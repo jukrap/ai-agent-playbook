@@ -9,7 +9,11 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = $PSScriptRoot
 
 if (Test-Path -LiteralPath (Join-Path $repoRoot '.git')) {
-  git -C $repoRoot pull --ff-only
+  if ($WhatIf) {
+    Write-Host "Would run: git -C `"$repoRoot`" pull --ff-only"
+  } else {
+    git -C $repoRoot pull --ff-only
+  }
 } else {
   Write-Warning 'This directory is not a git clone. Skipping git pull and running local install only.'
 }

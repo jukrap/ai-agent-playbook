@@ -9,14 +9,20 @@ Use this when `gh` is installed and authenticated. It is the shortest repeatable
 ```powershell
 $target = Join-Path $env:USERPROFILE 'Documents\ai-agent-playbook'
 if (Test-Path $target) {
-  git -C $target pull
+  $updater = Join-Path $target 'update.ps1'
+  if (Test-Path $updater) {
+    pwsh -NoProfile -ExecutionPolicy Bypass -File $updater
+  } else {
+    git -C $target pull --ff-only
+    pwsh -NoProfile -ExecutionPolicy Bypass -File (Join-Path $target 'install.ps1')
+  }
 } else {
   gh repo clone jukrap/ai-agent-playbook $target
+  pwsh -NoProfile -ExecutionPolicy Bypass -File (Join-Path $target 'install.ps1')
 }
-pwsh -NoProfile -ExecutionPolicy Bypass -File (Join-Path $target 'install.ps1')
 ```
 
-Restart Codex after the installer finishes.
+Restart Codex after the installer or updater finishes.
 
 ## Option 2: Standard Git install
 
@@ -70,7 +76,7 @@ Set-Location "$env:USERPROFILE\Documents\ai-agent-playbook"
 .\update.ps1
 ```
 
-The update script pulls with `--ff-only`, then runs the installer. Restart Codex after syncing.
+The update script pulls with `--ff-only`, then runs the installer. This is the normal one-command update path for every computer that already has a clone. Restart Codex after syncing.
 
 ## Option 4: Manual sync for custom paths
 
@@ -99,7 +105,7 @@ Then merge the closest profile from `templates/agents/profiles/**` and any neede
 
 ## Codex skill installer note
 
-Codex's skill installer can install individual skills from a GitHub repository path when authentication is available. For this playbook, cloning and running `install.ps1` is still the recommended method because:
+Codex's skill installer can install individual skills from a GitHub repository path when authentication is available. For this playbook, cloning and running `install.ps1` once, then `update.ps1` later, is still the recommended method because:
 
 - the repository contains many skills,
 - it also contains copyable templates and docs,

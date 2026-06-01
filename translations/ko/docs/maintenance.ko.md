@@ -51,6 +51,8 @@
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 .\scripts\sync-skills.ps1 -WhatIf
+.\install.ps1 -SkipValidation -WhatIf
+.\update.ps1 -SkipValidation -WhatIf
 ```
 
 Validation script가 바뀌면 같은 변경에서 `.github/workflows/validate.yml`도 갱신합니다.

@@ -4,10 +4,16 @@ Codex는 이 저장소의 skill을 로컬 skill 디렉터리에 복사하면 사
 
 ## 로컬 동기화
 
-새 컴퓨터 전체 설치 절차는 `../../docs/installation.md`를 봅니다. 저장소 루트에서는 아래를 우선 사용합니다.
+새 컴퓨터 전체 설치 절차는 `../../docs/installation.md`를 봅니다. 저장소를 clone한 뒤 처음 한 번은 아래를 사용합니다.
 
 ```powershell
 .\install.ps1
+```
+
+같은 컴퓨터에서 이후 업데이트할 때는:
+
+```powershell
+.\update.ps1
 ```
 
 Codex target directory만 직접 지정해야 한다면:

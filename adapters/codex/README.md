@@ -4,10 +4,16 @@ Codex can use the skills in this repository after they are copied into its skill
 
 ## Local sync
 
-For the full new-computer setup, see `../../docs/installation.md`. From the repository root, prefer:
+For the full new-computer setup, see `../../docs/installation.md`. From the repository root, use this once after cloning:
 
 ```powershell
 .\install.ps1
+```
+
+For later updates on the same computer:
+
+```powershell
+.\update.ps1
 ```
 
 To override only the Codex target directory:

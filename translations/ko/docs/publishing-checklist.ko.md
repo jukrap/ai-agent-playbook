@@ -27,6 +27,8 @@ rg -n --glob '!docs/publishing-checklist.md' "PERSONAL_NAME|COMPANY_NAME|CUSTOME
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 .\scripts\sync-skills.ps1 -WhatIf
+.\install.ps1 -SkipValidation -WhatIf
+.\update.ps1 -SkipValidation -WhatIf
 ```
 
 Skill 원본 파일이 바뀌었다면 검증 후 `.\scripts\sync-skills.ps1`를 실행합니다.

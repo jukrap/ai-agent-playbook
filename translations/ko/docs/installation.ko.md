@@ -9,14 +9,20 @@
 ```powershell
 $target = Join-Path $env:USERPROFILE 'Documents\ai-agent-playbook'
 if (Test-Path $target) {
-  git -C $target pull
+  $updater = Join-Path $target 'update.ps1'
+  if (Test-Path $updater) {
+    pwsh -NoProfile -ExecutionPolicy Bypass -File $updater
+  } else {
+    git -C $target pull --ff-only
+    pwsh -NoProfile -ExecutionPolicy Bypass -File (Join-Path $target 'install.ps1')
+  }
 } else {
   gh repo clone jukrap/ai-agent-playbook $target
+  pwsh -NoProfile -ExecutionPolicy Bypass -File (Join-Path $target 'install.ps1')
 }
-pwsh -NoProfile -ExecutionPolicy Bypass -File (Join-Path $target 'install.ps1')
 ```
 
-Installer가 끝난 뒤 Codex를 재시작합니다.
+Installer 또는 updater가 끝난 뒤 Codex를 재시작합니다.
 
 ## Option 2: 표준 Git 설치
 
@@ -70,7 +76,7 @@ Set-Location "$env:USERPROFILE\Documents\ai-agent-playbook"
 .\update.ps1
 ```
 
-Update script는 `--ff-only`로 pull한 뒤 installer를 실행합니다. Sync 후 Codex를 재시작합니다.
+Update script는 `--ff-only`로 pull한 뒤 installer를 실행합니다. 이미 clone이 있는 모든 컴퓨터에서는 이 명령 하나가 기본 업데이트 경로입니다. Sync 후 Codex를 재시작합니다.
 
 ## Option 4: custom path 수동 sync
 
@@ -99,7 +105,7 @@ Copy-Item .\templates\agents\global\AGENTS.md (Join-Path $projectRoot 'AGENTS.md
 
 ## Codex skill installer 참고
 
-Codex skill installer는 인증이 가능한 경우 GitHub repository path에서 개별 skill을 설치할 수 있습니다. 다만 이 playbook은 clone 후 `install.ps1`를 실행하는 방식을 권장합니다.
+Codex skill installer는 인증이 가능한 경우 GitHub repository path에서 개별 skill을 설치할 수 있습니다. 다만 이 playbook은 처음에는 clone 후 `install.ps1`를 실행하고, 이후에는 `update.ps1`를 실행하는 방식을 권장합니다.
 
 - skill이 여러 개입니다.
 - copyable templates와 docs도 함께 있습니다.

@@ -51,6 +51,8 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 .\scripts\sync-skills.ps1 -WhatIf
+.\install.ps1 -SkipValidation -WhatIf
+.\update.ps1 -SkipValidation -WhatIf
 ```
 
 If validation scripts change, update `.github/workflows/validate.yml` in the same change.

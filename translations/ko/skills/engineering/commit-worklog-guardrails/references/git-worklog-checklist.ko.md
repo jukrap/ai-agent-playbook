@@ -68,7 +68,8 @@ Title 규칙:
 Body 규칙:
 
 - 단순 변경이면 body를 생략합니다.
-- title만으로 무엇을 바꿨는지, 왜 바꿨는지, 영향 범위나 주의점이 설명되지 않을 때 `- ` bullet 1~4개를 씁니다.
+- 변경에 나중에 참고할 만한 context가 있으면 `- ` bullet 2~6개를 씁니다. 범위가 좁은 변경은 bullet 1개도 괜찮습니다.
+- diff에서 확인되는 무엇을 바꿨는지, 왜 중요한지, 영향 범위, 주의점을 보존합니다.
 - bullet은 결과 중심으로 쓰고 실제 diff에 근거합니다.
 - 구현 과정을 장황하게 설명하지 않습니다.
 
@@ -176,4 +177,4 @@ git remote -v
 - 특정 사람이나 외부 자료명을 내세우기보다 실제로 어떤 기준과 판단으로 바꿨는지 적습니다.
 - “무엇을 참고했다”보다 “무엇이 문제였고 어떻게 정리했는지”를 우선합니다.
 
-좋은 worklog는 decision path, confirmed cause, verification, remaining risks를 보존합니다. 파일 목록이나 긴 commit message가 아닙니다.
+Commit message는 다음 독자를 위한 간결한 context를 보존할 수 있습니다. 더 깊은 reasoning, blocker, decision history, confirmed cause, verification detail, remaining risk는 worklog에 둡니다.

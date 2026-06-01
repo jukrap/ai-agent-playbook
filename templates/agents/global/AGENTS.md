@@ -88,7 +88,7 @@ If the project uses another package manager or command set, use only commands pr
 - Use Conventional Commits by default.
 - Use `type(scope): summary` when the repository uses scoped commits.
 - Keep the subject focused on the main outcome, not the branch name or chat title.
-- Add a short body only when the title does not explain why, scope, or risk.
+- Add a structured body when it helps future readers understand why, scope, risk, or verification context.
 - Include a verification section only for commands or manual checks actually performed.
 - Include issue references only when the issue number and repository convention are known.
 - Do not add agent, model, co-author, or generated-by signatures.

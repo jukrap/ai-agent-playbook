@@ -88,7 +88,7 @@ pnpm build
 - 기본적으로 Conventional Commits를 사용합니다.
 - 저장소가 scoped commit을 쓰면 `type(scope): summary` 형식을 사용합니다.
 - subject는 branch명이나 chat title이 아니라 핵심 결과에 집중합니다.
-- title만으로 변경 이유, 범위, risk가 설명되지 않을 때만 짧은 body를 추가합니다.
+- 이후 독자가 변경 이유, 범위, risk, verification context를 이해하는 데 도움이 되면 구조화된 body를 추가합니다.
 - 실제 실행한 command나 manual check에 대해서만 verification section을 넣습니다.
 - issue 번호와 repository convention을 확실히 알 때만 issue reference를 넣습니다.
 - agent, model, co-author, generated-by signature를 추가하지 않습니다.

@@ -12,7 +12,7 @@ Protect unrelated changes, local-only files, and verification integrity.
 1. Check branch, remote, upstream, dirty files, and staged files.
 2. Stage only explicit files related to the task.
 3. Run project-defined verification and report only commands actually executed.
-4. Write concise Conventional Commit messages unless the repo proves another convention.
+4. Write structured Conventional Commit messages unless the repo proves another convention.
 5. Push only to the intended remote/branch.
 6. Write worklogs for milestones, blockers, large direction changes, or long debugging.
 

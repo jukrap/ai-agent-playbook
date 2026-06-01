@@ -78,7 +78,7 @@ pnpm build
 기본 형식:
 
 ```text
-type(scope): summary
+type(scope): structured summary
 ```
 
 repository convention을 먼저 따릅니다. 확인된 convention이 없으면 subject와 body는 사용자 또는 팀의 작업 언어에 맞춥니다. Conventional Commit type과 scope는 repository가 다른 형식을 증명하지 않는 한 영어로 유지합니다.
@@ -111,7 +111,8 @@ Title 규칙:
 Body 규칙:
 
 - 변경이 단순하면 body를 생략합니다.
-- title만으로 무엇을 바꿨는지, 왜 바꿨는지, 영향 범위나 주의점이 설명되지 않을 때만 `- ` bullet 1~4개를 씁니다.
+- 변경에 나중에 참고할 만한 context가 있으면 `- ` bullet 2~6개를 씁니다. 범위가 좁은 변경은 bullet 1개도 괜찮습니다.
+- diff에서 확인되는 무엇을 바꿨는지, 왜 중요한지, 영향 범위, 주의점을 보존합니다.
 - bullet은 결과 중심으로 씁니다.
 - 구현 과정을 장황하게 설명하지 않습니다.
 - diff에 없는 내용을 추측해서 쓰지 않습니다.
@@ -253,7 +254,7 @@ Media 규칙:
 
 ## Worklogs
 
-Worklog는 긴 commit message가 아닙니다. 다음 경우 작성합니다.
+Commit message는 간결한 context를 보존할 수 있지만, 더 깊은 reasoning은 worklog가 담당합니다. 다음 경우 worklog를 작성합니다.
 
 - milestone completion
 - blocker 또는 반복 실패

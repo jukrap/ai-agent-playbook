@@ -78,7 +78,7 @@ Output contract:
 Default format:
 
 ```text
-type(scope): concise summary
+type(scope): structured summary
 ```
 
 Use repository convention first. If no convention is proven, match the user's or team's working language for the subject and body. Keep Conventional Commit type and scope in English unless the repository proves another format.
@@ -111,7 +111,8 @@ Title rules:
 Body rules:
 
 - Omit the body when the change is simple.
-- Add one to four `- ` bullets when the title alone does not explain what changed, why it changed, impact, or caution.
+- Add two to six `- ` bullets when the change has useful future context. One bullet is fine for narrow changes.
+- Preserve what changed, why it matters, impact, and caution when those details are visible in the diff.
 - Keep bullets result-focused.
 - Do not narrate implementation steps.
 - Do not invent details that are not in the diff.
@@ -253,7 +254,7 @@ Default structure:
 
 ## Worklogs
 
-A worklog is not a long commit message. Write one for:
+Commit messages may preserve concise context, but worklogs carry deeper reasoning. Write a worklog for:
 
 - milestone completion
 - blockers or repeated failures

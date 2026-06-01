@@ -68,7 +68,8 @@ Title rules:
 Body rules:
 
 - Omit the body for simple changes.
-- Use one to four `- ` bullets when the title does not explain what changed, why it changed, impact, or caution.
+- Use two to six `- ` bullets when the change has useful future context. One bullet is fine for narrow changes.
+- Preserve what changed, why it matters, impact, and caution when those details are visible in the diff.
 - Keep bullets result-focused and grounded in the actual diff.
 - Do not narrate implementation steps.
 
@@ -142,4 +143,4 @@ Writing principles:
 - Prefer actual criteria and judgment over naming a person or external reference.
 - Prioritize what was wrong and how it was organized over what was referenced.
 
-Good worklogs preserve the decision path, confirmed cause, verification, and remaining risks. They are not file lists or long commit messages.
+Commit messages may preserve concise context for future readers. Use worklogs for deeper reasoning, blockers, decision history, confirmed causes, verification detail, and remaining risks.

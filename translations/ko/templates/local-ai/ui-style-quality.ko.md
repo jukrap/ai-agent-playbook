@@ -6,8 +6,8 @@
 
 - style quality, cleanup, broken-layout fix 요청은 product redesign 허가가 아닙니다.
 - 먼저 현재 화면 의도, existing components, shared primitives, tokens, CSS/inline style rules를 확인합니다.
-- 기본은 hybrid style policy입니다. shared layout과 token은 CSS가 적합할 수 있고, component-local 또는 dynamic style은 inline이 적합할 수 있습니다.
-- SI 또는 선임 선호 프로젝트에서는 inline style을 preferred local convention으로 명시적으로 허용합니다.
+- 기본은 repository에서 확인된 style policy입니다. 명시적이면 맞는 skill을 사용합니다: `design-system-first`, `css-class-first`, `utility-class-first`, `inline-style-first`.
+- 문서화된 policy가 없으면 component가 이미 쓰는 local pattern을 유지하고 새 styling system을 도입하지 않습니다.
 
 ## Review checklist
 
@@ -19,18 +19,12 @@
 - card 안에 card가 중첩되거나 제품 필요 이상으로 장식되는가?
 - operational tool이라면 density와 반복 사용 효율을 유지하는가?
 
-## Style 선택
+## Style policy 선택
 
-- inline styles 선호:
-  - 한 component 안에서만 쓰는 dynamic styles
-  - props/state에 강하게 연결된 값
-  - senior/team convention이 inline style을 선호하는 SI 프로젝트
-- CSS/classes 선호:
-  - global layout, reset, theme tokens
-  - 여러 component가 공유하는 variants/states
-  - media queries, container queries, pseudo selectors
-- shared UI 선호:
-  - buttons, inputs, selects, modals, toasts, pagination, toolbars
+- shared UI component, token, variant, slot이 styling을 맡아야 하면 `design-system-first`를 사용합니다.
+- stylesheet, CSS module, scoped CSS, semantic class가 project convention이면 `css-class-first`를 사용합니다.
+- Tailwind-style utility나 atomic class composition이 project convention이면 `utility-class-first`를 사용합니다.
+- component-local inline style object를 명시적으로 선호하면 `inline-style-first`를 사용합니다.
 
 ## Responsive rules
 

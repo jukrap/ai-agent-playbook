@@ -16,11 +16,14 @@
 - shared primitive bypass
 - card nesting 또는 불필요한 decoration
 
-## Style selection
+## Style policy selection
 
-- Inline style: component-local dynamic values, SI/senior preference, state-derived layout.
-- CSS/class: global layout, tokens, pseudo selectors, media/container queries, repeated variants.
-- Shared UI: buttons, inputs, selects, modals, toasts, pagination, toolbars.
+- `design-system-first`: shared component, token, variant, slot, reusable UI primitive가 있습니다.
+- `css-class-first`: stylesheet, CSS module, scoped CSS, semantic class name이 project convention입니다.
+- `utility-class-first`: Tailwind-style utility나 atomic class composition이 project convention입니다.
+- `inline-style-first`: component-local inline style object를 명시적으로 선호합니다.
+
+명시적 policy가 없으면 component가 이미 쓰는 local pattern을 유지하고 새 styling system을 도입하지 않습니다.
 
 ## Verification
 

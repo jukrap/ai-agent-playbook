@@ -100,7 +100,11 @@ When adding or changing skills, templates, examples, translations, or adapter no
 - `project-doc-system`: organize AGENTS, project specs, plans, local docs, and worklogs.
 - `commit-worklog-guardrails`: stage, commit, push, PR, and worklog safely.
 - `api-contract-boundary`: keep frontend/backend uncertainty at the API boundary.
+- `css-class-first`: follow stylesheet, CSS module, scoped CSS, or semantic class conventions.
+- `design-system-first`: reuse shared UI components, tokens, and variants before custom styling.
+- `inline-style-first`: follow explicit component-local inline style conventions.
 - `style-quality-review`: improve UI style quality without changing product intent.
+- `utility-class-first`: follow utility-first CSS or Tailwind-style class conventions.
 
 ### Legacy
 

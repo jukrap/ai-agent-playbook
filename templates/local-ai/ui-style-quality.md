@@ -6,8 +6,8 @@ Use this guide when reviewing style quality while preserving design intent.
 
 - A request for style quality, cleanup, or broken-layout fixes is not permission to redesign the product.
 - First inspect the current screen intent, existing components, shared primitives, tokens, and CSS/inline style rules.
-- Default to a hybrid style policy. Shared layout and tokens may belong in CSS; component-local or dynamic styles may belong inline.
-- In SI or senior-preference projects, explicitly allow inline styles as the preferred local convention.
+- Default to the repository's proven style policy. When it is explicit, use the matching skill: `design-system-first`, `css-class-first`, `utility-class-first`, or `inline-style-first`.
+- If no policy is documented, keep the local pattern already used by the component and avoid introducing a new styling system.
 
 ## Review checklist
 
@@ -19,18 +19,12 @@ Use this guide when reviewing style quality while preserving design intent.
 - Are cards nested inside cards or decorated beyond the product need?
 - If the screen is an operational tool, does the design preserve density and repeated-use efficiency?
 
-## Style selection
+## Style policy selection
 
-- Prefer inline styles for:
-  - dynamic styles used only inside one component
-  - values strongly tied to props or state
-  - SI projects where the senior/team convention prefers inline styles
-- Prefer CSS/classes for:
-  - global layout, reset, and theme tokens
-  - variants or states shared across many components
-  - media queries, container queries, and pseudo selectors
-- Prefer shared UI for:
-  - repeated primitives such as buttons, inputs, selects, modals, toasts, pagination, and toolbars
+- Use `design-system-first` when shared UI components, tokens, variants, or slots should own the styling.
+- Use `css-class-first` when stylesheets, CSS modules, scoped CSS, or semantic classes are the project convention.
+- Use `utility-class-first` when Tailwind-style utilities or atomic class composition are the project convention.
+- Use `inline-style-first` when component-local inline style objects are explicitly preferred.
 
 ## Responsive rules
 

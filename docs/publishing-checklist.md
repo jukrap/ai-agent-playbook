@@ -59,4 +59,4 @@ git remote add origin https://github.com/jukrap/ai-agent-playbook.git
 git push -u origin main
 ```
 
-Use a repository-local Git config here so global company Git settings stay untouched.
+Use a repository-local Git config here so unrelated global Git settings stay untouched.

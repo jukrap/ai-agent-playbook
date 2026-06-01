@@ -24,6 +24,14 @@
 
 이 저장소는 Superpowers 같은 process skill pack을 대체하지 않습니다. Process skill과 playbook skill을 어떻게 조합할지는 `docs/superpowers-integration.md`를 기준으로 판단합니다.
 
+## Style policy map
+
+- `style-quality-review`: product intent를 유지하는 일반 UI 품질 review.
+- `design-system-first`: shared component, token, variant, design-system primitive가 styling을 먼저 맡습니다.
+- `css-class-first`: stylesheet, CSS module, scoped CSS, semantic class가 project convention입니다.
+- `utility-class-first`: Tailwind-style utility나 atomic class composition이 project convention입니다.
+- `inline-style-first`: component-local inline style object를 명시적으로 선호합니다.
+
 ## 레거시 확장 맵
 
 - `legacy-general`: 기본 레거시 유지보수 원칙.

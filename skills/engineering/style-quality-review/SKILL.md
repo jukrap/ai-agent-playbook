@@ -12,9 +12,9 @@ Improve style quality while preserving the intended design.
 1. Inspect existing UI conventions, shared primitives, tokens, CSS, inline style patterns, and relevant docs.
 2. Classify issues as visual breakage, responsive failure, style structure risk, state coverage gap, or design-change risk.
 3. Keep changes minimal and aligned with the project style policy.
-4. For SI/senior-preference projects, treat inline styles as an accepted default when documented or requested.
+4. Apply the matching style policy skill when the repository convention is explicit: `design-system-first`, `css-class-first`, `utility-class-first`, or `inline-style-first`.
 5. Verify in browser or rendered UI when the task changes visible behavior.
 
 ## Reference
 
-Read `references/style-review-checklist.md` for detailed review criteria and style selection rules.
+Read `references/style-review-checklist.md` for detailed review criteria and style policy selection rules.

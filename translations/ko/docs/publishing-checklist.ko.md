@@ -59,4 +59,4 @@ git remote add origin https://github.com/jukrap/ai-agent-playbook.git
 git push -u origin main
 ```
 
-회사 계정용 global Git 설정을 건드리지 않도록 repository-local Git config를 사용합니다.
+관련 없는 global Git 설정을 건드리지 않도록 repository-local Git config를 사용합니다.

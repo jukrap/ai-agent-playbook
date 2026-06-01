@@ -16,7 +16,7 @@ SI 프로젝트와 오래된 운영 시스템에 사용합니다.
 - common includes, layouts, templates
 - globals와 shared scripts
 - backend contracts와 DB/schema/migration impact
-- customer, senior, team style preference
+- client, project, team style preference
 - old browsers, closed networks, WebView, ActiveX, printers, scanners 같은 제약
 
 ## 변경 규칙
@@ -24,7 +24,7 @@ SI 프로젝트와 오래된 운영 시스템에 사용합니다.
 - `rg`로 hidden coupling을 찾습니다.
 - 비슷한 파일명이 여러 개 있으면 runtime에 실제로 load되는 파일을 찾습니다.
 - shared CSS 또는 JS 변경 전 blast radius를 확인합니다.
-- inline-style preference가 team rule이면 존중합니다.
+- inline-style-first convention이 team rule이면 존중합니다.
 - 자동 테스트가 없으면 구체적인 manual verification scenario를 남깁니다.
 
 ## Red flags

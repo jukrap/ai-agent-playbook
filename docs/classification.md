@@ -24,6 +24,14 @@ Add a new category only when the first real skill in that category exists. When 
 
 This repository does not replace process skill packs such as Superpowers. Use `docs/superpowers-integration.md` to decide how process skills and playbook skills should be combined.
 
+## Style policy map
+
+- `style-quality-review`: general UI quality review while preserving product intent.
+- `design-system-first`: shared components, tokens, variants, and design-system primitives own styling first.
+- `css-class-first`: stylesheets, CSS modules, scoped CSS, or semantic classes are the project convention.
+- `utility-class-first`: Tailwind-style utilities or atomic class composition are the project convention.
+- `inline-style-first`: component-local inline style objects are explicitly preferred.
+
 ## Legacy expansion map
 
 - `legacy-general`: default legacy maintenance discipline.

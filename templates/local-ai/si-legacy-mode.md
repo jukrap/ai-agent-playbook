@@ -16,7 +16,7 @@ Use this guide for SI projects and old production systems.
 - common includes, layouts, and templates
 - globals and shared scripts
 - backend contracts and DB/schema/migration impact
-- customer, senior, or team style preference
+- client, project, or team style preference
 - constraints such as old browsers, closed networks, WebView, ActiveX, printers, or scanners
 
 ## Change rules
@@ -24,7 +24,7 @@ Use this guide for SI projects and old production systems.
 - Use `rg` to find hidden coupling.
 - When similar file names exist, identify which file is actually loaded at runtime.
 - Check blast radius before changing shared CSS or JS.
-- Respect inline-style preference when it is the team rule.
+- Respect inline-style-first convention when it is the team rule.
 - If automated tests do not exist, write concrete manual verification scenarios.
 
 ## Red flags

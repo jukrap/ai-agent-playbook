@@ -15,6 +15,7 @@ Use process skills first when they apply, then use the smallest relevant playboo
 - Feature planning: Superpowers planning or brainstorming skill plus `project-doc-system` when project docs need structure.
 - API integration: Superpowers implementation process plus `api-contract-boundary`.
 - UI polishing: Superpowers review or verification process plus `style-quality-review`.
+- Explicit style policy work: Superpowers implementation process plus `design-system-first`, `css-class-first`, `utility-class-first`, or `inline-style-first`.
 - Legacy change: Superpowers debugging or planning process plus the closest `legacy-*` skill.
 - Commit, push, PR, or handoff: Superpowers verification or branch-finishing process plus `commit-worklog-guardrails`.
 

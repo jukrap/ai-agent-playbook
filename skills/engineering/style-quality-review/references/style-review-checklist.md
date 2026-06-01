@@ -16,11 +16,14 @@
 - shared primitive bypasses
 - card nesting or unnecessary decoration
 
-## Style selection
+## Style policy selection
 
-- Inline style: component-local dynamic values, SI/senior preference, state-derived layout.
-- CSS/class: global layout, tokens, pseudo selectors, media/container queries, repeated variants.
-- Shared UI: buttons, inputs, selects, modals, toasts, pagination, toolbars.
+- `design-system-first`: shared components, tokens, variants, slots, and reusable UI primitives exist.
+- `css-class-first`: stylesheets, CSS modules, scoped CSS, or semantic class names are the project convention.
+- `utility-class-first`: Tailwind-style utilities or atomic class composition are the project convention.
+- `inline-style-first`: component-local inline style objects are explicitly preferred.
+
+When no explicit policy exists, keep the local pattern already used by the component and avoid introducing a new styling system.
 
 ## Verification
 

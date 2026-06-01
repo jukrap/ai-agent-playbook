@@ -1,0 +1,4 @@
+interface:
+  display_name: "Utility Class First"
+  short_description: "Follow utility-first CSS conventions"
+  default_prompt: "Use utility-class-first when this project prefers Tailwind-style utilities or atomic class composition for UI styling."

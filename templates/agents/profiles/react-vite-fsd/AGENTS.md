@@ -32,9 +32,9 @@ Use this profile for React, Vite, TypeScript, pnpm, and pragmatic FSD or a simil
 
 ## UI and styling
 
-- Default to a hybrid style policy. CSS can own shared tokens, reset, and broad layout rules; inline styles are acceptable for component-local or dynamic styles.
-- In SI or senior-preference projects, explicitly allow inline styles as the preferred local convention.
-- In strong design-system projects, prefer CSS variables, class names, and shared UI variants.
+- Follow the repository's explicit style policy when one exists: `design-system-first`, `css-class-first`, `utility-class-first`, or `inline-style-first`.
+- If no policy is documented, keep the component's existing local pattern instead of introducing a new styling system.
+- In strong design-system projects, prefer shared UI variants, tokens, and component props before custom styling.
 - Search for existing shared wrappers before creating buttons, inputs, selects, modals, toasts, or pagination.
 - Check text overflow, mobile width, loading, empty, error, and disabled states.
 - In style-quality reviews, preserve visual intent and focus on CSS/inline structure, duplication, cascade risk, and responsive breakage.

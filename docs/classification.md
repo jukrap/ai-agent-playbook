@@ -10,11 +10,10 @@ The content is not Codex-specific. Codex is one installation target. The source 
 
 - `skills/engineering`: repeatable engineering workflows for most repositories.
 - `skills/legacy`: legacy and SI maintenance workflows where runtime coupling and compatibility dominate.
-- `skills/productivity`: communication, handoff, or personal workflow skills. Reserved for future use.
 
 This mirrors the useful part of skill-first repositories: broad categories first, small composable skills second. We do not put `AGENTS.md` templates inside `skills` because those are copied into projects, not invoked as one-off skills.
 
-When a new category or skill changes this map, update `README.md`, this file, Korean translations, and installed skill copies through `docs/maintenance.md`.
+Add a new category only when the first real skill in that category exists. When a new category or skill changes this map, update `README.md`, this file, Korean translations, and installed skill copies through `docs/maintenance.md`.
 
 ## Template categories
 

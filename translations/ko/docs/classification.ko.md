@@ -10,11 +10,10 @@
 
 - `skills/engineering`: 대부분의 저장소에서 반복되는 엔지니어링 workflow.
 - `skills/legacy`: runtime 결합과 호환성이 중요한 SI/레거시 유지보수 workflow.
-- `skills/productivity`: 커뮤니케이션, 인수인계, 개인 workflow skill용. 현재는 향후 확장을 위해 예약합니다.
 
 이 구조는 skill-first 저장소의 장점을 따릅니다. 큰 범주를 먼저 나누고, 그 안에 작고 조합 가능한 skill을 둡니다. `AGENTS.md` 템플릿은 skill이 아니라 프로젝트에 복사하는 자료이므로 `skills` 아래에 두지 않습니다.
 
-새 category나 skill이 이 map을 바꾸면 `docs/maintenance.md`를 기준으로 `README.md`, 이 파일, 한국어 번역본, 설치된 skill 복사본을 함께 갱신합니다.
+새 category는 그 category에 들어갈 첫 실제 skill이 생겼을 때만 추가합니다. 새 category나 skill이 이 map을 바꾸면 `docs/maintenance.md`를 기준으로 `README.md`, 이 파일, 한국어 번역본, 설치된 skill 복사본을 함께 갱신합니다.
 
 ## 템플릿 분류
 

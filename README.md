@@ -16,7 +16,6 @@ It follows the same broad shape as public skill-first repositories such as [matt
 skills/
   engineering/   Cross-project engineering workflow skills
   legacy/        SI and legacy-system maintenance skills
-  productivity/  Reserved for communication/handoff skills
 templates/
   agents/        AGENTS.md templates and project profiles
   local-ai/      Optional local-only project docs
@@ -28,11 +27,24 @@ scripts/         Validation and local sync helpers
 .github/         GitHub Actions validation workflow
 ```
 
+## Documentation map
+
+- [Repository working rules](AGENTS.md): maintenance rules for agents editing this repository.
+- [Repository context](CONTEXT.md): core terms and design intent for the playbook.
+- [Installation](docs/installation.md): first install, existing-clone update, custom skill paths, and Codex restart notes.
+- [Codex adapter](adapters/codex/README.md): Codex-specific local sync behavior.
+- [Templates](templates/README.md): what to copy into project repositories and what to leave as installable skills.
+- [Classification](docs/classification.md): why skills, templates, examples, docs, and adapters are separated.
+- [Superpowers integration](docs/superpowers-integration.md): how to use this playbook alongside Superpowers-style process skills.
+- [Maintenance workflow](docs/maintenance.md): what to update together when adding or changing content.
+- [Translation policy](docs/translation-policy.md): English source and Korean translation rules.
+- [Publishing checklist](docs/publishing-checklist.md): private GitHub setup and pre-publish hygiene checks.
+
 ## Recommended use
 
 ### 1. Install reusable skills
 
-For a new computer, follow `docs/installation.md`. In short, clone this repository and run:
+For a new computer, follow [Installation](docs/installation.md). In short, clone this repository and run:
 
 ```powershell
 .\install.ps1
@@ -48,11 +60,11 @@ To update an existing clone later:
 
 ### 2. Use alongside process skills
 
-This playbook can be used with Superpowers-style process skills. Let process skills guide planning, debugging, TDD, verification, and branch finishing; use this playbook for repository-specific guardrails and reusable project rules. See `docs/superpowers-integration.md`.
+This playbook can be used with Superpowers-style process skills. Let process skills guide planning, debugging, TDD, verification, and branch finishing; use this playbook for repository-specific guardrails and reusable project rules. See [Superpowers integration](docs/superpowers-integration.md).
 
 ### 3. Copy project templates
 
-See `templates/README.md` for the difference between installable skills and copyable project templates.
+See [Templates](templates/README.md) for the difference between installable skills and copyable project templates.
 
 Start with one `templates/agents` profile:
 
@@ -73,7 +85,7 @@ Do not edit installed copies as the source. Edit this repository, validate, then
 
 ### 5. Extend through the maintenance workflow
 
-When adding or changing skills, templates, examples, translations, or adapter notes, follow `docs/maintenance.md`. It records which indexes, translations, validation scripts, and installed skill copies must be updated together.
+When adding or changing skills, templates, examples, translations, or adapter notes, follow [Maintenance workflow](docs/maintenance.md). It records which indexes, translations, validation scripts, and installed skill copies must be updated together.
 
 ## Skill categories
 
@@ -94,7 +106,7 @@ When adding or changing skills, templates, examples, translations, or adapter no
 
 ## Publishing checklist
 
-- Follow `docs/maintenance.md` for any additions made before publishing.
+- Follow [Maintenance workflow](docs/maintenance.md) for any additions made before publishing.
 - Check for personal paths, company names, credentials, and dated branch/PR references.
 - Validate every `SKILL.md`.
 - Validate translation safety and coverage.
@@ -102,9 +114,9 @@ When adding or changing skills, templates, examples, translations, or adapter no
 - Confirm templates do not claim a stack, package manager, or workflow unless the profile explicitly says so.
 - Keep the GitHub repository private until hygiene checks and validation pass.
 - Add a license only when the repository is meant for broader redistribution.
-- After publishing, update `adapters/codex/README.md` with the repository URL.
+- After publishing, update [Codex adapter](adapters/codex/README.md) with the repository URL.
 
-For a private GitHub repository under `jukrap`, see `docs/publishing-checklist.md` for first-push commands using repository-local Git config.
+For a private GitHub repository under `jukrap`, see [Publishing checklist](docs/publishing-checklist.md) for first-push commands using repository-local Git config.
 
 ## Translation policy
 

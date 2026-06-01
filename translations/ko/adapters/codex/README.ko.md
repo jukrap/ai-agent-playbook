@@ -4,7 +4,13 @@ Codex는 이 저장소의 skill을 로컬 skill 디렉터리에 복사하면 사
 
 ## 로컬 동기화
 
-저장소 루트에서 실행합니다.
+새 컴퓨터 전체 설치 절차는 `../../docs/installation.md`를 봅니다. 저장소 루트에서는 아래를 우선 사용합니다.
+
+```powershell
+.\install.ps1
+```
+
+Codex target directory만 직접 지정해야 한다면:
 
 ```powershell
 .\scripts\sync-skills.ps1 -CodexSkillsRoot "$env:USERPROFILE\.codex\skills"

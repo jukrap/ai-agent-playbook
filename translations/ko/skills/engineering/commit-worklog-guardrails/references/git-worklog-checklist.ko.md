@@ -54,12 +54,13 @@ type(scope): summary
 
 - Conventional Commit type은 `feat`, `fix`, `design`, `style`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`를 사용합니다.
 - scope는 유용하고 repository convention과 맞을 때만 씁니다.
-- subject는 repository 언어 convention을 따릅니다. 팀이 한국어 subject를 선호하면 type/scope는 영어로 두고 subject는 한국어로 씁니다.
+- subject는 repository 언어 convention을 따릅니다. 확인된 convention이 없으면 subject와 body는 사용자 또는 팀의 작업 언어에 맞춥니다. Conventional Commit type과 scope는 repository가 다른 형식을 증명하지 않는 한 영어로 유지합니다.
 
 Title 규칙:
 
 - 한 줄로 쓰고 끝에 마침표를 붙이지 않습니다.
 - 과정이 아니라 구체적인 결과를 씁니다.
+- subject는 사용자, 팀, repository의 주 사용 언어로 씁니다.
 - branch명, chat title, task title을 그대로 복사하지 않습니다.
 - `fix: update`, `chore: changes`, `refactor: cleanup`처럼 막연한 title을 피합니다.
 - `작업`, `처리`, `수정`, `변경`, `개선` 같은 일반 단어를 단독 핵심어처럼 쓰지 않습니다.

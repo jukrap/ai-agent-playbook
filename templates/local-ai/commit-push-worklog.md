@@ -81,7 +81,7 @@ Default format:
 type(scope): concise summary
 ```
 
-Use repository convention first. If the team prefers Korean subjects, keep the Conventional Commit type and scope in English and write the subject in Korean.
+Use repository convention first. If no convention is proven, match the user's or team's working language for the subject and body. Keep Conventional Commit type and scope in English unless the repository proves another format.
 
 Common types:
 
@@ -102,6 +102,7 @@ Title rules:
 - Keep the title one line.
 - Do not end the title with a period.
 - Make the concrete result clear.
+- Write the subject in the user's, team's, or repository's primary language.
 - Do not copy the branch name, chat title, or task title as the commit title.
 - Avoid vague titles such as `fix: update`, `chore: changes`, or `refactor: cleanup`.
 - Do not use generic words alone, such as `work`, `process`, `fix`, `change`, or `improvement`.

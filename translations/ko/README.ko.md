@@ -32,13 +32,19 @@ scripts/         검증과 로컬 동기화 스크립트
 
 ### 1. 재사용 skill 설치
 
-로컬에서는 `scripts/sync-skills.ps1`를 사용합니다. 저장소를 공개한 뒤에는 GitHub repository 설치를 지원하는 skill manager로 설치할 수 있습니다.
+새 컴퓨터에서는 `docs/installation.md`를 따릅니다. 요약하면 이 저장소를 clone하고 아래를 실행합니다.
 
 ```powershell
-.\scripts\sync-skills.ps1
+.\install.ps1
 ```
 
-이 스크립트는 모든 `skills/<category>/<skill>/SKILL.md` 폴더를 일반적인 로컬 agent skill 디렉터리에 복사합니다.
+Installer는 저장소를 검증한 뒤 모든 `skills/<category>/<skill>/SKILL.md` 폴더를 일반적인 로컬 agent skill 디렉터리에 복사합니다.
+
+기존 clone을 나중에 업데이트할 때는:
+
+```powershell
+.\update.ps1
+```
 
 ### 2. Process skill과 함께 사용
 

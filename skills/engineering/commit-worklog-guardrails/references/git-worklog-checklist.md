@@ -54,12 +54,13 @@ type(scope): summary
 
 - Use Conventional Commit types: `feat`, `fix`, `design`, `style`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`.
 - Use scope only when useful and consistent with the repository.
-- Use the repository's language convention for the subject. If the team prefers Korean subjects, keep type/scope in English and write the subject in Korean.
+- Use the repository's language convention for the subject. If no convention is proven, match the user's or team's working language for the subject and body. Keep Conventional Commit type and scope in English unless the repository proves another format.
 
 Title rules:
 
 - Keep it one line and do not end with a period.
 - State the concrete result, not the process.
+- Write the subject in the user's, team's, or repository's primary language.
 - Do not copy the branch name, chat title, or task title.
 - Avoid vague titles such as `fix: update`, `chore: changes`, or `refactor: cleanup`.
 - Do not use generic words alone, such as `work`, `process`, `fix`, `change`, or `improvement`.

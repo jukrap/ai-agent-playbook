@@ -4,7 +4,13 @@ Codex can use the skills in this repository after they are copied into its skill
 
 ## Local sync
 
-From the repository root:
+For the full new-computer setup, see `../../docs/installation.md`. From the repository root, prefer:
+
+```powershell
+.\install.ps1
+```
+
+To override only the Codex target directory:
 
 ```powershell
 .\scripts\sync-skills.ps1 -CodexSkillsRoot "$env:USERPROFILE\.codex\skills"

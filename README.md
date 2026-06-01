@@ -32,13 +32,19 @@ scripts/         Validation and local sync helpers
 
 ### 1. Install reusable skills
 
-Use `scripts/sync-skills.ps1` locally, or publish this repository and install with a skill manager that supports GitHub repositories.
+For a new computer, follow `docs/installation.md`. In short, clone this repository and run:
 
 ```powershell
-.\scripts\sync-skills.ps1
+.\install.ps1
 ```
 
-The script copies every `skills/<category>/<skill>/SKILL.md` folder to common local agent skill directories.
+The installer validates the repository, then copies every `skills/<category>/<skill>/SKILL.md` folder to common local agent skill directories.
+
+To update an existing clone later:
+
+```powershell
+.\update.ps1
+```
 
 ### 2. Use alongside process skills
 

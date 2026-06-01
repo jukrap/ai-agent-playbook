@@ -1,0 +1,111 @@
+# Installation
+
+This repository is easiest to use by cloning it once, then running the root installer. Several install styles are supported because different machines may have different GitHub authentication and PowerShell policies.
+
+## Option 1: Fast install with GitHub CLI
+
+Use this when `gh` is installed and authenticated. It is the shortest repeatable install/update flow:
+
+```powershell
+$target = Join-Path $env:USERPROFILE 'Documents\ai-agent-playbook'
+if (Test-Path $target) {
+  git -C $target pull
+} else {
+  gh repo clone jukrap/ai-agent-playbook $target
+}
+pwsh -NoProfile -ExecutionPolicy Bypass -File (Join-Path $target 'install.ps1')
+```
+
+Restart Codex after the installer finishes.
+
+## Option 2: Standard Git install
+
+Use this when GitHub CLI is not available, or when you prefer normal `git clone`.
+
+### 1. Authenticate GitHub
+
+For a private repository, sign in with one of these before cloning:
+
+- GitHub CLI: `gh auth login`
+- Git Credential Manager through the browser prompt during `git clone`
+- SSH key configured for GitHub
+
+### 2. Clone the repository
+
+```powershell
+$target = Join-Path $env:USERPROFILE 'Documents\ai-agent-playbook'
+git clone https://github.com/jukrap/ai-agent-playbook.git $target
+Set-Location $target
+```
+
+Use another local path if preferred. Keep this clone as the source of truth.
+
+### 3. Install skills
+
+```powershell
+.\install.ps1
+```
+
+The installer validates the repository and copies installable skills from `skills/<category>/<skill>` into:
+
+- `%USERPROFILE%\.codex\skills\<skill>`
+- `%USERPROFILE%\.agents\skills\<skill>`
+- `%USERPROFILE%\.agents\skills\legacys\<legacy-skill>` for legacy skills
+
+Restart Codex after syncing so the session can pick up skill metadata.
+
+### 4. Confirm installation
+
+```powershell
+Test-Path "$env:USERPROFILE\.codex\skills\repo-onboarding\SKILL.md"
+Test-Path "$env:USERPROFILE\.codex\skills\commit-worklog-guardrails\SKILL.md"
+```
+
+Both should print `True`.
+
+## Option 3: Existing clone update
+
+```powershell
+Set-Location "$env:USERPROFILE\Documents\ai-agent-playbook"
+.\update.ps1
+```
+
+The update script pulls with `--ff-only`, then runs the installer. Restart Codex after syncing.
+
+## Option 4: Manual sync for custom paths
+
+Use this only when you need non-default skill directories.
+
+```powershell
+.\scripts\validate-skills.ps1
+.\scripts\validate-translations.ps1
+.\scripts\sync-skills.ps1 `
+  -CodexSkillsRoot "$env:USERPROFILE\.codex\skills" `
+  -AgentsSkillsRoot "$env:USERPROFILE\.agents\skills"
+```
+
+## Applying project templates
+
+Templates are not installed automatically as skills. Copy or adapt them into each project.
+
+Common starting point:
+
+```powershell
+$projectRoot = Join-Path $env:USERPROFILE 'Documents\example-project'
+Copy-Item .\templates\agents\global\AGENTS.md (Join-Path $projectRoot 'AGENTS.md')
+```
+
+Then merge the closest profile from `templates/agents/profiles/**` and any needed local docs from `templates/local-ai/**`.
+
+## Codex skill installer note
+
+Codex's skill installer can install individual skills from a GitHub repository path when authentication is available. For this playbook, cloning and running `install.ps1` is still the recommended method because:
+
+- the repository contains many skills,
+- it also contains copyable templates and docs,
+- the installer validates first and installs both `.codex` and `.agents` layouts,
+- updates are a simple `.\update.ps1`.
+
+## Superpowers note
+
+This repository does not install Superpowers. Keep Superpowers installed separately, then use these skills alongside it.

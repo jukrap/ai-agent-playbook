@@ -1,0 +1,4 @@
+interface:
+  display_name: "Legacy Batch File Transfer"
+  short_description: "Maintain scheduled batch and file exchange flows"
+  default_prompt: "Use legacy-batch-file-transfer for cron/scheduler jobs, CSV/Excel import-export, SFTP/file drops, or nightly integration batches."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Legacy IE ActiveX Compat"
+  short_description: "Handle IE mode, ActiveX, and intranet compatibility"
+  default_prompt: "Use legacy-ie-activex-compat for IE mode, ActiveX, old browser support, intranet device integrations, or compatibility constraints."

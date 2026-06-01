@@ -1,0 +1,4 @@
+interface:
+  display_name: "Style Quality Review"
+  short_description: "Review UI style without changing product intent"
+  default_prompt: "Use style-quality-review to review and improve UI styling while preserving design intent."

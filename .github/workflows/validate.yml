@@ -1,0 +1,25 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  docs-and-skills:
+    name: Docs and skills
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Validate skills
+        shell: pwsh
+        run: ./scripts/validate-skills.ps1
+
+      - name: Validate translations
+        shell: pwsh
+        run: ./scripts/validate-translations.ps1

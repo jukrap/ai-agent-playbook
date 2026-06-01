@@ -1,0 +1,22 @@
+---
+name: legacy-dotnet-webforms
+description: Use when maintaining ASP.NET Web Forms, .NET Framework, code-behind pages, ViewState, postback events, Web.config, IIS, or old enterprise .NET web apps.
+---
+
+# Legacy Dotnet WebForms
+
+Respect the page lifecycle and server control contracts.
+
+## Workflow
+
+1. Trace `.aspx`, code-behind, designer file, master page, user controls, and event handlers.
+2. Check ViewState, postback order, validation controls, data binding, and session usage.
+3. Inspect Web.config, connection strings, handlers/modules, IIS assumptions, and deployment transform behavior.
+4. Preserve control IDs and server-side event names unless every reference is updated.
+5. Verify initial load, postback, validation failure, and deployed-framework compatibility.
+
+## Guardrails
+
+- Do not edit generated designer files manually unless that is the project convention.
+- Do not replace Web Forms lifecycle with SPA assumptions.
+- Do not assume modern .NET APIs are available in .NET Framework projects.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Contract Boundary"
+  short_description: "Keep frontend API work aligned with real contracts"
+  default_prompt: "Use api-contract-boundary before implementing or debugging backend API integration."

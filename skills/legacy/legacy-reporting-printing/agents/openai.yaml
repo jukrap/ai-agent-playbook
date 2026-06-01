@@ -1,0 +1,4 @@
+interface:
+  display_name: "Legacy Reporting Printing"
+  short_description: "Maintain report, export, print, label, barcode flows"
+  default_prompt: "Use legacy-reporting-printing for reporting, print preview, PDF/Excel export, barcode, label, invoice, or device printing flows."

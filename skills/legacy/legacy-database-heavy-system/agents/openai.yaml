@@ -1,0 +1,4 @@
+interface:
+  display_name: "Legacy Database Heavy System"
+  short_description: "Handle legacy systems with DB business logic"
+  default_prompt: "Use legacy-database-heavy-system before changing stored procedures, triggers, direct SQL, or DB-shaped business logic."

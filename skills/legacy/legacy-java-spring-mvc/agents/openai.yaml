@@ -1,0 +1,4 @@
+interface:
+  display_name: "Legacy Java Spring MVC"
+  short_description: "Maintain Java Spring MVC, JSP, MyBatis legacy apps"
+  default_prompt: "Use legacy-java-spring-mvc for Spring MVC, JSP, servlet, MyBatis, or WAR-style legacy maintenance."

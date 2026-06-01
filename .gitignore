@@ -1,0 +1,13 @@
+*.zip
+*.bak
+*.tmp
+tmp/
+.env
+.env.*
+*.local
+*.log
+node_modules/
+.venv/
+__pycache__/
+.DS_Store
+Thumbs.db

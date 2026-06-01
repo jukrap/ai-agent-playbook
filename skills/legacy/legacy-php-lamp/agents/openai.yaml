@@ -1,0 +1,4 @@
+interface:
+  display_name: "Legacy PHP LAMP"
+  short_description: "Maintain PHP include/session/form legacy apps"
+  default_prompt: "Use legacy-php-lamp for PHP pages with includes, sessions, direct SQL, forms, or mixed HTML/PHP scripts."

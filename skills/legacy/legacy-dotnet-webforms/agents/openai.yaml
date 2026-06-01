@@ -1,0 +1,4 @@
+interface:
+  display_name: "Legacy Dotnet WebForms"
+  short_description: "Maintain ASP.NET Web Forms and IIS legacy apps"
+  default_prompt: "Use legacy-dotnet-webforms for Web Forms, code-behind, ViewState, postback, IIS, or old .NET Framework apps."

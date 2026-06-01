@@ -1,0 +1,4 @@
+interface:
+  display_name: "Repo Onboarding"
+  short_description: "Inspect a repository before changing it"
+  default_prompt: "Use repo-onboarding to inspect this repository before planning or changing code."

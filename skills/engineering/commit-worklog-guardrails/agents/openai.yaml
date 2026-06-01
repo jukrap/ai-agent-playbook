@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit Worklog Guardrails"
+  short_description: "Prepare commits, pushes, PRs, and worklogs safely"
+  default_prompt: "Use commit-worklog-guardrails before staging, committing, pushing, opening a PR, or writing a worklog."

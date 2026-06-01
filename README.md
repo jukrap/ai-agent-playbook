@@ -1,6 +1,9 @@
 # AI Agent Playbook
 
-Korean translation: [README.ko.md](translations/ko/README.ko.md)
+## Languages
+
+- English (Canonical): this file
+- Korean (한국어): [README.ko.md](translations/ko/README.ko.md)
 
 Reusable agent skills, project templates, and working guides for software maintenance and delivery. The repository is agent-agnostic: Codex, Claude Code, and other coding agents can use the same source material, while adapters handle agent-specific installation.
 
@@ -44,7 +47,9 @@ scripts/         Validation and local sync helpers
 
 ### 1. Install reusable skills
 
-For a new computer, follow [Installation](docs/installation.md). In short, clone this repository and run:
+**Need setup instructions? Start with [Installation](docs/installation.md).** It covers first install, existing-clone updates, custom skill paths, and Codex restart notes.
+
+Default install summary:
 
 ```powershell
 .\install.ps1
@@ -113,7 +118,7 @@ When adding or changing skills, templates, examples, translations, or adapter no
 - Confirm `.github/workflows/validate.yml` passes after the repository is pushed.
 - Confirm templates do not claim a stack, package manager, or workflow unless the profile explicitly says so.
 - Keep the GitHub repository private until hygiene checks and validation pass.
-- Add a license only when the repository is meant for broader redistribution.
+- Confirm [MIT license](LICENSE) is included.
 - After publishing, update [Codex adapter](adapters/codex/README.md) with the repository URL.
 
 For a private GitHub repository under `jukrap`, see [Publishing checklist](docs/publishing-checklist.md) for first-push commands using repository-local Git config.
@@ -126,3 +131,7 @@ English files are canonical and are the only files meant for agent installation.
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 ```
+
+## Maintainer and license
+
+Maintained by [jukrap](https://github.com/jukrap). Licensed under [MIT](LICENSE).

@@ -40,7 +40,7 @@ After pushing to GitHub, confirm the `Validate` workflow passes. It runs the ski
 - Choose a repository name such as `ai-agent-playbook` or `agent-skills-playbook`.
 - For a private repository under `jukrap`, `ai-agent-playbook` maps cleanly to `https://github.com/jukrap/ai-agent-playbook`.
 - Keep the repository private until the hygiene search and validation commands pass.
-- Add a license only when the repository is meant for broader redistribution. Private reuse does not require one.
+- Keep the MIT license in `LICENSE` unless the repository intentionally changes its redistribution policy.
 - Add topics such as `ai-agents`, `skills`, `codex`, `claude-code`, `legacy-systems`, `software-engineering`.
 - After publishing, update install examples with the final repository URL.
 

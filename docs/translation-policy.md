@@ -16,6 +16,7 @@ English is the canonical source language for this repository.
 - Do not sync translations into local skill directories.
 - If English and Korean differ, the English file is the source of truth.
 - When updating an English source file, update the Korean translation in the same change when practical.
+- The root `README.md` may include native language names in the language selector.
 
 ## Naming
 

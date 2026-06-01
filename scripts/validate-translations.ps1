@@ -20,9 +20,13 @@ $sourceMdFiles = Get-ChildItem -LiteralPath $Root -Recurse -Filter '*.md' -File 
   Where-Object { $_.FullName -notlike "$translationRoot*" }
 
 foreach ($file in $sourceMdFiles) {
+  $rel = $file.FullName.Substring($Root.Length + 1)
   $content = Get-Content -LiteralPath $file.FullName -Raw
-  if ($content -match '\p{IsHangulSyllables}|\p{IsHangulJamo}|\p{IsHangulCompatibilityJamo}') {
-    $rel = $file.FullName.Substring($Root.Length + 1)
+  $contentForLanguageCheck = $content
+  if ($rel -eq 'README.md') {
+    $contentForLanguageCheck = $contentForLanguageCheck -replace 'Korean \(한국어\)', 'Korean'
+  }
+  if ($contentForLanguageCheck -match '\p{IsHangulSyllables}|\p{IsHangulJamo}|\p{IsHangulCompatibilityJamo}') {
     $errors += "English source contains Hangul: $rel"
   }
 }

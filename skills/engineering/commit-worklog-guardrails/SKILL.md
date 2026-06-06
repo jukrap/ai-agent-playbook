@@ -13,8 +13,9 @@ Protect unrelated changes, local-only files, and verification integrity.
 2. Stage only explicit files related to the task.
 3. Run project-defined verification and report only commands actually executed.
 4. Write structured Conventional Commit messages unless the repo proves another convention.
-5. Push only to the intended remote/branch.
-6. Write worklogs for milestones, blockers, large direction changes, or long debugging.
+5. Suggest a checkpoint commit when a verified logical slice, large diff, many touched files, or mixed concern set would be clearer as a separate commit.
+6. Push only to the intended remote/branch.
+7. Write detailed worklogs for milestones, blockers, large direction changes, or long debugging.
 
 ## Reference
 

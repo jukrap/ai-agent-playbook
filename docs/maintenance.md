@@ -5,7 +5,7 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 ## Source order
 
 - Edit English source files first.
-- Update Korean translations under `translations/ko` after the source is stable.
+- Update Korean translations under `translations/ko` after the English source is stable.
 - Do not create `SKILL.md` files under translations.
 - Do not edit installed local skill copies as the source of truth.
 
@@ -24,7 +24,7 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 ## Adding a project template
 
 1. Put copyable root agent instructions under `templates/agents`.
-2. Put optional local-only helper docs under `templates/local-ai`.
+2. Put project-memory templates under `templates/project-playbook`.
 3. Keep project-specific product facts out of reusable templates.
 4. Make technology-specific guidance profile-scoped, not global.
 5. Add the matching Korean translation under `translations/ko/templates/**`.
@@ -32,16 +32,16 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 
 ## Updating commit, PR, or worklog policy
 
-- Update both `templates/local-ai/commit-push-worklog.md` and `skills/engineering/commit-worklog-guardrails/references/git-worklog-checklist.md`.
+- Update both `templates/project-playbook/guides/commit-push-worklog.md` and `skills/engineering/commit-worklog-guardrails/references/git-worklog-checklist.md`.
 - Keep project-copyable guidance in the template.
 - Keep skill-triggered procedural guidance in the skill reference.
 - Update Korean translations for both files in the same change.
-- If the policy came from local Codex settings, remove machine-specific paths and keep the portable rule.
+- If the policy came from local agent settings, remove machine-specific paths and keep the portable rule.
 
 ## Updating examples
 
 - Keep examples generic and scrubbed.
-- Remove company names, customer names, internal domains, credentials, branch names, PR numbers, and dated operational status.
+- Remove personal names, company names, customer names, internal domains, credentials, branch names, PR numbers, and dated operational status.
 - Prefer examples that show decision quality, verification, and handoff clarity.
 - Do not let old examples become active rules unless the corresponding template or skill is updated.
 

@@ -24,7 +24,7 @@ Create small reusable skills that are easy for agents to discover and hard to mi
 - Do not put product scope, milestone status, branch policy, personal paths, or machine-specific setup into installable skills.
 - Do not write a long skill that duplicates project `AGENTS.md`, local docs, or an existing process skill pack.
 - Do not vendor an external skill pack wholesale when a short local rule or renamed focused skill would be clearer.
-- Do not rely on Claude Code-only hooks, slash commands, or environment variables in agent-agnostic skill source.
+- Do not rely on one agent runtime's hooks, slash commands, or environment variables in agent-agnostic skill source.
 
 ## Quick Structure
 

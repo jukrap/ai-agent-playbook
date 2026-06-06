@@ -2,6 +2,7 @@ param(
   [string]$SourceSkillsRoot = (Join-Path (Split-Path -Parent $PSScriptRoot) 'skills'),
   [string]$CodexSkillsRoot = (Join-Path $env:USERPROFILE '.codex\skills'),
   [string]$AgentsSkillsRoot = (Join-Path $env:USERPROFILE '.agents\skills'),
+  [switch]$SkipObsoleteCleanup,
   [switch]$WhatIf
 )
 
@@ -36,6 +37,46 @@ function Copy-Skill {
     Remove-Item -LiteralPath $destination -Recurse -Force
   }
   Copy-Item -LiteralPath $SourceDir -Destination $destination -Recurse
+}
+
+$obsoleteSkillNames = @(
+  'design-system-first',
+  'css-class-first',
+  'utility-class-first',
+  'inline-style-first'
+)
+
+function Remove-ObsoleteSkill {
+  param(
+    [string]$DestinationRoot,
+    [string]$SkillName
+  )
+
+  $destinationRootFull = [System.IO.Path]::GetFullPath($DestinationRoot)
+  $destination = Join-Path $DestinationRoot $SkillName
+  $destinationFull = [System.IO.Path]::GetFullPath($destination)
+
+  if (-not $destinationFull.StartsWith($destinationRootFull, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "Refusing to remove outside destination root: $destinationFull"
+  }
+
+  if (-not (Test-Path -LiteralPath $destination)) {
+    return
+  }
+
+  if ($WhatIf) {
+    Write-Host "Would remove obsolete skill $SkillName from $destination"
+    return
+  }
+
+  Remove-Item -LiteralPath $destination -Recurse -Force
+}
+
+if (-not $SkipObsoleteCleanup) {
+  foreach ($skillName in $obsoleteSkillNames) {
+    Remove-ObsoleteSkill -DestinationRoot $CodexSkillsRoot -SkillName $skillName
+    Remove-ObsoleteSkill -DestinationRoot $AgentsSkillsRoot -SkillName $skillName
+  }
 }
 
 foreach ($skillFile in $skillFiles) {

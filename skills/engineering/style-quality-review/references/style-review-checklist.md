@@ -18,12 +18,14 @@
 
 ## Style policy selection
 
-- `design-system-first`: shared components, tokens, variants, slots, and reusable UI primitives exist.
-- `css-class-first`: stylesheets, CSS modules, scoped CSS, or semantic class names are the project convention.
-- `utility-class-first`: Tailwind-style utilities or atomic class composition are the project convention.
-- `inline-style-first`: component-local inline style objects are explicitly preferred.
+- Design system first: shared components, tokens, variants, slots, and reusable UI primitives exist.
+- CSS/class first: stylesheets, CSS modules, scoped CSS, or semantic class names are the project convention.
+- Utility class first: Tailwind-style utilities or atomic class composition are the project convention.
+- Inline style first: component-local inline style objects are explicitly preferred.
 
 When no explicit policy exists, keep the local pattern already used by the component and avoid introducing a new styling system.
+
+Use `ui-style-policy` when the style policy itself needs to be selected, documented, or reconciled.
 
 ## Verification
 

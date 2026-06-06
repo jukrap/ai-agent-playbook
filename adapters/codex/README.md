@@ -26,13 +26,13 @@ The script flattens `skills/<category>/<skill>` into the local skill directory b
 
 ## GitHub install
 
-After this repository is published, a skill manager may be able to install it directly from GitHub:
+After this repository is published, a skill manager may be able to install it directly from the final repository URL:
 
 ```text
-https://github.com/jukrap/ai-agent-playbook
+<repo-url>
 ```
 
-Private repositories may require GitHub authentication in the target tool before installation works.
+Private repositories may require Git authentication in the target tool before installation works.
 
 ## Source rule
 
@@ -40,6 +40,6 @@ Do not edit files under the local installed skill directory as the source of tru
 
 ## Portable instructions
 
-Do not rely on Codex account-level custom instructions being present on another computer. Put reusable working agreements in project `AGENTS.md` templates or `templates/local-ai` docs, and keep machine-specific paths only in local setup notes.
+Do not rely on Codex account-level custom instructions being present on another computer. Put reusable working agreements in project `AGENTS.md` templates or `templates/project-playbook` docs, and keep machine-specific paths only in local setup notes.
 
-For root-level project policy, prefer `templates/agents/global/AGENTS.md`, `templates/agents/global/SKILLS.md`, and `templates/agents/global/GIT.md`. Treat Claude Code-specific hook or slash-command instructions from external skills as ideas to translate, not Codex defaults.
+For root-level project policy, prefer `templates/agents/global/AGENTS.md`, `templates/agents/global/SKILLS.md`, and `templates/agents/global/GIT.md`. Treat hooks, slash commands, or runtime-specific instructions from external skills as ideas to translate, not Codex defaults.

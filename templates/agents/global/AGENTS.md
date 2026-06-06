@@ -1,7 +1,7 @@
 # AGENTS.md
 # Reusable AI Agent Working Guide
 
-This file is a working agreement, not a product specification. Keep project-specific product, stack, and milestone details in separate files such as `PROJECT_SPEC.md`, `PLANS.md`, `FSD.md`, or `docs/plans/**`.
+This file is a working agreement, not a product specification. Keep project-specific product, stack, and milestone details in project docs such as `PROJECT_SPEC.md`, `PLANS.md`, architecture docs, or `ai-playbook/`.
 
 ## Core rules
 
@@ -12,7 +12,7 @@ This file is a working agreement, not a product specification. Keep project-spec
 - Never revert unrelated user changes.
 - Prefer `rg` for search.
 - Verify completion claims with fresh command output.
-- Reply in Korean by default when the user speaks Korean.
+- Reply in the user's language by default.
 
 ## Start-of-work checks
 
@@ -20,20 +20,18 @@ This file is a working agreement, not a product specification. Keep project-spec
 - Check dirty worktree state and leave unrelated changes alone.
 - Confirm package manager, lockfile, runtime version, and scripts.
 - Look for lower-level `AGENTS.md` files or package-specific instructions.
-- If project docs exist, read the relevant parts in this order: README, `PROJECT_SPEC.md`, `PLANS.md`, `FSD.md`, `docs/plans/README.md`.
-- If docs and code disagree, trust actual code and the latest user instruction first.
+- If `ai-playbook/` exists, read `START_HERE.md`, `CURRENT.md`, and relevant maps/runbooks before planning.
+- If project docs and code disagree, trust actual code and the latest user instruction first.
 
 ## Document roles
 
 - `AGENTS.md`: agent working rules, verification, git, and collaboration policy.
 - `SKILLS.md`: project-level skill selection policy.
 - `GIT.md`: portable commit and PR policy.
-- `PROJECT_SPEC.md`: product goals, feature/screen scope, data/API policy.
-- `PLANS.md`: milestones, completion criteria, verification commands.
-- `FSD.md`: FSD or architecture boundary rules.
-- `docs/plans/**`: detailed conventions, prompts, handoffs, and planning notes.
-- `docs/worklog/**`: milestone completion, blockers, and major direction changes.
-- `.local-ai/structural-review.md` or `docs/plans/STRUCTURAL_REVIEW.md`: evidence-backed structural review guidance when the project uses it.
+- `PROJECT_SPEC.md`: product goals, feature/screen scope, data/API policy when the project uses it.
+- `PLANS.md`: milestones, completion criteria, verification commands when the project uses it.
+- `FSD.md`: FSD or architecture boundary rules only when relevant.
+- `ai-playbook/`: current project memory, maps, runbooks, active plans, decisions, worklogs, and archived notes.
 - `design-docs/**`, `_reference/**`: secondary references used only when relevant.
 - `README.md`: public setup and run guide for new readers.
 
@@ -42,14 +40,15 @@ This file is a working agreement, not a product specification. Keep project-spec
 When instructions conflict, prefer this order:
 
 1. Latest user instruction.
-2. Actual code and configuration.
-3. Project-specific specification and planning docs.
-4. Nearest lower-level `AGENTS.md`.
-5. Global working rules.
-6. Old references and external material.
+2. Actual code, configuration, and command output.
+3. Root and nearest agent instruction files.
+4. Current project memory in `ai-playbook/CURRENT.md`, maps, runbooks, and decisions.
+5. Project-specific specification and planning docs.
+6. Worklogs, old references, examples, and archived material.
 
 ## Local-only docs
 
+- Decide whether `ai-playbook/` is committed or local-only.
 - If a project marks AI instructions, worklogs, design sources, or internal planning notes as local-only, do not commit them.
 - Check staged files before committing.
 - Do not bypass hooks that block local-only files.
@@ -58,7 +57,6 @@ When instructions conflict, prefer this order:
 ## Custom skills
 
 - Treat globally installed skills as reusable helpers, not mandatory behavior.
-- For Codex, common local skill roots include `%USERPROFILE%\.codex\skills` and `%USERPROFILE%\.agents\skills`.
 - If this file or another project doc names a skill, verify that a matching `SKILL.md` exists on disk before relying on it.
 - A missing session skill listing is not enough to prove the skill is unavailable; check the on-disk path when the project explicitly names it.
 - Use only the minimum relevant skill set for the task, and briefly state why the selected skills apply.
@@ -82,7 +80,7 @@ pnpm test:run
 pnpm build
 ```
 
-If the project uses another package manager or command set, use only commands proven by `package.json`, build files, or README.
+If the project uses another package manager or command set, use only commands proven by config, scripts, build files, or README.
 
 ## Git
 
@@ -98,7 +96,7 @@ If the project uses another package manager or command set, use only commands pr
 - Before pushing, check branch, remote, upstream, local-only staged files, and latest verification output.
 - Never revert user-made or task-unrelated changes.
 
-For portable Git policy, copy or read `templates/agents/global/GIT.md`. For deeper commit, PR, and worklog policy, copy or read `templates/local-ai/commit-push-worklog.md`.
+For portable Git policy, copy or read `templates/agents/global/GIT.md`. For deeper commit, PR, and worklog policy, copy or read `templates/project-playbook/guides/commit-push-worklog.md`.
 
 ## Skill usage
 
@@ -107,3 +105,5 @@ For project-level skill selection rules, copy or read `templates/agents/global/S
 ## Worklogs
 
 If the project uses worklogs, record milestone completion, blockers, major direction changes, and long debugging results. A useful worklog explains the problem and decision path, not just changed file names.
+
+When the project uses `ai-playbook/`, store detailed logs under `ai-playbook/worklogs/YYYY-MM/`, maintain monthly summaries under `ai-playbook/worklogs/summaries/`, and promote current facts into `CURRENT.md`, maps, runbooks, or decisions.

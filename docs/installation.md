@@ -1,10 +1,12 @@
 # Installation
 
-This repository is easiest to use by cloning it once, then running the root installer. Several install styles are supported because different machines may have different GitHub authentication and PowerShell policies.
+This repository is easiest to use by cloning it once, then running the root installer. Several install styles are supported because different machines may have different Git authentication and PowerShell policies.
+
+Replace `<repo-url>` with the final Git repository URL.
 
 ## Option 1: Fast install with GitHub CLI
 
-Use this when `gh` is installed and authenticated. It is the shortest repeatable install/update flow:
+Use this when `gh` is installed and authenticated.
 
 ```powershell
 $target = Join-Path $env:USERPROFILE 'Documents\ai-agent-playbook'
@@ -17,7 +19,7 @@ if (Test-Path $target) {
     pwsh -NoProfile -ExecutionPolicy Bypass -File (Join-Path $target 'install.ps1')
   }
 } else {
-  gh repo clone jukrap/ai-agent-playbook $target
+  gh repo clone <owner>/<repo> $target
   pwsh -NoProfile -ExecutionPolicy Bypass -File (Join-Path $target 'install.ps1')
 }
 ```
@@ -28,19 +30,19 @@ Restart Codex after the installer or updater finishes.
 
 Use this when GitHub CLI is not available, or when you prefer normal `git clone`.
 
-### 1. Authenticate GitHub
+### 1. Authenticate Git
 
 For a private repository, sign in with one of these before cloning:
 
 - GitHub CLI: `gh auth login`
 - Git Credential Manager through the browser prompt during `git clone`
-- SSH key configured for GitHub
+- SSH key configured for the host
 
 ### 2. Clone the repository
 
 ```powershell
 $target = Join-Path $env:USERPROFILE 'Documents\ai-agent-playbook'
-git clone https://github.com/jukrap/ai-agent-playbook.git $target
+git clone <repo-url> $target
 Set-Location $target
 ```
 
@@ -99,19 +101,20 @@ Common starting point:
 ```powershell
 $projectRoot = Join-Path $env:USERPROFILE 'Documents\example-project'
 Copy-Item .\templates\agents\global\AGENTS.md (Join-Path $projectRoot 'AGENTS.md')
+Copy-Item .\templates\project-playbook (Join-Path $projectRoot 'ai-playbook') -Recurse
 ```
 
-Optionally copy `templates/agents/global/SKILLS.md` or `templates/agents/global/GIT.md` when the project needs portable skill or Git policy. Then merge the closest profile from `templates/agents/profiles/**` and any needed local docs from `templates/local-ai/**`.
+Optionally copy `templates/agents/global/SKILLS.md` or `templates/agents/global/GIT.md` when the project needs portable skill or Git policy. Then merge the closest profile from `templates/agents/profiles/**` and any needed guides from `templates/project-playbook/guides/**`.
 
 ## Codex skill installer note
 
-Codex's skill installer can install individual skills from a GitHub repository path when authentication is available. For this playbook, cloning and running `install.ps1` once, then `update.ps1` later, is still the recommended method because:
+Codex's skill installer can install individual skills from a Git repository path when authentication is available. For this playbook, cloning and running `install.ps1` once, then `update.ps1` later, is still the recommended method because:
 
 - the repository contains many skills,
 - it also contains copyable templates and docs,
 - the installer validates first and installs both `.codex` and `.agents` layouts,
 - updates are a simple `.\update.ps1`.
 
-## Superpowers note
+## External process skills
 
-This repository does not install Superpowers. Keep Superpowers installed separately, then use these skills alongside it.
+This repository does not install external process skill packs. Keep them installed separately, then use these skills alongside them when useful.

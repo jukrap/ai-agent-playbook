@@ -7,7 +7,8 @@ This repository contains reusable AI agent skills and project templates. Keep co
 - Before adding, moving, or renaming content, read `docs/maintenance.md`.
 - Keep `skills/*/*/SKILL.md` concise and trigger-focused.
 - Put longer reusable details in `references/`.
-- Keep project-copyable docs under `templates/`.
+- Keep project-copyable root policies under `templates/agents`.
+- Keep copyable project-memory docs under `templates/project-playbook`.
 - Do not put personal absolute paths, company names, credentials, internal URLs, branch names, or PR numbers in public docs.
 - Update Korean translations in the same change as English source edits.
 - Validate skills and translations after editing.

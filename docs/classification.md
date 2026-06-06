@@ -1,38 +1,40 @@
 # Classification
 
-This repository separates installable skills from project templates.
+This repository separates installable skills, copyable templates, examples, docs, and adapters.
 
-## Why not keep everything under Codex
+## Why not keep everything under one agent
 
-The content is not Codex-specific. Codex is one installation target. The source should stay agent-agnostic, with agent-specific setup in `adapters/`.
+The content is not agent-specific. Codex is one installation target. The source should stay agent-agnostic, with agent-specific setup in `adapters/`.
 
 ## Skill categories
 
 - `skills/engineering`: repeatable engineering workflows for most repositories.
-- `skills/legacy`: legacy and SI maintenance workflows where runtime coupling and compatibility dominate.
-
-This mirrors the useful part of skill-first repositories: broad categories first, small composable skills second. We do not put `AGENTS.md` templates inside `skills` because those are copied into projects, not invoked as one-off skills.
+- `skills/legacy`: maintenance workflows where runtime coupling and compatibility dominate.
 
 Add a new category only when the first real skill in that category exists. When a new category or skill changes this map, update `README.md`, this file, Korean translations, and installed skill copies through `docs/maintenance.md`.
 
 ## Template categories
 
 - `templates/agents`: small root-level standing instruction files and stack-specific `AGENTS.md` profiles.
-- `templates/local-ai`: optional project-local docs for planning, worklogs, API boundaries, style rules, structural review, and FSD guidance.
+- `templates/project-playbook`: copyable project-memory template that becomes `ai-playbook/` in target repositories.
+- `templates/local-ai`: compatibility pointer for older projects; new work should use `templates/project-playbook`.
 
 Root-level files such as `templates/agents/global/SKILLS.md` and `templates/agents/global/GIT.md` stay in `templates/agents` because they are copied into projects as standing instructions, not invoked as skills.
 
 ## Process skill compatibility
 
-This repository does not replace process skill packs such as Superpowers. Use `docs/superpowers-integration.md` to decide how process skills and playbook skills should be combined.
+This repository does not replace external process skill packs. Use `docs/superpowers-integration.md` to decide how process skills and playbook skills should be combined.
+
+## Project-memory map
+
+- `project-bootstrap`: sets up root policies and an `ai-playbook/` layout after inspecting the repository.
+- `repo-onboarding`: reads repo state and existing `ai-playbook/` context before planning or editing.
+- `project-doc-system`: organizes `ai-playbook/`, maps, runbooks, decisions, plans, worklogs, and archived notes.
 
 ## Style policy map
 
-- `style-quality-review`: general UI quality review while preserving product intent.
-- `design-system-first`: shared components, tokens, variants, and design-system primitives own styling first.
-- `css-class-first`: stylesheets, CSS modules, scoped CSS, or semantic classes are the project convention.
-- `utility-class-first`: Tailwind-style utilities or atomic class composition are the project convention.
-- `inline-style-first`: component-local inline style objects are explicitly preferred.
+- `ui-style-policy`: selects or documents the repository styling method across design system, CSS/classes, utility classes, or inline styles.
+- `style-quality-review`: reviews visible UI quality while preserving product intent.
 
 ## Skill authoring map
 

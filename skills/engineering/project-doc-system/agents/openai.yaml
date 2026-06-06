@@ -1,4 +1,4 @@
 interface:
   display_name: "Project Doc System"
   short_description: "Set up reusable project AI docs"
-  default_prompt: "Use project-doc-system to organize AGENTS, project specs, plans, and worklogs."
+  default_prompt: "Use project-doc-system to organize AGENTS, ai-playbook project memory, plans, maps, runbooks, and worklogs."

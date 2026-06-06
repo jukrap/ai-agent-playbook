@@ -18,6 +18,6 @@
 1. Inspect the project's real config, README, build files, and existing docs first.
 2. Start with `global/AGENTS.md`; add `global/SKILLS.md` and `global/GIT.md` only when those standing rules help.
 3. Pick the closest stack profile and remove rules that do not apply.
-4. If the project needs local-only docs such as `PROJECT_SPEC.md`, `PLANS.md`, `FSD.md`, `docs/plans/**`, or `docs/worklog/**`, adapt `templates/local-ai/docs-system.md`.
-5. If the project needs detailed commit, push, PR, and worklog guidance, adapt `templates/local-ai/commit-push-worklog.md` in addition to `global/GIT.md`.
+4. If the project needs durable agent memory, copy `templates/project-playbook/` as `ai-playbook/`.
+5. If the project needs detailed commit, push, PR, and worklog guidance, adapt `templates/project-playbook/guides/commit-push-worklog.md` in addition to `global/GIT.md`.
 6. Keep project-specific product rules in separate docs. Use `AGENTS.md` for how the agent should work.

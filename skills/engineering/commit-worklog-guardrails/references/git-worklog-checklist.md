@@ -26,6 +26,18 @@ git diff --cached --name-only
 git diff --cached --stat
 ```
 
+## Commit checkpoints
+
+Ask whether to commit, or commit automatically only when the project explicitly opts in, after:
+
+- a verified logical slice is complete
+- many files are touched
+- the diff is large enough to obscure review intent
+- mixed concerns appear in one session, such as skills plus docs plus scripts
+- a risky refactor or migration step reaches a clean rollback point
+
+Prefer multiple commits when changes are logically separate. Do not split so aggressively that each commit loses useful context.
+
 ## Verification
 
 - Use repository-defined scripts only.
@@ -145,6 +157,8 @@ Writing principles:
 - Explain the reason and result so another person can understand the work without separate materials.
 - Prefer actual criteria and judgment over naming a person or external reference.
 - Prioritize what was wrong and how it was organized over what was referenced.
+- Use `ai-playbook/worklogs/YYYY-MM/` for detailed logs and `ai-playbook/worklogs/summaries/YYYY-MM.md` for monthly summaries when the project uses the playbook layout.
+- Promote durable facts from worklogs into `ai-playbook/CURRENT.md`, maps, runbooks, or decisions.
 
 Commit messages may preserve concise context for future readers. Use worklogs for deeper reasoning, blockers, decision history, confirmed causes, verification detail, and remaining risks.
 

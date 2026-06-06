@@ -101,7 +101,7 @@ $projectRoot = Join-Path $env:USERPROFILE 'Documents\example-project'
 Copy-Item .\templates\agents\global\AGENTS.md (Join-Path $projectRoot 'AGENTS.md')
 ```
 
-Then merge the closest profile from `templates/agents/profiles/**` and any needed local docs from `templates/local-ai/**`.
+Optionally copy `templates/agents/global/SKILLS.md` or `templates/agents/global/GIT.md` when the project needs portable skill or Git policy. Then merge the closest profile from `templates/agents/profiles/**` and any needed local docs from `templates/local-ai/**`.
 
 ## Codex skill installer note
 

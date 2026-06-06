@@ -6,8 +6,9 @@ Use them when starting a new repository, cleaning up project AI docs, or making 
 
 ## What is here
 
-- `agents/`: `AGENTS.md` examples for project roots and stack profiles.
-- `local-ai/`: optional project-local helper docs for onboarding, docs structure, commits, API boundaries, style quality, pragmatic FSD, and SI/legacy mode.
+- `agents/`: root instruction templates and stack profiles.
+- `agents/global/`: small root-level templates such as `AGENTS.md`, `SKILLS.md`, and `GIT.md`.
+- `local-ai/`: optional project-local helper docs for onboarding, docs structure, commits, API boundaries, style quality, structural review, pragmatic FSD, and SI/legacy mode.
 
 ## How agents discover them
 
@@ -22,11 +23,12 @@ For reusable cross-project behavior, install skills from `skills/`. For project-
 
 ## Recommended starting points
 
-- Unknown or mixed project: copy `agents/global/AGENTS.md`.
+- Unknown or mixed project: copy `agents/global/AGENTS.md`, then add `agents/global/SKILLS.md` or `agents/global/GIT.md` only if the project needs those standing rules.
 - React/Vite/FSD project: start with `agents/global/AGENTS.md` plus `agents/profiles/react-vite-fsd/AGENTS.md`.
 - Expo/React Native project: start with `agents/global/AGENTS.md` plus `agents/profiles/react-native-expo/AGENTS.md`.
 - Legacy project: start with `agents/global/AGENTS.md` plus the closest `agents/profiles/legacy-*` file.
-- Any project with careful git or local-only docs: adapt `local-ai/commit-push-worklog.md` and `local-ai/docs-system.md`.
+- Any project with careful git or local-only docs: adapt `agents/global/GIT.md`, `local-ai/commit-push-worklog.md`, and `local-ai/docs-system.md`.
+- Any project that needs evidence-backed architecture cleanup: adapt `local-ai/structural-review.md`.
 
 ## Application rule
 

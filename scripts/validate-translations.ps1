@@ -17,7 +17,10 @@ foreach ($file in $translatedSkillFiles) {
 }
 
 $sourceMdFiles = Get-ChildItem -LiteralPath $Root -Recurse -Filter '*.md' -File |
-  Where-Object { $_.FullName -notlike "$translationRoot*" }
+  Where-Object {
+    $_.FullName -notlike "$translationRoot*" -and
+    $_.FullName -notlike (Join-Path $Root '_reference\*')
+  }
 
 foreach ($file in $sourceMdFiles) {
   $rel = $file.FullName.Substring($Root.Length + 1)

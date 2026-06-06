@@ -181,6 +181,7 @@ Output contract:
 
 - Follow the repository PR template when it exists.
 - If there is no template, use the default structure below.
+- Write PR prose in the repository's language convention. If no convention is proven, match the user's or team's working language.
 - Remove placeholders.
 - Use `None` only where there is genuinely nothing to report.
 - Do not paste raw diffs or commit logs.

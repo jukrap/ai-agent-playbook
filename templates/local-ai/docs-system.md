@@ -13,6 +13,7 @@ Use this guide when organizing project-specific AI docs.
 - `docs/plans/CONVENTIONS.md`: coding conventions.
 - `docs/plans/AGENT_SKILL_USAGE.md`: when to use which skill.
 - `docs/plans/TEMPLATES.md`: repeatable slice or task templates.
+- `.local-ai/structural-review.md` or `docs/plans/STRUCTURAL_REVIEW.md`: evidence rules for repo-wide structure and cleanup reviews.
 - `docs/worklog/**`: milestone completion, blockers, and major direction changes.
 - `design-docs/**`, `_reference/**`: secondary references.
 

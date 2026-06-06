@@ -17,8 +17,10 @@ Add a new category only when the first real skill in that category exists. When 
 
 ## Template categories
 
-- `templates/agents`: root `AGENTS.md` examples by project profile.
-- `templates/local-ai`: optional project-local docs for planning, worklogs, API boundaries, style rules, and FSD guidance.
+- `templates/agents`: small root-level standing instruction files and stack-specific `AGENTS.md` profiles.
+- `templates/local-ai`: optional project-local docs for planning, worklogs, API boundaries, style rules, structural review, and FSD guidance.
+
+Root-level files such as `templates/agents/global/SKILLS.md` and `templates/agents/global/GIT.md` stay in `templates/agents` because they are copied into projects as standing instructions, not invoked as skills.
 
 ## Process skill compatibility
 
@@ -31,6 +33,10 @@ This repository does not replace process skill packs such as Superpowers. Use `d
 - `css-class-first`: stylesheets, CSS modules, scoped CSS, or semantic classes are the project convention.
 - `utility-class-first`: Tailwind-style utilities or atomic class composition are the project convention.
 - `inline-style-first`: component-local inline style objects are explicitly preferred.
+
+## Skill authoring map
+
+- `agent-skill-authoring`: reusable skill structure, trigger descriptions, references, and skill/template boundaries.
 
 ## Legacy expansion map
 

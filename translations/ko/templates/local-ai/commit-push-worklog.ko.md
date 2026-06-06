@@ -1,8 +1,8 @@
-# Commit, Push, PR, Worklog Guardrails
+# 커밋, 푸시, PR, 작업 기록 가드레일
 
-Agent가 commit, push, pull request, worklog를 다룰 때 사용합니다. 목표는 scope를 명확히 하고, local-only files를 보호하며, 검증되지 않은 완료 주장을 막는 것입니다.
+에이전트가 커밋, 푸시, PR, 작업 기록을 다룰 때 사용합니다. 목표는 범위를 명확히 하고, local-only 파일을 보호하며, 검증되지 않은 완료 주장을 막는 것입니다.
 
-## 작업 또는 staging 전
+## 작업 또는 스테이징 전
 
 ```bash
 git status --short --branch
@@ -12,17 +12,17 @@ git branch --show-current
 
 확인할 것:
 
-- 현재 branch가 작업에 맞는지.
-- upstream과 remotes가 무엇인지.
-- push 가능한 remote와 보호해야 할 remote가 무엇인지.
-- dirty files에 사용자 변경과 agent 변경이 섞였는지.
-- local-only docs나 generated output이 이미 staged 되었는지.
+- 현재 브랜치가 작업에 맞는지.
+- upstream과 remote가 무엇인지.
+- 푸시 가능한 remote와 보호해야 할 remote가 무엇인지.
+- dirty file에 사용자 변경과 에이전트 변경이 섞였는지.
+- local-only 문서나 생성 산출물이 이미 스테이징되었는지.
 
 ## Staging
 
 - `git add .`, `git add -A`를 기본값으로 쓰지 않습니다.
 - 작업과 관련된 파일만 stage합니다.
-- staging 후 반드시 확인합니다.
+- 스테이징 후 반드시 확인합니다.
 
 ```bash
 git diff --cached --name-only
@@ -36,8 +36,8 @@ git diff --cached --stat
 - `_reference/**`
 - `.local-ai/**`
 - 내부용 root-level `*.md`
-- temporary prompts, handoffs, worklogs, analysis logs
-- build output, coverage, visualizer output
+- 임시 프롬프트, 인수인계, 작업 기록, 분석 로그
+- 빌드 산출물, coverage, visualizer output
 
 프로젝트가 `README.md`를 공개 문서로 취급하면 예외가 될 수 있습니다.
 
@@ -58,22 +58,22 @@ pnpm build
 - 실패 원인을 읽고 관련 파일만 고칩니다.
 - 같은 검증을 다시 실행합니다.
 - 실패를 숨기지 않습니다.
-- 실행하지 않은 검증을 commit message, PR, final reply에 쓰지 않습니다.
+- 실행하지 않은 검증을 커밋 메시지, PR, 최종 답변에 쓰지 않습니다.
 
-## Commit messages
+## 커밋 메시지
 
 목표:
 
-- 요청된 commit 전략에 따라 현재 diff 또는 staged diff를 기준으로 최종 commit message를 1개 또는 여러 개 작성합니다.
+- 요청된 커밋 전략에 따라 현재 diff 또는 staged diff를 기준으로 최종 커밋 메시지를 1개 또는 여러 개 작성합니다.
 - 사람이 빠르게 읽고 변경 의도와 핵심 결과를 파악할 수 있게 합니다.
-- 변경이 논리적으로 분리되어 있고 사용자가 commit 또는 commit 준비를 요청했다면 별도 commit을 선호합니다.
-- 사용자가 single commit을 요청했거나 repository convention이 task당 1 commit을 선호한다면 가장 중심적인 논리 변경을 title에 쓰고 부수 변경은 body에서 짧게 설명합니다.
+- 변경이 논리적으로 분리되어 있고 사용자가 커밋 또는 커밋 준비를 요청했다면 별도 커밋을 선호합니다.
+- 사용자가 단일 커밋을 요청했거나 저장소 규칙이 작업당 커밋 1개를 선호한다면 가장 중심적인 논리 변경을 제목에 쓰고 부수 변경은 본문에서 짧게 설명합니다.
 
 출력 계약:
 
-- 요청된 최종 commit message 또는 commit plan만 출력합니다.
+- 요청된 최종 커밋 메시지 또는 커밋 계획만 출력합니다.
 - 설명, 후보 목록, 이유 설명, 따옴표, code fence를 붙이지 않습니다.
-- 필요한 수준으로만 구조를 씁니다: title, title plus body, title plus body plus verification, title plus body plus verification plus footer.
+- 필요한 수준으로만 구조를 씁니다: 제목, 제목과 본문, 제목과 본문과 검증, 제목과 본문과 검증과 footer.
 
 기본 형식:
 
@@ -81,58 +81,58 @@ pnpm build
 type(scope): structured summary
 ```
 
-repository convention을 먼저 따릅니다. 확인된 convention이 없으면 subject와 body는 사용자 또는 팀의 작업 언어에 맞춥니다. Conventional Commit type과 scope는 repository가 다른 형식을 증명하지 않는 한 영어로 유지합니다.
+저장소 규칙을 먼저 따릅니다. 확인된 규칙이 없으면 subject와 body는 사용자 또는 팀의 작업 언어에 맞춥니다. Conventional Commit type과 scope는 저장소가 다른 형식을 쓰는 것이 확인되지 않는 한 영어로 유지합니다.
 
 허용 type:
 
-- `feat`: user-facing feature
-- `fix`: bug fix
+- `feat`: 사용자 기능
+- `fix`: 버그 수정
 - `design`: UI/UX, 화면 구조, 시각적 변경
-- `style`: formatting, 정렬, 주석처럼 runtime 영향이 없는 변경
-- `refactor`: 동작 유지 refactor
+- `style`: 포맷, 정렬, 주석처럼 런타임 영향이 없는 변경
+- `refactor`: 동작 유지 리팩터링
 - `perf`: 성능 개선
-- `test`: test 추가/수정
+- `test`: 테스트 추가/수정
 - `docs`: 문서 변경
-- `build`: build/package 설정
+- `build`: 빌드/package 설정
 - `ci`: CI/CD 설정
-- `chore`: 기타 maintenance
+- `chore`: 기타 유지보수
 
-Title 규칙:
+제목 규칙:
 
-- title은 한 줄로 간결하게 작성합니다.
-- title 끝에 마침표를 붙이지 않습니다.
+- 제목은 한 줄로 간결하게 작성합니다.
+- 제목 끝에 마침표를 붙이지 않습니다.
 - 실제 변경의 핵심 결과가 바로 드러나게 씁니다.
-- subject는 사용자, 팀, repository의 주 사용 언어로 씁니다.
-- branch명, chat title, 작업 제목을 그대로 복사하지 않습니다.
-- `fix: update`, `chore: changes`, `refactor: cleanup`처럼 막연한 title을 피합니다.
+- subject는 사용자, 팀, 저장소의 주 사용 언어로 씁니다.
+- 브랜치명, 채팅 제목, 작업 제목을 그대로 복사하지 않습니다.
+- `fix: update`, `chore: changes`, `refactor: cleanup`처럼 막연한 제목을 피합니다.
 - `작업`, `처리`, `수정`, `변경`, `개선` 같은 단어를 단독 핵심어처럼 쓰지 않습니다.
 - UI, API, PR, HMR, MSW, SDK, JDK, WebView 같은 약어는 필요할 때만 대문자로 유지합니다.
 
-Body 규칙:
+본문 규칙:
 
-- 변경이 단순하면 body를 생략합니다.
-- 변경에 나중에 참고할 만한 context가 있으면 `- ` bullet 2~6개를 씁니다. 범위가 좁은 변경은 bullet 1개도 괜찮습니다.
+- 변경이 단순하면 본문을 생략합니다.
+- 변경에 나중에 참고할 만한 context가 있으면 `- ` 불릿 2~6개를 씁니다. 범위가 좁은 변경은 불릿 1개도 괜찮습니다.
 - diff에서 확인되는 무엇을 바꿨는지, 왜 중요한지, 영향 범위, 주의점을 보존합니다.
-- bullet은 결과 중심으로 씁니다.
+- 불릿은 결과 중심으로 씁니다.
 - 구현 과정을 장황하게 설명하지 않습니다.
 - diff에 없는 내용을 추측해서 쓰지 않습니다.
 
-Verification 규칙:
+검증 규칙:
 
-- 실제로 확인한 경우에만 `검증` 또는 `Verification` section을 추가합니다.
-- command나 manual check 결과를 짧게 씁니다.
+- 실제로 확인한 경우에만 `검증` 또는 `Verification` 섹션을 추가합니다.
+- 명령이나 수동 확인 결과를 짧게 씁니다.
 - 실행하지 않은 browser, device, test, lint, build, deployment 검증을 쓴 척하지 않습니다.
 
-Issue 규칙:
+이슈 규칙:
 
-- issue 번호를 확실히 아는 경우에만 reference를 넣습니다.
-- repository convention이 다르지 않으면 footer의 `Refs #123`, `Closes #123` 형식을 우선합니다.
-- 같은 issue를 title과 footer에 중복해서 쓰지 않습니다.
+- 이슈 번호를 확실히 아는 경우에만 참조를 넣습니다.
+- 저장소 규칙이 다르지 않으면 footer의 `Refs #123`, `Closes #123` 형식을 우선합니다.
+- 같은 이슈를 제목과 footer에 중복해서 쓰지 않습니다.
 
 금지:
 
-- agent, model, generated-by, co-authored-by, signed-off-by, email signature를 임의로 넣지 않습니다.
-- 검증하지 않은 test나 diff 밖의 변경을 쓰지 않습니다.
+- 에이전트, 모델, generated-by, co-authored-by, signed-off-by, 이메일 서명을 임의로 넣지 않습니다.
+- 검증하지 않은 테스트나 diff 밖의 변경을 쓰지 않습니다.
 
 예시:
 
@@ -155,9 +155,9 @@ refactor(table): data-table 책임 분리 및 인터랙션 훅 추출
 - pnpm test:run
 ```
 
-## Push
+## 푸시
 
-push 전:
+푸시 전:
 
 ```bash
 git status --short --branch
@@ -165,109 +165,110 @@ git log --oneline --decorate -5
 git remote -v
 ```
 
-- 현재 branch를 확인합니다.
+- 현재 브랜치를 확인합니다.
 - fork/origin/upstream 관계를 확인합니다.
-- `upstream`이 source repository라면 push 의도가 맞는지 확인합니다.
-- protected, deployment, shared branch는 명시적 사용자 지시 없이 push하지 않습니다.
+- `upstream`이 원본 저장소라면 푸시 의도가 맞는지 확인합니다.
+- 보호 브랜치, 배포 브랜치, 공유 브랜치는 명시적 사용자 지시 없이 푸시하지 않습니다.
 
-## PR body
+## PR 본문
 
 목표:
 
-- 실제 diff를 기준으로 PR body를 작성합니다.
-- reviewer가 목적, 범위, risk, verification, rollback을 빠르게 파악할 수 있게 합니다.
+- 실제 diff를 기준으로 PR 본문을 작성합니다.
+- 리뷰어가 목적, 범위, 리스크, 검증, 롤백을 빠르게 파악할 수 있게 합니다.
 
 출력 계약:
 
-- 저장소에 PR template이 있으면 그 구조를 따릅니다.
-- template이 없으면 아래 기본 구조를 사용합니다.
+- 저장소에 PR 템플릿이 있으면 그 구조를 따릅니다.
+- 템플릿이 없으면 아래 기본 구조를 사용합니다.
+- PR 문장은 저장소의 언어 규칙을 따릅니다. 확인된 규칙이 없으면 사용자 또는 팀의 작업 언어에 맞춥니다.
 - placeholder를 남기지 않습니다.
 - 해당 사항이 없으면 `None` 또는 `해당 없음`으로 짧게 정리합니다.
 - raw diff나 commit log를 붙이지 않습니다.
 
-Summary 규칙:
+요약 규칙:
 
 - 무엇이 달라졌는지를 먼저 쓰고, 왜 바꿨는지가 드러나게 합니다.
-- 1~3개 bullet 또는 1~3문장으로 씁니다.
-- review context를 바꾸는 배경이 아니라면 장황한 설명은 피합니다.
+- 1~3개 불릿 또는 1~3문장으로 씁니다.
+- 리뷰 맥락을 바꾸는 배경이 아니라면 장황한 설명은 피합니다.
 
-Change 규칙:
+변경 사항 규칙:
 
-- UI, state, API, type, configuration, documentation처럼 review concern 기준으로 묶습니다.
-- reviewer가 특히 확인해야 할 부분은 `Changes` 또는 `Risk`에 드러냅니다.
-- 사소한 구현 detail을 나열하지 않습니다.
+- UI, 상태, API, 타입, 설정, 문서처럼 리뷰 관점 기준으로 묶습니다.
+- 리뷰어가 특히 확인해야 할 부분은 `변경 사항` 또는 `리스크`에 드러냅니다.
+- 사소한 구현 세부사항을 나열하지 않습니다.
 
-Risk 규칙:
+리스크 규칙:
 
-- `Low`, `Medium`, `High` 또는 프로젝트 언어 convention에 맞춘 `낮음`, `중간`, `높음` 중 하나를 씁니다.
-- 실제 영향 기준으로 reason 한 줄을 붙입니다.
-- auth, routing, persistence, shared component, build config, data format 변경은 보수적으로 판단합니다.
+- `Low`, `Medium`, `High` 또는 프로젝트 언어 규칙에 맞춘 `낮음`, `중간`, `높음` 중 하나를 씁니다.
+- 실제 영향 기준으로 이유 한 줄을 붙입니다.
+- 인증, 라우팅, 영속 저장, 공용 컴포넌트, 빌드 설정, 데이터 형식 변경은 보수적으로 판단합니다.
 - 근거 없는 "문제 없음", "완벽히 해결" 같은 표현을 쓰지 않습니다.
 
-Verification 규칙:
+검증 규칙:
 
 - 실제 수행한 항목만 씁니다.
-- staging, browser, device, lint, type-check, scenario validation은 실제로 했을 때만 check합니다.
-- command name과 manual scenario name을 구체적으로 씁니다.
+- 스테이징, browser, device, lint, type-check, 시나리오 검증은 실제로 했을 때만 체크합니다.
+- 명령 이름과 수동 확인 시나리오 이름을 구체적으로 씁니다.
 
-Rollback 규칙:
+롤백 규칙:
 
-- shared behavior, configuration, production operation에 영향을 줄 수 있으면 가장 단순한 rollback path를 씁니다.
-- 특별한 rollback 처리가 필요 없을 때만 `None` 또는 `해당 없음`을 씁니다.
+- 공용 동작, 설정, 운영에 영향을 줄 수 있으면 가장 단순한 롤백 경로를 씁니다.
+- 특별한 롤백 처리가 필요 없을 때만 `None` 또는 `해당 없음`을 씁니다.
 
-Media 규칙:
+미디어 규칙:
 
-- UI 변경이 있을 때만 screenshot/video를 넣습니다.
+- UI 변경이 있을 때만 스크린샷/영상을 넣습니다.
 - UI 변경이 없으면 `None` 또는 `해당 없음`으로 둡니다.
 
 금지:
 
-- agent, model, generated-by, auto-generated, co-authored signature를 넣지 않습니다.
-- issue 번호, test, risk analysis, deployment status를 지어내지 않습니다.
-- 의미 없는 문장으로 template을 형식적으로만 채우지 않습니다.
+- 에이전트, 모델, generated-by, auto-generated, co-authored 서명을 넣지 않습니다.
+- 이슈 번호, 테스트, 리스크 분석, 배포 상태를 지어내지 않습니다.
+- 의미 없는 문장으로 템플릿을 형식적으로만 채우지 않습니다.
 
 기본 구조:
 
 ```md
-## Summary
-- Summarize what changed and why in one to three bullets.
+## 요약
+- 무엇을 바꿨고 왜 바꿨는지 한 개에서 세 개 불릿으로 요약합니다.
 
-## Related Issue
-- None
+## 관련 이슈
+- 해당 없음
 
-## Changes
-- Group major changes by review concern.
+## 변경 사항
+- 주요 변경을 리뷰 관점별로 묶습니다.
 
-## Risk
-- Low/Medium/High
-- Reason: describe the actual impact.
+## 리스크
+- 낮음/중간/높음
+- 이유: 실제 영향을 설명합니다.
 
-## Test/Verification
-- List only checks actually performed.
+## 테스트/검증
+- 실제 수행한 확인만 적습니다.
 
-## Rollback Plan
-- State the simplest rollback path.
+## 롤백 플랜
+- 가장 단순한 롤백 경로를 적습니다.
 
-## Screenshots/Video
-- None when there is no UI change.
+## 스크린샷/영상
+- UI 변경이 없으면 해당 없음.
 ```
 
-## Worklogs
+## 작업 기록
 
-Commit message는 간결한 context를 보존할 수 있지만, 더 깊은 reasoning은 worklog가 담당합니다. 다음 경우 worklog를 작성합니다.
+커밋 메시지는 간결한 context를 보존할 수 있지만, 더 깊은 판단 과정은 작업 기록이 담당합니다. 다음 경우 작업 기록을 작성합니다.
 
-- milestone completion
+- 마일스톤 완료
 - blocker 또는 반복 실패
-- major direction change
-- 원인이나 판단을 보존해야 하는 긴 debugging
-- deployment, backend contract, printing, native, permission 변경처럼 영향 범위가 넓은 작업
+- 큰 방향 변경
+- 원인이나 판단을 보존해야 하는 긴 디버깅
+- 배포, 백엔드 계약, 출력, 네이티브, 권한 변경처럼 영향 범위가 넓은 작업
 
 언어:
 
-- Worklog 언어는 target system과 팀 언어에 맞춥니다.
-- 사용자가 한국어로 말했거나 한국어 Jira project에 올릴 내용이면 한국어 section title과 한국어 문장을 사용합니다.
-- Ticket, repository, stakeholder context가 English-first라면 영어 section title과 영어 문장을 사용합니다.
-- Command, package name, API name, technical identifier는 원문을 유지합니다.
+- 작업 기록 언어는 대상 시스템과 팀 언어에 맞춥니다.
+- 사용자가 한국어로 말했거나 한국어 Jira 프로젝트에 올릴 내용이면 한국어 섹션 제목과 한국어 문장을 사용합니다.
+- 티켓, 저장소, 이해관계자 맥락이 영어 중심이면 영어 섹션 제목과 영어 문장을 사용합니다.
+- 명령, 패키지명, API명, 기술 식별자는 원문을 유지합니다.
 
 권장 영어 구조:
 
@@ -341,4 +342,4 @@ Commit message는 간결한 context를 보존할 수 있지만, 더 깊은 reaso
 - 특정 사람이나 외부 자료명을 내세우기보다 실제로 어떤 기준과 판단으로 바꿨는지 적습니다.
 - “무엇을 참고했다”보다 “무엇이 문제였고 어떻게 정리했는지”를 우선합니다.
 
-좋은 worklog는 파일 목록보다 reasoning을 보존합니다. 다음 agent가 빠르게 context를 회복할 수 있어야 합니다.
+좋은 작업 기록은 파일 목록보다 판단 과정을 보존합니다. 다음 에이전트가 빠르게 context를 회복할 수 있어야 합니다.

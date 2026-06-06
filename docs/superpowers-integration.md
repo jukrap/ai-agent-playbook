@@ -18,6 +18,8 @@ Use process skills first when they apply, then use the smallest relevant playboo
 - Explicit style policy work: Superpowers implementation process plus `design-system-first`, `css-class-first`, `utility-class-first`, or `inline-style-first`.
 - Legacy change: Superpowers debugging or planning process plus the closest `legacy-*` skill.
 - Commit, push, PR, or handoff: Superpowers verification or branch-finishing process plus `commit-worklog-guardrails`.
+- Creating or revising reusable skills: Superpowers planning or review process plus `agent-skill-authoring`.
+- Repository-wide structural cleanup: process planning plus `templates/local-ai/structural-review.md` or an installed evidence tool when the project has one.
 
 ## Priority
 
@@ -37,3 +39,4 @@ If a Superpowers process rule and a project-local rule disagree, follow the high
 - Do not load every available skill. Use the minimum set that clearly applies.
 - Do not let a generic process skill override confirmed repository constraints.
 - Do not copy machine-local custom instructions into public docs without removing paths, identities, and private workflow assumptions.
+- Do not assume Claude Code-only hooks, slash commands, or plugin environment variables are available in Codex.

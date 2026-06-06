@@ -26,11 +26,14 @@ This file is a working agreement, not a product specification. Keep project-spec
 ## Document roles
 
 - `AGENTS.md`: agent working rules, verification, git, and collaboration policy.
+- `SKILLS.md`: project-level skill selection policy.
+- `GIT.md`: portable commit and PR policy.
 - `PROJECT_SPEC.md`: product goals, feature/screen scope, data/API policy.
 - `PLANS.md`: milestones, completion criteria, verification commands.
 - `FSD.md`: FSD or architecture boundary rules.
 - `docs/plans/**`: detailed conventions, prompts, handoffs, and planning notes.
 - `docs/worklog/**`: milestone completion, blockers, and major direction changes.
+- `.local-ai/structural-review.md` or `docs/plans/STRUCTURAL_REVIEW.md`: evidence-backed structural review guidance when the project uses it.
 - `design-docs/**`, `_reference/**`: secondary references used only when relevant.
 - `README.md`: public setup and run guide for new readers.
 
@@ -95,7 +98,11 @@ If the project uses another package manager or command set, use only commands pr
 - Before pushing, check branch, remote, upstream, local-only staged files, and latest verification output.
 - Never revert user-made or task-unrelated changes.
 
-For deeper commit, PR, and worklog policy, copy or read `templates/local-ai/commit-push-worklog.md`.
+For portable Git policy, copy or read `templates/agents/global/GIT.md`. For deeper commit, PR, and worklog policy, copy or read `templates/local-ai/commit-push-worklog.md`.
+
+## Skill usage
+
+For project-level skill selection rules, copy or read `templates/agents/global/SKILLS.md`. Keep skill usage minimal and never let a generic skill override actual repository state or current user instructions.
 
 ## Worklogs
 

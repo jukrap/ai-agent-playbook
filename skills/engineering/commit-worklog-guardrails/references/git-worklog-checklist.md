@@ -2,6 +2,8 @@
 
 Use this reference before staging files, writing a commit message, pushing, opening a PR, or recording a worklog.
 
+If the project copied `templates/agents/global/GIT.md`, keep the short root policy and this detailed guide aligned. The root file is for standing rules; this reference is for the full procedural checklist.
+
 ## Before staging
 
 ```bash
@@ -109,6 +111,7 @@ git remote -v
 
 - Follow the repository template when it exists.
 - If there is no template, include summary, related issue, changes, risk, test/verification, rollback plan, and screenshots/video.
+- Write PR prose in the repository's language convention. If no convention is proven, match the user's or team's working language.
 - Summarize what changed first, then why.
 - Group changes by review concern rather than commit order.
 - Choose `Low`, `Medium`, or `High` risk and add a reason based on actual impact.
@@ -144,3 +147,5 @@ Writing principles:
 - Prioritize what was wrong and how it was organized over what was referenced.
 
 Commit messages may preserve concise context for future readers. Use worklogs for deeper reasoning, blockers, decision history, confirmed causes, verification detail, and remaining risks.
+
+Do not simplify worklogs into commit-message-sized summaries when the project uses them as durable context for future agents or maintainers.

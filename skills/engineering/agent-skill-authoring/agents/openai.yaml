@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Skill Authoring"
+  short_description: "Create small reusable agent skills"
+  default_prompt: "Use agent-skill-authoring when creating or reviewing reusable agent skills."

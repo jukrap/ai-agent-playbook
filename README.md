@@ -20,7 +20,7 @@ skills/
   engineering/   Cross-project engineering workflow skills
   legacy/        SI and legacy-system maintenance skills
 templates/
-  agents/        AGENTS.md templates and project profiles
+  agents/        Root agent instruction templates and project profiles
   local-ai/      Optional local-only project docs
 examples/        Worklog, prompt, and handoff examples
 translations/    Human translations; never install these as skills
@@ -39,6 +39,7 @@ scripts/         Validation and local sync helpers
 - [Templates](templates/README.md): what to copy into project repositories and what to leave as installable skills.
 - [Classification](docs/classification.md): why skills, templates, examples, docs, and adapters are separated.
 - [Superpowers integration](docs/superpowers-integration.md): how to use this playbook alongside Superpowers-style process skills.
+- [Project memory redesign notes](docs/project-memory-redesign.md): planning notes for clearer agent-facing project docs.
 - [Maintenance workflow](docs/maintenance.md): what to update together when adding or changing content.
 - [Translation policy](docs/translation-policy.md): English source and Korean translation rules.
 - [Publishing checklist](docs/publishing-checklist.md): private GitHub setup and pre-publish hygiene checks.
@@ -71,9 +72,14 @@ This playbook can be used with Superpowers-style process skills. Let process ski
 
 See [Templates](templates/README.md) for the difference between installable skills and copyable project templates.
 
-Start with one `templates/agents` profile:
+Start with the small root-level templates under `templates/agents/global`:
 
 - `templates/agents/global/AGENTS.md`: default for any repository.
+- `templates/agents/global/SKILLS.md`: project-level skill selection policy.
+- `templates/agents/global/GIT.md`: portable commit and PR policy.
+
+Then merge one profile when the project proves the stack:
+
 - `templates/agents/profiles/react-vite-fsd/AGENTS.md`: React/Vite/TypeScript with pragmatic FSD.
 - `templates/agents/profiles/react-native-expo/AGENTS.md`: Expo and React Native.
 - `templates/agents/profiles/legacy-*`: SI and legacy profiles.
@@ -96,6 +102,7 @@ When adding or changing skills, templates, examples, translations, or adapter no
 
 ### Engineering
 
+- `agent-skill-authoring`: create, review, and organize reusable agent skills.
 - `repo-onboarding`: inspect a repository before making project-specific assumptions.
 - `project-doc-system`: organize AGENTS, project specs, plans, local docs, and worklogs.
 - `commit-worklog-guardrails`: stage, commit, push, PR, and worklog safely.

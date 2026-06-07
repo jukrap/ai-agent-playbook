@@ -23,6 +23,38 @@ const OBSOLETE_STYLE_SKILLS = [
   'inline-style-first'
 ];
 
+const ROOT_BOOTSTRAP_REFS = [
+  'ai-playbook/START_HERE.md',
+  'ai-playbook/CURRENT.md',
+  'ai-playbook/SKILLS.md',
+  'ai-playbook/GIT.md'
+];
+
+const CORE_TEMPLATE_MARKERS = [
+  {
+    file: 'START_HERE.md',
+    markers: [
+      '- State the active task in one or two bullets.',
+      '# Replace with the next useful command for this project.',
+      '- Local-only policy:'
+    ]
+  },
+  {
+    file: 'CURRENT.md',
+    markers: [
+      '- Product or system shape:',
+      '- Primary stack:',
+      '- Verification commands:'
+    ]
+  },
+  {
+    file: 'questions.md',
+    markers: [
+      '| Open |  |  |  |  |'
+    ]
+  }
+];
+
 export function slugifyTitle(title) {
   const slug = title
     .normalize('NFKD')
@@ -102,6 +134,8 @@ export async function doctorProject(options) {
     const agentsText = await readFile(agentsFile, 'utf8');
     const pointsToPlaybook = agentsText.includes('ai-playbook/');
     checks.push(result(pointsToPlaybook ? 'pass' : 'warn', 'root AGENTS bootstrap', pointsToPlaybook ? 'Points to ai-playbook/.' : 'Found, but does not point agents to ai-playbook/.'));
+    const missingRefs = ROOT_BOOTSTRAP_REFS.filter((ref) => !agentsText.includes(ref));
+    checks.push(result(missingRefs.length ? 'warn' : 'pass', 'root AGENTS reading order', missingRefs.length ? `Missing explicit references: ${missingRefs.join(', ')}` : 'References core ai-playbook files.'));
   }
 
   const rootPolicyFiles = ['SKILLS.md', 'GIT.md'].filter((file) => existsSync(path.join(target, file)));
@@ -111,6 +145,11 @@ export async function doctorProject(options) {
   const gitignoreText = existsSync(gitignore) ? await readFile(gitignore, 'utf8') : '';
   const ignoresPlaybook = gitignoreText.split(/\r?\n/).some((line) => line.trim() === 'ai-playbook/');
   checks.push(result(ignoresPlaybook ? 'pass' : 'warn', 'ai-playbook commit policy', ignoresPlaybook ? 'Marked local-only in .gitignore.' : 'Not marked local-only; treat as committed project docs.'));
+
+  if (hasPlaybook) {
+    const templateFiles = await findCoreTemplateFiles(playbookRoot);
+    checks.push(result(templateFiles.length ? 'warn' : 'pass', 'playbook adaptation', templateFiles.length ? `Template prompts remain in: ${templateFiles.join(', ')}` : 'Core playbook files look adapted.'));
+  }
 
   const markdownFiles = await walkFiles(target, (file) => file.endsWith('.md'));
   const privatePaths = [];
@@ -203,6 +242,23 @@ export async function summarizeWorklogs(options) {
 
 function result(level, name, message) {
   return { level, name, message };
+}
+
+async function findCoreTemplateFiles(playbookRoot) {
+  const files = [];
+  for (const { file, markers } of CORE_TEMPLATE_MARKERS) {
+    const fullPath = path.join(playbookRoot, file);
+    if (!existsSync(fullPath)) continue;
+    const text = await readFile(fullPath, 'utf8');
+    if (markers.some((marker) => hasExactLine(text, marker))) {
+      files.push(file);
+    }
+  }
+  return files;
+}
+
+function hasExactLine(text, marker) {
+  return text.split(/\r?\n/).some((line) => line.trim() === marker);
 }
 
 async function assertDirectory(dir, message) {

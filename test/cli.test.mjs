@@ -52,6 +52,8 @@ test('doctor reports missing and bootstrapped project state', async () => {
   assert.equal(await runCli(['doctor', '.'], checked), 0);
   assert.match(checked.out(), /\[PASS\] ai-playbook\/CURRENT.md/);
   assert.match(checked.out(), /\[PASS\] root AGENTS bootstrap/);
+  assert.match(checked.out(), /\[PASS\] root AGENTS reading order/);
+  assert.match(checked.out(), /\[WARN\] playbook adaptation/);
   await cleanup(target);
 });
 

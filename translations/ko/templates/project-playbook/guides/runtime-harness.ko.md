@@ -62,3 +62,4 @@ node .\bin\ai-playbook.mjs doctor <target-repo> --strict
 - 큰 작업 중에는 milestone이 끝나거나 blocker가 해결되거나 방향이 바뀔 때 worklog를 씁니다.
 - handoff 전에는 `START_HERE.md`를 갱신하고, worklog의 오래 유지할 사실을 `CURRENT.md`, maps, runbooks, decisions로 승격합니다.
 - 커밋 또는 PR 전에는 `doctor`와 프로젝트별 검증을 실행합니다.
+- `doctor` warning은 조정이 필요한 항목으로 해석합니다. 방금 bootstrap한 결과는 핵심 playbook 파일을 프로젝트별 사실로 채우기 전까지 warning이 날 수 있습니다.

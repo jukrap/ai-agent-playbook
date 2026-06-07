@@ -46,6 +46,8 @@ Keep the top-level files stable:
 
 Put larger material in the matching subfolder. Use `maps/` for structure, `runbooks/` for commands, `decisions/` for durable choices, `plans/` for active execution, and `worklogs/` for detailed history.
 
+`doctor` warns while core files still contain template prompts. After first repo inspection, replace the placeholder bullets in `START_HERE.md`, `CURRENT.md`, and `questions.md` with project-specific current facts or state clearly that no active task or open question exists.
+
 ## Commit policy
 
 Decide per project whether `ai-playbook/` is committed or local-only. If local-only, add it to `.gitignore` before writing project-specific notes.

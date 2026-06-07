@@ -26,7 +26,9 @@ After publishing, the same CLI can be exposed through the package `bin` as `ai-p
 
 ## Doctor checks
 
-`doctor` checks for the minimum `ai-playbook/` layout, root `AGENTS.md`, whether root `AGENTS.md` points to `ai-playbook/`, unexpected root `SKILLS.md` or `GIT.md`, local-only policy, obsolete split style skills, and fixed local absolute paths. In default mode, warnings do not fail the command. In `--strict` mode, warnings fail.
+`doctor` checks for the minimum `ai-playbook/` layout, root `AGENTS.md`, whether root `AGENTS.md` points to the core playbook files, unexpected root `SKILLS.md` or `GIT.md`, local-only policy, unadapted core template prompts, obsolete split style skills, and fixed local absolute paths. In default mode, warnings do not fail the command. In `--strict` mode, warnings fail.
+
+Fresh bootstrap output can warn about `playbook adaptation` because `START_HERE.md`, `CURRENT.md`, and `questions.md` still contain template prompts. Treat that as a reminder to adapt the playbook after repo inspection, not as a bootstrap failure.
 
 ## Guide sync
 

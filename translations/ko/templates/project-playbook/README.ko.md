@@ -46,6 +46,8 @@ Worklogs는 history입니다. 계속 현재인 사실은 `CURRENT.md`, `maps/`, 
 
 더 큰 내용은 맞는 하위 폴더에 둡니다. 구조는 `maps/`, 명령은 `runbooks/`, 오래 남길 선택은 `decisions/`, 실행 중인 작업은 `plans/`, 상세 이력은 `worklogs/`를 사용합니다.
 
+핵심 파일에 템플릿 문구가 남아 있으면 `doctor`가 warning을 냅니다. 첫 저장소 점검 뒤 `START_HERE.md`, `CURRENT.md`, `questions.md`의 placeholder bullet을 프로젝트별 현재 사실로 바꾸거나, active task나 open question이 없다고 명확히 적습니다.
+
 ## 커밋 정책
 
 프로젝트별로 `ai-playbook/`을 commit할지 local-only로 둘지 결정합니다. local-only라면 project-specific note를 쓰기 전에 `.gitignore`에 추가합니다.

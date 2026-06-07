@@ -26,7 +26,9 @@ node .\bin\ai-playbook.mjs worklog summarize <target> --month YYYY-MM [--dry-run
 
 ## Doctor 점검
 
-`doctor`는 최소 `ai-playbook/` layout, root `AGENTS.md`, root `AGENTS.md`가 `ai-playbook/`을 가리키는지, 예상치 못한 root `SKILLS.md` 또는 `GIT.md`, local-only 정책, 분리된 예전 스타일 스킬 참조, 고정 로컬 절대경로를 점검합니다. 기본 모드에서는 warning이 실패로 처리되지 않습니다. `--strict` 모드에서는 warning도 실패합니다.
+`doctor`는 최소 `ai-playbook/` layout, root `AGENTS.md`, root `AGENTS.md`가 핵심 playbook 파일을 가리키는지, 예상치 못한 root `SKILLS.md` 또는 `GIT.md`, local-only 정책, 아직 조정되지 않은 핵심 템플릿 문구, 분리된 예전 스타일 스킬 참조, 고정 로컬 절대경로를 점검합니다. 기본 모드에서는 warning이 실패로 처리되지 않습니다. `--strict` 모드에서는 warning도 실패합니다.
+
+방금 bootstrap한 결과는 `START_HERE.md`, `CURRENT.md`, `questions.md`에 템플릿 문구가 남아 있어 `playbook adaptation` warning을 낼 수 있습니다. 이는 bootstrap 실패가 아니라 저장소 점검 뒤 playbook을 조정하라는 알림입니다.
 
 ## 가이드 동기화
 

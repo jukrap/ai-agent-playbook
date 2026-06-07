@@ -62,3 +62,4 @@ Use local-only mode when the notes may include private context, unfinished analy
 - During large work, write a worklog when a milestone completes, a blocker is resolved, or the direction changes.
 - Before a handoff, update `START_HERE.md` and promote durable facts from worklogs into `CURRENT.md`, maps, runbooks, or decisions.
 - Before commit or PR, run `doctor` and project-specific verification.
+- Treat `doctor` warnings as adaptation prompts. A fresh bootstrap is allowed to warn until core playbook files are filled with project-specific facts.

@@ -50,6 +50,7 @@ When instructions conflict, prefer this order:
 
 ## Git, PRs, and Worklogs
 
+- Before staging, committing, pushing, writing a commit message, or writing a PR body, read the project's `GIT.md` if it exists.
 - Ask before committing unless the project or user has explicitly opted into autonomous commits.
 - Use explicit staging; avoid `git add .` unless the repository convention allows it and the diff is already reviewed.
 - Before committing, inspect staged files and make sure local-only or sensitive docs are not included.

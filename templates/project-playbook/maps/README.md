@@ -16,4 +16,3 @@ Create only the maps the project needs:
 - State scan range and freshness for structural claims.
 - Prefer facts with file paths, command output, or code references.
 - Keep maps current enough to route work, not exhaustive enough to replace the code.
-

@@ -28,7 +28,6 @@ The runtime applies templates and creates scaffold files. It must not encode pri
 
 - `templates/agents`: small root-level standing instruction files and stack-specific `AGENTS.md` profiles.
 - `templates/project-playbook`: copyable project-memory template that becomes `ai-playbook/` in target repositories.
-- `templates/local-ai`: compatibility pointer for older projects; new work should use `templates/project-playbook`.
 
 Root-level files such as `templates/agents/global/SKILLS.md` and `templates/agents/global/GIT.md` stay in `templates/agents` because they are copied into projects as standing instructions, not invoked as skills.
 

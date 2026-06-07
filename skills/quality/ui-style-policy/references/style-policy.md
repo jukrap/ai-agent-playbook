@@ -35,4 +35,3 @@ When the policy will matter later, record:
 - evidence source
 - allowed exceptions
 - verification expectations for visible UI changes
-

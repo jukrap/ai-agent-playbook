@@ -25,7 +25,7 @@ After publishing, the same CLI can be exposed through the package `bin` as `ai-p
 
 ## Doctor checks
 
-`doctor` checks for the minimum `ai-playbook/` layout, root `AGENTS.md`, local-only policy, stale `local-ai` references, obsolete split style skills, and fixed local absolute paths. In default mode, warnings do not fail the command. In `--strict` mode, warnings fail.
+`doctor` checks for the minimum `ai-playbook/` layout, root `AGENTS.md`, local-only policy, obsolete split style skills, and fixed local absolute paths. In default mode, warnings do not fail the command. In `--strict` mode, warnings fail.
 
 ## Scaffold rules
 

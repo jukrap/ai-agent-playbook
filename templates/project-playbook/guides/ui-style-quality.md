@@ -30,4 +30,3 @@ If no explicit policy exists, follow the local component pattern and avoid intro
 - unnecessary cards, card nesting, or decorative structure
 
 Verify visible UI in a browser, simulator, screenshot, or rendered artifact when the task changes visible behavior.
-

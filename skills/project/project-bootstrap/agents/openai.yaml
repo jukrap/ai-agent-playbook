@@ -1,4 +1,3 @@
 openai:
   short_description: "Set up project agent memory and root instructions"
   default_prompt: "Use project-bootstrap to inspect this repository and propose only the ai-playbook and root agent docs it actually needs."
-

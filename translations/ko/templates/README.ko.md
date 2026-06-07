@@ -9,7 +9,6 @@
 - `agents/`: 루트 지침 템플릿과 스택 프로필.
 - `agents/global/`: `AGENTS.md`, `SKILLS.md`, `GIT.md` 같은 작은 루트 템플릿.
 - `project-playbook/`: 대상 프로젝트에 `ai-playbook/`로 복사하는 표준 프로젝트 메모리 묶음.
-- `local-ai/`: 오래된 프로젝트를 위한 호환 포인터. 새 작업은 `project-playbook/`을 사용합니다.
 - Runtime CLI 파일은 저장소 루트의 `bin/`, `src/`, `test/` 아래에 있습니다.
 
 ## 에이전트가 템플릿을 발견하는 방식

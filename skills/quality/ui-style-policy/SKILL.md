@@ -19,4 +19,3 @@ Choose one project styling policy from evidence before changing visible UI.
 ## Reference
 
 Read `references/style-policy.md` when the policy is ambiguous or when consolidating conflicting style guidance.
-

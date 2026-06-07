@@ -20,4 +20,3 @@ Create only the project memory and root instructions that the repository can act
 ## Reference
 
 Read `references/bootstrap-checklist.md` when generating or reviewing a project bootstrap plan.
-

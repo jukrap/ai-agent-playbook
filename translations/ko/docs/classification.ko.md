@@ -28,7 +28,6 @@ CLI는 설치형 스킬이 아닙니다. 이 저장소 checkout에서 실행해 
 
 - `templates/agents`: 작은 루트 상시 지침 파일과 스택별 `AGENTS.md` 프로필.
 - `templates/project-playbook`: 대상 저장소에서 `ai-playbook/`가 되는 복사용 프로젝트 메모리 템플릿.
-- `templates/local-ai`: 오래된 프로젝트를 위한 호환 포인터. 새 작업은 `templates/project-playbook`을 사용합니다.
 
 `templates/agents/global/SKILLS.md`, `templates/agents/global/GIT.md` 같은 루트 파일은 스킬로 호출하는 것이 아니라 프로젝트에 복사하는 상시 지침이므로 `templates/agents`에 둡니다.
 

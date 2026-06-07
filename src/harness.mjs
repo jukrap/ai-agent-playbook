@@ -122,20 +122,17 @@ export async function doctorProject(options) {
   checks.push(result(ignoresPlaybook ? 'pass' : 'warn', 'ai-playbook commit policy', ignoresPlaybook ? 'Marked local-only in .gitignore.' : 'Not marked local-only; treat as committed project docs.'));
 
   const markdownFiles = await walkFiles(target, (file) => file.endsWith('.md'));
-  const staleLocalAi = [];
   const privatePaths = [];
   const obsoleteSkillRefs = [];
   for (const file of markdownFiles) {
     const text = await readFile(file, 'utf8');
     const rel = path.relative(target, file);
-    if (/\blocal-ai\b/.test(text)) staleLocalAi.push(rel);
     if (/[A-Za-z]:\\/.test(text)) privatePaths.push(rel);
     for (const skill of OBSOLETE_STYLE_SKILLS) {
       if (text.includes(skill)) obsoleteSkillRefs.push(`${rel} -> ${skill}`);
     }
   }
 
-  checks.push(result(staleLocalAi.length ? 'warn' : 'pass', 'stale local-ai references', staleLocalAi.length ? staleLocalAi.join(', ') : 'None found.'));
   checks.push(result(privatePaths.length ? 'fail' : 'pass', 'absolute local paths', privatePaths.length ? privatePaths.join(', ') : 'None found.'));
   checks.push(result(obsoleteSkillRefs.length ? 'warn' : 'pass', 'obsolete style skill references', obsoleteSkillRefs.length ? obsoleteSkillRefs.join(', ') : 'None found.'));
 

@@ -26,4 +26,3 @@ Suggested format:
 - Record durable decisions, not every temporary preference.
 - If a worklog contains a decision that remains current, promote it here.
 - If a decision is reversed, add a new decision and link the old one.
-

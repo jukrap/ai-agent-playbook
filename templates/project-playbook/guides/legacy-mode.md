@@ -42,4 +42,3 @@ Use this guide for old, high-coupling, or operationally sensitive production sys
 - screens, jobs, endpoints, or scenarios checked
 - verification command or manual check result
 - remaining risks and follow-up work
-

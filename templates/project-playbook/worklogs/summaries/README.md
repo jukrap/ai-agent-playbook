@@ -11,4 +11,3 @@ Use `YYYY-MM.md` files to capture:
 - links to high-signal detailed worklogs
 
 Do not copy every worklog. Summaries should help the next agent decide what to read.
-

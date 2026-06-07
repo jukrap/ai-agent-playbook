@@ -26,7 +26,7 @@ node .\bin\ai-playbook.mjs worklog summarize <target> --month YYYY-MM [--dry-run
 
 ## Doctor 점검
 
-`doctor`는 최소 `ai-playbook/` layout, root `AGENTS.md`, local-only 정책, 오래된 `local-ai` 참조, 분리된 예전 스타일 스킬 참조, 고정 로컬 절대경로를 점검합니다. 기본 모드에서는 warning이 실패로 처리되지 않습니다. `--strict` 모드에서는 warning도 실패합니다.
+`doctor`는 최소 `ai-playbook/` layout, root `AGENTS.md`, local-only 정책, 분리된 예전 스타일 스킬 참조, 고정 로컬 절대경로를 점검합니다. 기본 모드에서는 warning이 실패로 처리되지 않습니다. `--strict` 모드에서는 warning도 실패합니다.
 
 ## Plan과 worklog 생성
 

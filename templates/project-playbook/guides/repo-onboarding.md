@@ -32,4 +32,3 @@ Use this guide before planning, editing, or answering project-specific workflow 
   - Search already attempted:
   - Why it matters:
 ```
-

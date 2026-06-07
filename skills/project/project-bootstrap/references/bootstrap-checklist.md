@@ -48,4 +48,3 @@ Add detailed maps, runbooks, decisions, and guides only when there is project ev
 - Use relative paths in reusable templates.
 - If `ai-playbook/` is local-only, add it to `.gitignore` before writing private notes.
 - If worklogs are committed, keep them scrubbed and useful for future maintainers.
-

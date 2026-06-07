@@ -23,4 +23,3 @@ Use this guide only when the project already uses Feature-Sliced Design or a sim
 - Prefer local consistency over textbook purity.
 
 Document durable architecture decisions in `ai-playbook/decisions/` or the project's architecture docs.
-

@@ -35,4 +35,3 @@ Prefer one small next slice by default:
 - avoid broad goals such as `clean architecture` or `fix all dead code`
 
 Keep durable structure facts in `ai-playbook/maps/` and durable decisions in `ai-playbook/decisions/`.
-

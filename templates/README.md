@@ -9,7 +9,6 @@ Use them when starting a new repository, cleaning up project agent docs, or maki
 - `agents/`: root instruction templates and stack profiles.
 - `agents/global/`: small root-level templates such as `AGENTS.md`, `SKILLS.md`, and `GIT.md`.
 - `project-playbook/`: the canonical project-memory bundle to copy into a target project as `ai-playbook/`.
-- `local-ai/`: compatibility pointer for older projects; new work should use `project-playbook/`.
 - Runtime CLI files live at the repository root under `bin/`, `src/`, and `test/`.
 
 ## How agents discover templates

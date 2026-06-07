@@ -36,4 +36,3 @@ Use this guide when organizing project-specific agent docs.
 Decide whether `ai-playbook/` is committed or local-only. If local-only, add it to `.gitignore` before writing private project facts.
 
 Before committing, inspect staged markdown files and avoid staging local-only notes, generated output, private references, or sensitive logs.
-

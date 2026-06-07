@@ -5,8 +5,8 @@
 ## 문서 역할
 
 - `AGENTS.md`: 에이전트 작업 흐름, 검증, 커밋, 협업 규칙.
-- `SKILLS.md`: 프로젝트 수준 스킬 선택 정책.
-- `GIT.md`: 짧은 루트 Git, commit, PR, push 정책.
+- `ai-playbook/SKILLS.md`: 프로젝트 수준 스킬 선택 정책.
+- `ai-playbook/GIT.md`: 짧은 Git, commit, PR, push 정책.
 - `README.md`: 사람을 위한 공개 setup/run guide.
 - `PROJECT_SPEC.md`: 프로젝트가 사용할 때 제품 목표, 기능/화면 범위, API/data 정책.
 - `PLANS.md`: 프로젝트가 사용할 때 마일스톤 순서, 완료 기준, 검증 명령.

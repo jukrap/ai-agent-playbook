@@ -11,7 +11,7 @@ const repoRoot = path.resolve(import.meta.dirname, '..');
 test('bootstrap dry-run does not write files', async () => {
   const target = await tempRepo();
   const io = capture(target);
-  const code = await runCli(['bootstrap', '.', '--with-skills', '--with-git', '--dry-run'], io);
+  const code = await runCli(['bootstrap', '.', '--dry-run'], io);
 
   assert.equal(code, 0);
   assert.match(io.out(), /copy README\.md/);
@@ -19,15 +19,17 @@ test('bootstrap dry-run does not write files', async () => {
   await cleanup(target);
 });
 
-test('bootstrap writes playbook and root policies without overwriting', async () => {
+test('bootstrap writes playbook and root agent policy without overwriting', async () => {
   const target = await tempRepo();
   const io = capture(target);
 
-  assert.equal(await runCli(['bootstrap', '.', '--with-skills', '--with-git', '--local-only'], io), 0);
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], io), 0);
   assert.equal(existsSync(path.join(target, 'ai-playbook', 'CURRENT.md')), true);
+  assert.equal(existsSync(path.join(target, 'ai-playbook', 'SKILLS.md')), true);
+  assert.equal(existsSync(path.join(target, 'ai-playbook', 'GIT.md')), true);
   assert.equal(existsSync(path.join(target, 'AGENTS.md')), true);
-  assert.equal(existsSync(path.join(target, 'SKILLS.md')), true);
-  assert.equal(existsSync(path.join(target, 'GIT.md')), true);
+  assert.equal(existsSync(path.join(target, 'SKILLS.md')), false);
+  assert.equal(existsSync(path.join(target, 'GIT.md')), false);
 
   const gitignore = await readFile(path.join(target, '.gitignore'), 'utf8');
   assert.match(gitignore, /^ai-playbook\/$/m);

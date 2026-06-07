@@ -5,8 +5,8 @@ Use this guide when organizing project-specific agent docs.
 ## Document roles
 
 - `AGENTS.md`: agent workflow, verification, git, and collaboration rules.
-- `SKILLS.md`: project-level skill selection policy.
-- `GIT.md`: short root-level Git, commit, PR, and push policy.
+- `ai-playbook/SKILLS.md`: project-level skill selection policy.
+- `ai-playbook/GIT.md`: short Git, commit, PR, and push policy.
 - `README.md`: public setup and run guide for humans.
 - `PROJECT_SPEC.md`: product goals, feature/screen scope, API/data policy when the project uses this file.
 - `PLANS.md`: milestone order, completion criteria, and verification commands when the project uses this file.

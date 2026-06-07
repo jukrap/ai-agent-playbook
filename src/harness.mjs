@@ -6,6 +6,8 @@ export const REQUIRED_PLAYBOOK_FILES = [
   'README.md',
   'START_HERE.md',
   'CURRENT.md',
+  'SKILLS.md',
+  'GIT.md',
   'questions.md',
   'maps/README.md',
   'runbooks/README.md',
@@ -42,8 +44,6 @@ export async function bootstrapProject(options) {
     target,
     profile,
     localOnly = false,
-    withSkills = false,
-    withGit = false,
     dryRun = false,
     force = false
   } = options;
@@ -69,24 +69,6 @@ export async function bootstrapProject(options) {
     agentContent = `${agentContent.trimEnd()}\n\n---\n\n# Profile: ${profile}\n\n${profileContent.trimStart()}`;
   }
   await writeManagedFile(path.join(target, 'AGENTS.md'), agentContent, { dryRun, force, operations, conflicts });
-
-  if (withSkills) {
-    await copyTemplateFile(path.join(templateRoot, 'agents', 'global', 'SKILLS.md'), path.join(target, 'SKILLS.md'), {
-      dryRun,
-      force,
-      operations,
-      conflicts
-    });
-  }
-
-  if (withGit) {
-    await copyTemplateFile(path.join(templateRoot, 'agents', 'global', 'GIT.md'), path.join(target, 'GIT.md'), {
-      dryRun,
-      force,
-      operations,
-      conflicts
-    });
-  }
 
   if (localOnly) {
     await ensureGitignoreEntry(target, 'ai-playbook/', { dryRun, operations });
@@ -115,6 +97,9 @@ export async function doctorProject(options) {
 
   const hasAgents = existsSync(path.join(target, 'AGENTS.md'));
   checks.push(result(hasAgents ? 'pass' : 'warn', 'root AGENTS.md', hasAgents ? 'Found.' : 'Missing root agent policy.'));
+
+  const rootPolicyFiles = ['SKILLS.md', 'GIT.md'].filter((file) => existsSync(path.join(target, file)));
+  checks.push(result(rootPolicyFiles.length ? 'warn' : 'pass', 'root policy files', rootPolicyFiles.length ? `Prefer ai-playbook/SKILLS.md and ai-playbook/GIT.md; root files found: ${rootPolicyFiles.join(', ')}` : 'No root SKILLS.md or GIT.md.'));
 
   const gitignore = path.join(target, '.gitignore');
   const gitignoreText = existsSync(gitignore) ? await readFile(gitignore, 'utf8') : '';

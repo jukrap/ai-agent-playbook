@@ -11,7 +11,7 @@ Codex has two different `AGENTS.md` layers:
 - Codex home global: personal defaults in `~/.codex/AGENTS.md`, or another directory if `CODEX_HOME` is set.
 - Project root: repository rules in the target project's `AGENTS.md`.
 
-`templates/codex-home/AGENTS.md` is for the first layer. `templates/agents/global/AGENTS.md` is for the second layer and is what `ai-playbook bootstrap` writes into a target project.
+`templates/codex-home/AGENTS.md` is for the first layer. `templates/agents/global/AGENTS.md` is for the second layer and is what `ai-playbook bootstrap` writes into a target project. Skill and Git policy live under `ai-playbook/SKILLS.md` and `ai-playbook/GIT.md`.
 
 Recommended first setup:
 
@@ -40,16 +40,16 @@ For an existing project, do not overwrite its root agent docs on the first pass.
 $playbookRepo = '<path-to-ai-agent-playbook>'
 $targetRepo = '<path-to-target-project>'
 Set-Location -LiteralPath $playbookRepo
-node .\bin\ai-playbook.mjs bootstrap $targetRepo --local-only --with-skills --with-git --dry-run
+node .\bin\ai-playbook.mjs bootstrap $targetRepo --local-only --dry-run
 ```
 
-If the target already has `AGENTS.md`, `SKILLS.md`, or `GIT.md`, inspect the conflict instead of using `--force`. A safer trial path is to scaffold into a temporary folder, inspect the generated files, then manually merge only the pieces the project needs:
+If the target already has `AGENTS.md` or `ai-playbook/`, inspect the conflict instead of using `--force`. A safer trial path is to scaffold into a temporary folder, inspect the generated files, then manually merge only the pieces the project needs:
 
 ```powershell
 $scratch = Join-Path $env:TEMP 'ai-playbook-scaffold'
 Remove-Item -LiteralPath $scratch -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Path $scratch | Out-Null
-node .\bin\ai-playbook.mjs bootstrap $scratch --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs bootstrap $scratch --local-only
 ```
 
 For a legacy or documentation-heavy project, usually add only `ai-playbook/START_HERE.md`, `CURRENT.md`, and a docs map first. Keep existing worklogs and plans in place until a human has reviewed the migration.
@@ -96,14 +96,14 @@ The repository also includes a small Node CLI for project harness setup and main
 
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
 node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs doctor <target-repo> --strict
 node .\bin\ai-playbook.mjs plan new <target-repo> --title "short-plan-title"
 node .\bin\ai-playbook.mjs worklog new <target-repo> --title "short-worklog-title"
 ```
 
-Use the CLI when a project needs repeatable `AGENTS.md`, `SKILLS.md`, `GIT.md`, and `ai-playbook/` scaffolding. Use installed skills when the agent needs reusable working behavior during a coding session.
+Use the CLI when a project needs repeatable root `AGENTS.md` and `ai-playbook/` scaffolding. Use installed skills when the agent needs reusable working behavior during a coding session.
 
 Codex App does not need `ai-playbook` to be installed as a global command. The stable invocation is:
 
@@ -119,4 +119,4 @@ Use `guides sync` when a project already has `ai-playbook/` and you only want mi
 
 Do not rely on Codex account-level custom instructions being present on another computer. Put reusable working agreements in project `AGENTS.md` templates or `templates/project-playbook` docs, and keep machine-specific paths only in local setup notes.
 
-For root-level project policy, prefer `templates/agents/global/AGENTS.md`, `templates/agents/global/SKILLS.md`, and `templates/agents/global/GIT.md`. Treat hooks, slash commands, or runtime-specific instructions from external skills as ideas to translate, not Codex defaults.
+For root-level project policy, prefer `templates/agents/global/AGENTS.md`. Keep skill and Git policy in `templates/project-playbook/SKILLS.md` and `templates/project-playbook/GIT.md`. Treat hooks, slash commands, or runtime-specific instructions from external skills as ideas to translate, not Codex defaults.

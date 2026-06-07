@@ -7,8 +7,6 @@
 ## 프로필 선택
 
 - `global/AGENTS.md`: 알 수 없는 스택, 문서 중심 프로젝트, 일반 저장소에 쓰는 프로젝트 루트 기본 작업 합의.
-- `global/SKILLS.md`: 선택적 프로젝트 수준 스킬 선택 정책.
-- `global/GIT.md`: 선택적 프로젝트 수준 commit/PR 정책.
 - `profiles/react-vite-fsd/AGENTS.md`: React, Vite, TypeScript, pnpm, pragmatic FSD 또는 유사한 layered frontend.
 - `profiles/react-native-expo/AGENTS.md`: Expo Router, React Native, native/device verification.
 - `profiles/legacy-jquery-web/AGENTS.md`: jQuery, plugin, direct DOM manipulation, script-order dependent pages.
@@ -18,8 +16,8 @@
 ## 적용 방법
 
 1. 프로젝트의 실제 config, README, build files, existing docs를 먼저 확인합니다.
-2. `global/AGENTS.md`로 시작하고, 도움이 될 때만 `global/SKILLS.md`와 `global/GIT.md`를 추가합니다.
+2. `global/AGENTS.md`로 시작하고, skill/Git 정책은 `ai-playbook/SKILLS.md`와 `ai-playbook/GIT.md` 아래에 둡니다.
 3. 가장 가까운 스택 프로필을 고르고 적용되지 않는 규칙을 제거합니다.
 4. 오래 남길 에이전트 메모리가 필요하면 `templates/project-playbook/`을 `ai-playbook/`로 복사합니다.
-5. 자세한 commit, push, PR, worklog 지침이 필요하면 `global/GIT.md`에 더해 `templates/project-playbook/guides/commit-push-worklog.md`를 조정합니다.
+5. 자세한 commit, push, PR, worklog 지침이 필요하면 `templates/project-playbook/GIT.md`와 `templates/project-playbook/guides/commit-push-worklog.md`를 조정합니다.
 6. 프로젝트 고유 제품 규칙은 별도 문서에 둡니다. `AGENTS.md`는 에이전트가 어떻게 일할지에 집중합니다.

@@ -123,15 +123,15 @@ Templates are not installed automatically as skills. Use the runtime CLI for the
 ### Runtime path
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-project> --with-skills --with-git --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-project> --with-skills --with-git
+node .\bin\ai-playbook.mjs bootstrap <target-project> --dry-run
+node .\bin\ai-playbook.mjs bootstrap <target-project>
 node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
 node .\bin\ai-playbook.mjs doctor <target-project>
 ```
 
 Use `--profile <name>` only after the target stack is known. Use `--local-only` when `ai-playbook/` should be added to the target `.gitignore`.
 
-Use `guides sync` for projects that already have `ai-playbook/` and only need missing guide templates from a newer playbook checkout. It does not modify root policy files or project-specific notes unless `--force` is explicitly used for guide files.
+Use `guides sync` for projects that already have `ai-playbook/` and only need missing guide templates from a newer playbook checkout. It does not modify root `AGENTS.md`, playbook policy files, or project-specific notes unless `--force` is explicitly used for guide files.
 
 Create plan and worklog files through the CLI so paths stay predictable:
 
@@ -151,7 +151,7 @@ Copy-Item .\templates\agents\global\AGENTS.md (Join-Path $projectRoot 'AGENTS.md
 Copy-Item .\templates\project-playbook (Join-Path $projectRoot 'ai-playbook') -Recurse
 ```
 
-`templates/agents/global/` is the project-root base template folder. Optionally copy `templates/agents/global/SKILLS.md` or `templates/agents/global/GIT.md` when the project needs portable skill or Git policy. Then merge the closest profile from `templates/agents/profiles/**` and any needed guides from `templates/project-playbook/guides/**`.
+`templates/agents/global/` is the project-root base template folder for `AGENTS.md`. Keep skill and Git policy in `ai-playbook/SKILLS.md` and `ai-playbook/GIT.md`, copied from `templates/project-playbook/`. Then merge the closest profile from `templates/agents/profiles/**` and any needed guides from `templates/project-playbook/guides/**`.
 
 ## Codex skill installer note
 

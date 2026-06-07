@@ -26,8 +26,8 @@
 ## Document roles
 
 - `AGENTS.md`: agent working rules, verification, git, collaboration policy.
-- `SKILLS.md`: project-level skill selection policy.
-- `GIT.md`: portable commit and PR policy.
+- `ai-playbook/SKILLS.md`: 프로젝트 수준 스킬 선택 정책.
+- `ai-playbook/GIT.md`: 휴대 가능한 commit/PR 정책.
 - `PROJECT_SPEC.md`: 프로젝트가 사용할 때 제품 목표, 기능/화면 범위, data/API policy.
 - `PLANS.md`: 프로젝트가 사용할 때 milestone, completion criteria, verification commands.
 - `FSD.md`: 필요할 때만 FSD 또는 architecture boundary rules.
@@ -84,6 +84,7 @@ pnpm build
 
 ## Git
 
+- 스테이징, 커밋, 푸시, 커밋 메시지 작성, PR 본문 작성 전에 `ai-playbook/GIT.md`가 있으면 읽습니다.
 - `git add .` 또는 `git add -A`보다 explicit staging을 선호합니다.
 - commit 전 staged files를 확인합니다.
 - 기본은 Conventional Commits를 사용합니다.
@@ -96,11 +97,11 @@ pnpm build
 - push 전 branch, remote, upstream, local-only staged files, latest verification output을 확인합니다.
 - 사용자 변경이나 task-unrelated changes를 되돌리지 않습니다.
 
-portable Git policy는 `templates/agents/global/GIT.md`를 복사하거나 읽습니다. 자세한 commit, PR, worklog policy는 `templates/project-playbook/guides/commit-push-worklog.md`를 복사하거나 읽습니다.
+portable Git policy는 `ai-playbook/GIT.md`를 읽습니다. 자세한 commit, PR, worklog policy는 `ai-playbook/guides/commit-push-worklog.md`를 읽습니다.
 
 ## Skill usage
 
-project-level skill selection rules는 `templates/agents/global/SKILLS.md`를 복사하거나 읽습니다. skill usage는 최소화하고 generic skill이 실제 repository state나 current user instruction을 덮어쓰지 않게 합니다.
+project-level skill selection rules는 `ai-playbook/SKILLS.md`를 읽습니다. skill usage는 최소화하고 generic skill이 실제 repository state나 current user instruction을 덮어쓰지 않게 합니다.
 
 ## Worklog
 

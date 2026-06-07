@@ -7,7 +7,7 @@ Use them when starting a new repository, cleaning up project agent docs, or maki
 ## What is here
 
 - `agents/`: root instruction templates and stack profiles.
-- `agents/global/`: small project-root templates such as `AGENTS.md`, `SKILLS.md`, and `GIT.md`. Despite the folder name, these are copied into target repositories; they are not Codex home-global files.
+- `agents/global/`: small project-root `AGENTS.md` template. Despite the folder name, this is copied into target repositories; it is not Codex home-global guidance.
 - `codex-home/`: optional personal `~/.codex/AGENTS.md` starting point for Codex users.
 - `project-playbook/`: the canonical project-memory bundle to copy into a target project as `ai-playbook/`.
 - Runtime CLI files live at the repository root under `bin/`, `src/`, and `test/`.
@@ -25,20 +25,20 @@ For reusable cross-project behavior, install skills from `skills/`. For project-
 
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
 node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs doctor <target-repo>
 ```
 
 ## Recommended starting points
 
-- Unknown or mixed project: copy `agents/global/AGENTS.md`, then add `agents/global/SKILLS.md` or `agents/global/GIT.md` only if the project needs those standing rules.
+- Unknown or mixed project: copy `agents/global/AGENTS.md`; keep skill and Git policy inside `project-playbook/` as `ai-playbook/SKILLS.md` and `ai-playbook/GIT.md`.
 - Personal Codex defaults: adapt `codex-home/AGENTS.md` into your Codex home directory, then keep repository rules in project `AGENTS.md` files.
 - Any project that needs durable agent memory: bootstrap or copy `project-playbook/` as `ai-playbook/`.
 - React/Vite/FSD project: start with `agents/global/AGENTS.md` plus `agents/profiles/react-vite-fsd/AGENTS.md`.
 - Expo/React Native project: start with `agents/global/AGENTS.md` plus `agents/profiles/react-native-expo/AGENTS.md`.
 - Legacy project: start with `agents/global/AGENTS.md`, the closest `agents/profiles/legacy-*` file, and `project-playbook/guides/legacy-mode.md`.
-- Any project with careful Git or local-only docs: adapt `agents/global/GIT.md` and `project-playbook/guides/commit-push-worklog.md`.
+- Any project with careful Git or local-only docs: adapt `project-playbook/GIT.md` and `project-playbook/guides/commit-push-worklog.md`.
 - Any project that needs evidence-backed architecture cleanup: adapt `project-playbook/guides/structural-review.md`.
 - Any project that already has another agent-doc system or harness: start with `project-playbook/guides/harness-migration.md`.
 

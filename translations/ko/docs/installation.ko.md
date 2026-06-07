@@ -123,15 +123,15 @@ Sync script는 기본적으로 다른 사람이 만든 같은 이름의 skill을
 권장 경로는 런타임 CLI입니다.
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-project> --with-skills --with-git --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-project> --with-skills --with-git
+node .\bin\ai-playbook.mjs bootstrap <target-project> --dry-run
+node .\bin\ai-playbook.mjs bootstrap <target-project>
 node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
 node .\bin\ai-playbook.mjs doctor <target-project>
 ```
 
 대상 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다. `ai-playbook/`을 대상 `.gitignore`에 추가해야 하면 `--local-only`를 사용합니다.
 
-이미 `ai-playbook/`이 있는 프로젝트에서 새 playbook checkout의 누락된 가이드 템플릿만 가져오려면 `guides sync`를 사용합니다. 이 명령은 `--force`로 가이드 파일 덮어쓰기를 명시하지 않는 한 루트 정책 파일이나 프로젝트별 메모를 수정하지 않습니다.
+이미 `ai-playbook/`이 있는 프로젝트에서 새 playbook checkout의 누락된 가이드 템플릿만 가져오려면 `guides sync`를 사용합니다. 이 명령은 `--force`로 가이드 파일 덮어쓰기를 명시하지 않는 한 루트 `AGENTS.md`, playbook 정책 파일, 프로젝트별 메모를 수정하지 않습니다.
 
 Plan과 worklog는 CLI로 생성할 수 있습니다.
 
@@ -149,7 +149,7 @@ Copy-Item .\templates\agents\global\AGENTS.md (Join-Path $projectRoot 'AGENTS.md
 Copy-Item .\templates\project-playbook (Join-Path $projectRoot 'ai-playbook') -Recurse
 ```
 
-`templates/agents/global/`은 프로젝트 루트 기본 템플릿 폴더입니다. 프로젝트에 휴대 가능한 skill 또는 Git 정책이 필요하면 `templates/agents/global/SKILLS.md` 또는 `templates/agents/global/GIT.md`를 선택적으로 복사합니다. 그 다음 `templates/agents/profiles/**`에서 가장 가까운 profile을 병합하고, 필요한 guide는 `templates/project-playbook/guides/**`에서 고릅니다.
+`templates/agents/global/`은 `AGENTS.md`용 프로젝트 루트 기본 템플릿 폴더입니다. skill/Git 정책은 `templates/project-playbook/`에서 복사되는 `ai-playbook/SKILLS.md`, `ai-playbook/GIT.md`에 둡니다. 그 다음 `templates/agents/profiles/**`에서 가장 가까운 profile을 병합하고, 필요한 guide는 `templates/project-playbook/guides/**`에서 고릅니다.
 
 ## Codex skill installer 참고
 

@@ -7,7 +7,7 @@
 ## 포함 내용
 
 - `agents/`: 루트 지침 템플릿과 스택 프로필.
-- `agents/global/`: `AGENTS.md`, `SKILLS.md`, `GIT.md` 같은 작은 프로젝트 루트 템플릿. 폴더 이름이 `global`이지만 대상 저장소에 복사되는 파일이며, Codex home 전역 파일이 아닙니다.
+- `agents/global/`: 작은 프로젝트 루트 `AGENTS.md` 템플릿. 폴더 이름이 `global`이지만 대상 저장소에 복사되는 파일이며, Codex home 전역 지침이 아닙니다.
 - `codex-home/`: Codex 사용자를 위한 선택적 개인 `~/.codex/AGENTS.md` 시작점.
 - `project-playbook/`: 대상 프로젝트에 `ai-playbook/`로 복사하는 표준 프로젝트 메모리 묶음.
 - Runtime CLI 파일은 저장소 루트의 `bin/`, `src/`, `test/` 아래에 있습니다.
@@ -25,20 +25,20 @@
 
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
 node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs doctor <target-repo>
 ```
 
 ## 추천 시작점
 
-- 불분명하거나 혼합된 프로젝트: `agents/global/AGENTS.md`를 복사하고, 필요할 때만 `agents/global/SKILLS.md`나 `agents/global/GIT.md`를 추가합니다.
+- 불분명하거나 혼합된 프로젝트: `agents/global/AGENTS.md`를 복사하고, skill/Git 정책은 `project-playbook/` 안에서 `ai-playbook/SKILLS.md`, `ai-playbook/GIT.md`로 유지합니다.
 - 개인 Codex 기본값: `codex-home/AGENTS.md`를 Codex home 디렉터리에 맞게 조정하고, 저장소 규칙은 프로젝트 `AGENTS.md` 파일에 둡니다.
 - 오래 남길 에이전트 메모리가 필요한 프로젝트: `project-playbook/`을 `ai-playbook/`로 bootstrap하거나 복사합니다.
 - React/Vite/FSD 프로젝트: `agents/global/AGENTS.md`와 `agents/profiles/react-vite-fsd/AGENTS.md`로 시작합니다.
 - Expo/React Native 프로젝트: `agents/global/AGENTS.md`와 `agents/profiles/react-native-expo/AGENTS.md`로 시작합니다.
 - 레거시 프로젝트: `agents/global/AGENTS.md`, 가장 가까운 `agents/profiles/legacy-*`, `project-playbook/guides/legacy-mode.md`로 시작합니다.
-- Git 또는 로컬 전용 문서가 중요한 프로젝트: `agents/global/GIT.md`와 `project-playbook/guides/commit-push-worklog.md`를 조정합니다.
+- Git 또는 로컬 전용 문서가 중요한 프로젝트: `project-playbook/GIT.md`와 `project-playbook/guides/commit-push-worklog.md`를 조정합니다.
 - 근거 기반 아키텍처 정리가 필요한 프로젝트: `project-playbook/guides/structural-review.md`를 조정합니다.
 - 이미 다른 에이전트 문서 체계나 하네스가 있는 프로젝트: `project-playbook/guides/harness-migration.md`로 시작합니다.
 

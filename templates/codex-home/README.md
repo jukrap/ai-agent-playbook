@@ -41,6 +41,8 @@ experiments. Remove it when the experiment is done.
 - Customer, employer, account, or private path details.
 - Rules that should travel with a repository.
 
-Put repository rules in the project's root `AGENTS.md`. If you use this
-playbook's project templates, those root files come from
-`templates/agents/global/` and are different from this Codex home template.
+Put repository working rules in the project's root `AGENTS.md`. If you use this
+playbook's project templates, the root `AGENTS.md` comes from
+`templates/agents/global/`, while skill and Git policy live under
+`templates/project-playbook/` as `ai-playbook/SKILLS.md` and
+`ai-playbook/GIT.md`.

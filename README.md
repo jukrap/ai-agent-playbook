@@ -83,7 +83,7 @@ To update an existing clone later:
 Use the runtime CLI when you want to apply the project harness to a target repository:
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-project> --with-skills --with-git
+node .\bin\ai-playbook.mjs bootstrap <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project>
 ```
 
@@ -96,13 +96,11 @@ node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-project>
 ```
 
-### 3. Copy root project policies manually
+### 3. Copy root project policy manually
 
-Start with small root-level templates under `templates/agents/global`:
+Start with the small root-level template under `templates/agents/global`:
 
 - `AGENTS.md`: default working agreement.
-- `SKILLS.md`: project-level skill selection policy.
-- `GIT.md`: portable commit and PR policy.
 
 Then merge one profile only when the project proves the stack:
 
@@ -116,7 +114,7 @@ For Codex's personal home-level defaults, use `templates/codex-home/AGENTS.md`. 
 
 Copy `templates/project-playbook/` into the target project as `ai-playbook/`.
 
-Use `ai-playbook/` for current project truth, maps, runbooks, decisions, active plans, detailed worklogs, summaries, and archived notes. Decide per project whether this folder is committed or local-only.
+Use `ai-playbook/` for current project truth, skill policy, Git policy, maps, runbooks, decisions, active plans, detailed worklogs, summaries, and archived notes. Decide per project whether this folder is committed or local-only.
 
 Use the CLI to create working docs without inventing paths:
 

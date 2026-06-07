@@ -12,8 +12,8 @@
 ## Template selection
 
 - Root working agreement: `templates/agents/global/AGENTS.md`.
-- Optional root skill policy: `templates/agents/global/SKILLS.md`.
-- Optional root Git policy: `templates/agents/global/GIT.md`.
+- Skill policy: `templates/project-playbook/SKILLS.md`, copied as `ai-playbook/SKILLS.md`.
+- Git policy: `templates/project-playbook/GIT.md`, copied as `ai-playbook/GIT.md`.
 - Project memory: `templates/project-playbook/`을 `ai-playbook/`로 복사합니다.
 - Stack profile: stack이 확인된 경우에만 가장 가까운 `templates/agents/profiles/**/AGENTS.md`를 추가합니다.
 
@@ -24,6 +24,8 @@
 - `README.md`
 - `START_HERE.md`
 - `CURRENT.md`
+- `SKILLS.md`
+- `GIT.md`
 - `questions.md`
 - `maps/README.md`
 - `runbooks/README.md`

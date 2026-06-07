@@ -2,7 +2,7 @@
 
 파일 staging, commit message 작성, push, PR 생성, worklog 기록 전에 이 참고 문서를 사용합니다.
 
-프로젝트가 `templates/agents/global/GIT.md`를 복사했다면 짧은 루트 정책과 이 상세 가이드를 맞춰 둡니다. 루트 파일은 상시 규칙용이고, 이 참고 문서는 전체 절차 체크리스트용입니다.
+프로젝트가 `ai-playbook/GIT.md`를 사용한다면 짧은 정책과 이 상세 가이드를 맞춰 둡니다. Playbook 파일은 상시 규칙용이고, 이 참고 문서는 전체 절차 체크리스트용입니다.
 
 ## Staging 전
 

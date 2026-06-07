@@ -12,8 +12,8 @@ Use this checklist when creating root agent files or an `ai-playbook/` folder fo
 ## Template selection
 
 - Root working agreement: `templates/agents/global/AGENTS.md`.
-- Optional root skill policy: `templates/agents/global/SKILLS.md`.
-- Optional root Git policy: `templates/agents/global/GIT.md`.
+- Skill policy: `templates/project-playbook/SKILLS.md`, copied as `ai-playbook/SKILLS.md`.
+- Git policy: `templates/project-playbook/GIT.md`, copied as `ai-playbook/GIT.md`.
 - Project memory: copy `templates/project-playbook/` as `ai-playbook/`.
 - Stack profile: add the closest `templates/agents/profiles/**/AGENTS.md` only when the stack is confirmed.
 
@@ -24,6 +24,8 @@ For most projects, start with:
 - `README.md`
 - `START_HERE.md`
 - `CURRENT.md`
+- `SKILLS.md`
+- `GIT.md`
 - `questions.md`
 - `maps/README.md`
 - `runbooks/README.md`

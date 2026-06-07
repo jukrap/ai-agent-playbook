@@ -2,7 +2,7 @@
 
 Use this reference before staging files, writing a commit message, pushing, opening a PR, or recording a worklog.
 
-If the project copied `templates/agents/global/GIT.md`, keep the short root policy and this detailed guide aligned. The root file is for standing rules; this reference is for the full procedural checklist.
+If the project uses `ai-playbook/GIT.md`, keep the short policy and this detailed guide aligned. The playbook file is for standing rules; this reference is for the full procedural checklist.
 
 ## Before staging
 

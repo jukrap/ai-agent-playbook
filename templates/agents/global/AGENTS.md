@@ -26,8 +26,8 @@ This file is a working agreement, not a product specification. Keep project-spec
 ## Document roles
 
 - `AGENTS.md`: agent working rules, verification, git, and collaboration policy.
-- `SKILLS.md`: project-level skill selection policy.
-- `GIT.md`: portable commit and PR policy.
+- `ai-playbook/SKILLS.md`: project-level skill selection policy.
+- `ai-playbook/GIT.md`: portable commit and PR policy.
 - `PROJECT_SPEC.md`: product goals, feature/screen scope, data/API policy when the project uses it.
 - `PLANS.md`: milestones, completion criteria, verification commands when the project uses it.
 - `FSD.md`: FSD or architecture boundary rules only when relevant.
@@ -84,6 +84,7 @@ If the project uses another package manager or command set, use only commands pr
 
 ## Git
 
+- Before staging, committing, pushing, writing a commit message, or writing a PR body, read `ai-playbook/GIT.md` when it exists.
 - Prefer explicit staging over `git add .` or `git add -A`.
 - Inspect staged files before committing.
 - Use Conventional Commits by default.
@@ -96,11 +97,11 @@ If the project uses another package manager or command set, use only commands pr
 - Before pushing, check branch, remote, upstream, local-only staged files, and latest verification output.
 - Never revert user-made or task-unrelated changes.
 
-For portable Git policy, copy or read `templates/agents/global/GIT.md`. For deeper commit, PR, and worklog policy, copy or read `templates/project-playbook/guides/commit-push-worklog.md`.
+For portable Git policy, read `ai-playbook/GIT.md`. For deeper commit, PR, and worklog policy, read `ai-playbook/guides/commit-push-worklog.md`.
 
 ## Skill usage
 
-For project-level skill selection rules, copy or read `templates/agents/global/SKILLS.md`. Keep skill usage minimal and never let a generic skill override actual repository state or current user instructions.
+For project-level skill selection rules, read `ai-playbook/SKILLS.md`. Keep skill usage minimal and never let a generic skill override actual repository state or current user instructions.
 
 ## Worklogs
 

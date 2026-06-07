@@ -26,11 +26,11 @@ The runtime applies templates and creates scaffold files. It must not encode pri
 
 ## Template categories
 
-- `templates/agents`: small root-level standing instruction files and stack-specific `AGENTS.md` profiles.
+- `templates/agents`: root `AGENTS.md` standing instruction files and stack-specific profiles.
 - `templates/codex-home`: optional personal Codex home guidance for `~/.codex/AGENTS.md`; it is not copied into target repositories by the runtime.
-- `templates/project-playbook`: copyable project-memory template that becomes `ai-playbook/` in target repositories.
+- `templates/project-playbook`: copyable project-memory template that becomes `ai-playbook/` in target repositories, including internal `SKILLS.md` and `GIT.md` policy files.
 
-Root-level files such as `templates/agents/global/SKILLS.md` and `templates/agents/global/GIT.md` stay in `templates/agents` because they are copied into projects as standing instructions, not invoked as skills.
+Keep the target project root small. The runtime writes only root `AGENTS.md` by default; skill and Git policy belong under `ai-playbook/`.
 
 ## Process skill compatibility
 

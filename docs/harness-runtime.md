@@ -5,7 +5,7 @@
 ## Command surface
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target> [--profile <name>] [--local-only] [--with-skills] [--with-git] [--dry-run] [--force]
+node .\bin\ai-playbook.mjs bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]
 node .\bin\ai-playbook.mjs doctor <target> [--strict]
 node .\bin\ai-playbook.mjs guides sync <target> [--dry-run] [--force]
 node .\bin\ai-playbook.mjs plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
@@ -19,14 +19,14 @@ After publishing, the same CLI can be exposed through the package `bin` as `ai-p
 
 - Copies `templates/project-playbook/` to `<target>/ai-playbook/`.
 - Writes `<target>/AGENTS.md` from `templates/agents/global/AGENTS.md`. This is a project-root base template, not Codex's personal `~/.codex/AGENTS.md`.
-- Adds `SKILLS.md` with `--with-skills` and `GIT.md` with `--with-git`.
+- Includes `ai-playbook/SKILLS.md` and `ai-playbook/GIT.md` as part of the project playbook.
 - Merges a stack profile into `AGENTS.md` when `--profile <name>` is provided.
 - Appends `ai-playbook/` to `.gitignore` only when `--local-only` is provided.
 - Refuses to overwrite existing files unless `--force` is provided.
 
 ## Doctor checks
 
-`doctor` checks for the minimum `ai-playbook/` layout, root `AGENTS.md`, local-only policy, obsolete split style skills, and fixed local absolute paths. In default mode, warnings do not fail the command. In `--strict` mode, warnings fail.
+`doctor` checks for the minimum `ai-playbook/` layout, root `AGENTS.md`, unexpected root `SKILLS.md` or `GIT.md`, local-only policy, obsolete split style skills, and fixed local absolute paths. In default mode, warnings do not fail the command. In `--strict` mode, warnings fail.
 
 ## Guide sync
 
@@ -35,7 +35,7 @@ After publishing, the same CLI can be exposed through the package `bin` as `ai-p
 - Default behavior keeps existing guide files and copies only missing guide files.
 - Use `--dry-run` first to preview additions.
 - Use `--force` only when you intentionally want to replace existing guide files with the current template versions.
-- This command does not update `AGENTS.md`, `SKILLS.md`, `GIT.md`, `CURRENT.md`, plans, worklogs, or project-specific notes.
+- This command does not update `AGENTS.md`, `ai-playbook/SKILLS.md`, `ai-playbook/GIT.md`, `CURRENT.md`, plans, worklogs, or project-specific notes.
 
 ## Scaffold rules
 

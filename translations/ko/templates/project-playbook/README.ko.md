@@ -8,7 +8,7 @@
 
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
 node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs doctor <target-repo>
 ```
@@ -30,7 +30,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 
 1. 최신 사용자 지시.
 2. 실제 code, configuration, command output.
-3. `AGENTS.md`, `SKILLS.md`, `GIT.md`.
+3. 루트 `AGENTS.md`, `ai-playbook/SKILLS.md`, `ai-playbook/GIT.md`.
 4. `ai-playbook/CURRENT.md`, maps, runbooks, decisions.
 5. Worklogs와 archived notes.
 

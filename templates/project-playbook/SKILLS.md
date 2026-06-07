@@ -1,6 +1,6 @@
 # Project Skill Policy
 
-Use this file when a project wants portable guidance for selecting agent skills. Keep it small and adapt it to the project before committing it.
+Use this file when a project wants portable guidance for selecting agent skills. Keep it small and adapt it to the project before committing or sharing the project playbook.
 
 ## Default rule
 

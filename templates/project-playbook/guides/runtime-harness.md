@@ -10,7 +10,7 @@ From this repository:
 
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
 node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs doctor <target-repo>
 ```
@@ -39,7 +39,7 @@ Use skills for behavior during the session:
 
 ## File placement rules
 
-- Keep root `AGENTS.md`, `SKILLS.md`, and `GIT.md` short.
+- Keep root `AGENTS.md` short. Keep skill and Git policy in `ai-playbook/SKILLS.md` and `ai-playbook/GIT.md`.
 - Keep current facts in `CURRENT.md`.
 - Keep active execution plans in `plans/`.
 - Keep detailed reasoning and recovery history in `worklogs/YYYY-MM/`.

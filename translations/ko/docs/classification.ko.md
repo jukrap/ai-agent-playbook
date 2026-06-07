@@ -26,11 +26,11 @@ CLI는 설치형 스킬이 아닙니다. 이 저장소 checkout에서 실행해 
 
 ## 템플릿 분류
 
-- `templates/agents`: 작은 루트 상시 지침 파일과 스택별 `AGENTS.md` 프로필.
+- `templates/agents`: 루트 `AGENTS.md` 상시 지침 파일과 스택별 프로필.
 - `templates/codex-home`: `~/.codex/AGENTS.md`용 선택적 개인 Codex home 지침. 런타임이 대상 저장소에 복사하지 않습니다.
-- `templates/project-playbook`: 대상 저장소에서 `ai-playbook/`가 되는 복사용 프로젝트 메모리 템플릿.
+- `templates/project-playbook`: 대상 저장소에서 `ai-playbook/`가 되는 복사용 프로젝트 메모리 템플릿. 내부 `SKILLS.md`와 `GIT.md` 정책 파일을 포함합니다.
 
-`templates/agents/global/SKILLS.md`, `templates/agents/global/GIT.md` 같은 루트 파일은 스킬로 호출하는 것이 아니라 프로젝트에 복사하는 상시 지침이므로 `templates/agents`에 둡니다.
+대상 프로젝트 루트는 작게 유지합니다. 런타임은 기본적으로 루트 `AGENTS.md`만 쓰고, skill/Git 정책은 `ai-playbook/` 아래에 둡니다.
 
 ## 작업 흐름 스킬 호환성
 

@@ -3,8 +3,6 @@
 ## Recommended files
 
 - `AGENTS.md`: agent working agreements, verification, git, collaboration rules.
-- `SKILLS.md`: project-level skill selection policy.
-- `GIT.md`: 짧은 루트 Git, commit, PR, push policy.
 - `README.md`: public setup and run guide.
 - `PROJECT_SPEC.md`: 프로젝트가 사용할 때 product goal, screens, feature scope, API/data policies.
 - `PLANS.md`: 프로젝트가 사용할 때 milestones, completion criteria, verification commands.
@@ -12,6 +10,8 @@
 - `ai-playbook/README.md`: agent-facing project memory index and source-of-truth rules.
 - `ai-playbook/START_HERE.md`: 다음 agent를 위한 가장 짧은 resume guide.
 - `ai-playbook/CURRENT.md`: current baseline, active risks, decisions that still matter.
+- `ai-playbook/SKILLS.md`: project-level skill selection policy.
+- `ai-playbook/GIT.md`: 짧은 Git, commit, PR, push policy.
 - `ai-playbook/maps/**`: repository, runtime, API, route, data, risk maps.
 - `ai-playbook/runbooks/**`: repeatable commands and operational procedures.
 - `ai-playbook/decisions/**`: durable decisions with rationale and evidence.

@@ -32,8 +32,6 @@ export async function runCli(argv, io = {}) {
         target,
         profile: parsed.flags.profile,
         localOnly: Boolean(parsed.flags['local-only']),
-        withSkills: Boolean(parsed.flags['with-skills']),
-        withGit: Boolean(parsed.flags['with-git']),
         dryRun: Boolean(parsed.flags['dry-run']),
         force: Boolean(parsed.flags.force)
       });
@@ -164,5 +162,5 @@ function write(stream, text) {
 }
 
 function helpText() {
-  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--with-skills] [--with-git] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
+  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
 }

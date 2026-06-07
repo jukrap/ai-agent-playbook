@@ -8,7 +8,7 @@ Preferred setup from this repository:
 
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
 node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs doctor <target-repo>
 ```
@@ -30,7 +30,7 @@ When docs disagree, prefer:
 
 1. Latest user instruction.
 2. Actual code, configuration, and command output.
-3. `AGENTS.md`, `SKILLS.md`, and `GIT.md`.
+3. Root `AGENTS.md`, `ai-playbook/SKILLS.md`, and `ai-playbook/GIT.md`.
 4. `ai-playbook/CURRENT.md`, maps, runbooks, and decisions.
 5. Worklogs and archived notes.
 

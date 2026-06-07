@@ -10,7 +10,7 @@
 
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
 node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs doctor <target-repo>
 ```
@@ -39,7 +39,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo> --strict
 
 ## 파일 배치 규칙
 
-- root `AGENTS.md`, `SKILLS.md`, `GIT.md`는 짧게 유지합니다.
+- 루트 `AGENTS.md`는 짧게 유지합니다. skill/Git 정책은 `ai-playbook/SKILLS.md`와 `ai-playbook/GIT.md`에 둡니다.
 - 현재 사실은 `CURRENT.md`에 둡니다.
 - 실행 중인 계획은 `plans/`에 둡니다.
 - 상세 판단 과정과 복구용 이력은 `worklogs/YYYY-MM/`에 둡니다.

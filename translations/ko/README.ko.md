@@ -83,7 +83,7 @@ test/                  Node CLI 테스트
 대상 저장소에 프로젝트 하네스를 적용하려면 런타임 CLI를 사용합니다.
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-project> --with-skills --with-git
+node .\bin\ai-playbook.mjs bootstrap <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project>
 ```
 
@@ -101,8 +101,6 @@ node .\bin\ai-playbook.mjs guides sync <target-project>
 먼저 `templates/agents/global` 아래의 작은 루트 템플릿을 고릅니다.
 
 - `AGENTS.md`: 기본 작업 합의.
-- `SKILLS.md`: 프로젝트별 스킬 선택 정책.
-- `GIT.md`: 휴대 가능한 커밋/PR 정책.
 
 그 다음 프로젝트 기술 스택이 확인되면 profile 하나만 병합합니다.
 
@@ -116,7 +114,7 @@ Codex의 개인 home 수준 기본값은 `templates/codex-home/AGENTS.md`를 사
 
 `templates/project-playbook/`을 대상 프로젝트에 `ai-playbook/`로 복사합니다.
 
-`ai-playbook/`에는 현재 프로젝트 사실, map, runbook, decision, active plan, 상세 worklog, summary, archive를 둡니다. 이 폴더를 커밋할지 local-only로 둘지는 프로젝트마다 결정합니다.
+`ai-playbook/`에는 현재 프로젝트 사실, 스킬 정책, Git 정책, map, runbook, decision, active plan, 상세 worklog, summary, archive를 둡니다. 이 폴더를 커밋할지 local-only로 둘지는 프로젝트마다 결정합니다.
 
 작업 문서 경로를 임의로 만들지 않으려면 CLI로 생성합니다.
 

@@ -18,7 +18,7 @@ After publishing, the same CLI can be exposed through the package `bin` as `ai-p
 ## Bootstrap behavior
 
 - Copies `templates/project-playbook/` to `<target>/ai-playbook/`.
-- Writes `<target>/AGENTS.md` from `templates/agents/global/AGENTS.md`. This is a project-root base template, not Codex's personal `~/.codex/AGENTS.md`.
+- Writes a thin `<target>/AGENTS.md` from `templates/agents/global/AGENTS.md`. This is a project-root bootstrap, not Codex's personal `~/.codex/AGENTS.md`.
 - Includes `ai-playbook/SKILLS.md` and `ai-playbook/GIT.md` as part of the project playbook.
 - Merges a stack profile into `AGENTS.md` when `--profile <name>` is provided.
 - Appends `ai-playbook/` to `.gitignore` only when `--local-only` is provided.
@@ -26,7 +26,7 @@ After publishing, the same CLI can be exposed through the package `bin` as `ai-p
 
 ## Doctor checks
 
-`doctor` checks for the minimum `ai-playbook/` layout, root `AGENTS.md`, unexpected root `SKILLS.md` or `GIT.md`, local-only policy, obsolete split style skills, and fixed local absolute paths. In default mode, warnings do not fail the command. In `--strict` mode, warnings fail.
+`doctor` checks for the minimum `ai-playbook/` layout, root `AGENTS.md`, whether root `AGENTS.md` points to `ai-playbook/`, unexpected root `SKILLS.md` or `GIT.md`, local-only policy, obsolete split style skills, and fixed local absolute paths. In default mode, warnings do not fail the command. In `--strict` mode, warnings fail.
 
 ## Guide sync
 

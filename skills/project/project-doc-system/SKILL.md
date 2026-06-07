@@ -10,7 +10,7 @@ Separate working rules from product facts and keep stale notes out of active gui
 ## Workflow
 
 1. Inspect existing docs and git/local-only policy before proposing structure.
-2. Keep `AGENTS.md` about how to work; move current project memory into `ai-playbook/`.
+2. Keep `AGENTS.md` as a thin entrypoint; move current project memory into `ai-playbook/`.
 3. Separate current truth, maps, runbooks, decisions, active plans, worklogs, and archived notes.
 4. Preserve dated prompts, handoffs, and worklogs as history unless their rules are still current.
 5. Promote still-current facts from worklogs into `CURRENT.md`, maps, runbooks, or decisions.

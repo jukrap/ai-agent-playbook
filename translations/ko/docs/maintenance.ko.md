@@ -23,7 +23,7 @@
 
 ## 프로젝트 템플릿 추가
 
-1. 복사용 루트 에이전트 지침은 `templates/agents` 아래에 둡니다.
+1. 복사용 얇은 루트 에이전트 부트스트랩 파일은 `templates/agents` 아래에 둡니다.
 2. 개인 Codex home 기본값은 `templates/codex-home` 아래에 둡니다.
 3. 프로젝트 메모리 템플릿은 `templates/project-playbook` 아래에 둡니다.
 4. 재사용 템플릿에는 프로젝트 고유 제품 사실을 넣지 않습니다.

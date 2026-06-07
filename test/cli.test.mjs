@@ -19,7 +19,7 @@ test('bootstrap dry-run does not write files', async () => {
   await cleanup(target);
 });
 
-test('bootstrap writes playbook and root agent policy without overwriting', async () => {
+test('bootstrap writes playbook and thin root agent bootstrap without overwriting', async () => {
   const target = await tempRepo();
   const io = capture(target);
 
@@ -30,6 +30,7 @@ test('bootstrap writes playbook and root agent policy without overwriting', asyn
   assert.equal(existsSync(path.join(target, 'AGENTS.md')), true);
   assert.equal(existsSync(path.join(target, 'SKILLS.md')), false);
   assert.equal(existsSync(path.join(target, 'GIT.md')), false);
+  assert.match(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), /ai-playbook\//);
 
   const gitignore = await readFile(path.join(target, '.gitignore'), 'utf8');
   assert.match(gitignore, /^ai-playbook\/$/m);
@@ -50,6 +51,7 @@ test('doctor reports missing and bootstrapped project state', async () => {
   const checked = capture(target);
   assert.equal(await runCli(['doctor', '.'], checked), 0);
   assert.match(checked.out(), /\[PASS\] ai-playbook\/CURRENT.md/);
+  assert.match(checked.out(), /\[PASS\] root AGENTS bootstrap/);
   await cleanup(target);
 });
 

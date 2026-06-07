@@ -4,7 +4,7 @@ Use this guide when organizing project-specific agent docs.
 
 ## Document roles
 
-- `AGENTS.md`: agent workflow, verification, git, and collaboration rules.
+- `AGENTS.md`: thin agent entrypoint that points to the playbook and nearest local rules.
 - `ai-playbook/SKILLS.md`: project-level skill selection policy.
 - `ai-playbook/GIT.md`: short Git, commit, PR, and push policy.
 - `README.md`: public setup and run guide for humans.
@@ -23,7 +23,7 @@ Use this guide when organizing project-specific agent docs.
 
 ## Cleanup rules
 
-- Keep root agent instructions focused on how to work.
+- Keep root agent instructions short enough to be a stable entrypoint.
 - Keep current project truth in `ai-playbook/CURRENT.md`.
 - Keep structural facts in `ai-playbook/maps/`.
 - Keep repeated commands in `ai-playbook/runbooks/`.

@@ -24,7 +24,7 @@ The goal is not to erase the old system. The goal is to preserve useful evidence
 
 Move or copy content by role:
 
-- Root working rules: current agent behavior, verification policy, and source-of-truth priority go in `AGENTS.md`.
+- Root entrypoint: keep only the minimal agent bootstrap in `AGENTS.md`; put current behavior, verification policy, and source-of-truth detail in `ai-playbook/`.
 - Skill selection rules: reusable skill loading policy goes in `ai-playbook/SKILLS.md`.
 - Git and PR policy: commit, PR, push, and worklog expectations go in `ai-playbook/GIT.md` or `ai-playbook/guides/commit-push-worklog.md`.
 - Current project truth: active architecture, product constraints, and known commands go in `ai-playbook/CURRENT.md`.
@@ -82,7 +82,7 @@ history, and record the migration in a dated worklog.
 
 ## Done criteria
 
-- `AGENTS.md`, `ai-playbook/SKILLS.md`, and `ai-playbook/GIT.md` either exist or have an explicit reason not to exist.
+- `AGENTS.md` points to `ai-playbook/`, and `ai-playbook/SKILLS.md` plus `ai-playbook/GIT.md` either exist or have an explicit reason not to exist.
 - `ai-playbook/START_HERE.md`, `CURRENT.md`, and `questions.md` reflect the current project.
 - Old instructions have either been merged, archived, or marked as historical.
 - Active plans and worklogs live under predictable `ai-playbook/` paths.

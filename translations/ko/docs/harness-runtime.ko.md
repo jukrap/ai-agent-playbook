@@ -18,7 +18,7 @@ node .\bin\ai-playbook.mjs worklog summarize <target> --month YYYY-MM [--dry-run
 ## Bootstrap 동작
 
 - `templates/project-playbook/`을 `<target>/ai-playbook/`로 복사합니다.
-- `templates/agents/global/AGENTS.md`를 `<target>/AGENTS.md`로 복사합니다. 이 파일은 프로젝트 루트 기본 템플릿이며, Codex의 개인 `~/.codex/AGENTS.md`가 아닙니다.
+- `templates/agents/global/AGENTS.md`를 얇은 `<target>/AGENTS.md`로 복사합니다. 이 파일은 프로젝트 루트 부트스트랩이며, Codex의 개인 `~/.codex/AGENTS.md`가 아닙니다.
 - `ai-playbook/SKILLS.md`와 `ai-playbook/GIT.md`는 project playbook의 일부로 포함됩니다.
 - `--profile <name>`이 있으면 `templates/agents/profiles/<name>/AGENTS.md`를 root `AGENTS.md`에 병합합니다.
 - `--local-only`가 있으면 대상 `.gitignore`에만 `ai-playbook/`을 추가합니다.
@@ -26,7 +26,7 @@ node .\bin\ai-playbook.mjs worklog summarize <target> --month YYYY-MM [--dry-run
 
 ## Doctor 점검
 
-`doctor`는 최소 `ai-playbook/` layout, root `AGENTS.md`, 예상치 못한 root `SKILLS.md` 또는 `GIT.md`, local-only 정책, 분리된 예전 스타일 스킬 참조, 고정 로컬 절대경로를 점검합니다. 기본 모드에서는 warning이 실패로 처리되지 않습니다. `--strict` 모드에서는 warning도 실패합니다.
+`doctor`는 최소 `ai-playbook/` layout, root `AGENTS.md`, root `AGENTS.md`가 `ai-playbook/`을 가리키는지, 예상치 못한 root `SKILLS.md` 또는 `GIT.md`, local-only 정책, 분리된 예전 스타일 스킬 참조, 고정 로컬 절대경로를 점검합니다. 기본 모드에서는 warning이 실패로 처리되지 않습니다. `--strict` 모드에서는 warning도 실패합니다.
 
 ## 가이드 동기화
 

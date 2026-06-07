@@ -2,7 +2,7 @@
 
 ## Recommended files
 
-- `AGENTS.md`: agent working agreements, verification, git, collaboration rules.
+- `AGENTS.md`: playbook과 가장 가까운 local rule을 가리키는 얇은 agent 진입점.
 - `README.md`: public setup and run guide.
 - `PROJECT_SPEC.md`: 프로젝트가 사용할 때 product goal, screens, feature scope, API/data policies.
 - `PLANS.md`: 프로젝트가 사용할 때 milestones, completion criteria, verification commands.
@@ -31,7 +31,7 @@
 
 ## Cleanup rules
 
-- root agent instructions는 how to work에 집중합니다.
+- 루트 에이전트 지침은 안정적인 진입점이 될 만큼 짧게 유지합니다.
 - current project truth는 `ai-playbook/CURRENT.md`에 둡니다.
 - structural facts는 `ai-playbook/maps/`에 둡니다.
 - repeated commands는 `ai-playbook/runbooks/`에 둡니다.

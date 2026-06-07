@@ -23,7 +23,7 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 
 ## Adding a project template
 
-1. Put copyable root agent instructions under `templates/agents`.
+1. Put copyable thin root agent bootstrap files under `templates/agents`.
 2. Put personal Codex home defaults under `templates/codex-home`.
 3. Put project-memory templates under `templates/project-playbook`.
 4. Keep project-specific product facts out of reusable templates.

@@ -15,7 +15,7 @@ The repository is more than a skill collection. It provides a harness for:
 
 - installing reusable skills
 - running `ai-playbook` bootstrap and doctor commands
-- copying root agent policies into projects
+- copying a thin root agent bootstrap into projects
 - creating `ai-playbook/` project memory
 - scaffolding active plans, detailed worklogs, and monthly summaries
 - keeping maps, runbooks, decisions, plans, and worklogs useful over time
@@ -100,7 +100,7 @@ node .\bin\ai-playbook.mjs guides sync <target-project>
 
 Start with the small root-level template under `templates/agents/global`:
 
-- `AGENTS.md`: default working agreement.
+- `AGENTS.md`: thin root bootstrap that points agents to `ai-playbook/`.
 
 Then merge one profile only when the project proves the stack:
 
@@ -140,7 +140,7 @@ Do not edit installed copies as the source. Edit this repository, validate, then
 
 ### Project
 
-- `project-bootstrap`: set up root agent policies and `ai-playbook/` project memory.
+- `project-bootstrap`: set up a thin root agent bootstrap and `ai-playbook/` project memory.
 - `repo-onboarding`: inspect a repository before making project-specific assumptions.
 - `project-doc-system`: organize agent docs, project memory, plans, maps, runbooks, and worklogs.
 

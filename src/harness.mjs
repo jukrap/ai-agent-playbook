@@ -95,8 +95,14 @@ export async function doctorProject(options) {
     checks.push(result(ok ? 'pass' : 'fail', `ai-playbook/${file}`, ok ? 'Found.' : 'Missing.'));
   }
 
-  const hasAgents = existsSync(path.join(target, 'AGENTS.md'));
+  const agentsFile = path.join(target, 'AGENTS.md');
+  const hasAgents = existsSync(agentsFile);
   checks.push(result(hasAgents ? 'pass' : 'warn', 'root AGENTS.md', hasAgents ? 'Found.' : 'Missing root agent policy.'));
+  if (hasAgents) {
+    const agentsText = await readFile(agentsFile, 'utf8');
+    const pointsToPlaybook = agentsText.includes('ai-playbook/');
+    checks.push(result(pointsToPlaybook ? 'pass' : 'warn', 'root AGENTS bootstrap', pointsToPlaybook ? 'Points to ai-playbook/.' : 'Found, but does not point agents to ai-playbook/.'));
+  }
 
   const rootPolicyFiles = ['SKILLS.md', 'GIT.md'].filter((file) => existsSync(path.join(target, file)));
   checks.push(result(rootPolicyFiles.length ? 'warn' : 'pass', 'root policy files', rootPolicyFiles.length ? `Prefer ai-playbook/SKILLS.md and ai-playbook/GIT.md; root files found: ${rootPolicyFiles.join(', ')}` : 'No root SKILLS.md or GIT.md.'));

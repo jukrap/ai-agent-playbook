@@ -2,7 +2,7 @@
 
 ## Recommended files
 
-- `AGENTS.md`: agent working agreements, verification, git, and collaboration rules.
+- `AGENTS.md`: thin agent entrypoint that points to the playbook and nearest local rules.
 - `README.md`: public setup and run guide.
 - `PROJECT_SPEC.md`: product goal, screens, feature scope, API/data policies when the project uses this file.
 - `PLANS.md`: milestones, completion criteria, and verification commands when the project uses this file.
@@ -31,7 +31,7 @@
 
 ## Cleanup rules
 
-- Keep root agent instructions focused on how to work.
+- Keep root agent instructions short enough to be a stable entrypoint.
 - Keep current project truth in `ai-playbook/CURRENT.md`.
 - Keep structural facts in `ai-playbook/maps/`.
 - Keep repeated commands in `ai-playbook/runbooks/`.

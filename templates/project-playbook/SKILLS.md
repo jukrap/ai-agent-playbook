@@ -19,7 +19,7 @@ Use process skills before project guardrail skills when the task is about how to
 
 Use installed playbook skills for recurring repository concerns:
 
-- `project-bootstrap`: setting up root agent policies and `ai-playbook/`.
+- `project-bootstrap`: setting up a thin root agent bootstrap and `ai-playbook/`.
 - `repo-onboarding`: entering an unfamiliar or stale repository.
 - `project-doc-system`: organizing `AGENTS.md`, `ai-playbook/`, maps, runbooks, plans, and worklogs.
 - `api-contract-boundary`: changing or reviewing API integration.
@@ -43,7 +43,7 @@ Do not assume another agent runtime's hooks, slash commands, or plugin environme
 
 ## When to write project docs instead of a skill
 
-- Put standing repository instructions in `AGENTS.md`, this file, or other project docs.
+- Put only the root entrypoint in `AGENTS.md`; put standing skill policy here and longer project instructions in `ai-playbook/` docs.
 - Put product scope in product/spec docs.
 - Put milestones in planning docs.
 - Put project memory under `ai-playbook/`.

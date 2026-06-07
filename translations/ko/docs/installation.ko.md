@@ -149,7 +149,7 @@ Copy-Item .\templates\agents\global\AGENTS.md (Join-Path $projectRoot 'AGENTS.md
 Copy-Item .\templates\project-playbook (Join-Path $projectRoot 'ai-playbook') -Recurse
 ```
 
-`templates/agents/global/`은 `AGENTS.md`용 프로젝트 루트 기본 템플릿 폴더입니다. skill/Git 정책은 `templates/project-playbook/`에서 복사되는 `ai-playbook/SKILLS.md`, `ai-playbook/GIT.md`에 둡니다. 그 다음 `templates/agents/profiles/**`에서 가장 가까운 profile을 병합하고, 필요한 guide는 `templates/project-playbook/guides/**`에서 고릅니다.
+`templates/agents/global/`은 `AGENTS.md`용 프로젝트 루트 부트스트랩 템플릿 폴더입니다. skill/Git 정책은 `templates/project-playbook/`에서 복사되는 `ai-playbook/SKILLS.md`, `ai-playbook/GIT.md`에 둡니다. 그 다음 stack이 확인된 경우에만 `templates/agents/profiles/**`에서 가장 가까운 profile을 병합하고, 필요한 guide는 `templates/project-playbook/guides/**`에서 고릅니다.
 
 ## Codex skill installer 참고
 

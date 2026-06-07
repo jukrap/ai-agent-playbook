@@ -9,7 +9,7 @@ For Codex App on Windows, treat this repository as the local source of truth and
 Codex has two different `AGENTS.md` layers:
 
 - Codex home global: personal defaults in `~/.codex/AGENTS.md`, or another directory if `CODEX_HOME` is set.
-- Project root: repository rules in the target project's `AGENTS.md`.
+- Project root: a thin bootstrap in the target project's `AGENTS.md` that points to repository playbook docs.
 
 `templates/codex-home/AGENTS.md` is for the first layer. `templates/agents/global/AGENTS.md` is for the second layer and is what `ai-playbook bootstrap` writes into a target project. Skill and Git policy live under `ai-playbook/SKILLS.md` and `ai-playbook/GIT.md`.
 
@@ -32,7 +32,7 @@ New-Item -ItemType Directory -Force -Path $codexHome | Out-Null
 Copy-Item -LiteralPath (Join-Path $playbookRepo 'templates\codex-home\AGENTS.md') -Destination (Join-Path $codexHome 'AGENTS.md')
 ```
 
-Do not put project-specific rules in the Codex home global file. Use the target project's root `AGENTS.md` and `ai-playbook/` docs for repository behavior.
+Do not put project-specific rules in the Codex home global file. Use the target project's root `AGENTS.md` only as the entrypoint, and keep repository behavior in `ai-playbook/` docs.
 
 For an existing project, do not overwrite its root agent docs on the first pass. Start with a dry run:
 

@@ -39,7 +39,7 @@ Use skills for behavior during the session:
 
 ## File placement rules
 
-- Keep root `AGENTS.md` short. Keep skill and Git policy in `ai-playbook/SKILLS.md` and `ai-playbook/GIT.md`.
+- Keep root `AGENTS.md` as a thin bootstrap. Keep skill and Git policy in `ai-playbook/SKILLS.md` and `ai-playbook/GIT.md`.
 - Keep current facts in `CURRENT.md`.
 - Keep active execution plans in `plans/`.
 - Keep detailed reasoning and recovery history in `worklogs/YYYY-MM/`.

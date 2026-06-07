@@ -11,11 +11,11 @@ Use this checklist when creating root agent files or an `ai-playbook/` folder fo
 
 ## Template selection
 
-- Root working agreement: `templates/agents/global/AGENTS.md`.
+- Thin root bootstrap: `templates/agents/global/AGENTS.md`.
 - Skill policy: `templates/project-playbook/SKILLS.md`, copied as `ai-playbook/SKILLS.md`.
 - Git policy: `templates/project-playbook/GIT.md`, copied as `ai-playbook/GIT.md`.
 - Project memory: copy `templates/project-playbook/` as `ai-playbook/`.
-- Stack profile: add the closest `templates/agents/profiles/**/AGENTS.md` only when the stack is confirmed.
+- Stack profile: add the closest `templates/agents/profiles/**/AGENTS.md` only when the stack is confirmed; keep the root entrypoint short.
 
 ## Minimum useful `ai-playbook/`
 

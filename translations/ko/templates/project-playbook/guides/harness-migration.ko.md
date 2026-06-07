@@ -24,7 +24,7 @@
 
 문서 역할에 따라 옮기거나 복사합니다.
 
-- 루트 작업 규칙: 현재 에이전트 동작, 검증 정책, 기준 우선순위는 `AGENTS.md`에 둡니다.
+- 루트 진입점: `AGENTS.md`에는 최소 agent bootstrap만 두고, 현재 동작, 검증 정책, 기준 우선순위의 상세 내용은 `ai-playbook/`에 둡니다.
 - 스킬 선택 규칙: 재사용 스킬을 언제 읽을지에 대한 정책은 `ai-playbook/SKILLS.md`에 둡니다.
 - Git과 PR 정책: 커밋, PR, push, worklog 기대치는 `ai-playbook/GIT.md` 또는 `ai-playbook/guides/commit-push-worklog.md`에 둡니다.
 - 현재 프로젝트 사실: 활성 아키텍처, 제품 제약, 확인된 명령은 `ai-playbook/CURRENT.md`에 둡니다.
@@ -82,7 +82,7 @@ ai-playbook/CURRENT.md, ai-playbook/questions.md, ai-playbook/guides/harness-mig
 
 ## 완료 기준
 
-- `AGENTS.md`, `ai-playbook/SKILLS.md`, `ai-playbook/GIT.md`가 있거나, 만들지 않는 명확한 이유가 있습니다.
+- `AGENTS.md`가 `ai-playbook/`을 가리키며, `ai-playbook/SKILLS.md`와 `ai-playbook/GIT.md`가 있거나 만들지 않는 명확한 이유가 있습니다.
 - `ai-playbook/START_HERE.md`, `CURRENT.md`, `questions.md`가 현재 프로젝트 상태를 반영합니다.
 - 기존 지침은 병합되었거나, archive로 이동했거나, 과거 기록으로 표시되어 있습니다.
 - 진행 중 계획과 worklog가 예측 가능한 `ai-playbook/` 경로 아래에 있습니다.

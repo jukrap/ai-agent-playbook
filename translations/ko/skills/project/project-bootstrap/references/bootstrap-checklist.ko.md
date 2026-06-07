@@ -11,11 +11,11 @@
 
 ## Template selection
 
-- Root working agreement: `templates/agents/global/AGENTS.md`.
+- 얇은 루트 부트스트랩: `templates/agents/global/AGENTS.md`.
 - Skill policy: `templates/project-playbook/SKILLS.md`, copied as `ai-playbook/SKILLS.md`.
 - Git policy: `templates/project-playbook/GIT.md`, copied as `ai-playbook/GIT.md`.
 - Project memory: `templates/project-playbook/`을 `ai-playbook/`로 복사합니다.
-- Stack profile: stack이 확인된 경우에만 가장 가까운 `templates/agents/profiles/**/AGENTS.md`를 추가합니다.
+- Stack profile: stack이 확인된 경우에만 가장 가까운 `templates/agents/profiles/**/AGENTS.md`를 추가하고, root 진입점은 짧게 유지합니다.
 
 ## Minimum useful `ai-playbook/`
 

@@ -19,7 +19,7 @@
 
 반복되는 저장소 관심사에는 설치된 playbook 스킬을 사용합니다.
 
-- `project-bootstrap`: 루트 에이전트 정책과 `ai-playbook/` 설정.
+- `project-bootstrap`: 얇은 루트 에이전트 부트스트랩과 `ai-playbook/` 설정.
 - `repo-onboarding`: 낯설거나 오래된 저장소 진입.
 - `project-doc-system`: `AGENTS.md`, `ai-playbook/`, maps, runbooks, plans, worklogs 정리.
 - `api-contract-boundary`: API 연동 변경 또는 리뷰.
@@ -43,7 +43,7 @@
 
 ## Skill 대신 project docs에 써야 할 때
 
-- 상시 저장소 지침은 `AGENTS.md`, 이 파일, 또는 다른 프로젝트 문서에 둡니다.
+- `AGENTS.md`에는 루트 진입점만 두고, 상시 skill 정책은 이 파일에, 더 긴 프로젝트 지침은 `ai-playbook/` 문서에 둡니다.
 - 제품 범위는 제품/명세 문서에 둡니다.
 - 마일스톤은 계획 문서에 둡니다.
 - 프로젝트 메모리는 `ai-playbook/` 아래에 둡니다.

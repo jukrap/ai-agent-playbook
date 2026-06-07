@@ -15,7 +15,7 @@
 
 - 재사용 스킬 설치
 - `ai-playbook` bootstrap 및 doctor 명령 실행
-- 프로젝트 루트 에이전트 정책 복사
+- 얇은 프로젝트 루트 에이전트 부트스트랩 복사
 - `ai-playbook/` 프로젝트 메모리 생성
 - 진행 중인 plan, 상세 worklog, 월간 summary 생성
 - map, runbook, decision, plan, worklog를 계속 유용하게 유지
@@ -100,7 +100,7 @@ node .\bin\ai-playbook.mjs guides sync <target-project>
 
 먼저 `templates/agents/global` 아래의 작은 루트 템플릿을 고릅니다.
 
-- `AGENTS.md`: 기본 작업 합의.
+- `AGENTS.md`: 에이전트를 `ai-playbook/`으로 안내하는 얇은 루트 부트스트랩.
 
 그 다음 프로젝트 기술 스택이 확인되면 profile 하나만 병합합니다.
 
@@ -140,7 +140,7 @@ node .\bin\ai-playbook.mjs worklog summarize <target-project> --month 2026-06
 
 ### Project
 
-- `project-bootstrap`: 루트 에이전트 정책과 `ai-playbook/` 프로젝트 메모리를 설정합니다.
+- `project-bootstrap`: 얇은 루트 에이전트 부트스트랩과 `ai-playbook/` 프로젝트 메모리를 설정합니다.
 - `repo-onboarding`: 프로젝트별 가정을 하기 전에 저장소를 먼저 파악합니다.
 - `project-doc-system`: 에이전트 문서, 프로젝트 메모리, plan, map, runbook, worklog를 정리합니다.
 

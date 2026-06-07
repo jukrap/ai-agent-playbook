@@ -4,7 +4,7 @@
 
 ## 문서 역할
 
-- `AGENTS.md`: 에이전트 작업 흐름, 검증, 커밋, 협업 규칙.
+- `AGENTS.md`: playbook과 가장 가까운 local rule을 가리키는 얇은 agent 진입점.
 - `ai-playbook/SKILLS.md`: 프로젝트 수준 스킬 선택 정책.
 - `ai-playbook/GIT.md`: 짧은 Git, commit, PR, push 정책.
 - `README.md`: 사람을 위한 공개 setup/run guide.
@@ -24,7 +24,7 @@
 
 ## 정리 규칙
 
-- `AGENTS.md`는 작업 방식에 집중합니다.
+- `AGENTS.md`는 안정적인 진입점이 될 만큼 짧게 유지합니다.
 - 현재 프로젝트 사실은 `ai-playbook/CURRENT.md`에 둡니다.
 - 구조 사실은 `ai-playbook/maps/`에 둡니다.
 - 반복 명령은 `ai-playbook/runbooks/`에 둡니다.

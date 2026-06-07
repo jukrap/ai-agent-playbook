@@ -2,6 +2,40 @@
 
 Codex can use the skills in this repository after they are copied into its skill directory.
 
+## Codex App on Windows
+
+For Codex App on Windows, treat this repository as the local source of truth and run setup from PowerShell in the checkout. Keep paths in variables or quotes because target repositories often live under paths with spaces or non-ASCII characters.
+
+Recommended first setup:
+
+```powershell
+$playbookRepo = '<path-to-ai-agent-playbook>'
+Set-Location -LiteralPath $playbookRepo
+.\install.ps1
+```
+
+After syncing skills, restart Codex App or start a new session so skill metadata is refreshed.
+
+For an existing project, do not overwrite its root agent docs on the first pass. Start with a dry run:
+
+```powershell
+$playbookRepo = '<path-to-ai-agent-playbook>'
+$targetRepo = '<path-to-target-project>'
+Set-Location -LiteralPath $playbookRepo
+node .\bin\ai-playbook.mjs bootstrap $targetRepo --local-only --with-skills --with-git --dry-run
+```
+
+If the target already has `AGENTS.md`, `SKILLS.md`, or `GIT.md`, inspect the conflict instead of using `--force`. A safer trial path is to scaffold into a temporary folder, inspect the generated files, then manually merge only the pieces the project needs:
+
+```powershell
+$scratch = Join-Path $env:TEMP 'ai-playbook-scaffold'
+Remove-Item -LiteralPath $scratch -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Path $scratch | Out-Null
+node .\bin\ai-playbook.mjs bootstrap $scratch --local-only --with-skills --with-git
+```
+
+For a legacy or documentation-heavy project, usually add only `ai-playbook/START_HERE.md`, `CURRENT.md`, and a docs map first. Keep existing worklogs and plans in place until a human has reviewed the migration.
+
 ## Local sync
 
 For the full new-computer setup, see `../../docs/installation.md`. From the repository root, use this once after cloning:
@@ -51,6 +85,14 @@ node .\bin\ai-playbook.mjs worklog new <target-repo> --title "short-worklog-titl
 ```
 
 Use the CLI when a project needs repeatable `AGENTS.md`, `SKILLS.md`, `GIT.md`, and `ai-playbook/` scaffolding. Use installed skills when the agent needs reusable working behavior during a coding session.
+
+Codex App does not need `ai-playbook` to be installed as a global command. The stable invocation is:
+
+```powershell
+node .\bin\ai-playbook.mjs <command>
+```
+
+Use `doctor` after manual merges to catch missing playbook files, absolute local paths, and obsolete style-skill references.
 
 ## Portable instructions
 

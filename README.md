@@ -49,7 +49,7 @@ test/                  Node CLI tests
 - [Repository context](CONTEXT.md): core terms and design intent for the playbook.
 - [Installation](docs/installation.md): first install, existing-clone update, custom skill paths, and Codex restart notes.
 - [Runtime harness](docs/harness-runtime.md): `ai-playbook` CLI commands, overwrite policy, and target-project flow.
-- [Codex adapter](adapters/codex/README.md): Codex-specific local sync behavior.
+- [Codex adapter](adapters/codex/README.md): Codex-specific local sync behavior and Codex App on Windows workflow.
 - [Templates](templates/README.md): what to copy into project repositories and what to leave as installable skills.
 - [Classification](docs/classification.md): why skills, templates, examples, docs, and adapters are separated.
 - [Superpowers integration](docs/superpowers-integration.md): how to use this playbook alongside external process skills.

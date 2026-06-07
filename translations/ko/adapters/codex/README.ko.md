@@ -2,6 +2,40 @@
 
 Codex는 이 저장소의 스킬이 Codex 스킬 디렉터리에 복사된 뒤 사용할 수 있습니다.
 
+## Windows용 Codex App
+
+Windows용 Codex App에서는 이 저장소 checkout을 로컬 source of truth로 두고 PowerShell에서 설정을 실행합니다. 대상 저장소 경로에 공백이나 비ASCII 문자가 들어갈 수 있으므로 경로는 변수나 따옴표, `-LiteralPath`로 다룹니다.
+
+처음 설정할 때의 권장 흐름:
+
+```powershell
+$playbookRepo = '<path-to-ai-agent-playbook>'
+Set-Location -LiteralPath $playbookRepo
+.\install.ps1
+```
+
+스킬을 동기화한 뒤에는 Codex App을 재시작하거나 새 세션을 시작해 skill metadata가 갱신되게 합니다.
+
+기존 프로젝트에는 첫 시도에서 root agent docs를 덮어쓰지 않습니다. 먼저 dry run으로 시작합니다.
+
+```powershell
+$playbookRepo = '<path-to-ai-agent-playbook>'
+$targetRepo = '<path-to-target-project>'
+Set-Location -LiteralPath $playbookRepo
+node .\bin\ai-playbook.mjs bootstrap $targetRepo --local-only --with-skills --with-git --dry-run
+```
+
+대상 프로젝트에 이미 `AGENTS.md`, `SKILLS.md`, `GIT.md`가 있으면 `--force`를 쓰지 말고 conflict를 확인합니다. 더 안전한 시험 경로는 임시 폴더에 scaffold를 만든 뒤 생성된 파일을 보고 프로젝트에 필요한 부분만 수동 병합하는 것입니다.
+
+```powershell
+$scratch = Join-Path $env:TEMP 'ai-playbook-scaffold'
+Remove-Item -LiteralPath $scratch -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Path $scratch | Out-Null
+node .\bin\ai-playbook.mjs bootstrap $scratch --local-only --with-skills --with-git
+```
+
+레거시 또는 문서가 많은 프로젝트에는 보통 `ai-playbook/START_HERE.md`, `CURRENT.md`, docs map만 먼저 얹습니다. 기존 worklog와 plan은 사람이 migration을 검토하기 전까지 제자리에 둡니다.
+
 ## 로컬 동기화
 
 새 컴퓨터에서의 전체 설정은 `../../../docs/installation.md`를 봅니다. 저장소 루트에서 clone 뒤 한 번 실행합니다.
@@ -51,6 +85,14 @@ node .\bin\ai-playbook.mjs worklog new <target-repo> --title "short-worklog-titl
 ```
 
 대상 프로젝트에 반복 가능한 `AGENTS.md`, `SKILLS.md`, `GIT.md`, `ai-playbook/` scaffold가 필요하면 CLI를 사용합니다. 코딩 세션 중 재사용할 작업 행동이 필요하면 설치된 skill을 사용합니다.
+
+Codex App에서는 `ai-playbook`을 global command로 설치할 필요가 없습니다. 안정적인 호출 방식은 아래입니다.
+
+```powershell
+node .\bin\ai-playbook.mjs <command>
+```
+
+수동 병합 뒤에는 `doctor`를 실행해 누락된 playbook 파일, 고정 로컬 절대경로, 예전 style skill 참조를 확인합니다.
 
 ## 휴대 가능한 지침
 

@@ -26,6 +26,8 @@ if (Test-Path $target) {
 
 installer 또는 updater가 끝나면 Codex를 재시작합니다.
 
+Windows용 Codex App에서는 이 저장소를 일반 checkout으로 유지하고 그 checkout에서 PowerShell 명령을 실행합니다. Windows app 작업 흐름, 기존 프로젝트 dry run, 안전한 수동 병합 경로는 `../adapters/codex/README.ko.md`를 봅니다.
+
 ## Option 2: 일반 Git 설치
 
 GitHub CLI를 쓰지 않거나 일반 `git clone`을 선호할 때 사용합니다.

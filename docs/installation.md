@@ -26,6 +26,8 @@ if (Test-Path $target) {
 
 Restart Codex after the installer or updater finishes.
 
+For Codex App on Windows, keep this repository as a normal checkout and run PowerShell commands from that checkout. See `../adapters/codex/README.md` for the Windows app workflow, existing-project dry runs, and safe manual merge path.
+
 ## Option 2: Standard Git install
 
 Use this when GitHub CLI is not available, or when you prefer normal `git clone`.

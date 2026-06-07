@@ -60,6 +60,8 @@ installer는 저장소를 검증하고 `skills/<category>/<skill>`의 설치형 
 - `%USERPROFILE%\.agents\skills\<skill>`
 - legacy skill은 `%USERPROFILE%\.agents\skills\legacys\<legacy-skill>`
 
+설치된 skill에는 `.ai-agent-playbook-install.json` ownership marker가 추가됩니다. 이후 update는 marker가 있는 managed skill, 예전 installer가 만든 것으로 보이는 동일 내용 unmanaged copy, 또는 사용자가 `-ForceUnmanaged`를 명시한 unmanaged copy만 교체합니다. Managed 설치본을 로컬에서 수정한 경우 updater는 기본적으로 덮어쓰지 않으며, 백업 후 `-ForceManaged`를 명시해야 교체합니다.
+
 동기화 뒤에는 Codex를 재시작해 다음 세션이 skill metadata를 읽게 합니다.
 
 ### 4. 설치 확인
@@ -80,6 +82,14 @@ Set-Location "$env:USERPROFILE\Documents\ai-agent-playbook"
 
 update script는 `--ff-only`로 pull한 뒤 installer를 실행합니다. 이미 clone이 있는 컴퓨터의 일반적인 업데이트 경로입니다. 동기화 뒤에는 Codex를 재시작합니다.
 
+위험한 update 전에는 dry run을 먼저 사용합니다.
+
+```powershell
+.\update.ps1 -WhatIf
+```
+
+Updater가 unmanaged conflict를 보고하면 해당 폴더를 먼저 확인합니다. 같은 이름의 skill이 이 playbook에서 온 것이 확실하거나 의도적으로 대체 가능한 경우가 아니라면 `-ForceUnmanaged`를 쓰지 않습니다.
+
 ## Option 4: 사용자 지정 경로에 수동 동기화
 
 기본 skill 디렉터리가 아닌 곳을 써야 할 때만 사용합니다.
@@ -91,6 +101,8 @@ update script는 `--ff-only`로 pull한 뒤 installer를 실행합니다. 이미
   -CodexSkillsRoot "$env:USERPROFILE\.codex\skills" `
   -AgentsSkillsRoot "$env:USERPROFILE\.agents\skills"
 ```
+
+Sync script는 기본적으로 다른 사람이 만든 같은 이름의 skill을 삭제하거나 덮어쓰지 않습니다. Obsolete skill도 ownership marker가 이 playbook 설치본임을 증명할 때만 제거합니다.
 
 ## 프로젝트 템플릿 적용
 

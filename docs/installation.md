@@ -60,6 +60,8 @@ The installer validates the repository and copies installable skills from `skill
 - `%USERPROFILE%\.agents\skills\<skill>`
 - `%USERPROFILE%\.agents\skills\legacys\<legacy-skill>` for legacy skills
 
+Installed skills receive an ownership marker named `.ai-agent-playbook-install.json`. Later updates replace only matching managed skills, matching unmanaged copies from older installs, or unmanaged copies when `-ForceUnmanaged` is explicitly provided. If a managed installed copy was edited locally, the updater refuses to overwrite it unless `-ForceManaged` is provided.
+
 Restart Codex after syncing so the session can pick up skill metadata.
 
 ### 4. Confirm installation
@@ -80,6 +82,14 @@ Set-Location "$env:USERPROFILE\Documents\ai-agent-playbook"
 
 The update script pulls with `--ff-only`, then runs the installer. This is the normal one-command update path for every computer that already has a clone. Restart Codex after syncing.
 
+Use a dry run before risky updates:
+
+```powershell
+.\update.ps1 -WhatIf
+```
+
+If the updater reports an unmanaged conflict, inspect that folder before deciding whether this playbook should own it. Do not use `-ForceUnmanaged` unless the same-name skill is known to be from this playbook or intentionally replaceable.
+
 ## Option 4: Manual sync for custom paths
 
 Use this only when you need non-default skill directories.
@@ -91,6 +101,8 @@ Use this only when you need non-default skill directories.
   -CodexSkillsRoot "$env:USERPROFILE\.codex\skills" `
   -AgentsSkillsRoot "$env:USERPROFILE\.agents\skills"
 ```
+
+The sync script does not remove or overwrite other people's same-name skills by default. It only removes obsolete skills when their ownership marker proves they were installed by this playbook.
 
 ## Applying project templates
 

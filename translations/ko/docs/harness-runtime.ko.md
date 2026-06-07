@@ -18,7 +18,7 @@ node .\bin\ai-playbook.mjs worklog summarize <target> --month YYYY-MM [--dry-run
 ## Bootstrap 동작
 
 - `templates/project-playbook/`을 `<target>/ai-playbook/`로 복사합니다.
-- `templates/agents/global/AGENTS.md`를 `<target>/AGENTS.md`로 복사합니다.
+- `templates/agents/global/AGENTS.md`를 `<target>/AGENTS.md`로 복사합니다. 이 파일은 프로젝트 루트 기본 템플릿이며, Codex의 개인 `~/.codex/AGENTS.md`가 아닙니다.
 - `--with-skills`가 있으면 `SKILLS.md`를 추가합니다.
 - `--with-git`이 있으면 `GIT.md`를 추가합니다.
 - `--profile <name>`이 있으면 `templates/agents/profiles/<name>/AGENTS.md`를 root `AGENTS.md`에 병합합니다.

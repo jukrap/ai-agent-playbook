@@ -66,6 +66,16 @@ Installed skills receive an ownership marker named `.ai-agent-playbook-install.j
 
 Restart Codex after syncing so the session can pick up skill metadata.
 
+Optional Codex home guidance:
+
+```powershell
+$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $env:USERPROFILE '.codex' }
+New-Item -ItemType Directory -Force -Path $codexHome | Out-Null
+Copy-Item .\templates\codex-home\AGENTS.md (Join-Path $codexHome 'AGENTS.md')
+```
+
+This is for personal Codex defaults only. Keep repository rules in project `AGENTS.md` files.
+
 ### 4. Confirm installation
 
 ```powershell
@@ -141,7 +151,7 @@ Copy-Item .\templates\agents\global\AGENTS.md (Join-Path $projectRoot 'AGENTS.md
 Copy-Item .\templates\project-playbook (Join-Path $projectRoot 'ai-playbook') -Recurse
 ```
 
-Optionally copy `templates/agents/global/SKILLS.md` or `templates/agents/global/GIT.md` when the project needs portable skill or Git policy. Then merge the closest profile from `templates/agents/profiles/**` and any needed guides from `templates/project-playbook/guides/**`.
+`templates/agents/global/` is the project-root base template folder. Optionally copy `templates/agents/global/SKILLS.md` or `templates/agents/global/GIT.md` when the project needs portable skill or Git policy. Then merge the closest profile from `templates/agents/profiles/**` and any needed guides from `templates/project-playbook/guides/**`.
 
 ## Codex skill installer note
 

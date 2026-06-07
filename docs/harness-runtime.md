@@ -18,7 +18,7 @@ After publishing, the same CLI can be exposed through the package `bin` as `ai-p
 ## Bootstrap behavior
 
 - Copies `templates/project-playbook/` to `<target>/ai-playbook/`.
-- Writes `<target>/AGENTS.md` from `templates/agents/global/AGENTS.md`.
+- Writes `<target>/AGENTS.md` from `templates/agents/global/AGENTS.md`. This is a project-root base template, not Codex's personal `~/.codex/AGENTS.md`.
 - Adds `SKILLS.md` with `--with-skills` and `GIT.md` with `--with-git`.
 - Merges a stack profile into `AGENTS.md` when `--profile <name>` is provided.
 - Appends `ai-playbook/` to `.gitignore` only when `--local-only` is provided.

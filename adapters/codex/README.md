@@ -6,6 +6,13 @@ Codex can use the skills in this repository after they are copied into its skill
 
 For Codex App on Windows, treat this repository as the local source of truth and run setup from PowerShell in the checkout. Keep paths in variables or quotes because target repositories often live under paths with spaces or non-ASCII characters.
 
+Codex has two different `AGENTS.md` layers:
+
+- Codex home global: personal defaults in `~/.codex/AGENTS.md`, or another directory if `CODEX_HOME` is set.
+- Project root: repository rules in the target project's `AGENTS.md`.
+
+`templates/codex-home/AGENTS.md` is for the first layer. `templates/agents/global/AGENTS.md` is for the second layer and is what `ai-playbook bootstrap` writes into a target project.
+
 Recommended first setup:
 
 ```powershell
@@ -15,6 +22,17 @@ Set-Location -LiteralPath $playbookRepo
 ```
 
 After syncing skills, restart Codex App or start a new session so skill metadata is refreshed.
+
+Optional personal Codex global setup:
+
+```powershell
+$playbookRepo = '<path-to-ai-agent-playbook>'
+$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $env:USERPROFILE '.codex' }
+New-Item -ItemType Directory -Force -Path $codexHome | Out-Null
+Copy-Item -LiteralPath (Join-Path $playbookRepo 'templates\codex-home\AGENTS.md') -Destination (Join-Path $codexHome 'AGENTS.md')
+```
+
+Do not put project-specific rules in the Codex home global file. Use the target project's root `AGENTS.md` and `ai-playbook/` docs for repository behavior.
 
 For an existing project, do not overwrite its root agent docs on the first pass. Start with a dry run:
 

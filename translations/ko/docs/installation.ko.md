@@ -66,6 +66,16 @@ installer는 저장소를 검증하고 `skills/<category>/<skill>`의 설치형 
 
 동기화 뒤에는 Codex를 재시작해 다음 세션이 skill metadata를 읽게 합니다.
 
+선택적 Codex home 지침:
+
+```powershell
+$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $env:USERPROFILE '.codex' }
+New-Item -ItemType Directory -Force -Path $codexHome | Out-Null
+Copy-Item .\templates\codex-home\AGENTS.md (Join-Path $codexHome 'AGENTS.md')
+```
+
+이 파일은 개인 Codex 기본값 전용입니다. 저장소 규칙은 프로젝트 `AGENTS.md` 파일에 둡니다.
+
 ### 4. 설치 확인
 
 ```powershell
@@ -139,7 +149,7 @@ Copy-Item .\templates\agents\global\AGENTS.md (Join-Path $projectRoot 'AGENTS.md
 Copy-Item .\templates\project-playbook (Join-Path $projectRoot 'ai-playbook') -Recurse
 ```
 
-프로젝트에 휴대 가능한 skill 또는 Git 정책이 필요하면 `templates/agents/global/SKILLS.md` 또는 `templates/agents/global/GIT.md`를 선택적으로 복사합니다. 그 다음 `templates/agents/profiles/**`에서 가장 가까운 profile을 병합하고, 필요한 guide는 `templates/project-playbook/guides/**`에서 고릅니다.
+`templates/agents/global/`은 프로젝트 루트 기본 템플릿 폴더입니다. 프로젝트에 휴대 가능한 skill 또는 Git 정책이 필요하면 `templates/agents/global/SKILLS.md` 또는 `templates/agents/global/GIT.md`를 선택적으로 복사합니다. 그 다음 `templates/agents/profiles/**`에서 가장 가까운 profile을 병합하고, 필요한 guide는 `templates/project-playbook/guides/**`에서 고릅니다.
 
 ## Codex skill installer 참고
 

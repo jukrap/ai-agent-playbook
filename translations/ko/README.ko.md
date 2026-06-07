@@ -33,6 +33,7 @@ skills/
   legacy/              레거시 시스템 유지보수 스킬
 templates/
   agents/              루트 에이전트 지침 템플릿과 프로젝트 프로필
+  codex-home/          선택적 개인 Codex home AGENTS.md 템플릿
   project-playbook/    복사용 ai-playbook 프로젝트 메모리 템플릿
 examples/              작업 기록, 프롬프트, 인수인계 예시
 translations/          사람이 읽는 번역본. 스킬 설치 대상이 아님
@@ -108,6 +109,8 @@ node .\bin\ai-playbook.mjs guides sync <target-project>
 - `templates/agents/profiles/react-vite-fsd/AGENTS.md`
 - `templates/agents/profiles/react-native-expo/AGENTS.md`
 - `templates/agents/profiles/legacy-*`
+
+Codex의 개인 home 수준 기본값은 `templates/codex-home/AGENTS.md`를 사용합니다. 이 파일은 프로젝트 루트 템플릿과 별개이며, 저장소별 규칙을 담지 않습니다.
 
 ### 4. 프로젝트 메모리 수동 추가
 

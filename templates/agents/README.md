@@ -2,9 +2,11 @@
 
 `templates/agents` contains `AGENTS.md` examples that can be copied into project roots. A project usually keeps one root `AGENTS.md` and merges in the nearest matching profile.
 
+The `global/` name means "stack-neutral project-root base template" inside this repository. It is not Codex's personal global file in `~/.codex/AGENTS.md`. For Codex home-level defaults, use `../codex-home/`.
+
 ## Choosing a profile
 
-- `global/AGENTS.md`: default working agreement for unknown stacks, documentation-first projects, and general repositories.
+- `global/AGENTS.md`: default project-root working agreement for unknown stacks, documentation-first projects, and general repositories.
 - `global/SKILLS.md`: optional project-level skill selection policy.
 - `global/GIT.md`: optional project-level commit and PR policy.
 - `profiles/react-vite-fsd/AGENTS.md`: React, Vite, TypeScript, pnpm, and pragmatic FSD or a similar layered frontend.

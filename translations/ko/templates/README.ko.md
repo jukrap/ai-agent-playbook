@@ -7,7 +7,8 @@
 ## 포함 내용
 
 - `agents/`: 루트 지침 템플릿과 스택 프로필.
-- `agents/global/`: `AGENTS.md`, `SKILLS.md`, `GIT.md` 같은 작은 루트 템플릿.
+- `agents/global/`: `AGENTS.md`, `SKILLS.md`, `GIT.md` 같은 작은 프로젝트 루트 템플릿. 폴더 이름이 `global`이지만 대상 저장소에 복사되는 파일이며, Codex home 전역 파일이 아닙니다.
+- `codex-home/`: Codex 사용자를 위한 선택적 개인 `~/.codex/AGENTS.md` 시작점.
 - `project-playbook/`: 대상 프로젝트에 `ai-playbook/`로 복사하는 표준 프로젝트 메모리 묶음.
 - Runtime CLI 파일은 저장소 루트의 `bin/`, `src/`, `test/` 아래에 있습니다.
 
@@ -32,6 +33,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 ## 추천 시작점
 
 - 불분명하거나 혼합된 프로젝트: `agents/global/AGENTS.md`를 복사하고, 필요할 때만 `agents/global/SKILLS.md`나 `agents/global/GIT.md`를 추가합니다.
+- 개인 Codex 기본값: `codex-home/AGENTS.md`를 Codex home 디렉터리에 맞게 조정하고, 저장소 규칙은 프로젝트 `AGENTS.md` 파일에 둡니다.
 - 오래 남길 에이전트 메모리가 필요한 프로젝트: `project-playbook/`을 `ai-playbook/`로 bootstrap하거나 복사합니다.
 - React/Vite/FSD 프로젝트: `agents/global/AGENTS.md`와 `agents/profiles/react-vite-fsd/AGENTS.md`로 시작합니다.
 - Expo/React Native 프로젝트: `agents/global/AGENTS.md`와 `agents/profiles/react-native-expo/AGENTS.md`로 시작합니다.

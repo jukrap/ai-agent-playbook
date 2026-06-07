@@ -7,7 +7,8 @@ Use them when starting a new repository, cleaning up project agent docs, or maki
 ## What is here
 
 - `agents/`: root instruction templates and stack profiles.
-- `agents/global/`: small root-level templates such as `AGENTS.md`, `SKILLS.md`, and `GIT.md`.
+- `agents/global/`: small project-root templates such as `AGENTS.md`, `SKILLS.md`, and `GIT.md`. Despite the folder name, these are copied into target repositories; they are not Codex home-global files.
+- `codex-home/`: optional personal `~/.codex/AGENTS.md` starting point for Codex users.
 - `project-playbook/`: the canonical project-memory bundle to copy into a target project as `ai-playbook/`.
 - Runtime CLI files live at the repository root under `bin/`, `src/`, and `test/`.
 
@@ -32,6 +33,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 ## Recommended starting points
 
 - Unknown or mixed project: copy `agents/global/AGENTS.md`, then add `agents/global/SKILLS.md` or `agents/global/GIT.md` only if the project needs those standing rules.
+- Personal Codex defaults: adapt `codex-home/AGENTS.md` into your Codex home directory, then keep repository rules in project `AGENTS.md` files.
 - Any project that needs durable agent memory: bootstrap or copy `project-playbook/` as `ai-playbook/`.
 - React/Vite/FSD project: start with `agents/global/AGENTS.md` plus `agents/profiles/react-vite-fsd/AGENTS.md`.
 - Expo/React Native project: start with `agents/global/AGENTS.md` plus `agents/profiles/react-native-expo/AGENTS.md`.

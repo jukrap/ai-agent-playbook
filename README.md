@@ -33,6 +33,7 @@ skills/
   legacy/              Legacy-system maintenance skills
 templates/
   agents/              Root agent instruction templates and project profiles
+  codex-home/          Optional personal Codex home AGENTS.md template
   project-playbook/    Copyable ai-playbook project-memory template
 examples/              Worklog, prompt, and handoff examples
 translations/          Human translations; never install these as skills
@@ -108,6 +109,8 @@ Then merge one profile only when the project proves the stack:
 - `templates/agents/profiles/react-vite-fsd/AGENTS.md`
 - `templates/agents/profiles/react-native-expo/AGENTS.md`
 - `templates/agents/profiles/legacy-*`
+
+For Codex's personal home-level defaults, use `templates/codex-home/AGENTS.md`. That file is separate from project-root templates and should not contain repository-specific rules.
 
 ### 4. Add project memory manually
 

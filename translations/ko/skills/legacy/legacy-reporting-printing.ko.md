@@ -2,7 +2,7 @@
 
 Report generation, print preview, PDF/Excel export, barcode/label printing, invoices, templates, printer/device-specific output flow를 유지보수할 때 사용합니다.
 
-## Workflow
+## 진행 절차
 
 1. template source, data query, formatting layer, export library, printer path, device assumptions를 식별합니다.
 2. page size, margins, DPI, fonts, barcode/QR readability, locale, timezone, number/date formatting을 확인합니다.

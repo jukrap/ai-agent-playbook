@@ -2,7 +2,7 @@
 
 IE mode, ActiveX, old browser APIs, document modes, device plugins, enterprise compatibility constraints에 의존하는 intranet system을 유지보수할 때 사용합니다.
 
-## Workflow
+## 진행 절차
 
 1. target browser, document mode, compatibility view, IE mode policy, required plugins를 식별합니다.
 2. ActiveX/object/embed calls, device integrations, security prompts, registry/group-policy assumptions를 추적합니다.

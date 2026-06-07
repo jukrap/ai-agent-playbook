@@ -2,7 +2,7 @@
 
 Scheduled batches, cron jobs, Windows Task Scheduler, CSV/Excel import-export, SFTP/file drops, EDI-like transfers, nightly integrations를 유지보수할 때 사용합니다.
 
-## Workflow
+## 진행 절차
 
 1. scheduler, trigger time, input/output folders, filename patterns, encoding, delimiter, retention rules를 식별합니다.
 2. parsing, validation, deduplication, retries, partial failure, archive/error handling을 추적합니다.

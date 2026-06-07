@@ -1,12 +1,12 @@
 # Git, 커밋, PR 정책
 
-이 파일은 휴대 가능한 프로젝트 수준 Git 정책으로 사용합니다. 프로젝트가 조정하기 전까지 저장소별 브랜치 이름, remote, 이슈 번호, 보호 브랜치 규칙은 템플릿에 넣지 않습니다.
+이 파일은 portable project-level Git policy입니다. repository-specific branch name, remote, issue number, protected-branch rule은 프로젝트에 맞게 조정하기 전까지 template에 넣지 않습니다.
 
-이 문서는 루트에 두는 짧은 정책입니다. 이후 독자가 참고할 수 있는 상세 커밋, PR, 작업 기록 기준이 필요하면 `../../local-ai/commit-push-worklog.md` 같은 자세한 문서를 함께 사용합니다.
+이 문서는 루트에 두는 짧은 정책입니다. 미래 독자를 위한 자세한 commit, PR, worklog guidance가 필요하면 `templates/project-playbook/guides/commit-push-worklog.md` 같은 상세 문서를 함께 사용합니다.
 
-## 스테이징 전
+## Staging 전
 
-현재 브랜치, remote, upstream, dirty file, staged file을 확인합니다.
+현재 branch, remotes, upstream, dirty files, staged files를 확인합니다.
 
 ```bash
 git status --short --branch
@@ -16,93 +16,98 @@ git diff --cached --name-only
 ```
 
 - 관련 없는 사용자 변경을 되돌리지 않습니다.
-- local-only 문서, 참고 자료, 생성 산출물, 관련 없는 dirty file을 스테이징하지 않습니다.
-- `git add .`, `git add -A`보다 명시적 스테이징을 선호합니다.
-- 커밋 전 staged file 이름과 staged diff를 확인합니다.
+- local-only docs, reference material, generated output, unrelated dirty files를 stage하지 않습니다.
+- `git add .` 또는 `git add -A`보다 explicit staging을 선호합니다.
+- commit 전 staged names와 staged diff를 확인합니다.
+
+## 커밋 체크포인트
+
+프로젝트가 명시적으로 자동 commit을 허용한 경우가 아니라면, 아래 상황 후에는 commit 여부를 묻습니다.
+
+- 검증된 logical slice가 완료됨
+- 많은 파일이 변경됨
+- diff가 커서 review intent가 흐려짐
+- 한 세션에 여러 concern이 섞임
+- 위험한 refactor 또는 migration step이 깨끗한 rollback point에 도달함
 
 ## 커밋 메시지
 
-저장소가 다른 규칙을 쓰는 것이 확인되지 않았다면 Conventional Commits를 사용합니다.
+repository가 다른 convention을 증명하지 않으면 Conventional Commits를 사용합니다.
 
-커밋 제목과 본문은 사용자, 팀, 저장소의 주 사용 언어로 씁니다. 저장소가 다른 형식을 쓰는 것이 확인되지 않았다면 Conventional Commit type과 scope는 영어로 유지합니다.
+commit subject와 body는 사용자, 팀, 또는 repository의 primary language로 씁니다. repository가 다른 형식을 증명하지 않으면 Conventional Commit type과 scope는 영어로 유지합니다.
 
-형식:
+Format:
 
 ```text
 type(scope): summary
 ```
 
-허용 type:
+Allowed types:
 
-- `feat`: 사용자 기능
-- `fix`: 버그 수정
-- `design`: UI/UX, 화면 구조, 시각적 변경
-- `style`: 포맷, 정렬, 주석, 런타임 영향 없는 코드 스타일
-- `refactor`: 동작 유지 리팩터링
-- `perf`: 성능 개선
-- `test`: 테스트 추가 또는 변경
-- `docs`: 문서 변경
-- `build`: 빌드 또는 의존성 설정
-- `ci`: CI/CD 설정
-- `chore`: 유지보수
+- `feat`: user-facing feature
+- `fix`: bug fix
+- `design`: UI/UX, screen structure, visual changes
+- `style`: formatting, ordering, comments, non-runtime code style
+- `refactor`: behavior-preserving refactor
+- `perf`: performance improvement
+- `test`: test addition or change
+- `docs`: documentation change
+- `build`: build or dependency configuration
+- `ci`: CI/CD configuration
+- `chore`: maintenance
 
-제목 규칙:
+Rules:
 
-- 제목은 한 줄로 유지하고 끝에 마침표를 붙이지 않습니다.
-- 구체적인 결과가 드러나게 씁니다.
-- 브랜치명, 채팅 제목, 작업 제목을 그대로 복사하지 않습니다.
-- `fix: update`, `chore: changes`, `refactor: cleanup` 같은 모호한 제목을 피합니다.
-- UI, API, PR, HMR, MSW, SDK, JDK, WebView 같은 약어는 유용할 때 대문자로 유지합니다.
-
-본문 규칙:
-
-- 단순 변경은 본문을 생략합니다.
-- 무엇을 바꿨는지, 왜 중요한지, 영향, 주의점 설명이 필요할 때만 짧은 `- ` 불릿을 씁니다.
-- 구현 과정을 장황하게 설명하지 않습니다.
-- 실제 실행한 명령 또는 수동 확인에 대해서만 검증 섹션을 넣습니다.
-- 이슈 번호와 저장소 규칙을 확실히 알 때만 이슈 참조를 넣습니다.
-- 저장소가 명시적으로 요구하지 않는 한 에이전트, 모델, generated-by, co-authored-by, signed-off-by, 이메일 서명 줄을 넣지 않습니다.
+- title은 한 줄로 쓰고 끝 마침표를 생략합니다.
+- concrete result가 드러나게 씁니다.
+- branch name, chat title, task title을 그대로 복사하지 않습니다.
+- `fix: update`, `chore: changes`, `refactor: cleanup` 같은 vague title을 피합니다.
+- 단순 변경이면 body를 생략합니다.
+- 무엇이 바뀌었고 왜 중요한지, 영향 또는 주의점이 필요할 때만 짧은 `- ` bullets를 씁니다.
+- 실제 실행한 command 또는 manual check에만 verification section을 포함합니다.
+- issue number와 repository convention을 아는 경우에만 issue reference를 포함합니다.
+- repository가 명시적으로 요구하지 않는 한 agent, model, generated-by, co-authored-by, signed-off-by, email signature line을 넣지 않습니다.
 
 ## PR 본문
 
-저장소 PR 템플릿이 있으면 따릅니다. 없으면 아래 구조를 사용합니다.
+repository PR template이 있으면 따릅니다. 없으면 아래 구조를 사용합니다.
 
 ```md
-## 요약
-- 무엇을 바꿨고 왜 바꿨는지 한 개에서 세 개 불릿으로 요약합니다.
+## Summary
+- 무엇이 바뀌었고 왜 바뀌었는지 1~3개 bullet로 요약합니다.
 
-## 관련 이슈
-- 해당 없음
+## Related Issue
+- None
 
-## 변경 사항
-- 주요 변경을 리뷰 관점별로 묶습니다.
+## Changes
+- 주요 변경을 review concern별로 묶습니다.
 
-## 리스크
-- 낮음/중간/높음
-- 이유: 실제 영향을 설명합니다.
+## Risk
+- Low/Medium/High
+- Reason: 실제 영향을 설명합니다.
 
-## 테스트/검증
-- 실제 수행한 확인만 적습니다.
+## Test/Verification
+- 실제 수행한 check만 나열합니다.
 
-## 롤백 플랜
-- 가장 단순한 롤백 경로를 적습니다.
+## Rollback Plan
+- 가장 단순한 rollback path를 적습니다.
 
-## 스크린샷/영상
-- UI 변경이 없으면 해당 없음.
+## Screenshots/Video
+- UI 변경이 없으면 None.
 ```
 
-규칙:
+Rules:
 
 - 기억이 아니라 실제 diff를 기준으로 씁니다.
-- 저장소 템플릿이 다른 규칙을 증명하지 않는 한 PR 문장도 사용자, 팀, 저장소의 주 사용 언어로 씁니다.
-- UI, 상태, API, 타입, 문서, 설정 같은 리뷰 관점별로 변경을 묶습니다.
-- 인증, 라우팅, 영속 저장, 공용 컴포넌트, 빌드 설정, 데이터 형식은 보수적으로 리스크를 고릅니다.
-- 실행하지 않은 확인을 완료한 것처럼 표시하지 않습니다.
-- 이슈 번호, 스테이징 상태, 배포 상태, 스크린샷, 테스트 결과를 지어내지 않습니다.
+- repository template이 다른 convention을 증명하지 않는 한 PR prose도 사용자, 팀, repository의 primary language로 씁니다.
+- UI, state, API, types, docs, configuration 같은 review concern별로 묶습니다.
+- auth, routing, persistence, shared components, build config, data formats는 risk를 보수적으로 판단합니다.
+- 실행하지 않은 check를 완료로 표시하지 않습니다.
+- issue number, staging status, deployment status, screenshots, test result를 지어내지 않습니다.
 
 ## 푸시
 
-푸시 전:
+push 전:
 
 ```bash
 git status --short --branch
@@ -110,6 +115,6 @@ git log --oneline --decorate -5
 git remote -v
 ```
 
-- 브랜치와 remote를 확인합니다.
-- upstream과 보호 브랜치 정책을 확인합니다.
-- 명시적 지시 없이 보호 브랜치, 배포 브랜치, 공유 브랜치에 푸시하지 않습니다.
+- branch와 remote를 확인합니다.
+- upstream과 protected branch policy를 확인합니다.
+- 명시적 지시 없이 protected, deployment, shared branch에 push하지 않습니다.

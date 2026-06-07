@@ -2,7 +2,7 @@
 
 Templates, controllers, form posts, server validation, sessions, layouts, partials, mixed server/client behavior가 있는 server-rendered web pages를 유지보수할 때 사용합니다.
 
-## Workflow
+## 진행 절차
 
 1. route/controller, view model, template, form action, validation, redirect flow를 추적합니다.
 2. markup 또는 CSS 변경 전 layout/partial/include reuse를 확인합니다.

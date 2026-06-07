@@ -94,7 +94,27 @@ Use this only when you need non-default skill directories.
 
 ## Applying project templates
 
-Templates are not installed automatically as skills. Copy or adapt them into each project.
+Templates are not installed automatically as skills. Use the runtime CLI for the normal path, or copy/adapt templates manually when you need tighter control.
+
+### Runtime path
+
+```powershell
+node .\bin\ai-playbook.mjs bootstrap <target-project> --with-skills --with-git --dry-run
+node .\bin\ai-playbook.mjs bootstrap <target-project> --with-skills --with-git
+node .\bin\ai-playbook.mjs doctor <target-project>
+```
+
+Use `--profile <name>` only after the target stack is known. Use `--local-only` when `ai-playbook/` should be added to the target `.gitignore`.
+
+Create plan and worklog files through the CLI so paths stay predictable:
+
+```powershell
+node .\bin\ai-playbook.mjs plan new <target-project> --title "Feature slice"
+node .\bin\ai-playbook.mjs worklog new <target-project> --title "Feature slice"
+node .\bin\ai-playbook.mjs worklog summarize <target-project> --month 2026-06
+```
+
+### Manual path
 
 Common starting point:
 

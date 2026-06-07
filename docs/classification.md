@@ -1,6 +1,6 @@
 # Classification
 
-This repository separates installable skills, copyable templates, examples, docs, and adapters.
+This repository separates runtime CLI code, installable skills, copyable templates, examples, docs, and adapters.
 
 ## Why not keep everything under one agent
 
@@ -8,10 +8,21 @@ The content is not agent-specific. Codex is one installation target. The source 
 
 ## Skill categories
 
-- `skills/engineering`: repeatable engineering workflows for most repositories.
+- `skills/project`: project bootstrap, onboarding, and project-memory maintenance.
+- `skills/quality`: API boundary, UI style policy, and visual quality workflows.
+- `skills/git`: commit, PR, push, and worklog guardrails.
+- `skills/meta`: skill-authoring and repository-maintenance skills.
 - `skills/legacy`: maintenance workflows where runtime coupling and compatibility dominate.
 
 Add a new category only when the first real skill in that category exists. When a new category or skill changes this map, update `README.md`, this file, Korean translations, and installed skill copies through `docs/maintenance.md`.
+
+## Runtime category
+
+- `bin/ai-playbook.mjs`: CLI entrypoint.
+- `src/`: dependency-free Node runtime implementation.
+- `test/`: Node test coverage for bootstrap, doctor, plan, and worklog commands.
+
+The runtime applies templates and creates scaffold files. It must not encode private project facts or replace the installable skills.
 
 ## Template categories
 

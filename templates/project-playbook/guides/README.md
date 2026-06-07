@@ -5,6 +5,7 @@ These guides are optional support documents. Copy only the guides that fit the t
 Recommended starting guides:
 
 - `repo-onboarding.md`: first pass through an unfamiliar project.
+- `runtime-harness.md`: how to use the CLI-backed `ai-playbook/` harness without scattering markdown files.
 - `docs-system.md`: project memory roles and cleanup rules.
 - `commit-push-worklog.md`: detailed Git, PR, and worklog policy.
 - `structural-review.md`: evidence-backed repository structure review.
@@ -14,4 +15,3 @@ Recommended starting guides:
 - `legacy-mode.md`: cautious maintenance for old or high-coupling systems.
 
 Guides do not override current code, user instructions, root agent rules, or project configuration.
-

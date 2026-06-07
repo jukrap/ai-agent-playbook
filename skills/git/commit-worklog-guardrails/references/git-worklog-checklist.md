@@ -145,7 +145,7 @@ Write a worklog for:
 ## Worklog language and shape
 
 - Match the worklog language to the target system and team language.
-- Use the localized Korean structure from `translations/ko/skills/engineering/commit-worklog-guardrails/references/git-worklog-checklist.ko.md` for Korean Jira projects or when the user asks in Korean.
+- Use the localized Korean structure from `translations/ko/skills/git/commit-worklog-guardrails/references/git-worklog-checklist.ko.md` for Korean Jira projects or when the user asks in Korean.
 - Use English section titles and English prose for English-first tickets, repositories, or stakeholders.
 - Keep commands, package names, API names, and technical identifiers in their original form.
 

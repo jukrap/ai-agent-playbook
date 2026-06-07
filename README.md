@@ -5,7 +5,7 @@
 - English (Canonical): this file
 - Korean (한국어): [README.ko.md](translations/ko/README.ko.md)
 
-Reusable agent skills, project templates, and project-memory guides for software maintenance and delivery. The repository is agent-agnostic: Codex, Claude Code, and other coding agents can use the same source material, while adapters handle agent-specific installation.
+Reusable agent skills, project templates, project-memory guides, and a small runtime CLI for software maintenance and delivery. The repository is agent-agnostic: Codex, Claude Code, and other coding agents can use the same source material, while adapters handle agent-specific installation.
 
 ## Why this exists
 
@@ -14,15 +14,22 @@ Coding agents fail most often when they guess project conventions, skip verifica
 The repository is more than a skill collection. It provides a harness for:
 
 - installing reusable skills
+- running `ai-playbook` bootstrap and doctor commands
 - copying root agent policies into projects
 - creating `ai-playbook/` project memory
+- scaffolding active plans, detailed worklogs, and monthly summaries
 - keeping maps, runbooks, decisions, plans, and worklogs useful over time
 
 ## Repository layout
 
 ```text
+bin/                  ai-playbook CLI entrypoint
+src/                  CLI runtime implementation
 skills/
-  engineering/         Cross-project engineering workflow skills
+  project/             Bootstrap, onboarding, and project-memory skills
+  quality/             API boundary and UI quality skills
+  git/                 Commit, PR, push, and worklog skills
+  meta/                Skill-authoring skills
   legacy/              Legacy-system maintenance skills
 templates/
   agents/              Root agent instruction templates and project profiles
@@ -32,6 +39,7 @@ translations/          Human translations; never install these as skills
 adapters/              Agent-specific install notes
 docs/                  Classification, installation, and publishing notes
 scripts/               Validation and local sync helpers
+test/                  Node CLI tests
 .github/               GitHub Actions validation workflow
 ```
 
@@ -40,6 +48,7 @@ scripts/               Validation and local sync helpers
 - [Repository working rules](AGENTS.md): maintenance rules for agents editing this repository.
 - [Repository context](CONTEXT.md): core terms and design intent for the playbook.
 - [Installation](docs/installation.md): first install, existing-clone update, custom skill paths, and Codex restart notes.
+- [Runtime harness](docs/harness-runtime.md): `ai-playbook` CLI commands, overwrite policy, and target-project flow.
 - [Codex adapter](adapters/codex/README.md): Codex-specific local sync behavior.
 - [Templates](templates/README.md): what to copy into project repositories and what to leave as installable skills.
 - [Classification](docs/classification.md): why skills, templates, examples, docs, and adapters are separated.
@@ -68,7 +77,18 @@ To update an existing clone later:
 .\update.ps1
 ```
 
-### 2. Copy root project policies
+### 2. Bootstrap a project harness
+
+Use the runtime CLI when you want to apply the project harness to a target repository:
+
+```powershell
+node .\bin\ai-playbook.mjs bootstrap <target-project> --with-skills --with-git
+node .\bin\ai-playbook.mjs doctor <target-project>
+```
+
+Use `--dry-run` before writing files, `--local-only` when `ai-playbook/` should be ignored by Git, and `--profile <name>` after the project stack is known.
+
+### 3. Copy root project policies manually
 
 Start with small root-level templates under `templates/agents/global`:
 
@@ -82,17 +102,25 @@ Then merge one profile only when the project proves the stack:
 - `templates/agents/profiles/react-native-expo/AGENTS.md`
 - `templates/agents/profiles/legacy-*`
 
-### 3. Add project memory
+### 4. Add project memory manually
 
 Copy `templates/project-playbook/` into the target project as `ai-playbook/`.
 
 Use `ai-playbook/` for current project truth, maps, runbooks, decisions, active plans, detailed worklogs, summaries, and archived notes. Decide per project whether this folder is committed or local-only.
 
-### 4. Use alongside process skills
+Use the CLI to create working docs without inventing paths:
+
+```powershell
+node .\bin\ai-playbook.mjs plan new <target-project> --title "Feature slice"
+node .\bin\ai-playbook.mjs worklog new <target-project> --title "Feature slice"
+node .\bin\ai-playbook.mjs worklog summarize <target-project> --month 2026-06
+```
+
+### 5. Use alongside process skills
 
 External process skills can guide planning, debugging, TDD, verification, and branch finishing. Use this playbook for repository-specific guardrails, project memory, API boundaries, style policy, legacy risk control, Git policy, and worklogs. See [Superpowers integration](docs/superpowers-integration.md).
 
-### 5. Keep source and installed skills separate
+### 6. Keep source and installed skills separate
 
 - Source of truth: this repository.
 - Installed copies: local agent skill directories.
@@ -102,16 +130,25 @@ Do not edit installed copies as the source. Edit this repository, validate, then
 
 ## Skill categories
 
-### Engineering
+### Project
 
-- `agent-skill-authoring`: create, review, and organize reusable agent skills.
 - `project-bootstrap`: set up root agent policies and `ai-playbook/` project memory.
 - `repo-onboarding`: inspect a repository before making project-specific assumptions.
 - `project-doc-system`: organize agent docs, project memory, plans, maps, runbooks, and worklogs.
-- `commit-worklog-guardrails`: stage, commit, push, PR, and worklog safely.
+
+### Quality
+
 - `api-contract-boundary`: keep frontend/backend uncertainty at the API boundary.
 - `ui-style-policy`: choose and document the repository UI styling policy.
 - `style-quality-review`: improve UI style quality without changing product intent.
+
+### Git
+
+- `commit-worklog-guardrails`: stage, commit, push, PR, and worklog safely.
+
+### Meta
+
+- `agent-skill-authoring`: create, review, and organize reusable agent skills.
 
 ### Legacy
 
@@ -135,6 +172,8 @@ Do not edit installed copies as the source. Edit this repository, validate, then
 English files are canonical and are the only files meant for agent installation. Korean translations live under `translations/ko` for human reading and review. Do not copy translated skill docs into local skill directories.
 
 ```powershell
+npm run check
+npm test
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 ```

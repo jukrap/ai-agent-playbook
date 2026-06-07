@@ -2,6 +2,8 @@
 
 Use this file for current project truth that future agents should trust before old plans or worklogs.
 
+Keep facts here only after they are confirmed by code, configuration, command output, or an explicit user/team decision.
+
 ## Baseline
 
 - Product or system shape:
@@ -32,4 +34,5 @@ Use this file for current project truth that future agents should trust before o
 
 - Promote durable facts from recent worklogs into this file.
 - Archive stale plans when the work completes or changes direction.
-
+- Remove or revise facts when code and docs diverge.
+- Link to maps, runbooks, and decisions for detail instead of turning this file into a long report.

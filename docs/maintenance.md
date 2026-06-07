@@ -30,9 +30,17 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 5. Add the matching Korean translation under `translations/ko/templates/**`.
 6. Update template indexes when the new template changes recommended bundles.
 
+## Updating the runtime CLI
+
+1. Keep runtime code under `bin/`, `src/`, and `test/`.
+2. Keep the CLI dependency-free unless the feature needs a dependency.
+3. Add tests for every new command, overwrite rule, or path convention.
+4. Update `docs/harness-runtime.md`, `README.md`, installation docs, and Korean translations.
+5. Run `npm run check` and `npm test`.
+
 ## Updating commit, PR, or worklog policy
 
-- Update both `templates/project-playbook/guides/commit-push-worklog.md` and `skills/engineering/commit-worklog-guardrails/references/git-worklog-checklist.md`.
+- Update both `templates/project-playbook/guides/commit-push-worklog.md` and `skills/git/commit-worklog-guardrails/references/git-worklog-checklist.md`.
 - Keep project-copyable guidance in the template.
 - Keep skill-triggered procedural guidance in the skill reference.
 - Update Korean translations for both files in the same change.
@@ -48,6 +56,8 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 ## Required checks
 
 ```powershell
+npm run check
+npm test
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 .\scripts\sync-skills.ps1 -WhatIf

@@ -4,6 +4,14 @@ Copy this folder into a target repository as `ai-playbook/`.
 
 The folder is project memory for agents and maintainers. It keeps current truth, maps, runbooks, plans, decisions, and worklogs separate so a future session can resume without rereading the whole repository.
 
+Preferred setup from this repository:
+
+```powershell
+node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
+node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs doctor <target-repo>
+```
+
 ## Reading order
 
 1. `START_HERE.md`: shortest resume guide for the next agent.
@@ -26,9 +34,18 @@ When docs disagree, prefer:
 
 Worklogs are history. Promote facts that remain current into `CURRENT.md`, `maps/`, `runbooks/`, or `decisions/`.
 
+## Maintenance rule
+
+Keep the top-level files stable:
+
+- `START_HERE.md`: current resume pointer only.
+- `CURRENT.md`: durable current facts only.
+- `questions.md`: unresolved decision-changing questions only.
+
+Put larger material in the matching subfolder. Use `maps/` for structure, `runbooks/` for commands, `decisions/` for durable choices, `plans/` for active execution, and `worklogs/` for detailed history.
+
 ## Commit policy
 
 Decide per project whether `ai-playbook/` is committed or local-only. If local-only, add it to `.gitignore` before writing project-specific notes.
 
 Do not store credentials, private URLs, customer data, personal paths, raw logs with sensitive values, or machine-specific secrets here.
-

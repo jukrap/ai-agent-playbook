@@ -1,6 +1,6 @@
 # Templates
 
-Templates are copyable project files, not installable skills.
+Templates are copyable project files, not installable skills. The normal target-project folder is `ai-playbook/`.
 
 Use them when starting a new repository, cleaning up project agent docs, or making agent behavior portable across computers.
 
@@ -8,8 +8,9 @@ Use them when starting a new repository, cleaning up project agent docs, or maki
 
 - `agents/`: root instruction templates and stack profiles.
 - `agents/global/`: small root-level templates such as `AGENTS.md`, `SKILLS.md`, and `GIT.md`.
-- `project-playbook/`: the canonical folder to copy into a target project as `ai-playbook/`.
+- `project-playbook/`: the canonical project-memory bundle to copy into a target project as `ai-playbook/`.
 - `local-ai/`: compatibility pointer for older projects; new work should use `project-playbook/`.
+- Runtime CLI files live at the repository root under `bin/`, `src/`, and `test/`.
 
 ## How agents discover templates
 
@@ -20,12 +21,18 @@ Agents do not automatically load templates just because this repository is insta
 - The user explicitly asks the agent to read or apply it.
 - A skill reference points the agent to it during project bootstrap or documentation setup.
 
-For reusable cross-project behavior, install skills from `skills/`. For project-specific standing instructions and durable memory, adapt files from `templates/`.
+For reusable cross-project behavior, install skills from `skills/`. For project-specific standing instructions and durable memory, adapt files from `templates/`. For the most repeatable path, use the runtime CLI from the repository root:
+
+```powershell
+node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
+node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs doctor <target-repo>
+```
 
 ## Recommended starting points
 
 - Unknown or mixed project: copy `agents/global/AGENTS.md`, then add `agents/global/SKILLS.md` or `agents/global/GIT.md` only if the project needs those standing rules.
-- Any project that needs durable agent memory: copy `project-playbook/` as `ai-playbook/`.
+- Any project that needs durable agent memory: bootstrap or copy `project-playbook/` as `ai-playbook/`.
 - React/Vite/FSD project: start with `agents/global/AGENTS.md` plus `agents/profiles/react-vite-fsd/AGENTS.md`.
 - Expo/React Native project: start with `agents/global/AGENTS.md` plus `agents/profiles/react-native-expo/AGENTS.md`.
 - Legacy project: start with `agents/global/AGENTS.md`, the closest `agents/profiles/legacy-*` file, and `project-playbook/guides/legacy-mode.md`.
@@ -35,3 +42,5 @@ For reusable cross-project behavior, install skills from `skills/`. For project-
 ## Application rule
 
 Always reduce templates to the target repository. Remove stack, command, workflow, or policy rules that the project does not actually use.
+
+Do not hand-create random markdown files at the repository root when the content belongs in `ai-playbook/maps/`, `ai-playbook/runbooks/`, `ai-playbook/decisions/`, `ai-playbook/plans/`, or `ai-playbook/worklogs/`.

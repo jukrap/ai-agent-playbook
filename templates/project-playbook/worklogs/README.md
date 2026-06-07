@@ -2,6 +2,13 @@
 
 Worklogs preserve detailed reasoning, blockers, verification, and direction changes.
 
+From this repository, scaffold worklogs and monthly summaries with:
+
+```powershell
+node .\bin\ai-playbook.mjs worklog new <target-repo> --title "short-worklog-title"
+node .\bin\ai-playbook.mjs worklog summarize <target-repo> --month YYYY-MM
+```
+
 ## Layout
 
 ```text
@@ -27,4 +34,4 @@ worklogs/
 - Explain problem, decision path, evidence, verification, and remaining risk.
 - Do not reduce worklogs to commit-message-sized summaries when the project relies on them as durable context.
 - Promote still-current facts into `../CURRENT.md`, `../maps/`, `../runbooks/`, or `../decisions/`.
-
+- Group detailed entries by month and keep one summary per month in `summaries/`.

@@ -24,11 +24,12 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 ## Adding a project template
 
 1. Put copyable root agent instructions under `templates/agents`.
-2. Put project-memory templates under `templates/project-playbook`.
-3. Keep project-specific product facts out of reusable templates.
-4. Make technology-specific guidance profile-scoped, not global.
-5. Add the matching Korean translation under `translations/ko/templates/**`.
-6. Update template indexes when the new template changes recommended bundles.
+2. Put personal Codex home defaults under `templates/codex-home`.
+3. Put project-memory templates under `templates/project-playbook`.
+4. Keep project-specific product facts out of reusable templates.
+5. Make technology-specific guidance profile-scoped, not global or Codex-home default.
+6. Add the matching Korean translation under `translations/ko/templates/**`.
+7. Update template indexes when the new template changes recommended bundles.
 
 ## Updating the runtime CLI
 

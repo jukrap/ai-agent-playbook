@@ -24,11 +24,12 @@
 ## 프로젝트 템플릿 추가
 
 1. 복사용 루트 에이전트 지침은 `templates/agents` 아래에 둡니다.
-2. 프로젝트 메모리 템플릿은 `templates/project-playbook` 아래에 둡니다.
-3. reusable template에는 프로젝트 고유 제품 사실을 넣지 않습니다.
-4. 기술별 guidance는 global이 아니라 profile에 둡니다.
-5. 대응하는 한국어 번역을 `translations/ko/templates/**` 아래에 추가합니다.
-6. 새 template이 추천 bundle을 바꾸면 template index를 갱신합니다.
+2. 개인 Codex home 기본값은 `templates/codex-home` 아래에 둡니다.
+3. 프로젝트 메모리 템플릿은 `templates/project-playbook` 아래에 둡니다.
+4. 재사용 템플릿에는 프로젝트 고유 제품 사실을 넣지 않습니다.
+5. 기술별 지침은 global이나 Codex home 기본값이 아니라 profile에 둡니다.
+6. 대응하는 한국어 번역을 `translations/ko/templates/**` 아래에 추가합니다.
+7. 새 템플릿이 추천 bundle을 바꾸면 템플릿 index를 갱신합니다.
 
 ## 런타임 CLI 갱신
 

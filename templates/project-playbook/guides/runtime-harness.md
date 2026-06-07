@@ -11,10 +11,13 @@ From this repository:
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs doctor <target-repo>
 ```
 
 Use `--dry-run` first when the target already has agent docs. Use `--force` only after inspecting conflicts and deciding the generated file should replace the existing one.
+
+Use `guides sync` after the target already has `ai-playbook/` and you only want missing guide files from a newer playbook checkout. By default it keeps existing guides, root policies, current project notes, plans, and worklogs.
 
 ## Active project flow
 

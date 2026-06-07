@@ -144,6 +144,35 @@ export async function doctorProject(options) {
   };
 }
 
+export async function syncGuides(options) {
+  const {
+    repoRoot,
+    target,
+    dryRun = false,
+    force = false
+  } = options;
+
+  await assertDirectory(target, 'Target repository does not exist');
+
+  const operations = [];
+  const conflicts = [];
+  const source = path.join(repoRoot, 'templates', 'project-playbook', 'guides');
+  const destination = path.join(target, 'ai-playbook', 'guides');
+  await copyTree(source, destination, {
+    dryRun,
+    force,
+    skipExisting: !force,
+    operations,
+    conflicts
+  });
+
+  return {
+    ok: conflicts.length === 0,
+    operations,
+    conflicts
+  };
+}
+
 export async function createPlan(options) {
   const { target, title, date = todayIso(), dryRun = false, force = false } = options;
   requireTitle(title);
@@ -202,6 +231,10 @@ async function copyTree(sourceRoot, destinationRoot, context) {
     const rel = path.relative(sourceRoot, source);
     const destination = path.join(destinationRoot, rel);
     if (existsSync(destination) && !context.force) {
+      if (context.skipExisting) {
+        context.operations.push(`keep ${path.relative(path.dirname(destinationRoot), destination)}`);
+        continue;
+      }
       context.conflicts.push(path.relative(path.dirname(destinationRoot), destination));
       continue;
     }

@@ -25,6 +25,7 @@ For reusable cross-project behavior, install skills from `skills/`. For project-
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs doctor <target-repo>
 ```
 
@@ -37,6 +38,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 - Legacy project: start with `agents/global/AGENTS.md`, the closest `agents/profiles/legacy-*` file, and `project-playbook/guides/legacy-mode.md`.
 - Any project with careful Git or local-only docs: adapt `agents/global/GIT.md` and `project-playbook/guides/commit-push-worklog.md`.
 - Any project that needs evidence-backed architecture cleanup: adapt `project-playbook/guides/structural-review.md`.
+- Any project that already has another agent-doc system or harness: start with `project-playbook/guides/harness-migration.md`.
 
 ## Application rule
 

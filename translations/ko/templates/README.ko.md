@@ -25,6 +25,7 @@
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs doctor <target-repo>
 ```
 
@@ -37,6 +38,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 - 레거시 프로젝트: `agents/global/AGENTS.md`, 가장 가까운 `agents/profiles/legacy-*`, `project-playbook/guides/legacy-mode.md`로 시작합니다.
 - Git 또는 로컬 전용 문서가 중요한 프로젝트: `agents/global/GIT.md`와 `project-playbook/guides/commit-push-worklog.md`를 조정합니다.
 - 근거 기반 아키텍처 정리가 필요한 프로젝트: `project-playbook/guides/structural-review.md`를 조정합니다.
+- 이미 다른 에이전트 문서 체계나 하네스가 있는 프로젝트: `project-playbook/guides/harness-migration.md`로 시작합니다.
 
 ## 적용 규칙
 

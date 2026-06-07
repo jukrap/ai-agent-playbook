@@ -6,6 +6,7 @@ Recommended starting guides:
 
 - `repo-onboarding.md`: first pass through an unfamiliar project.
 - `runtime-harness.md`: how to use the CLI-backed `ai-playbook/` harness without scattering markdown files.
+- `harness-migration.md`: migrate from existing agent docs, skill sets, or another harness without losing history.
 - `docs-system.md`: project memory roles and cleanup rules.
 - `commit-push-worklog.md`: detailed Git, PR, and worklog policy.
 - `structural-review.md`: evidence-backed repository structure review.

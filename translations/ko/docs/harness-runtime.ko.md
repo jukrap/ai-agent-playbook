@@ -7,6 +7,7 @@
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target> [--profile <name>] [--local-only] [--with-skills] [--with-git] [--dry-run] [--force]
 node .\bin\ai-playbook.mjs doctor <target> [--strict]
+node .\bin\ai-playbook.mjs guides sync <target> [--dry-run] [--force]
 node .\bin\ai-playbook.mjs plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
 node .\bin\ai-playbook.mjs worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
 node .\bin\ai-playbook.mjs worklog summarize <target> --month YYYY-MM [--dry-run] [--force]
@@ -27,6 +28,15 @@ node .\bin\ai-playbook.mjs worklog summarize <target> --month YYYY-MM [--dry-run
 ## Doctor 점검
 
 `doctor`는 최소 `ai-playbook/` layout, root `AGENTS.md`, local-only 정책, 분리된 예전 스타일 스킬 참조, 고정 로컬 절대경로를 점검합니다. 기본 모드에서는 warning이 실패로 처리되지 않습니다. `--strict` 모드에서는 warning도 실패합니다.
+
+## 가이드 동기화
+
+`guides sync`는 이 저장소의 현재 가이드 템플릿을 `<target>/ai-playbook/guides/`로 복사합니다.
+
+- 기본 동작은 기존 가이드 파일을 유지하고, 없는 가이드 파일만 추가합니다.
+- 먼저 `--dry-run`으로 추가될 파일을 확인합니다.
+- 기존 가이드를 현재 템플릿 버전으로 바꾸기로 결정한 경우에만 `--force`를 사용합니다.
+- 이 명령은 `AGENTS.md`, `SKILLS.md`, `GIT.md`, `CURRENT.md`, plans, worklogs, 프로젝트별 메모리를 수정하지 않습니다.
 
 ## Plan과 worklog 생성
 

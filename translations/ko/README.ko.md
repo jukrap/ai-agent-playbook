@@ -88,6 +88,13 @@ node .\bin\ai-playbook.mjs doctor <target-project>
 
 파일을 쓰기 전에는 `--dry-run`을 사용합니다. `ai-playbook/`을 Git에서 제외해야 하면 `--local-only`를 사용하고, 프로젝트 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다.
 
+대상 프로젝트에 이미 `ai-playbook/`이 있고 새로 추가된 가이드 템플릿만 가져오면 된다면, 프로젝트 메모리는 건드리지 않고 가이드만 동기화합니다.
+
+```powershell
+node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
+node .\bin\ai-playbook.mjs guides sync <target-project>
+```
+
 ### 3. 루트 프로젝트 정책 수동 복사
 
 먼저 `templates/agents/global` 아래의 작은 루트 템플릿을 고릅니다.

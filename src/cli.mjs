@@ -5,6 +5,7 @@ import {
   createPlan,
   createWorklog,
   doctorProject,
+  syncGuides,
   summarizeWorklogs
 } from './harness.mjs';
 
@@ -51,6 +52,21 @@ export async function runCli(argv, io = {}) {
         write(stdout, `[${check.level.toUpperCase()}] ${check.name}: ${check.message}\n`);
       }
       return result.ok ? 0 : 1;
+    }
+
+    if (command === 'guides' && subcommand === 'sync') {
+      const result = await syncGuides({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        dryRun: Boolean(parsed.flags['dry-run']),
+        force: Boolean(parsed.flags.force)
+      });
+      printOperations(stdout, result.operations);
+      if (!result.ok) {
+        write(stderr, `Conflicts:\n${result.conflicts.map((item) => `- ${item}`).join('\n')}\nUse --force to overwrite.\n`);
+        return 2;
+      }
+      return 0;
     }
 
     if (command === 'plan' && subcommand === 'new') {
@@ -148,5 +164,5 @@ function write(stream, text) {
 }
 
 function helpText() {
-  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--with-skills] [--with-git] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
+  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--with-skills] [--with-git] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
 }

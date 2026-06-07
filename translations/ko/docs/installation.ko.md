@@ -115,10 +115,13 @@ Sync script는 기본적으로 다른 사람이 만든 같은 이름의 skill을
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-project> --with-skills --with-git --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-project> --with-skills --with-git
+node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
 node .\bin\ai-playbook.mjs doctor <target-project>
 ```
 
 대상 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다. `ai-playbook/`을 대상 `.gitignore`에 추가해야 하면 `--local-only`를 사용합니다.
+
+이미 `ai-playbook/`이 있는 프로젝트에서 새 playbook checkout의 누락된 가이드 템플릿만 가져오려면 `guides sync`를 사용합니다. 이 명령은 `--force`로 가이드 파일 덮어쓰기를 명시하지 않는 한 루트 정책 파일이나 프로젝트별 메모를 수정하지 않습니다.
 
 Plan과 worklog는 CLI로 생성할 수 있습니다.
 

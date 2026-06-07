@@ -79,6 +79,7 @@ The repository also includes a small Node CLI for project harness setup and main
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs doctor <target-repo> --strict
 node .\bin\ai-playbook.mjs plan new <target-repo> --title "short-plan-title"
 node .\bin\ai-playbook.mjs worklog new <target-repo> --title "short-worklog-title"
@@ -93,6 +94,8 @@ node .\bin\ai-playbook.mjs <command>
 ```
 
 Use `doctor` after manual merges to catch missing playbook files, absolute local paths, and obsolete style-skill references.
+
+Use `guides sync` when a project already has `ai-playbook/` and you only want missing guide templates from this checkout. It keeps existing guide files by default; use `--force` only after reviewing guide overwrites.
 
 ## Portable instructions
 

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -48,6 +48,23 @@ test('doctor reports missing and bootstrapped project state', async () => {
   const checked = capture(target);
   assert.equal(await runCli(['doctor', '.'], checked), 0);
   assert.match(checked.out(), /\[PASS\] ai-playbook\/CURRENT.md/);
+  await cleanup(target);
+});
+
+test('guides sync restores missing guides without overwriting local guide edits', async () => {
+  const target = await tempRepo();
+  assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
+
+  const customGuide = path.join(target, 'ai-playbook', 'guides', 'runtime-harness.md');
+  const missingGuide = path.join(target, 'ai-playbook', 'guides', 'harness-migration.md');
+  await writeFile(customGuide, '# Local guide edit\n');
+  await rm(missingGuide, { force: true });
+
+  const sync = capture(target);
+  assert.equal(await runCli(['guides', 'sync', '.'], sync), 0);
+  assert.match(sync.out(), /keep guides\\runtime-harness\.md|keep guides\/runtime-harness\.md/);
+  assert.match(await readFile(customGuide, 'utf8'), /Local guide edit/);
+  assert.match(await readFile(missingGuide, 'utf8'), /Harness Migration/);
   await cleanup(target);
 });
 

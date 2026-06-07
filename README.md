@@ -88,6 +88,13 @@ node .\bin\ai-playbook.mjs doctor <target-project>
 
 Use `--dry-run` before writing files, `--local-only` when `ai-playbook/` should be ignored by Git, and `--profile <name>` after the project stack is known.
 
+If a target project already has `ai-playbook/` and you only need newly added guide templates, sync guides without touching project memory:
+
+```powershell
+node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
+node .\bin\ai-playbook.mjs guides sync <target-project>
+```
+
 ### 3. Copy root project policies manually
 
 Start with small root-level templates under `templates/agents/global`:

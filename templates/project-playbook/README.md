@@ -9,6 +9,7 @@ Preferred setup from this repository:
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs doctor <target-repo>
 ```
 
@@ -21,6 +22,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 5. `runbooks/`: commands and operational procedures.
 6. `plans/`: active implementation plans only.
 7. `worklogs/`: detailed history and monthly summaries.
+8. `guides/`: reusable support guides, including `harness-migration.md` for projects that already have agent docs or another harness.
 
 ## Source of truth
 

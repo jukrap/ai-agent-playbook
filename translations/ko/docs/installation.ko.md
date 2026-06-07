@@ -96,6 +96,24 @@ update script는 `--ff-only`로 pull한 뒤 installer를 실행합니다. 이미
 
 템플릿은 skill처럼 자동 설치되지 않습니다. 각 프로젝트에 복사하거나 조정합니다.
 
+권장 경로는 런타임 CLI입니다.
+
+```powershell
+node .\bin\ai-playbook.mjs bootstrap <target-project> --with-skills --with-git --dry-run
+node .\bin\ai-playbook.mjs bootstrap <target-project> --with-skills --with-git
+node .\bin\ai-playbook.mjs doctor <target-project>
+```
+
+대상 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다. `ai-playbook/`을 대상 `.gitignore`에 추가해야 하면 `--local-only`를 사용합니다.
+
+Plan과 worklog는 CLI로 생성할 수 있습니다.
+
+```powershell
+node .\bin\ai-playbook.mjs plan new <target-project> --title "Feature slice"
+node .\bin\ai-playbook.mjs worklog new <target-project> --title "Feature slice"
+node .\bin\ai-playbook.mjs worklog summarize <target-project> --month 2026-06
+```
+
 일반적인 시작점:
 
 ```powershell

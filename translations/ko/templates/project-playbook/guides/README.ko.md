@@ -1,11 +1,12 @@
 # Project Playbook Guides
 
-이 guide들은 선택적 support document입니다. 대상 프로젝트에 맞는 guide만 복사하거나 `ai-playbook/README.md`에서 링크합니다.
+이 guide들은 선택적 지원 문서입니다. 대상 프로젝트에 맞는 guide만 복사하거나 `ai-playbook/README.md`에서 링크합니다.
 
 추천 시작 guide:
 
-- `repo-onboarding.md`: unfamiliar project 첫 점검.
-- `docs-system.md`: project memory 역할과 cleanup rules.
+- `repo-onboarding.md`: 낯선 프로젝트 첫 점검.
+- `runtime-harness.md`: CLI-backed `ai-playbook/` harness를 사용하면서 markdown 파일을 흩뜨리지 않는 방법.
+- `docs-system.md`: project memory 역할과 cleanup rule.
 - `commit-push-worklog.md`: 자세한 Git, PR, worklog policy.
 - `structural-review.md`: 근거 기반 repository structure review.
 - `api-contract-boundary.md`: API와 DTO boundary 규율.

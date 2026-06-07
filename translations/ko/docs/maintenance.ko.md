@@ -30,9 +30,17 @@
 5. 대응하는 한국어 번역을 `translations/ko/templates/**` 아래에 추가합니다.
 6. 새 template이 추천 bundle을 바꾸면 template index를 갱신합니다.
 
+## 런타임 CLI 갱신
+
+1. CLI entrypoint는 `bin/ai-playbook.mjs`에 둡니다.
+2. 구현은 `src/` 아래에 두고 template 내용은 중복하지 않습니다.
+3. 테스트는 `test/` 아래에 추가합니다.
+4. `docs/harness-runtime.md`, `README.md`, 설치 문서, 한국어 번역을 함께 갱신합니다.
+5. 대상 프로젝트 파일을 덮어쓰는 동작은 기본적으로 막고, `--force`로만 허용합니다.
+
 ## Commit, PR, worklog 정책 갱신
 
-- `templates/project-playbook/guides/commit-push-worklog.md`와 `skills/engineering/commit-worklog-guardrails/references/git-worklog-checklist.md`를 함께 갱신합니다.
+- `templates/project-playbook/guides/commit-push-worklog.md`와 `skills/git/commit-worklog-guardrails/references/git-worklog-checklist.md`를 함께 갱신합니다.
 - 프로젝트에 복사하는 안내는 template에 둡니다.
 - 스킬로 호출되는 절차 안내는 스킬 참고 자료에 둡니다.
 - 두 파일의 한국어 번역도 같은 변경에서 갱신합니다.
@@ -48,6 +56,8 @@
 ## 필수 점검
 
 ```powershell
+npm run check
+npm test
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 .\scripts\sync-skills.ps1 -WhatIf

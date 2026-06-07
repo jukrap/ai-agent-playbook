@@ -5,13 +5,13 @@
 ## 역할 분리
 
 - 작업 흐름 스킬은 어떻게 일할지를 결정합니다: brainstorming, planning, TDD, debugging, verification, branch finishing, review discipline.
-- 이 playbook은 저장소 보호 규칙을 더합니다: 프로젝트 bootstrap, onboarding, project memory, API boundary, UI style policy, legacy risk control, commit policy, PR body policy, worklog.
+- 이 playbook은 저장소 보호 규칙을 더합니다: runtime bootstrap, onboarding, project memory, API boundary, UI style policy, legacy risk control, commit policy, PR body policy, worklog.
 
-작업 흐름 스킬이 적용되는 경우 먼저 사용하고, 그 다음 가장 작은 관련 playbook 스킬 또는 프로젝트 템플릿을 사용합니다.
+작업 흐름 스킬이 적용되는 경우 먼저 사용하고, 그 다음 가장 작은 관련 playbook 스킬, 프로젝트 템플릿, 런타임 명령을 사용합니다.
 
 ## 추천 조합
 
-- 새 저장소 또는 불분명한 codebase: 프로세스 planning과 `project-bootstrap` 또는 `repo-onboarding`.
+- 새 저장소 또는 불분명한 codebase: 프로세스 planning과 `project-bootstrap`, `repo-onboarding`, 또는 `node .\bin\ai-playbook.mjs bootstrap <target> --dry-run`.
 - 기능 계획: project docs나 `ai-playbook/` 구조가 필요하면 프로세스 planning과 `project-doc-system`.
 - API integration: 구현 프로세스와 `api-contract-boundary`.
 - UI styling policy: 구현 또는 리뷰 프로세스와 `ui-style-policy`.
@@ -19,7 +19,7 @@
 - 레거시 변경: 디버깅 또는 planning 프로세스와 가장 가까운 `legacy-*` 스킬.
 - Commit, push, PR, handoff: 검증 또는 branch-finishing 프로세스와 `commit-worklog-guardrails`.
 - 재사용 스킬 작성/수정: planning 또는 리뷰 프로세스와 `agent-skill-authoring`.
-- 저장소 전체 구조 정리: 프로세스 planning과 `templates/project-playbook/guides/structural-review.md`, 또는 프로젝트가 설치한 근거 도구.
+- 저장소 전체 구조 정리: 프로세스 planning과 `node .\bin\ai-playbook.mjs doctor <target>`, `templates/project-playbook/guides/structural-review.md`, 또는 프로젝트가 설치한 근거 도구.
 
 ## 우선순위
 
@@ -40,3 +40,4 @@
 - 일반 프로세스 스킬이 확인된 저장소 제약을 덮어쓰게 하지 않습니다.
 - 특정 장비의 custom instruction을 public docs에 옮길 때 path, identity, private workflow assumption을 제거하지 않은 채 복사하지 않습니다.
 - 다른 에이전트 런타임의 hook, slash command, plugin environment variable이 사용 가능하다고 가정하지 않습니다.
+- 이 저장소의 CLI를 planning, TDD, debugging, verification 작업 흐름 스킬의 대체재로 취급하지 않습니다. CLI는 project memory를 scaffold하고 점검할 뿐입니다.

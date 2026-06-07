@@ -1,6 +1,6 @@
 # 템플릿
 
-템플릿은 프로젝트에 복사하는 파일이며 설치형 스킬이 아닙니다.
+템플릿은 프로젝트에 복사하는 파일이며 설치형 스킬이 아닙니다. 일반적인 대상 프로젝트 폴더 이름은 `ai-playbook/`입니다.
 
 새 저장소를 시작하거나, 프로젝트 에이전트 문서를 정리하거나, 여러 컴퓨터에서 에이전트 동작을 휴대 가능하게 만들 때 사용합니다.
 
@@ -8,8 +8,9 @@
 
 - `agents/`: 루트 지침 템플릿과 스택 프로필.
 - `agents/global/`: `AGENTS.md`, `SKILLS.md`, `GIT.md` 같은 작은 루트 템플릿.
-- `project-playbook/`: 대상 프로젝트에 `ai-playbook/`로 복사하는 표준 템플릿.
+- `project-playbook/`: 대상 프로젝트에 `ai-playbook/`로 복사하는 표준 프로젝트 메모리 묶음.
 - `local-ai/`: 오래된 프로젝트를 위한 호환 포인터. 새 작업은 `project-playbook/`을 사용합니다.
+- Runtime CLI 파일은 저장소 루트의 `bin/`, `src/`, `test/` 아래에 있습니다.
 
 ## 에이전트가 템플릿을 발견하는 방식
 
@@ -20,12 +21,18 @@
 - 사용자가 명시적으로 에이전트에게 읽거나 적용하라고 요청한 경우.
 - 프로젝트 bootstrap 또는 문서 설정 중 스킬 참고 자료가 에이전트를 그쪽으로 안내한 경우.
 
-여러 프로젝트에서 재사용되는 동작은 `skills/`에서 설치합니다. 프로젝트별 상시 지침과 오래 남길 메모리는 `templates/`에서 조정합니다.
+여러 프로젝트에서 재사용되는 동작은 `skills/`에서 설치합니다. 프로젝트별 상시 지침과 오래 남길 메모리는 `templates/`에서 조정합니다. 가장 반복 가능한 경로는 저장소 루트에서 런타임 CLI를 사용하는 것입니다.
+
+```powershell
+node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
+node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only --with-skills --with-git
+node .\bin\ai-playbook.mjs doctor <target-repo>
+```
 
 ## 추천 시작점
 
 - 불분명하거나 혼합된 프로젝트: `agents/global/AGENTS.md`를 복사하고, 필요할 때만 `agents/global/SKILLS.md`나 `agents/global/GIT.md`를 추가합니다.
-- 오래 남길 에이전트 메모리가 필요한 프로젝트: `project-playbook/`을 `ai-playbook/`로 복사합니다.
+- 오래 남길 에이전트 메모리가 필요한 프로젝트: `project-playbook/`을 `ai-playbook/`로 bootstrap하거나 복사합니다.
 - React/Vite/FSD 프로젝트: `agents/global/AGENTS.md`와 `agents/profiles/react-vite-fsd/AGENTS.md`로 시작합니다.
 - Expo/React Native 프로젝트: `agents/global/AGENTS.md`와 `agents/profiles/react-native-expo/AGENTS.md`로 시작합니다.
 - 레거시 프로젝트: `agents/global/AGENTS.md`, 가장 가까운 `agents/profiles/legacy-*`, `project-playbook/guides/legacy-mode.md`로 시작합니다.
@@ -35,3 +42,5 @@
 ## 적용 규칙
 
 템플릿은 항상 대상 저장소에 맞게 줄입니다. 프로젝트가 실제로 쓰지 않는 스택, 명령, 작업 흐름, 정책 규칙은 제거합니다.
+
+내용이 `ai-playbook/maps/`, `ai-playbook/runbooks/`, `ai-playbook/decisions/`, `ai-playbook/plans/`, `ai-playbook/worklogs/`에 속한다면 프로젝트 루트에 느슨한 markdown 파일을 새로 만들지 않습니다.

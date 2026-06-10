@@ -21,7 +21,7 @@ Use this profile for legacy hybrid apps that mix an Android native shell, WebVie
 
 - Follow the existing web styling method inside WebView screens.
 - When native UI and web UI appear together, check status bar, safe area, keyboard, density, and viewport metadata.
-- Respect inline-style preference in SI or legacy projects when it is the local rule.
+- Respect inline-style preference when it is the project-local rule.
 
 ## Verification
 

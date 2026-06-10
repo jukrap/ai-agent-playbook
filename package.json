@@ -1,0 +1,16 @@
+{
+  "name": "ai-agent-playbook",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "ai-playbook": "./bin/ai-playbook.mjs"
+  },
+  "scripts": {
+    "check": "node --check bin/ai-playbook.mjs && node --check src/cli.mjs && node --check src/harness.mjs",
+    "test": "node --test test/cli.test.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

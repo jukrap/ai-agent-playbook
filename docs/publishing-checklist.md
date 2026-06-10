@@ -1,6 +1,6 @@
 # Publishing Checklist
 
-Use this before pushing the repository to GitHub.
+Use this before pushing the repository to a shared Git host.
 
 ## Maintenance check
 
@@ -10,13 +10,13 @@ Use this before pushing the repository to GitHub.
 
 ## Public hygiene
 
-- Search for personal paths:
+Search for private or machine-specific values:
 
 ```powershell
-rg -n --glob '!docs/publishing-checklist.md' "PERSONAL_NAME|COMPANY_NAME|CUSTOMER_NAME|INTERNAL_DOMAIN|SECRET|TOKEN|PASSWORD|PRIVATE_KEY|PR #|ticket #|C:\\|D:\\" .
+rg -n --glob '!docs/publishing-checklist.md' "PERSONAL_NAME|COMPANY_NAME|CUSTOMER_NAME|INTERNAL_DOMAIN|SECRET|TOKEN|PASSWORD|PRIVATE_KEY|PR #|ticket #|[A-Za-z]:\\\\" .
 ```
 
-- Remove credentials, internal domains, screenshots with customer data, and dated branch/PR status.
+- Remove credentials, internal domains, screenshots with private data, and dated branch/PR status.
 - Keep examples generic.
 - Do not publish generated zip files or local install output.
 - Confirm `.gitignore` excludes local environment files, logs, temporary files, and generated dependency folders before the first commit.
@@ -24,6 +24,8 @@ rg -n --glob '!docs/publishing-checklist.md' "PERSONAL_NAME|COMPANY_NAME|CUSTOME
 ## Validation
 
 ```powershell
+npm run check
+npm test
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 .\scripts\sync-skills.ps1 -WhatIf
@@ -33,30 +35,29 @@ rg -n --glob '!docs/publishing-checklist.md' "PERSONAL_NAME|COMPANY_NAME|CUSTOME
 
 If skill source files changed, run `.\scripts\sync-skills.ps1` after validation.
 
-After pushing to GitHub, confirm the `Validate` workflow passes. It runs the skill and translation validators on `push` and `pull_request`.
+After pushing, confirm the validation workflow passes if the repository uses one.
 
-## GitHub setup
+## Git host setup
 
-- Choose a repository name such as `ai-agent-playbook` or `agent-skills-playbook`.
-- For a private repository under `jukrap`, `ai-agent-playbook` maps cleanly to `https://github.com/jukrap/ai-agent-playbook`.
+- Choose a repository name such as `ai-agent-playbook` or `agent-harness-playbook`.
 - Keep the repository private until the hygiene search and validation commands pass.
 - Keep the MIT license in `LICENSE` unless the repository intentionally changes its redistribution policy.
-- Add topics such as `ai-agents`, `skills`, `codex`, `claude-code`, `legacy-systems`, `software-engineering`.
+- Add topics such as `ai-agents`, `skills`, `codex`, `agent-playbook`, `legacy-systems`, `software-engineering`.
 - After publishing, update install examples with the final repository URL.
 
 ## First push
 
-After creating the empty private repository on GitHub:
+After creating the empty private repository:
 
 ```powershell
 git init
-git config user.name "jukrap"
-git config user.email "jukrap628@gmail.com"
+git config user.name "<git-user-name>"
+git config user.email "<git-user-email>"
 git add .
 git commit -m "docs: initial ai agent playbook"
 git branch -M main
-git remote add origin https://github.com/jukrap/ai-agent-playbook.git
+git remote add origin <repo-url>
 git push -u origin main
 ```
 
-Use a repository-local Git config here so unrelated global Git settings stay untouched.
+Use repository-local Git config here so unrelated global Git settings stay untouched.

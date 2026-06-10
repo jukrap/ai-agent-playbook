@@ -1,36 +1,55 @@
 # Classification
 
-This repository separates installable skills from project templates.
+This repository separates runtime CLI code, installable skills, copyable templates, examples, docs, and adapters.
 
-## Why not keep everything under Codex
+## Why not keep everything under one agent
 
-The content is not Codex-specific. Codex is one installation target. The source should stay agent-agnostic, with agent-specific setup in `adapters/`.
+The content is not agent-specific. Codex is one installation target. The source should stay agent-agnostic, with agent-specific setup in `adapters/`.
 
 ## Skill categories
 
-- `skills/engineering`: repeatable engineering workflows for most repositories.
-- `skills/legacy`: legacy and SI maintenance workflows where runtime coupling and compatibility dominate.
-
-This mirrors the useful part of skill-first repositories: broad categories first, small composable skills second. We do not put `AGENTS.md` templates inside `skills` because those are copied into projects, not invoked as one-off skills.
+- `skills/project`: project bootstrap, onboarding, and project-memory maintenance.
+- `skills/quality`: API boundary, UI style policy, and visual quality workflows.
+- `skills/git`: commit, PR, push, and worklog guardrails.
+- `skills/meta`: skill-authoring and repository-maintenance skills.
+- `skills/legacy`: maintenance workflows where runtime coupling and compatibility dominate.
 
 Add a new category only when the first real skill in that category exists. When a new category or skill changes this map, update `README.md`, this file, Korean translations, and installed skill copies through `docs/maintenance.md`.
 
+## Runtime category
+
+- `bin/ai-playbook.mjs`: CLI entrypoint.
+- `src/`: dependency-free Node runtime implementation.
+- `test/`: Node test coverage for bootstrap, doctor, plan, and worklog commands.
+
+The runtime applies templates and creates scaffold files. It must not encode private project facts or replace the installable skills.
+
 ## Template categories
 
-- `templates/agents`: root `AGENTS.md` examples by project profile.
-- `templates/local-ai`: optional project-local docs for planning, worklogs, API boundaries, style rules, and FSD guidance.
+- `templates/agents`: thin root `AGENTS.md` bootstrap files and stack-specific profiles.
+- `templates/codex-home`: optional personal Codex home guidance for `~/.codex/AGENTS.md`; it is not copied into target repositories by the runtime.
+- `templates/project-playbook`: copyable project-memory template that becomes `ai-playbook/` in target repositories, including internal `SKILLS.md` and `GIT.md` policy files.
+
+Keep the target project root small. The runtime writes only a thin root `AGENTS.md` bootstrap by default; skill and Git policy belong under `ai-playbook/`.
 
 ## Process skill compatibility
 
-This repository does not replace process skill packs such as Superpowers. Use `docs/superpowers-integration.md` to decide how process skills and playbook skills should be combined.
+This repository does not replace external process skill packs. Use `docs/superpowers-integration.md` to decide how process skills and playbook skills should be combined.
+
+## Project-memory map
+
+- `project-bootstrap`: sets up root policies and an `ai-playbook/` layout after inspecting the repository.
+- `repo-onboarding`: reads repo state and existing `ai-playbook/` context before planning or editing.
+- `project-doc-system`: organizes `ai-playbook/`, maps, runbooks, decisions, plans, worklogs, and archived notes.
 
 ## Style policy map
 
-- `style-quality-review`: general UI quality review while preserving product intent.
-- `design-system-first`: shared components, tokens, variants, and design-system primitives own styling first.
-- `css-class-first`: stylesheets, CSS modules, scoped CSS, or semantic classes are the project convention.
-- `utility-class-first`: Tailwind-style utilities or atomic class composition are the project convention.
-- `inline-style-first`: component-local inline style objects are explicitly preferred.
+- `ui-style-policy`: selects or documents the repository styling method across design system, CSS/classes, utility classes, or inline styles.
+- `style-quality-review`: reviews visible UI quality while preserving product intent.
+
+## Skill authoring map
+
+- `agent-skill-authoring`: reusable skill structure, trigger descriptions, references, and skill/template boundaries.
 
 ## Legacy expansion map
 

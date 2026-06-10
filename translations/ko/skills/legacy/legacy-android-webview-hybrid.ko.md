@@ -2,7 +2,7 @@
 
 local 또는 remote web assets를 WebView로 load하고 JavaScript bridge, permissions, device APIs로 native behavior와 연결하는 Android app을 유지보수할 때 사용합니다.
 
-## Workflow
+## 진행 절차
 
 1. Activity/Fragment, WebView settings, asset source, URL loading mode, bridge interface를 식별합니다.
 2. bridge method names, payload shape, callback protocol, permissions, lifecycle hooks를 확인합니다.

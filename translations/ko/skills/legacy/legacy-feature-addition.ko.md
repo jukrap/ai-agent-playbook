@@ -2,7 +2,7 @@
 
 주변 architecture를 rewrite하지 않고 legacy system에 behavior, screen, field, business rule, integration을 추가할 때 사용합니다.
 
-## Workflow
+## 진행 절차
 
 1. UI, validation, state, API/server, persistence, deploy path까지 현재 flow를 end-to-end로 map합니다.
 2. 같은 종류의 feature에 대한 가장 가까운 existing pattern을 찾습니다.

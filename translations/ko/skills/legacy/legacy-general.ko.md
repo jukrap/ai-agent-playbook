@@ -2,7 +2,7 @@
 
 runtime flow가 불명확하고 오래된 convention, hidden coupling, 약한 tests, 섞인 documentation이 있는 legacy codebase를 유지보수/확장할 때 사용합니다.
 
-## Workflow
+## 진행 절차
 
 1. 실제 entrypoints, build/deploy flow, runtime files, active docs를 식별합니다.
 2. architecture 변경을 제안하기 전에 현재 behavior를 추적합니다.

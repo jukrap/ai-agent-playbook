@@ -2,7 +2,7 @@
 
 ASP.NET Web Forms, .NET Framework, code-behind pages, ViewState, postback events, Web.config, IIS, 오래된 enterprise .NET web app을 유지보수할 때 사용합니다.
 
-## Workflow
+## 진행 절차
 
 1. `.aspx`, code-behind, designer file, master page, user controls, event handlers를 추적합니다.
 2. ViewState, postback order, validation controls, data binding, session usage를 확인합니다.

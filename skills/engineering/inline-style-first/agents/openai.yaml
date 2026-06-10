@@ -1,4 +1,0 @@
-interface:
-  display_name: "Inline Style First"
-  short_description: "Follow explicit inline-style-first UI conventions"
-  default_prompt: "Use inline-style-first when this project explicitly prefers component-local inline styles for UI work."

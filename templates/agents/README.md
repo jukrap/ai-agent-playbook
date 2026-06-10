@@ -1,10 +1,12 @@
 # AGENTS.md Template Guide
 
-`templates/agents` contains `AGENTS.md` examples that can be copied into project roots. A project usually keeps one root `AGENTS.md` and merges in the nearest matching profile.
+`templates/agents` contains `AGENTS.md` examples that can be copied into project roots. A project usually keeps one thin root `AGENTS.md` that points agents to `ai-playbook/`, then merges in the nearest matching profile only when the stack is confirmed.
+
+The `global/` name means "stack-neutral project-root base template" inside this repository. It is not Codex's personal global file in `~/.codex/AGENTS.md`. For Codex home-level defaults, use `../codex-home/`.
 
 ## Choosing a profile
 
-- `global/AGENTS.md`: default for unknown stacks, documentation-first projects, and general repositories.
+- `global/AGENTS.md`: thin project-root bootstrap for unknown stacks, documentation-first projects, and general repositories.
 - `profiles/react-vite-fsd/AGENTS.md`: React, Vite, TypeScript, pnpm, and pragmatic FSD or a similar layered frontend.
 - `profiles/react-native-expo/AGENTS.md`: Expo Router, React Native, and native/device verification.
 - `profiles/legacy-jquery-web/AGENTS.md`: jQuery, plugins, direct DOM manipulation, and script-order dependent pages.
@@ -14,7 +16,8 @@
 ## How to apply
 
 1. Inspect the project's real config, README, build files, and existing docs first.
-2. Pick the closest profile and remove stack rules that do not apply.
-3. If the project needs local-only docs such as `PROJECT_SPEC.md`, `PLANS.md`, `FSD.md`, `docs/plans/**`, or `docs/worklog/**`, adapt `templates/local-ai/docs-system.md`.
-4. If the project needs strict commit, push, PR, and worklog rules, adapt `templates/local-ai/commit-push-worklog.md`.
-5. Keep project-specific product rules in separate docs. Use `AGENTS.md` for how the agent should work.
+2. Start with `global/AGENTS.md` as a short bootstrap; keep skill and Git policy under `ai-playbook/SKILLS.md` and `ai-playbook/GIT.md`.
+3. Pick the closest stack profile and remove rules that do not apply.
+4. If the project needs durable agent memory, copy `templates/project-playbook/` as `ai-playbook/`.
+5. If the project needs detailed commit, push, PR, and worklog guidance, adapt `templates/project-playbook/GIT.md` and `templates/project-playbook/guides/commit-push-worklog.md`.
+6. Keep project-specific product rules in separate docs. Use `AGENTS.md` only for the minimum entrypoint and local override rules.

@@ -41,6 +41,8 @@ Repository audit or structural evidence tools can help when a repository-wide st
 
 Do not assume another agent runtime's hooks, slash commands, or plugin environment variables work here. If a skill or tool was written for another agent, translate its intent into supported commands and repository-local rules.
 
+If this project later enables runtime hooks, keep them optional and documented. Hooks may remind or inject context, but the durable rule must still live in `AGENTS.md`, `ai-playbook/`, or project docs.
+
 ## When to write project docs instead of a skill
 
 - Put only the root entrypoint in `AGENTS.md`; put standing skill policy here and longer project instructions in `ai-playbook/` docs.

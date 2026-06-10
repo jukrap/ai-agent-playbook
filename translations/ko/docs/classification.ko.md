@@ -24,6 +24,8 @@
 
 CLI는 설치형 스킬이 아닙니다. 이 저장소 checkout에서 실행해 대상 프로젝트에 템플릿을 적용하고 하네스 상태를 점검합니다.
 
+선택적 hook 또는 plugin 실험은 안정된 계약이 생길 때까지 명확히 분리된 adapter나 실험 package에 둡니다. 기본 문서와 CLI 하네스에 필수 조건이 되어서는 안 됩니다.
+
 ## 템플릿 분류
 
 - `templates/agents`: 얇은 루트 `AGENTS.md` 부트스트랩 파일과 스택별 프로필.
@@ -35,6 +37,8 @@ CLI는 설치형 스킬이 아닙니다. 이 저장소 checkout에서 실행해 
 ## 작업 흐름 스킬 호환성
 
 이 저장소는 외부 작업 흐름 스킬 묶음을 대체하지 않습니다. 작업 흐름 스킬과 playbook 스킬을 어떻게 조합할지는 `docs/superpowers-integration.md`를 기준으로 판단합니다.
+
+Runtime hook layer를 local experiment로 둘지, adapter로 만들지, 문서화된 CLI behavior로 승격할지 판단할 때는 `runtime-roadmap.ko.md`를 사용합니다.
 
 ## 프로젝트 메모리 지도
 

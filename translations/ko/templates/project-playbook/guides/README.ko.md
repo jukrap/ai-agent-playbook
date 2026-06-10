@@ -6,6 +6,7 @@
 
 - `repo-onboarding.md`: 낯선 프로젝트 첫 점검.
 - `runtime-harness.md`: CLI 기반 `ai-playbook/` 하네스를 사용하면서 markdown 파일을 흩뜨리지 않는 방법.
+- `runtime-roadmap.md`: 문서 하네스가 안정된 뒤 선택적 runtime hook이 적절한지 판단하는 방법.
 - `harness-migration.md`: 기존 에이전트 문서, 스킬 세트, 다른 하네스에서 이력을 잃지 않고 옮기는 방법.
 - `docs-system.md`: 프로젝트 메모리 역할과 정리 규칙.
 - `commit-push-worklog.md`: 자세한 Git, PR, worklog 정책.

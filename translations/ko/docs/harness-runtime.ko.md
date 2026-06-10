@@ -2,6 +2,8 @@
 
 `ai-playbook`은 이 저장소를 대상 프로젝트에 적용하기 위한 실행 표면입니다. AI 모델을 호출하지 않습니다. 템플릿을 복사하고, 프로젝트 메모리 상태를 점검하고, 예측 가능한 plan/worklog 파일을 만들어 에이전트가 임의의 markdown 경로를 계속 새로 만들지 않게 합니다.
 
+이 CLI와 project playbook이 기본 하네스입니다. Runtime hook 또는 plugin은 선택 확장이며, 동작이 명시적이고 local이며 쉽게 끌 수 있기 전까지 기본 경로 밖에 둡니다. 단계적 설계는 `runtime-roadmap.ko.md`를 봅니다.
+
 ## 명령
 
 ```powershell
@@ -30,6 +32,8 @@ node .\bin\ai-playbook.mjs worklog summarize <target> --month YYYY-MM [--dry-run
 
 방금 bootstrap한 결과는 `START_HERE.md`, `CURRENT.md`, `questions.md`에 템플릿 문구가 남아 있어 `playbook adaptation` warning을 낼 수 있습니다. 이는 bootstrap 실패가 아니라 저장소 점검 뒤 playbook을 조정하라는 알림입니다.
 
+향후 `doctor` 개선은 check id, severity, actionable message를 사람과 나중 자동화가 모두 읽기 좋게 안정화하는 방향으로 진행합니다. Machine-readable output은 `--json` 같은 명시적 option 뒤에 두고, 현재 text output은 사람이 읽는 기본값으로 유지합니다.
+
 ## 가이드 동기화
 
 `guides sync`는 이 저장소의 현재 가이드 템플릿을 `<target>/ai-playbook/guides/`로 복사합니다.
@@ -53,3 +57,5 @@ node .\bin\ai-playbook.mjs worklog summarize <target> --month YYYY-MM [--dry-run
 - CLI는 `ai-playbook/`을 커밋할지 local-only로 둘지 자동 결정하지 않습니다. 사용자가 `--local-only`를 명시해야 합니다.
 - CLI는 스킬 설치를 대체하지 않습니다. 스킬은 `install.ps1`, `update.ps1`, `scripts/sync-skills.ps1` 흐름으로 관리합니다.
 - CLI는 수동 검토를 대체하지 않습니다. 기존 agent docs가 있는 프로젝트에서는 먼저 `--dry-run`을 사용합니다.
+- 기본 하네스는 plugin hook, slash command, global install, network access를 요구하지 않습니다.
+- 향후 hook layer가 추가되더라도 context나 reminder만 주입해야 하며 tool output을 다시 쓰거나 project file을 자동 편집하지 않습니다.

@@ -22,7 +22,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 5. `runbooks/`: commands and operational procedures.
 6. `plans/`: active implementation plans only.
 7. `worklogs/`: detailed history and monthly summaries.
-8. `guides/`: reusable support guides, including `harness-migration.md` for projects that already have agent docs or another harness.
+8. `guides/`: reusable support guides, including `harness-migration.md` for projects that already have agent docs or another harness and `runtime-roadmap.md` for optional hook-layer decisions.
 
 ## Source of truth
 
@@ -47,6 +47,8 @@ Keep the top-level files stable:
 Put larger material in the matching subfolder. Use `maps/` for structure, `runbooks/` for commands, `decisions/` for durable choices, `plans/` for active execution, and `worklogs/` for detailed history.
 
 `doctor` warns while core files still contain template prompts. After first repo inspection, replace the placeholder bullets in `START_HERE.md`, `CURRENT.md`, and `questions.md` with project-specific current facts or state clearly that no active task or open question exists.
+
+Do not add runtime hooks before this document harness works on its own. If the project later chooses hooks, document the decision and keep the hook layer optional.
 
 ## Commit policy
 

@@ -24,6 +24,8 @@ Add a new category only when the first real skill in that category exists. When 
 
 The runtime applies templates and creates scaffold files. It must not encode private project facts or replace the installable skills.
 
+Optional hook or plugin experiments belong in a clearly separated adapter or experimental package until they have a stable contract. They must not become required for the default document and CLI harness.
+
 ## Template categories
 
 - `templates/agents`: thin root `AGENTS.md` bootstrap files and stack-specific profiles.
@@ -35,6 +37,8 @@ Keep the target project root small. The runtime writes only a thin root `AGENTS.
 ## Process skill compatibility
 
 This repository does not replace external process skill packs. Use `docs/superpowers-integration.md` to decide how process skills and playbook skills should be combined.
+
+Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should remain a local experiment, become an adapter, or be promoted into documented CLI behavior.
 
 ## Project-memory map
 

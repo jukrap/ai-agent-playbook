@@ -22,7 +22,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 5. `runbooks/`: 명령과 운영 절차.
 6. `plans/`: 진행 중인 구현 계획만 둡니다.
 7. `worklogs/`: 상세 이력과 월간 summary.
-8. `guides/`: 재사용 지원 가이드. 이미 에이전트 문서나 다른 하네스가 있는 프로젝트는 `harness-migration.md`를 봅니다.
+8. `guides/`: 재사용 지원 가이드. 이미 에이전트 문서나 다른 하네스가 있는 프로젝트는 `harness-migration.md`, 선택적 hook layer를 판단할 때는 `runtime-roadmap.md`를 봅니다.
 
 ## 신뢰 우선순위
 
@@ -47,6 +47,8 @@ Worklogs는 history입니다. 계속 현재인 사실은 `CURRENT.md`, `maps/`, 
 더 큰 내용은 맞는 하위 폴더에 둡니다. 구조는 `maps/`, 명령은 `runbooks/`, 오래 남길 선택은 `decisions/`, 실행 중인 작업은 `plans/`, 상세 이력은 `worklogs/`를 사용합니다.
 
 핵심 파일에 템플릿 문구가 남아 있으면 `doctor`가 warning을 냅니다. 첫 저장소 점검 뒤 `START_HERE.md`, `CURRENT.md`, `questions.md`의 placeholder bullet을 프로젝트별 현재 사실로 바꾸거나, active task나 open question이 없다고 명확히 적습니다.
+
+이 문서 하네스가 hook 없이 동작하기 전에는 runtime hook을 추가하지 않습니다. 프로젝트가 나중에 hook을 선택한다면 decision을 문서화하고 hook layer를 선택 사항으로 유지합니다.
 
 ## 커밋 정책
 

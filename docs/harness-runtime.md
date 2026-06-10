@@ -2,6 +2,8 @@
 
 `ai-playbook` is the executable surface for applying this repository to a target project. It does not call an AI model. It copies templates, checks project-memory health, and creates predictable plan/worklog files so agents stop inventing ad hoc markdown paths.
 
+This CLI and the project playbook are the default harness. Runtime hooks or plugins are optional extensions and should stay outside the default path until their behavior is explicit, local, and easy to disable. See `docs/runtime-roadmap.md` for the staged design.
+
 ## Command surface
 
 ```powershell
@@ -30,6 +32,8 @@ After publishing, the same CLI can be exposed through the package `bin` as `ai-p
 
 Fresh bootstrap output can warn about `playbook adaptation` because `START_HERE.md`, `CURRENT.md`, and `questions.md` still contain template prompts. Treat that as a reminder to adapt the playbook after repo inspection, not as a bootstrap failure.
 
+Future `doctor` work should keep check ids, severity, and actionable messages stable enough for humans first and later automation. Machine-readable output belongs behind an explicit option such as `--json`; the current text output remains the human default.
+
 ## Guide sync
 
 `guides sync` copies current guide templates from this repository to `<target>/ai-playbook/guides/`.
@@ -53,3 +57,5 @@ Fresh bootstrap output can warn about `playbook adaptation` because `START_HERE.
 - Do not encode project-specific product facts in the runtime.
 - Keep reusable templates relative-path based.
 - Treat `_reference/` and `_work/` as local development material, never target-project input.
+- Do not require plugin hooks, slash commands, global installs, or network access for the default harness.
+- If a future hook layer is added, it should inject context or reminders only; it should not rewrite tool output or edit project files automatically.

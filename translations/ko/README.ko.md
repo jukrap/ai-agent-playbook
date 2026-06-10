@@ -77,6 +77,8 @@ node .\bin\ai-playbook.mjs doctor <target-project>
 
 대상 프로젝트의 `ai-playbook/` 폴더를 Git에서 제외해야 하면 `--local-only`를 사용합니다. `--profile <name>`은 대상 stack이 확인된 뒤에만 사용합니다.
 
+Runtime hook과 plugin은 기본 설치 경로에 포함되지 않습니다. 문서와 CLI 하네스가 안정된 뒤 선택적으로 확장합니다. [런타임 로드맵](docs/runtime-roadmap.ko.md)을 봅니다.
+
 ## 평소 작업 흐름
 
 ```text
@@ -138,6 +140,7 @@ test/                 Node CLI 테스트
 - [저장소 맥락](CONTEXT.ko.md): playbook의 핵심 용어와 설계 의도.
 - [설치](docs/installation.ko.md): 첫 설치, 기존 clone 업데이트, 사용자 지정 스킬 경로, Codex 재시작 기준.
 - [런타임 하네스](docs/harness-runtime.ko.md): CLI 명령, 덮어쓰기 정책, 대상 프로젝트 적용 흐름.
+- [런타임 로드맵](docs/runtime-roadmap.ko.md): 단계적 강화 계획과 선택적 hook layer 경계.
 - [Codex 어댑터](adapters/codex/README.ko.md): Codex 기준 로컬 동기화 방식과 Windows용 Codex App 작업 흐름.
 - [템플릿](templates/README.ko.md): 프로젝트 저장소에 복사할 문서와 설치형 스킬의 차이.
 - [분류](docs/classification.ko.md): skills, templates, examples, docs, adapters를 나누는 이유.

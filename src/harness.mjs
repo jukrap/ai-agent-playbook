@@ -1,5 +1,6 @@
 import { mkdir, readdir, readFile, stat, writeFile, copyFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 
 export const REQUIRED_PLAYBOOK_FILES = [
@@ -24,6 +25,7 @@ export const CONTEXT_SOURCE_FILES = [
   'SKILLS.md',
   'GIT.md'
 ];
+export const GUIDE_MANIFEST_FILE = 'manifest.json';
 
 const OBSOLETE_STYLE_SKILLS = [
   'design-system-first',
@@ -223,6 +225,7 @@ export async function doctorProject(options) {
       templateFiles.length ? `Template prompts remain in: ${templateFiles.join(', ')}` : 'Core playbook files look adapted.',
       templateFiles.map((file) => `ai-playbook/${toPortablePath(file)}`)
     ));
+    checks.push(...await worklogSummaryFreshnessChecks(playbookRoot));
   }
 
   const markdownFiles = await walkFiles(target, (file) => file.endsWith('.md'));
@@ -266,6 +269,68 @@ export async function doctorProject(options) {
   };
 }
 
+export async function buildDoctorReminderSignal(options) {
+  const { repoRoot, target } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+
+  const resolvedTarget = path.resolve(target);
+  const playbookRoot = path.join(target, 'ai-playbook');
+  const reminders = [];
+
+  if (!existsSync(playbookRoot)) {
+    reminders.push(reminder(
+      'reminder.playbook.missing',
+      'warn',
+      'ai-playbook/ is missing; run bootstrap or inspect the project playbook setup before relying on runtime reminders.',
+      ['ai-playbook/']
+    ));
+    return {
+      schemaVersion: SCHEMA_VERSION,
+      ok: false,
+      target: resolvedTarget,
+      reminders
+    };
+  }
+
+  const guideReport = await checkGuides({ repoRoot, target });
+  const missingGuides = guideReport.guides.filter((guide) => guide.status === 'missing');
+  if (missingGuides.length > 0) {
+    reminders.push(reminder(
+      'reminder.guides.missing',
+      'warn',
+      `Missing ${missingGuides.length} guide template(s); run guides sync after reviewing the target project.`,
+      missingGuides.map((guide) => guide.path)
+    ));
+  }
+
+  const staleGuides = guideReport.guides.filter((guide) => guide.status === 'stale');
+  if (staleGuides.length > 0) {
+    reminders.push(reminder(
+      'reminder.guides.stale',
+      'warn',
+      `Found ${staleGuides.length} stale guide template(s); review local edits before replacing them.`,
+      staleGuides.map((guide) => guide.path)
+    ));
+  }
+
+  const freshnessChecks = await worklogSummaryFreshnessChecks(playbookRoot);
+  for (const check of freshnessChecks.filter((item) => item.level === 'warn')) {
+    reminders.push(reminder(
+      `reminder.${check.id}`,
+      check.level,
+      check.message,
+      check.paths
+    ));
+  }
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: reminders.length === 0,
+    target: resolvedTarget,
+    reminders
+  };
+}
+
 export async function checkGuides(options) {
   const { repoRoot, target } = options;
 
@@ -273,21 +338,34 @@ export async function checkGuides(options) {
 
   const source = path.join(repoRoot, 'templates', 'project-playbook', 'guides');
   const destination = path.join(target, 'ai-playbook', 'guides');
-  const sourceFiles = await walkFiles(source, (file) => file.endsWith('.md'));
+  const sourceGuides = await loadGuideManifest(source);
   const guides = [];
-  for (const file of sourceFiles) {
-    const rel = toPortablePath(path.relative(source, file));
-    const destinationFile = path.join(destination, rel);
+  for (const guide of sourceGuides) {
+    const rel = toPortablePath(guide.path);
+    const destinationFile = path.join(destination, ...rel.split('/'));
+    const sourceHash = guide.sourceHash ?? await hashFile(path.join(source, ...rel.split('/')));
+    if (!existsSync(destinationFile)) {
+      guides.push({
+        path: `ai-playbook/guides/${rel}`,
+        status: 'missing',
+        sourceHash
+      });
+      continue;
+    }
+    const targetHash = await hashFile(destinationFile);
     guides.push({
       path: `ai-playbook/guides/${rel}`,
-      status: existsSync(destinationFile) ? 'present' : 'missing'
+      status: targetHash === sourceHash ? 'present' : 'stale',
+      sourceHash,
+      targetHash
     });
   }
   guides.sort((left, right) => left.path.localeCompare(right.path));
   const summary = {
     total: guides.length,
     present: guides.filter((guide) => guide.status === 'present').length,
-    missing: guides.filter((guide) => guide.status === 'missing').length
+    missing: guides.filter((guide) => guide.status === 'missing').length,
+    stale: guides.filter((guide) => guide.status === 'stale').length
   };
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -435,6 +513,10 @@ function contextWarning(id, message, paths = []) {
   return { id, message, paths };
 }
 
+function reminder(id, level, message, paths = []) {
+  return { id, level, message, paths };
+}
+
 function summarizeChecks(checks) {
   return {
     total: checks.length,
@@ -473,6 +555,77 @@ async function findCoreTemplateFiles(playbookRoot) {
     }
   }
   return files;
+}
+
+async function worklogSummaryFreshnessChecks(playbookRoot) {
+  const checks = [];
+  const worklogsRoot = path.join(playbookRoot, 'worklogs');
+  const summariesRoot = path.join(worklogsRoot, 'summaries');
+  if (!existsSync(worklogsRoot)) return checks;
+
+  const entries = await readdir(worklogsRoot, { withFileTypes: true });
+  const months = entries
+    .filter((entry) => entry.isDirectory() && /^\d{4}-\d{2}$/.test(entry.name))
+    .map((entry) => entry.name)
+    .sort();
+
+  for (const month of months) {
+    const monthDir = path.join(worklogsRoot, month);
+    const worklogFiles = (await readdir(monthDir, { withFileTypes: true }))
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+      .map((entry) => entry.name)
+      .sort();
+    if (worklogFiles.length === 0) continue;
+
+    const summaryFile = path.join(summariesRoot, `${month}.md`);
+    const monthPath = `ai-playbook/worklogs/${month}/`;
+    const summaryPath = `ai-playbook/worklogs/summaries/${month}.md`;
+    if (!existsSync(summaryFile)) {
+      checks.push(result(
+        'warn',
+        `worklog-summary.missing.${month}`,
+        'freshness',
+        `${month} worklog summary`,
+        `Worklog entries exist for ${month}, but the monthly summary is missing.`,
+        [monthPath, summaryPath]
+      ));
+      continue;
+    }
+
+    const summaryInfo = await stat(summaryFile);
+    const latestWorklog = await latestFileByModifiedTime(monthDir, worklogFiles);
+    if (latestWorklog.info.mtimeMs > summaryInfo.mtimeMs) {
+      checks.push(result(
+        'warn',
+        `worklog-summary.stale.${month}`,
+        'freshness',
+        `${month} worklog summary freshness`,
+        `The ${month} summary is older than ${latestWorklog.name}.`,
+        [`ai-playbook/worklogs/${month}/${latestWorklog.name}`, summaryPath]
+      ));
+      continue;
+    }
+
+    checks.push(result(
+      'pass',
+      `worklog-summary.fresh.${month}`,
+      'freshness',
+      `${month} worklog summary freshness`,
+      `The ${month} summary is newer than the detailed worklogs.`,
+      [summaryPath, monthPath]
+    ));
+  }
+
+  return checks;
+}
+
+async function latestFileByModifiedTime(directory, files) {
+  const details = await Promise.all(files.map(async (name) => ({
+    name,
+    info: await stat(path.join(directory, name))
+  })));
+  details.sort((left, right) => right.info.mtimeMs - left.info.mtimeMs || left.name.localeCompare(right.name));
+  return details[0];
 }
 
 function hasExactLine(text, marker) {
@@ -536,6 +689,41 @@ async function ensureGitignoreEntry(target, entry, context) {
     const prefix = existing && !existing.endsWith('\n') ? `${existing}\n` : existing;
     await writeFile(file, `${prefix}${entry}\n`);
   }
+}
+
+async function loadGuideManifest(sourceRoot) {
+  const manifestPath = path.join(sourceRoot, GUIDE_MANIFEST_FILE);
+  if (!existsSync(manifestPath)) {
+    return loadGuideManifestFallback(sourceRoot);
+  }
+
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  if (manifest?.schemaVersion !== SCHEMA_VERSION || !Array.isArray(manifest.guides)) {
+    throw new Error(`Invalid guide manifest: ${manifestPath}`);
+  }
+
+  return manifest.guides.map((guide) => {
+    if (!guide || typeof guide.path !== 'string' || typeof guide.sourceHash !== 'string') {
+      throw new Error(`Invalid guide manifest entry: ${manifestPath}`);
+    }
+    return {
+      path: toPortablePath(guide.path),
+      sourceHash: guide.sourceHash
+    };
+  });
+}
+
+async function loadGuideManifestFallback(sourceRoot) {
+  const sourceFiles = await walkFiles(sourceRoot, (file) => file.endsWith('.md'));
+  return Promise.all(sourceFiles.map(async (file) => ({
+    path: toPortablePath(path.relative(sourceRoot, file)),
+    sourceHash: await hashFile(file)
+  })));
+}
+
+async function hashFile(file) {
+  const content = await readFile(file);
+  return createHash('sha256').update(content).digest('hex');
 }
 
 async function writeScaffold(file, content, options) {

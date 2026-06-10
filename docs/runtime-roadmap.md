@@ -14,11 +14,11 @@ The default path stays simple: install skills, bootstrap `ai-playbook/` when a t
 ## Current Strengths
 
 - `bootstrap` creates a thin root `AGENTS.md` and a project-memory `ai-playbook/` folder without assuming a stack.
-- `doctor` already checks minimum layout, root policy placement, local-only policy, template adaptation, obsolete skill references, and fixed local paths.
-- `guides sync` adds missing guide templates without replacing local edits by default.
+- `doctor` already checks minimum layout, root policy placement, local-only policy, template adaptation, worklog summary freshness, obsolete skill references, and fixed local paths.
+- `guides sync` adds missing guide templates without replacing local edits by default, and `guides sync --check --json` reports stale guides with source and target hashes.
 - `plan`, `worklog`, and `worklog summarize` keep active plans, detailed history, and monthly summaries in predictable paths.
 - The installer and updater use managed markers and hashes so local skill edits and unmanaged same-name skills are not overwritten silently.
-- `doctor --json`, `guides sync --check --json`, `context --json`, and `adapter check --json` provide a small machine-readable core for future adapters.
+- `doctor --json`, `doctor --reminder --json`, `guides sync --check --json`, `context --json`, and `adapter check --json` provide a small machine-readable core for future adapters.
 
 ## Document Harness Hardening
 
@@ -28,7 +28,7 @@ Keep improving these areas before making hooks part of any default install path:
 - Keep `doctor` warning categories separated into setup health, adaptation reminders, local-only policy, and public-safety findings.
 - Keep `bootstrap` dry-run first for existing projects and make conflict output easy to copy into a migration note.
 - Keep `--force` scoped to reviewed overwrites; do not use broad force as a migration strategy.
-- Add a future guide manifest or version marker so `guides sync` can report stale guides without overwriting project-specific edits.
+- Maintain the guide manifest so `guides sync --check --json` can report stale guides without overwriting project-specific edits.
 - Make migration from existing agent docs preserve history, classify current rules, and record remaining uncertainty in `ai-playbook/questions.md`.
 - Treat `worklog summarize` as a promotion checkpoint: durable facts belong in `CURRENT.md`, maps, runbooks, or decisions, not only in history.
 
@@ -42,7 +42,7 @@ Runtime hooks should be designed as thin adapters over the document harness:
 - **Compaction hooks:** `PostCompact` may reintroduce compact playbook context after context compaction.
 - **Rules loader:** load portable rule sources from project playbook files and optional rule folders. Do not re-inject `AGENTS.md` by default when the agent already loads it natively.
 - **Context injector:** emit additional context through the runtime's supported hook JSON contract and keep debug logs on stderr.
-- **Doctor reminder:** prefer a short reminder to run `doctor`; avoid automatic full checks on every session until cost and noise are proven acceptable.
+- **Doctor reminder:** prefer the small `doctor --reminder --json` signal or a short reminder to run `doctor`; avoid automatic full checks on every session until cost and noise are proven acceptable.
 - **Command layer:** keep `node .\bin\ai-playbook.mjs ...` as the stable invocation. Global commands and plugin commands are conveniences only.
 
 ## Risks of Going Runtime-First
@@ -92,10 +92,8 @@ These can be implemented before a full plugin exists:
 
 - For a concrete V4+ execution plan and next-session handoff, see `docs/plans/2026-06-11-runtime-harness-v4-plus.md`.
 - Better bootstrap conflict reports for existing projects.
-- A guide manifest or version marker so `guides sync --check` can report stale guides, not only missing guides.
-- Worklog summary freshness checks that remind agents to promote durable facts.
-- A `doctor` reminder hook that does not run full checks automatically.
-- V4 candidates: `Stop`, continuation, blocking feedback, and any automatic doctor execution after cost and noise are proven acceptable.
+- A local adapter configuration renderer that prints reviewable settings without writing them.
+- V4 candidates still requiring caution: `Stop`, continuation, blocking feedback, and any automatic doctor execution after cost and noise are proven acceptable.
 
 ## Process Skill Compatibility
 

@@ -14,7 +14,7 @@ Before considering hooks:
 - Move durable current facts into `CURRENT.md`, maps, runbooks, or decisions.
 - Keep detailed history in `worklogs/` and summarize it when it contains durable facts.
 - Use `guides sync --dry-run` from the source playbook checkout to add missing support guides without overwriting local edits.
-- Use `guides sync --check`, `doctor --json`, and `adapter check --json` when an adapter or automation needs a read-only health signal.
+- Use `guides sync --check --json`, `doctor --json`, `doctor --reminder --json`, and `adapter check --json` when an adapter or automation needs a read-only health signal.
 
 ## Runtime Readiness Checklist
 
@@ -38,7 +38,7 @@ Good first hook responsibilities are small:
 - inject compact project-memory context from `START_HERE.md`, `CURRENT.md`, `SKILLS.md`, and `GIT.md` when native context is insufficient;
 - match edited file paths to relevant project guides or rule files;
 - remind on commit, push, PR, merge, worklog, or doctor-like prompts only when the lifecycle event is explicitly enabled;
-- remind the agent to run `doctor` before handoff;
+- remind the agent to run `doctor` before handoff, or use `doctor --reminder --json` for a small local signal;
 - clear deduplication state after context compaction.
 
 Avoid hooks that:
@@ -52,7 +52,7 @@ Avoid hooks that:
 ## Suggested Migration Order
 
 1. Stabilize `ai-playbook/` and run `doctor`.
-2. Add any missing guides with `guides sync --dry-run`, then a reviewed `guides sync`.
+2. Add any missing guides with `guides sync --dry-run`, then a reviewed `guides sync`; use `guides sync --check --json` to review stale guides before overwriting local edits.
 3. Document hook intent in a decision note before enabling it.
 4. Run the source playbook's `adapter check` command for the selected adapter.
 5. Create fixture tests for hook inputs and outputs when local customization is needed.
@@ -91,6 +91,7 @@ These events should stay quiet for unrelated prompts, missing playbooks, unsuppo
 - The project works without hooks.
 - Hooks add reminders or context, not hidden policy.
 - The selected adapter passes a read-only self-check before local activation.
+- Guide checks have no unexplained missing guides, and stale guides have been reviewed.
 - `doctor` has no unexplained failures.
 - Remaining warnings are documented.
 - A human can disable the hook layer without losing project memory.

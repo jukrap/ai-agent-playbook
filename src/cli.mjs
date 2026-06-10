@@ -1,10 +1,13 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  buildProjectContext,
   bootstrapProject,
+  checkGuides,
   createPlan,
   createWorklog,
   doctorProject,
+  parseMaxChars,
   syncGuides,
   summarizeWorklogs
 } from './harness.mjs';
@@ -46,13 +49,31 @@ export async function runCli(argv, io = {}) {
     if (command === 'doctor') {
       const target = resolveTarget(cwd, subcommand);
       const result = await doctorProject({ target, strict: Boolean(parsed.flags.strict) });
-      for (const check of result.checks) {
-        write(stdout, `[${check.level.toUpperCase()}] ${check.name}: ${check.message}\n`);
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        for (const check of result.checks) {
+          write(stdout, `[${check.level.toUpperCase()}] ${check.name}: ${check.message}\n`);
+        }
       }
       return result.ok ? 0 : 1;
     }
 
     if (command === 'guides' && subcommand === 'sync') {
+      if (parsed.flags.check) {
+        const result = await checkGuides({
+          repoRoot: root,
+          target: resolveTarget(cwd, targetArg)
+        });
+        if (parsed.flags.json) {
+          writeJson(stdout, result);
+        } else {
+          for (const guide of result.guides) {
+            write(stdout, `[${guide.status.toUpperCase()}] ${guide.path}\n`);
+          }
+        }
+        return result.ok ? 0 : 1;
+      }
       const result = await syncGuides({
         repoRoot: root,
         target: resolveTarget(cwd, targetArg),
@@ -65,6 +86,23 @@ export async function runCli(argv, io = {}) {
         return 2;
       }
       return 0;
+    }
+
+    if (command === 'context') {
+      const result = await buildProjectContext({
+        target: resolveTarget(cwd, subcommand),
+        maxChars: parseMaxChars(parsed.flags['max-chars'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else if (result.additionalContext) {
+        write(stdout, `${result.additionalContext}\n`);
+      } else {
+        for (const warning of result.warnings) {
+          write(stderr, `[WARN] ${warning.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
     }
 
     if (command === 'plan' && subcommand === 'new') {
@@ -134,7 +172,7 @@ export function parseArgs(argv) {
 }
 
 function needsValue(key) {
-  return ['profile', 'title', 'date', 'month'].includes(key);
+  return ['profile', 'title', 'date', 'month', 'max-chars'].includes(key);
 }
 
 function resolveTarget(cwd, value) {
@@ -161,6 +199,10 @@ function write(stream, text) {
   stream.write(text);
 }
 
+function writeJson(stream, value) {
+  write(stream, `${JSON.stringify(value, null, 2)}\n`);
+}
+
 function helpText() {
-  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
+  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
 }

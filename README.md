@@ -34,7 +34,7 @@ The repository is agent-agnostic. Codex, Claude Code, and other coding agents ca
 | ----------------- | --------------------------------------------------------------------------------------------------- | ------------------ |
 | Reusable skills   | Trigger-focused operating guides for onboarding, docs, quality, Git, meta work, and legacy systems. | `skills/`          |
 | Project templates | Copyable root agent rules, stack profiles, and project-memory files.                                | `templates/`       |
-| Runtime harness   | A small CLI for bootstrapping `ai-playbook/`, creating plans, and keeping worklogs predictable.     | `bin/`, `src/`     |
+| Runtime harness   | A small CLI for bootstrapping `ai-playbook/`, health checks, hook context, plans, and worklogs.     | `bin/`, `src/`     |
 | Human docs        | Installation, classification, maintenance, publishing, and translation notes.                       | `docs/`            |
 | Translations      | Korean reading copies that mirror English source files.                                             | `translations/ko/` |
 | Agent adapters    | Setup notes for specific agent environments.                                                        | `adapters/`        |
@@ -73,9 +73,13 @@ Use the runtime CLI only when a target project should receive a root `AGENTS.md`
 node .\bin\ai-playbook.mjs bootstrap <target-project> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project>
+node .\bin\ai-playbook.mjs doctor <target-project> --json
+node .\bin\ai-playbook.mjs context <target-project> --json
 ```
 
 Use `--local-only` when the target project's `ai-playbook/` folder should be ignored by Git. Use `--profile <name>` only after the target stack is known.
+
+Runtime hooks and plugins are not part of the default install path. Treat them as optional extensions after the document and CLI harness are stable. The Codex and Claude Code adapters include read-only context hook examples, but they are not installed automatically. See [Runtime roadmap](docs/runtime-roadmap.md).
 
 ## Everyday Flow
 
@@ -112,11 +116,11 @@ templates/
   project-playbook/   Copyable ai-playbook project-memory template
 examples/             Worklog, prompt, and handoff examples
 translations/         Human translations; never install these as skills
-adapters/             Agent-specific install notes
+adapters/             Agent-specific install notes and optional hook PoCs
 docs/                 Classification, installation, publishing, and maintenance notes
 docs/assets/          README and documentation images
 scripts/              Validation and local sync helpers
-test/                 Node CLI tests
+test/                 Node CLI and adapter tests
 .github/              GitHub Actions validation workflow
 ```
 
@@ -137,8 +141,10 @@ Each `SKILL.md` stays short and trigger-focused. Longer reusable detail belongs 
 - [Repository working rules](AGENTS.md): maintenance rules for agents editing this repository.
 - [Repository context](CONTEXT.md): core terms and design intent for the playbook.
 - [Installation](docs/installation.md): first install, existing-clone update, custom skill paths, and Codex restart notes.
-- [Runtime harness](docs/harness-runtime.md): CLI commands, overwrite policy, and target-project flow.
+- [Runtime harness](docs/harness-runtime.md): CLI commands, JSON contracts, overwrite policy, and target-project flow.
+- [Runtime roadmap](docs/runtime-roadmap.md): staged hardening plan and optional hook-layer boundaries.
 - [Codex adapter](adapters/codex/README.md): Codex-specific local sync behavior and Codex App on Windows workflow.
+- [Claude Code adapter](adapters/claude-code/README.md): Claude Code setup notes and optional read-only context hook example.
 - [Templates](templates/README.md): what to copy into project repositories and what to leave as installable skills.
 - [Classification](docs/classification.md): why skills, templates, examples, docs, and adapters are separated.
 - [Superpowers integration](docs/superpowers-integration.md): how to use this playbook alongside external process skills.

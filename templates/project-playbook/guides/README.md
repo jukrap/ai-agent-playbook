@@ -6,6 +6,7 @@ Recommended starting guides:
 
 - `repo-onboarding.md`: first pass through an unfamiliar project.
 - `runtime-harness.md`: how to use the CLI-backed `ai-playbook/` harness without scattering markdown files.
+- `runtime-roadmap.md`: decide whether optional runtime hooks are appropriate after the document harness is stable.
 - `harness-migration.md`: migrate from existing agent docs, skill sets, or another harness without losing history.
 - `docs-system.md`: project memory roles and cleanup rules.
 - `commit-push-worklog.md`: detailed Git, PR, and worklog policy.

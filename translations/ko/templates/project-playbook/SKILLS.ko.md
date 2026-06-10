@@ -41,6 +41,8 @@
 
 다른 에이전트 런타임의 hook, slash command, plugin environment variable이 여기서 동작한다고 가정하지 않습니다. 다른 에이전트 기준으로 작성된 스킬이나 도구라면 의도를 지원되는 명령과 저장소 로컬 규칙으로 옮깁니다.
 
+이 프로젝트가 나중에 runtime hook을 켜더라도 선택 사항으로 유지하고 문서화합니다. Hook은 reminder나 context를 주입할 수 있지만 durable rule은 여전히 `AGENTS.md`, `ai-playbook/`, project docs에 있어야 합니다.
+
 ## Skill 대신 project docs에 써야 할 때
 
 - `AGENTS.md`에는 루트 진입점만 두고, 상시 skill 정책은 이 파일에, 더 긴 프로젝트 지침은 `ai-playbook/` 문서에 둡니다.

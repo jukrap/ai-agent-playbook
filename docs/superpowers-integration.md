@@ -6,6 +6,7 @@ This playbook is designed to work alongside external process skills such as Supe
 
 - Process skills decide how to work: brainstorming, planning, TDD, debugging, verification, branch finishing, and review discipline.
 - This playbook adds repository guardrails: runtime bootstrap, onboarding, project memory, API boundaries, UI style policy, legacy risk control, commit policy, PR body policy, and worklogs.
+- Optional runtime hooks may reinforce those guardrails with reminders or context injection, but they should not replace process skills or hide repository policy outside project files.
 
 Use process skills first when they apply, then use the smallest relevant playbook skill, project template, or runtime command.
 
@@ -41,3 +42,4 @@ If a process rule and a project-local rule disagree, follow the higher-priority 
 - Do not copy machine-local custom instructions into public docs without removing paths, identities, and private workflow assumptions.
 - Do not assume another agent runtime's hooks, slash commands, or plugin environment variables are available.
 - Do not treat this repository's CLI as a replacement for planning, TDD, debugging, or verification process skills. It only scaffolds and checks project memory.
+- Do not make hook-based behavior mandatory when the same policy can live clearly in `AGENTS.md` or `ai-playbook/`.

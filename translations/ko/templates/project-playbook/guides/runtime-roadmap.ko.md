@@ -25,6 +25,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 - 대상 agent가 현재 환경에서 lifecycle hook을 지원합니다.
 - 매일 쓰기 전에 hook output을 local fixture로 테스트할 수 있습니다.
 - Source adapter가 이 대상 프로젝트에서 `adapter check`를 통과합니다.
+- 선택적 reminder event는 기본값이 아니라 `AI_PLAYBOOK_HOOK_EVENTS` 같은 local 설정으로 명시적으로 켭니다.
 - Hook을 configuration으로 비활성화할 수 있습니다.
 - Native project instruction과 injected context가 서로 중복되지 않습니다.
 - Hook이 project file을 자동으로 쓰지 않습니다.
@@ -36,6 +37,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 
 - Native context가 부족할 때 `START_HERE.md`, `CURRENT.md`, `SKILLS.md`, `GIT.md` 기반 compact project-memory context를 주입합니다.
 - 편집된 file path를 관련 project guide나 rule file과 매칭합니다.
+- Lifecycle event가 명시적으로 켜진 경우에만 commit, push, PR, merge, worklog, doctor-like prompt에 reminder를 냅니다.
 - Handoff 전 `doctor` 실행을 상기합니다.
 - Context compaction 뒤 deduplication state를 비웁니다.
 
@@ -75,6 +77,14 @@ node .\bin\ai-playbook.mjs <command>
 node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --json
 node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --json
 ```
+
+추가 reminder event는 local hook 설정에서만 켭니다.
+
+```powershell
+$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse'
+```
+
+이 event는 관련 없는 prompt, missing playbook, unsupported payload, non-edit tool에서 조용히 빠져야 합니다.
 
 ## 완료 기준
 

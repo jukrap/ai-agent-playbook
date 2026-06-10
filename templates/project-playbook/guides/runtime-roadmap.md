@@ -25,6 +25,7 @@ Consider optional hooks only when all of these are true:
 - The target agent supports lifecycle hooks in the current environment.
 - Hook output can be tested with local fixtures before enabling it in daily work.
 - The source adapter passes `adapter check` for this target project.
+- Optional reminder events are enabled explicitly with a local setting such as `AI_PLAYBOOK_HOOK_EVENTS`, not by default.
 - The hook can be disabled through configuration.
 - Native project instructions and injected context will not duplicate each other.
 - The hook does not write project files automatically.
@@ -36,6 +37,7 @@ Good first hook responsibilities are small:
 
 - inject compact project-memory context from `START_HERE.md`, `CURRENT.md`, `SKILLS.md`, and `GIT.md` when native context is insufficient;
 - match edited file paths to relevant project guides or rule files;
+- remind on commit, push, PR, merge, worklog, or doctor-like prompts only when the lifecycle event is explicitly enabled;
 - remind the agent to run `doctor` before handoff;
 - clear deduplication state after context compaction.
 
@@ -75,6 +77,14 @@ Before enabling one of those examples, run the corresponding read-only check fro
 node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --json
 node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --json
 ```
+
+Enable extra reminder events only in a local hook setting:
+
+```powershell
+$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse'
+```
+
+These events should stay quiet for unrelated prompts, missing playbooks, unsupported payloads, and non-edit tools.
 
 ## Done Criteria
 

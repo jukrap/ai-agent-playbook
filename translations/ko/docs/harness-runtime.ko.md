@@ -71,6 +71,23 @@ node .\bin\ai-playbook.mjs adapter check <target> --adapter claude-code --json
 
 `--json`을 사용하면 `{ schemaVersion, ok, target, adapter, summary, checks }`를 반환합니다. Check 항목은 `doctor`와 같은 `id`, `level`, `category`, `name`, `message`, `paths` 구조를 사용하므로 hook 또는 setup automation이 사람이 읽는 text를 parsing하지 않고도 일찍 실패할 수 있습니다.
 
+## Lifecycle reminder hook
+
+Adapter hook 예시는 기본적으로 context refresh event만 켭니다.
+
+- `SessionStart`
+- `PostCompact`
+
+`UserPromptSubmit`과 `PostToolUse`는 opt-in reminder event입니다. Local hook 설정에서 `AI_PLAYBOOK_HOOK_EVENTS`를 comma-separated list로 설정한 경우에만 켭니다.
+
+```powershell
+$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse'
+```
+
+`UserPromptSubmit`은 prompt가 commit, push, PR, merge, worklog, doctor 같은 handoff 작업으로 보일 때만 짧은 guardrail reminder를 출력합니다. `PostToolUse`는 edit-like tool payload에서 변경 file path를 읽을 수 있을 때만 짧은 reminder를 출력합니다. 두 event 모두 `ai-playbook/`이 없거나, event가 opt-in 되지 않았거나, 관련 intent/path가 없으면 조용히 빠집니다.
+
+이 reminder는 의도적으로 좁게 유지합니다. `doctor`를 실행하지 않고, tool call을 block하지 않고, session을 continuation하지 않고, tool output을 다시 쓰지 않고, file을 쓰지 않고, network call을 하지 않습니다.
+
 ## Plan과 worklog 생성
 
 - Plan은 `ai-playbook/plans/YYYY-MM-DD-<slug>.md`에 생성됩니다.

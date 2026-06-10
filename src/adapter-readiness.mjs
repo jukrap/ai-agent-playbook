@@ -119,7 +119,7 @@ async function fileCheck(repoRoot, relPath, id, name) {
 }
 
 async function hookJsonCheck(runner, eventName, target, maxChars) {
-  const output = await runner({ hook_event_name: eventName, cwd: target }, { maxChars });
+  const output = await runner({ hook_event_name: eventName, cwd: target }, { maxChars, env: {} });
   const parsed = parseHookOutput(output);
   const valid = Boolean(
     parsed?.hookSpecificOutput
@@ -138,7 +138,7 @@ async function hookJsonCheck(runner, eventName, target, maxChars) {
 }
 
 async function quietHookCheck(runner, eventName, target, maxChars, details) {
-  const output = await runner({ hook_event_name: eventName, cwd: target }, { maxChars });
+  const output = await runner({ hook_event_name: eventName, cwd: target }, { maxChars, env: {} });
   const quiet = output === '';
   return check(
     quiet ? 'pass' : 'fail',

@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { checkAdapterReadiness } from './adapter-readiness.mjs';
 import {
   buildProjectContext,
   bootstrapProject,
@@ -105,6 +106,24 @@ export async function runCli(argv, io = {}) {
       return result.ok ? 0 : 1;
     }
 
+    if (command === 'adapter' && subcommand === 'check') {
+      const result = await checkAdapterReadiness({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        adapter: parsed.flags.adapter,
+        maxChars: parseMaxChars(parsed.flags['max-chars'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Adapter readiness: ${result.adapter} (${result.ok ? 'ok' : 'needs attention'})\n`);
+        for (const check of result.checks) {
+          write(stdout, `[${check.level.toUpperCase()}] ${check.name}: ${check.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
     if (command === 'plan' && subcommand === 'new') {
       const result = await createPlan({
         target: resolveTarget(cwd, targetArg),
@@ -172,7 +191,7 @@ export function parseArgs(argv) {
 }
 
 function needsValue(key) {
-  return ['profile', 'title', 'date', 'month', 'max-chars'].includes(key);
+  return ['profile', 'title', 'date', 'month', 'max-chars', 'adapter'].includes(key);
 }
 
 function resolveTarget(cwd, value) {
@@ -204,5 +223,5 @@ function writeJson(stream, value) {
 }
 
 function helpText() {
-  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
+  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
 }

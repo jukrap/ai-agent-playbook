@@ -1,55 +1,143 @@
-# AI Agent Playbook
+<p align="center">
+  <img src="../../docs/assets/logo-wide.png" alt="AI Agent Playbook" width="520">
+</p>
+
+<h1 align="center">AI Agent Playbook</h1>
+
+<p align="center">
+  실제 소프트웨어 저장소 안에서 조심스럽게 일해야 하는 AI 에이전트를 위한 밝고 재사용 가능한 플레이북입니다.
+</p>
+
+<p align="center">
+  <a href="../../LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-2f9e44?style=flat-square"></a>
+  <img alt="Node >= 18" src="https://img.shields.io/badge/node-%3E%3D18-1c7ed6?style=flat-square">
+  <img alt="PowerShell installer" src="https://img.shields.io/badge/installer-PowerShell-f08c00?style=flat-square">
+  <img alt="Agent agnostic" src="https://img.shields.io/badge/agents-Codex%20%7C%20Claude%20Code%20%7C%20more-e03131?style=flat-square">
+</p>
 
 ## 언어 / Languages
 
-- English (Canonical): [README.md](../../README.md)
+- English (canonical): [README.md](../../README.md)
 - Korean (한국어): 이 문서
 
-소프트웨어 유지보수와 개발 흐름에 재사용할 수 있는 에이전트 스킬, 프로젝트 템플릿, 프로젝트 메모리 가이드, 작은 런타임 CLI를 함께 둔 저장소입니다. 이 저장소는 특정 에이전트에 종속되지 않습니다. Codex, Claude Code, 그 외 코딩 에이전트는 같은 원본을 사용할 수 있고, 에이전트별 설치 방식은 `adapters/`에서 다룹니다.
+## 이건 뭐임?
 
-## 존재 이유
+AI Agent Playbook은 재사용 가능한 에이전트 스킬, 프로젝트 템플릿, 프로젝트 메모리 가이드, 의존성이 적은 런타임 CLI를 함께 둔 작은 책꽂이 같은 저장소입니다.
 
-코딩 에이전트는 프로젝트 규칙을 추측하거나, 검증을 건너뛰거나, API 계약을 흐리거나, 세션 사이에 맥락을 잃거나, 레거시 시스템을 과하게 갈아엎을 때 자주 실패합니다. 이 playbook은 그런 반복되는 작업 원칙을 작고 명확하며 재사용 가능한 형태로 둡니다.
+코딩 에이전트가 추측을 줄이도록 돕습니다. 저장소를 먼저 살피고, 로컬 규칙을 존중하고, API 경계를 흐리지 않고, 쓸모 있는 작업 기록을 남기고, 완료를 말하기 전에 검증하도록 유도합니다.
 
-이 저장소는 단순한 스킬 모음이 아닙니다. 아래를 함께 제공하는 하네스입니다.
+이 저장소는 특정 에이전트에 종속되지 않습니다. Codex, Claude Code, 그 외 코딩 에이전트는 같은 원본을 사용할 수 있고, 에이전트별 설치 방식은 `adapters/`에서 분리해 다룹니다.
 
-- 재사용 스킬 설치
-- `ai-playbook` bootstrap 및 doctor 명령 실행
-- 얇은 프로젝트 루트 에이전트 부트스트랩 복사
-- `ai-playbook/` 프로젝트 메모리 생성
-- 진행 중인 plan, 상세 worklog, 월간 summary 생성
-- map, runbook, decision, plan, worklog를 계속 유용하게 유지
+## 제공하는 것
 
-## 저장소 구조
+| 구성             | 역할                                                                                            | 위치               |
+| ---------------- | ----------------------------------------------------------------------------------------------- | ------------------ |
+| 재사용 스킬      | onboarding, docs, quality, Git, meta work, legacy system을 위한 trigger 중심 작업 가이드입니다. | `skills/`          |
+| 프로젝트 템플릿  | 복사 가능한 루트 에이전트 규칙, stack profile, project-memory 파일입니다.                       | `templates/`       |
+| 런타임 하네스    | `ai-playbook/` bootstrap, plan 생성, worklog 경로 관리를 위한 작은 CLI입니다.                   | `bin/`, `src/`     |
+| 사람이 읽는 문서 | 설치, 분류, 유지보수, 공개 준비, 번역 정책 문서입니다.                                          | `docs/`            |
+| 번역             | 영어 원본을 따라가는 한국어 읽기용 문서입니다.                                                  | `translations/ko/` |
+| 에이전트 어댑터  | 특정 에이전트 환경별 설정 메모입니다.                                                           | `adapters/`        |
+
+## 빠른 시작
+
+### 1. 스킬만 설치
+
+재사용 가능한 에이전트 스킬만 로컬에서 쓰고 싶고, 대상 프로젝트에 하네스를 적용하지 않을 때 사용합니다.
+
+```powershell
+.\install.ps1
+```
+
+설치 스크립트는 이 저장소를 검증한 뒤 모든 `skills/<category>/<skill>/SKILL.md` 폴더를 일반적인 로컬 스킬 디렉터리에 복사합니다.
+
+- `%USERPROFILE%\.codex\skills\<skill>`
+- `%USERPROFILE%\.agents\skills\<skill>`
+- `%USERPROFILE%\.agents\skills\legacys\<legacy-skill>`: legacy 스킬용
+
+설치 후 새 스킬 metadata를 읽도록 Codex를 재시작하거나 새 에이전트 세션을 시작합니다.
+
+### 2. 기존 설치 업데이트
+
+```powershell
+.\update.ps1
+```
+
+업데이트 스크립트는 현재 checkout을 `--ff-only`로 가져온 뒤 저장소를 검증하고 관리 중인 설치 스킬을 동기화합니다.
+
+### 3. 필요할 때 프로젝트 하네스 적용
+
+대상 프로젝트에 루트 `AGENTS.md` bootstrap과 `ai-playbook/` project-memory 폴더를 넣어야 할 때만 런타임 CLI를 사용합니다.
+
+```powershell
+node .\bin\ai-playbook.mjs bootstrap <target-project> --dry-run
+node .\bin\ai-playbook.mjs bootstrap <target-project>
+node .\bin\ai-playbook.mjs doctor <target-project>
+```
+
+대상 프로젝트의 `ai-playbook/` 폴더를 Git에서 제외해야 하면 `--local-only`를 사용합니다. `--profile <name>`은 대상 stack이 확인된 뒤에만 사용합니다.
+
+## 평소 작업 흐름
+
+```text
+Clone once
+  -> install skills
+  -> restart the agent
+  -> inspect a target project
+  -> optionally bootstrap ai-playbook/
+  -> plan, worklog, verify, and hand off with consistent paths
+```
+
+기존 프로젝트에서는 먼저 dry run을 실행하고 충돌을 확인한 뒤 파일을 씁니다.
+
+```powershell
+node .\bin\ai-playbook.mjs bootstrap <target-project> --local-only --dry-run
+node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
+```
+
+## 저장소 지도
 
 ```text
 bin/                  ai-playbook CLI 진입점
 src/                  CLI 런타임 구현
 skills/
-  project/             bootstrap, onboarding, 프로젝트 메모리 스킬
-  quality/             API boundary와 UI 품질 스킬
-  git/                 commit, PR, push, worklog 스킬
-  meta/                스킬 작성 스킬
-  legacy/              레거시 시스템 유지보수 스킬
+  project/            bootstrap, onboarding, project-memory 스킬
+  quality/            API boundary와 UI quality 스킬
+  git/                commit, PR, push, worklog 스킬
+  meta/               skill-authoring 스킬
+  legacy/             legacy-system maintenance 스킬
 templates/
-  agents/              루트 에이전트 지침 템플릿과 프로젝트 프로필
-  codex-home/          선택적 개인 Codex home AGENTS.md 템플릿
-  project-playbook/    복사용 ai-playbook 프로젝트 메모리 템플릿
-examples/              작업 기록, 프롬프트, 인수인계 예시
-translations/          사람이 읽는 번역본. 스킬 설치 대상이 아님
-adapters/              에이전트별 설치 메모
-docs/                  분류, 설치, 공개 준비 문서
-scripts/               검증과 로컬 동기화 스크립트
-test/                  Node CLI 테스트
-.github/               GitHub Actions 검증 작업 흐름
+  agents/             루트 에이전트 지침 템플릿과 project profile
+  codex-home/         선택적 개인 Codex home AGENTS.md 템플릿
+  project-playbook/   복사용 ai-playbook project-memory 템플릿
+examples/             worklog, prompt, handoff 예시
+translations/         사람이 읽는 번역본. 스킬 설치 대상이 아님
+adapters/             에이전트별 설치 메모
+docs/                 분류, 설치, 공개, 유지보수 문서
+docs/assets/          README와 문서용 이미지
+scripts/              검증과 로컬 동기화 helper
+test/                 Node CLI 테스트
+.github/              GitHub Actions 검증 workflow
 ```
 
-## 문서 지도
+## 스킬 책꽂이
+
+| 분류    | 스킬                                                                                                                                                                                                                                                                                                                                               |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Project | `project-bootstrap`, `repo-onboarding`, `project-doc-system`                                                                                                                                                                                                                                                                                       |
+| Quality | `api-contract-boundary`, `ui-style-policy`, `style-quality-review`                                                                                                                                                                                                                                                                                 |
+| Git     | `commit-worklog-guardrails`                                                                                                                                                                                                                                                                                                                        |
+| Meta    | `agent-skill-authoring`                                                                                                                                                                                                                                                                                                                            |
+| Legacy  | `legacy-general`, `legacy-feature-addition`, `legacy-risk-check`, `legacy-jquery-web`, `legacy-server-rendered-web`, `legacy-php-lamp`, `legacy-java-spring-mvc`, `legacy-dotnet-webforms`, `legacy-android-webview-hybrid`, `legacy-ie-activex-compat`, `legacy-database-heavy-system`, `legacy-reporting-printing`, `legacy-batch-file-transfer` |
+
+각 `SKILL.md`는 짧고 trigger 중심으로 유지합니다. 더 긴 재사용 상세 내용은 `references/`에 둡니다.
+
+## 문서
 
 - [저장소 작업 규칙](AGENTS.ko.md): 이 저장소를 수정하는 에이전트를 위한 유지보수 규칙.
 - [저장소 맥락](CONTEXT.ko.md): playbook의 핵심 용어와 설계 의도.
 - [설치](docs/installation.ko.md): 첫 설치, 기존 clone 업데이트, 사용자 지정 스킬 경로, Codex 재시작 기준.
-- [런타임 하네스](docs/harness-runtime.ko.md): `ai-playbook` CLI 명령, 덮어쓰기 정책, 대상 프로젝트 적용 흐름.
+- [런타임 하네스](docs/harness-runtime.ko.md): CLI 명령, 덮어쓰기 정책, 대상 프로젝트 적용 흐름.
 - [Codex 어댑터](adapters/codex/README.ko.md): Codex 기준 로컬 동기화 방식과 Windows용 Codex App 작업 흐름.
 - [템플릿](templates/README.ko.md): 프로젝트 저장소에 복사할 문서와 설치형 스킬의 차이.
 - [분류](docs/classification.ko.md): skills, templates, examples, docs, adapters를 나누는 이유.
@@ -58,133 +146,31 @@ test/                  Node CLI 테스트
 - [번역 정책](docs/translation-policy.ko.md): 영어 원문과 한국어 번역본 관리 규칙.
 - [공개 체크리스트](docs/publishing-checklist.ko.md): 공개 전 위생 점검.
 
-## 권장 사용법
+## 유지보수 검증
 
-### 1. 재사용 스킬 설치
-
-구체적인 설치 절차는 [설치](docs/installation.ko.md)에서 시작합니다.
-
-기본 설치 요약:
-
-```powershell
-.\install.ps1
-```
-
-설치 스크립트는 저장소를 검증한 뒤 모든 `skills/<category>/<skill>/SKILL.md` 폴더를 일반적인 로컬 에이전트 스킬 디렉터리에 복사합니다.
-
-기존 clone을 나중에 업데이트할 때는:
-
-```powershell
-.\update.ps1
-```
-
-### 2. 프로젝트 하네스 bootstrap
-
-대상 저장소에 프로젝트 하네스를 적용하려면 런타임 CLI를 사용합니다.
-
-```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-project>
-node .\bin\ai-playbook.mjs doctor <target-project>
-```
-
-파일을 쓰기 전에는 `--dry-run`을 사용합니다. `ai-playbook/`을 Git에서 제외해야 하면 `--local-only`를 사용하고, 프로젝트 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다.
-
-대상 프로젝트에 이미 `ai-playbook/`이 있고 새로 추가된 가이드 템플릿만 가져오면 된다면, 프로젝트 메모리는 건드리지 않고 가이드만 동기화합니다.
-
-```powershell
-node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-project>
-```
-
-### 3. 루트 프로젝트 정책 수동 복사
-
-먼저 `templates/agents/global` 아래의 작은 루트 템플릿을 고릅니다.
-
-- `AGENTS.md`: 에이전트를 `ai-playbook/`으로 안내하는 얇은 루트 부트스트랩.
-
-그 다음 프로젝트 기술 스택이 확인되면 profile 하나만 병합합니다.
-
-- `templates/agents/profiles/react-vite-fsd/AGENTS.md`
-- `templates/agents/profiles/react-native-expo/AGENTS.md`
-- `templates/agents/profiles/legacy-*`
-
-Codex의 개인 home 수준 기본값은 `templates/codex-home/AGENTS.md`를 사용합니다. 이 파일은 프로젝트 루트 템플릿과 별개이며, 저장소별 규칙을 담지 않습니다.
-
-### 4. 프로젝트 메모리 수동 추가
-
-`templates/project-playbook/`을 대상 프로젝트에 `ai-playbook/`로 복사합니다.
-
-`ai-playbook/`에는 현재 프로젝트 사실, 스킬 정책, Git 정책, map, runbook, decision, active plan, 상세 worklog, summary, archive를 둡니다. 이 폴더를 커밋할지 local-only로 둘지는 프로젝트마다 결정합니다.
-
-작업 문서 경로를 임의로 만들지 않으려면 CLI로 생성합니다.
-
-```powershell
-node .\bin\ai-playbook.mjs plan new <target-project> --title "Feature slice"
-node .\bin\ai-playbook.mjs worklog new <target-project> --title "Feature slice"
-node .\bin\ai-playbook.mjs worklog summarize <target-project> --month 2026-06
-```
-
-### 5. 작업 흐름 스킬과 함께 사용
-
-외부 작업 흐름 스킬은 계획, 디버깅, TDD, 검증, 브랜치 마무리를 이끌 수 있습니다. 이 playbook은 저장소별 보호 규칙, 프로젝트 메모리, API 경계, 스타일 정책, 레거시 위험 제어, Git 정책, worklog를 보강하는 데 사용합니다. 자세한 내용은 [Superpowers 연동](docs/superpowers-integration.ko.md)을 봅니다.
-
-### 6. 원본과 설치본 분리
-
-- Source of truth: 이 저장소.
-- 설치된 복사본: 로컬 에이전트 스킬 디렉터리.
-- 에이전트별 메모: `adapters/`.
-
-설치본을 원본처럼 수정하지 않습니다. 이 저장소를 수정하고, 검증한 뒤, 다시 동기화합니다.
-
-## 스킬 분류
-
-### Project
-
-- `project-bootstrap`: 얇은 루트 에이전트 부트스트랩과 `ai-playbook/` 프로젝트 메모리를 설정합니다.
-- `repo-onboarding`: 프로젝트별 가정을 하기 전에 저장소를 먼저 파악합니다.
-- `project-doc-system`: 에이전트 문서, 프로젝트 메모리, plan, map, runbook, worklog를 정리합니다.
-
-### Quality
-
-- `api-contract-boundary`: frontend/backend 불확실성을 API boundary에 가둡니다.
-- `ui-style-policy`: 저장소 UI 스타일 정책을 선택하고 문서화합니다.
-- `style-quality-review`: 제품 의도를 바꾸지 않고 UI style quality를 개선합니다.
-
-### Git
-
-- `commit-worklog-guardrails`: stage, commit, push, PR, worklog를 안전하게 처리합니다.
-
-### Meta
-
-- `agent-skill-authoring`: 재사용 가능한 에이전트 스킬을 만들고, 검토하고, 정리합니다.
-
-### Legacy
-
-- General: `legacy-general`, `legacy-feature-addition`, `legacy-risk-check`.
-- Web: `legacy-jquery-web`, `legacy-server-rendered-web`, `legacy-php-lamp`, `legacy-java-spring-mvc`, `legacy-dotnet-webforms`.
-- Platform constraints: `legacy-android-webview-hybrid`, `legacy-ie-activex-compat`.
-- Operational integrations: `legacy-database-heavy-system`, `legacy-reporting-printing`, `legacy-batch-file-transfer`.
-
-## 공개 전 체크리스트
-
-- 공개 전에 추가한 내용은 [유지보수 작업 흐름](docs/maintenance.ko.md)을 기준으로 확인합니다.
-- 개인 경로, 이름, 자격증명, 내부 URL, 날짜가 박힌 branch/PR reference를 확인합니다.
-- 모든 `SKILL.md`를 검증합니다.
-- 번역 안전성과 coverage를 검증합니다.
-- 프로필이 명시하지 않은 기술 스택, package manager, 작업 흐름을 템플릿이 단정하지 않는지 확인합니다.
-- [MIT 라이선스](../../LICENSE)가 포함되어 있는지 확인합니다.
-- 공개 후 설치 예시에 최종 repository URL을 반영합니다.
-
-## 번역 정책
-
-영어 파일이 기준 원본이며 에이전트 설치 대상은 영어 파일뿐입니다. 한국어 번역본은 사람이 읽고 검토하기 위한 자료로 `translations/ko` 아래에 둡니다. 번역된 스킬 문서를 로컬 스킬 디렉터리에 복사하지 않습니다.
+저장소 편집이 끝났다고 말하기 전에 프로젝트에서 정한 검증을 실행합니다.
 
 ```powershell
 npm run check
 npm test
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
+.\scripts\sync-skills.ps1 -WhatIf
 ```
+
+소스 편집 뒤 설치된 로컬 복사본을 갱신해야 하면 아래를 실행합니다.
+
+```powershell
+.\scripts\sync-skills.ps1
+```
+
+## 공개 준비 메모
+
+- 영어 source file이 기준 원본입니다.
+- 영어 source를 바꾸면 같은 변경에서 한국어 번역도 갱신합니다.
+- 개인 절대 경로, 회사명, credential, 내부 URL, branch name, PR number를 커밋하지 않습니다.
+- 설치된 skill copy를 source of truth처럼 수정하지 않습니다. 이 저장소를 수정하고, 검증한 뒤, 동기화합니다.
+- profile이 명시하지 않은 stack, package manager, workflow를 template이 단정하지 않는지 확인합니다.
 
 ## 라이선스
 

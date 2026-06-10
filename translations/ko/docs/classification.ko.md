@@ -19,12 +19,12 @@
 ## 런타임 CLI 분류
 
 - `bin/ai-playbook.mjs`: CLI 진입점.
-- `src/`: bootstrap, doctor, plan/worklog 생성 구현.
-- `test/`: Node test runner 기반 CLI 테스트.
+- `src/`: bootstrap, doctor, context, guide check, plan/worklog 생성 구현.
+- `test/`: Node test runner 기반 CLI와 adapter hook 테스트.
 
 CLI는 설치형 스킬이 아닙니다. 이 저장소 checkout에서 실행해 대상 프로젝트에 템플릿을 적용하고 하네스 상태를 점검합니다.
 
-선택적 hook 또는 plugin 실험은 안정된 계약이 생길 때까지 명확히 분리된 adapter나 실험 package에 둡니다. 기본 문서와 CLI 하네스에 필수 조건이 되어서는 안 됩니다.
+선택적 hook 또는 plugin 실험은 안정된 계약이 생길 때까지 명확히 분리된 adapter나 실험 package에 둡니다. Core CLI 계약을 호출할 수는 있지만, 기본 문서와 CLI 하네스에 필수 조건이 되거나 project policy의 유일한 위치가 되어서는 안 됩니다.
 
 ## 템플릿 분류
 

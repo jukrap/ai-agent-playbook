@@ -14,6 +14,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 - Durable current fact를 `CURRENT.md`, maps, runbooks, decisions로 옮깁니다.
 - Detailed history는 `worklogs/`에 두고 durable fact가 있으면 summary를 만듭니다.
 - Source playbook checkout에서 `guides sync --dry-run`을 사용해 local edit을 덮어쓰지 않고 누락된 support guide를 확인합니다.
+- Adapter나 automation이 read-only health signal을 필요로 하면 `guides sync --check`와 `doctor --json`을 사용합니다.
 
 ## Runtime 준비 체크리스트
 
@@ -26,13 +27,13 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 - Hook을 configuration으로 비활성화할 수 있습니다.
 - Native project instruction과 injected context가 서로 중복되지 않습니다.
 - Hook이 project file을 자동으로 쓰지 않습니다.
+- Hook이 자체 project-memory loader를 새로 만들지 않고 `context --json`을 사용할 수 있습니다.
 
 ## 적절한 Hook 책임
 
 좋은 첫 hook 책임은 작습니다.
 
-- agent에게 `START_HERE.md`와 `CURRENT.md`를 읽도록 상기합니다.
-- Native context가 부족할 때 compact project-memory context를 주입합니다.
+- Native context가 부족할 때 `START_HERE.md`, `CURRENT.md`, `SKILLS.md`, `GIT.md` 기반 compact project-memory context를 주입합니다.
 - 편집된 file path를 관련 project guide나 rule file과 매칭합니다.
 - Handoff 전 `doctor` 실행을 상기합니다.
 - Context compaction 뒤 deduplication state를 비웁니다.
@@ -54,15 +55,17 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 5. Reminder 또는 context-injection behavior만 먼저 켭니다.
 6. Opt-out 경로를 유지하고 남은 risk를 worklog에 기록합니다.
 
-## Codex App 메모
+## Adapter 메모
 
-Codex App에서는 짧은 timeout을 가진 Node 기반 hook을 선호합니다. Hook program은 지원되는 JSON을 stdout에 쓰고, debug log는 stderr에 쓰며, Windows path를 안전하게 처리하고, 기본적으로 network call을 피해야 합니다.
+Codex App과 Claude Code에서는 짧은 timeout을 가진 Node 기반 hook을 선호합니다. Hook program은 지원되는 JSON을 stdout에 쓰고, debug log는 stderr에 쓰며, Windows path를 안전하게 처리하고, 기본적으로 network call을 피해야 합니다.
 
 Global `ai-playbook` 명령을 요구하지 않습니다. 안정 호출은 아래입니다.
 
 ```powershell
 node .\bin\ai-playbook.mjs <command>
 ```
+
+원본 playbook 저장소에는 read-only adapter 예시가 있습니다. 이를 프로젝트 필수 조건이 아니라 로컬 출발점으로 다룹니다.
 
 ## 완료 기준
 

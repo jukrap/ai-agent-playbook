@@ -14,6 +14,7 @@ Before considering hooks:
 - Move durable current facts into `CURRENT.md`, maps, runbooks, or decisions.
 - Keep detailed history in `worklogs/` and summarize it when it contains durable facts.
 - Use `guides sync --dry-run` from the source playbook checkout to add missing support guides without overwriting local edits.
+- Use `guides sync --check` and `doctor --json` when an adapter or automation needs a read-only health signal.
 
 ## Runtime Readiness Checklist
 
@@ -26,13 +27,13 @@ Consider optional hooks only when all of these are true:
 - The hook can be disabled through configuration.
 - Native project instructions and injected context will not duplicate each other.
 - The hook does not write project files automatically.
+- The hook can use `context --json` instead of inventing its own project-memory loader.
 
 ## Useful Hook Responsibilities
 
 Good first hook responsibilities are small:
 
-- remind the agent to read `START_HERE.md` and `CURRENT.md`;
-- inject compact project-memory context when native context is insufficient;
+- inject compact project-memory context from `START_HERE.md`, `CURRENT.md`, `SKILLS.md`, and `GIT.md` when native context is insufficient;
 - match edited file paths to relevant project guides or rule files;
 - remind the agent to run `doctor` before handoff;
 - clear deduplication state after context compaction.
@@ -54,15 +55,17 @@ Avoid hooks that:
 5. Enable only reminder or context-injection behavior first.
 6. Keep an opt-out path and record any remaining risk in a worklog.
 
-## Codex App Notes
+## Adapter Notes
 
-For Codex App, prefer Node-based hooks with short timeouts. Hook programs should write supported JSON to stdout, write debug logs to stderr, handle Windows paths safely, and avoid network calls by default.
+For Codex App and Claude Code, prefer Node-based hooks with short timeouts. Hook programs should write supported JSON to stdout, write debug logs to stderr, handle Windows paths safely, and avoid network calls by default.
 
 Do not require a global `ai-playbook` command. The stable invocation remains:
 
 ```powershell
 node .\bin\ai-playbook.mjs <command>
 ```
+
+The source playbook repository includes read-only adapter examples. Treat them as local starting points, not project requirements.
 
 ## Done Criteria
 

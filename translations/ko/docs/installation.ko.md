@@ -120,7 +120,7 @@ Sync script는 기본적으로 다른 사람이 만든 같은 이름의 skill을
 
 템플릿은 skill처럼 자동 설치되지 않습니다. 각 프로젝트에 복사하거나 조정합니다.
 
-이 경로가 기본 project harness입니다. Runtime hook 또는 Codex plugin은 선택적 향후 확장이며 `install.ps1`, `update.ps1`, 현재 CLI가 설치하지 않습니다.
+이 경로가 기본 project harness입니다. Runtime hook 또는 agent plugin은 선택 확장이며 `install.ps1`, `update.ps1`, 현재 CLI가 설치하지 않습니다.
 
 권장 경로는 런타임 CLI입니다.
 
@@ -128,12 +128,17 @@ Sync script는 기본적으로 다른 사람이 만든 같은 이름의 skill을
 node .\bin\ai-playbook.mjs bootstrap <target-project> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-project>
 node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
+node .\bin\ai-playbook.mjs guides sync <target-project> --check
 node .\bin\ai-playbook.mjs doctor <target-project>
+node .\bin\ai-playbook.mjs doctor <target-project> --json
+node .\bin\ai-playbook.mjs context <target-project> --json
 ```
 
 대상 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다. `ai-playbook/`을 대상 `.gitignore`에 추가해야 하면 `--local-only`를 사용합니다.
 
 이미 `ai-playbook/`이 있는 프로젝트에서 새 playbook checkout의 누락된 가이드 템플릿만 가져오려면 `guides sync`를 사용합니다. 이 명령은 `--force`로 가이드 파일 덮어쓰기를 명시하지 않는 한 루트 `AGENTS.md`, playbook 정책 파일, 프로젝트별 메모를 수정하지 않습니다.
+
+선택적 adapter hook 예시는 내부적으로 `context` 명령을 사용합니다. 이 예시는 read-only이며 `adapters/`에서 수동으로 활성화해야 합니다.
 
 Plan과 worklog는 CLI로 생성할 수 있습니다.
 

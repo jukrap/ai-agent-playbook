@@ -1,6 +1,6 @@
 # Runtime Roadmap
 
-This roadmap describes how to strengthen the current document and CLI harness before adding any optional runtime hook layer.
+This roadmap describes how to strengthen the current document and CLI harness while adding optional runtime hook layers as thin adapters.
 
 The default path stays simple: install skills, bootstrap `ai-playbook/` when a target project needs it, run `doctor`, create plans and worklogs in predictable locations, and keep project rules explicit in files. Runtime hooks are an optional extension for environments that support them.
 
@@ -18,13 +18,14 @@ The default path stays simple: install skills, bootstrap `ai-playbook/` when a t
 - `guides sync` adds missing guide templates without replacing local edits by default.
 - `plan`, `worklog`, and `worklog summarize` keep active plans, detailed history, and monthly summaries in predictable paths.
 - The installer and updater use managed markers and hashes so local skill edits and unmanaged same-name skills are not overwritten silently.
+- `doctor --json`, `guides sync --check --json`, and `context --json` provide a small machine-readable core for future adapters.
 
 ## Document Harness Hardening
 
-Prioritize these improvements before runtime hooks:
+Keep improving these areas before making hooks part of any default install path:
 
-- Normalize `doctor` checks around stable ids, severity, actionable messages, and strict/non-strict exit behavior.
-- Split `doctor` warnings into setup health, adaptation reminders, local-only policy, and public-safety findings.
+- Keep `doctor` check ids, severity, actionable messages, and strict/non-strict exit behavior stable.
+- Keep `doctor` warning categories separated into setup health, adaptation reminders, local-only policy, and public-safety findings.
 - Keep `bootstrap` dry-run first for existing projects and make conflict output easy to copy into a migration note.
 - Keep `--force` scoped to reviewed overwrites; do not use broad force as a migration strategy.
 - Add a future guide manifest or version marker so `guides sync` can report stale guides without overwriting project-specific edits.
@@ -36,9 +37,9 @@ Prioritize these improvements before runtime hooks:
 Runtime hooks should be designed as thin adapters over the document harness:
 
 - **Plugin shell:** an opt-in package or adapter folder, never part of the default installer until the project has a stable contract.
-- **Session hooks:** `SessionStart` and `UserPromptSubmit` may load compact project reminders from `ai-playbook/` when native agent context is not enough.
+- **Session hooks:** `SessionStart` may load compact project reminders from `ai-playbook/` when native agent context is not enough. `UserPromptSubmit` is a later candidate.
 - **Post-edit hooks:** `PostToolUse` may inject file-specific reminders after successful edit-like operations. It should not rewrite tool output or edit files.
-- **Compaction hooks:** `PostCompact` may clear deduplication state so important rules can be reintroduced after context compaction.
+- **Compaction hooks:** `PostCompact` may reintroduce compact playbook context after context compaction.
 - **Rules loader:** load portable rule sources from project playbook files and optional rule folders. Do not re-inject `AGENTS.md` by default when the agent already loads it natively.
 - **Context injector:** emit additional context through the runtime's supported hook JSON contract and keep debug logs on stderr.
 - **Doctor reminder:** prefer a short reminder to run `doctor`; avoid automatic full checks on every session until cost and noise are proven acceptable.
@@ -74,16 +75,23 @@ For Codex App compatibility, any future plugin or hook proof of concept should:
 - use environment variables for opt-in behavior;
 - degrade silently or with a small reminder when plugin hooks are unavailable.
 
-## Intermediate Steps Without Hooks
+## Adapter PoC
 
-These can be implemented before a plugin exists:
+The first adapter proof of concept is intentionally read-only:
 
-- `doctor --json` for stable machine-readable health output.
-- `guides sync --check` to report missing or stale guides without writing files.
-- Check ids and severity normalization for `doctor`.
+- `adapters/codex/hook.mjs` emits `hookSpecificOutput.additionalContext` for `SessionStart` and `PostCompact`.
+- `adapters/claude-code/hook.mjs` uses the same core context builder for Claude Code's hook JSON contract.
+- Both wrappers call the shared `context` core, never edit project files, never call the network, and stay silent when `ai-playbook/` is missing.
+- Example hook settings live beside each adapter and are not installed automatically.
+
+## Next Intermediate Steps
+
+These can be implemented before a full plugin exists:
+
 - Better bootstrap conflict reports for existing projects.
+- A guide manifest or version marker so `guides sync --check` can report stale guides, not only missing guides.
 - Worklog summary freshness checks that remind agents to promote durable facts.
-- A project guide for deciding whether runtime hooks are appropriate.
+- A `doctor` reminder hook that does not run full checks automatically.
 - Fixture-based tests for migration, Windows paths, spaces, and non-ASCII paths.
 
 ## Process Skill Compatibility

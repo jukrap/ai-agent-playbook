@@ -90,6 +90,7 @@ The first adapter proof of concept is intentionally read-only:
 
 These can be implemented before a full plugin exists:
 
+- For a concrete V4+ execution plan and next-session handoff, see `docs/plans/2026-06-11-runtime-harness-v4-plus.md`.
 - Better bootstrap conflict reports for existing projects.
 - A guide manifest or version marker so `guides sync --check` can report stale guides, not only missing guides.
 - Worklog summary freshness checks that remind agents to promote durable facts.

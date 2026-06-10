@@ -134,6 +134,14 @@ node .\bin\ai-playbook.mjs context <target-repo> --json
 
 The hook does not install itself, edit project files, rewrite tool output, or call the network. If `ai-playbook/` is missing, unsupported, or unreadable, it exits successfully with no stdout.
 
+By default, the hook only handles `SessionStart` and `PostCompact`. To experiment with narrow lifecycle reminders, opt in locally:
+
+```powershell
+$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse'
+```
+
+`UserPromptSubmit` only reminds on commit, push, PR, merge, worklog, or doctor-style intent. `PostToolUse` only reminds after edit-like tool payloads when a changed path can be read. Both stay quiet for unrelated prompts, missing playbooks, and unsupported payloads.
+
 Before wiring the hook into local Codex settings, run:
 
 ```powershell

@@ -37,8 +37,8 @@ Keep improving these areas before making hooks part of any default install path:
 Runtime hooks should be designed as thin adapters over the document harness:
 
 - **Plugin shell:** an opt-in package or adapter folder, never part of the default installer until the project has a stable contract.
-- **Session hooks:** `SessionStart` may load compact project reminders from `ai-playbook/` when native agent context is not enough. `UserPromptSubmit` is a later candidate.
-- **Post-edit hooks:** `PostToolUse` may inject file-specific reminders after successful edit-like operations. It should not rewrite tool output or edit files.
+- **Session hooks:** `SessionStart` may load compact project reminders from `ai-playbook/` when native agent context is not enough. `UserPromptSubmit` stays opt-in and emits only short guardrail reminders for handoff-like prompts.
+- **Post-edit hooks:** `PostToolUse` stays opt-in and may inject file-specific reminders after successful edit-like operations when changed paths can be read. It should not rewrite tool output or edit files.
 - **Compaction hooks:** `PostCompact` may reintroduce compact playbook context after context compaction.
 - **Rules loader:** load portable rule sources from project playbook files and optional rule folders. Do not re-inject `AGENTS.md` by default when the agent already loads it natively.
 - **Context injector:** emit additional context through the runtime's supported hook JSON contract and keep debug logs on stderr.
@@ -84,6 +84,7 @@ The first adapter proof of concept is intentionally read-only:
 - Both wrappers call the shared `context` core, never edit project files, never call the network, and stay silent when `ai-playbook/` is missing.
 - Example hook settings live beside each adapter and are not installed automatically.
 - `adapter check` verifies the read-only wrapper, example settings, supported hook events, and quiet unsupported paths before a user enables an adapter manually.
+- `AI_PLAYBOOK_HOOK_EVENTS` can opt in `UserPromptSubmit` and `PostToolUse` reminders. They stay quiet for unrelated prompts, missing playbooks, unsupported payloads, and non-edit tools.
 
 ## Next Intermediate Steps
 
@@ -93,7 +94,7 @@ These can be implemented before a full plugin exists:
 - A guide manifest or version marker so `guides sync --check` can report stale guides, not only missing guides.
 - Worklog summary freshness checks that remind agents to promote durable facts.
 - A `doctor` reminder hook that does not run full checks automatically.
-- Lifecycle reminder hooks for `UserPromptSubmit` or `PostToolUse`, guarded by explicit opt-in configuration.
+- V4 candidates: `Stop`, continuation, blocking feedback, and any automatic doctor execution after cost and noise are proven acceptable.
 
 ## Process Skill Compatibility
 

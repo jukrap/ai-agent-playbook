@@ -16,6 +16,14 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
+      - name: Validate runtime syntax
+        shell: pwsh
+        run: npm run check
+
+      - name: Test runtime CLI
+        shell: pwsh
+        run: npm test
+
       - name: Validate skills
         shell: pwsh
         run: ./scripts/validate-skills.ps1

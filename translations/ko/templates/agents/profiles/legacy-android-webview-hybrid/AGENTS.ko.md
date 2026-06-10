@@ -21,7 +21,7 @@ Android native shell, WebView, local web assets, JavaScript bridge가 섞인 레
 
 - WebView 내부 화면은 기존 web styling method를 따릅니다.
 - native UI와 web UI가 함께 보이면 status bar, safe area, keyboard, density, viewport metadata를 확인합니다.
-- SI 또는 legacy 프로젝트에서 inline style이 local rule이면 존중합니다.
+- inline style preference가 project-local rule이면 존중합니다.
 
 ## 검증
 

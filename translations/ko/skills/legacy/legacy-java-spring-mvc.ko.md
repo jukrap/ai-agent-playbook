@@ -2,7 +2,7 @@
 
 Legacy Java Spring MVC, JSP, Servlet, MyBatis, WAR deployment, XML config, server-rendered Java web app을 유지보수할 때 사용합니다.
 
-## Workflow
+## 진행 절차
 
 1. controller route mappings, interceptors, filters, JSP/templates, form binding, validation을 찾습니다.
 2. XML/annotation config, bean wiring, transaction boundaries, mapper SQL을 확인합니다.

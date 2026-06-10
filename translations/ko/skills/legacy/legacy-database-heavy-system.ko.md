@@ -2,7 +2,7 @@
 
 Business rules가 stored procedures, triggers, views, direct SQL, scheduled jobs, database-shaped contracts에 있는 legacy system을 유지보수할 때 사용합니다.
 
-## Workflow
+## 진행 절차
 
 1. 변경과 관련된 tables, views, stored procedures, triggers, jobs, direct SQL call sites를 식별합니다.
 2. application code와 database-side behavior를 모두 추적한 뒤 수정합니다.

@@ -1,4 +1,0 @@
-interface:
-  display_name: "CSS Class First"
-  short_description: "Follow stylesheet and semantic class conventions"
-  default_prompt: "Use css-class-first when this project prefers stylesheets, CSS modules, scoped CSS, or semantic class names for UI styling."

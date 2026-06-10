@@ -1,0 +1,3 @@
+openai:
+  short_description: "Choose and enforce the repository UI style policy"
+  default_prompt: "Use ui-style-policy to inspect existing UI styling conventions and choose the correct styling method before editing visible UI."

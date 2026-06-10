@@ -21,7 +21,7 @@ Use this profile for legacy browser projects built around jQuery, plugins, direc
 ## UI and styling
 
 - Follow whichever style mechanism the project actually uses: inline styles, class toggles, or existing CSS files.
-- Respect inline-style preference in SI or legacy projects when it is the local rule.
+- Respect inline-style preference when it is the project-local rule.
 - Check table width, long text, small monitors, IE, and old-browser requirements.
 
 ## Verification

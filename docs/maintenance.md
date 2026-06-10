@@ -5,7 +5,7 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 ## Source order
 
 - Edit English source files first.
-- Update Korean translations under `translations/ko` after the source is stable.
+- Update Korean translations under `translations/ko` after the English source is stable.
 - Do not create `SKILL.md` files under translations.
 - Do not edit installed local skill copies as the source of truth.
 
@@ -23,31 +23,42 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 
 ## Adding a project template
 
-1. Put copyable root agent instructions under `templates/agents`.
-2. Put optional local-only helper docs under `templates/local-ai`.
-3. Keep project-specific product facts out of reusable templates.
-4. Make technology-specific guidance profile-scoped, not global.
-5. Add the matching Korean translation under `translations/ko/templates/**`.
-6. Update template indexes when the new template changes recommended bundles.
+1. Put copyable thin root agent bootstrap files under `templates/agents`.
+2. Put personal Codex home defaults under `templates/codex-home`.
+3. Put project-memory templates under `templates/project-playbook`.
+4. Keep project-specific product facts out of reusable templates.
+5. Make technology-specific guidance profile-scoped, not global or Codex-home default.
+6. Add the matching Korean translation under `translations/ko/templates/**`.
+7. Update template indexes when the new template changes recommended bundles.
+
+## Updating the runtime CLI
+
+1. Keep runtime code under `bin/`, `src/`, and `test/`.
+2. Keep the CLI dependency-free unless the feature needs a dependency.
+3. Add tests for every new command, overwrite rule, or path convention.
+4. Update `docs/harness-runtime.md`, `README.md`, installation docs, and Korean translations.
+5. Run `npm run check` and `npm test`.
 
 ## Updating commit, PR, or worklog policy
 
-- Update both `templates/local-ai/commit-push-worklog.md` and `skills/engineering/commit-worklog-guardrails/references/git-worklog-checklist.md`.
+- Update both `templates/project-playbook/guides/commit-push-worklog.md` and `skills/git/commit-worklog-guardrails/references/git-worklog-checklist.md`.
 - Keep project-copyable guidance in the template.
 - Keep skill-triggered procedural guidance in the skill reference.
 - Update Korean translations for both files in the same change.
-- If the policy came from local Codex settings, remove machine-specific paths and keep the portable rule.
+- If the policy came from local agent settings, remove machine-specific paths and keep the portable rule.
 
 ## Updating examples
 
 - Keep examples generic and scrubbed.
-- Remove company names, customer names, internal domains, credentials, branch names, PR numbers, and dated operational status.
+- Remove personal names, company names, customer names, internal domains, credentials, branch names, PR numbers, and dated operational status.
 - Prefer examples that show decision quality, verification, and handoff clarity.
 - Do not let old examples become active rules unless the corresponding template or skill is updated.
 
 ## Required checks
 
 ```powershell
+npm run check
+npm test
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 .\scripts\sync-skills.ps1 -WhatIf

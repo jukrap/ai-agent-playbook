@@ -2,6 +2,8 @@ param(
   [string]$CodexSkillsRoot = (Join-Path $env:USERPROFILE '.codex\skills'),
   [string]$AgentsSkillsRoot = (Join-Path $env:USERPROFILE '.agents\skills'),
   [switch]$SkipValidation,
+  [switch]$ForceManaged,
+  [switch]$ForceUnmanaged,
   [switch]$WhatIf
 )
 
@@ -26,6 +28,8 @@ if (-not $SkipValidation) {
 & $syncSkills `
   -CodexSkillsRoot $CodexSkillsRoot `
   -AgentsSkillsRoot $AgentsSkillsRoot `
+  -ForceManaged:$ForceManaged `
+  -ForceUnmanaged:$ForceUnmanaged `
   -WhatIf:$WhatIf
 
 if ($WhatIf) {

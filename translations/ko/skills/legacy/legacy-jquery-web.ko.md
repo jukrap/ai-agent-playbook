@@ -2,7 +2,7 @@
 
 jQuery, plugin, 직접 DOM 조작, global scripts, AJAX callbacks, script-order 의존 behavior로 만든 browser pages를 유지보수할 때 사용합니다.
 
-## Workflow
+## 진행 절차
 
 1. active HTML/template과 script include order를 찾습니다.
 2. selector usage, delegated events, plugin initialization, AJAX calls, globals를 추적합니다.

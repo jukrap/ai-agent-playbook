@@ -2,7 +2,7 @@
 
 include files, sessions, mixed HTML/PHP pages, direct SQL, globals, form posts, shared hosting constraints가 있는 legacy PHP/LAMP application을 유지보수할 때 사용합니다.
 
-## Workflow
+## 진행 절차
 
 1. entry PHP file, includes/requires, shared config, session start, auth checks, form handling을 추적합니다.
 2. direct SQL, escaping, encoding, timezone, file upload, path assumptions를 확인합니다.

@@ -1,56 +1,56 @@
 # AGENTS.md
 # React/Vite Pragmatic FSD Profile
 
-React, Vite, TypeScript, pnpm, pragmatic FSD 또는 유사 계층형 프론트엔드에 사용합니다. 저장소가 다른 도구를 쓰면 이 프로필보다 저장소 설정을 우선합니다.
+React, Vite, TypeScript, pnpm, pragmatic FSD 또는 유사한 layered frontend 프로젝트에 이 profile을 사용합니다. 저장소가 다른 도구를 사용하면 이 profile보다 repository config를 신뢰합니다.
 
-## 시작 규칙
+## Start rules
 
 - `package.json`, lockfile, README, local docs, branch, dirty worktree를 먼저 확인합니다.
-- 로컬 근거 없이 React, Vite, pnpm, FSD, test 명령을 가정하지 않습니다.
-- 수정 전 `src` 구조와 import boundary를 확인합니다.
-- 사용자 변경은 되돌리지 않습니다.
+- local evidence 없이 React, Vite, pnpm, FSD, test commands를 추측하지 않습니다.
+- 편집 전 `src` 구조와 import boundaries를 확인합니다.
+- 사용자 변경을 되돌리지 않습니다.
 
-## 문서 우선순위
+## Document priority
 
 1. 최신 사용자 지시.
-2. 실제 코드, config, package scripts.
+2. 실제 code, config, package scripts.
 3. `PROJECT_SPEC.md`, `PLANS.md`, `FSD.md`.
-4. `docs/plans/**`와 최신 worklog.
-5. `design-docs/**`, `_reference/**`.
-6. 이 프로필.
+4. `ai-playbook/CURRENT.md`, relevant maps/runbooks/plans, latest worklog summary.
+5. `design-docs/**`와 `_reference/**`.
+6. 이 profile.
 
 ## Architecture
 
-- FSD는 필수가 아닙니다. 프로젝트가 이미 쓰거나 문서가 요구할 때만 적용합니다.
-- 일반 layer 순서는 `app -> pages -> widgets -> features -> entities -> shared`입니다.
-- page는 routing과 composition 중심으로 유지합니다.
-- widget은 화면의 큰 업무 block을 담당합니다.
-- feature는 user action, form, mutation, selection, filter를 담당합니다.
-- entity는 domain type, API adapter, query option, domain UI를 담당합니다.
-- shared code는 project domain concept에 의존하지 않게 둡니다.
-- slice public API는 `index.ts`를 선호합니다.
+- FSD는 mandatory가 아닙니다. 프로젝트가 이미 사용하거나 docs가 요구할 때만 적용합니다.
+- 일반적인 layer order는 `app -> pages -> widgets -> features -> entities -> shared`입니다.
+- pages는 routing과 composition에 집중합니다.
+- widgets는 화면의 큰 business block에 사용합니다.
+- features는 user actions, forms, mutations, selections, filters에 사용합니다.
+- entities는 domain types, API adapters, query options, domain UI에 사용합니다.
+- shared code는 project domain concepts에 의존하지 않게 유지합니다.
+- slice public APIs는 `index.ts`를 통한 방식을 선호합니다.
 
-## UI와 styling
+## UI and styling
 
-- 명시적 style policy가 있으면 그 기준을 따릅니다: `design-system-first`, `css-class-first`, `utility-class-first`, `inline-style-first`.
-- 문서화된 policy가 없으면 새 styling system을 도입하지 말고 component의 기존 local pattern을 유지합니다.
-- 강한 design-system 프로젝트에서는 custom styling 전에 shared UI variant, token, component prop을 우선합니다.
-- button, input, select, modal, toast, pagination을 만들기 전에 기존 shared wrapper를 찾습니다.
-- text overflow, mobile width, loading, empty, error, disabled 상태를 확인합니다.
-- style-quality review에서는 visual intent를 유지하고 CSS/inline 구조, 중복, cascade risk, responsive breakage를 봅니다.
+- repository의 explicit style policy를 따릅니다. policy가 불분명하거나 충돌하면 `ui-style-policy`를 사용합니다.
+- documented policy가 없으면 새 styling system을 도입하지 말고 component의 existing local pattern을 유지합니다.
+- design-system이 강한 프로젝트에서는 custom styling 전에 shared UI variants, tokens, component props를 우선합니다.
+- button, input, select, modal, toast, pagination을 새로 만들기 전에 existing shared wrappers를 검색합니다.
+- text overflow, mobile width, loading, empty, error, disabled states를 확인합니다.
+- style-quality review에서는 visual intent를 보존하고 CSS/inline structure, duplication, cascade risk, responsive breakage에 집중합니다.
 
-## State, query, API
+## State, query, and API
 
-- local state로 충분하면 local state를 씁니다.
-- 서버 데이터는 프로젝트의 기존 server-state tool을 따릅니다.
-- global store는 URL이나 server state로 해결되지 않는 여러 화면/기능 공유 state에만 씁니다.
-- page/widget은 endpoint path와 transport detail을 직접 알지 않게 합니다.
-- backend DTO와 frontend domain type을 분리하고 adapter에서 naming과 wrapper response를 정리합니다.
-- Swagger, backend DTO, command object, mapper, sample response를 확인 없이 같은 것으로 취급하지 않습니다.
+- local state로 충분하면 local state를 사용합니다.
+- server data에는 프로젝트의 existing server-state tool을 사용합니다.
+- global store는 URL 또는 server state로 처리할 수 없고 여러 screen/feature에 공유되는 state에만 사용합니다.
+- pages/widgets가 endpoint paths와 transport details에 의존하지 않게 합니다.
+- backend DTO와 frontend domain type을 분리합니다. naming과 wrapped responses는 adapter에서 normalize합니다.
+- Swagger, backend DTO, command object, mapper, sample response를 확인 없이 interchangeable하게 취급하지 않습니다.
 
-## 검증
+## Verification
 
-프로젝트 scripts를 우선합니다. 흔한 React/Vite 프로젝트에서는 아래 명령이 있을 때만 실행합니다.
+project scripts를 먼저 사용합니다. 흔한 React/Vite 프로젝트에서 아래 command가 존재할 때만 실행합니다.
 
 ```bash
 pnpm lint
@@ -58,10 +58,10 @@ pnpm test:run
 pnpm build
 ```
 
-UI 작업은 가능하면 browser에서 주요 desktop/mobile width를 확인합니다. visible change가 있으면 overflow와 interaction state도 봅니다.
+UI 작업은 가능하면 browser에서 중요한 desktop/mobile widths를 확인합니다. visible changes에는 overflow와 interaction states를 확인합니다.
 
-## Git과 worklog
+## Git and worklogs
 
-- 명시 staging을 사용하고 local-only docs가 staged 되었는지 확인합니다.
-- 팀 convention이 그렇다면 `type(scope): 한국어 요약`을 사용합니다.
-- milestone 완료, blocker, 큰 방향 변경, 긴 debugging에는 worklog를 남깁니다.
+- commit 전 explicit staging과 local-only docs 여부를 확인합니다.
+- 팀 commit convention이 그렇다면 `type(scope): Korean summary`를 사용합니다.
+- milestone completion, blocker, major direction change, long debugging에는 worklog를 남깁니다.

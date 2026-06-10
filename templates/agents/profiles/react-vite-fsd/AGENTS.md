@@ -15,7 +15,7 @@ Use this profile for React, Vite, TypeScript, pnpm, and pragmatic FSD or a simil
 1. Latest user instruction.
 2. Actual code, config, and package scripts.
 3. `PROJECT_SPEC.md`, `PLANS.md`, `FSD.md`.
-4. `docs/plans/**` and the latest worklog.
+4. `ai-playbook/CURRENT.md`, relevant maps/runbooks/plans, and the latest worklog summary.
 5. `design-docs/**` and `_reference/**`.
 6. This profile.
 
@@ -32,7 +32,7 @@ Use this profile for React, Vite, TypeScript, pnpm, and pragmatic FSD or a simil
 
 ## UI and styling
 
-- Follow the repository's explicit style policy when one exists: `design-system-first`, `css-class-first`, `utility-class-first`, or `inline-style-first`.
+- Follow the repository's explicit style policy when one exists; use `ui-style-policy` when the policy is unclear or conflicting.
 - If no policy is documented, keep the component's existing local pattern instead of introducing a new styling system.
 - In strong design-system projects, prefer shared UI variants, tokens, and component props before custom styling.
 - Search for existing shared wrappers before creating buttons, inputs, selects, modals, toasts, or pagination.

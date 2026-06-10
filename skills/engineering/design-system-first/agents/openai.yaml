@@ -1,4 +1,0 @@
-interface:
-  display_name: "Design System First"
-  short_description: "Reuse shared UI components and design tokens first"
-  default_prompt: "Use design-system-first when this project has shared UI components, tokens, variants, or a design system to reuse before custom styling."

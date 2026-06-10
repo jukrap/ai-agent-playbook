@@ -2,6 +2,8 @@ param(
   [string]$CodexSkillsRoot = (Join-Path $env:USERPROFILE '.codex\skills'),
   [string]$AgentsSkillsRoot = (Join-Path $env:USERPROFILE '.agents\skills'),
   [switch]$SkipValidation,
+  [switch]$ForceManaged,
+  [switch]$ForceUnmanaged,
   [switch]$WhatIf
 )
 
@@ -22,4 +24,6 @@ if (Test-Path -LiteralPath (Join-Path $repoRoot '.git')) {
   -CodexSkillsRoot $CodexSkillsRoot `
   -AgentsSkillsRoot $AgentsSkillsRoot `
   -SkipValidation:$SkipValidation `
+  -ForceManaged:$ForceManaged `
+  -ForceUnmanaged:$ForceUnmanaged `
   -WhatIf:$WhatIf

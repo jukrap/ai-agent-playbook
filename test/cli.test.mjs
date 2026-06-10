@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, stat, utimes, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -83,6 +83,120 @@ test('doctor --json reports stable schema and strict warning behavior', async ()
   await cleanup(target);
 });
 
+test('doctor --json warns when a worklog month has no summary without writing files', async () => {
+  const target = await tempRepo('ai playbook-worklog-공백-');
+  assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
+  assert.equal(await runCli(['worklog', 'new', '.', '--title', 'Freshness Check', '--date', '2026-05-03'], capture(target)), 0);
+  const before = await listRelativeFiles(target);
+
+  const checked = capture(target);
+  assert.equal(await runCli(['doctor', '.', '--json'], checked), 0);
+  const report = JSON.parse(checked.out());
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  const warning = report.checks.find((check) => check.id === 'worklog-summary.missing.2026-05');
+  assert.equal(warning.level, 'warn');
+  assert.equal(warning.category, 'freshness');
+  assert.deepEqual(warning.paths, [
+    'ai-playbook/worklogs/2026-05/',
+    'ai-playbook/worklogs/summaries/2026-05.md'
+  ]);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('doctor --json warns when a worklog summary is older than an entry', async () => {
+  const target = await tempRepo('ai playbook-worklog-한글-');
+  assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
+  assert.equal(await runCli(['worklog', 'new', '.', '--title', 'Freshness Check', '--date', '2026-06-04'], capture(target)), 0);
+  assert.equal(await runCli(['worklog', 'summarize', '.', '--month', '2026-06'], capture(target)), 0);
+
+  const worklog = path.join(target, 'ai-playbook', 'worklogs', '2026-06', '2026-06-04-freshness-check.md');
+  const summary = path.join(target, 'ai-playbook', 'worklogs', 'summaries', '2026-06.md');
+  await utimes(summary, new Date('2026-06-04T00:00:00Z'), new Date('2026-06-04T00:00:00Z'));
+  await utimes(worklog, new Date('2026-06-05T00:00:00Z'), new Date('2026-06-05T00:00:00Z'));
+  const before = await listRelativeFiles(target);
+
+  const checked = capture(target);
+  assert.equal(await runCli(['doctor', '.', '--json'], checked), 0);
+  const report = JSON.parse(checked.out());
+  const warning = report.checks.find((check) => check.id === 'worklog-summary.stale.2026-06');
+  assert.equal(warning.level, 'warn');
+  assert.equal(warning.category, 'freshness');
+  assert.deepEqual(warning.paths, [
+    'ai-playbook/worklogs/2026-06/2026-06-04-freshness-check.md',
+    'ai-playbook/worklogs/summaries/2026-06.md'
+  ]);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('doctor --json passes worklog summary freshness when the summary is newest', async () => {
+  const target = await tempRepo('ai playbook-worklog-fresh-');
+  assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
+  assert.equal(await runCli(['worklog', 'new', '.', '--title', 'Freshness Check', '--date', '2026-07-04'], capture(target)), 0);
+  assert.equal(await runCli(['worklog', 'summarize', '.', '--month', '2026-07'], capture(target)), 0);
+
+  const worklog = path.join(target, 'ai-playbook', 'worklogs', '2026-07', '2026-07-04-freshness-check.md');
+  const summary = path.join(target, 'ai-playbook', 'worklogs', 'summaries', '2026-07.md');
+  await utimes(worklog, new Date('2026-07-04T00:00:00Z'), new Date('2026-07-04T00:00:00Z'));
+  await utimes(summary, new Date('2026-07-05T00:00:00Z'), new Date('2026-07-05T00:00:00Z'));
+
+  const checked = capture(target);
+  assert.equal(await runCli(['doctor', '.', '--json'], checked), 0);
+  const report = JSON.parse(checked.out());
+  assert.equal(report.checks.some((check) => check.id === 'worklog-summary.missing.2026-07'), false);
+  assert.equal(report.checks.some((check) => check.id === 'worklog-summary.stale.2026-07'), false);
+  assert.equal(report.checks.some((check) => check.id === 'worklog-summary.fresh.2026-07' && check.level === 'pass'), true);
+  await cleanup(target);
+});
+
+test('doctor --reminder --json reports a small no-write reminder signal', async () => {
+  const missing = await tempRepo('ai playbook-reminder-missing-');
+  const missingBefore = await listRelativeFiles(missing);
+  const missingCheck = capture(missing);
+  assert.equal(await runCli(['doctor', '.', '--reminder', '--json'], missingCheck), 0);
+  const missingReport = JSON.parse(missingCheck.out());
+  assert.equal(missingReport.schemaVersion, '1');
+  assert.equal(missingReport.ok, false);
+  assert.equal(missingReport.reminders.length, 1);
+  assert.equal(missingReport.reminders[0].id, 'reminder.playbook.missing');
+  assert.equal(missingReport.reminders[0].level, 'warn');
+  assert.deepEqual(missingReport.reminders[0].paths, ['ai-playbook/']);
+  assert.deepEqual(await listRelativeFiles(missing), missingBefore);
+  await cleanup(missing);
+
+  const fresh = await tempRepo('ai playbook-reminder-fresh-');
+  assert.equal(await runCli(['bootstrap', '.'], capture(fresh)), 0);
+  const freshBefore = await listRelativeFiles(fresh);
+  const freshCheck = capture(fresh);
+  assert.equal(await runCli(['doctor', '.', '--reminder', '--json'], freshCheck), 0);
+  const freshReport = JSON.parse(freshCheck.out());
+  assert.equal(freshReport.schemaVersion, '1');
+  assert.equal(freshReport.ok, true);
+  assert.deepEqual(freshReport.reminders, []);
+  assert.deepEqual(await listRelativeFiles(fresh), freshBefore);
+  await cleanup(fresh);
+});
+
+test('doctor --reminder --json includes stale guide and worklog freshness reminders', async () => {
+  const target = await tempRepo('ai playbook-reminder-한글-');
+  assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
+  await writeFile(path.join(target, 'ai-playbook', 'guides', 'runtime-harness.md'), '# Local guide edit\n');
+  assert.equal(await runCli(['worklog', 'new', '.', '--title', 'Freshness Check', '--date', '2026-08-04'], capture(target)), 0);
+  const before = await listRelativeFiles(target);
+
+  const checked = capture(target);
+  assert.equal(await runCli(['doctor', '.', '--reminder', '--json'], checked), 0);
+  const report = JSON.parse(checked.out());
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, false);
+  assert.equal(report.reminders.some((reminder) => reminder.id === 'reminder.guides.stale' && reminder.level === 'warn'), true);
+  assert.equal(report.reminders.some((reminder) => reminder.id === 'reminder.worklog-summary.missing.2026-08' && reminder.level === 'warn'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
 test('guides sync restores missing guides without overwriting local guide edits', async () => {
   const target = await tempRepo();
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
@@ -101,8 +215,9 @@ test('guides sync restores missing guides without overwriting local guide edits'
 });
 
 test('guides sync --check reports missing guides without writing files', async () => {
-  const target = await tempRepo();
+  const target = await tempRepo('ai playbook-guides-테스트-');
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
+  const before = await listRelativeFiles(target);
 
   const missingGuide = path.join(target, 'ai-playbook', 'guides', 'harness-migration.md');
   await rm(missingGuide, { force: true });
@@ -113,8 +228,46 @@ test('guides sync --check reports missing guides without writing files', async (
   assert.equal(report.schemaVersion, '1');
   assert.equal(report.ok, false);
   assert.equal(report.summary.missing, 1);
-  assert.equal(report.guides.some((guide) => guide.path === 'ai-playbook/guides/harness-migration.md' && guide.status === 'missing'), true);
+  assert.equal(report.summary.stale, 0);
+  const guide = report.guides.find((item) => item.path === 'ai-playbook/guides/harness-migration.md');
+  assert.equal(guide.status, 'missing');
+  assert.match(guide.sourceHash, /^[a-f0-9]{64}$/);
+  assert.equal('targetHash' in guide, false);
   assert.equal(existsSync(missingGuide), false);
+  assert.deepEqual(await listRelativeFiles(target), before.filter((file) => file !== 'ai-playbook/guides/harness-migration.md'));
+  await cleanup(target);
+});
+
+test('guides sync --check reports present and stale guides without overwriting local edits', async () => {
+  const target = await tempRepo('ai playbook-guides-한글-');
+  assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
+
+  const localGuide = path.join(target, 'ai-playbook', 'guides', 'runtime-harness.md');
+  await writeFile(localGuide, '# Local guide edit\n');
+  const before = await listRelativeFiles(target);
+
+  const check = capture(target);
+  assert.equal(await runCli(['guides', 'sync', '.', '--check', '--json'], check), 0);
+  const report = JSON.parse(check.out());
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.summary.missing, 0);
+  assert.equal(report.summary.stale, 1);
+  assert.equal(report.guides.every((guide) => ['present', 'stale'].includes(guide.status)), true);
+
+  const stale = report.guides.find((guide) => guide.path === 'ai-playbook/guides/runtime-harness.md');
+  assert.equal(stale.status, 'stale');
+  assert.match(stale.sourceHash, /^[a-f0-9]{64}$/);
+  assert.match(stale.targetHash, /^[a-f0-9]{64}$/);
+  assert.notEqual(stale.sourceHash, stale.targetHash);
+
+  const present = report.guides.find((guide) => guide.status === 'present');
+  assert.match(present.sourceHash, /^[a-f0-9]{64}$/);
+  assert.match(present.targetHash, /^[a-f0-9]{64}$/);
+  assert.equal(present.sourceHash, present.targetHash);
+
+  assert.match(await readFile(localGuide, 'utf8'), /Local guide edit/);
+  assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
 });
 

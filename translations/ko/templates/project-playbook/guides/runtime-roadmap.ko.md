@@ -14,7 +14,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 - Durable current fact를 `CURRENT.md`, maps, runbooks, decisions로 옮깁니다.
 - Detailed history는 `worklogs/`에 두고 durable fact가 있으면 summary를 만듭니다.
 - Source playbook checkout에서 `guides sync --dry-run`을 사용해 local edit을 덮어쓰지 않고 누락된 support guide를 확인합니다.
-- Adapter나 automation이 read-only health signal을 필요로 하면 `guides sync --check`, `doctor --json`, `adapter check --json`을 사용합니다.
+- Adapter나 automation이 read-only health signal을 필요로 하면 `guides sync --check --json`, `doctor --json`, `doctor --reminder --json`, `adapter check --json`을 사용합니다.
 
 ## Runtime 준비 체크리스트
 
@@ -38,7 +38,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 - Native context가 부족할 때 `START_HERE.md`, `CURRENT.md`, `SKILLS.md`, `GIT.md` 기반 compact project-memory context를 주입합니다.
 - 편집된 file path를 관련 project guide나 rule file과 매칭합니다.
 - Lifecycle event가 명시적으로 켜진 경우에만 commit, push, PR, merge, worklog, doctor-like prompt에 reminder를 냅니다.
-- Handoff 전 `doctor` 실행을 상기합니다.
+- Handoff 전 `doctor` 실행을 상기하거나, 작은 local signal에는 `doctor --reminder --json`을 사용합니다.
 - Context compaction 뒤 deduplication state를 비웁니다.
 
 피해야 할 hook:
@@ -52,7 +52,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 ## 권장 migration 순서
 
 1. `ai-playbook/`을 안정화하고 `doctor`를 실행합니다.
-2. `guides sync --dry-run`으로 누락 guide를 확인한 뒤, 검토한 `guides sync`를 실행합니다.
+2. `guides sync --dry-run`으로 누락 guide를 확인한 뒤, 검토한 `guides sync`를 실행합니다. Local edit을 덮어쓰기 전에는 `guides sync --check --json`으로 stale guide를 검토합니다.
 3. Hook을 켜기 전에 decision note에 hook intent를 문서화합니다.
 4. Source playbook의 `adapter check` 명령을 선택한 adapter에 대해 실행합니다.
 5. Local customization이 필요하면 hook input/output fixture test를 만듭니다.
@@ -91,6 +91,7 @@ $env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse'
 - 프로젝트가 hook 없이도 동작합니다.
 - Hook은 hidden policy가 아니라 reminder 또는 context만 더합니다.
 - 선택한 adapter가 local activation 전에 read-only self-check를 통과합니다.
+- Guide check에 설명되지 않은 missing guide가 없고, stale guide를 검토했습니다.
 - `doctor`에 설명되지 않은 failure가 없습니다.
 - 남은 warning이 문서화되어 있습니다.
 - 사람이 hook layer를 꺼도 project memory를 잃지 않습니다.

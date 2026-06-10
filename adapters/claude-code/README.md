@@ -15,9 +15,12 @@ Run the CLI from this repository checkout:
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-repo> --check
 node .\bin\ai-playbook.mjs doctor <target-repo> --json
+node .\bin\ai-playbook.mjs doctor <target-repo> --reminder --json
 node .\bin\ai-playbook.mjs context <target-repo> --json
 node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --json
 ```
+
+Use `doctor --reminder --json` only as a small read-only local signal for wrappers or scripts. The hook example does not run doctor automatically.
 
 `context` reads only these project playbook files:
 

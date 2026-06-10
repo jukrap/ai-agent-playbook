@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { checkAdapterReadiness } from './adapter-readiness.mjs';
 import {
   buildProjectContext,
+  buildDoctorReminderSignal,
   bootstrapProject,
   checkGuides,
   createPlan,
@@ -49,6 +50,19 @@ export async function runCli(argv, io = {}) {
 
     if (command === 'doctor') {
       const target = resolveTarget(cwd, subcommand);
+      if (parsed.flags.reminder) {
+        const result = await buildDoctorReminderSignal({ repoRoot: root, target });
+        if (parsed.flags.json) {
+          writeJson(stdout, result);
+        } else if (result.reminders.length) {
+          for (const reminder of result.reminders) {
+            write(stdout, `[${reminder.level.toUpperCase()}] ${reminder.message}\n`);
+          }
+        } else {
+          write(stdout, 'No doctor reminders.\n');
+        }
+        return 0;
+      }
       const result = await doctorProject({ target, strict: Boolean(parsed.flags.strict) });
       if (parsed.flags.json) {
         writeJson(stdout, result);
@@ -223,5 +237,5 @@ function writeJson(stream, value) {
 }
 
 function helpText() {
-  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
+  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook doctor <target> --reminder [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
 }

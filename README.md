@@ -77,6 +77,8 @@ node .\bin\ai-playbook.mjs doctor <target-project>
 
 Use `--local-only` when the target project's `ai-playbook/` folder should be ignored by Git. Use `--profile <name>` only after the target stack is known.
 
+Runtime hooks and plugins are not part of the default install path. Treat them as optional extensions after the document and CLI harness are stable. See [Runtime roadmap](docs/runtime-roadmap.md).
+
 ## Everyday Flow
 
 ```text
@@ -138,6 +140,7 @@ Each `SKILL.md` stays short and trigger-focused. Longer reusable detail belongs 
 - [Repository context](CONTEXT.md): core terms and design intent for the playbook.
 - [Installation](docs/installation.md): first install, existing-clone update, custom skill paths, and Codex restart notes.
 - [Runtime harness](docs/harness-runtime.md): CLI commands, overwrite policy, and target-project flow.
+- [Runtime roadmap](docs/runtime-roadmap.md): staged hardening plan and optional hook-layer boundaries.
 - [Codex adapter](adapters/codex/README.md): Codex-specific local sync behavior and Codex App on Windows workflow.
 - [Templates](templates/README.md): what to copy into project repositories and what to leave as installable skills.
 - [Classification](docs/classification.md): why skills, templates, examples, docs, and adapters are separated.

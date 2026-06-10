@@ -120,6 +120,8 @@ The sync script does not remove or overwrite other people's same-name skills by 
 
 Templates are not installed automatically as skills. Use the runtime CLI for the normal path, or copy/adapt templates manually when you need tighter control.
 
+This is the default project harness. Runtime hooks or Codex plugins are optional future extensions and are not installed by `install.ps1`, `update.ps1`, or the current CLI.
+
 ### Runtime path
 
 ```powershell
@@ -165,3 +167,5 @@ Codex's skill installer can install individual skills from a Git repository path
 ## External process skills
 
 This repository does not install external process skill packs. Keep them installed separately, then use these skills alongside them when useful.
+
+If a project later adopts a hook-based runtime, keep it opt-in and documented in the target project's `ai-playbook/`. The project should still be understandable and usable from the document harness alone.

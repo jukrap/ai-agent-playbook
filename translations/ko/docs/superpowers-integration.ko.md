@@ -6,6 +6,7 @@
 
 - 작업 흐름 스킬은 어떻게 일할지를 결정합니다: brainstorming, planning, TDD, debugging, verification, branch finishing, review discipline.
 - 이 playbook은 저장소 보호 규칙을 더합니다: runtime bootstrap, onboarding, project memory, API boundary, UI style policy, legacy risk control, commit policy, PR body policy, worklog.
+- 선택적 runtime hook은 reminder나 context injection으로 이런 guardrail을 보강할 수 있지만, process skill을 대체하거나 저장소 정책을 project file 밖에 숨기지 않아야 합니다.
 
 작업 흐름 스킬이 적용되는 경우 먼저 사용하고, 그 다음 가장 작은 관련 playbook 스킬, 프로젝트 템플릿, 런타임 명령을 사용합니다.
 
@@ -41,3 +42,4 @@
 - 특정 장비의 custom instruction을 public docs에 옮길 때 path, identity, private workflow assumption을 제거하지 않은 채 복사하지 않습니다.
 - 다른 에이전트 런타임의 hook, slash command, plugin environment variable이 사용 가능하다고 가정하지 않습니다.
 - 이 저장소의 CLI를 planning, TDD, debugging, verification 작업 흐름 스킬의 대체재로 취급하지 않습니다. CLI는 project memory를 scaffold하고 점검할 뿐입니다.
+- 같은 정책을 `AGENTS.md`나 `ai-playbook/`에 명확히 둘 수 있다면 hook 기반 동작을 필수로 만들지 않습니다.

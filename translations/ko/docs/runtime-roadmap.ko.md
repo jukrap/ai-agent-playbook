@@ -1,0 +1,109 @@
+# 런타임 로드맵
+
+이 로드맵은 선택적 런타임 hook layer를 추가하기 전에 현재 문서와 CLI 하네스를 어떻게 강화할지 설명합니다.
+
+기본 경로는 단순하게 유지합니다. 스킬을 설치하고, 대상 프로젝트에 필요할 때 `ai-playbook/`을 bootstrap하고, `doctor`를 실행하고, plan과 worklog를 예측 가능한 위치에 만들고, 프로젝트 규칙을 파일에 명시적으로 둡니다. Runtime hook은 이를 지원하는 환경에서만 쓰는 선택 확장입니다.
+
+## 목표
+
+- Runtime 자동화를 추가하기 전에 문서 하네스를 더 안전하게 만듭니다.
+- CLI를 결정적이고, 의존성이 적고, 파일 시스템 중심으로 유지합니다.
+- Runtime-specific 동작을 기본 템플릿 밖에 둬 에이전트 간 이식성을 유지합니다.
+- 향후 hook 기반 연동이 tool output을 다시 쓰거나 project file을 자동 변경하지 않고 context 또는 reminder만 주입할 수 있게 합니다.
+
+## 현재 장점
+
+- `bootstrap`은 stack을 가정하지 않고 얇은 root `AGENTS.md`와 project-memory `ai-playbook/` 폴더를 만듭니다.
+- `doctor`는 최소 layout, root policy 위치, local-only 정책, template adaptation, obsolete skill reference, fixed local path를 이미 점검합니다.
+- `guides sync`는 기본적으로 local edit을 교체하지 않고 누락된 guide template만 추가합니다.
+- `plan`, `worklog`, `worklog summarize`는 active plan, 상세 이력, 월간 summary를 예측 가능한 경로에 둡니다.
+- Installer와 updater는 managed marker와 hash를 사용해 local skill edit과 unmanaged same-name skill을 조용히 덮어쓰지 않습니다.
+
+## 문서 하네스 강화
+
+Runtime hook보다 먼저 아래를 우선합니다.
+
+- `doctor` 점검을 안정적인 id, severity, actionable message, strict/non-strict exit behavior 중심으로 정규화합니다.
+- `doctor` warning을 setup health, adaptation reminder, local-only policy, public-safety finding으로 나눕니다.
+- 기존 프로젝트에는 `bootstrap` dry run을 먼저 사용하고, conflict output을 migration note로 옮기기 쉽게 만듭니다.
+- `--force`는 검토한 overwrite에만 제한합니다. Migration을 위해 넓은 force를 쓰지 않습니다.
+- 향후 guide manifest 또는 version marker를 추가해 `guides sync`가 project-specific edit을 덮어쓰지 않고 stale guide를 보고할 수 있게 합니다.
+- 기존 agent docs migration은 history를 보존하고, current rule을 분류하고, 남은 불확실성을 `ai-playbook/questions.md`에 기록합니다.
+- `worklog summarize`는 승격 checkpoint로 다룹니다. Durable fact는 history에만 두지 말고 `CURRENT.md`, maps, runbooks, decisions로 옮깁니다.
+
+## 선택적 런타임 레이어
+
+Runtime hook은 문서 하네스 위에 얇은 adapter로 설계합니다.
+
+- **Plugin shell:** 안정된 계약이 생기기 전까지 기본 installer에 넣지 않는 opt-in package 또는 adapter folder.
+- **Session hooks:** `SessionStart`와 `UserPromptSubmit`은 native agent context만으로 부족할 때 `ai-playbook/`의 작은 project reminder를 불러올 수 있습니다.
+- **Post-edit hooks:** `PostToolUse`는 성공한 edit-like operation 뒤 file-specific reminder를 주입할 수 있습니다. Tool output을 다시 쓰거나 file을 편집하지 않습니다.
+- **Compaction hooks:** `PostCompact`는 context compaction 뒤 중요한 rule을 다시 소개할 수 있도록 deduplication state를 비울 수 있습니다.
+- **Rules loader:** Project playbook file과 선택적 rule folder에서 portable rule source를 읽습니다. Agent가 `AGENTS.md`를 native로 이미 읽는다면 기본적으로 다시 주입하지 않습니다.
+- **Context injector:** Runtime이 지원하는 hook JSON contract로 additional context만 출력하고 debug log는 stderr에 둡니다.
+- **Doctor reminder:** 매 session마다 전체 check를 자동 실행하기보다 `doctor` 실행 reminder를 우선합니다. 비용과 소음이 검증된 뒤에만 자동 실행을 고려합니다.
+- **Command layer:** 안정 호출은 `node .\bin\ai-playbook.mjs ...`로 유지합니다. Global command와 plugin command는 편의 기능일 뿐입니다.
+
+## Runtime-first 위험
+
+- Hook API와 plugin 설치 동작은 agent와 app version마다 다를 수 있습니다.
+- Native project instruction과 hook-injected context가 중복되거나 충돌할 수 있습니다.
+- 자동 check는 시끄럽거나 느리거나 잘못된 working directory에서 실행될 수 있습니다.
+- Plugin installer는 사용자 설정을 바꿀 수 있어 project template 복사보다 위험합니다.
+- Public docs가 portable playbook 원칙 대신 특정 외부 harness model을 고정할 수 있습니다.
+- Runtime state가 `ai-playbook/`에 보여야 할 결정을 숨길 수 있습니다.
+
+## 경계
+
+- 문서 하네스는 project memory, source-of-truth rule, migration, worklog, 명시적 verification command를 맡습니다.
+- CLI는 deterministic scaffolding, health check, guide synchronization, 예측 가능한 file creation을 맡습니다.
+- 선택적 runtime hook은 reminder, context injection, 반복 guidance deduplication, diagnostics report를 할 수 있습니다.
+- 선택적 runtime hook이 project policy의 유일한 위치가 되어서는 안 됩니다.
+- Skill은 재사용 작업 가이드이고, template은 project-copyable standing instruction입니다.
+
+## Codex App 제약
+
+Codex App 호환성을 위해 향후 plugin 또는 hook PoC는 아래를 지켜야 합니다.
+
+- 가능하면 Node로 실행하고 shell-specific 기능을 피합니다.
+- Hook command는 짧게 끝나야 하며 timeout은 보수적으로 둡니다.
+- Hook JSON은 stdout에만 쓰고 debug 정보는 stderr에만 씁니다.
+- Windows path, 공백, 비ASCII project path를 처리합니다.
+- Global command 요구를 피합니다.
+- 기본적으로 network call을 하지 않습니다.
+- Opt-in behavior는 environment variable로 제어합니다.
+- Plugin hook을 사용할 수 없으면 조용히 건너뛰거나 작은 reminder만 남깁니다.
+
+## Hook 없이 가능한 중간 단계
+
+Plugin 없이 먼저 구현할 수 있는 항목입니다.
+
+- 안정적인 machine-readable health output을 위한 `doctor --json`.
+- 파일을 쓰지 않고 missing/stale guide를 보고하는 `guides sync --check`.
+- `doctor` check id와 severity 정규화.
+- 기존 프로젝트용 bootstrap conflict report 개선.
+- Durable fact 승격을 상기시키는 worklog summary freshness check.
+- Runtime hook이 적절한지 판단하는 project guide.
+- Migration, Windows path, 공백 path, 비ASCII path fixture test.
+
+## 작업 흐름 스킬 호환성
+
+외부 작업 흐름 스킬은 agent가 어떻게 계획, 테스트, 디버깅, 리뷰, branch 마무리를 할지 결정할 수 있습니다. 이 playbook은 project memory, bootstrap, doctor check, skill policy, Git/worklog policy, migration guidance 같은 저장소 guardrail을 제공합니다.
+
+Runtime hook도 같은 분리를 따라야 합니다. 저장소 guardrail을 강화할 수는 있지만, process skill의 planning, TDD, debugging, review workflow를 대체해서는 안 됩니다.
+
+## 검증 전략
+
+Roadmap과 문서 변경에는 아래를 실행합니다.
+
+```powershell
+npm run check
+npm test
+.\scripts\validate-skills.ps1
+.\scripts\validate-translations.ps1
+.\scripts\sync-skills.ps1 -WhatIf
+```
+
+향후 CLI 변경에는 새 option, output shape, overwrite rule, path convention마다 Node test를 추가합니다.
+
+향후 runtime hook PoC에는 각 hook payload의 fixture 기반 smoke test를 추가하고, hook이 지원되는 JSON만 출력하며 file을 편집하지 않고 opt-out 설정을 존중하는지 검증합니다.

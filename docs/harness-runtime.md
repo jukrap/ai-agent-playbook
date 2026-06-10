@@ -71,6 +71,23 @@ The command verifies the target path, `ai-playbook/`, non-empty core context, ad
 
 Use `--json` to return `{ schemaVersion, ok, target, adapter, summary, checks }`. Checks use the same `id`, `level`, `category`, `name`, `message`, and `paths` shape as `doctor`, so hook or setup automation can fail early without parsing human text.
 
+## Lifecycle reminder hooks
+
+The adapter hook examples enable only context refresh events by default:
+
+- `SessionStart`
+- `PostCompact`
+
+`UserPromptSubmit` and `PostToolUse` are opt-in reminder events. Enable them only in a local hook configuration by setting `AI_PLAYBOOK_HOOK_EVENTS` to a comma-separated list:
+
+```powershell
+$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse'
+```
+
+`UserPromptSubmit` emits a short guardrail reminder only when the prompt appears to involve commit, push, PR, merge, worklog, or doctor-style handoff work. `PostToolUse` emits a short reminder only for edit-like tool payloads where the hook can read changed file paths. Both stay silent when `ai-playbook/` is missing, when the event is not opted in, or when no relevant intent/path is found.
+
+These reminders are intentionally narrow. They do not run `doctor`, block tool calls, continue sessions, rewrite tool output, write files, or call the network.
+
 ## Scaffold rules
 
 - Plans are created under `ai-playbook/plans/YYYY-MM-DD-<slug>.md`.

@@ -134,6 +134,14 @@ node .\bin\ai-playbook.mjs context <target-repo> --json
 
 Hook은 스스로 설치되지 않고, project file을 편집하지 않고, tool output을 다시 쓰지 않고, network call을 하지 않습니다. `ai-playbook/`이 없거나 지원되지 않거나 읽을 수 없으면 stdout 없이 성공 종료합니다.
 
+기본적으로 hook은 `SessionStart`와 `PostCompact`만 처리합니다. 좁은 lifecycle reminder를 실험하려면 local에서 명시적으로 opt in합니다.
+
+```powershell
+$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse'
+```
+
+`UserPromptSubmit`은 commit, push, PR, merge, worklog, doctor 계열 intent에서만 reminder를 냅니다. `PostToolUse`는 edit-like tool payload에서 changed path를 읽을 수 있을 때만 reminder를 냅니다. 관련 없는 prompt, missing playbook, unsupported payload에서는 둘 다 조용히 빠집니다.
+
 Hook을 local Codex 설정에 연결하기 전에 아래를 실행합니다.
 
 ```powershell

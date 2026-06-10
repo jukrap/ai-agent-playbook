@@ -16,6 +16,7 @@ node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-repo> --check
 node .\bin\ai-playbook.mjs doctor <target-repo> --json
 node .\bin\ai-playbook.mjs context <target-repo> --json
+node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --json
 ```
 
 `context` reads only these project playbook files:
@@ -35,6 +36,14 @@ It does not re-inject root `AGENTS.md` by default.
 - `PostCompact`
 
 The hook does not install itself, edit project files, rewrite tool output, or call the network. If `ai-playbook/` is missing, unsupported, or unreadable, it exits successfully with no stdout.
+
+Before wiring the hook into local Claude Code settings, run:
+
+```powershell
+node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --json
+```
+
+Treat any failure as a setup issue to fix in the target project or adapter checkout before enabling the hook. The check is read-only and verifies both supported hook JSON and quiet unsupported paths.
 
 Use `settings.example.json` only as a manual starting point. Replace `<path-to-ai-agent-playbook>` with this checkout path in a local Claude Code settings file. Keep the timeout short and keep debug output on stderr by setting `AI_PLAYBOOK_DEBUG=1` only while troubleshooting.
 

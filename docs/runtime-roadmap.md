@@ -18,7 +18,7 @@ The default path stays simple: install skills, bootstrap `ai-playbook/` when a t
 - `guides sync` adds missing guide templates without replacing local edits by default.
 - `plan`, `worklog`, and `worklog summarize` keep active plans, detailed history, and monthly summaries in predictable paths.
 - The installer and updater use managed markers and hashes so local skill edits and unmanaged same-name skills are not overwritten silently.
-- `doctor --json`, `guides sync --check --json`, and `context --json` provide a small machine-readable core for future adapters.
+- `doctor --json`, `guides sync --check --json`, `context --json`, and `adapter check --json` provide a small machine-readable core for future adapters.
 
 ## Document Harness Hardening
 
@@ -83,6 +83,7 @@ The first adapter proof of concept is intentionally read-only:
 - `adapters/claude-code/hook.mjs` uses the same core context builder for Claude Code's hook JSON contract.
 - Both wrappers call the shared `context` core, never edit project files, never call the network, and stay silent when `ai-playbook/` is missing.
 - Example hook settings live beside each adapter and are not installed automatically.
+- `adapter check` verifies the read-only wrapper, example settings, supported hook events, and quiet unsupported paths before a user enables an adapter manually.
 
 ## Next Intermediate Steps
 
@@ -92,7 +93,7 @@ These can be implemented before a full plugin exists:
 - A guide manifest or version marker so `guides sync --check` can report stale guides, not only missing guides.
 - Worklog summary freshness checks that remind agents to promote durable facts.
 - A `doctor` reminder hook that does not run full checks automatically.
-- Fixture-based tests for migration, Windows paths, spaces, and non-ASCII paths.
+- Lifecycle reminder hooks for `UserPromptSubmit` or `PostToolUse`, guarded by explicit opt-in configuration.
 
 ## Process Skill Compatibility
 

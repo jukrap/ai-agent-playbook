@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -147,6 +147,52 @@ test('context --json builds compact hook context without root AGENTS', async () 
   await cleanup(target);
 });
 
+test('adapter check reports readiness for Codex and Claude Code without writing files', async () => {
+  const target = await tempRepo('ai playbook-테스트-');
+  assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
+  await writeFile(path.join(target, 'ai-playbook', 'CURRENT.md'), '# Current\n\nAdapter readiness signal\n');
+  const before = await listRelativeFiles(target);
+
+  for (const adapter of ['codex', 'claude-code']) {
+    const io = capture(target);
+    assert.equal(await runCli(['adapter', 'check', '.', '--adapter', adapter, '--json', '--max-chars', '5000'], io), 0);
+    const report = JSON.parse(io.out());
+    assert.equal(report.schemaVersion, '1');
+    assert.equal(report.ok, true);
+    assert.equal(report.adapter, adapter);
+    assert.equal(report.summary.fail, 0);
+    assert.equal(report.checks.some((check) => check.id === 'context.non-empty' && check.level === 'pass'), true);
+    assert.equal(report.checks.some((check) => check.id === 'hook.session-start.json' && check.level === 'pass'), true);
+    assert.equal(report.checks.some((check) => check.id === 'hook.post-compact.json' && check.level === 'pass'), true);
+    assert.equal(report.checks.some((check) => check.id === 'hook.unsupported-event-silent' && check.level === 'pass'), true);
+    assert.equal(report.checks.some((check) => check.id === 'hook.missing-playbook-silent' && check.level === 'pass'), true);
+  }
+
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('adapter check reports missing playbook and rejects unsupported adapters', async () => {
+  const target = await tempRepo('ai playbook-누락-');
+  const before = await listRelativeFiles(target);
+
+  const missing = capture(target);
+  assert.equal(await runCli(['adapter', 'check', '.', '--adapter', 'codex', '--json'], missing), 1);
+  const report = JSON.parse(missing.out());
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, false);
+  assert.equal(report.summary.fail > 0, true);
+  assert.equal(report.checks.some((check) => check.id === 'playbook.directory' && check.level === 'fail'), true);
+  assert.equal(report.checks.some((check) => check.id === 'context.non-empty' && check.level === 'fail'), true);
+  assert.equal(report.checks.some((check) => check.id === 'hook.missing-playbook-silent' && check.level === 'pass'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const unsupported = capture(target);
+  assert.equal(await runCli(['adapter', 'check', '.', '--adapter', 'unknown'], unsupported), 1);
+  assert.match(unsupported.err(), /Unsupported adapter: unknown/);
+  await cleanup(target);
+});
+
 test('plan and worklog scaffold commands create dated files', async () => {
   const target = await tempRepo();
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
@@ -176,6 +222,26 @@ function capture(cwd) {
 
 async function tempRepo(prefix = 'ai-playbook-test-') {
   return mkdtemp(path.join(os.tmpdir(), prefix));
+}
+
+async function listRelativeFiles(root) {
+  const files = [];
+  await walk(root, '');
+  files.sort();
+  return files;
+
+  async function walk(current, rel) {
+    const entries = await readdir(current, { withFileTypes: true });
+    for (const entry of entries) {
+      const entryRel = rel ? `${rel}/${entry.name}` : entry.name;
+      const fullPath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        await walk(fullPath, entryRel);
+      } else if (entry.isFile()) {
+        files.push(entryRel);
+      }
+    }
+  }
 }
 
 async function cleanup(target) {

@@ -12,6 +12,7 @@ node .\bin\ai-playbook.mjs doctor <target> [--strict] [--json]
 node .\bin\ai-playbook.mjs guides sync <target> [--dry-run] [--force]
 node .\bin\ai-playbook.mjs guides sync <target> --check [--json]
 node .\bin\ai-playbook.mjs context <target> [--json] [--max-chars N]
+node .\bin\ai-playbook.mjs adapter check <target> --adapter codex|claude-code [--json] [--max-chars N]
 node .\bin\ai-playbook.mjs plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
 node .\bin\ai-playbook.mjs worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
 node .\bin\ai-playbook.mjs worklog summarize <target> --month YYYY-MM [--dry-run] [--force]
@@ -56,6 +57,19 @@ Use `--json` when a hook, wrapper, or automation needs stable machine-readable o
 - `ai-playbook/GIT.md`
 
 It does not read or re-inject root `AGENTS.md` by default. Use `--json` to return `{ schemaVersion, ok, target, sources, additionalContext, warnings }`. Use `--max-chars N` to cap injected context for hook environments.
+
+## Adapter readiness
+
+`adapter check` is a read-only self-check before manually enabling an optional hook adapter.
+
+```powershell
+node .\bin\ai-playbook.mjs adapter check <target> --adapter codex --json
+node .\bin\ai-playbook.mjs adapter check <target> --adapter claude-code --json
+```
+
+The command verifies the target path, `ai-playbook/`, non-empty core context, adapter hook files, example settings, supported hook JSON for `SessionStart` and `PostCompact`, and quiet behavior for unsupported events or missing playbook context. It does not install hooks, write project files, call the network, or require a global command.
+
+Use `--json` to return `{ schemaVersion, ok, target, adapter, summary, checks }`. Checks use the same `id`, `level`, `category`, `name`, `message`, and `paths` shape as `doctor`, so hook or setup automation can fail early without parsing human text.
 
 ## Scaffold rules
 

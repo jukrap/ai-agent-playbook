@@ -132,13 +132,14 @@ node .\bin\ai-playbook.mjs guides sync <target-project> --check
 node .\bin\ai-playbook.mjs doctor <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project> --json
 node .\bin\ai-playbook.mjs context <target-project> --json
+node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
 ```
 
 대상 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다. `ai-playbook/`을 대상 `.gitignore`에 추가해야 하면 `--local-only`를 사용합니다.
 
 이미 `ai-playbook/`이 있는 프로젝트에서 새 playbook checkout의 누락된 가이드 템플릿만 가져오려면 `guides sync`를 사용합니다. 이 명령은 `--force`로 가이드 파일 덮어쓰기를 명시하지 않는 한 루트 `AGENTS.md`, playbook 정책 파일, 프로젝트별 메모를 수정하지 않습니다.
 
-선택적 adapter hook 예시는 내부적으로 `context` 명령을 사용합니다. 이 예시는 read-only이며 `adapters/`에서 수동으로 활성화해야 합니다.
+선택적 adapter hook 예시는 내부적으로 `context` 명령을 사용합니다. 이 예시는 read-only이며 `adapters/`에서 수동으로 활성화해야 합니다. Local hook 설정을 편집하기 전에 선택한 adapter에 대해 `adapter check`를 실행합니다.
 
 Plan과 worklog는 CLI로 생성할 수 있습니다.
 

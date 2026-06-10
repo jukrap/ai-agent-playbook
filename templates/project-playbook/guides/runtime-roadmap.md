@@ -14,7 +14,7 @@ Before considering hooks:
 - Move durable current facts into `CURRENT.md`, maps, runbooks, or decisions.
 - Keep detailed history in `worklogs/` and summarize it when it contains durable facts.
 - Use `guides sync --dry-run` from the source playbook checkout to add missing support guides without overwriting local edits.
-- Use `guides sync --check` and `doctor --json` when an adapter or automation needs a read-only health signal.
+- Use `guides sync --check`, `doctor --json`, and `adapter check --json` when an adapter or automation needs a read-only health signal.
 
 ## Runtime Readiness Checklist
 
@@ -24,6 +24,7 @@ Consider optional hooks only when all of these are true:
 - The team understands which docs are public and which are local-only.
 - The target agent supports lifecycle hooks in the current environment.
 - Hook output can be tested with local fixtures before enabling it in daily work.
+- The source adapter passes `adapter check` for this target project.
 - The hook can be disabled through configuration.
 - Native project instructions and injected context will not duplicate each other.
 - The hook does not write project files automatically.
@@ -51,9 +52,10 @@ Avoid hooks that:
 1. Stabilize `ai-playbook/` and run `doctor`.
 2. Add any missing guides with `guides sync --dry-run`, then a reviewed `guides sync`.
 3. Document hook intent in a decision note before enabling it.
-4. Create fixture tests for hook inputs and outputs.
-5. Enable only reminder or context-injection behavior first.
-6. Keep an opt-out path and record any remaining risk in a worklog.
+4. Run the source playbook's `adapter check` command for the selected adapter.
+5. Create fixture tests for hook inputs and outputs when local customization is needed.
+6. Enable only reminder or context-injection behavior first.
+7. Keep an opt-out path and record any remaining risk in a worklog.
 
 ## Adapter Notes
 
@@ -67,10 +69,18 @@ node .\bin\ai-playbook.mjs <command>
 
 The source playbook repository includes read-only adapter examples. Treat them as local starting points, not project requirements.
 
+Before enabling one of those examples, run the corresponding read-only check from the source checkout:
+
+```powershell
+node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --json
+node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --json
+```
+
 ## Done Criteria
 
 - The project works without hooks.
 - Hooks add reminders or context, not hidden policy.
+- The selected adapter passes a read-only self-check before local activation.
 - `doctor` has no unexplained failures.
 - Remaining warnings are documented.
 - A human can disable the hook layer without losing project memory.

@@ -14,7 +14,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 - Durable current fact를 `CURRENT.md`, maps, runbooks, decisions로 옮깁니다.
 - Detailed history는 `worklogs/`에 두고 durable fact가 있으면 summary를 만듭니다.
 - Source playbook checkout에서 `guides sync --dry-run`을 사용해 local edit을 덮어쓰지 않고 누락된 support guide를 확인합니다.
-- Adapter나 automation이 read-only health signal을 필요로 하면 `guides sync --check`와 `doctor --json`을 사용합니다.
+- Adapter나 automation이 read-only health signal을 필요로 하면 `guides sync --check`, `doctor --json`, `adapter check --json`을 사용합니다.
 
 ## Runtime 준비 체크리스트
 
@@ -24,6 +24,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 - 팀이 public docs와 local-only docs의 경계를 이해합니다.
 - 대상 agent가 현재 환경에서 lifecycle hook을 지원합니다.
 - 매일 쓰기 전에 hook output을 local fixture로 테스트할 수 있습니다.
+- Source adapter가 이 대상 프로젝트에서 `adapter check`를 통과합니다.
 - Hook을 configuration으로 비활성화할 수 있습니다.
 - Native project instruction과 injected context가 서로 중복되지 않습니다.
 - Hook이 project file을 자동으로 쓰지 않습니다.
@@ -51,9 +52,10 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 1. `ai-playbook/`을 안정화하고 `doctor`를 실행합니다.
 2. `guides sync --dry-run`으로 누락 guide를 확인한 뒤, 검토한 `guides sync`를 실행합니다.
 3. Hook을 켜기 전에 decision note에 hook intent를 문서화합니다.
-4. Hook input/output fixture test를 만듭니다.
-5. Reminder 또는 context-injection behavior만 먼저 켭니다.
-6. Opt-out 경로를 유지하고 남은 risk를 worklog에 기록합니다.
+4. Source playbook의 `adapter check` 명령을 선택한 adapter에 대해 실행합니다.
+5. Local customization이 필요하면 hook input/output fixture test를 만듭니다.
+6. Reminder 또는 context-injection behavior만 먼저 켭니다.
+7. Opt-out 경로를 유지하고 남은 risk를 worklog에 기록합니다.
 
 ## Adapter 메모
 
@@ -67,10 +69,18 @@ node .\bin\ai-playbook.mjs <command>
 
 원본 playbook 저장소에는 read-only adapter 예시가 있습니다. 이를 프로젝트 필수 조건이 아니라 로컬 출발점으로 다룹니다.
 
+이 예시 중 하나를 켜기 전에는 source checkout에서 대응하는 read-only check를 실행합니다.
+
+```powershell
+node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --json
+node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --json
+```
+
 ## 완료 기준
 
 - 프로젝트가 hook 없이도 동작합니다.
 - Hook은 hidden policy가 아니라 reminder 또는 context만 더합니다.
+- 선택한 adapter가 local activation 전에 read-only self-check를 통과합니다.
 - `doctor`에 설명되지 않은 failure가 없습니다.
 - 남은 warning이 문서화되어 있습니다.
 - 사람이 hook layer를 꺼도 project memory를 잃지 않습니다.

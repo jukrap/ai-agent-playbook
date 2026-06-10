@@ -75,11 +75,12 @@ node .\bin\ai-playbook.mjs bootstrap <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project> --json
 node .\bin\ai-playbook.mjs context <target-project> --json
+node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
 ```
 
 대상 프로젝트의 `ai-playbook/` 폴더를 Git에서 제외해야 하면 `--local-only`를 사용합니다. `--profile <name>`은 대상 stack이 확인된 뒤에만 사용합니다.
 
-Runtime hook과 plugin은 기본 설치 경로에 포함되지 않습니다. 문서와 CLI 하네스가 안정된 뒤 선택적으로 확장합니다. Codex와 Claude Code adapter에는 read-only context hook 예시가 있지만 자동 설치되지 않습니다. [런타임 로드맵](docs/runtime-roadmap.ko.md)을 봅니다.
+Runtime hook과 plugin은 기본 설치 경로에 포함되지 않습니다. 문서와 CLI 하네스가 안정된 뒤 선택적으로 확장합니다. Codex와 Claude Code adapter에는 read-only context hook 예시와 read-only `adapter check` self-check가 있지만 자동 설치되지 않습니다. [런타임 로드맵](docs/runtime-roadmap.ko.md)을 봅니다.
 
 ## 평소 작업 흐름
 

@@ -102,6 +102,7 @@ node .\bin\ai-playbook.mjs guides sync <target-repo> --check
 node .\bin\ai-playbook.mjs doctor <target-repo> --strict
 node .\bin\ai-playbook.mjs doctor <target-repo> --json
 node .\bin\ai-playbook.mjs context <target-repo> --json
+node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --json
 node .\bin\ai-playbook.mjs plan new <target-repo> --title "short-plan-title"
 node .\bin\ai-playbook.mjs worklog new <target-repo> --title "short-worklog-title"
 ```
@@ -132,6 +133,14 @@ node .\bin\ai-playbook.mjs context <target-repo> --json
 ```
 
 Hook은 스스로 설치되지 않고, project file을 편집하지 않고, tool output을 다시 쓰지 않고, network call을 하지 않습니다. `ai-playbook/`이 없거나 지원되지 않거나 읽을 수 없으면 stdout 없이 성공 종료합니다.
+
+Hook을 local Codex 설정에 연결하기 전에 아래를 실행합니다.
+
+```powershell
+node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --json
+```
+
+Failure가 있으면 hook을 켜기 전에 대상 프로젝트나 adapter checkout의 설정 문제로 보고 수정합니다. 이 check는 read-only이며 지원 hook JSON과 quiet unsupported path를 모두 확인합니다.
 
 `hooks.example.json`은 수동 설정 출발점으로만 사용합니다. Local Codex plugin 또는 hook 설정에서 `<path-to-ai-agent-playbook>`을 이 checkout 경로로 바꿉니다. Timeout은 짧게 유지하고, troubleshooting 중에만 `AI_PLAYBOOK_DEBUG=1`로 debug output을 stderr에 남깁니다.
 

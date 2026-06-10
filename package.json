@@ -7,7 +7,7 @@
     "ai-playbook": "./bin/ai-playbook.mjs"
   },
   "scripts": {
-    "check": "node --check bin/ai-playbook.mjs && node --check src/cli.mjs && node --check src/harness.mjs && node --check adapters/shared/context-hook.mjs && node --check adapters/codex/hook.mjs && node --check adapters/claude-code/hook.mjs",
+    "check": "node --check bin/ai-playbook.mjs && node --check src/cli.mjs && node --check src/harness.mjs && node --check src/adapter-readiness.mjs && node --check adapters/shared/context-hook.mjs && node --check adapters/codex/hook.mjs && node --check adapters/claude-code/hook.mjs",
     "test": "node --test test/*.test.mjs"
   },
   "engines": {

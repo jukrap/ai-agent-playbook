@@ -74,6 +74,7 @@ node .\bin\ai-playbook.mjs bootstrap <target-project> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project> --json
+node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
 node .\bin\ai-playbook.mjs context <target-project> --json
 node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
 ```
@@ -98,6 +99,7 @@ Clone once
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-project> --local-only --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
+node .\bin\ai-playbook.mjs guides sync <target-project> --check --json
 ```
 
 ## 저장소 지도

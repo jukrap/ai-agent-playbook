@@ -101,6 +101,7 @@ node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-repo> --check
 node .\bin\ai-playbook.mjs doctor <target-repo> --strict
 node .\bin\ai-playbook.mjs doctor <target-repo> --json
+node .\bin\ai-playbook.mjs doctor <target-repo> --reminder --json
 node .\bin\ai-playbook.mjs context <target-repo> --json
 node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --json
 node .\bin\ai-playbook.mjs plan new <target-repo> --title "short-plan-title"
@@ -117,7 +118,9 @@ node .\bin\ai-playbook.mjs <command>
 
 수동 병합 뒤에는 `doctor`를 실행해 누락된 playbook 파일, 고정 로컬 절대경로, 예전 style skill 참조를 확인합니다.
 
-대상 프로젝트에 이미 `ai-playbook/`이 있고 이 checkout의 누락된 가이드 템플릿만 가져오려면 `guides sync`를 사용합니다. 기본값은 기존 가이드 파일을 유지합니다. 가이드 덮어쓰기를 검토한 뒤에만 `--force`를 사용합니다.
+대상 프로젝트에 이미 `ai-playbook/`이 있고 이 checkout의 누락된 가이드 템플릿만 가져오려면 `guides sync`를 사용합니다. 기본값은 기존 가이드 파일을 유지합니다. `guides sync --check --json`은 source와 target hash를 비교해 stale guide file도 보고합니다. 가이드 덮어쓰기를 검토한 뒤에만 `--force`를 사용합니다.
+
+Local wrapper code가 missing playbook, stale guide, worklog summary freshness에 대한 작은 read-only signal만 필요로 하면 `doctor --reminder --json`을 사용합니다. Adapter hook 예시는 이 명령을 자동 실행하지 않습니다.
 
 ## 선택적 context hook PoC
 

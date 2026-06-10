@@ -16,6 +16,15 @@ export const REQUIRED_PLAYBOOK_FILES = [
   'worklogs/summaries/README.md'
 ];
 
+export const SCHEMA_VERSION = '1';
+export const DEFAULT_CONTEXT_MAX_CHARS = 12000;
+export const CONTEXT_SOURCE_FILES = [
+  'START_HERE.md',
+  'CURRENT.md',
+  'SKILLS.md',
+  'GIT.md'
+];
+
 const OBSOLETE_STYLE_SKILLS = [
   'design-system-first',
   'css-class-first',
@@ -70,6 +79,15 @@ export function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
 
+export function parseMaxChars(value, optionName = '--max-chars') {
+  if (value === undefined || value === false) return DEFAULT_CONTEXT_MAX_CHARS;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 500) {
+    throw new Error(`Invalid ${optionName}; expected an integer >= 500.`);
+  }
+  return parsed;
+}
+
 export async function bootstrapProject(options) {
   const {
     repoRoot,
@@ -120,35 +138,91 @@ export async function doctorProject(options) {
   const checks = [];
   const playbookRoot = path.join(target, 'ai-playbook');
   const hasPlaybook = existsSync(playbookRoot);
-  checks.push(result(hasPlaybook ? 'pass' : 'fail', 'ai-playbook directory', hasPlaybook ? 'Found ai-playbook/.' : 'Missing ai-playbook/.'));
+  checks.push(result(
+    hasPlaybook ? 'pass' : 'fail',
+    'playbook.directory',
+    'setup',
+    'ai-playbook directory',
+    hasPlaybook ? 'Found ai-playbook/.' : 'Missing ai-playbook/.',
+    ['ai-playbook/']
+  ));
 
   for (const file of REQUIRED_PLAYBOOK_FILES) {
     const ok = existsSync(path.join(playbookRoot, file));
-    checks.push(result(ok ? 'pass' : 'fail', `ai-playbook/${file}`, ok ? 'Found.' : 'Missing.'));
+    checks.push(result(
+      ok ? 'pass' : 'fail',
+      checkIdForPlaybookFile(file),
+      'setup',
+      `ai-playbook/${file}`,
+      ok ? 'Found.' : 'Missing.',
+      [`ai-playbook/${toPortablePath(file)}`]
+    ));
   }
 
   const agentsFile = path.join(target, 'AGENTS.md');
   const hasAgents = existsSync(agentsFile);
-  checks.push(result(hasAgents ? 'pass' : 'warn', 'root AGENTS.md', hasAgents ? 'Found.' : 'Missing root agent policy.'));
+  checks.push(result(
+    hasAgents ? 'pass' : 'warn',
+    'root-agents.exists',
+    'bootstrap',
+    'root AGENTS.md',
+    hasAgents ? 'Found.' : 'Missing root agent policy.',
+    ['AGENTS.md']
+  ));
   if (hasAgents) {
     const agentsText = await readFile(agentsFile, 'utf8');
     const pointsToPlaybook = agentsText.includes('ai-playbook/');
-    checks.push(result(pointsToPlaybook ? 'pass' : 'warn', 'root AGENTS bootstrap', pointsToPlaybook ? 'Points to ai-playbook/.' : 'Found, but does not point agents to ai-playbook/.'));
+    checks.push(result(
+      pointsToPlaybook ? 'pass' : 'warn',
+      'root-agents.points-to-playbook',
+      'bootstrap',
+      'root AGENTS bootstrap',
+      pointsToPlaybook ? 'Points to ai-playbook/.' : 'Found, but does not point agents to ai-playbook/.',
+      ['AGENTS.md']
+    ));
     const missingRefs = ROOT_BOOTSTRAP_REFS.filter((ref) => !agentsText.includes(ref));
-    checks.push(result(missingRefs.length ? 'warn' : 'pass', 'root AGENTS reading order', missingRefs.length ? `Missing explicit references: ${missingRefs.join(', ')}` : 'References core ai-playbook files.'));
+    checks.push(result(
+      missingRefs.length ? 'warn' : 'pass',
+      'root-agents.reading-order',
+      'bootstrap',
+      'root AGENTS reading order',
+      missingRefs.length ? `Missing explicit references: ${missingRefs.join(', ')}` : 'References core ai-playbook files.',
+      ['AGENTS.md', ...missingRefs]
+    ));
   }
 
   const rootPolicyFiles = ['SKILLS.md', 'GIT.md'].filter((file) => existsSync(path.join(target, file)));
-  checks.push(result(rootPolicyFiles.length ? 'warn' : 'pass', 'root policy files', rootPolicyFiles.length ? `Prefer ai-playbook/SKILLS.md and ai-playbook/GIT.md; root files found: ${rootPolicyFiles.join(', ')}` : 'No root SKILLS.md or GIT.md.'));
+  checks.push(result(
+    rootPolicyFiles.length ? 'warn' : 'pass',
+    'root-policy-files',
+    'policy',
+    'root policy files',
+    rootPolicyFiles.length ? `Prefer ai-playbook/SKILLS.md and ai-playbook/GIT.md; root files found: ${rootPolicyFiles.join(', ')}` : 'No root SKILLS.md or GIT.md.',
+    rootPolicyFiles
+  ));
 
   const gitignore = path.join(target, '.gitignore');
   const gitignoreText = existsSync(gitignore) ? await readFile(gitignore, 'utf8') : '';
   const ignoresPlaybook = gitignoreText.split(/\r?\n/).some((line) => line.trim() === 'ai-playbook/');
-  checks.push(result(ignoresPlaybook ? 'pass' : 'warn', 'ai-playbook commit policy', ignoresPlaybook ? 'Marked local-only in .gitignore.' : 'Not marked local-only; treat as committed project docs.'));
+  checks.push(result(
+    ignoresPlaybook ? 'pass' : 'warn',
+    'playbook.commit-policy',
+    'policy',
+    'ai-playbook commit policy',
+    ignoresPlaybook ? 'Marked local-only in .gitignore.' : 'Not marked local-only; treat as committed project docs.',
+    ['.gitignore', 'ai-playbook/']
+  ));
 
   if (hasPlaybook) {
     const templateFiles = await findCoreTemplateFiles(playbookRoot);
-    checks.push(result(templateFiles.length ? 'warn' : 'pass', 'playbook adaptation', templateFiles.length ? `Template prompts remain in: ${templateFiles.join(', ')}` : 'Core playbook files look adapted.'));
+    checks.push(result(
+      templateFiles.length ? 'warn' : 'pass',
+      'playbook.adaptation',
+      'adaptation',
+      'playbook adaptation',
+      templateFiles.length ? `Template prompts remain in: ${templateFiles.join(', ')}` : 'Core playbook files look adapted.',
+      templateFiles.map((file) => `ai-playbook/${toPortablePath(file)}`)
+    ));
   }
 
   const markdownFiles = await walkFiles(target, (file) => file.endsWith('.md'));
@@ -156,21 +230,134 @@ export async function doctorProject(options) {
   const obsoleteSkillRefs = [];
   for (const file of markdownFiles) {
     const text = await readFile(file, 'utf8');
-    const rel = path.relative(target, file);
+    const rel = toPortablePath(path.relative(target, file));
     if (/[A-Za-z]:\\/.test(text)) privatePaths.push(rel);
     for (const skill of OBSOLETE_STYLE_SKILLS) {
       if (text.includes(skill)) obsoleteSkillRefs.push(`${rel} -> ${skill}`);
     }
   }
 
-  checks.push(result(privatePaths.length ? 'fail' : 'pass', 'absolute local paths', privatePaths.length ? privatePaths.join(', ') : 'None found.'));
-  checks.push(result(obsoleteSkillRefs.length ? 'warn' : 'pass', 'obsolete style skill references', obsoleteSkillRefs.length ? obsoleteSkillRefs.join(', ') : 'None found.'));
+  checks.push(result(
+    privatePaths.length ? 'fail' : 'pass',
+    'public-safety.absolute-local-paths',
+    'safety',
+    'absolute local paths',
+    privatePaths.length ? privatePaths.join(', ') : 'None found.',
+    privatePaths
+  ));
+  checks.push(result(
+    obsoleteSkillRefs.length ? 'warn' : 'pass',
+    'skills.obsolete-style-references',
+    'skills',
+    'obsolete style skill references',
+    obsoleteSkillRefs.length ? obsoleteSkillRefs.join(', ') : 'None found.',
+    obsoleteSkillRefs.map((item) => item.split(' -> ')[0])
+  ));
 
   const hasFailure = checks.some((check) => check.level === 'fail');
   const hasWarning = checks.some((check) => check.level === 'warn');
   return {
+    schemaVersion: SCHEMA_VERSION,
     ok: strict ? !hasFailure && !hasWarning : !hasFailure,
+    target: path.resolve(target),
+    strict,
+    summary: summarizeChecks(checks),
     checks
+  };
+}
+
+export async function checkGuides(options) {
+  const { repoRoot, target } = options;
+
+  await assertDirectory(target, 'Target repository does not exist');
+
+  const source = path.join(repoRoot, 'templates', 'project-playbook', 'guides');
+  const destination = path.join(target, 'ai-playbook', 'guides');
+  const sourceFiles = await walkFiles(source, (file) => file.endsWith('.md'));
+  const guides = [];
+  for (const file of sourceFiles) {
+    const rel = toPortablePath(path.relative(source, file));
+    const destinationFile = path.join(destination, rel);
+    guides.push({
+      path: `ai-playbook/guides/${rel}`,
+      status: existsSync(destinationFile) ? 'present' : 'missing'
+    });
+  }
+  guides.sort((left, right) => left.path.localeCompare(right.path));
+  const summary = {
+    total: guides.length,
+    present: guides.filter((guide) => guide.status === 'present').length,
+    missing: guides.filter((guide) => guide.status === 'missing').length
+  };
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: summary.missing === 0,
+    target: path.resolve(target),
+    summary,
+    guides
+  };
+}
+
+export async function buildProjectContext(options) {
+  const { target, maxChars = DEFAULT_CONTEXT_MAX_CHARS } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+
+  const playbookRoot = path.join(target, 'ai-playbook');
+  const warnings = [];
+  const sources = [];
+  const sections = [];
+  if (!existsSync(playbookRoot)) {
+    return {
+      schemaVersion: SCHEMA_VERSION,
+      ok: false,
+      target: path.resolve(target),
+      sources,
+      additionalContext: '',
+      warnings: [contextWarning('context.missing-playbook', 'Missing ai-playbook/.')]
+    };
+  }
+
+  for (const file of CONTEXT_SOURCE_FILES) {
+    const fullPath = path.join(playbookRoot, file);
+    const sourcePath = `ai-playbook/${file}`;
+    if (!existsSync(fullPath)) {
+      warnings.push(contextWarning('context.missing-source', `Missing ${sourcePath}.`, [sourcePath]));
+      continue;
+    }
+    const content = (await readFile(fullPath, 'utf8')).trim();
+    sources.push({ path: sourcePath, bytes: content.length });
+    if (content) {
+      sections.push(`## ${sourcePath}\n\n${content}`);
+    }
+  }
+
+  if (sections.length === 0) {
+    return {
+      schemaVersion: SCHEMA_VERSION,
+      ok: false,
+      target: path.resolve(target),
+      sources,
+      additionalContext: '',
+      warnings: [
+        ...warnings,
+        contextWarning('context.empty', 'No non-empty context source files found.')
+      ]
+    };
+  }
+
+  const rawContext = `<ai-playbook-context>\n${sections.join('\n\n---\n\n')}\n</ai-playbook-context>`;
+  const { text, truncated } = truncateText(rawContext, maxChars);
+  if (truncated) {
+    warnings.push(contextWarning('context.truncated', `Context was truncated to ${maxChars} characters.`));
+  }
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: path.resolve(target),
+    sources,
+    additionalContext: text,
+    warnings
   };
 }
 
@@ -240,8 +427,39 @@ export async function summarizeWorklogs(options) {
   return writeScaffold(file, content, { dryRun, force });
 }
 
-function result(level, name, message) {
-  return { level, name, message };
+function result(level, id, category, name, message, paths = []) {
+  return { id, level, category, name, message, paths };
+}
+
+function contextWarning(id, message, paths = []) {
+  return { id, message, paths };
+}
+
+function summarizeChecks(checks) {
+  return {
+    total: checks.length,
+    pass: checks.filter((check) => check.level === 'pass').length,
+    warn: checks.filter((check) => check.level === 'warn').length,
+    fail: checks.filter((check) => check.level === 'fail').length
+  };
+}
+
+function checkIdForPlaybookFile(file) {
+  return `playbook.file.${file.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '')}`;
+}
+
+function toPortablePath(value) {
+  return value.split(path.sep).join('/');
+}
+
+function truncateText(text, maxChars) {
+  if (text.length <= maxChars) return { text, truncated: false };
+  const marker = '\n[ai-playbook context truncated]\n';
+  const sliceLength = Math.max(0, maxChars - marker.length);
+  return {
+    text: `${text.slice(0, sliceLength).trimEnd()}${marker}`,
+    truncated: true
+  };
 }
 
 async function findCoreTemplateFiles(playbookRoot) {

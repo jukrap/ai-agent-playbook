@@ -20,11 +20,11 @@ Add a new category only when the first real skill in that category exists. When 
 
 - `bin/ai-playbook.mjs`: CLI entrypoint.
 - `src/`: dependency-free Node runtime implementation.
-- `test/`: Node test coverage for bootstrap, doctor, plan, and worklog commands.
+- `test/`: Node test coverage for bootstrap, doctor, context, guide checks, adapter hooks, plan, and worklog commands.
 
 The runtime applies templates and creates scaffold files. It must not encode private project facts or replace the installable skills.
 
-Optional hook or plugin experiments belong in a clearly separated adapter or experimental package until they have a stable contract. They must not become required for the default document and CLI harness.
+Optional hook or plugin experiments belong in a clearly separated adapter or experimental package until they have a stable contract. They may call the core CLI contracts, but they must not become required for the default document and CLI harness or the only place where project policy exists.
 
 ## Template categories
 

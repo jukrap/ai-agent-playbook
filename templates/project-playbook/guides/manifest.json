@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1",
+  "guides": [
+    {
+      "path": "api-contract-boundary.md",
+      "sourceHash": "e789c6b9591d1081825c22de7e2abd1c656a7f94538fcad956e25d1f1750bb1e"
+    },
+    {
+      "path": "commit-push-worklog.md",
+      "sourceHash": "373bca11f4bc076520cbd233361f496cc22268087d01e891a41e798e0c345285"
+    },
+    {
+      "path": "docs-system.md",
+      "sourceHash": "65c51fe902b74866c312f9db819cfebf42df5af968b2e36859316a505a9846d2"
+    },
+    {
+      "path": "harness-migration.md",
+      "sourceHash": "cdeacd148103df8d2ec8a0591f16839ce57be07b0cee43110107bab05c635334"
+    },
+    {
+      "path": "legacy-mode.md",
+      "sourceHash": "9d6a849c4521690ce55b35be351aa4ea1919158f8a47811b50704e916399b933"
+    },
+    {
+      "path": "pragmatic-fsd.md",
+      "sourceHash": "422e31109fda3105f2a6b7e421d65ffd930636227a2d1d4bac4e0890b112f5ec"
+    },
+    {
+      "path": "README.md",
+      "sourceHash": "666ad5022b4da74f4287d82db57dac79a2df4238ad14f40f379babf00e01aad4"
+    },
+    {
+      "path": "repo-onboarding.md",
+      "sourceHash": "77e1f8ace810f4c16b63b41e72dc0fc3ea4e71ff7353d5ec57177ceea8df5c28"
+    },
+    {
+      "path": "runtime-harness.md",
+      "sourceHash": "689d3ded3f3ffceda03a17c46d7f5184012bed16f02a448fb78675ffd99612b1"
+    },
+    {
+      "path": "runtime-roadmap.md",
+      "sourceHash": "fa575aa25963b617210663370adb1e9135ded7f37df8709d2d881622316cc29e"
+    },
+    {
+      "path": "structural-review.md",
+      "sourceHash": "dce0db266dae488653a328ef7840551a871be65bb957e7fbc18c299b4b3be141"
+    },
+    {
+      "path": "ui-style-quality.md",
+      "sourceHash": "26cceb0ade50927c264e88864fe5314165e2f765baf073a0c45d66f579b5f711"
+    }
+  ]
+}

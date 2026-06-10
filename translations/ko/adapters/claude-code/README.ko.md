@@ -15,9 +15,12 @@ Claude Code는 이 저장소를 두 계층에서 사용할 수 있습니다.
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-repo> --check
 node .\bin\ai-playbook.mjs doctor <target-repo> --json
+node .\bin\ai-playbook.mjs doctor <target-repo> --reminder --json
 node .\bin\ai-playbook.mjs context <target-repo> --json
 node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --json
 ```
+
+`doctor --reminder --json`은 wrapper나 script가 작은 read-only local signal만 필요할 때 사용합니다. Hook 예시는 doctor를 자동 실행하지 않습니다.
 
 `context`는 아래 project playbook 파일만 읽습니다.
 

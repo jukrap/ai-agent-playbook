@@ -101,6 +101,7 @@ node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-repo> --check
 node .\bin\ai-playbook.mjs doctor <target-repo> --strict
 node .\bin\ai-playbook.mjs doctor <target-repo> --json
+node .\bin\ai-playbook.mjs doctor <target-repo> --reminder --json
 node .\bin\ai-playbook.mjs context <target-repo> --json
 node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --json
 node .\bin\ai-playbook.mjs plan new <target-repo> --title "short-plan-title"
@@ -117,7 +118,9 @@ node .\bin\ai-playbook.mjs <command>
 
 Use `doctor` after manual merges to catch missing playbook files, absolute local paths, and obsolete style-skill references.
 
-Use `guides sync` when a project already has `ai-playbook/` and you only want missing guide templates from this checkout. It keeps existing guide files by default; use `--force` only after reviewing guide overwrites.
+Use `guides sync` when a project already has `ai-playbook/` and you only want missing guide templates from this checkout. It keeps existing guide files by default; `guides sync --check --json` also reports stale guide files by comparing source and target hashes. Use `--force` only after reviewing guide overwrites.
+
+Use `doctor --reminder --json` when local wrapper code needs a small read-only signal about missing playbooks, stale guides, or worklog summary freshness. The adapter hook examples do not run this automatically.
 
 ## Optional context hook PoC
 

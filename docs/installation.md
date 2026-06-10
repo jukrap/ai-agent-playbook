@@ -120,18 +120,25 @@ The sync script does not remove or overwrite other people's same-name skills by 
 
 Templates are not installed automatically as skills. Use the runtime CLI for the normal path, or copy/adapt templates manually when you need tighter control.
 
+This is the default project harness. Runtime hooks or agent plugins are optional extensions and are not installed by `install.ps1`, `update.ps1`, or the current CLI.
+
 ### Runtime path
 
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-project> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-project>
 node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
+node .\bin\ai-playbook.mjs guides sync <target-project> --check
 node .\bin\ai-playbook.mjs doctor <target-project>
+node .\bin\ai-playbook.mjs doctor <target-project> --json
+node .\bin\ai-playbook.mjs context <target-project> --json
 ```
 
 Use `--profile <name>` only after the target stack is known. Use `--local-only` when `ai-playbook/` should be added to the target `.gitignore`.
 
 Use `guides sync` for projects that already have `ai-playbook/` and only need missing guide templates from a newer playbook checkout. It does not modify root `AGENTS.md`, playbook policy files, or project-specific notes unless `--force` is explicitly used for guide files.
+
+The optional adapter hook examples use the `context` command internally. They are read-only and must be enabled manually from `adapters/`.
 
 Create plan and worklog files through the CLI so paths stay predictable:
 
@@ -165,3 +172,5 @@ Codex's skill installer can install individual skills from a Git repository path
 ## External process skills
 
 This repository does not install external process skill packs. Keep them installed separately, then use these skills alongside them when useful.
+
+If a project later adopts a hook-based runtime, keep it opt-in and documented in the target project's `ai-playbook/`. The project should still be understandable and usable from the document harness alone.

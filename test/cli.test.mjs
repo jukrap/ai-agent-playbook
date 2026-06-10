@@ -57,6 +57,32 @@ test('doctor reports missing and bootstrapped project state', async () => {
   await cleanup(target);
 });
 
+test('doctor --json reports stable schema and strict warning behavior', async () => {
+  const target = await tempRepo('ai playbook-테스트-');
+  const missing = capture(target);
+
+  assert.equal(await runCli(['doctor', '.', '--json'], missing), 1);
+  const missingReport = JSON.parse(missing.out());
+  assert.equal(missingReport.schemaVersion, '1');
+  assert.equal(missingReport.strict, false);
+  assert.equal(missingReport.summary.fail > 0, true);
+  assert.equal(missingReport.checks.some((check) => check.id === 'playbook.directory' && check.category === 'setup'), true);
+
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  const defaultCheck = capture(target);
+  assert.equal(await runCli(['doctor', '.', '--json'], defaultCheck), 0);
+  const defaultReport = JSON.parse(defaultCheck.out());
+  assert.equal(defaultReport.ok, true);
+  assert.equal(defaultReport.checks.some((check) => check.id === 'playbook.adaptation' && check.level === 'warn'), true);
+
+  const strictCheck = capture(target);
+  assert.equal(await runCli(['doctor', '.', '--json', '--strict'], strictCheck), 1);
+  const strictReport = JSON.parse(strictCheck.out());
+  assert.equal(strictReport.strict, true);
+  assert.equal(strictReport.ok, false);
+  await cleanup(target);
+});
+
 test('guides sync restores missing guides without overwriting local guide edits', async () => {
   const target = await tempRepo();
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
@@ -71,6 +97,53 @@ test('guides sync restores missing guides without overwriting local guide edits'
   assert.match(sync.out(), /keep guides\\runtime-harness\.md|keep guides\/runtime-harness\.md/);
   assert.match(await readFile(customGuide, 'utf8'), /Local guide edit/);
   assert.match(await readFile(missingGuide, 'utf8'), /Harness Migration/);
+  await cleanup(target);
+});
+
+test('guides sync --check reports missing guides without writing files', async () => {
+  const target = await tempRepo();
+  assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
+
+  const missingGuide = path.join(target, 'ai-playbook', 'guides', 'harness-migration.md');
+  await rm(missingGuide, { force: true });
+
+  const check = capture(target);
+  assert.equal(await runCli(['guides', 'sync', '.', '--check', '--json'], check), 1);
+  const report = JSON.parse(check.out());
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, false);
+  assert.equal(report.summary.missing, 1);
+  assert.equal(report.guides.some((guide) => guide.path === 'ai-playbook/guides/harness-migration.md' && guide.status === 'missing'), true);
+  assert.equal(existsSync(missingGuide), false);
+  await cleanup(target);
+});
+
+test('context --json builds compact hook context without root AGENTS', async () => {
+  const target = await tempRepo('ai playbook-테스트-');
+  assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
+
+  await writeFile(path.join(target, 'ai-playbook', 'START_HERE.md'), '# Start\n\nStart signal\n');
+  await writeFile(path.join(target, 'ai-playbook', 'CURRENT.md'), '# Current\n\nCurrent signal\n');
+  await writeFile(path.join(target, 'ai-playbook', 'SKILLS.md'), '# Skills\n\nSkill signal\n');
+  await writeFile(path.join(target, 'ai-playbook', 'GIT.md'), '# Git\n\nGit signal\n');
+  await writeFile(path.join(target, 'AGENTS.md'), '# Root\n\nRoot agent marker\n');
+
+  const context = capture(target);
+  assert.equal(await runCli(['context', '.', '--json', '--max-chars', '5000'], context), 0);
+  const report = JSON.parse(context.out());
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.deepEqual(report.sources.map((source) => source.path), [
+    'ai-playbook/START_HERE.md',
+    'ai-playbook/CURRENT.md',
+    'ai-playbook/SKILLS.md',
+    'ai-playbook/GIT.md'
+  ]);
+  assert.match(report.additionalContext, /Start signal/);
+  assert.match(report.additionalContext, /Current signal/);
+  assert.match(report.additionalContext, /Skill signal/);
+  assert.match(report.additionalContext, /Git signal/);
+  assert.doesNotMatch(report.additionalContext, /Root agent marker/);
   await cleanup(target);
 });
 
@@ -101,8 +174,8 @@ function capture(cwd) {
   };
 }
 
-async function tempRepo() {
-  return mkdtemp(path.join(os.tmpdir(), 'ai-playbook-test-'));
+async function tempRepo(prefix = 'ai-playbook-test-') {
+  return mkdtemp(path.join(os.tmpdir(), prefix));
 }
 
 async function cleanup(target) {

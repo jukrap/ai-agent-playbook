@@ -19,6 +19,7 @@
 - `ai-playbook/worklogs/**`: detailed milestone, blocker, direction-change, debugging records.
 - `ai-playbook/archive/**`: stale plans, old handoffs, retired notes.
 - `design-docs/**`, `_reference/**`: secondary references.
+- `ai-playbook/guides/runtime-roadmap.md`: runtime hook이 project docs를 대체하지 않고 보강해도 되는지 판단하는 선택적 guidance.
 
 ## Source-of-truth priority
 
@@ -40,3 +41,4 @@
 - stale plans, prompts, handoffs는 archive합니다.
 - current facts는 worklogs에서 `CURRENT.md`, maps, runbooks, decisions로 승격합니다.
 - 흩어진 반복 지침보다 index document 하나를 선호합니다.
+- Hook-specific behavior는 선택적이고 문서화된 상태로 유지합니다. Runtime state가 project policy의 유일한 source가 되면 안 됩니다.

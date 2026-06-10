@@ -50,3 +50,4 @@ Add detailed maps, runbooks, decisions, and guides only when there is project ev
 - Use relative paths in reusable templates.
 - If `ai-playbook/` is local-only, add it to `.gitignore` before writing private notes.
 - If worklogs are committed, keep them scrubbed and useful for future maintainers.
+- Do not add runtime hooks during bootstrap. Stabilize the document harness first, then use `templates/project-playbook/guides/runtime-roadmap.md` if the project needs optional hook behavior.

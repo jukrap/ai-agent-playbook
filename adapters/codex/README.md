@@ -98,7 +98,10 @@ The repository also includes a small Node CLI for project harness setup and main
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
 node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
+node .\bin\ai-playbook.mjs guides sync <target-repo> --check
 node .\bin\ai-playbook.mjs doctor <target-repo> --strict
+node .\bin\ai-playbook.mjs doctor <target-repo> --json
+node .\bin\ai-playbook.mjs context <target-repo> --json
 node .\bin\ai-playbook.mjs plan new <target-repo> --title "short-plan-title"
 node .\bin\ai-playbook.mjs worklog new <target-repo> --title "short-worklog-title"
 ```
@@ -114,6 +117,23 @@ node .\bin\ai-playbook.mjs <command>
 Use `doctor` after manual merges to catch missing playbook files, absolute local paths, and obsolete style-skill references.
 
 Use `guides sync` when a project already has `ai-playbook/` and you only want missing guide templates from this checkout. It keeps existing guide files by default; use `--force` only after reviewing guide overwrites.
+
+## Optional context hook PoC
+
+`hook.mjs` is a read-only proof of concept for Codex hook environments. It reads the hook payload from stdin, uses the payload `cwd` as the target project, and emits `hookSpecificOutput.additionalContext` for:
+
+- `SessionStart`
+- `PostCompact`
+
+It uses the shared runtime context builder behind:
+
+```powershell
+node .\bin\ai-playbook.mjs context <target-repo> --json
+```
+
+The hook does not install itself, edit project files, rewrite tool output, or call the network. If `ai-playbook/` is missing, unsupported, or unreadable, it exits successfully with no stdout.
+
+Use `hooks.example.json` only as a manual starting point. Replace `<path-to-ai-agent-playbook>` with this checkout path in a local Codex plugin or hook configuration. Keep the timeout short and keep debug output on stderr by setting `AI_PLAYBOOK_DEBUG=1` only while troubleshooting.
 
 ## Portable instructions
 

@@ -50,3 +50,4 @@
 - reusable templates에서는 relative paths를 사용합니다.
 - `ai-playbook/`이 local-only라면 private notes를 쓰기 전에 `.gitignore`에 추가합니다.
 - worklog를 commit한다면 scrubbed 상태이고 future maintainers에게 유용해야 합니다.
+- Bootstrap 중에는 runtime hook을 추가하지 않습니다. 문서 하네스를 먼저 안정화한 뒤, 프로젝트에 선택적 hook behavior가 필요하면 `templates/project-playbook/guides/runtime-roadmap.md`를 사용합니다.

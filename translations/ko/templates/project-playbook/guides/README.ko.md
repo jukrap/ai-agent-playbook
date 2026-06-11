@@ -1,11 +1,11 @@
 # Project Playbook Guides
 
-이 guide들은 선택적 지원 문서입니다. 대상 프로젝트에 맞는 guide만 복사하거나 `ai-playbook/README.md`에서 링크합니다.
+이 guide들은 선택적 지원 문서입니다. 대상 프로젝트에 맞는 guide만 복사하거나 `.ai-playbook/README.md`에서 링크합니다.
 
 추천 시작 guide:
 
 - `repo-onboarding.md`: 낯선 프로젝트 첫 점검.
-- `runtime-harness.md`: CLI 기반 `ai-playbook/` 하네스를 사용하면서 markdown 파일을 흩뜨리지 않는 방법.
+- `runtime-harness.md`: CLI 기반 `.ai-playbook/` 하네스를 사용하면서 markdown 파일을 흩뜨리지 않는 방법.
 - `runtime-roadmap.md`: 문서 하네스가 안정된 뒤 선택적 runtime hook이 적절한지 판단하는 방법.
 - `harness-migration.md`: 기존 에이전트 문서, 스킬 세트, 다른 하네스에서 이력을 잃지 않고 옮기는 방법.
 - `docs-system.md`: 프로젝트 메모리 역할과 정리 규칙.

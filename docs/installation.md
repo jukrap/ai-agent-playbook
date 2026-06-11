@@ -136,9 +136,11 @@ node .\bin\ai-playbook.mjs context <target-project> --json
 node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
 ```
 
-Use `--profile <name>` only after the target stack is known. Use `--local-only` when `ai-playbook/` should be added to the target `.gitignore`.
+Use `--profile <name>` only after the target stack is known. Use `--local-only` when `.ai-playbook/` should be added to the target `.gitignore`.
 
-Use `guides sync` for projects that already have `ai-playbook/` and only need missing guide templates from a newer playbook checkout. `guides sync --check --json` also reports stale guides using source and target hashes. It does not modify root `AGENTS.md`, playbook policy files, or project-specific notes unless `--force` is explicitly used for guide files.
+Use `guides sync` for projects that already have `.ai-playbook/` and only need missing guide templates from a newer playbook checkout. `guides sync --check --json` also reports stale guides using source and target hashes. It does not modify root `AGENTS.md`, playbook policy files, or project-specific notes unless `--force` is explicitly used for guide files.
+
+During the path transition, these runtime commands also support an existing legacy `ai-playbook/` folder when `.ai-playbook/` is absent. New bootstrap output uses `.ai-playbook/`.
 
 The optional adapter hook examples use the `context` command internally. They are read-only and must be enabled manually from `adapters/`. Run `adapter check` for the selected adapter before editing local hook settings.
 
@@ -160,7 +162,7 @@ Copy-Item .\templates\agents\global\AGENTS.md (Join-Path $projectRoot 'AGENTS.md
 Copy-Item .\templates\project-playbook (Join-Path $projectRoot 'ai-playbook') -Recurse
 ```
 
-`templates/agents/global/` is the project-root bootstrap template folder for `AGENTS.md`. Keep skill and Git policy in `ai-playbook/SKILLS.md` and `ai-playbook/GIT.md`, copied from `templates/project-playbook/`. Then merge the closest profile from `templates/agents/profiles/**` only when the stack is confirmed, and add any needed guides from `templates/project-playbook/guides/**`.
+`templates/agents/global/` is the project-root bootstrap template folder for `AGENTS.md`. Keep skill and Git policy in `.ai-playbook/SKILLS.md` and `.ai-playbook/GIT.md`, copied from `templates/project-playbook/`. Then merge the closest profile from `templates/agents/profiles/**` only when the stack is confirmed, and add any needed guides from `templates/project-playbook/guides/**`.
 
 ## Codex skill installer note
 
@@ -175,4 +177,4 @@ Codex's skill installer can install individual skills from a Git repository path
 
 This repository does not install external process skill packs. Keep them installed separately, then use these skills alongside them when useful.
 
-If a project later adopts a hook-based runtime, keep it opt-in and documented in the target project's `ai-playbook/`. The project should still be understandable and usable from the document harness alone.
+If a project later adopts a hook-based runtime, keep it opt-in and documented in the target project's `.ai-playbook/`. The project should still be understandable and usable from the document harness alone.

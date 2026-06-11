@@ -4,7 +4,8 @@ import path from 'node:path';
 import {
   buildProjectContext,
   DEFAULT_CONTEXT_MAX_CHARS,
-  parseMaxChars
+  parseMaxChars,
+  resolvePlaybookLayout
 } from '../../src/harness.mjs';
 
 const DEFAULT_CONTEXT_EVENTS = ['SessionStart', 'PostCompact'];
@@ -206,8 +207,8 @@ function extractPatchPaths(value) {
 
 function pathReminders(paths) {
   const reminders = new Set();
-  if (paths.some((item) => item === 'AGENTS.md' || item.endsWith('/AGENTS.md') || item.startsWith('ai-playbook/'))) {
-    reminders.add('- Project policy reminder: durable rules and memory should stay visible in AGENTS.md, ai-playbook/, or project docs.');
+  if (paths.some((item) => item === 'AGENTS.md' || item.endsWith('/AGENTS.md') || item.startsWith('.ai-playbook/') || item.startsWith('ai-playbook/'))) {
+    reminders.add('- Project policy reminder: durable rules and memory should stay visible in AGENTS.md, .ai-playbook/, or project docs.');
   }
   if (paths.some((item) => item.startsWith('skills/'))) {
     reminders.add('- Skill reminder: keep SKILL.md concise and trigger-focused; put longer reusable detail in references/ and validate skills.');
@@ -236,7 +237,7 @@ function looksLikePath(value) {
 }
 
 function hasPlaybook(target) {
-  return existsSync(path.join(target, 'ai-playbook'));
+  return existsSync(resolvePlaybookLayout(target).root);
 }
 
 function hookOutput(hookEventName, additionalContext) {

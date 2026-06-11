@@ -34,4 +34,4 @@
 - 검증 명령 또는 감사 점검을 포함합니다.
 - `clean architecture`, `fix all dead code` 같은 넓은 목표를 피합니다.
 
-오래 남길 구조 사실은 `ai-playbook/maps/`, 오래 남길 결정은 `ai-playbook/decisions/`에 둡니다.
+오래 남길 구조 사실은 `.ai-playbook/maps/`, 오래 남길 결정은 `.ai-playbook/decisions/`에 둡니다.

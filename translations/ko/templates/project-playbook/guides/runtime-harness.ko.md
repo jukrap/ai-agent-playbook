@@ -1,8 +1,8 @@
 # 런타임 하네스 가이드
 
-`templates/project-playbook/`을 대상 프로젝트에 `ai-playbook/`로 복사한 뒤 이 가이드를 사용합니다.
+`templates/project-playbook/`을 대상 프로젝트에 `.ai-playbook/`로 복사한 뒤 이 가이드를 사용합니다.
 
-런타임 하네스는 루트 에이전트 파일, `ai-playbook/` 프로젝트 메모리, 설치형 스킬, 이 저장소의 작은 CLI를 합친 것입니다. 모든 프로젝트에 같은 작업 흐름이 필요하다고 단정하지 않으면서도 에이전트 설정을 반복 가능하게 만드는 것이 목적입니다.
+런타임 하네스는 루트 에이전트 파일, `.ai-playbook/` 프로젝트 메모리, 설치형 스킬, 이 저장소의 작은 CLI를 합친 것입니다. 모든 프로젝트에 같은 작업 흐름이 필요하다고 단정하지 않으면서도 에이전트 설정을 반복 가능하게 만드는 것이 목적입니다.
 
 ## 일반 설정 흐름
 
@@ -17,7 +17,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 
 대상 프로젝트에 이미 에이전트 문서가 있으면 먼저 `--dry-run`을 사용합니다. 충돌을 확인하고 생성 파일이 기존 파일을 대체해야 한다고 판단한 뒤에만 `--force`를 사용합니다.
 
-대상 프로젝트에 이미 `ai-playbook/`이 있고 새 playbook checkout의 누락된 가이드만 가져오고 싶다면 `guides sync`를 사용합니다. 기본값은 기존 가이드, 루트 정책, 현재 프로젝트 메모, plan, worklog를 유지합니다.
+대상 프로젝트에 이미 `.ai-playbook/`이 있고 새 playbook checkout의 누락된 가이드만 가져오고 싶다면 `guides sync`를 사용합니다. 기본값은 기존 가이드, 루트 정책, 현재 프로젝트 메모, plan, worklog를 유지합니다.
 
 ## 진행 중 프로젝트 흐름
 
@@ -39,7 +39,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo> --strict
 
 ## 파일 배치 규칙
 
-- 루트 `AGENTS.md`는 얇은 부트스트랩으로 유지합니다. skill/Git 정책은 `ai-playbook/SKILLS.md`와 `ai-playbook/GIT.md`에 둡니다.
+- 루트 `AGENTS.md`는 얇은 부트스트랩으로 유지합니다. skill/Git 정책은 `.ai-playbook/SKILLS.md`와 `.ai-playbook/GIT.md`에 둡니다.
 - 현재 사실은 `CURRENT.md`에 둡니다.
 - 실행 중인 계획은 `plans/`에 둡니다.
 - 상세 판단 과정과 복구용 이력은 `worklogs/YYYY-MM/`에 둡니다.
@@ -52,9 +52,9 @@ node .\bin\ai-playbook.mjs doctor <target-repo> --strict
 
 ## 로컬 전용 정책
 
-프로젝트별 세부사항을 쓰기 전에 `ai-playbook/`을 커밋할지 로컬 전용으로 둘지 결정합니다.
+프로젝트별 세부사항을 쓰기 전에 `.ai-playbook/`을 커밋할지 로컬 전용으로 둘지 결정합니다.
 
-메모에 비공개 맥락, 끝나지 않은 분석, 원본 로그, 민감한 URL, 특정 고객 세부사항이 들어갈 수 있으면 로컬 전용 모드를 사용합니다. 프로젝트가 `ai-playbook/`을 커밋한다면 공개 문서처럼 민감한 내용을 정리합니다.
+메모에 비공개 맥락, 끝나지 않은 분석, 원본 로그, 민감한 URL, 특정 고객 세부사항이 들어갈 수 있으면 로컬 전용 모드를 사용합니다. 프로젝트가 `.ai-playbook/`을 커밋한다면 공개 문서처럼 민감한 내용을 정리합니다.
 
 ## 유지보수 주기
 

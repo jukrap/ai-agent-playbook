@@ -11,7 +11,7 @@ Codex has two different `AGENTS.md` layers:
 - Codex home global: personal defaults in `~/.codex/AGENTS.md`, or another directory if `CODEX_HOME` is set.
 - Project root: a thin bootstrap in the target project's `AGENTS.md` that points to repository playbook docs.
 
-`templates/codex-home/AGENTS.md` is for the first layer. `templates/agents/global/AGENTS.md` is for the second layer and is what `ai-playbook bootstrap` writes into a target project. Skill and Git policy live under `ai-playbook/SKILLS.md` and `ai-playbook/GIT.md`.
+`templates/codex-home/AGENTS.md` is for the first layer. `templates/agents/global/AGENTS.md` is for the second layer and is what `ai-playbook bootstrap` writes into a target project. Skill and Git policy live under `.ai-playbook/SKILLS.md` and `.ai-playbook/GIT.md`.
 
 Recommended first setup:
 
@@ -32,7 +32,7 @@ New-Item -ItemType Directory -Force -Path $codexHome | Out-Null
 Copy-Item -LiteralPath (Join-Path $playbookRepo 'templates\codex-home\AGENTS.md') -Destination (Join-Path $codexHome 'AGENTS.md')
 ```
 
-Do not put project-specific rules in the Codex home global file. Use the target project's root `AGENTS.md` only as the entrypoint, and keep repository behavior in `ai-playbook/` docs.
+Do not put project-specific rules in the Codex home global file. Use the target project's root `AGENTS.md` only as the entrypoint, and keep repository behavior in `.ai-playbook/` docs.
 
 For an existing project, do not overwrite its root agent docs on the first pass. Start with a dry run:
 
@@ -43,7 +43,7 @@ Set-Location -LiteralPath $playbookRepo
 node .\bin\ai-playbook.mjs bootstrap $targetRepo --local-only --dry-run
 ```
 
-If the target already has `AGENTS.md` or `ai-playbook/`, inspect the conflict instead of using `--force`. A safer trial path is to scaffold into a temporary folder, inspect the generated files, then manually merge only the pieces the project needs:
+If the target already has `AGENTS.md` or `.ai-playbook/`, inspect the conflict instead of using `--force`. A safer trial path is to scaffold into a temporary folder, inspect the generated files, then manually merge only the pieces the project needs:
 
 ```powershell
 $scratch = Join-Path $env:TEMP 'ai-playbook-scaffold'
@@ -52,7 +52,7 @@ New-Item -ItemType Directory -Path $scratch | Out-Null
 node .\bin\ai-playbook.mjs bootstrap $scratch --local-only
 ```
 
-For a legacy or documentation-heavy project, usually add only `ai-playbook/START_HERE.md`, `CURRENT.md`, and a docs map first. Keep existing worklogs and plans in place until a human has reviewed the migration.
+For a legacy or documentation-heavy project, usually add only `.ai-playbook/START_HERE.md`, `CURRENT.md`, and a docs map first. Keep existing worklogs and plans in place until a human has reviewed the migration.
 
 ## Local sync
 
@@ -108,7 +108,7 @@ node .\bin\ai-playbook.mjs plan new <target-repo> --title "short-plan-title"
 node .\bin\ai-playbook.mjs worklog new <target-repo> --title "short-worklog-title"
 ```
 
-Use the CLI when a project needs repeatable root `AGENTS.md` and `ai-playbook/` scaffolding. Use installed skills when the agent needs reusable working behavior during a coding session.
+Use the CLI when a project needs repeatable root `AGENTS.md` and `.ai-playbook/` scaffolding. Use installed skills when the agent needs reusable working behavior during a coding session.
 
 Codex App does not need `ai-playbook` to be installed as a global command. The stable invocation is:
 
@@ -118,7 +118,7 @@ node .\bin\ai-playbook.mjs <command>
 
 Use `doctor` after manual merges to catch missing playbook files, absolute local paths, and obsolete style-skill references.
 
-Use `guides sync` when a project already has `ai-playbook/` and you only want missing guide templates from this checkout. It keeps existing guide files by default; `guides sync --check --json` also reports stale guide files by comparing source and target hashes. Use `--force` only after reviewing guide overwrites.
+Use `guides sync` when a project already has `.ai-playbook/` and you only want missing guide templates from this checkout. It keeps existing guide files by default; `guides sync --check --json` also reports stale guide files by comparing source and target hashes. Use `--force` only after reviewing guide overwrites.
 
 Use `doctor --reminder --json` when local wrapper code needs a small read-only signal about missing playbooks, stale guides, or worklog summary freshness. The adapter hook examples do not run this automatically.
 
@@ -135,7 +135,7 @@ It uses the shared runtime context builder behind:
 node .\bin\ai-playbook.mjs context <target-repo> --json
 ```
 
-The hook does not install itself, edit project files, rewrite tool output, or call the network. If `ai-playbook/` is missing, unsupported, or unreadable, it exits successfully with no stdout.
+The hook does not install itself, edit project files, rewrite tool output, or call the network. If `.ai-playbook/` is missing, unsupported, or unreadable, it exits successfully with no stdout.
 
 By default, the hook only handles `SessionStart` and `PostCompact`. To experiment with narrow lifecycle reminders, opt in locally:
 

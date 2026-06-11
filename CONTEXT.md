@@ -5,8 +5,8 @@ This repository is a reusable harness and playbook for coding agents.
 ## Terms
 
 - `skill`: An installable folder containing `SKILL.md` and optional resources.
-- `template`: A file or folder adapted for a target environment, usually a thin root agent bootstrap, personal Codex home defaults, or `ai-playbook/`.
-- `project playbook`: The copyable `templates/project-playbook/` source that becomes `ai-playbook/` in a target project.
+- `template`: A file or folder adapted for a target environment, usually a thin root agent bootstrap, personal Codex home defaults, or `.ai-playbook/`.
+- `project playbook`: The copyable `templates/project-playbook/` source that becomes `.ai-playbook/` in a target project.
 - `project memory`: Current truth, maps, runbooks, decisions, plans, worklogs, and archived notes that help future agents resume work.
 - `runtime harness`: The `ai-playbook` CLI surface that applies templates, checks project-memory health, and scaffolds plans/worklogs.
 - `adapter`: Agent-specific installation or synchronization guidance.

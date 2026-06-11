@@ -21,4 +21,4 @@ API integration, DTO mapping, mock-vs-remote behavior, request payload, response
 - remaining uncertainty
 - verification command 또는 manual check
 
-장기 프로젝트에서는 durable API facts를 `ai-playbook/maps/api-map.md`에 둡니다.
+장기 프로젝트에서는 durable API facts를 `.ai-playbook/maps/api-map.md`에 둡니다.

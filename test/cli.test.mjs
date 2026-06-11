@@ -375,6 +375,111 @@ test('adapter check reports readiness for Codex and Claude Code without writing 
   await cleanup(target);
 });
 
+test('adapter config --json renders local hook config without writing files', async () => {
+  const target = await tempRepo('adapter config-공백-한글-');
+  const before = await listRelativeFiles(target);
+
+  for (const adapter of ['codex', 'claude-code']) {
+    const io = capture(target);
+    assert.equal(await runCli(['adapter', 'config', '.', '--adapter', adapter, '--json'], io), 0);
+    const report = JSON.parse(io.out());
+    assert.equal(report.schemaVersion, '1');
+    assert.equal(report.ok, true);
+    assert.equal(report.target, target);
+    assert.equal(report.adapter, adapter);
+    assert.match(report.hookCommand, /^node ".+"$/);
+    assert.doesNotMatch(report.hookCommand, /<path-to-ai-agent-playbook>/);
+    assert.doesNotMatch(JSON.stringify(report.config), /<path-to-ai-agent-playbook>/);
+    assert.match(report.hookCommand, new RegExp(adapter === 'codex' ? 'adapters[/\\\\]codex[/\\\\]hook\\.mjs' : 'adapters[/\\\\]claude-code[/\\\\]hook\\.mjs'));
+    assert.equal(report.config.hooks.SessionStart[0].hooks[0].command, report.hookCommand);
+    assert.equal(report.config.hooks.PostCompact[0].hooks[0].command, report.hookCommand);
+    assert.equal(report.warnings.some((warning) => warning.id === 'config.playbook.missing'), true);
+  }
+
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const unsupported = capture(target);
+  assert.equal(await runCli(['adapter', 'config', '.', '--adapter', 'unknown', '--json'], unsupported), 1);
+  assert.match(unsupported.err(), /Unsupported adapter: unknown/);
+  await cleanup(target);
+
+  const legacyTarget = await tempRepo('adapter config legacy-한글-');
+  await mkdir(path.join(legacyTarget, 'ai-playbook'));
+  const beforeLegacy = await listRelativeFiles(legacyTarget);
+  const legacy = capture(legacyTarget);
+  assert.equal(await runCli(['adapter', 'config', '.', '--adapter', 'codex', '--json'], legacy), 0);
+  const legacyReport = JSON.parse(legacy.out());
+  assert.equal(legacyReport.warnings.some((warning) => warning.id === 'config.playbook.missing'), true);
+  assert.deepEqual(await listRelativeFiles(legacyTarget), beforeLegacy);
+  await cleanup(legacyTarget);
+});
+
+test('adapter check --settings validates rendered settings without writing files', async () => {
+  const target = await tempRepo('adapter settings-공백-한글-');
+  assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
+  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nAdapter settings signal\n');
+
+  const configIo = capture(target);
+  assert.equal(await runCli(['adapter', 'config', '.', '--adapter', 'codex', '--json'], configIo), 0);
+  const config = JSON.parse(configIo.out()).config;
+  const settingsPath = path.join(target, 'local settings-한글.json');
+  await writeFile(settingsPath, `${JSON.stringify(config, null, 2)}\n`);
+  const before = await listRelativeFiles(target);
+
+  const checked = capture(target);
+  assert.equal(await runCli(['adapter', 'check', '.', '--adapter', 'codex', '--settings', settingsPath, '--json', '--max-chars', '5000'], checked), 0);
+  const report = JSON.parse(checked.out());
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.summary.fail, 0);
+  assert.equal(report.checks.some((check) => check.id === 'settings.file' && check.level === 'pass'), true);
+  assert.equal(report.checks.some((check) => check.id === 'settings.json' && check.level === 'pass'), true);
+  assert.equal(report.checks.some((check) => check.id === 'settings.hook.session-start.command' && check.level === 'pass'), true);
+  assert.equal(report.checks.some((check) => check.id === 'settings.hook.post-compact.command' && check.level === 'pass'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('adapter check --settings reports missing, malformed, and mismatched settings without writing files', async () => {
+  const target = await tempRepo('adapter bad settings-한글-');
+  assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
+  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nAdapter settings signal\n');
+
+  const missingPath = path.join(target, 'missing settings.json');
+  const beforeMissing = await listRelativeFiles(target);
+  const missing = capture(target);
+  assert.equal(await runCli(['adapter', 'check', '.', '--adapter', 'codex', '--settings', missingPath, '--json'], missing), 1);
+  const missingReport = JSON.parse(missing.out());
+  assert.equal(missingReport.checks.some((check) => check.id === 'settings.file' && check.level === 'fail'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeMissing);
+
+  const malformedPath = path.join(target, 'malformed settings.json');
+  await writeFile(malformedPath, '{ not json');
+  const beforeMalformed = await listRelativeFiles(target);
+  const malformed = capture(target);
+  assert.equal(await runCli(['adapter', 'check', '.', '--adapter', 'codex', '--settings', malformedPath, '--json'], malformed), 1);
+  const malformedReport = JSON.parse(malformed.out());
+  assert.equal(malformedReport.checks.some((check) => check.id === 'settings.json' && check.level === 'fail'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeMalformed);
+
+  const mismatchPath = path.join(target, 'mismatch settings.json');
+  const mismatchConfig = {
+    hooks: {
+      SessionStart: [{ hooks: [{ type: 'command', command: 'node "C:\\other\\hook.mjs"', timeout: 5 }] }],
+      PostCompact: [{ matcher: 'manual|auto', hooks: [{ type: 'command', command: 'node "C:\\other\\hook.mjs"', timeout: 5 }] }]
+    }
+  };
+  await writeFile(mismatchPath, `${JSON.stringify(mismatchConfig, null, 2)}\n`);
+  const beforeMismatch = await listRelativeFiles(target);
+  const mismatch = capture(target);
+  assert.equal(await runCli(['adapter', 'check', '.', '--adapter', 'codex', '--settings', mismatchPath, '--json'], mismatch), 1);
+  const mismatchReport = JSON.parse(mismatch.out());
+  assert.equal(mismatchReport.checks.some((check) => check.id === 'settings.hook.session-start.command' && check.level === 'fail'), true);
+  assert.equal(mismatchReport.checks.some((check) => check.id === 'settings.hook.post-compact.command' && check.level === 'fail'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeMismatch);
+  await cleanup(target);
+});
+
 test('adapter check reports missing playbook and rejects unsupported adapters', async () => {
   const target = await tempRepo('ai playbook-누락-');
   const before = await listRelativeFiles(target);

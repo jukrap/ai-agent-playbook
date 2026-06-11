@@ -45,10 +45,10 @@ The hook does not install itself, edit project files, rewrite tool output, or ca
 By default, the hook only handles `SessionStart` and `PostCompact`. To experiment with narrow lifecycle reminders, opt in locally:
 
 ```powershell
-$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse'
+$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse,Stop'
 ```
 
-`UserPromptSubmit` only reminds on commit, push, PR, merge, worklog, or doctor-style intent. `PostToolUse` only reminds after edit-like tool payloads when a changed path can be read. Both stay quiet for unrelated prompts, missing playbooks, and unsupported payloads.
+`UserPromptSubmit` only reminds on commit, push, PR, merge, worklog, or doctor-style intent. `PostToolUse` only reminds after edit-like tool payloads when a changed path can be read. `Stop` only emits a short end-of-session handoff reminder. These events stay quiet for unrelated prompts, missing playbooks, and unsupported payloads; they do not block, continue the session, run doctor, write files, or call the network.
 
 Before wiring the hook into local Claude Code settings, render a local config and inspect it:
 

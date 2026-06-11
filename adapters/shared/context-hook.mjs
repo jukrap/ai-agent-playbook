@@ -9,7 +9,7 @@ import {
 } from '../../src/harness.mjs';
 
 const DEFAULT_CONTEXT_EVENTS = ['SessionStart', 'PostCompact'];
-const OPTIONAL_REMINDER_EVENTS = ['UserPromptSubmit', 'PostToolUse'];
+const OPTIONAL_REMINDER_EVENTS = ['UserPromptSubmit', 'PostToolUse', 'Stop'];
 const EDIT_LIKE_TOOL_PATTERN = /\b(apply_patch|edit|write|create|delete|move|rename|replace)\b/i;
 const PATH_KEYS = new Set([
   'destination',
@@ -41,6 +41,9 @@ export async function runContextHook(input, options = {}) {
     }
     if (hookEventName === 'PostToolUse') {
       return postToolUseReminderOutput(input, target, hookEventName, maxChars);
+    }
+    if (hookEventName === 'Stop') {
+      return stopReminderOutput(target, hookEventName, maxChars);
     }
 
     const context = await buildProjectContext({ target, maxChars });
@@ -124,6 +127,17 @@ function postToolUseReminderOutput(input, target, hookEventName, maxChars) {
     '<ai-playbook-reminder>',
     `Edit-like tool output referenced: ${changedPaths.join(', ')}`,
     ...reminders,
+    '</ai-playbook-reminder>'
+  ].join('\n'), maxChars));
+}
+
+function stopReminderOutput(target, hookEventName, maxChars) {
+  if (!hasPlaybook(target)) return '';
+  return hookOutput(hookEventName, limitReminder([
+    '<ai-playbook-reminder>',
+    'Session ending. If repository state changed, keep handoff facts visible in CURRENT.md, plans, worklogs, or project docs.',
+    '- Run doctor manually when setup, guide freshness, or worklog freshness is uncertain.',
+    '- This Stop reminder does not block, continue the session, run doctor, write files, or call the network.',
     '</ai-playbook-reminder>'
   ].join('\n'), maxChars));
 }

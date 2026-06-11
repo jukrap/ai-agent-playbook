@@ -86,7 +86,8 @@ The first adapter proof of concept is intentionally read-only:
 - `adapter config` renders reviewable local settings with this checkout's hook path, without writing files or requiring `.ai-playbook/` to exist first.
 - `adapter check` verifies the read-only wrapper, example settings, supported hook events, and quiet unsupported paths before a user enables an adapter manually.
 - `adapter check --settings <path>` validates a manually edited local settings file without writing files.
-- `AI_PLAYBOOK_HOOK_EVENTS` can opt in `UserPromptSubmit` and `PostToolUse` reminders. They stay quiet for unrelated prompts, missing playbooks, unsupported payloads, and non-edit tools.
+- `AI_PLAYBOOK_HOOK_EVENTS` can opt in `UserPromptSubmit`, `PostToolUse`, and `Stop` reminders. They stay quiet for unrelated prompts, missing playbooks, unsupported payloads, and non-edit tools.
+- `Stop` is a non-blocking handoff reminder only; it does not request continuation or run doctor.
 
 ## Next Intermediate Steps
 
@@ -95,7 +96,7 @@ These can be implemented before a full plugin exists:
 - For a concrete V4+ execution plan and next-session handoff, see `docs/plans/2026-06-11-runtime-harness-v4-plus.md`.
 - Better bootstrap conflict reports for existing projects.
 - Verify in real projects whether rendered adapter settings reduce setup mistakes without adding noise.
-- Candidates still requiring caution: `Stop`, continuation, blocking feedback, and any automatic doctor execution after cost and noise are proven acceptable.
+- Candidates still requiring caution: continuation, blocking feedback, and any automatic doctor execution after cost and noise are proven acceptable.
 
 ## Process Skill Compatibility
 

@@ -142,10 +142,10 @@ Hook은 스스로 설치되지 않고, project file을 편집하지 않고, tool
 기본적으로 hook은 `SessionStart`와 `PostCompact`만 처리합니다. 좁은 lifecycle reminder를 실험하려면 local에서 명시적으로 opt in합니다.
 
 ```powershell
-$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse'
+$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse,Stop'
 ```
 
-`UserPromptSubmit`은 commit, push, PR, merge, worklog, doctor 계열 intent에서만 reminder를 냅니다. `PostToolUse`는 edit-like tool payload에서 changed path를 읽을 수 있을 때만 reminder를 냅니다. 관련 없는 prompt, missing playbook, unsupported payload에서는 둘 다 조용히 빠집니다.
+`UserPromptSubmit`은 commit, push, PR, merge, worklog, doctor 계열 intent에서만 reminder를 냅니다. `PostToolUse`는 edit-like tool payload에서 changed path를 읽을 수 있을 때만 reminder를 냅니다. `Stop`은 짧은 end-of-session handoff reminder만 냅니다. 관련 없는 prompt, missing playbook, unsupported payload에서는 조용히 빠지며, block, session continuation, doctor 실행, file write, network call을 하지 않습니다.
 
 Hook을 local Codex 설정에 연결하기 전에 local config를 렌더링하고 검토합니다.
 

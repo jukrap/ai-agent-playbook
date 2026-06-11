@@ -144,6 +144,38 @@ test('PostToolUse reminder stays quiet for non-edit tools or edit payloads witho
   await cleanup(target);
 });
 
+test('Stop reminder is opt-in, no-write, and quiet without playbook context', async () => {
+  const target = await bootstrappedRepo('stop reminder-한글-');
+  const before = await listRelativeFiles(target);
+
+  assert.equal(await runCodexHook({
+    hook_event_name: 'Stop',
+    cwd: target
+  }, { env: {} }), '');
+
+  const output = await runClaudeCodeHook({
+    hook_event_name: 'Stop',
+    cwd: target
+  }, {
+    env: { AI_PLAYBOOK_HOOK_EVENTS: 'Stop' },
+    maxChars: 5000
+  });
+  const parsed = JSON.parse(output);
+  assert.equal(parsed.hookSpecificOutput.hookEventName, 'Stop');
+  assert.match(parsed.hookSpecificOutput.additionalContext, /Session ending/);
+  assert.match(parsed.hookSpecificOutput.additionalContext, /doctor/);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const missing = await tempRepo('stop missing-한글-');
+  assert.equal(await runCodexHook({
+    hook_event_name: 'Stop',
+    cwd: missing
+  }, { env: { AI_PLAYBOOK_HOOK_EVENTS: 'Stop' } }), '');
+
+  await cleanup(target);
+  await cleanup(missing);
+});
+
 async function bootstrappedRepo(prefix = '.ai-playbook-test-') {
   const target = await tempRepo(prefix);
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);

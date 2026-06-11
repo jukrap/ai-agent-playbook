@@ -203,44 +203,45 @@ node .\bin\ai-playbook.mjs adapter check <target> --adapter codex --settings <lo
 - Windows, spaces, and non-ASCII paths are covered.
 - No write happens unless a future explicit write flag is added.
 
-## V6: Controlled Blocking And Continuation Experiment
+## V6: Opt-in Stop Reminder Checkpoint
 
-V6 should be attempted only after V4 and V5 prove that reminders are useful and not noisy.
+V6 should stay smaller than blocking. After V4 and V5, the next safe runtime step is an opt-in `Stop` reminder that can help end-of-session handoff without changing control flow.
 
 ### V6 Goals
 
-- Explore whether a hook can prevent common unsafe handoffs without trapping the user in loops.
-- Keep blocking behavior opt-in, rare, explainable, and easy to disable.
+- Add a final handoff nudge without blocking or continuation.
+- Keep the reminder opt-in, quiet by default, no-network, and no-write.
+- Confirm that end-of-session reminders do not become noisy before considering stronger runtime behavior.
 
 ### V6 Scope
 
-1. Add an experimental blocking mode for high-confidence safety failures only.
-2. Add strict cooldown and loop prevention.
-3. Keep continuation out unless the target runtime has a clear, tested contract.
-
-### Candidate Blocking Cases
-
-- Public-safety failure: a staged or edited public doc contains a local absolute path.
-- Missing required project playbook files when a hook is explicitly configured for a project.
-- Commit or PR intent with unrun required verification, only if the signal is explicit and reliable.
+1. Add `Stop` to `AI_PLAYBOOK_HOOK_EVENTS` as an optional reminder event.
+2. Emit a short handoff reminder only when the target has a playbook.
+3. Keep blocking, continuation, and automatic doctor execution out of V6.
 
 ### V6 Boundaries
 
 - Disabled by default.
-- Separate environment variable, for example `AI_PLAYBOOK_HOOK_BLOCKING=1`.
-- Never block on subjective style preferences.
-- Never block because warnings exist.
-- Always include a clear bypass instruction.
-- Never run network checks.
-- Never edit files.
+- Never block, continue, or run doctor.
+- Never write files, rewrite tool output, or call the network.
+- Missing or malformed payloads are quiet.
+- Missing playbook context is quiet.
 
 ### V6 Tests
 
-- Blocking off by default.
-- Blocking emits only for high-confidence fixture cases.
-- Cooldown prevents repeated identical blocking output.
-- Missing or malformed payloads are quiet.
-- No continuation happens unless explicitly added and fixture-tested.
+- `Stop` is quiet by default.
+- `Stop` emits only when explicitly opted in.
+- Missing playbook is quiet.
+- Output is valid hook JSON.
+- No files are written.
+
+### Later Blocking Candidates
+
+Controlled blocking should remain a later experiment. Candidate cases still need stronger runtime contracts and loop prevention:
+
+- Public-safety failure: a staged or edited public doc contains a local absolute path.
+- Missing required project playbook files when a hook is explicitly configured for a project.
+- Commit or PR intent with unrun required verification, only if the signal is explicit and reliable.
 
 ## V7: Plugin Or Package Shell
 

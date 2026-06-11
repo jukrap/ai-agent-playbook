@@ -98,13 +98,15 @@ The adapter hook examples enable only context refresh events by default:
 - `SessionStart`
 - `PostCompact`
 
-`UserPromptSubmit` and `PostToolUse` are opt-in reminder events. Enable them only in a local hook configuration by setting `AI_PLAYBOOK_HOOK_EVENTS` to a comma-separated list:
+`UserPromptSubmit`, `PostToolUse`, and `Stop` are opt-in reminder events. Enable them only in a local hook configuration by setting `AI_PLAYBOOK_HOOK_EVENTS` to a comma-separated list:
 
 ```powershell
-$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse'
+$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse,Stop'
 ```
 
 `UserPromptSubmit` emits a short guardrail reminder only when the prompt appears to involve commit, push, PR, merge, worklog, or doctor-style handoff work. `PostToolUse` emits a short reminder only for edit-like tool payloads where the hook can read changed file paths. Both stay silent when `.ai-playbook/` is missing, when the event is not opted in, or when no relevant intent/path is found.
+
+`Stop` emits a short end-of-session reminder only when explicitly opted in and the target has a playbook. It is intended as a final handoff nudge, not as a blocking or continuation mechanism.
 
 These reminders are intentionally narrow. They do not run `doctor`, block tool calls, continue sessions, rewrite tool output, write files, or call the network.
 

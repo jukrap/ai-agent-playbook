@@ -203,44 +203,45 @@ node .\bin\ai-playbook.mjs adapter check <target> --adapter codex --settings <lo
 - Windows, 공백, 비ASCII 경로를 다룹니다.
 - 향후 explicit write flag가 추가되기 전까지 쓰기가 발생하지 않습니다.
 
-## V6: Controlled Blocking And Continuation Experiment
+## V6: Opt-in Stop Reminder Checkpoint
 
-V6는 V4와 V5를 거쳐 reminder가 유용하고 시끄럽지 않다는 점이 확인된 뒤에만 시도합니다.
+V6는 blocking보다 작게 유지합니다. V4와 V5 뒤의 안전한 다음 runtime 단계는 control flow를 바꾸지 않고 end-of-session handoff를 돕는 opt-in `Stop` reminder입니다.
 
 ### V6 목표
 
-- Hook이 흔한 unsafe handoff를 loop 없이 막을 수 있는지 탐색합니다.
-- Blocking behavior를 opt-in, rare, explainable, easy to disable 상태로 유지합니다.
+- Blocking이나 continuation 없이 마지막 handoff 알림을 추가합니다.
+- Reminder를 opt-in, quiet by default, no-network, no-write로 유지합니다.
+- 더 강한 runtime behavior를 검토하기 전에 end-of-session reminder가 시끄러워지지 않는지 확인합니다.
 
 ### V6 범위
 
-1. High-confidence safety failure에만 experimental blocking mode 추가.
-2. Strict cooldown과 loop prevention 추가.
-3. Target runtime에 명확하고 테스트된 contract가 생기기 전까지 continuation은 제외.
-
-### Blocking 후보
-
-- Public-safety failure: staged 또는 edited public doc에 local absolute path가 들어감.
-- Project에 hook이 명시적으로 설정되어 있는데 required project playbook file이 빠짐.
-- Commit 또는 PR intent가 있고 required verification이 실행되지 않았다는 signal이 명시적이고 신뢰 가능한 경우.
+1. `Stop`을 `AI_PLAYBOOK_HOOK_EVENTS`의 optional reminder event로 추가합니다.
+2. 대상에 playbook이 있을 때만 짧은 handoff reminder를 출력합니다.
+3. V6에는 blocking, continuation, automatic doctor execution을 넣지 않습니다.
 
 ### V6 경계
 
 - 기본값은 off입니다.
-- 별도 environment variable을 사용합니다. 예: `AI_PLAYBOOK_HOOK_BLOCKING=1`.
-- 주관적 style preference로 block하지 않습니다.
-- Warning이 있다는 이유만으로 block하지 않습니다.
-- 항상 명확한 bypass instruction을 포함합니다.
-- Network check를 하지 않습니다.
-- 파일을 편집하지 않습니다.
+- Block, continue, doctor 실행을 하지 않습니다.
+- File write, tool output rewrite, network call을 하지 않습니다.
+- Missing 또는 malformed payload는 조용히 빠집니다.
+- Missing playbook context는 조용히 빠집니다.
 
 ### V6 테스트
 
-- Blocking은 기본값에서 off입니다.
-- High-confidence fixture case에서만 blocking output을 냅니다.
-- Cooldown이 같은 blocking output 반복을 막습니다.
-- Missing 또는 malformed payload는 quiet path입니다.
-- Continuation은 명시적으로 추가되고 fixture-tested되기 전까지 발생하지 않습니다.
+- `Stop`은 기본값에서 조용합니다.
+- `Stop`은 명시적으로 opt in된 경우에만 출력합니다.
+- Missing playbook은 조용합니다.
+- Output은 valid hook JSON입니다.
+- 파일을 쓰지 않습니다.
+
+### 이후 Blocking 후보
+
+Controlled blocking은 이후 실험으로 남깁니다. 아래 후보는 더 강한 runtime contract와 loop prevention이 필요합니다.
+
+- Public-safety failure: staged 또는 edited public doc에 local absolute path가 들어감.
+- Project에 hook이 명시적으로 설정되어 있는데 required project playbook file이 빠짐.
+- Commit 또는 PR intent가 있고 required verification이 실행되지 않았다는 signal이 명시적이고 신뢰 가능한 경우.
 
 ## V7: Plugin Or Package Shell
 

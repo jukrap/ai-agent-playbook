@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, stat, writeFile, copyFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rename, stat, writeFile, copyFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -124,10 +124,8 @@ export async function bootstrapProject(options) {
   const templateRoot = path.join(repoRoot, 'templates');
   const playbookSource = path.join(templateRoot, 'project-playbook');
   const playbookTarget = path.join(target, DEFAULT_PLAYBOOK_DIR);
-
-  await copyTree(playbookSource, playbookTarget, { dryRun, force, operations, conflicts });
-
   const rootAgent = path.join(templateRoot, 'agents', 'global', 'AGENTS.md');
+
   let agentContent = await readFile(rootAgent, 'utf8');
   if (profile) {
     const profileFile = path.join(templateRoot, 'agents', 'profiles', profile, 'AGENTS.md');
@@ -137,15 +135,124 @@ export async function bootstrapProject(options) {
     const profileContent = await readFile(profileFile, 'utf8');
     agentContent = `${agentContent.trimEnd()}\n\n---\n\n# Profile: ${profile}\n\n${profileContent.trimStart()}`;
   }
-  await writeManagedFile(path.join(target, 'AGENTS.md'), agentContent, { dryRun, force, operations, conflicts });
+
+  const preflight = { dryRun: true, force, operations, conflicts };
+  await copyTree(playbookSource, playbookTarget, preflight);
+  await writeManagedFile(path.join(target, 'AGENTS.md'), agentContent, preflight);
+  if (localOnly) {
+    await ensureGitignoreEntry(target, `${DEFAULT_PLAYBOOK_DIR}/`, preflight);
+  }
+
+  if (dryRun || conflicts.length > 0) {
+    return {
+      ok: conflicts.length === 0,
+      operations,
+      conflicts
+    };
+  }
+
+  operations.length = 0;
+  conflicts.length = 0;
+  await copyTree(playbookSource, playbookTarget, { dryRun: false, force, operations, conflicts });
+  await writeManagedFile(path.join(target, 'AGENTS.md'), agentContent, { dryRun: false, force, operations, conflicts });
 
   if (localOnly) {
-    await ensureGitignoreEntry(target, `${DEFAULT_PLAYBOOK_DIR}/`, { dryRun, operations });
+    await ensureGitignoreEntry(target, `${DEFAULT_PLAYBOOK_DIR}/`, { dryRun: false, operations });
   }
 
   return {
     ok: conflicts.length === 0,
     operations,
+    conflicts
+  };
+}
+
+export async function migratePlaybookPath(options) {
+  const { target, apply = false } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+
+  const resolvedTarget = path.resolve(target);
+  const legacyRoot = path.join(resolvedTarget, LEGACY_PLAYBOOK_DIR);
+  const dotRoot = path.join(resolvedTarget, DEFAULT_PLAYBOOK_DIR);
+  const hasLegacy = existsSync(legacyRoot);
+  const hasDot = existsSync(dotRoot);
+  const operations = [];
+  const warnings = [];
+  const conflicts = [];
+
+  if (hasDot && hasLegacy) {
+    conflicts.push({
+      id: 'playbook.destination-exists',
+      message: `Both ${DEFAULT_PLAYBOOK_DIR}/ and ${LEGACY_PLAYBOOK_DIR}/ exist; review and merge manually.`,
+      paths: [`${DEFAULT_PLAYBOOK_DIR}/`, `${LEGACY_PLAYBOOK_DIR}/`]
+    });
+  } else if (!hasLegacy && !hasDot) {
+    conflicts.push({
+      id: 'playbook.source-missing',
+      message: `Missing ${LEGACY_PLAYBOOK_DIR}/ and ${DEFAULT_PLAYBOOK_DIR}/; run bootstrap or inspect the target first.`,
+      paths: [`${LEGACY_PLAYBOOK_DIR}/`, `${DEFAULT_PLAYBOOK_DIR}/`]
+    });
+  } else if (hasDot) {
+    warnings.push({
+      id: 'playbook.already-dot-path',
+      message: `${DEFAULT_PLAYBOOK_DIR}/ already exists; no path migration is needed.`,
+      paths: [`${DEFAULT_PLAYBOOK_DIR}/`]
+    });
+  } else {
+    operations.push({
+      id: 'playbook.move',
+      action: 'move',
+      message: `Move ${LEGACY_PLAYBOOK_DIR}/ to ${DEFAULT_PLAYBOOK_DIR}/.`,
+      paths: [`${LEGACY_PLAYBOOK_DIR}/`, `${DEFAULT_PLAYBOOK_DIR}/`]
+    });
+  }
+
+  const referencePlanRoot = hasDot ? dotRoot : legacyRoot;
+  const referencePlan = existsSync(referencePlanRoot)
+    ? await playbookReferenceUpdatePlan(resolvedTarget, referencePlanRoot)
+    : [];
+  if (referencePlan.length > 0) {
+    operations.push({
+      id: 'references.update',
+      action: 'replace',
+      message: `Update ${referencePlan.length} file(s) from ${LEGACY_PLAYBOOK_DIR}/ references to ${DEFAULT_PLAYBOOK_DIR}/.`,
+      paths: referencePlan.map((item) => toPortablePath(path.relative(resolvedTarget, item.file)))
+    });
+  }
+
+  const gitignorePlan = await gitignoreMigrationPlan(resolvedTarget);
+  if (gitignorePlan) operations.push(gitignorePlan);
+
+  const ok = conflicts.length === 0;
+  let movedPlaybook = false;
+  if (apply && ok) {
+    if (hasLegacy && !hasDot) {
+      await rename(legacyRoot, dotRoot);
+      movedPlaybook = true;
+    }
+    for (const item of referencePlan) {
+      const file = item.file.startsWith(legacyRoot)
+        ? path.join(dotRoot, path.relative(legacyRoot, item.file))
+        : item.file;
+      await writeFile(file, replaceLegacyPlaybookRefs(await readFile(file, 'utf8')));
+    }
+    if (gitignorePlan) {
+      await applyGitignoreMigration(resolvedTarget);
+    }
+  }
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok,
+    target: resolvedTarget,
+    applied: Boolean(apply && ok && (movedPlaybook || referencePlan.length > 0 || gitignorePlan)),
+    summary: {
+      operations: operations.length,
+      warnings: warnings.length,
+      conflicts: conflicts.length
+    },
+    operations,
+    warnings,
     conflicts
   };
 }
@@ -352,7 +459,7 @@ export async function buildDoctorReminderSignal(options) {
 }
 
 export async function checkGuides(options) {
-  const { repoRoot, target } = options;
+  const { repoRoot, target, includeDiff = false } = options;
 
   await assertDirectory(target, 'Target repository does not exist');
 
@@ -374,12 +481,16 @@ export async function checkGuides(options) {
       continue;
     }
     const targetHash = await hashFile(destinationFile);
-    guides.push({
+    const entry = {
       path: `${playbook.relativeRoot}guides/${rel}`,
       status: targetHash === sourceHash ? 'present' : 'stale',
       sourceHash,
       targetHash
-    });
+    };
+    if (includeDiff && entry.status === 'stale') {
+      entry.diff = await guideDiff(path.join(source, ...rel.split('/')), destinationFile);
+    }
+    guides.push(entry);
   }
   guides.sort((left, right) => left.path.localeCompare(right.path));
   const summary = {
@@ -712,6 +823,78 @@ async function ensureGitignoreEntry(target, entry, context) {
     const prefix = existing && !existing.endsWith('\n') ? `${existing}\n` : existing;
     await writeFile(file, `${prefix}${entry}\n`);
   }
+}
+
+async function playbookReferenceUpdatePlan(target, playbookRoot) {
+  const candidates = [];
+  for (const rootFile of ['AGENTS.md']) {
+    const file = path.join(target, rootFile);
+    if (existsSync(file)) candidates.push(file);
+  }
+  candidates.push(...await walkFiles(playbookRoot, (file) => /\.(?:md|json)$/i.test(file)));
+
+  const updates = [];
+  for (const file of candidates) {
+    const text = await readFile(file, 'utf8');
+    const updated = replaceLegacyPlaybookRefs(text);
+    if (updated !== text) {
+      updates.push({ file });
+    }
+  }
+  return updates;
+}
+
+function replaceLegacyPlaybookRefs(text) {
+  return text.replace(/(^|[^.])ai-playbook\//g, '$1.ai-playbook/');
+}
+
+async function gitignoreMigrationPlan(target) {
+  const file = path.join(target, '.gitignore');
+  const existing = existsSync(file) ? await readFile(file, 'utf8') : '';
+  const lines = existing.split(/\r?\n/).map((line) => line.trim());
+  if (lines.includes(`${DEFAULT_PLAYBOOK_DIR}/`)) return null;
+  if (!lines.includes(`${LEGACY_PLAYBOOK_DIR}/`)) return null;
+  return {
+    id: 'gitignore.add-dot-playbook',
+    action: 'append',
+    message: `Add ${DEFAULT_PLAYBOOK_DIR}/ to .gitignore because legacy ${LEGACY_PLAYBOOK_DIR}/ is already ignored.`,
+    paths: ['.gitignore', `${DEFAULT_PLAYBOOK_DIR}/`, `${LEGACY_PLAYBOOK_DIR}/`]
+  };
+}
+
+async function applyGitignoreMigration(target) {
+  const file = path.join(target, '.gitignore');
+  const existing = existsSync(file) ? await readFile(file, 'utf8') : '';
+  const lines = existing.split(/\r?\n/).map((line) => line.trim());
+  if (lines.includes(`${DEFAULT_PLAYBOOK_DIR}/`)) return;
+  if (!lines.includes(`${LEGACY_PLAYBOOK_DIR}/`)) return;
+  const prefix = existing && !existing.endsWith('\n') ? `${existing}\n` : existing;
+  await writeFile(file, `${prefix}${DEFAULT_PLAYBOOK_DIR}/\n`);
+}
+
+async function guideDiff(sourceFile, targetFile) {
+  const sourceLines = normalizedLines(await readFile(sourceFile, 'utf8'));
+  const targetLines = normalizedLines(await readFile(targetFile, 'utf8'));
+  const max = Math.max(sourceLines.length, targetLines.length);
+  let firstDifferenceLine = max + 1;
+  for (let index = 0; index < max; index += 1) {
+    if ((sourceLines[index] ?? null) !== (targetLines[index] ?? null)) {
+      firstDifferenceLine = index + 1;
+      break;
+    }
+  }
+  return {
+    sourceLineCount: sourceLines.length,
+    targetLineCount: targetLines.length,
+    firstDifferenceLine,
+    sourceLine: sourceLines[firstDifferenceLine - 1] ?? null,
+    targetLine: targetLines[firstDifferenceLine - 1] ?? null
+  };
+}
+
+function normalizedLines(text) {
+  const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\n$/, '');
+  return normalized.length ? normalized.split('\n') : [];
 }
 
 async function loadGuideManifest(sourceRoot) {

@@ -98,7 +98,8 @@ The repository also includes a small Node CLI for project harness setup and main
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
 node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-repo> --check
+node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
+node .\bin\ai-playbook.mjs migrate path <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo> --strict
 node .\bin\ai-playbook.mjs doctor <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo> --reminder --json
@@ -130,7 +131,9 @@ This shell is not installed automatically, does not write settings, and is only 
 
 Use `doctor` after manual merges to catch missing playbook files, absolute local paths, and obsolete style-skill references.
 
-Use `guides sync` when a project already has `.ai-playbook/` and you only want missing guide templates from this checkout. It keeps existing guide files by default; `guides sync --check --json` also reports stale guide files by comparing source and target hashes. Use `--force` only after reviewing guide overwrites.
+Use `guides sync` when a project already has `.ai-playbook/` and you only want missing guide templates from this checkout. It keeps existing guide files by default; `guides sync --check --diff --json` also reports stale guide files by comparing source and target hashes and showing the first differing line. Use `--force` only after reviewing guide overwrites.
+
+Use `migrate path --json` to preview a legacy `ai-playbook/` to `.ai-playbook/` move before applying it. This is separate from hook setup and does not install or edit adapter settings.
 
 Use `doctor --reminder --json` when local wrapper code needs a small read-only signal about missing playbooks, stale guides, or worklog summary freshness. The adapter hook examples do not run this automatically.
 

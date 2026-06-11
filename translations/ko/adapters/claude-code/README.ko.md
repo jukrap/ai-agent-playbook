@@ -13,7 +13,8 @@ Claude Code는 이 저장소를 두 계층에서 사용할 수 있습니다.
 
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-repo> --check
+node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
+node .\bin\ai-playbook.mjs migrate path <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo> --reminder --json
 node .\bin\ai-playbook.mjs context <target-repo> --json
@@ -33,6 +34,8 @@ node .\adapters\claude-code\package.mjs hook
 이 shell은 자동 설치되지 않고 settings를 쓰지 않으며 packaging 편의 기능일 뿐입니다. 기본 문서 하네스에는 main CLI를 우선 사용합니다.
 
 `doctor --reminder --json`은 wrapper나 script가 작은 read-only local signal만 필요할 때 사용합니다. Hook 예시는 doctor를 자동 실행하지 않습니다.
+
+Legacy `ai-playbook/` 프로젝트에서는 `migrate path --json`을 preview로만 먼저 사용합니다. 이 흐름은 hook 설정과 분리되어 있으며 Claude Code settings를 설치하거나 편집하지 않습니다.
 
 `context`는 아래 project playbook 파일만 읽습니다.
 

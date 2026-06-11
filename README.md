@@ -76,13 +76,14 @@ node .\bin\ai-playbook.mjs doctor <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
 node .\bin\ai-playbook.mjs context <target-project> --json
+node .\bin\ai-playbook.mjs migrate path <target-project> --json
 node .\bin\ai-playbook.mjs adapter config <target-project> --adapter codex --json
 node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
 ```
 
 Use `--local-only` when the target project's `.ai-playbook/` folder should be ignored by Git. Use `--profile <name>` only after the target stack is known.
 
-Existing projects that already have `ai-playbook/` continue to work as a legacy layout when `.ai-playbook/` is absent, but new bootstrap output uses `.ai-playbook/`.
+Existing projects that already have `ai-playbook/` continue to work as a legacy layout when `.ai-playbook/` is absent, but new bootstrap output uses `.ai-playbook/`. Use `migrate path --json` to preview the legacy-to-dot path move before applying it.
 
 Runtime hooks and plugins are not part of the default install path. Treat them as optional extensions after the document and CLI harness are stable. The Codex and Claude Code adapters include read-only context hook examples, a read-only `adapter config` renderer, and a read-only `adapter check` self-check, but they are not installed automatically. See [Runtime roadmap](docs/runtime-roadmap.md).
 
@@ -102,7 +103,8 @@ For existing projects, start with a dry run and inspect conflicts before writing
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-project> --local-only --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-project> --check --json
+node .\bin\ai-playbook.mjs guides sync <target-project> --check --diff --json
+node .\bin\ai-playbook.mjs migrate path <target-project> --json
 ```
 
 ## Repository Map

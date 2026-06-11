@@ -12,12 +12,16 @@
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
 node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
+node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
+node .\bin\ai-playbook.mjs migrate path <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo>
 ```
 
-대상 프로젝트에 이미 에이전트 문서가 있으면 먼저 `--dry-run`을 사용합니다. 충돌을 확인하고 생성 파일이 기존 파일을 대체해야 한다고 판단한 뒤에만 `--force`를 사용합니다.
+대상 프로젝트에 이미 에이전트 문서가 있으면 먼저 `--dry-run`을 사용합니다. Bootstrap은 파일을 만들기 전에 쓰기 작업을 먼저 점검하지만, 충돌은 여전히 검토해야 합니다. 충돌을 확인하고 생성 파일이 기존 파일을 대체해야 한다고 판단한 뒤에만 `--force`를 사용합니다.
 
-대상 프로젝트에 이미 `.ai-playbook/`이 있고 새 playbook checkout의 누락된 가이드만 가져오고 싶다면 `guides sync`를 사용합니다. 기본값은 기존 가이드, 루트 정책, 현재 프로젝트 메모, plan, worklog를 유지합니다.
+대상 프로젝트에 이미 `.ai-playbook/`이 있고 새 playbook checkout의 누락된 가이드만 가져오고 싶다면 `guides sync`를 사용합니다. 기본값은 기존 가이드, 루트 정책, 현재 프로젝트 메모, plan, worklog를 유지합니다. Local edit을 교체하기 전 stale guide를 검토하려면 `guides sync --check --diff --json`을 사용합니다.
+
+프로젝트가 아직 legacy `ai-playbook/` 폴더를 사용한다면 `migrate path --json`으로 `.ai-playbook/` 이동, 참조 갱신, `.gitignore` 변경을 먼저 preview합니다. Preview를 검토한 뒤에만 `--apply`를 추가합니다. 두 경로가 모두 있으면 멈추고 수동으로 병합합니다.
 
 ## 진행 중 프로젝트 흐름
 

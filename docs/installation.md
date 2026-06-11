@@ -128,7 +128,8 @@ This is the default project harness. Runtime hooks or agent plugins are optional
 node .\bin\ai-playbook.mjs bootstrap <target-project> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-project>
 node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-project> --check
+node .\bin\ai-playbook.mjs guides sync <target-project> --check --diff
+node .\bin\ai-playbook.mjs migrate path <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
@@ -140,9 +141,9 @@ node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --sett
 
 Use `--profile <name>` only after the target stack is known. Use `--local-only` when `.ai-playbook/` should be added to the target `.gitignore`.
 
-Use `guides sync` for projects that already have `.ai-playbook/` and only need missing guide templates from a newer playbook checkout. `guides sync --check --json` also reports stale guides using source and target hashes. It does not modify root `AGENTS.md`, playbook policy files, or project-specific notes unless `--force` is explicitly used for guide files.
+Use `guides sync` for projects that already have `.ai-playbook/` and only need missing guide templates from a newer playbook checkout. `guides sync --check --json` also reports stale guides using source and target hashes, and `--diff` adds the first differing line without writing files. It does not modify root `AGENTS.md`, playbook policy files, or project-specific notes unless `--force` is explicitly used for guide files.
 
-During the path transition, these runtime commands also support an existing legacy `ai-playbook/` folder when `.ai-playbook/` is absent. New bootstrap output uses `.ai-playbook/`.
+During the path transition, these runtime commands also support an existing legacy `ai-playbook/` folder when `.ai-playbook/` is absent. New bootstrap output uses `.ai-playbook/`. Use `migrate path --json` to preview a legacy folder move and reference updates, then add `--apply` only after reviewing the preview.
 
 The optional adapter hook examples use the `context` command internally. They are read-only and must be enabled manually from `adapters/`. Use `adapter config` to render placeholder-free local settings, then use `adapter check --settings <local-settings-path>` after manually editing a local settings file.
 

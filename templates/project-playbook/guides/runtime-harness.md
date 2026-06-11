@@ -1,8 +1,8 @@
 # Runtime Harness Guide
 
-Use this guide after copying `templates/project-playbook/` into a target project as `ai-playbook/`.
+Use this guide after copying `templates/project-playbook/` into a target project as `.ai-playbook/`.
 
-The runtime harness is the combination of root agent files, `ai-playbook/` project memory, installable skills, and the small CLI in this repository. It is meant to make agent setup repeatable without pretending every project needs the same workflow.
+The runtime harness is the combination of root agent files, `.ai-playbook/` project memory, installable skills, and the small CLI in this repository. It is meant to make agent setup repeatable without pretending every project needs the same workflow.
 
 ## Normal setup flow
 
@@ -17,7 +17,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 
 Use `--dry-run` first when the target already has agent docs. Use `--force` only after inspecting conflicts and deciding the generated file should replace the existing one.
 
-Use `guides sync` after the target already has `ai-playbook/` and you only want missing guide files from a newer playbook checkout. By default it keeps existing guides, root policies, current project notes, plans, and worklogs.
+Use `guides sync` after the target already has `.ai-playbook/` and you only want missing guide files from a newer playbook checkout. By default it keeps existing guides, root policies, current project notes, plans, and worklogs.
 
 ## Active project flow
 
@@ -39,7 +39,7 @@ Use skills for behavior during the session:
 
 ## File placement rules
 
-- Keep root `AGENTS.md` as a thin bootstrap. Keep skill and Git policy in `ai-playbook/SKILLS.md` and `ai-playbook/GIT.md`.
+- Keep root `AGENTS.md` as a thin bootstrap. Keep skill and Git policy in `.ai-playbook/SKILLS.md` and `.ai-playbook/GIT.md`.
 - Keep current facts in `CURRENT.md`.
 - Keep active execution plans in `plans/`.
 - Keep detailed reasoning and recovery history in `worklogs/YYYY-MM/`.
@@ -52,9 +52,9 @@ Do not create loose markdown files at the project root unless the repository alr
 
 ## Local-only policy
 
-Decide whether `ai-playbook/` is committed or local-only before writing project-specific details.
+Decide whether `.ai-playbook/` is committed or local-only before writing project-specific details.
 
-Use local-only mode when the notes may include private context, unfinished analysis, raw logs, sensitive URLs, or customer-specific details. If the project commits `ai-playbook/`, scrub it like public documentation.
+Use local-only mode when the notes may include private context, unfinished analysis, raw logs, sensitive URLs, or customer-specific details. If the project commits `.ai-playbook/`, scrub it like public documentation.
 
 ## Maintenance cadence
 

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, readdir, rm, stat, utimes, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, stat, utimes, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -15,7 +15,7 @@ test('bootstrap dry-run does not write files', async () => {
 
   assert.equal(code, 0);
   assert.match(io.out(), /copy README\.md/);
-  assert.equal(existsSync(path.join(target, 'ai-playbook')), false);
+  assert.equal(existsSync(path.join(target, '.ai-playbook')), false);
   await cleanup(target);
 });
 
@@ -24,16 +24,16 @@ test('bootstrap writes playbook and thin root agent bootstrap without overwritin
   const io = capture(target);
 
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], io), 0);
-  assert.equal(existsSync(path.join(target, 'ai-playbook', 'CURRENT.md')), true);
-  assert.equal(existsSync(path.join(target, 'ai-playbook', 'SKILLS.md')), true);
-  assert.equal(existsSync(path.join(target, 'ai-playbook', 'GIT.md')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'CURRENT.md')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'SKILLS.md')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'GIT.md')), true);
   assert.equal(existsSync(path.join(target, 'AGENTS.md')), true);
   assert.equal(existsSync(path.join(target, 'SKILLS.md')), false);
   assert.equal(existsSync(path.join(target, 'GIT.md')), false);
-  assert.match(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), /ai-playbook\//);
+  assert.match(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), /\.ai-playbook\//);
 
   const gitignore = await readFile(path.join(target, '.gitignore'), 'utf8');
-  assert.match(gitignore, /^ai-playbook\/$/m);
+  assert.match(gitignore, /^\.ai-playbook\/$/m);
 
   const second = capture(target);
   assert.equal(await runCli(['bootstrap', '.'], second), 2);
@@ -45,15 +45,65 @@ test('doctor reports missing and bootstrapped project state', async () => {
   const target = await tempRepo();
   const missing = capture(target);
   assert.equal(await runCli(['doctor', '.'], missing), 1);
-  assert.match(missing.out(), /\[FAIL\] ai-playbook directory/);
+  assert.match(missing.out(), /\[FAIL\] \.ai-playbook directory/);
 
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
   const checked = capture(target);
   assert.equal(await runCli(['doctor', '.'], checked), 0);
-  assert.match(checked.out(), /\[PASS\] ai-playbook\/CURRENT.md/);
+  assert.match(checked.out(), /\[PASS\] .ai-playbook\/CURRENT.md/);
   assert.match(checked.out(), /\[PASS\] root AGENTS bootstrap/);
   assert.match(checked.out(), /\[PASS\] root AGENTS reading order/);
   assert.match(checked.out(), /\[WARN\] playbook adaptation/);
+  await cleanup(target);
+});
+
+test('legacy ai-playbook layout remains readable when the dot playbook is absent', async () => {
+  const target = await tempRepo('legacy ai playbook-한글-');
+  await writePlaybookFixture(target, 'ai-playbook', 'Legacy context signal');
+  await writeFile(path.join(target, '.gitignore'), 'ai-playbook/\n');
+  await writeFile(path.join(target, 'AGENTS.md'), [
+    '# Root',
+    '',
+    'Read ai-playbook/START_HERE.md, ai-playbook/CURRENT.md, ai-playbook/SKILLS.md, and ai-playbook/GIT.md.'
+  ].join('\n'));
+
+  const doctor = capture(target);
+  assert.equal(await runCli(['doctor', '.', '--json'], doctor), 0);
+  const doctorReport = JSON.parse(doctor.out());
+  assert.equal(doctorReport.ok, true);
+  assert.equal(doctorReport.checks.some((check) => check.id === 'playbook.directory' && check.paths.includes('ai-playbook/')), true);
+  assert.equal(doctorReport.checks.some((check) => check.id === 'playbook.file.current.md' && check.paths.includes('ai-playbook/CURRENT.md')), true);
+
+  const context = capture(target);
+  assert.equal(await runCli(['context', '.', '--json', '--max-chars', '5000'], context), 0);
+  const contextReport = JSON.parse(context.out());
+  assert.equal(contextReport.ok, true);
+  assert.deepEqual(contextReport.sources.map((source) => source.path), [
+    'ai-playbook/START_HERE.md',
+    'ai-playbook/CURRENT.md',
+    'ai-playbook/SKILLS.md',
+    'ai-playbook/GIT.md'
+  ]);
+  assert.match(contextReport.additionalContext, /Legacy context signal/);
+  await cleanup(target);
+});
+
+test('write commands keep using legacy ai-playbook when the dot playbook is absent', async () => {
+  const target = await tempRepo('legacy ai playbook-write-공백-');
+  await writePlaybookFixture(target, 'ai-playbook', 'Legacy write signal');
+
+  assert.equal(await runCli(['guides', 'sync', '.'], capture(target)), 0);
+  assert.equal(existsSync(path.join(target, 'ai-playbook', 'guides', 'runtime-harness.md')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook')), false);
+
+  assert.equal(await runCli(['plan', 'new', '.', '--title', 'Legacy Path', '--date', '2026-06-08'], capture(target)), 0);
+  assert.equal(await runCli(['worklog', 'new', '.', '--title', 'Legacy Path', '--date', '2026-06-08'], capture(target)), 0);
+  assert.equal(await runCli(['worklog', 'summarize', '.', '--month', '2026-06'], capture(target)), 0);
+
+  await stat(path.join(target, 'ai-playbook', 'plans', '2026-06-08-legacy-path.md'));
+  await stat(path.join(target, 'ai-playbook', 'worklogs', '2026-06', '2026-06-08-legacy-path.md'));
+  await stat(path.join(target, 'ai-playbook', 'worklogs', 'summaries', '2026-06.md'));
+  assert.equal(existsSync(path.join(target, '.ai-playbook')), false);
   await cleanup(target);
 });
 
@@ -98,8 +148,8 @@ test('doctor --json warns when a worklog month has no summary without writing fi
   assert.equal(warning.level, 'warn');
   assert.equal(warning.category, 'freshness');
   assert.deepEqual(warning.paths, [
-    'ai-playbook/worklogs/2026-05/',
-    'ai-playbook/worklogs/summaries/2026-05.md'
+    '.ai-playbook/worklogs/2026-05/',
+    '.ai-playbook/worklogs/summaries/2026-05.md'
   ]);
   assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
@@ -111,8 +161,8 @@ test('doctor --json warns when a worklog summary is older than an entry', async 
   assert.equal(await runCli(['worklog', 'new', '.', '--title', 'Freshness Check', '--date', '2026-06-04'], capture(target)), 0);
   assert.equal(await runCli(['worklog', 'summarize', '.', '--month', '2026-06'], capture(target)), 0);
 
-  const worklog = path.join(target, 'ai-playbook', 'worklogs', '2026-06', '2026-06-04-freshness-check.md');
-  const summary = path.join(target, 'ai-playbook', 'worklogs', 'summaries', '2026-06.md');
+  const worklog = path.join(target, '.ai-playbook', 'worklogs', '2026-06', '2026-06-04-freshness-check.md');
+  const summary = path.join(target, '.ai-playbook', 'worklogs', 'summaries', '2026-06.md');
   await utimes(summary, new Date('2026-06-04T00:00:00Z'), new Date('2026-06-04T00:00:00Z'));
   await utimes(worklog, new Date('2026-06-05T00:00:00Z'), new Date('2026-06-05T00:00:00Z'));
   const before = await listRelativeFiles(target);
@@ -124,8 +174,8 @@ test('doctor --json warns when a worklog summary is older than an entry', async 
   assert.equal(warning.level, 'warn');
   assert.equal(warning.category, 'freshness');
   assert.deepEqual(warning.paths, [
-    'ai-playbook/worklogs/2026-06/2026-06-04-freshness-check.md',
-    'ai-playbook/worklogs/summaries/2026-06.md'
+    '.ai-playbook/worklogs/2026-06/2026-06-04-freshness-check.md',
+    '.ai-playbook/worklogs/summaries/2026-06.md'
   ]);
   assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
@@ -137,8 +187,8 @@ test('doctor --json passes worklog summary freshness when the summary is newest'
   assert.equal(await runCli(['worklog', 'new', '.', '--title', 'Freshness Check', '--date', '2026-07-04'], capture(target)), 0);
   assert.equal(await runCli(['worklog', 'summarize', '.', '--month', '2026-07'], capture(target)), 0);
 
-  const worklog = path.join(target, 'ai-playbook', 'worklogs', '2026-07', '2026-07-04-freshness-check.md');
-  const summary = path.join(target, 'ai-playbook', 'worklogs', 'summaries', '2026-07.md');
+  const worklog = path.join(target, '.ai-playbook', 'worklogs', '2026-07', '2026-07-04-freshness-check.md');
+  const summary = path.join(target, '.ai-playbook', 'worklogs', 'summaries', '2026-07.md');
   await utimes(worklog, new Date('2026-07-04T00:00:00Z'), new Date('2026-07-04T00:00:00Z'));
   await utimes(summary, new Date('2026-07-05T00:00:00Z'), new Date('2026-07-05T00:00:00Z'));
 
@@ -162,7 +212,7 @@ test('doctor --reminder --json reports a small no-write reminder signal', async 
   assert.equal(missingReport.reminders.length, 1);
   assert.equal(missingReport.reminders[0].id, 'reminder.playbook.missing');
   assert.equal(missingReport.reminders[0].level, 'warn');
-  assert.deepEqual(missingReport.reminders[0].paths, ['ai-playbook/']);
+  assert.deepEqual(missingReport.reminders[0].paths, ['.ai-playbook/']);
   assert.deepEqual(await listRelativeFiles(missing), missingBefore);
   await cleanup(missing);
 
@@ -182,7 +232,7 @@ test('doctor --reminder --json reports a small no-write reminder signal', async 
 test('doctor --reminder --json includes stale guide and worklog freshness reminders', async () => {
   const target = await tempRepo('ai playbook-reminder-한글-');
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
-  await writeFile(path.join(target, 'ai-playbook', 'guides', 'runtime-harness.md'), '# Local guide edit\n');
+  await writeFile(path.join(target, '.ai-playbook', 'guides', 'runtime-harness.md'), '# Local guide edit\n');
   assert.equal(await runCli(['worklog', 'new', '.', '--title', 'Freshness Check', '--date', '2026-08-04'], capture(target)), 0);
   const before = await listRelativeFiles(target);
 
@@ -201,8 +251,8 @@ test('guides sync restores missing guides without overwriting local guide edits'
   const target = await tempRepo();
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
 
-  const customGuide = path.join(target, 'ai-playbook', 'guides', 'runtime-harness.md');
-  const missingGuide = path.join(target, 'ai-playbook', 'guides', 'harness-migration.md');
+  const customGuide = path.join(target, '.ai-playbook', 'guides', 'runtime-harness.md');
+  const missingGuide = path.join(target, '.ai-playbook', 'guides', 'harness-migration.md');
   await writeFile(customGuide, '# Local guide edit\n');
   await rm(missingGuide, { force: true });
 
@@ -219,7 +269,7 @@ test('guides sync --check reports missing guides without writing files', async (
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
   const before = await listRelativeFiles(target);
 
-  const missingGuide = path.join(target, 'ai-playbook', 'guides', 'harness-migration.md');
+  const missingGuide = path.join(target, '.ai-playbook', 'guides', 'harness-migration.md');
   await rm(missingGuide, { force: true });
 
   const check = capture(target);
@@ -229,12 +279,12 @@ test('guides sync --check reports missing guides without writing files', async (
   assert.equal(report.ok, false);
   assert.equal(report.summary.missing, 1);
   assert.equal(report.summary.stale, 0);
-  const guide = report.guides.find((item) => item.path === 'ai-playbook/guides/harness-migration.md');
+  const guide = report.guides.find((item) => item.path === '.ai-playbook/guides/harness-migration.md');
   assert.equal(guide.status, 'missing');
   assert.match(guide.sourceHash, /^[a-f0-9]{64}$/);
   assert.equal('targetHash' in guide, false);
   assert.equal(existsSync(missingGuide), false);
-  assert.deepEqual(await listRelativeFiles(target), before.filter((file) => file !== 'ai-playbook/guides/harness-migration.md'));
+  assert.deepEqual(await listRelativeFiles(target), before.filter((file) => file !== '.ai-playbook/guides/harness-migration.md'));
   await cleanup(target);
 });
 
@@ -242,7 +292,7 @@ test('guides sync --check reports present and stale guides without overwriting l
   const target = await tempRepo('ai playbook-guides-한글-');
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
 
-  const localGuide = path.join(target, 'ai-playbook', 'guides', 'runtime-harness.md');
+  const localGuide = path.join(target, '.ai-playbook', 'guides', 'runtime-harness.md');
   await writeFile(localGuide, '# Local guide edit\n');
   const before = await listRelativeFiles(target);
 
@@ -255,7 +305,7 @@ test('guides sync --check reports present and stale guides without overwriting l
   assert.equal(report.summary.stale, 1);
   assert.equal(report.guides.every((guide) => ['present', 'stale'].includes(guide.status)), true);
 
-  const stale = report.guides.find((guide) => guide.path === 'ai-playbook/guides/runtime-harness.md');
+  const stale = report.guides.find((guide) => guide.path === '.ai-playbook/guides/runtime-harness.md');
   assert.equal(stale.status, 'stale');
   assert.match(stale.sourceHash, /^[a-f0-9]{64}$/);
   assert.match(stale.targetHash, /^[a-f0-9]{64}$/);
@@ -275,10 +325,10 @@ test('context --json builds compact hook context without root AGENTS', async () 
   const target = await tempRepo('ai playbook-테스트-');
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
 
-  await writeFile(path.join(target, 'ai-playbook', 'START_HERE.md'), '# Start\n\nStart signal\n');
-  await writeFile(path.join(target, 'ai-playbook', 'CURRENT.md'), '# Current\n\nCurrent signal\n');
-  await writeFile(path.join(target, 'ai-playbook', 'SKILLS.md'), '# Skills\n\nSkill signal\n');
-  await writeFile(path.join(target, 'ai-playbook', 'GIT.md'), '# Git\n\nGit signal\n');
+  await writeFile(path.join(target, '.ai-playbook', 'START_HERE.md'), '# Start\n\nStart signal\n');
+  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nCurrent signal\n');
+  await writeFile(path.join(target, '.ai-playbook', 'SKILLS.md'), '# Skills\n\nSkill signal\n');
+  await writeFile(path.join(target, '.ai-playbook', 'GIT.md'), '# Git\n\nGit signal\n');
   await writeFile(path.join(target, 'AGENTS.md'), '# Root\n\nRoot agent marker\n');
 
   const context = capture(target);
@@ -287,10 +337,10 @@ test('context --json builds compact hook context without root AGENTS', async () 
   assert.equal(report.schemaVersion, '1');
   assert.equal(report.ok, true);
   assert.deepEqual(report.sources.map((source) => source.path), [
-    'ai-playbook/START_HERE.md',
-    'ai-playbook/CURRENT.md',
-    'ai-playbook/SKILLS.md',
-    'ai-playbook/GIT.md'
+    '.ai-playbook/START_HERE.md',
+    '.ai-playbook/CURRENT.md',
+    '.ai-playbook/SKILLS.md',
+    '.ai-playbook/GIT.md'
   ]);
   assert.match(report.additionalContext, /Start signal/);
   assert.match(report.additionalContext, /Current signal/);
@@ -303,7 +353,7 @@ test('context --json builds compact hook context without root AGENTS', async () 
 test('adapter check reports readiness for Codex and Claude Code without writing files', async () => {
   const target = await tempRepo('ai playbook-테스트-');
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
-  await writeFile(path.join(target, 'ai-playbook', 'CURRENT.md'), '# Current\n\nAdapter readiness signal\n');
+  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nAdapter readiness signal\n');
   const before = await listRelativeFiles(target);
 
   for (const adapter of ['codex', 'claude-code']) {
@@ -354,9 +404,9 @@ test('plan and worklog scaffold commands create dated files', async () => {
   assert.equal(await runCli(['worklog', 'new', '.', '--title', 'Runtime Harness', '--date', '2026-06-07'], capture(target)), 0);
   assert.equal(await runCli(['worklog', 'summarize', '.', '--month', '2026-06'], capture(target)), 0);
 
-  await stat(path.join(target, 'ai-playbook', 'plans', '2026-06-07-runtime-harness.md'));
-  await stat(path.join(target, 'ai-playbook', 'worklogs', '2026-06', '2026-06-07-runtime-harness.md'));
-  await stat(path.join(target, 'ai-playbook', 'worklogs', 'summaries', '2026-06.md'));
+  await stat(path.join(target, '.ai-playbook', 'plans', '2026-06-07-runtime-harness.md'));
+  await stat(path.join(target, '.ai-playbook', 'worklogs', '2026-06', '2026-06-07-runtime-harness.md'));
+  await stat(path.join(target, '.ai-playbook', 'worklogs', 'summaries', '2026-06.md'));
   await cleanup(target);
 });
 
@@ -373,8 +423,29 @@ function capture(cwd) {
   };
 }
 
-async function tempRepo(prefix = 'ai-playbook-test-') {
+async function tempRepo(prefix = '.ai-playbook-test-') {
   return mkdtemp(path.join(os.tmpdir(), prefix));
+}
+
+async function writePlaybookFixture(target, dirName, currentSignal) {
+  const files = {
+    'README.md': '# Playbook\n',
+    'START_HERE.md': '# Start\n\nStart fixture\n',
+    'CURRENT.md': `# Current\n\n${currentSignal}\n`,
+    'SKILLS.md': '# Skills\n\nSkill fixture\n',
+    'GIT.md': '# Git\n\nGit fixture\n',
+    'questions.md': '# Questions\n\n| Status | Question | Decision | Owner | Date |\n| --- | --- | --- | --- | --- |\n',
+    'maps/README.md': '# Maps\n',
+    'runbooks/README.md': '# Runbooks\n',
+    'plans/README.md': '# Plans\n',
+    'worklogs/README.md': '# Worklogs\n',
+    'worklogs/summaries/README.md': '# Summaries\n'
+  };
+  for (const [file, content] of Object.entries(files)) {
+    const destination = path.join(target, dirName, ...file.split('/'));
+    await mkdir(path.dirname(destination), { recursive: true });
+    await writeFile(destination, content);
+  }
 }
 
 async function listRelativeFiles(root) {

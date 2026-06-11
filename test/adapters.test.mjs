@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -36,7 +36,7 @@ test('Claude Code context hook emits additionalContext after compaction', async 
   await cleanup(target);
 });
 
-test('context hooks stay silent when ai-playbook is missing or event is unsupported', async () => {
+test('context hooks stay silent when .ai-playbook is missing or event is unsupported', async () => {
   const target = await tempRepo();
   assert.equal(await runCodexHook({ hook_event_name: 'SessionStart', cwd: target }, { env: {} }), '');
   assert.equal(await runClaudeCodeHook({ hook_event_name: 'PostToolUse', cwd: target }, { env: {} }), '');
@@ -84,6 +84,23 @@ test('lifecycle reminder hooks stay quiet for unrelated prompts and missing play
   await cleanup(missing);
 });
 
+test('lifecycle reminder hooks accept legacy ai-playbook during transition', async () => {
+  const target = await legacyRepo();
+  const output = await runCodexHook({
+    hook_event_name: 'UserPromptSubmit',
+    cwd: target,
+    prompt: '커밋 전에 상태 확인해줘'
+  }, {
+    env: { AI_PLAYBOOK_HOOK_EVENTS: 'UserPromptSubmit' },
+    maxChars: 5000
+  });
+
+  const parsed = JSON.parse(output);
+  assert.equal(parsed.hookSpecificOutput.hookEventName, 'UserPromptSubmit');
+  assert.match(parsed.hookSpecificOutput.additionalContext, /Git guardrail/);
+  await cleanup(target);
+});
+
 test('PostToolUse reminder matches edit-like payload paths without writing files', async () => {
   const target = await bootstrappedRepo('ai playbook-후크-');
   const before = await listRelativeFiles(target);
@@ -127,10 +144,10 @@ test('PostToolUse reminder stays quiet for non-edit tools or edit payloads witho
   await cleanup(target);
 });
 
-async function bootstrappedRepo(prefix = 'ai-playbook-test-') {
+async function bootstrappedRepo(prefix = '.ai-playbook-test-') {
   const target = await tempRepo(prefix);
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
-  await writeFile(path.join(target, 'ai-playbook', 'CURRENT.md'), '# Current\n\nCurrent adapter signal\n');
+  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nCurrent adapter signal\n');
   await writeFile(path.join(target, 'AGENTS.md'), '# Root\n\nRoot agent marker\n');
   return target;
 }
@@ -148,8 +165,24 @@ function capture(cwd) {
   };
 }
 
-async function tempRepo(prefix = 'ai-playbook-test-') {
+async function tempRepo(prefix = '.ai-playbook-test-') {
   return mkdtemp(path.join(os.tmpdir(), prefix));
+}
+
+async function legacyRepo() {
+  const target = await tempRepo('legacy ai playbook-hook-');
+  const files = {
+    'START_HERE.md': '# Start\n\nStart signal\n',
+    'CURRENT.md': '# Current\n\nCurrent adapter signal\n',
+    'SKILLS.md': '# Skills\n\nSkill signal\n',
+    'GIT.md': '# Git\n\nGit signal\n'
+  };
+  for (const [file, content] of Object.entries(files)) {
+    const destination = path.join(target, 'ai-playbook', file);
+    await mkdir(path.dirname(destination), { recursive: true });
+    await writeFile(destination, content);
+  }
+  return target;
 }
 
 async function listRelativeFiles(root) {

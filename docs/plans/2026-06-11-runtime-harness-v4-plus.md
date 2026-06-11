@@ -4,7 +4,7 @@
 
 **Goal:** Extend the runtime harness beyond read-only adapter reminders without losing the current document-first, opt-in, no-network, no-hidden-policy boundary.
 
-**Architecture:** Keep the CLI and `ai-playbook/` document harness as the stable core. Add runtime automation in layers: diagnostics first, local configuration helpers second, and only then carefully controlled blocking or continuation experiments. Every runtime behavior must be disabled by default unless the plan explicitly says otherwise.
+**Architecture:** Keep the CLI and `.ai-playbook/` document harness as the stable core. Add runtime automation in layers: diagnostics first, local configuration helpers second, and only then carefully controlled blocking or continuation experiments. Every runtime behavior must be disabled by default unless the plan explicitly says otherwise.
 
 **Tech Stack:** Dependency-free Node ESM, Node test runner, PowerShell validation scripts, Markdown source docs with Korean translations.
 
@@ -93,7 +93,7 @@ V4 should strengthen the core CLI before adding stronger hook behavior.
 **Design:**
 
 - Add doctor checks under category `freshness`.
-- Detect months that have files under `ai-playbook/worklogs/YYYY-MM/*.md` but no corresponding `ai-playbook/worklogs/summaries/YYYY-MM.md`.
+- Detect months that have files under `.ai-playbook/worklogs/YYYY-MM/*.md` but no corresponding `.ai-playbook/worklogs/summaries/YYYY-MM.md`.
 - Detect a summary file older than one or more worklog entries in the same month.
 - Warn, not fail, in default doctor mode.
 - Fail only in `doctor --strict` if the repository already treats all warnings as strict failures.
@@ -153,7 +153,7 @@ Only do this after Tasks 1-3 are reviewed.
 - Keep it non-blocking.
 - Do not request continuation.
 - Do not execute doctor automatically.
-- Output only a short reminder when the target has `ai-playbook/`.
+- Output only a short reminder when the target has `.ai-playbook/`.
 - Use a cooldown or deterministic quiet path if the event would fire too often. If no reliable cooldown can be implemented without state files, do not add `Stop` yet.
 
 **Tests:**
@@ -249,7 +249,7 @@ V7 is optional. Do it only if local adapter setup becomes common enough that a p
 ### V7 Goals
 
 - Package the same core commands behind a thin runtime-specific shell.
-- Keep project rules in `AGENTS.md` and `ai-playbook/`, not in plugin-only files.
+- Keep project rules in `AGENTS.md` and `.ai-playbook/`, not in plugin-only files.
 - Keep adapter-specific files under `adapters/` or a clearly experimental package.
 
 ### V7 Scope

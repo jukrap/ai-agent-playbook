@@ -11,7 +11,7 @@ Create only the project memory and root instructions that the repository can act
 
 1. Inspect repository structure, git state, README, agent instructions, build config, scripts, and existing docs before proposing files.
 2. Classify the project shape: new, inherited, legacy, API-heavy, UI-heavy, mobile, multi-repo, documentation-only, or mixed.
-3. Decide whether `ai-playbook/` should be committed or local-only, then record that policy before writing private notes.
+3. Decide whether `.ai-playbook/` should be committed or local-only, then record that policy before writing private notes.
 4. Adapt a thin root `AGENTS.md` from `templates/agents/global` and project memory templates from `templates/project-playbook`.
 5. Create only the maps, runbooks, decisions, plans, guides, and worklog structure the project needs now.
 6. Keep project-specific facts in project docs, not installable skills.

@@ -13,7 +13,7 @@
 ## 추천 조합
 
 - 새 저장소 또는 불분명한 codebase: 프로세스 planning과 `project-bootstrap`, `repo-onboarding`, 또는 `node .\bin\ai-playbook.mjs bootstrap <target> --dry-run`.
-- 기능 계획: project docs나 `ai-playbook/` 구조가 필요하면 프로세스 planning과 `project-doc-system`.
+- 기능 계획: project docs나 `.ai-playbook/` 구조가 필요하면 프로세스 planning과 `project-doc-system`.
 - API integration: 구현 프로세스와 `api-contract-boundary`.
 - UI styling policy: 구현 또는 리뷰 프로세스와 `ui-style-policy`.
 - UI polishing: 리뷰 또는 검증 프로세스와 `style-quality-review`.
@@ -42,4 +42,4 @@
 - 특정 장비의 custom instruction을 public docs에 옮길 때 path, identity, private workflow assumption을 제거하지 않은 채 복사하지 않습니다.
 - 다른 에이전트 런타임의 hook, slash command, plugin environment variable이 사용 가능하다고 가정하지 않습니다.
 - 이 저장소의 CLI를 planning, TDD, debugging, verification 작업 흐름 스킬의 대체재로 취급하지 않습니다. CLI는 project memory를 scaffold하고 점검할 뿐입니다.
-- 같은 정책을 `AGENTS.md`나 `ai-playbook/`에 명확히 둘 수 있다면 hook 기반 동작을 필수로 만들지 않습니다.
+- 같은 정책을 `AGENTS.md`나 `.ai-playbook/`에 명확히 둘 수 있다면 hook 기반 동작을 필수로 만들지 않습니다.

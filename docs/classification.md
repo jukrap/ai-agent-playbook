@@ -30,9 +30,9 @@ Optional hook or plugin experiments belong in a clearly separated adapter or exp
 
 - `templates/agents`: thin root `AGENTS.md` bootstrap files and stack-specific profiles.
 - `templates/codex-home`: optional personal Codex home guidance for `~/.codex/AGENTS.md`; it is not copied into target repositories by the runtime.
-- `templates/project-playbook`: copyable project-memory template that becomes `ai-playbook/` in target repositories, including internal `SKILLS.md` and `GIT.md` policy files.
+- `templates/project-playbook`: copyable project-memory template that becomes `.ai-playbook/` in target repositories, including internal `SKILLS.md` and `GIT.md` policy files.
 
-Keep the target project root small. The runtime writes only a thin root `AGENTS.md` bootstrap by default; skill and Git policy belong under `ai-playbook/`.
+Keep the target project root small. The runtime writes only a thin root `AGENTS.md` bootstrap by default; skill and Git policy belong under `.ai-playbook/`.
 
 ## Process skill compatibility
 
@@ -42,9 +42,9 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 
 ## Project-memory map
 
-- `project-bootstrap`: sets up root policies and an `ai-playbook/` layout after inspecting the repository.
-- `repo-onboarding`: reads repo state and existing `ai-playbook/` context before planning or editing.
-- `project-doc-system`: organizes `ai-playbook/`, maps, runbooks, decisions, plans, worklogs, and archived notes.
+- `project-bootstrap`: sets up root policies and an `.ai-playbook/` layout after inspecting the repository.
+- `repo-onboarding`: reads repo state and existing `.ai-playbook/` context before planning or editing.
+- `project-doc-system`: organizes `.ai-playbook/`, maps, runbooks, decisions, plans, worklogs, and archived notes.
 
 ## Style policy map
 

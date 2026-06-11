@@ -34,7 +34,7 @@ The repository is agent-agnostic. Codex, Claude Code, and other coding agents ca
 | ----------------- | --------------------------------------------------------------------------------------------------- | ------------------ |
 | Reusable skills   | Trigger-focused operating guides for onboarding, docs, quality, Git, meta work, and legacy systems. | `skills/`          |
 | Project templates | Copyable root agent rules, stack profiles, and project-memory files.                                | `templates/`       |
-| Runtime harness   | A small CLI for bootstrapping `ai-playbook/`, health checks, hook context, plans, and worklogs.     | `bin/`, `src/`     |
+| Runtime harness   | A small CLI for bootstrapping `.ai-playbook/`, health checks, hook context, plans, and worklogs.     | `bin/`, `src/`     |
 | Human docs        | Installation, classification, maintenance, publishing, and translation notes.                       | `docs/`            |
 | Translations      | Korean reading copies that mirror English source files.                                             | `translations/ko/` |
 | Agent adapters    | Setup notes for specific agent environments.                                                        | `adapters/`        |
@@ -67,7 +67,7 @@ The updater pulls the current checkout with `--ff-only`, validates the repositor
 
 ### 3. Apply the Project Harness When Needed
 
-Use the runtime CLI only when a target project should receive a root `AGENTS.md` bootstrap and an `ai-playbook/` project-memory folder.
+Use the runtime CLI only when a target project should receive a root `AGENTS.md` bootstrap and an `.ai-playbook/` project-memory folder.
 
 ```powershell
 node .\bin\ai-playbook.mjs bootstrap <target-project> --dry-run
@@ -79,7 +79,9 @@ node .\bin\ai-playbook.mjs context <target-project> --json
 node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
 ```
 
-Use `--local-only` when the target project's `ai-playbook/` folder should be ignored by Git. Use `--profile <name>` only after the target stack is known.
+Use `--local-only` when the target project's `.ai-playbook/` folder should be ignored by Git. Use `--profile <name>` only after the target stack is known.
+
+Existing projects that already have `ai-playbook/` continue to work as a legacy layout when `.ai-playbook/` is absent, but new bootstrap output uses `.ai-playbook/`.
 
 Runtime hooks and plugins are not part of the default install path. Treat them as optional extensions after the document and CLI harness are stable. The Codex and Claude Code adapters include read-only context hook examples and a read-only `adapter check` self-check, but they are not installed automatically. See [Runtime roadmap](docs/runtime-roadmap.md).
 
@@ -90,7 +92,7 @@ Clone once
   -> install skills
   -> restart the agent
   -> inspect a target project
-  -> optionally bootstrap ai-playbook/
+  -> optionally bootstrap .ai-playbook/
   -> plan, worklog, verify, and hand off with consistent paths
 ```
 

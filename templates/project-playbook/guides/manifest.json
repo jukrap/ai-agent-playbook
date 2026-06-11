@@ -3,19 +3,19 @@
   "guides": [
     {
       "path": "api-contract-boundary.md",
-      "sourceHash": "e789c6b9591d1081825c22de7e2abd1c656a7f94538fcad956e25d1f1750bb1e"
+      "sourceHash": "4bea35caaf002a9550cf39c2fe02b2fc77414df81db16da6ce6adad04b04430c"
     },
     {
       "path": "commit-push-worklog.md",
-      "sourceHash": "373bca11f4bc076520cbd233361f496cc22268087d01e891a41e798e0c345285"
+      "sourceHash": "dce1ea0e7f0d5933122bb0eebdfbd2a4a794891709496f1a37db5814c580f517"
     },
     {
       "path": "docs-system.md",
-      "sourceHash": "65c51fe902b74866c312f9db819cfebf42df5af968b2e36859316a505a9846d2"
+      "sourceHash": "3b7336014c5711f3950e73b3093d836791fe0932f6b83d570bb151a559a88079"
     },
     {
       "path": "harness-migration.md",
-      "sourceHash": "cdeacd148103df8d2ec8a0591f16839ce57be07b0cee43110107bab05c635334"
+      "sourceHash": "72dd5c1215614b5a05056792fe4fc400d86932f644cd6715c2f7841cb1fe05a7"
     },
     {
       "path": "legacy-mode.md",
@@ -23,27 +23,27 @@
     },
     {
       "path": "pragmatic-fsd.md",
-      "sourceHash": "422e31109fda3105f2a6b7e421d65ffd930636227a2d1d4bac4e0890b112f5ec"
+      "sourceHash": "35d165cc4e405545c2951d138039d5c4cf6195a6ace2c8e872112de1f29c7af2"
     },
     {
       "path": "README.md",
-      "sourceHash": "666ad5022b4da74f4287d82db57dac79a2df4238ad14f40f379babf00e01aad4"
+      "sourceHash": "dc7043a6e54fd418815f110041c7dedc93c3093c5537e6d977e1f7295276967e"
     },
     {
       "path": "repo-onboarding.md",
-      "sourceHash": "77e1f8ace810f4c16b63b41e72dc0fc3ea4e71ff7353d5ec57177ceea8df5c28"
+      "sourceHash": "fd9a7507167e22a66ea853f0db1f8ad8fa4e0fe6ec85f918975c63a0da9deaef"
     },
     {
       "path": "runtime-harness.md",
-      "sourceHash": "689d3ded3f3ffceda03a17c46d7f5184012bed16f02a448fb78675ffd99612b1"
+      "sourceHash": "02188ca96758d75de99dd5925a97254e2009f5a2faa29a8e2c31d55c54d56341"
     },
     {
       "path": "runtime-roadmap.md",
-      "sourceHash": "fa575aa25963b617210663370adb1e9135ded7f37df8709d2d881622316cc29e"
+      "sourceHash": "8f10ea02337b65228bd5aecebd0367c5c82fe95cdc4f0a5f94ce073281d5ab8b"
     },
     {
       "path": "structural-review.md",
-      "sourceHash": "dce0db266dae488653a328ef7840551a871be65bb957e7fbc18c299b4b3be141"
+      "sourceHash": "737c70e8c5c9d4b3eb94087a69c6a8e3009f90ccfabadd79a0f13a580b7add97"
     },
     {
       "path": "ui-style-quality.md",

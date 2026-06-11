@@ -37,8 +37,8 @@ When instructions conflict, prefer this order:
 - Use only the minimum relevant skill set for the task.
 - Treat installed skills as reusable helpers, not higher-priority rules.
 - If the user names a skill, try to use it, but do not let it override user instructions or project-local policy.
-- If a project contains `ai-playbook/`, read `ai-playbook/START_HERE.md`, `ai-playbook/CURRENT.md`, and only the relevant maps, runbooks, plans, decisions, or worklogs.
-- Put new agent-facing project memory under the existing `ai-playbook/` structure when the project uses it. Do not scatter one-off markdown files at the repository root.
+- If a project contains `.ai-playbook/`, read `.ai-playbook/START_HERE.md`, `.ai-playbook/CURRENT.md`, and only the relevant maps, runbooks, plans, decisions, or worklogs.
+- Put new agent-facing project memory under the existing `.ai-playbook/` structure when the project uses it. Do not scatter one-off markdown files at the repository root.
 
 ## Implementation
 
@@ -50,7 +50,7 @@ When instructions conflict, prefer this order:
 
 ## Git, PRs, and Worklogs
 
-- Before staging, committing, pushing, writing a commit message, or writing a PR body, read the project's `ai-playbook/GIT.md` if it exists.
+- Before staging, committing, pushing, writing a commit message, or writing a PR body, read the project's `.ai-playbook/GIT.md` if it exists.
 - Ask before committing unless the project or user has explicitly opted into autonomous commits.
 - Use explicit staging; avoid `git add .` unless the repository convention allows it and the diff is already reviewed.
 - Before committing, inspect staged files and make sure local-only or sensitive docs are not included.

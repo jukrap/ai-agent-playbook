@@ -19,9 +19,9 @@ Use process skills before project guardrail skills when the task is about how to
 
 Use installed playbook skills for recurring repository concerns:
 
-- `project-bootstrap`: setting up a thin root agent bootstrap and `ai-playbook/`.
+- `project-bootstrap`: setting up a thin root agent bootstrap and `.ai-playbook/`.
 - `repo-onboarding`: entering an unfamiliar or stale repository.
-- `project-doc-system`: organizing `AGENTS.md`, `ai-playbook/`, maps, runbooks, plans, and worklogs.
+- `project-doc-system`: organizing `AGENTS.md`, `.ai-playbook/`, maps, runbooks, plans, and worklogs.
 - `api-contract-boundary`: changing or reviewing API integration.
 - `ui-style-policy`: selecting or documenting UI styling policy.
 - `style-quality-review`: reviewing visible UI style without redesigning.
@@ -41,12 +41,12 @@ Repository audit or structural evidence tools can help when a repository-wide st
 
 Do not assume another agent runtime's hooks, slash commands, or plugin environment variables work here. If a skill or tool was written for another agent, translate its intent into supported commands and repository-local rules.
 
-If this project later enables runtime hooks, keep them optional and documented. Hooks may remind or inject context, but the durable rule must still live in `AGENTS.md`, `ai-playbook/`, or project docs.
+If this project later enables runtime hooks, keep them optional and documented. Hooks may remind or inject context, but the durable rule must still live in `AGENTS.md`, `.ai-playbook/`, or project docs.
 
 ## When to write project docs instead of a skill
 
-- Put only the root entrypoint in `AGENTS.md`; put standing skill policy here and longer project instructions in `ai-playbook/` docs.
+- Put only the root entrypoint in `AGENTS.md`; put standing skill policy here and longer project instructions in `.ai-playbook/` docs.
 - Put product scope in product/spec docs.
 - Put milestones in planning docs.
-- Put project memory under `ai-playbook/`.
+- Put project memory under `.ai-playbook/`.
 - Create or install a skill only when the behavior is reusable across projects.

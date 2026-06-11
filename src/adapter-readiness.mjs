@@ -6,6 +6,7 @@ import { runCodexHook } from '../adapters/codex/hook.mjs';
 import {
   buildProjectContext,
   DEFAULT_CONTEXT_MAX_CHARS,
+  resolvePlaybookLayout,
   SCHEMA_VERSION
 } from './harness.mjs';
 
@@ -41,7 +42,8 @@ export async function checkAdapterReadiness(options) {
   }
 
   const resolvedTarget = path.resolve(target);
-  const playbookRoot = path.join(resolvedTarget, 'ai-playbook');
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const playbookRoot = playbook.root;
   const checks = [];
 
   const targetIsDirectory = await isDirectory(resolvedTarget);
@@ -59,9 +61,9 @@ export async function checkAdapterReadiness(options) {
     hasPlaybook ? 'pass' : 'fail',
     'playbook.directory',
     'setup',
-    'ai-playbook directory',
-    hasPlaybook ? 'Found ai-playbook/.' : 'Missing ai-playbook/.',
-    ['ai-playbook/']
+    `${playbook.dir} directory`,
+    hasPlaybook ? `Found ${playbook.relativeRoot}.` : `Missing ${playbook.relativeRoot}.`,
+    [playbook.relativeRoot]
   ));
 
   const context = await safeBuildContext(resolvedTarget, maxChars);
@@ -73,7 +75,7 @@ export async function checkAdapterReadiness(options) {
     context.ok && context.additionalContext
       ? `Built context from ${context.sources.length} source file(s).`
       : messageFromWarnings(context.warnings, 'No hook context could be built.'),
-    context.sources?.map((source) => source.path) ?? ['ai-playbook/']
+    context.sources?.map((source) => source.path) ?? [playbook.relativeRoot]
   ));
 
   checks.push(await fileCheck(repoRoot, adapterConfig.hookPath, 'adapter.hook-file', 'adapter hook file'));

@@ -1,6 +1,6 @@
 # 템플릿
 
-템플릿은 프로젝트에 복사하는 파일이며 설치형 스킬이 아닙니다. 일반적인 대상 프로젝트 폴더 이름은 `ai-playbook/`입니다.
+템플릿은 프로젝트에 복사하는 파일이며 설치형 스킬이 아닙니다. 일반적인 대상 프로젝트 폴더 이름은 `.ai-playbook/`입니다.
 
 새 저장소를 시작하거나, 프로젝트 에이전트 문서를 정리하거나, 여러 컴퓨터에서 에이전트 동작을 휴대 가능하게 만들 때 사용합니다.
 
@@ -9,7 +9,7 @@
 - `agents/`: 루트 지침 템플릿과 스택 프로필.
 - `agents/global/`: 얇은 프로젝트 루트 `AGENTS.md` 부트스트랩. 폴더 이름이 `global`이지만 대상 저장소에 복사되는 파일이며, Codex home 전역 지침이 아닙니다.
 - `codex-home/`: Codex 사용자를 위한 선택적 개인 `~/.codex/AGENTS.md` 시작점.
-- `project-playbook/`: 대상 프로젝트에 `ai-playbook/`로 복사하는 표준 프로젝트 메모리 묶음.
+- `project-playbook/`: 대상 프로젝트에 `.ai-playbook/`로 복사하는 표준 프로젝트 메모리 묶음.
 - Runtime CLI 파일은 저장소 루트의 `bin/`, `src/`, `test/` 아래에 있습니다.
 
 ## 에이전트가 템플릿을 발견하는 방식
@@ -32,9 +32,9 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 
 ## 추천 시작점
 
-- 불분명하거나 혼합된 프로젝트: `agents/global/AGENTS.md`를 루트 부트스트랩으로 복사하고, skill/Git 정책은 `project-playbook/` 안에서 `ai-playbook/SKILLS.md`, `ai-playbook/GIT.md`로 유지합니다.
+- 불분명하거나 혼합된 프로젝트: `agents/global/AGENTS.md`를 루트 부트스트랩으로 복사하고, skill/Git 정책은 `project-playbook/` 안에서 `.ai-playbook/SKILLS.md`, `.ai-playbook/GIT.md`로 유지합니다.
 - 개인 Codex 기본값: `codex-home/AGENTS.md`를 Codex home 디렉터리에 맞게 조정하고, 저장소 규칙은 프로젝트 `AGENTS.md` 파일에 둡니다.
-- 오래 남길 에이전트 메모리가 필요한 프로젝트: `project-playbook/`을 `ai-playbook/`로 bootstrap하거나 복사합니다.
+- 오래 남길 에이전트 메모리가 필요한 프로젝트: `project-playbook/`을 `.ai-playbook/`로 bootstrap하거나 복사합니다.
 - React/Vite/FSD 프로젝트: `agents/global/AGENTS.md`와 `agents/profiles/react-vite-fsd/AGENTS.md`로 시작합니다.
 - Expo/React Native 프로젝트: `agents/global/AGENTS.md`와 `agents/profiles/react-native-expo/AGENTS.md`로 시작합니다.
 - 레거시 프로젝트: `agents/global/AGENTS.md`, 가장 가까운 `agents/profiles/legacy-*`, `project-playbook/guides/legacy-mode.md`로 시작합니다.
@@ -46,4 +46,4 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 
 템플릿은 항상 대상 저장소에 맞게 줄입니다. 프로젝트가 실제로 쓰지 않는 스택, 명령, 작업 흐름, 정책 규칙은 제거합니다.
 
-내용이 `ai-playbook/maps/`, `ai-playbook/runbooks/`, `ai-playbook/decisions/`, `ai-playbook/plans/`, `ai-playbook/worklogs/`에 속한다면 프로젝트 루트에 느슨한 markdown 파일을 새로 만들지 않습니다.
+내용이 `.ai-playbook/maps/`, `.ai-playbook/runbooks/`, `.ai-playbook/decisions/`, `.ai-playbook/plans/`, `.ai-playbook/worklogs/`에 속한다면 프로젝트 루트에 느슨한 markdown 파일을 새로 만들지 않습니다.

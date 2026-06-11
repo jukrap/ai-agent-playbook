@@ -1,6 +1,6 @@
 # Project Playbook 템플릿
 
-이 폴더를 대상 저장소에 `ai-playbook/`로 복사합니다.
+이 폴더를 대상 저장소에 `.ai-playbook/`로 복사합니다.
 
 이 폴더는 에이전트와 유지보수자를 위한 프로젝트 메모리입니다. 현재 사실, 지도, 반복 절차, 계획, 결정 기록, 작업 기록을 분리해 미래 세션이 전체 저장소를 다시 읽지 않아도 이어서 작업할 수 있게 합니다.
 
@@ -30,8 +30,8 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 
 1. 최신 사용자 지시.
 2. 실제 code, configuration, command output.
-3. 루트 `AGENTS.md`, `ai-playbook/SKILLS.md`, `ai-playbook/GIT.md`.
-4. `ai-playbook/CURRENT.md`, maps, runbooks, decisions.
+3. 루트 `AGENTS.md`, `.ai-playbook/SKILLS.md`, `.ai-playbook/GIT.md`.
+4. `.ai-playbook/CURRENT.md`, maps, runbooks, decisions.
 5. Worklogs와 archived notes.
 
 Worklogs는 history입니다. 계속 현재인 사실은 `CURRENT.md`, `maps/`, `runbooks/`, `decisions/`로 승격합니다.
@@ -52,6 +52,6 @@ Worklogs는 history입니다. 계속 현재인 사실은 `CURRENT.md`, `maps/`, 
 
 ## 커밋 정책
 
-프로젝트별로 `ai-playbook/`을 commit할지 local-only로 둘지 결정합니다. local-only라면 project-specific note를 쓰기 전에 `.gitignore`에 추가합니다.
+프로젝트별로 `.ai-playbook/`을 commit할지 local-only로 둘지 결정합니다. local-only라면 project-specific note를 쓰기 전에 `.gitignore`에 추가합니다.
 
 credential, private URL, customer data, personal path, 민감값이 있는 raw log, machine-specific secret을 여기에 저장하지 않습니다.

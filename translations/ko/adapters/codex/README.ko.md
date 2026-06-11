@@ -103,7 +103,9 @@ node .\bin\ai-playbook.mjs doctor <target-repo> --strict
 node .\bin\ai-playbook.mjs doctor <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo> --reminder --json
 node .\bin\ai-playbook.mjs context <target-repo> --json
+node .\bin\ai-playbook.mjs adapter config <target-repo> --adapter codex --json
 node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --json
+node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --settings <local-settings-path> --json
 node .\bin\ai-playbook.mjs plan new <target-repo> --title "short-plan-title"
 node .\bin\ai-playbook.mjs worklog new <target-repo> --title "short-worklog-title"
 ```
@@ -145,7 +147,15 @@ $env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse'
 
 `UserPromptSubmit`은 commit, push, PR, merge, worklog, doctor 계열 intent에서만 reminder를 냅니다. `PostToolUse`는 edit-like tool payload에서 changed path를 읽을 수 있을 때만 reminder를 냅니다. 관련 없는 prompt, missing playbook, unsupported payload에서는 둘 다 조용히 빠집니다.
 
-Hook을 local Codex 설정에 연결하기 전에 아래를 실행합니다.
+Hook을 local Codex 설정에 연결하기 전에 local config를 렌더링하고 검토합니다.
+
+```powershell
+node .\bin\ai-playbook.mjs adapter config <target-repo> --adapter codex --json
+```
+
+Renderer는 read-only입니다. 이 checkout의 absolute hook path를 사용한 hook command와 붙여 넣을 수 있는 config를 출력하며, settings file을 쓰거나 output에 placeholder path를 남기지 않습니다.
+
+그 다음 adapter check를 실행합니다.
 
 ```powershell
 node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --json
@@ -153,7 +163,13 @@ node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --json
 
 Failure가 있으면 hook을 켜기 전에 대상 프로젝트나 adapter checkout의 설정 문제로 보고 수정합니다. 이 check는 read-only이며 지원 hook JSON과 quiet unsupported path를 모두 확인합니다.
 
-`hooks.example.json`은 수동 설정 출발점으로만 사용합니다. Local Codex plugin 또는 hook 설정에서 `<path-to-ai-agent-playbook>`을 이 checkout 경로로 바꿉니다. Timeout은 짧게 유지하고, troubleshooting 중에만 `AI_PLAYBOOK_DEBUG=1`로 debug output을 stderr에 남깁니다.
+Local Codex plugin 또는 hook 설정을 수동으로 편집한 뒤에는 settings file도 검증합니다.
+
+```powershell
+node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --settings <local-settings-path> --json
+```
+
+`hooks.example.json`은 renderer만으로 충분하지 않을 때의 수동 참고용으로만 사용합니다. Timeout은 짧게 유지하고, troubleshooting 중에만 `AI_PLAYBOOK_DEBUG=1`로 debug output을 stderr에 남깁니다.
 
 ## 휴대 가능한 지침
 

@@ -76,6 +76,7 @@ node .\bin\ai-playbook.mjs doctor <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
 node .\bin\ai-playbook.mjs context <target-project> --json
+node .\bin\ai-playbook.mjs adapter config <target-project> --adapter codex --json
 node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
 ```
 
@@ -83,7 +84,7 @@ node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
 
 이미 `ai-playbook/`을 가진 프로젝트는 `.ai-playbook/`이 없을 때 legacy layout으로 계속 동작하지만, 새 bootstrap 결과는 `.ai-playbook/`을 사용합니다.
 
-Runtime hook과 plugin은 기본 설치 경로에 포함되지 않습니다. 문서와 CLI 하네스가 안정된 뒤 선택적으로 확장합니다. Codex와 Claude Code adapter에는 read-only context hook 예시와 read-only `adapter check` self-check가 있지만 자동 설치되지 않습니다. [런타임 로드맵](docs/runtime-roadmap.ko.md)을 봅니다.
+Runtime hook과 plugin은 기본 설치 경로에 포함되지 않습니다. 문서와 CLI 하네스가 안정된 뒤 선택적으로 확장합니다. Codex와 Claude Code adapter에는 read-only context hook 예시, read-only `adapter config` renderer, read-only `adapter check` self-check가 있지만 자동 설치되지 않습니다. [런타임 로드맵](docs/runtime-roadmap.ko.md)을 봅니다.
 
 ## 평소 작업 흐름
 

@@ -14,7 +14,7 @@ Before considering hooks:
 - Move durable current facts into `CURRENT.md`, maps, runbooks, or decisions.
 - Keep detailed history in `worklogs/` and summarize it when it contains durable facts.
 - Use `guides sync --dry-run` from the source playbook checkout to add missing support guides without overwriting local edits.
-- Use `guides sync --check --json`, `doctor --json`, `doctor --reminder --json`, and `adapter check --json` when an adapter or automation needs a read-only health signal.
+- Use `guides sync --check --diff --json`, `migrate path --json`, `doctor --json`, `doctor --reminder --json`, and `adapter check --json` when an adapter or automation needs a read-only health signal.
 
 ## Runtime Readiness Checklist
 
@@ -53,12 +53,13 @@ Avoid hooks that:
 ## Suggested Migration Order
 
 1. Stabilize `.ai-playbook/` and run `doctor`.
-2. Add any missing guides with `guides sync --dry-run`, then a reviewed `guides sync`; use `guides sync --check --json` to review stale guides before overwriting local edits.
-3. Document hook intent in a decision note before enabling it.
-4. Run the source playbook's `adapter check` command for the selected adapter.
-5. Create fixture tests for hook inputs and outputs when local customization is needed.
-6. Enable only reminder or context-injection behavior first.
-7. Keep an opt-out path and record any remaining risk in a worklog.
+2. If the project still uses legacy `ai-playbook/`, preview `migrate path --json` and apply only after reviewing the folder move, reference updates, and `.gitignore` change.
+3. Add any missing guides with `guides sync --dry-run`, then a reviewed `guides sync`; use `guides sync --check --diff --json` to review stale guides before overwriting local edits.
+4. Document hook intent in a decision note before enabling it.
+5. Run the source playbook's `adapter check` command for the selected adapter.
+6. Create fixture tests for hook inputs and outputs when local customization is needed.
+7. Enable only reminder or context-injection behavior first.
+8. Keep an opt-out path and record any remaining risk in a worklog.
 
 ## Adapter Notes
 

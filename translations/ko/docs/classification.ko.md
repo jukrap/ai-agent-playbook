@@ -19,8 +19,8 @@
 ## 런타임 CLI 분류
 
 - `bin/ai-playbook.mjs`: CLI 진입점.
-- `src/`: bootstrap, doctor, context, guide check, plan/worklog 생성 구현.
-- `test/`: Node test runner 기반 CLI, adapter hook, adapter readiness, lifecycle reminder 테스트.
+- `src/`: bootstrap, doctor, context, guide check, path migration, plan/worklog 생성 구현.
+- `test/`: Node test runner 기반 CLI, path migration, adapter hook, adapter readiness, lifecycle reminder 테스트.
 
 CLI는 설치형 스킬이 아닙니다. 이 저장소 checkout에서 실행해 대상 프로젝트에 템플릿을 적용하고 하네스 상태를 점검합니다.
 

@@ -128,7 +128,8 @@ Sync script는 기본적으로 다른 사람이 만든 같은 이름의 skill을
 node .\bin\ai-playbook.mjs bootstrap <target-project> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-project>
 node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-project> --check
+node .\bin\ai-playbook.mjs guides sync <target-project> --check --diff
+node .\bin\ai-playbook.mjs migrate path <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
@@ -140,9 +141,9 @@ node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --sett
 
 대상 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다. `.ai-playbook/`을 대상 `.gitignore`에 추가해야 하면 `--local-only`를 사용합니다.
 
-이미 `.ai-playbook/`이 있는 프로젝트에서 새 playbook checkout의 누락된 가이드 템플릿만 가져오려면 `guides sync`를 사용합니다. `guides sync --check --json`은 source와 target hash를 사용해 stale guide도 보고합니다. 이 명령은 `--force`로 가이드 파일 덮어쓰기를 명시하지 않는 한 루트 `AGENTS.md`, playbook 정책 파일, 프로젝트별 메모를 수정하지 않습니다.
+이미 `.ai-playbook/`이 있는 프로젝트에서 새 playbook checkout의 누락된 가이드 템플릿만 가져오려면 `guides sync`를 사용합니다. `guides sync --check --json`은 source와 target hash를 사용해 stale guide도 보고하고, `--diff`를 추가하면 파일을 쓰지 않고 첫 차이 line을 보여줍니다. 이 명령은 `--force`로 가이드 파일 덮어쓰기를 명시하지 않는 한 루트 `AGENTS.md`, playbook 정책 파일, 프로젝트별 메모를 수정하지 않습니다.
 
-경로 전환 기간에는 `.ai-playbook/`이 없고 기존 `ai-playbook/` 폴더만 있는 프로젝트도 runtime 명령이 지원합니다. 새 bootstrap 결과는 `.ai-playbook/`을 사용합니다.
+경로 전환 기간에는 `.ai-playbook/`이 없고 기존 `ai-playbook/` 폴더만 있는 프로젝트도 runtime 명령이 지원합니다. 새 bootstrap 결과는 `.ai-playbook/`을 사용합니다. Legacy 폴더 이동과 참조 갱신은 먼저 `migrate path --json`으로 preview하고, 검토한 뒤에만 `--apply`를 추가합니다.
 
 선택적 adapter hook 예시는 내부적으로 `context` 명령을 사용합니다. 이 예시는 read-only이며 `adapters/`에서 수동으로 활성화해야 합니다. `adapter config`로 placeholder 없는 local 설정을 렌더링한 뒤, local settings file을 수동으로 편집한 후 `adapter check --settings <local-settings-path>`로 확인합니다.
 

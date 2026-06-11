@@ -14,8 +14,10 @@ The default path stays simple: install skills, bootstrap `.ai-playbook/` when a 
 ## Current Strengths
 
 - `bootstrap` creates a thin root `AGENTS.md` and a project-memory `.ai-playbook/` folder without assuming a stack.
+- `bootstrap` preflights planned writes so existing-project conflicts do not leave partial playbook output behind.
 - `doctor` already checks minimum layout, root policy placement, local-only policy, template adaptation, worklog summary freshness, obsolete skill references, and fixed local paths.
-- `guides sync` adds missing guide templates without replacing local edits by default, and `guides sync --check --json` reports stale guides with source and target hashes.
+- `guides sync` adds missing guide templates without replacing local edits by default, and `guides sync --check --diff --json` reports stale guides with source and target hashes plus the first differing line.
+- `migrate path` previews and optionally applies the legacy `ai-playbook/` to `.ai-playbook/` folder move, reference updates, and `.gitignore` transition.
 - `plan`, `worklog`, and `worklog summarize` keep active plans, detailed history, and monthly summaries in predictable paths.
 - The installer and updater use managed markers and hashes so local skill edits and unmanaged same-name skills are not overwritten silently.
 - `doctor --json`, `doctor --reminder --json`, `guides sync --check --json`, `context --json`, `adapter config --json`, and `adapter check --json` provide a small machine-readable core for future adapters.
@@ -26,9 +28,11 @@ Keep improving these areas before making hooks part of any default install path:
 
 - Keep `doctor` check ids, severity, actionable messages, and strict/non-strict exit behavior stable.
 - Keep `doctor` warning categories separated into setup health, adaptation reminders, local-only policy, and public-safety findings.
-- Keep `bootstrap` dry-run first for existing projects and make conflict output easy to copy into a migration note.
+- Keep `bootstrap` dry-run first for existing projects and keep conflict output easy to copy into a migration note.
 - Keep `--force` scoped to reviewed overwrites; do not use broad force as a migration strategy.
 - Maintain the guide manifest so `guides sync --check --json` can report stale guides without overwriting project-specific edits.
+- Use `guides sync --check --diff --json` before overwriting stale guide files so local edits stay visible.
+- Use `migrate path --json` before applying legacy folder moves so path changes stay explicit and reversible by normal Git review.
 - Make migration from existing agent docs preserve history, classify current rules, and record remaining uncertainty in `.ai-playbook/questions.md`.
 - Treat `worklog summarize` as a promotion checkpoint: durable facts belong in `CURRENT.md`, maps, runbooks, or decisions, not only in history.
 
@@ -95,8 +99,8 @@ The first adapter proof of concept is intentionally read-only:
 These can be implemented before a full plugin exists:
 
 - For a concrete V4+ execution plan and next-session handoff, see `docs/plans/2026-06-11-runtime-harness-v4-plus.md`.
-- Better bootstrap conflict reports for existing projects.
 - Verify in real projects whether rendered adapter settings reduce setup mistakes without adding noise.
+- Verify in real projects whether `migrate path --json` catches common legacy path references without touching unrelated files.
 - Candidates still requiring caution: continuation, blocking feedback, and any automatic doctor execution after cost and noise are proven acceptable.
 
 ## Process Skill Compatibility

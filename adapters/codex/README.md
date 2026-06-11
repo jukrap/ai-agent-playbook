@@ -118,6 +118,16 @@ Codex App does not need `ai-playbook` to be installed as a global command. The s
 node .\bin\ai-playbook.mjs <command>
 ```
 
+The optional adapter-local package shell exposes the same hook, config, and check path with the Codex adapter fixed:
+
+```powershell
+node .\adapters\codex\package.mjs config <target-repo> --json
+node .\adapters\codex\package.mjs check <target-repo> --json
+node .\adapters\codex\package.mjs hook
+```
+
+This shell is not installed automatically, does not write settings, and is only a packaging convenience. Prefer the main CLI for the default document harness.
+
 Use `doctor` after manual merges to catch missing playbook files, absolute local paths, and obsolete style-skill references.
 
 Use `guides sync` when a project already has `.ai-playbook/` and you only want missing guide templates from this checkout. It keeps existing guide files by default; `guides sync --check --json` also reports stale guide files by comparing source and target hashes. Use `--force` only after reviewing guide overwrites.

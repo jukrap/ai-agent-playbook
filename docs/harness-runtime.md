@@ -91,6 +91,21 @@ The command verifies the target path, `.ai-playbook/`, non-empty core context, a
 
 Use `--settings <path>` only after manually editing a local settings file. It adds checks for settings file existence, JSON parseability, and whether `SessionStart` and `PostCompact` point to the rendered local hook command. Use `--json` to return `{ schemaVersion, ok, target, adapter, summary, checks }`. Checks use the same `id`, `level`, `category`, `name`, `message`, and `paths` shape as `doctor`, so hook or setup automation can fail early without parsing human text.
 
+## Adapter package shell
+
+Adapter package shell entrypoints are optional local wrappers around the same hook, config, and check helpers. They are not installed automatically and do not change local settings.
+
+```powershell
+node .\adapters\codex\package.mjs config <target> --json
+node .\adapters\codex\package.mjs check <target> --json
+node .\adapters\codex\package.mjs hook
+node .\adapters\claude-code\package.mjs config <target> --json
+node .\adapters\claude-code\package.mjs check <target> --json
+node .\adapters\claude-code\package.mjs hook
+```
+
+Use the main CLI as the stable default surface. The package shell is a convenience for adapter-local experiments and packaging smoke tests.
+
 ## Lifecycle reminder hooks
 
 The adapter hook examples enable only context refresh events by default:

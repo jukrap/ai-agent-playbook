@@ -22,6 +22,16 @@ node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --j
 node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --settings <local-settings-path> --json
 ```
 
+The optional adapter-local package shell exposes the same hook, config, and check path with the Claude Code adapter fixed:
+
+```powershell
+node .\adapters\claude-code\package.mjs config <target-repo> --json
+node .\adapters\claude-code\package.mjs check <target-repo> --json
+node .\adapters\claude-code\package.mjs hook
+```
+
+This shell is not installed automatically, does not write settings, and is only a packaging convenience. Prefer the main CLI for the default document harness.
+
 Use `doctor --reminder --json` only as a small read-only local signal for wrappers or scripts. The hook example does not run doctor automatically.
 
 `context` reads only these project playbook files:

@@ -10,8 +10,12 @@ Preferred setup from this repository:
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
 node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
+node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
+node .\bin\ai-playbook.mjs migrate path <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo>
 ```
+
+For legacy `ai-playbook/` projects, keep `migrate path` in preview mode until the planned folder move, reference updates, and `.gitignore` change have been reviewed.
 
 ## Reading order
 

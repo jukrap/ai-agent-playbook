@@ -10,8 +10,12 @@
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
 node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
+node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
+node .\bin\ai-playbook.mjs migrate path <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo>
 ```
+
+Legacy `ai-playbook/` 프로젝트에서는 폴더 이동, 참조 갱신, `.gitignore` 변경 계획을 검토하기 전까지 `migrate path`를 preview mode로 유지합니다.
 
 ## 읽는 순서
 

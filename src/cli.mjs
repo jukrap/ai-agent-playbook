@@ -9,6 +9,7 @@ import {
   createPlan,
   createWorklog,
   doctorProject,
+  migratePlaybookPath,
   parseMaxChars,
   syncGuides,
   summarizeWorklogs
@@ -78,13 +79,15 @@ export async function runCli(argv, io = {}) {
       if (parsed.flags.check) {
         const result = await checkGuides({
           repoRoot: root,
-          target: resolveTarget(cwd, targetArg)
+          target: resolveTarget(cwd, targetArg),
+          includeDiff: Boolean(parsed.flags.diff)
         });
         if (parsed.flags.json) {
           writeJson(stdout, result);
         } else {
           for (const guide of result.guides) {
-            write(stdout, `[${guide.status.toUpperCase()}] ${guide.path}\n`);
+            const suffix = guide.diff ? ` (first diff line ${guide.diff.firstDifferenceLine})` : '';
+            write(stdout, `[${guide.status.toUpperCase()}] ${guide.path}${suffix}\n`);
           }
         }
         return result.ok ? 0 : 1;
@@ -115,6 +118,30 @@ export async function runCli(argv, io = {}) {
       } else {
         for (const warning of result.warnings) {
           write(stderr, `[WARN] ${warning.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'migrate' && subcommand === 'path') {
+      const result = await migratePlaybookPath({
+        target: resolveTarget(cwd, targetArg),
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        for (const operation of result.operations) {
+          write(stdout, `[PLAN] ${operation.message}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+        if (!parsed.flags.apply && result.operations.length > 0) {
+          write(stdout, 'Re-run with --apply to perform this migration.\n');
         }
       }
       return result.ok ? 0 : 1;
@@ -257,5 +284,5 @@ function writeJson(stream, value) {
 }
 
 function helpText() {
-  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook doctor <target> --reminder [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook adapter config <target> --adapter codex|claude-code [--json]\n  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
+  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook doctor <target> --reminder [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--diff] [--json]\n  ai-playbook migrate path <target> [--apply] [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook adapter config <target> --adapter codex|claude-code [--json]\n  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
 }

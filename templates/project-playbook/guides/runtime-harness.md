@@ -12,12 +12,16 @@ From this repository:
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
 node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
 node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
+node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
+node .\bin\ai-playbook.mjs migrate path <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo>
 ```
 
-Use `--dry-run` first when the target already has agent docs. Use `--force` only after inspecting conflicts and deciding the generated file should replace the existing one.
+Use `--dry-run` first when the target already has agent docs. Bootstrap preflights writes before creating files, but conflicts still need review. Use `--force` only after inspecting conflicts and deciding the generated file should replace the existing one.
 
-Use `guides sync` after the target already has `.ai-playbook/` and you only want missing guide files from a newer playbook checkout. By default it keeps existing guides, root policies, current project notes, plans, and worklogs.
+Use `guides sync` after the target already has `.ai-playbook/` and you only want missing guide files from a newer playbook checkout. By default it keeps existing guides, root policies, current project notes, plans, and worklogs. Use `guides sync --check --diff --json` when reviewing stale guides before replacing local edits.
+
+If the project still has a legacy `ai-playbook/` folder, use `migrate path --json` to preview the move to `.ai-playbook/`, reference updates, and `.gitignore` change. Add `--apply` only after reviewing the preview. If both paths exist, stop and merge manually.
 
 ## Active project flow
 

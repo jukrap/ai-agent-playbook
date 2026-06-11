@@ -11,7 +11,8 @@ node .\bin\ai-playbook.mjs bootstrap <target> [--profile <name>] [--local-only] 
 node .\bin\ai-playbook.mjs doctor <target> [--strict] [--json]
 node .\bin\ai-playbook.mjs doctor <target> --reminder [--json]
 node .\bin\ai-playbook.mjs guides sync <target> [--dry-run] [--force]
-node .\bin\ai-playbook.mjs guides sync <target> --check [--json]
+node .\bin\ai-playbook.mjs guides sync <target> --check [--diff] [--json]
+node .\bin\ai-playbook.mjs migrate path <target> [--apply] [--json]
 node .\bin\ai-playbook.mjs context <target> [--json] [--max-chars N]
 node .\bin\ai-playbook.mjs adapter config <target> --adapter codex|claude-code [--json]
 node .\bin\ai-playbook.mjs adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]
@@ -30,8 +31,24 @@ After publishing, the same CLI can be exposed through the package `bin` as `ai-p
 - Merges a stack profile into `AGENTS.md` when `--profile <name>` is provided.
 - Appends `.ai-playbook/` to `.gitignore` only when `--local-only` is provided.
 - Refuses to overwrite existing files unless `--force` is provided.
+- Preflights all planned writes before creating files. If a conflict is found, the command reports it without leaving a partial `.ai-playbook/` tree behind.
 
 Compatibility: new bootstrap output uses `.ai-playbook/`. Runtime commands still read and write an existing legacy `ai-playbook/` folder when `.ai-playbook/` is absent, so older projects can migrate gradually. If both folders exist, `.ai-playbook/` is preferred.
+
+## Path migration
+
+`migrate path` helps projects move from the legacy `ai-playbook/` folder to `.ai-playbook/`.
+
+```powershell
+node .\bin\ai-playbook.mjs migrate path <target> --json
+node .\bin\ai-playbook.mjs migrate path <target> --apply --json
+```
+
+The default mode is a no-write preview. It reports the planned folder move, root/playbook reference updates from `ai-playbook/` to `.ai-playbook/`, and whether `.gitignore` should add `.ai-playbook/` while keeping the legacy ignore entry during the transition.
+
+Use `--apply` only after reviewing the preview. Apply mode renames the folder, updates references in the root `AGENTS.md` and playbook markdown or JSON files, and appends `.ai-playbook/` to `.gitignore` when needed. It does not call the network, install hooks, or edit unrelated project files.
+
+If both `ai-playbook/` and `.ai-playbook/` exist, the command reports a conflict and writes nothing.
 
 ## Doctor checks
 
@@ -53,6 +70,7 @@ Use `doctor --reminder --json` when a wrapper or script needs a small non-blocki
 - Use `--dry-run` first to preview additions.
 - Use `--check` to report missing guide files without writing anything. Add `--json` for automation.
 - `--check --json` compares guide templates against the source guide manifest and reports `present`, `missing`, or `stale` for each guide. Entries include `sourceHash` and, when the target file exists, `targetHash`.
+- Add `--diff` with `--check` to include the first differing line and source/target line counts for stale guides. This is still read-only.
 - Stale guides do not fail the default check. They are review signals so local guide edits are not overwritten silently.
 - Use `--force` only when you intentionally want to replace existing guide files with the current template versions.
 - This command does not update `AGENTS.md`, `.ai-playbook/SKILLS.md`, `.ai-playbook/GIT.md`, `CURRENT.md`, plans, worklogs, or project-specific notes.

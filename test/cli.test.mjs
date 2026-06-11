@@ -368,6 +368,7 @@ test('adapter check reports readiness for Codex and Claude Code without writing 
     assert.equal(report.checks.some((check) => check.id === 'hook.session-start.json' && check.level === 'pass'), true);
     assert.equal(report.checks.some((check) => check.id === 'hook.post-compact.json' && check.level === 'pass'), true);
     assert.equal(report.checks.some((check) => check.id === 'hook.unsupported-event-silent' && check.level === 'pass'), true);
+    assert.equal(report.checks.some((check) => check.id === 'hook.stop-silent-by-default' && check.level === 'pass'), true);
     assert.equal(report.checks.some((check) => check.id === 'hook.missing-playbook-silent' && check.level === 'pass'), true);
   }
 

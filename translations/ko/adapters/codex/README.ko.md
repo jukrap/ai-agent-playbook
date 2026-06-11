@@ -118,6 +118,16 @@ Codex App에서는 `ai-playbook`을 global command로 설치할 필요가 없습
 node .\bin\ai-playbook.mjs <command>
 ```
 
+선택적 adapter-local package shell은 Codex adapter를 고정한 같은 hook, config, check 경로를 노출합니다.
+
+```powershell
+node .\adapters\codex\package.mjs config <target-repo> --json
+node .\adapters\codex\package.mjs check <target-repo> --json
+node .\adapters\codex\package.mjs hook
+```
+
+이 shell은 자동 설치되지 않고 settings를 쓰지 않으며 packaging 편의 기능일 뿐입니다. 기본 문서 하네스에는 main CLI를 우선 사용합니다.
+
 수동 병합 뒤에는 `doctor`를 실행해 누락된 playbook 파일, 고정 로컬 절대경로, 예전 style skill 참조를 확인합니다.
 
 대상 프로젝트에 이미 `.ai-playbook/`이 있고 이 checkout의 누락된 가이드 템플릿만 가져오려면 `guides sync`를 사용합니다. 기본값은 기존 가이드 파일을 유지합니다. `guides sync --check --json`은 source와 target hash를 비교해 stale guide file도 보고합니다. 가이드 덮어쓰기를 검토한 뒤에만 `--force`를 사용합니다.

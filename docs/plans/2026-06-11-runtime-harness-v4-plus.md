@@ -245,20 +245,22 @@ Controlled blocking should remain a later experiment. Candidate cases still need
 
 ## V7: Plugin Or Package Shell
 
-V7 is optional. Do it only if local adapter setup becomes common enough that a package shell reduces real friction.
+V7 is optional. Keep it smaller than a full plugin: add adapter-local package shell entrypoints only when they reduce real setup and smoke-test friction.
 
 ### V7 Goals
 
-- Package the same core commands behind a thin runtime-specific shell.
+- Expose the same hook, config, and check commands behind a thin runtime-specific shell.
 - Keep project rules in `AGENTS.md` and `.ai-playbook/`, not in plugin-only files.
-- Keep adapter-specific files under `adapters/` or a clearly experimental package.
+- Keep adapter-specific files under `adapters/`.
+- Keep plugin installation and user configuration mutation out of scope.
 
 ### V7 Scope
 
-- Codex plugin proof of concept.
-- Claude Code command or skill wrapper proof of concept.
-- Smoke tests for packaged commands.
-- Documentation that the package is optional.
+- Shared adapter shell runner.
+- Codex package shell entrypoint.
+- Claude Code package shell entrypoint.
+- Shell smoke tests for hook, config, and check commands.
+- Documentation that the shell is optional.
 
 ### V7 Boundaries
 
@@ -266,6 +268,7 @@ V7 is optional. Do it only if local adapter setup becomes common enough that a p
 - Do not mutate user configuration without explicit consent.
 - Do not make public docs depend on one agent runtime.
 - Do not duplicate source policy into generated plugin files unless it is clearly derived from project docs.
+- Do not create a full plugin package until the shell proves useful.
 
 ## Not Recommended Yet
 

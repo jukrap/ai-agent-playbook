@@ -18,7 +18,7 @@ The default path stays simple: install skills, bootstrap `.ai-playbook/` when a 
 - `guides sync` adds missing guide templates without replacing local edits by default, and `guides sync --check --json` reports stale guides with source and target hashes.
 - `plan`, `worklog`, and `worklog summarize` keep active plans, detailed history, and monthly summaries in predictable paths.
 - The installer and updater use managed markers and hashes so local skill edits and unmanaged same-name skills are not overwritten silently.
-- `doctor --json`, `doctor --reminder --json`, `guides sync --check --json`, `context --json`, and `adapter check --json` provide a small machine-readable core for future adapters.
+- `doctor --json`, `doctor --reminder --json`, `guides sync --check --json`, `context --json`, `adapter config --json`, and `adapter check --json` provide a small machine-readable core for future adapters.
 
 ## Document Harness Hardening
 
@@ -83,7 +83,9 @@ The first adapter proof of concept is intentionally read-only:
 - `adapters/claude-code/hook.mjs` uses the same core context builder for Claude Code's hook JSON contract.
 - Both wrappers call the shared `context` core, never edit project files, never call the network, and stay silent when `.ai-playbook/` is missing.
 - Example hook settings live beside each adapter and are not installed automatically.
+- `adapter config` renders reviewable local settings with this checkout's hook path, without writing files or requiring `.ai-playbook/` to exist first.
 - `adapter check` verifies the read-only wrapper, example settings, supported hook events, and quiet unsupported paths before a user enables an adapter manually.
+- `adapter check --settings <path>` validates a manually edited local settings file without writing files.
 - `AI_PLAYBOOK_HOOK_EVENTS` can opt in `UserPromptSubmit` and `PostToolUse` reminders. They stay quiet for unrelated prompts, missing playbooks, unsupported payloads, and non-edit tools.
 
 ## Next Intermediate Steps
@@ -92,8 +94,8 @@ These can be implemented before a full plugin exists:
 
 - For a concrete V4+ execution plan and next-session handoff, see `docs/plans/2026-06-11-runtime-harness-v4-plus.md`.
 - Better bootstrap conflict reports for existing projects.
-- A local adapter configuration renderer that prints reviewable settings without writing them.
-- V4 candidates still requiring caution: `Stop`, continuation, blocking feedback, and any automatic doctor execution after cost and noise are proven acceptable.
+- Verify in real projects whether rendered adapter settings reduce setup mistakes without adding noise.
+- Candidates still requiring caution: `Stop`, continuation, blocking feedback, and any automatic doctor execution after cost and noise are proven acceptable.
 
 ## Process Skill Compatibility
 

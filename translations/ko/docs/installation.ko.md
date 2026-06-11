@@ -133,7 +133,9 @@ node .\bin\ai-playbook.mjs doctor <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
 node .\bin\ai-playbook.mjs context <target-project> --json
+node .\bin\ai-playbook.mjs adapter config <target-project> --adapter codex --json
 node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
+node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --settings <local-settings-path> --json
 ```
 
 대상 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다. `.ai-playbook/`을 대상 `.gitignore`에 추가해야 하면 `--local-only`를 사용합니다.
@@ -142,7 +144,7 @@ node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
 
 경로 전환 기간에는 `.ai-playbook/`이 없고 기존 `ai-playbook/` 폴더만 있는 프로젝트도 runtime 명령이 지원합니다. 새 bootstrap 결과는 `.ai-playbook/`을 사용합니다.
 
-선택적 adapter hook 예시는 내부적으로 `context` 명령을 사용합니다. 이 예시는 read-only이며 `adapters/`에서 수동으로 활성화해야 합니다. Local hook 설정을 편집하기 전에 선택한 adapter에 대해 `adapter check`를 실행합니다.
+선택적 adapter hook 예시는 내부적으로 `context` 명령을 사용합니다. 이 예시는 read-only이며 `adapters/`에서 수동으로 활성화해야 합니다. `adapter config`로 placeholder 없는 local 설정을 렌더링한 뒤, local settings file을 수동으로 편집한 후 `adapter check --settings <local-settings-path>`로 확인합니다.
 
 Plan과 worklog는 CLI로 생성할 수 있습니다.
 
@@ -157,7 +159,7 @@ node .\bin\ai-playbook.mjs worklog summarize <target-project> --month 2026-06
 ```powershell
 $projectRoot = Join-Path $env:USERPROFILE 'Documents\example-project'
 Copy-Item .\templates\agents\global\AGENTS.md (Join-Path $projectRoot 'AGENTS.md')
-Copy-Item .\templates\project-playbook (Join-Path $projectRoot 'ai-playbook') -Recurse
+Copy-Item .\templates\project-playbook (Join-Path $projectRoot '.ai-playbook') -Recurse
 ```
 
 `templates/agents/global/`은 `AGENTS.md`용 프로젝트 루트 부트스트랩 템플릿 폴더입니다. skill/Git 정책은 `templates/project-playbook/`에서 복사되는 `.ai-playbook/SKILLS.md`, `.ai-playbook/GIT.md`에 둡니다. 그 다음 stack이 확인된 경우에만 `templates/agents/profiles/**`에서 가장 가까운 profile을 병합하고, 필요한 guide는 `templates/project-playbook/guides/**`에서 고릅니다.

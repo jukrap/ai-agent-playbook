@@ -133,7 +133,9 @@ node .\bin\ai-playbook.mjs doctor <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
 node .\bin\ai-playbook.mjs context <target-project> --json
+node .\bin\ai-playbook.mjs adapter config <target-project> --adapter codex --json
 node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
+node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --settings <local-settings-path> --json
 ```
 
 Use `--profile <name>` only after the target stack is known. Use `--local-only` when `.ai-playbook/` should be added to the target `.gitignore`.
@@ -142,7 +144,7 @@ Use `guides sync` for projects that already have `.ai-playbook/` and only need m
 
 During the path transition, these runtime commands also support an existing legacy `ai-playbook/` folder when `.ai-playbook/` is absent. New bootstrap output uses `.ai-playbook/`.
 
-The optional adapter hook examples use the `context` command internally. They are read-only and must be enabled manually from `adapters/`. Run `adapter check` for the selected adapter before editing local hook settings.
+The optional adapter hook examples use the `context` command internally. They are read-only and must be enabled manually from `adapters/`. Use `adapter config` to render placeholder-free local settings, then use `adapter check --settings <local-settings-path>` after manually editing a local settings file.
 
 Create plan and worklog files through the CLI so paths stay predictable:
 
@@ -159,7 +161,7 @@ Common starting point:
 ```powershell
 $projectRoot = Join-Path $env:USERPROFILE 'Documents\example-project'
 Copy-Item .\templates\agents\global\AGENTS.md (Join-Path $projectRoot 'AGENTS.md')
-Copy-Item .\templates\project-playbook (Join-Path $projectRoot 'ai-playbook') -Recurse
+Copy-Item .\templates\project-playbook (Join-Path $projectRoot '.ai-playbook') -Recurse
 ```
 
 `templates/agents/global/` is the project-root bootstrap template folder for `AGENTS.md`. Keep skill and Git policy in `.ai-playbook/SKILLS.md` and `.ai-playbook/GIT.md`, copied from `templates/project-playbook/`. Then merge the closest profile from `templates/agents/profiles/**` only when the stack is confirmed, and add any needed guides from `templates/project-playbook/guides/**`.

@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { stat } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { runClaudeCodeHook } from '../adapters/claude-code/hook.mjs';
 import { runCodexHook } from '../adapters/codex/hook.mjs';
@@ -27,19 +27,56 @@ export function supportedAdapterNames() {
   return Object.keys(ADAPTERS);
 }
 
+export async function renderAdapterConfig(options) {
+  const {
+    repoRoot,
+    target,
+    adapter
+  } = options;
+
+  const adapterConfig = adapterConfigFor(adapter);
+  const resolvedTarget = path.resolve(target);
+  if (!await isDirectory(resolvedTarget)) {
+    throw new Error(`Target path is missing or is not a directory: ${resolvedTarget}`);
+  }
+
+  const warnings = [];
+  const preferredPlaybookRoot = path.join(resolvedTarget, '.ai-playbook');
+  if (!existsSync(preferredPlaybookRoot) || !await isDirectory(preferredPlaybookRoot)) {
+    const hasLegacyPlaybook = existsSync(path.join(resolvedTarget, 'ai-playbook'))
+      && await isDirectory(path.join(resolvedTarget, 'ai-playbook'));
+    warnings.push({
+      id: 'config.playbook.missing',
+      message: hasLegacyPlaybook
+        ? 'Missing .ai-playbook/; legacy ai-playbook/ remains compatible, but rendered config should be reviewed before manual setup.'
+        : 'Missing .ai-playbook/; rendered config is still available for manual setup.',
+      paths: ['.ai-playbook/']
+    });
+  }
+
+  const hookCommand = adapterHookCommand(repoRoot, adapterConfig);
+  const config = await adapterExampleWithCommand(repoRoot, adapterConfig, hookCommand);
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    adapter,
+    hookCommand,
+    config,
+    warnings
+  };
+}
+
 export async function checkAdapterReadiness(options) {
   const {
     repoRoot,
     target,
     adapter,
-    maxChars = DEFAULT_CONTEXT_MAX_CHARS
+    maxChars = DEFAULT_CONTEXT_MAX_CHARS,
+    settingsPath
   } = options;
 
-  const adapterConfig = ADAPTERS[adapter];
-  if (!adapterConfig) {
-    const adapterName = adapter ?? '<missing>';
-    throw new Error(`Unsupported adapter: ${adapterName}. Expected one of: ${supportedAdapterNames().join(', ')}.`);
-  }
+  const adapterConfig = adapterConfigFor(adapter);
 
   const resolvedTarget = path.resolve(target);
   const playbook = resolvePlaybookLayout(resolvedTarget);
@@ -96,6 +133,10 @@ export async function checkAdapterReadiness(options) {
     message: 'Missing playbook context produces no stdout.'
   }));
 
+  if (settingsPath) {
+    checks.push(...await settingsValidationChecks(repoRoot, adapterConfig, settingsPath));
+  }
+
   const summary = summarize(checks);
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -105,6 +146,99 @@ export async function checkAdapterReadiness(options) {
     summary,
     checks
   };
+}
+
+function adapterConfigFor(adapter) {
+  const adapterConfig = ADAPTERS[adapter];
+  if (!adapterConfig) {
+    const adapterName = adapter ?? '<missing>';
+    throw new Error(`Unsupported adapter: ${adapterName}. Expected one of: ${supportedAdapterNames().join(', ')}.`);
+  }
+  return adapterConfig;
+}
+
+function adapterHookCommand(repoRoot, adapterConfig) {
+  const hookPath = path.resolve(repoRoot, ...adapterConfig.hookPath.split('/'));
+  return `node "${hookPath.replace(/"/g, '\\"')}"`;
+}
+
+async function adapterExampleWithCommand(repoRoot, adapterConfig, hookCommand) {
+  const examplePath = path.join(repoRoot, ...adapterConfig.examplePath.split('/'));
+  const config = JSON.parse(await readFile(examplePath, 'utf8'));
+  return replaceExampleHookCommands(config, hookCommand);
+}
+
+function replaceExampleHookCommands(value, hookCommand) {
+  if (Array.isArray(value)) {
+    return value.map((item) => replaceExampleHookCommands(item, hookCommand));
+  }
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => {
+    if (key === 'command' && typeof item === 'string' && item.includes('<path-to-ai-agent-playbook>')) {
+      return [key, hookCommand];
+    }
+    return [key, replaceExampleHookCommands(item, hookCommand)];
+  }));
+}
+
+async function settingsValidationChecks(repoRoot, adapterConfig, settingsPath) {
+  const resolvedSettingsPath = path.resolve(settingsPath);
+  const checks = [];
+  const hasSettings = existsSync(resolvedSettingsPath) && await isFile(resolvedSettingsPath);
+  checks.push(check(
+    hasSettings ? 'pass' : 'fail',
+    'settings.file',
+    'settings',
+    'settings file',
+    hasSettings ? 'Found.' : 'Missing settings file.',
+    [resolvedSettingsPath]
+  ));
+  if (!hasSettings) return checks;
+
+  let settings;
+  try {
+    settings = JSON.parse(await readFile(resolvedSettingsPath, 'utf8'));
+    checks.push(check(
+      'pass',
+      'settings.json',
+      'settings',
+      'settings JSON',
+      'Parsed settings JSON.',
+      [resolvedSettingsPath]
+    ));
+  } catch (error) {
+    checks.push(check(
+      'fail',
+      'settings.json',
+      'settings',
+      'settings JSON',
+      error instanceof Error ? error.message : 'Malformed settings JSON.',
+      [resolvedSettingsPath]
+    ));
+    return checks;
+  }
+
+  const expectedCommand = adapterHookCommand(repoRoot, adapterConfig);
+  for (const eventName of ['SessionStart', 'PostCompact']) {
+    const found = settingsHasHookCommand(settings, eventName, expectedCommand);
+    checks.push(check(
+      found ? 'pass' : 'fail',
+      `settings.hook.${eventId(eventName)}.command`,
+      'settings',
+      `${eventName} settings hook command`,
+      found ? 'Settings point to the local adapter hook command.' : 'Settings do not point to the local adapter hook command.',
+      [resolvedSettingsPath]
+    ));
+  }
+
+  return checks;
+}
+
+function settingsHasHookCommand(settings, eventName, expectedCommand) {
+  const groups = settings?.hooks?.[eventName];
+  if (!Array.isArray(groups)) return false;
+  return groups.some((group) => Array.isArray(group?.hooks)
+    && group.hooks.some((hook) => hook?.type === 'command' && hook.command === expectedCommand));
 }
 
 async function fileCheck(repoRoot, relPath, id, name) {

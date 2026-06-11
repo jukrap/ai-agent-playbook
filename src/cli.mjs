@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkAdapterReadiness } from './adapter-readiness.mjs';
+import { checkAdapterReadiness, renderAdapterConfig } from './adapter-readiness.mjs';
 import {
   buildProjectContext,
   buildDoctorReminderSignal,
@@ -125,7 +125,8 @@ export async function runCli(argv, io = {}) {
         repoRoot: root,
         target: resolveTarget(cwd, targetArg),
         adapter: parsed.flags.adapter,
-        maxChars: parseMaxChars(parsed.flags['max-chars'])
+        maxChars: parseMaxChars(parsed.flags['max-chars']),
+        settingsPath: parsed.flags.settings ? path.resolve(cwd, parsed.flags.settings) : undefined
       });
       if (parsed.flags.json) {
         writeJson(stdout, result);
@@ -134,6 +135,25 @@ export async function runCli(argv, io = {}) {
         for (const check of result.checks) {
           write(stdout, `[${check.level.toUpperCase()}] ${check.name}: ${check.message}\n`);
         }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'adapter' && subcommand === 'config') {
+      const result = await renderAdapterConfig({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        adapter: parsed.flags.adapter
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Adapter config: ${result.adapter}\n`);
+        write(stdout, `Hook command: ${result.hookCommand}\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        writeJson(stdout, result.config);
       }
       return result.ok ? 0 : 1;
     }
@@ -205,7 +225,7 @@ export function parseArgs(argv) {
 }
 
 function needsValue(key) {
-  return ['profile', 'title', 'date', 'month', 'max-chars', 'adapter'].includes(key);
+  return ['profile', 'title', 'date', 'month', 'max-chars', 'adapter', 'settings'].includes(key);
 }
 
 function resolveTarget(cwd, value) {
@@ -237,5 +257,5 @@ function writeJson(stream, value) {
 }
 
 function helpText() {
-  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook doctor <target> --reminder [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
+  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook doctor <target> --reminder [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook adapter config <target> --adapter codex|claude-code [--json]\n  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
 }

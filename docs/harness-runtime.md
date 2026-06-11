@@ -13,7 +13,8 @@ node .\bin\ai-playbook.mjs doctor <target> --reminder [--json]
 node .\bin\ai-playbook.mjs guides sync <target> [--dry-run] [--force]
 node .\bin\ai-playbook.mjs guides sync <target> --check [--json]
 node .\bin\ai-playbook.mjs context <target> [--json] [--max-chars N]
-node .\bin\ai-playbook.mjs adapter check <target> --adapter codex|claude-code [--json] [--max-chars N]
+node .\bin\ai-playbook.mjs adapter config <target> --adapter codex|claude-code [--json]
+node .\bin\ai-playbook.mjs adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]
 node .\bin\ai-playbook.mjs plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
 node .\bin\ai-playbook.mjs worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
 node .\bin\ai-playbook.mjs worklog summarize <target> --month YYYY-MM [--dry-run] [--force]
@@ -67,18 +68,28 @@ Use `doctor --reminder --json` when a wrapper or script needs a small non-blocki
 
 It does not read or re-inject root `AGENTS.md` by default. Use `--json` to return `{ schemaVersion, ok, target, sources, additionalContext, warnings }`. Use `--max-chars N` to cap injected context for hook environments.
 
-## Adapter readiness
+## Adapter config and readiness
+
+`adapter config` renders copy-paste-safe local hook configuration for manual setup. It is read-only: it does not create settings files, install hooks, edit project files, or call the network.
+
+```powershell
+node .\bin\ai-playbook.mjs adapter config <target> --adapter codex --json
+node .\bin\ai-playbook.mjs adapter config <target> --adapter claude-code --json
+```
+
+Use `--json` to return `{ schemaVersion, ok, target, adapter, hookCommand, config, warnings }`. `hookCommand` and `config` use the current checkout path and do not include `<path-to-ai-agent-playbook>` placeholders. A missing `.ai-playbook/` folder is reported as a warning, not as a config rendering failure.
 
 `adapter check` is a read-only self-check before manually enabling an optional hook adapter.
 
 ```powershell
 node .\bin\ai-playbook.mjs adapter check <target> --adapter codex --json
 node .\bin\ai-playbook.mjs adapter check <target> --adapter claude-code --json
+node .\bin\ai-playbook.mjs adapter check <target> --adapter codex --settings <local-settings-path> --json
 ```
 
 The command verifies the target path, `.ai-playbook/`, non-empty core context, adapter hook files, example settings, supported hook JSON for `SessionStart` and `PostCompact`, and quiet behavior for unsupported events or missing playbook context. It does not install hooks, write project files, call the network, or require a global command.
 
-Use `--json` to return `{ schemaVersion, ok, target, adapter, summary, checks }`. Checks use the same `id`, `level`, `category`, `name`, `message`, and `paths` shape as `doctor`, so hook or setup automation can fail early without parsing human text.
+Use `--settings <path>` only after manually editing a local settings file. It adds checks for settings file existence, JSON parseability, and whether `SessionStart` and `PostCompact` point to the rendered local hook command. Use `--json` to return `{ schemaVersion, ok, target, adapter, summary, checks }`. Checks use the same `id`, `level`, `category`, `name`, `message`, and `paths` shape as `doctor`, so hook or setup automation can fail early without parsing human text.
 
 ## Lifecycle reminder hooks
 

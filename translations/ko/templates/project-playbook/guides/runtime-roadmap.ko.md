@@ -14,7 +14,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 - Durable current fact를 `CURRENT.md`, maps, runbooks, decisions로 옮깁니다.
 - Detailed history는 `worklogs/`에 두고 durable fact가 있으면 summary를 만듭니다.
 - Source playbook checkout에서 `guides sync --dry-run`을 사용해 local edit을 덮어쓰지 않고 누락된 support guide를 확인합니다.
-- Adapter나 automation이 read-only health signal을 필요로 하면 `guides sync --check --json`, `doctor --json`, `doctor --reminder --json`, `adapter check --json`을 사용합니다.
+- Adapter나 automation이 read-only health signal을 필요로 하면 `guides sync --check --diff --json`, `migrate path --json`, `doctor --json`, `doctor --reminder --json`, `adapter check --json`을 사용합니다.
 
 ## Runtime 준비 체크리스트
 
@@ -53,12 +53,13 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 ## 권장 migration 순서
 
 1. `.ai-playbook/`을 안정화하고 `doctor`를 실행합니다.
-2. `guides sync --dry-run`으로 누락 guide를 확인한 뒤, 검토한 `guides sync`를 실행합니다. Local edit을 덮어쓰기 전에는 `guides sync --check --json`으로 stale guide를 검토합니다.
-3. Hook을 켜기 전에 decision note에 hook intent를 문서화합니다.
-4. Source playbook의 `adapter check` 명령을 선택한 adapter에 대해 실행합니다.
-5. Local customization이 필요하면 hook input/output fixture test를 만듭니다.
-6. Reminder 또는 context-injection behavior만 먼저 켭니다.
-7. Opt-out 경로를 유지하고 남은 risk를 worklog에 기록합니다.
+2. 프로젝트가 아직 legacy `ai-playbook/`을 사용한다면 `migrate path --json`으로 preview하고, 폴더 이동, 참조 갱신, `.gitignore` 변경을 검토한 뒤에만 적용합니다.
+3. `guides sync --dry-run`으로 누락 guide를 확인한 뒤, 검토한 `guides sync`를 실행합니다. Local edit을 덮어쓰기 전에는 `guides sync --check --diff --json`으로 stale guide를 검토합니다.
+4. Hook을 켜기 전에 decision note에 hook intent를 문서화합니다.
+5. Source playbook의 `adapter check` 명령을 선택한 adapter에 대해 실행합니다.
+6. Local customization이 필요하면 hook input/output fixture test를 만듭니다.
+7. Reminder 또는 context-injection behavior만 먼저 켭니다.
+8. Opt-out 경로를 유지하고 남은 risk를 worklog에 기록합니다.
 
 ## Adapter 메모
 

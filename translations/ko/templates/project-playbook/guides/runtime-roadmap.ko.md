@@ -1,6 +1,6 @@
 # Runtime Roadmap Guide
 
-프로젝트에 이미 `ai-playbook/`이 있고 문서 하네스만 유지할지, 선택적 runtime hook을 더할지 판단할 때 사용합니다.
+프로젝트에 이미 `.ai-playbook/`이 있고 문서 하네스만 유지할지, 선택적 runtime hook을 더할지 판단할 때 사용합니다.
 
 기본 답은 문서 하네스 우선입니다. Runtime hook은 프로젝트가 자동 reminder나 context injection에서 이득을 보고, agent 환경이 해당 hook을 안정적으로 지원할 때만 유용합니다.
 
@@ -10,7 +10,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 
 - `doctor`를 실행하고 남은 warning을 기록합니다.
 - `START_HERE.md`, `CURRENT.md`, `questions.md`를 조정해 template prompt가 남지 않게 합니다.
-- `ai-playbook/`을 commit할지 local-only로 둘지 결정합니다.
+- `.ai-playbook/`을 commit할지 local-only로 둘지 결정합니다.
 - Durable current fact를 `CURRENT.md`, maps, runbooks, decisions로 옮깁니다.
 - Detailed history는 `worklogs/`에 두고 durable fact가 있으면 summary를 만듭니다.
 - Source playbook checkout에서 `guides sync --dry-run`을 사용해 local edit을 덮어쓰지 않고 누락된 support guide를 확인합니다.
@@ -20,7 +20,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 
 아래가 모두 참일 때만 선택적 hook을 고려합니다.
 
-- 프로젝트에 명확한 root agent entrypoint와 최신 `ai-playbook/` 파일이 있습니다.
+- 프로젝트에 명확한 root agent entrypoint와 최신 `.ai-playbook/` 파일이 있습니다.
 - 팀이 public docs와 local-only docs의 경계를 이해합니다.
 - 대상 agent가 현재 환경에서 lifecycle hook을 지원합니다.
 - 매일 쓰기 전에 hook output을 local fixture로 테스트할 수 있습니다.
@@ -51,7 +51,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 
 ## 권장 migration 순서
 
-1. `ai-playbook/`을 안정화하고 `doctor`를 실행합니다.
+1. `.ai-playbook/`을 안정화하고 `doctor`를 실행합니다.
 2. `guides sync --dry-run`으로 누락 guide를 확인한 뒤, 검토한 `guides sync`를 실행합니다. Local edit을 덮어쓰기 전에는 `guides sync --check --json`으로 stale guide를 검토합니다.
 3. Hook을 켜기 전에 decision note에 hook intent를 문서화합니다.
 4. Source playbook의 `adapter check` 명령을 선택한 adapter에 대해 실행합니다.

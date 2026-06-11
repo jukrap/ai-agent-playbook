@@ -2,7 +2,7 @@
 
 파일 staging, commit message 작성, push, PR 생성, worklog 기록 전에 이 참고 문서를 사용합니다.
 
-프로젝트가 `ai-playbook/GIT.md`를 사용한다면 짧은 정책과 이 상세 가이드를 맞춰 둡니다. Playbook 파일은 상시 규칙용이고, 이 참고 문서는 전체 절차 체크리스트용입니다.
+프로젝트가 `.ai-playbook/GIT.md`를 사용한다면 짧은 정책과 이 상세 가이드를 맞춰 둡니다. Playbook 파일은 상시 규칙용이고, 이 참고 문서는 전체 절차 체크리스트용입니다.
 
 ## Staging 전
 
@@ -155,8 +155,8 @@ git remote -v
 - 다른 사람이 별도 자료 없이 작업을 이해할 수 있게 이유와 결과를 설명합니다.
 - 사람 또는 외부 reference 이름보다 실제 기준과 판단을 우선합니다.
 - 무엇을 참고했는지보다 무엇이 잘못됐고 어떻게 정리했는지를 우선합니다.
-- 프로젝트가 playbook layout을 쓰면 상세 로그는 `ai-playbook/worklogs/YYYY-MM/`, 월간 요약은 `ai-playbook/worklogs/summaries/YYYY-MM.md`에 둡니다.
-- 오래 남길 사실은 worklog에서 `ai-playbook/CURRENT.md`, maps, runbooks, decisions로 승격합니다.
+- 프로젝트가 playbook layout을 쓰면 상세 로그는 `.ai-playbook/worklogs/YYYY-MM/`, 월간 요약은 `.ai-playbook/worklogs/summaries/YYYY-MM.md`에 둡니다.
+- 오래 남길 사실은 worklog에서 `.ai-playbook/CURRENT.md`, maps, runbooks, decisions로 승격합니다.
 
 Commit message는 미래 독자를 위한 간결한 맥락을 보존할 수 있습니다. Worklog에는 더 깊은 reasoning, blocker, 결정 이력, 확인된 원인, 검증 세부사항, 남은 리스크를 남깁니다.
 

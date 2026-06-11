@@ -19,6 +19,8 @@ export const REQUIRED_PLAYBOOK_FILES = [
 
 export const SCHEMA_VERSION = '1';
 export const DEFAULT_CONTEXT_MAX_CHARS = 12000;
+export const DEFAULT_PLAYBOOK_DIR = '.ai-playbook';
+export const LEGACY_PLAYBOOK_DIR = 'ai-playbook';
 export const CONTEXT_SOURCE_FILES = [
   'START_HERE.md',
   'CURRENT.md',
@@ -35,10 +37,10 @@ const OBSOLETE_STYLE_SKILLS = [
 ];
 
 const ROOT_BOOTSTRAP_REFS = [
-  'ai-playbook/START_HERE.md',
-  'ai-playbook/CURRENT.md',
-  'ai-playbook/SKILLS.md',
-  'ai-playbook/GIT.md'
+  'START_HERE.md',
+  'CURRENT.md',
+  'SKILLS.md',
+  'GIT.md'
 ];
 
 const CORE_TEMPLATE_MARKERS = [
@@ -90,6 +92,21 @@ export function parseMaxChars(value, optionName = '--max-chars') {
   return parsed;
 }
 
+export function resolvePlaybookLayout(target) {
+  const defaultRoot = path.join(target, DEFAULT_PLAYBOOK_DIR);
+  const legacyRoot = path.join(target, LEGACY_PLAYBOOK_DIR);
+  const dir = existsSync(defaultRoot)
+    ? DEFAULT_PLAYBOOK_DIR
+    : existsSync(legacyRoot)
+      ? LEGACY_PLAYBOOK_DIR
+      : DEFAULT_PLAYBOOK_DIR;
+  return {
+    dir,
+    root: path.join(target, dir),
+    relativeRoot: `${dir}/`
+  };
+}
+
 export async function bootstrapProject(options) {
   const {
     repoRoot,
@@ -106,7 +123,7 @@ export async function bootstrapProject(options) {
   const conflicts = [];
   const templateRoot = path.join(repoRoot, 'templates');
   const playbookSource = path.join(templateRoot, 'project-playbook');
-  const playbookTarget = path.join(target, 'ai-playbook');
+  const playbookTarget = path.join(target, DEFAULT_PLAYBOOK_DIR);
 
   await copyTree(playbookSource, playbookTarget, { dryRun, force, operations, conflicts });
 
@@ -123,7 +140,7 @@ export async function bootstrapProject(options) {
   await writeManagedFile(path.join(target, 'AGENTS.md'), agentContent, { dryRun, force, operations, conflicts });
 
   if (localOnly) {
-    await ensureGitignoreEntry(target, 'ai-playbook/', { dryRun, operations });
+    await ensureGitignoreEntry(target, `${DEFAULT_PLAYBOOK_DIR}/`, { dryRun, operations });
   }
 
   return {
@@ -138,15 +155,16 @@ export async function doctorProject(options) {
   await assertDirectory(target, 'Target repository does not exist');
 
   const checks = [];
-  const playbookRoot = path.join(target, 'ai-playbook');
+  const playbook = resolvePlaybookLayout(target);
+  const playbookRoot = playbook.root;
   const hasPlaybook = existsSync(playbookRoot);
   checks.push(result(
     hasPlaybook ? 'pass' : 'fail',
     'playbook.directory',
     'setup',
-    'ai-playbook directory',
-    hasPlaybook ? 'Found ai-playbook/.' : 'Missing ai-playbook/.',
-    ['ai-playbook/']
+    `${playbook.dir} directory`,
+    hasPlaybook ? `Found ${playbook.relativeRoot}.` : `Missing ${playbook.relativeRoot}.`,
+    [playbook.relativeRoot]
   ));
 
   for (const file of REQUIRED_PLAYBOOK_FILES) {
@@ -155,9 +173,9 @@ export async function doctorProject(options) {
       ok ? 'pass' : 'fail',
       checkIdForPlaybookFile(file),
       'setup',
-      `ai-playbook/${file}`,
+      `${playbook.relativeRoot}${file}`,
       ok ? 'Found.' : 'Missing.',
-      [`ai-playbook/${toPortablePath(file)}`]
+      [`${playbook.relativeRoot}${toPortablePath(file)}`]
     ));
   }
 
@@ -173,22 +191,23 @@ export async function doctorProject(options) {
   ));
   if (hasAgents) {
     const agentsText = await readFile(agentsFile, 'utf8');
-    const pointsToPlaybook = agentsText.includes('ai-playbook/');
+    const pointsToPlaybook = agentsText.includes(playbook.relativeRoot);
     checks.push(result(
       pointsToPlaybook ? 'pass' : 'warn',
       'root-agents.points-to-playbook',
       'bootstrap',
       'root AGENTS bootstrap',
-      pointsToPlaybook ? 'Points to ai-playbook/.' : 'Found, but does not point agents to ai-playbook/.',
+      pointsToPlaybook ? `Points to ${playbook.relativeRoot}.` : `Found, but does not point agents to ${playbook.relativeRoot}.`,
       ['AGENTS.md']
     ));
-    const missingRefs = ROOT_BOOTSTRAP_REFS.filter((ref) => !agentsText.includes(ref));
+    const expectedRefs = ROOT_BOOTSTRAP_REFS.map((ref) => `${playbook.relativeRoot}${ref}`);
+    const missingRefs = expectedRefs.filter((ref) => !agentsText.includes(ref));
     checks.push(result(
       missingRefs.length ? 'warn' : 'pass',
       'root-agents.reading-order',
       'bootstrap',
       'root AGENTS reading order',
-      missingRefs.length ? `Missing explicit references: ${missingRefs.join(', ')}` : 'References core ai-playbook files.',
+      missingRefs.length ? `Missing explicit references: ${missingRefs.join(', ')}` : `References core ${playbook.relativeRoot} files.`,
       ['AGENTS.md', ...missingRefs]
     ));
   }
@@ -199,20 +218,20 @@ export async function doctorProject(options) {
     'root-policy-files',
     'policy',
     'root policy files',
-    rootPolicyFiles.length ? `Prefer ai-playbook/SKILLS.md and ai-playbook/GIT.md; root files found: ${rootPolicyFiles.join(', ')}` : 'No root SKILLS.md or GIT.md.',
+    rootPolicyFiles.length ? `Prefer ${playbook.relativeRoot}SKILLS.md and ${playbook.relativeRoot}GIT.md; root files found: ${rootPolicyFiles.join(', ')}` : 'No root SKILLS.md or GIT.md.',
     rootPolicyFiles
   ));
 
   const gitignore = path.join(target, '.gitignore');
   const gitignoreText = existsSync(gitignore) ? await readFile(gitignore, 'utf8') : '';
-  const ignoresPlaybook = gitignoreText.split(/\r?\n/).some((line) => line.trim() === 'ai-playbook/');
+  const ignoresPlaybook = gitignoreText.split(/\r?\n/).some((line) => line.trim() === playbook.relativeRoot);
   checks.push(result(
     ignoresPlaybook ? 'pass' : 'warn',
     'playbook.commit-policy',
     'policy',
-    'ai-playbook commit policy',
+    `${playbook.relativeRoot} commit policy`,
     ignoresPlaybook ? 'Marked local-only in .gitignore.' : 'Not marked local-only; treat as committed project docs.',
-    ['.gitignore', 'ai-playbook/']
+    ['.gitignore', playbook.relativeRoot]
   ));
 
   if (hasPlaybook) {
@@ -223,9 +242,9 @@ export async function doctorProject(options) {
       'adaptation',
       'playbook adaptation',
       templateFiles.length ? `Template prompts remain in: ${templateFiles.join(', ')}` : 'Core playbook files look adapted.',
-      templateFiles.map((file) => `ai-playbook/${toPortablePath(file)}`)
+      templateFiles.map((file) => `${playbook.relativeRoot}${toPortablePath(file)}`)
     ));
-    checks.push(...await worklogSummaryFreshnessChecks(playbookRoot));
+    checks.push(...await worklogSummaryFreshnessChecks(playbookRoot, playbook.dir));
   }
 
   const markdownFiles = await walkFiles(target, (file) => file.endsWith('.md'));
@@ -274,15 +293,16 @@ export async function buildDoctorReminderSignal(options) {
   await assertDirectory(target, 'Target repository does not exist');
 
   const resolvedTarget = path.resolve(target);
-  const playbookRoot = path.join(target, 'ai-playbook');
+  const playbook = resolvePlaybookLayout(target);
+  const playbookRoot = playbook.root;
   const reminders = [];
 
   if (!existsSync(playbookRoot)) {
     reminders.push(reminder(
       'reminder.playbook.missing',
       'warn',
-      'ai-playbook/ is missing; run bootstrap or inspect the project playbook setup before relying on runtime reminders.',
-      ['ai-playbook/']
+      `${playbook.relativeRoot} is missing; run bootstrap or inspect the project playbook setup before relying on runtime reminders.`,
+      [playbook.relativeRoot]
     ));
     return {
       schemaVersion: SCHEMA_VERSION,
@@ -313,7 +333,7 @@ export async function buildDoctorReminderSignal(options) {
     ));
   }
 
-  const freshnessChecks = await worklogSummaryFreshnessChecks(playbookRoot);
+  const freshnessChecks = await worklogSummaryFreshnessChecks(playbookRoot, playbook.dir);
   for (const check of freshnessChecks.filter((item) => item.level === 'warn')) {
     reminders.push(reminder(
       `reminder.${check.id}`,
@@ -337,7 +357,8 @@ export async function checkGuides(options) {
   await assertDirectory(target, 'Target repository does not exist');
 
   const source = path.join(repoRoot, 'templates', 'project-playbook', 'guides');
-  const destination = path.join(target, 'ai-playbook', 'guides');
+  const playbook = resolvePlaybookLayout(target);
+  const destination = path.join(playbook.root, 'guides');
   const sourceGuides = await loadGuideManifest(source);
   const guides = [];
   for (const guide of sourceGuides) {
@@ -346,7 +367,7 @@ export async function checkGuides(options) {
     const sourceHash = guide.sourceHash ?? await hashFile(path.join(source, ...rel.split('/')));
     if (!existsSync(destinationFile)) {
       guides.push({
-        path: `ai-playbook/guides/${rel}`,
+        path: `${playbook.relativeRoot}guides/${rel}`,
         status: 'missing',
         sourceHash
       });
@@ -354,7 +375,7 @@ export async function checkGuides(options) {
     }
     const targetHash = await hashFile(destinationFile);
     guides.push({
-      path: `ai-playbook/guides/${rel}`,
+      path: `${playbook.relativeRoot}guides/${rel}`,
       status: targetHash === sourceHash ? 'present' : 'stale',
       sourceHash,
       targetHash
@@ -380,7 +401,8 @@ export async function buildProjectContext(options) {
   const { target, maxChars = DEFAULT_CONTEXT_MAX_CHARS } = options;
   await assertDirectory(target, 'Target repository does not exist');
 
-  const playbookRoot = path.join(target, 'ai-playbook');
+  const playbook = resolvePlaybookLayout(target);
+  const playbookRoot = playbook.root;
   const warnings = [];
   const sources = [];
   const sections = [];
@@ -391,13 +413,13 @@ export async function buildProjectContext(options) {
       target: path.resolve(target),
       sources,
       additionalContext: '',
-      warnings: [contextWarning('context.missing-playbook', 'Missing ai-playbook/.')]
+      warnings: [contextWarning('context.missing-playbook', `Missing ${playbook.relativeRoot}.`, [playbook.relativeRoot])]
     };
   }
 
   for (const file of CONTEXT_SOURCE_FILES) {
     const fullPath = path.join(playbookRoot, file);
-    const sourcePath = `ai-playbook/${file}`;
+    const sourcePath = `${playbook.relativeRoot}${file}`;
     if (!existsSync(fullPath)) {
       warnings.push(contextWarning('context.missing-source', `Missing ${sourcePath}.`, [sourcePath]));
       continue;
@@ -452,7 +474,7 @@ export async function syncGuides(options) {
   const operations = [];
   const conflicts = [];
   const source = path.join(repoRoot, 'templates', 'project-playbook', 'guides');
-  const destination = path.join(target, 'ai-playbook', 'guides');
+  const destination = path.join(resolvePlaybookLayout(target).root, 'guides');
   await copyTree(source, destination, {
     dryRun,
     force,
@@ -471,7 +493,7 @@ export async function syncGuides(options) {
 export async function createPlan(options) {
   const { target, title, date = todayIso(), dryRun = false, force = false } = options;
   requireTitle(title);
-  const file = path.join(target, 'ai-playbook', 'plans', `${date}-${slugifyTitle(title)}.md`);
+  const file = path.join(resolvePlaybookLayout(target).root, 'plans', `${date}-${slugifyTitle(title)}.md`);
   const content = `# ${title}\n\nStatus: active\nDate: ${date}\n\n## Goal\n\nDescribe the outcome this plan should produce.\n\n## Approach\n\nRecord the chosen implementation path and important constraints.\n\n## Steps\n\n- [ ] First implementation slice.\n- [ ] Verification and cleanup.\n\n## Verification\n\n- Record commands or manual checks here after they are known.\n`;
   return writeScaffold(file, content, { dryRun, force });
 }
@@ -480,7 +502,7 @@ export async function createWorklog(options) {
   const { target, title, date = todayIso(), dryRun = false, force = false } = options;
   requireTitle(title);
   const month = date.slice(0, 7);
-  const file = path.join(target, 'ai-playbook', 'worklogs', month, `${date}-${slugifyTitle(title)}.md`);
+  const file = path.join(resolvePlaybookLayout(target).root, 'worklogs', month, `${date}-${slugifyTitle(title)}.md`);
   const content = `# ${title}\n\nDate: ${date}\n\n## Context\n\nExplain what prompted the work.\n\n## Decision Path\n\nRecord the reasoning, alternatives considered, and evidence.\n\n## Changes\n\nSummarize the important changes without reducing this to a file list.\n\n## Verification\n\nRecord only checks that were actually run.\n\n## Remaining Risk\n\nCapture follow-up risk or note none after verification.\n`;
   return writeScaffold(file, content, { dryRun, force });
 }
@@ -490,14 +512,15 @@ export async function summarizeWorklogs(options) {
   if (!month || !/^\d{4}-\d{2}$/.test(month)) {
     throw new Error('Missing or invalid --month YYYY-MM.');
   }
-  const monthDir = path.join(target, 'ai-playbook', 'worklogs', month);
+  const playbook = resolvePlaybookLayout(target);
+  const monthDir = path.join(playbook.root, 'worklogs', month);
   const files = existsSync(monthDir)
     ? (await readdir(monthDir, { withFileTypes: true }))
         .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
         .map((entry) => entry.name)
         .sort()
     : [];
-  const file = path.join(target, 'ai-playbook', 'worklogs', 'summaries', `${month}.md`);
+  const file = path.join(playbook.root, 'worklogs', 'summaries', `${month}.md`);
   const lines = files.length
     ? files.map((name) => `- ${name}: summarize durable facts, decisions, verification, and follow-up risk.`)
     : ['- No worklog files found for this month yet.'];
@@ -557,7 +580,7 @@ async function findCoreTemplateFiles(playbookRoot) {
   return files;
 }
 
-async function worklogSummaryFreshnessChecks(playbookRoot) {
+async function worklogSummaryFreshnessChecks(playbookRoot, playbookDir) {
   const checks = [];
   const worklogsRoot = path.join(playbookRoot, 'worklogs');
   const summariesRoot = path.join(worklogsRoot, 'summaries');
@@ -578,8 +601,8 @@ async function worklogSummaryFreshnessChecks(playbookRoot) {
     if (worklogFiles.length === 0) continue;
 
     const summaryFile = path.join(summariesRoot, `${month}.md`);
-    const monthPath = `ai-playbook/worklogs/${month}/`;
-    const summaryPath = `ai-playbook/worklogs/summaries/${month}.md`;
+    const monthPath = `${playbookDir}/worklogs/${month}/`;
+    const summaryPath = `${playbookDir}/worklogs/summaries/${month}.md`;
     if (!existsSync(summaryFile)) {
       checks.push(result(
         'warn',
@@ -601,7 +624,7 @@ async function worklogSummaryFreshnessChecks(playbookRoot) {
         'freshness',
         `${month} worklog summary freshness`,
         `The ${month} summary is older than ${latestWorklog.name}.`,
-        [`ai-playbook/worklogs/${month}/${latestWorklog.name}`, summaryPath]
+        [`${playbookDir}/worklogs/${month}/${latestWorklog.name}`, summaryPath]
       ));
       continue;
     }

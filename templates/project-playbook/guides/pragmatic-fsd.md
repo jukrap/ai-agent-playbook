@@ -22,4 +22,4 @@ Use this guide only when the project already uses Feature-Sliced Design or a sim
 - Do not create a new slice for one-off code unless it has a clear product responsibility.
 - Prefer local consistency over textbook purity.
 
-Document durable architecture decisions in `ai-playbook/decisions/` or the project's architecture docs.
+Document durable architecture decisions in `.ai-playbook/decisions/` or the project's architecture docs.

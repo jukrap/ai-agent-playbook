@@ -22,4 +22,4 @@
 - 명확한 product responsibility가 없는 one-off code를 위해 새 slice를 만들지 않습니다.
 - textbook purity보다 local consistency를 우선합니다.
 
-Durable architecture decision은 `ai-playbook/decisions/` 또는 프로젝트 architecture docs에 기록합니다.
+Durable architecture decision은 `.ai-playbook/decisions/` 또는 프로젝트 architecture docs에 기록합니다.

@@ -13,7 +13,7 @@ Choose one project styling policy from evidence before changing visible UI.
 2. Prefer the existing design system first when shared components, variants, slots, or tokens own the UI surface.
 3. Choose the custom styling layer that the project already uses: CSS/classes, utility classes, or inline style objects.
 4. Avoid introducing a parallel styling method for one task.
-5. Document durable policy decisions in root instructions or `ai-playbook/` when the project lacks clear guidance.
+5. Document durable policy decisions in root instructions or `.ai-playbook/` when the project lacks clear guidance.
 6. Use `style-quality-review` for visual, responsive, overflow, and state review after selecting the policy.
 
 ## Reference

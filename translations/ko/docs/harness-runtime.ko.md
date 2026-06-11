@@ -98,13 +98,15 @@ Adapter hook 예시는 기본적으로 context refresh event만 켭니다.
 - `SessionStart`
 - `PostCompact`
 
-`UserPromptSubmit`과 `PostToolUse`는 opt-in reminder event입니다. Local hook 설정에서 `AI_PLAYBOOK_HOOK_EVENTS`를 comma-separated list로 설정한 경우에만 켭니다.
+`UserPromptSubmit`, `PostToolUse`, `Stop`은 opt-in reminder event입니다. Local hook 설정에서 `AI_PLAYBOOK_HOOK_EVENTS`를 comma-separated list로 설정한 경우에만 켭니다.
 
 ```powershell
-$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse'
+$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse,Stop'
 ```
 
 `UserPromptSubmit`은 prompt가 commit, push, PR, merge, worklog, doctor 같은 handoff 작업으로 보일 때만 짧은 guardrail reminder를 출력합니다. `PostToolUse`는 edit-like tool payload에서 변경 file path를 읽을 수 있을 때만 짧은 reminder를 출력합니다. 두 event 모두 `.ai-playbook/`이 없거나, event가 opt-in 되지 않았거나, 관련 intent/path가 없으면 조용히 빠집니다.
+
+`Stop`은 명시적으로 opt in했고 대상에 playbook이 있을 때만 짧은 end-of-session reminder를 출력합니다. 마지막 handoff 알림일 뿐 blocking이나 continuation mechanism이 아닙니다.
 
 이 reminder는 의도적으로 좁게 유지합니다. `doctor`를 실행하지 않고, tool call을 block하지 않고, session을 continuation하지 않고, tool output을 다시 쓰지 않고, file을 쓰지 않고, network call을 하지 않습니다.
 

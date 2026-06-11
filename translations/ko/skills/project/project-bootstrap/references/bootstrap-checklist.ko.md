@@ -1,6 +1,6 @@
 # Project Bootstrap Checklist
 
-대상 프로젝트에 root agent files 또는 `ai-playbook/` folder를 만들 때 사용합니다.
+대상 프로젝트에 root agent files 또는 `.ai-playbook/` folder를 만들 때 사용합니다.
 
 ## Discovery
 
@@ -12,12 +12,12 @@
 ## Template selection
 
 - 얇은 루트 부트스트랩: `templates/agents/global/AGENTS.md`.
-- Skill policy: `templates/project-playbook/SKILLS.md`, copied as `ai-playbook/SKILLS.md`.
-- Git policy: `templates/project-playbook/GIT.md`, copied as `ai-playbook/GIT.md`.
-- Project memory: `templates/project-playbook/`을 `ai-playbook/`로 복사합니다.
+- Skill policy: `templates/project-playbook/SKILLS.md`, copied as `.ai-playbook/SKILLS.md`.
+- Git policy: `templates/project-playbook/GIT.md`, copied as `.ai-playbook/GIT.md`.
+- Project memory: `templates/project-playbook/`을 `.ai-playbook/`로 복사합니다.
 - Stack profile: stack이 확인된 경우에만 가장 가까운 `templates/agents/profiles/**/AGENTS.md`를 추가하고, root 진입점은 짧게 유지합니다.
 
-## Minimum useful `ai-playbook/`
+## Minimum useful `.ai-playbook/`
 
 대부분의 프로젝트는 아래로 시작합니다.
 
@@ -48,6 +48,6 @@
 
 - personal absolute paths, private names, credentials, internal URLs, raw tokens, customer data, machine-local assumptions를 commit하지 않습니다.
 - reusable templates에서는 relative paths를 사용합니다.
-- `ai-playbook/`이 local-only라면 private notes를 쓰기 전에 `.gitignore`에 추가합니다.
+- `.ai-playbook/`이 local-only라면 private notes를 쓰기 전에 `.gitignore`에 추가합니다.
 - worklog를 commit한다면 scrubbed 상태이고 future maintainers에게 유용해야 합니다.
 - Bootstrap 중에는 runtime hook을 추가하지 않습니다. 문서 하네스를 먼저 안정화한 뒤, 프로젝트에 선택적 hook behavior가 필요하면 `templates/project-playbook/guides/runtime-roadmap.md`를 사용합니다.

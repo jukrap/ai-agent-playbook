@@ -1,6 +1,6 @@
 # Runtime Roadmap Guide
 
-Use this guide when a project already has `ai-playbook/` and you are deciding whether to keep the document harness only or add optional runtime hooks.
+Use this guide when a project already has `.ai-playbook/` and you are deciding whether to keep the document harness only or add optional runtime hooks.
 
 The default answer should be document harness first. Runtime hooks are useful only when the project benefits from automatic reminders or context injection and the agent environment supports those hooks reliably.
 
@@ -10,7 +10,7 @@ Before considering hooks:
 
 - Run `doctor` and record remaining warnings.
 - Adapt `START_HERE.md`, `CURRENT.md`, and `questions.md` so they no longer contain template prompts.
-- Decide whether `ai-playbook/` is committed or local-only.
+- Decide whether `.ai-playbook/` is committed or local-only.
 - Move durable current facts into `CURRENT.md`, maps, runbooks, or decisions.
 - Keep detailed history in `worklogs/` and summarize it when it contains durable facts.
 - Use `guides sync --dry-run` from the source playbook checkout to add missing support guides without overwriting local edits.
@@ -20,7 +20,7 @@ Before considering hooks:
 
 Consider optional hooks only when all of these are true:
 
-- The project has a clear root agent entrypoint and current `ai-playbook/` files.
+- The project has a clear root agent entrypoint and current `.ai-playbook/` files.
 - The team understands which docs are public and which are local-only.
 - The target agent supports lifecycle hooks in the current environment.
 - Hook output can be tested with local fixtures before enabling it in daily work.
@@ -51,7 +51,7 @@ Avoid hooks that:
 
 ## Suggested Migration Order
 
-1. Stabilize `ai-playbook/` and run `doctor`.
+1. Stabilize `.ai-playbook/` and run `doctor`.
 2. Add any missing guides with `guides sync --dry-run`, then a reviewed `guides sync`; use `guides sync --check --json` to review stale guides before overwriting local edits.
 3. Document hook intent in a decision note before enabling it.
 4. Run the source playbook's `adapter check` command for the selected adapter.

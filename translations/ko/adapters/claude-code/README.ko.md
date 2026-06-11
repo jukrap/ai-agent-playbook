@@ -2,7 +2,7 @@
 
 Claude Code는 이 저장소를 두 계층에서 사용할 수 있습니다.
 
-- project `AGENTS.md`와 `ai-playbook/`에 있는 portable document harness;
+- project `AGENTS.md`와 `.ai-playbook/`에 있는 portable document harness;
 - 같은 local CLI를 호출하는 선택적 Claude Code hook 또는 skill.
 
 기본 경로는 여전히 문서와 CLI 하네스입니다. 프로젝트가 이 playbook을 사용하기 위해 Claude Code hook, plugin, user-level settings에 의존하면 안 됩니다.
@@ -24,10 +24,10 @@ node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --j
 
 `context`는 아래 project playbook 파일만 읽습니다.
 
-- `ai-playbook/START_HERE.md`
-- `ai-playbook/CURRENT.md`
-- `ai-playbook/SKILLS.md`
-- `ai-playbook/GIT.md`
+- `.ai-playbook/START_HERE.md`
+- `.ai-playbook/CURRENT.md`
+- `.ai-playbook/SKILLS.md`
+- `.ai-playbook/GIT.md`
 
 기본적으로 root `AGENTS.md`를 다시 주입하지 않습니다.
 
@@ -38,7 +38,7 @@ node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --j
 - `SessionStart`
 - `PostCompact`
 
-Hook은 스스로 설치되지 않고, project file을 편집하지 않고, tool output을 다시 쓰지 않고, network call을 하지 않습니다. `ai-playbook/`이 없거나 지원되지 않거나 읽을 수 없으면 stdout 없이 성공 종료합니다.
+Hook은 스스로 설치되지 않고, project file을 편집하지 않고, tool output을 다시 쓰지 않고, network call을 하지 않습니다. `.ai-playbook/`이 없거나 지원되지 않거나 읽을 수 없으면 stdout 없이 성공 종료합니다.
 
 기본적으로 hook은 `SessionStart`와 `PostCompact`만 처리합니다. 좁은 lifecycle reminder를 실험하려면 local에서 명시적으로 opt in합니다.
 
@@ -64,4 +64,4 @@ Claude Code는 project, personal, plugin 위치에서 skill을 읽을 수 있습
 
 ## 원본 규칙
 
-Project policy는 `ai-playbook/`에 두고, 재사용 가능한 source content는 이 저장소에 둡니다. Claude Code hook과 skill은 선택적 runtime 편의 기능이며 project memory의 유일한 위치가 아닙니다.
+Project policy는 `.ai-playbook/`에 두고, 재사용 가능한 source content는 이 저장소에 둡니다. Claude Code hook과 skill은 선택적 runtime 편의 기능이며 project memory의 유일한 위치가 아닙니다.

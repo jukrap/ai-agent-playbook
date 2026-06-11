@@ -2,7 +2,7 @@
 
 This roadmap describes how to strengthen the current document and CLI harness while adding optional runtime hook layers as thin adapters.
 
-The default path stays simple: install skills, bootstrap `ai-playbook/` when a target project needs it, run `doctor`, create plans and worklogs in predictable locations, and keep project rules explicit in files. Runtime hooks are an optional extension for environments that support them.
+The default path stays simple: install skills, bootstrap `.ai-playbook/` when a target project needs it, run `doctor`, create plans and worklogs in predictable locations, and keep project rules explicit in files. Runtime hooks are an optional extension for environments that support them.
 
 ## Goals
 
@@ -13,7 +13,7 @@ The default path stays simple: install skills, bootstrap `ai-playbook/` when a t
 
 ## Current Strengths
 
-- `bootstrap` creates a thin root `AGENTS.md` and a project-memory `ai-playbook/` folder without assuming a stack.
+- `bootstrap` creates a thin root `AGENTS.md` and a project-memory `.ai-playbook/` folder without assuming a stack.
 - `doctor` already checks minimum layout, root policy placement, local-only policy, template adaptation, worklog summary freshness, obsolete skill references, and fixed local paths.
 - `guides sync` adds missing guide templates without replacing local edits by default, and `guides sync --check --json` reports stale guides with source and target hashes.
 - `plan`, `worklog`, and `worklog summarize` keep active plans, detailed history, and monthly summaries in predictable paths.
@@ -29,7 +29,7 @@ Keep improving these areas before making hooks part of any default install path:
 - Keep `bootstrap` dry-run first for existing projects and make conflict output easy to copy into a migration note.
 - Keep `--force` scoped to reviewed overwrites; do not use broad force as a migration strategy.
 - Maintain the guide manifest so `guides sync --check --json` can report stale guides without overwriting project-specific edits.
-- Make migration from existing agent docs preserve history, classify current rules, and record remaining uncertainty in `ai-playbook/questions.md`.
+- Make migration from existing agent docs preserve history, classify current rules, and record remaining uncertainty in `.ai-playbook/questions.md`.
 - Treat `worklog summarize` as a promotion checkpoint: durable facts belong in `CURRENT.md`, maps, runbooks, or decisions, not only in history.
 
 ## Optional Runtime Layers
@@ -37,7 +37,7 @@ Keep improving these areas before making hooks part of any default install path:
 Runtime hooks should be designed as thin adapters over the document harness:
 
 - **Plugin shell:** an opt-in package or adapter folder, never part of the default installer until the project has a stable contract.
-- **Session hooks:** `SessionStart` may load compact project reminders from `ai-playbook/` when native agent context is not enough. `UserPromptSubmit` stays opt-in and emits only short guardrail reminders for handoff-like prompts.
+- **Session hooks:** `SessionStart` may load compact project reminders from `.ai-playbook/` when native agent context is not enough. `UserPromptSubmit` stays opt-in and emits only short guardrail reminders for handoff-like prompts.
 - **Post-edit hooks:** `PostToolUse` stays opt-in and may inject file-specific reminders after successful edit-like operations when changed paths can be read. It should not rewrite tool output or edit files.
 - **Compaction hooks:** `PostCompact` may reintroduce compact playbook context after context compaction.
 - **Rules loader:** load portable rule sources from project playbook files and optional rule folders. Do not re-inject `AGENTS.md` by default when the agent already loads it natively.
@@ -52,7 +52,7 @@ Runtime hooks should be designed as thin adapters over the document harness:
 - Automatic checks can be noisy, slow, or run from the wrong working directory.
 - Plugin installers may change user configuration, which is a higher-risk operation than copying project templates.
 - Public docs can accidentally hard-code one external harness model instead of preserving portable playbook principles.
-- Runtime state can hide decisions that should remain visible in `ai-playbook/`.
+- Runtime state can hide decisions that should remain visible in `.ai-playbook/`.
 
 ## Boundary
 
@@ -81,7 +81,7 @@ The first adapter proof of concept is intentionally read-only:
 
 - `adapters/codex/hook.mjs` emits `hookSpecificOutput.additionalContext` for `SessionStart` and `PostCompact`.
 - `adapters/claude-code/hook.mjs` uses the same core context builder for Claude Code's hook JSON contract.
-- Both wrappers call the shared `context` core, never edit project files, never call the network, and stay silent when `ai-playbook/` is missing.
+- Both wrappers call the shared `context` core, never edit project files, never call the network, and stay silent when `.ai-playbook/` is missing.
 - Example hook settings live beside each adapter and are not installed automatically.
 - `adapter check` verifies the read-only wrapper, example settings, supported hook events, and quiet unsupported paths before a user enables an adapter manually.
 - `AI_PLAYBOOK_HOOK_EVENTS` can opt in `UserPromptSubmit` and `PostToolUse` reminders. They stay quiet for unrelated prompts, missing playbooks, unsupported payloads, and non-edit tools.

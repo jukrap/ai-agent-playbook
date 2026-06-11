@@ -1,6 +1,6 @@
 # Git, 커밋, PR 정책
 
-이 파일은 `ai-playbook/` 안에 두는 portable project-level Git policy입니다. repository-specific branch name, remote, issue number, protected-branch rule은 프로젝트에 맞게 조정하기 전까지 template에 넣지 않습니다.
+이 파일은 `.ai-playbook/` 안에 두는 portable project-level Git policy입니다. repository-specific branch name, remote, issue number, protected-branch rule은 프로젝트에 맞게 조정하기 전까지 template에 넣지 않습니다.
 
 이 문서는 짧은 정책입니다. 미래 독자를 위한 자세한 commit, PR, worklog guidance가 필요하면 `guides/commit-push-worklog.md` 같은 상세 문서를 함께 사용합니다.
 

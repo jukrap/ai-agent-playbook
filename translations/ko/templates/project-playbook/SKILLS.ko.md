@@ -19,9 +19,9 @@
 
 반복되는 저장소 관심사에는 설치된 playbook 스킬을 사용합니다.
 
-- `project-bootstrap`: 얇은 루트 에이전트 부트스트랩과 `ai-playbook/` 설정.
+- `project-bootstrap`: 얇은 루트 에이전트 부트스트랩과 `.ai-playbook/` 설정.
 - `repo-onboarding`: 낯설거나 오래된 저장소 진입.
-- `project-doc-system`: `AGENTS.md`, `ai-playbook/`, maps, runbooks, plans, worklogs 정리.
+- `project-doc-system`: `AGENTS.md`, `.ai-playbook/`, maps, runbooks, plans, worklogs 정리.
 - `api-contract-boundary`: API 연동 변경 또는 리뷰.
 - `ui-style-policy`: UI 스타일 정책 선택 또는 문서화.
 - `style-quality-review`: 재설계 없이 눈에 보이는 UI 스타일 리뷰.
@@ -41,12 +41,12 @@
 
 다른 에이전트 런타임의 hook, slash command, plugin environment variable이 여기서 동작한다고 가정하지 않습니다. 다른 에이전트 기준으로 작성된 스킬이나 도구라면 의도를 지원되는 명령과 저장소 로컬 규칙으로 옮깁니다.
 
-이 프로젝트가 나중에 runtime hook을 켜더라도 선택 사항으로 유지하고 문서화합니다. Hook은 reminder나 context를 주입할 수 있지만 durable rule은 여전히 `AGENTS.md`, `ai-playbook/`, project docs에 있어야 합니다.
+이 프로젝트가 나중에 runtime hook을 켜더라도 선택 사항으로 유지하고 문서화합니다. Hook은 reminder나 context를 주입할 수 있지만 durable rule은 여전히 `AGENTS.md`, `.ai-playbook/`, project docs에 있어야 합니다.
 
 ## Skill 대신 project docs에 써야 할 때
 
-- `AGENTS.md`에는 루트 진입점만 두고, 상시 skill 정책은 이 파일에, 더 긴 프로젝트 지침은 `ai-playbook/` 문서에 둡니다.
+- `AGENTS.md`에는 루트 진입점만 두고, 상시 skill 정책은 이 파일에, 더 긴 프로젝트 지침은 `.ai-playbook/` 문서에 둡니다.
 - 제품 범위는 제품/명세 문서에 둡니다.
 - 마일스톤은 계획 문서에 둡니다.
-- 프로젝트 메모리는 `ai-playbook/` 아래에 둡니다.
+- 프로젝트 메모리는 `.ai-playbook/` 아래에 둡니다.
 - 프로젝트를 넘어 재사용되는 동작일 때만 스킬을 만들거나 설치합니다.

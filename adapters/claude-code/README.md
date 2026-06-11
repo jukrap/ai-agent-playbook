@@ -2,7 +2,7 @@
 
 Claude Code can use this repository at two levels:
 
-- the portable document harness in project `AGENTS.md` and `ai-playbook/`;
+- the portable document harness in project `AGENTS.md` and `.ai-playbook/`;
 - optional Claude Code hooks or skills that call the same local CLI.
 
 The default path is still the document and CLI harness. Do not require Claude Code hooks, plugins, or user-level settings for a project to use this playbook.
@@ -24,10 +24,10 @@ Use `doctor --reminder --json` only as a small read-only local signal for wrappe
 
 `context` reads only these project playbook files:
 
-- `ai-playbook/START_HERE.md`
-- `ai-playbook/CURRENT.md`
-- `ai-playbook/SKILLS.md`
-- `ai-playbook/GIT.md`
+- `.ai-playbook/START_HERE.md`
+- `.ai-playbook/CURRENT.md`
+- `.ai-playbook/SKILLS.md`
+- `.ai-playbook/GIT.md`
 
 It does not re-inject root `AGENTS.md` by default.
 
@@ -38,7 +38,7 @@ It does not re-inject root `AGENTS.md` by default.
 - `SessionStart`
 - `PostCompact`
 
-The hook does not install itself, edit project files, rewrite tool output, or call the network. If `ai-playbook/` is missing, unsupported, or unreadable, it exits successfully with no stdout.
+The hook does not install itself, edit project files, rewrite tool output, or call the network. If `.ai-playbook/` is missing, unsupported, or unreadable, it exits successfully with no stdout.
 
 By default, the hook only handles `SessionStart` and `PostCompact`. To experiment with narrow lifecycle reminders, opt in locally:
 
@@ -64,4 +64,4 @@ Claude Code can load skills from project, personal, or plugin locations. This re
 
 ## Source rule
 
-Keep project policy in `ai-playbook/` and reusable source content in this repository. Treat Claude Code hooks and skills as optional runtime conveniences, not the only place where project memory exists.
+Keep project policy in `.ai-playbook/` and reusable source content in this repository. Treat Claude Code hooks and skills as optional runtime conveniences, not the only place where project memory exists.

@@ -13,7 +13,7 @@ Use process skills first when they apply, then use the smallest relevant playboo
 ## Recommended pairings
 
 - New repository or unclear codebase: process planning plus `project-bootstrap`, `repo-onboarding`, or `node .\bin\ai-playbook.mjs bootstrap <target> --dry-run`.
-- Feature planning: process planning plus `project-doc-system` when project docs or `ai-playbook/` need structure.
+- Feature planning: process planning plus `project-doc-system` when project docs or `.ai-playbook/` need structure.
 - API integration: implementation process plus `api-contract-boundary`.
 - UI styling policy: implementation or review process plus `ui-style-policy`.
 - UI polishing: review or verification process plus `style-quality-review`.
@@ -42,4 +42,4 @@ If a process rule and a project-local rule disagree, follow the higher-priority 
 - Do not copy machine-local custom instructions into public docs without removing paths, identities, and private workflow assumptions.
 - Do not assume another agent runtime's hooks, slash commands, or plugin environment variables are available.
 - Do not treat this repository's CLI as a replacement for planning, TDD, debugging, or verification process skills. It only scaffolds and checks project memory.
-- Do not make hook-based behavior mandatory when the same policy can live clearly in `AGENTS.md` or `ai-playbook/`.
+- Do not make hook-based behavior mandatory when the same policy can live clearly in `AGENTS.md` or `.ai-playbook/`.

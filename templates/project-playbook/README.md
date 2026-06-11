@@ -1,6 +1,6 @@
 # Project Playbook Template
 
-Copy this folder into a target repository as `ai-playbook/`.
+Copy this folder into a target repository as `.ai-playbook/`.
 
 The folder is project memory for agents and maintainers. It keeps current truth, maps, runbooks, plans, decisions, and worklogs separate so a future session can resume without rereading the whole repository.
 
@@ -30,8 +30,8 @@ When docs disagree, prefer:
 
 1. Latest user instruction.
 2. Actual code, configuration, and command output.
-3. Root `AGENTS.md`, `ai-playbook/SKILLS.md`, and `ai-playbook/GIT.md`.
-4. `ai-playbook/CURRENT.md`, maps, runbooks, and decisions.
+3. Root `AGENTS.md`, `.ai-playbook/SKILLS.md`, and `.ai-playbook/GIT.md`.
+4. `.ai-playbook/CURRENT.md`, maps, runbooks, and decisions.
 5. Worklogs and archived notes.
 
 Worklogs are history. Promote facts that remain current into `CURRENT.md`, `maps/`, `runbooks/`, or `decisions/`.
@@ -52,6 +52,6 @@ Do not add runtime hooks before this document harness works on its own. If the p
 
 ## Commit policy
 
-Decide per project whether `ai-playbook/` is committed or local-only. If local-only, add it to `.gitignore` before writing project-specific notes.
+Decide per project whether `.ai-playbook/` is committed or local-only. If local-only, add it to `.gitignore` before writing project-specific notes.
 
 Do not store credentials, private URLs, customer data, personal paths, raw logs with sensitive values, or machine-specific secrets here.

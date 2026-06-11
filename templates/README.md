@@ -1,6 +1,6 @@
 # Templates
 
-Templates are copyable project files, not installable skills. The normal target-project folder is `ai-playbook/`.
+Templates are copyable project files, not installable skills. The normal target-project folder is `.ai-playbook/`.
 
 Use them when starting a new repository, cleaning up project agent docs, or making agent behavior portable across computers.
 
@@ -9,7 +9,7 @@ Use them when starting a new repository, cleaning up project agent docs, or maki
 - `agents/`: root instruction templates and stack profiles.
 - `agents/global/`: thin project-root `AGENTS.md` bootstrap. Despite the folder name, this is copied into target repositories; it is not Codex home-global guidance.
 - `codex-home/`: optional personal `~/.codex/AGENTS.md` starting point for Codex users.
-- `project-playbook/`: the canonical project-memory bundle to copy into a target project as `ai-playbook/`.
+- `project-playbook/`: the canonical project-memory bundle to copy into a target project as `.ai-playbook/`.
 - Runtime CLI files live at the repository root under `bin/`, `src/`, and `test/`.
 
 ## How agents discover templates
@@ -32,9 +32,9 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 
 ## Recommended starting points
 
-- Unknown or mixed project: copy `agents/global/AGENTS.md` as the root bootstrap; keep skill and Git policy inside `project-playbook/` as `ai-playbook/SKILLS.md` and `ai-playbook/GIT.md`.
+- Unknown or mixed project: copy `agents/global/AGENTS.md` as the root bootstrap; keep skill and Git policy inside `project-playbook/` as `.ai-playbook/SKILLS.md` and `.ai-playbook/GIT.md`.
 - Personal Codex defaults: adapt `codex-home/AGENTS.md` into your Codex home directory, then keep repository rules in project `AGENTS.md` files.
-- Any project that needs durable agent memory: bootstrap or copy `project-playbook/` as `ai-playbook/`.
+- Any project that needs durable agent memory: bootstrap or copy `project-playbook/` as `.ai-playbook/`.
 - React/Vite/FSD project: start with `agents/global/AGENTS.md` plus `agents/profiles/react-vite-fsd/AGENTS.md`.
 - Expo/React Native project: start with `agents/global/AGENTS.md` plus `agents/profiles/react-native-expo/AGENTS.md`.
 - Legacy project: start with `agents/global/AGENTS.md`, the closest `agents/profiles/legacy-*` file, and `project-playbook/guides/legacy-mode.md`.
@@ -46,4 +46,4 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 
 Always reduce templates to the target repository. Remove stack, command, workflow, or policy rules that the project does not actually use.
 
-Do not hand-create random markdown files at the repository root when the content belongs in `ai-playbook/maps/`, `ai-playbook/runbooks/`, `ai-playbook/decisions/`, `ai-playbook/plans/`, or `ai-playbook/worklogs/`.
+Do not hand-create random markdown files at the repository root when the content belongs in `.ai-playbook/maps/`, `.ai-playbook/runbooks/`, `.ai-playbook/decisions/`, `.ai-playbook/plans/`, or `.ai-playbook/worklogs/`.

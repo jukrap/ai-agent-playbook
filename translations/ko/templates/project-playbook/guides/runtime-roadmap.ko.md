@@ -39,6 +39,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 - 편집된 file path를 관련 project guide나 rule file과 매칭합니다.
 - Lifecycle event가 명시적으로 켜진 경우에만 commit, push, PR, merge, worklog, doctor-like prompt에 reminder를 냅니다.
 - Handoff 전 `doctor` 실행을 상기하거나, 작은 local signal에는 `doctor --reminder --json`을 사용합니다.
+- Blocking이나 continuation 없이 짧은 opt-in `Stop` handoff reminder를 제공합니다.
 - Context compaction 뒤 deduplication state를 비웁니다.
 
 피해야 할 hook:
@@ -81,10 +82,10 @@ node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --j
 추가 reminder event는 local hook 설정에서만 켭니다.
 
 ```powershell
-$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse'
+$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse,Stop'
 ```
 
-이 event는 관련 없는 prompt, missing playbook, unsupported payload, non-edit tool에서 조용히 빠져야 합니다.
+이 event는 관련 없는 prompt, missing playbook, unsupported payload, non-edit tool에서 조용히 빠져야 합니다. `Stop`은 handoff reminder일 뿐이며 block, continuation 요청, doctor 실행, file write, network call을 하지 않아야 합니다.
 
 ## 완료 기준
 

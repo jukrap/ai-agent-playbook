@@ -39,6 +39,7 @@ Good first hook responsibilities are small:
 - match edited file paths to relevant project guides or rule files;
 - remind on commit, push, PR, merge, worklog, or doctor-like prompts only when the lifecycle event is explicitly enabled;
 - remind the agent to run `doctor` before handoff, or use `doctor --reminder --json` for a small local signal;
+- provide a short opt-in `Stop` handoff reminder without blocking or continuation;
 - clear deduplication state after context compaction.
 
 Avoid hooks that:
@@ -81,10 +82,10 @@ node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --j
 Enable extra reminder events only in a local hook setting:
 
 ```powershell
-$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse'
+$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse,Stop'
 ```
 
-These events should stay quiet for unrelated prompts, missing playbooks, unsupported payloads, and non-edit tools.
+These events should stay quiet for unrelated prompts, missing playbooks, unsupported payloads, and non-edit tools. `Stop` is only a handoff reminder; it should not block, request continuation, run doctor, write files, or call the network.
 
 ## Done Criteria
 

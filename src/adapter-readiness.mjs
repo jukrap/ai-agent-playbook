@@ -125,6 +125,11 @@ export async function checkAdapterReadiness(options) {
     name: 'unsupported event quiet path',
     message: 'Unsupported hook events produce no stdout.'
   }));
+  checks.push(await quietHookCheck(adapterConfig.runner, 'Stop', resolvedTarget, maxChars, {
+    id: 'hook.stop-silent-by-default',
+    name: 'Stop hook quiet by default',
+    message: 'Stop produces no stdout unless explicitly opted in.'
+  }));
 
   const missingPlaybookTarget = hasPlaybook ? playbookRoot : resolvedTarget;
   checks.push(await quietHookCheck(adapterConfig.runner, 'SessionStart', missingPlaybookTarget, maxChars, {

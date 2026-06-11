@@ -88,6 +88,7 @@ The first adapter proof of concept is intentionally read-only:
 - `adapter check --settings <path>` validates a manually edited local settings file without writing files.
 - `AI_PLAYBOOK_HOOK_EVENTS` can opt in `UserPromptSubmit`, `PostToolUse`, and `Stop` reminders. They stay quiet for unrelated prompts, missing playbooks, unsupported payloads, and non-edit tools.
 - `Stop` is a non-blocking handoff reminder only; it does not request continuation or run doctor.
+- Adapter-local package shell entrypoints expose the same hook, config, and check helpers for packaging smoke tests, but they are not installed automatically.
 
 ## Next Intermediate Steps
 

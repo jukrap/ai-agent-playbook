@@ -22,6 +22,16 @@ node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --j
 node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --settings <local-settings-path> --json
 ```
 
+선택적 adapter-local package shell은 Claude Code adapter를 고정한 같은 hook, config, check 경로를 노출합니다.
+
+```powershell
+node .\adapters\claude-code\package.mjs config <target-repo> --json
+node .\adapters\claude-code\package.mjs check <target-repo> --json
+node .\adapters\claude-code\package.mjs hook
+```
+
+이 shell은 자동 설치되지 않고 settings를 쓰지 않으며 packaging 편의 기능일 뿐입니다. 기본 문서 하네스에는 main CLI를 우선 사용합니다.
+
 `doctor --reminder --json`은 wrapper나 script가 작은 read-only local signal만 필요할 때 사용합니다. Hook 예시는 doctor를 자동 실행하지 않습니다.
 
 `context`는 아래 project playbook 파일만 읽습니다.

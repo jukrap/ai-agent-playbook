@@ -91,6 +91,21 @@ node .\bin\ai-playbook.mjs adapter check <target> --adapter codex --settings <lo
 
 `--settings <path>`는 local settings file을 수동으로 편집한 뒤에만 사용합니다. Settings file 존재 여부, JSON parsing 가능 여부, `SessionStart`와 `PostCompact`가 렌더링된 local hook command를 가리키는지 확인합니다. `--json`을 사용하면 `{ schemaVersion, ok, target, adapter, summary, checks }`를 반환합니다. Check 항목은 `doctor`와 같은 `id`, `level`, `category`, `name`, `message`, `paths` 구조를 사용하므로 hook 또는 setup automation이 사람이 읽는 text를 parsing하지 않고도 일찍 실패할 수 있습니다.
 
+## Adapter package shell
+
+Adapter package shell entrypoint는 같은 hook, config, check helper를 감싸는 선택적 local wrapper입니다. 자동 설치되지 않고 local settings를 바꾸지 않습니다.
+
+```powershell
+node .\adapters\codex\package.mjs config <target> --json
+node .\adapters\codex\package.mjs check <target> --json
+node .\adapters\codex\package.mjs hook
+node .\adapters\claude-code\package.mjs config <target> --json
+node .\adapters\claude-code\package.mjs check <target> --json
+node .\adapters\claude-code\package.mjs hook
+```
+
+안정적인 기본 표면은 main CLI입니다. Package shell은 adapter-local experiment와 packaging smoke test를 위한 편의 기능입니다.
+
 ## Lifecycle reminder hook
 
 Adapter hook 예시는 기본적으로 context refresh event만 켭니다.

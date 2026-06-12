@@ -134,6 +134,9 @@ node .\bin\ai-playbook.mjs doctor <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
 node .\bin\ai-playbook.mjs context <target-project> --json
+node .\bin\ai-playbook.mjs rules check <target-project> --path src/example.ts --json
+node .\bin\ai-playbook.mjs diagnostics check <target-project> --json
+node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
 node .\bin\ai-playbook.mjs adapter config <target-project> --adapter codex --json
 node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
 node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --settings <local-settings-path> --json
@@ -146,6 +149,8 @@ Use `guides sync` for projects that already have `.ai-playbook/` and only need m
 During the path transition, these runtime commands also support an existing legacy `ai-playbook/` folder when `.ai-playbook/` is absent. New bootstrap output uses `.ai-playbook/`. Use `migrate path --json` to preview a legacy folder move and reference updates, then add `--apply` only after reviewing the preview.
 
 The optional adapter hook examples use the `context` command internally. They are read-only and must be enabled manually from `adapters/`. Use `adapter config` to render placeholder-free local settings, then use `adapter check --settings <local-settings-path>` after manually editing a local settings file.
+
+The operator diagnostics commands are also read-only. `rules check` shows which portable rule files apply to a path, `diagnostics check` lists likely verification commands without running them, and `qa tui-check` checks terminal captures for width overflow and CJK layout risk.
 
 Create plan and worklog files through the CLI so paths stay predictable:
 

@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkAdapterReadiness, renderAdapterConfig } from './adapter-readiness.mjs';
+import { checkDiagnostics, checkRules, checkTuiCapture } from './operator-diagnostics.mjs';
 import {
   buildProjectContext,
   buildDoctorReminderSignal,
@@ -147,6 +148,60 @@ export async function runCli(argv, io = {}) {
       return result.ok ? 0 : 1;
     }
 
+    if (command === 'rules' && subcommand === 'check') {
+      const result = await checkRules({
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Rule matches: ${result.summary.applies}/${result.summary.total}\n`);
+        for (const rule of result.rules) {
+          write(stdout, `[${rule.applies ? 'MATCH' : 'SKIP'}] ${rule.path} (${rule.reason})\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'diagnostics' && subcommand === 'check') {
+      const result = await checkDiagnostics({ target: resolveTarget(cwd, targetArg) });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Diagnostics commands: ${result.summary.commands}\n`);
+        for (const commandCandidate of result.commands) {
+          write(stdout, `- ${commandCandidate.command} (${commandCandidate.source})\n`);
+        }
+        for (const check of result.checks.filter((item) => item.level !== 'pass')) {
+          write(stdout, `[${check.level.toUpperCase()}] ${check.name}: ${check.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'qa' && subcommand === 'tui-check') {
+      const result = await checkTuiCapture({
+        file: resolveTarget(cwd, targetArg),
+        cols: parseColumns(parsed.flags.cols)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `TUI width: max ${result.maxWidth}/${result.expectedColumns}\n`);
+        for (const line of result.overflowLines) {
+          write(stdout, `[OVERFLOW] line ${line.line}: ${line.width} columns (+${line.overflowBy})\n`);
+        }
+        if (result.borderMisaligned) {
+          write(stdout, '[WARN] box-drawing borders do not match expected columns.\n');
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
     if (command === 'adapter' && subcommand === 'check') {
       const result = await checkAdapterReadiness({
         repoRoot: root,
@@ -252,7 +307,7 @@ export function parseArgs(argv) {
 }
 
 function needsValue(key) {
-  return ['profile', 'title', 'date', 'month', 'max-chars', 'adapter', 'settings'].includes(key);
+  return ['profile', 'title', 'date', 'month', 'max-chars', 'adapter', 'settings', 'path', 'cols'].includes(key);
 }
 
 function resolveTarget(cwd, value) {
@@ -283,6 +338,15 @@ function writeJson(stream, value) {
   write(stream, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+function parseColumns(value) {
+  if (value === undefined || value === false) return 80;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error('Invalid --cols; expected a positive integer.');
+  }
+  return parsed;
+}
+
 function helpText() {
-  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook doctor <target> --reminder [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--diff] [--json]\n  ai-playbook migrate path <target> [--apply] [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook adapter config <target> --adapter codex|claude-code [--json]\n  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
+  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook doctor <target> --reminder [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--diff] [--json]\n  ai-playbook migrate path <target> [--apply] [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook rules check <target> [--path <file>] [--json]\n  ai-playbook diagnostics check <target> [--json]\n  ai-playbook qa tui-check <capture-file> [--cols N] [--json]\n  ai-playbook adapter config <target> --adapter codex|claude-code [--json]\n  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
 }

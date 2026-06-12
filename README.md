@@ -77,6 +77,7 @@ node .\bin\ai-playbook.mjs doctor <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
 node .\bin\ai-playbook.mjs context <target-project> --json
 node .\bin\ai-playbook.mjs migrate path <target-project> --json
+node .\bin\ai-playbook.mjs operator check <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs rules check <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs diagnostics check <target-project> --json
 node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
@@ -90,7 +91,7 @@ Existing projects that already have `ai-playbook/` continue to work as a legacy 
 
 Runtime hooks and plugins are not part of the default install path. Treat them as optional extensions after the document and CLI harness are stable. The Codex and Claude Code adapters include read-only context hook examples, a read-only `adapter config` renderer, and a read-only `adapter check` self-check, but they are not installed automatically. See [Runtime roadmap](docs/runtime-roadmap.md).
 
-Operator diagnostics such as `rules check`, `diagnostics check`, and `qa tui-check` are read-only. Use them to inspect rule matching, local verification command candidates, and terminal/CJK layout evidence before adding stronger runtime automation. `diagnostics check` formats package scripts with the detected lockfile package manager.
+Operator diagnostics such as `operator check`, `rules check`, `diagnostics check`, and `qa tui-check` are read-only. Use `operator check` as the combined human checkpoint for doctor, guide freshness, local verification command candidates, and rule matching before adding stronger runtime automation. `diagnostics check` formats package scripts with the detected lockfile package manager.
 
 ## Everyday Flow
 

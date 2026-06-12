@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkAdapterReadiness, renderAdapterConfig } from './adapter-readiness.mjs';
-import { checkDiagnostics, checkRules, checkTuiCapture } from './operator-diagnostics.mjs';
+import { checkDiagnostics, checkOperator, checkRules, checkTuiCapture } from './operator-diagnostics.mjs';
 import {
   buildProjectContext,
   buildDoctorReminderSignal,
@@ -143,6 +143,24 @@ export async function runCli(argv, io = {}) {
         }
         if (!parsed.flags.apply && result.operations.length > 0) {
           write(stdout, 'Re-run with --apply to perform this migration.\n');
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'operator' && subcommand === 'check') {
+      const result = await checkOperator({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        includeDiff: Boolean(parsed.flags.diff)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Operator check: ${result.ok ? 'ok' : 'needs attention'}\n`);
+        for (const check of result.checks) {
+          write(stdout, `[${check.level.toUpperCase()}] ${check.name}: ${check.message}\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -348,5 +366,5 @@ function parseColumns(value) {
 }
 
 function helpText() {
-  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook doctor <target> --reminder [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--diff] [--json]\n  ai-playbook migrate path <target> [--apply] [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook rules check <target> [--path <file>] [--json]\n  ai-playbook diagnostics check <target> [--json]\n  ai-playbook qa tui-check <capture-file> [--cols N] [--json]\n  ai-playbook adapter config <target> --adapter codex|claude-code [--json]\n  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
+  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook doctor <target> --reminder [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--diff] [--json]\n  ai-playbook migrate path <target> [--apply] [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook operator check <target> [--path <file>] [--diff] [--json]\n  ai-playbook rules check <target> [--path <file>] [--json]\n  ai-playbook diagnostics check <target> [--json]\n  ai-playbook qa tui-check <capture-file> [--cols N] [--json]\n  ai-playbook adapter config <target> --adapter codex|claude-code [--json]\n  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
 }

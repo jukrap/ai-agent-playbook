@@ -15,6 +15,7 @@ node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
 node .\bin\ai-playbook.mjs migrate path <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo>
+node .\bin\ai-playbook.mjs operator check <target-repo> --path src/example.ts --json
 node .\bin\ai-playbook.mjs rules check <target-repo> --path src/example.ts --json
 node .\bin\ai-playbook.mjs diagnostics check <target-repo> --json
 node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
@@ -48,6 +49,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo> --strict
 
 Agent에게 더 강한 evidence가 필요하지만 hook까지는 과할 때 read-only diagnostics를 사용합니다.
 
+- `operator check`는 doctor, guide freshness, diagnostics, rule matching을 하나의 read-only human checkpoint로 묶습니다.
 - `rules check`는 path에 적용되는 project rule file을 보여줍니다. Root `AGENTS.md`는 일반 entrypoint로 유지하고, injected context로 중복하지 않습니다.
 - `diagnostics check`는 project metadata에서 local verification command 후보를 읽되 실행하지 않고, package script를 렌더링할 때 lockfile에서 감지한 package manager를 사용합니다.
 - `qa tui-check`는 terminal capture에서 width overflow, 단순 border misalignment, ANSI 존재 여부, CJK wide-character column을 확인합니다.

@@ -14,6 +14,7 @@ node .\bin\ai-playbook.mjs guides sync <target> [--dry-run] [--force]
 node .\bin\ai-playbook.mjs guides sync <target> --check [--diff] [--json]
 node .\bin\ai-playbook.mjs migrate path <target> [--apply] [--json]
 node .\bin\ai-playbook.mjs context <target> [--json] [--max-chars N]
+node .\bin\ai-playbook.mjs operator check <target> [--path <file>] [--diff] [--json]
 node .\bin\ai-playbook.mjs rules check <target> [--path <file>] [--json]
 node .\bin\ai-playbook.mjs diagnostics check <target> [--json]
 node .\bin\ai-playbook.mjs qa tui-check <capture-file> [--cols N] [--json]
@@ -92,6 +93,15 @@ It does not read or re-inject root `AGENTS.md` by default. Use `--json` to retur
 ## Operator diagnostics
 
 The diagnostics commands are read-only operator signals. They help a human or agent decide what to inspect next; they do not install hooks, run project commands, write files, or call the network.
+
+`operator check` is the combined human checkpoint:
+
+```powershell
+node .\bin\ai-playbook.mjs operator check <target> --json
+node .\bin\ai-playbook.mjs operator check <target> --path src/example.ts --diff --json
+```
+
+It aggregates `doctor`, `guides sync --check`, `diagnostics check`, and `rules check` into one report. `--path` is forwarded to rule matching. `--diff` includes the same first-difference guide details as `guides sync --check --diff`. JSON output returns `{ schemaVersion, ok, target, path, summary, checks, sections }`, where `sections` contains the original `doctor`, `guides`, `diagnostics`, and `rules` reports. Missing guide templates or doctor failures fail the combined check; stale guides and diagnostics warnings stay as warning-level operator signals.
 
 `rules check` discovers portable rule files and reports which rules apply to a path:
 

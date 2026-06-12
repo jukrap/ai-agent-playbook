@@ -108,7 +108,7 @@ Rule discovery는 root `AGENTS.md`를 의도적으로 제외합니다. 지원되
 node .\bin\ai-playbook.mjs diagnostics check <target> --json
 ```
 
-현재는 흔한 `package.json` script와 기본 Python, Rust, Go project marker를 감지합니다. Command set이 없어도 failure가 아니라 warning입니다. 일부 프로젝트는 verification을 runbook이나 외부 CI에 둘 수 있기 때문입니다.
+현재는 흔한 `package.json` script와 기본 Python, Rust, Go project marker를 감지합니다. Package script는 `pnpm-lock.yaml`, `yarn.lock`, `package-lock.json`, Bun lockfile 같은 lockfile에서 감지한 package manager 문법으로 렌더링합니다. JSON output에는 `packageManager`가 포함됩니다. Command set이 없어도 failure가 아니라 warning입니다. 일부 프로젝트는 verification을 runbook이나 외부 CI에 둘 수 있기 때문입니다.
 
 `qa tui-check`는 terminal capture에서 width overflow, CJK wide-character column, ANSI 존재 여부, 단순 box-drawing alignment를 확인합니다.
 

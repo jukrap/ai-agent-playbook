@@ -150,7 +150,7 @@ During the path transition, these runtime commands also support an existing lega
 
 The optional adapter hook examples use the `context` command internally. They are read-only and must be enabled manually from `adapters/`. Use `adapter config` to render placeholder-free local settings, then use `adapter check --settings <local-settings-path>` after manually editing a local settings file.
 
-The operator diagnostics commands are also read-only. `rules check` shows which portable rule files apply to a path, `diagnostics check` lists likely verification commands without running them, and `qa tui-check` checks terminal captures for width overflow and CJK layout risk.
+The operator diagnostics commands are also read-only. `rules check` shows which portable rule files apply to a path, `diagnostics check` lists likely verification commands without running them and respects detected package manager lockfiles, and `qa tui-check` checks terminal captures for width overflow and CJK layout risk.
 
 Create plan and worklog files through the CLI so paths stay predictable:
 

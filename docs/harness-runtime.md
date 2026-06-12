@@ -108,7 +108,7 @@ Rule discovery intentionally excludes root `AGENTS.md`, because supported agents
 node .\bin\ai-playbook.mjs diagnostics check <target> --json
 ```
 
-It currently detects common `package.json` scripts plus basic Python, Rust, and Go project markers. A missing command set is a warning, not a failure, because some projects keep verification in runbooks or external CI.
+It currently detects common `package.json` scripts plus basic Python, Rust, and Go project markers. Package scripts are rendered with the detected package manager from lockfiles such as `pnpm-lock.yaml`, `yarn.lock`, `package-lock.json`, or Bun lockfiles. JSON output includes `packageManager`. A missing command set is a warning, not a failure, because some projects keep verification in runbooks or external CI.
 
 `qa tui-check` checks captured terminal output for width overflow, CJK wide-character columns, ANSI presence, and simple box-drawing alignment:
 

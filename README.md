@@ -90,7 +90,7 @@ Existing projects that already have `ai-playbook/` continue to work as a legacy 
 
 Runtime hooks and plugins are not part of the default install path. Treat them as optional extensions after the document and CLI harness are stable. The Codex and Claude Code adapters include read-only context hook examples, a read-only `adapter config` renderer, and a read-only `adapter check` self-check, but they are not installed automatically. See [Runtime roadmap](docs/runtime-roadmap.md).
 
-Operator diagnostics such as `rules check`, `diagnostics check`, and `qa tui-check` are read-only. Use them to inspect rule matching, local verification command candidates, and terminal/CJK layout evidence before adding stronger runtime automation.
+Operator diagnostics such as `rules check`, `diagnostics check`, and `qa tui-check` are read-only. Use them to inspect rule matching, local verification command candidates, and terminal/CJK layout evidence before adding stronger runtime automation. `diagnostics check` formats package scripts with the detected lockfile package manager.
 
 ## Everyday Flow
 

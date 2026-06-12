@@ -49,7 +49,7 @@ Use skills for behavior during the session:
 Use read-only diagnostics when an agent needs stronger evidence but a hook would be too much:
 
 - `rules check` shows which project rule files apply to a path. Keep root `AGENTS.md` as the normal entrypoint; do not duplicate it as injected context.
-- `diagnostics check` lists likely local verification commands from project metadata without running them.
+- `diagnostics check` lists likely local verification commands from project metadata without running them, using the package manager detected from lockfiles when it renders package scripts.
 - `qa tui-check` checks terminal captures for width overflow, simple border misalignment, ANSI presence, and CJK wide-character columns.
 
 ## File placement rules

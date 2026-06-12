@@ -98,6 +98,38 @@ test('diagnostics check --json reports local verification command candidates wit
   await cleanup(target);
 });
 
+test('diagnostics check --json prefers the detected package manager without writing files', async () => {
+  const target = await tempRepo('diagnostics pnpm-공백-한글-');
+  await writeFile(path.join(target, 'pnpm-lock.yaml'), 'lockfileVersion: 9.0\n');
+  await writeFile(path.join(target, 'package.json'), JSON.stringify({
+    scripts: {
+      lint: 'eslint .',
+      typecheck: 'tsc -b --pretty false',
+      build: 'tsc -b && vite build'
+    }
+  }, null, 2));
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli(['diagnostics', 'check', '.', '--json'], io), 0);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.deepEqual(report.packageManager, {
+    name: 'pnpm',
+    lockfile: 'pnpm-lock.yaml'
+  });
+  assert.deepEqual(report.commands.map((command) => command.command), [
+    'pnpm lint',
+    'pnpm typecheck',
+    'pnpm build'
+  ]);
+  assert.equal(report.checks.some((check) => check.id === 'diagnostics.package-manager' && check.level === 'pass'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
 test('diagnostics check --json warns when no verification command candidates are found', async () => {
   const target = await tempRepo('diagnostics empty-한글-');
   const before = await listRelativeFiles(target);

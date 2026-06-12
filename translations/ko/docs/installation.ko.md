@@ -150,7 +150,7 @@ node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --sett
 
 선택적 adapter hook 예시는 내부적으로 `context` 명령을 사용합니다. 이 예시는 read-only이며 `adapters/`에서 수동으로 활성화해야 합니다. `adapter config`로 placeholder 없는 local 설정을 렌더링한 뒤, local settings file을 수동으로 편집한 후 `adapter check --settings <local-settings-path>`로 확인합니다.
 
-Operator diagnostics 명령도 read-only입니다. `rules check`는 path에 적용되는 portable rule file을 보여주고, `diagnostics check`는 실행하지 않은 상태로 verification command 후보를 나열하며, `qa tui-check`는 terminal capture의 width overflow와 CJK layout risk를 확인합니다.
+Operator diagnostics 명령도 read-only입니다. `rules check`는 path에 적용되는 portable rule file을 보여주고, `diagnostics check`는 실행하지 않은 상태로 verification command 후보를 나열하며 감지한 package manager lockfile을 반영합니다. `qa tui-check`는 terminal capture의 width overflow와 CJK layout risk를 확인합니다.
 
 Plan과 worklog는 CLI로 생성할 수 있습니다.
 

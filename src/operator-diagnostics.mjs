@@ -18,6 +18,13 @@ const RULE_FILE_SOURCES = [
 const RULE_EXTENSIONS = new Set(['.md', '.mdc']);
 const RULE_EXCLUDED_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.turbo', 'coverage']);
 const PACKAGE_SCRIPT_ORDER = ['check', 'test', 'test:run', 'lint', 'typecheck', 'build'];
+const PACKAGE_MANAGER_LOCKFILES = [
+  ['pnpm', 'pnpm-lock.yaml'],
+  ['yarn', 'yarn.lock'],
+  ['npm', 'package-lock.json'],
+  ['bun', 'bun.lockb'],
+  ['bun', 'bun.lock']
+];
 
 export async function checkRules(options) {
   const { target, filePath } = options;
@@ -79,8 +86,19 @@ export async function checkDiagnostics(options) {
   await assertDirectory(target, 'Target repository does not exist');
 
   const resolvedTarget = path.resolve(target);
+  const packageManager = detectPackageManager(resolvedTarget);
   const checks = [
-    checkResult('pass', 'diagnostics.target', 'diagnostics', 'target directory', 'Target directory exists.', ['.'])
+    checkResult('pass', 'diagnostics.target', 'diagnostics', 'target directory', 'Target directory exists.', ['.']),
+    checkResult(
+      'pass',
+      'diagnostics.package-manager',
+      'diagnostics',
+      'package manager',
+      packageManager.lockfile
+        ? `Using ${packageManager.name} command syntax from ${packageManager.lockfile}.`
+        : `Using ${packageManager.name} command syntax by default.`,
+      packageManager.lockfile ? [packageManager.lockfile] : ['package.json']
+    )
   ];
   const commands = [];
 
@@ -93,9 +111,9 @@ export async function checkDiagnostics(options) {
       for (const script of PACKAGE_SCRIPT_ORDER) {
         if (typeof scripts[script] !== 'string') continue;
         commands.push({
-          id: `npm.${script.replace(/[^a-z0-9]+/gi, '-')}`,
+          id: `${packageManager.name}.${script.replace(/[^a-z0-9]+/gi, '-')}`,
           source: 'package.json',
-          command: script === 'test' ? 'npm test' : `npm run ${script}`,
+          command: renderPackageScriptCommand(packageManager.name, script),
           script,
           description: scripts[script]
         });
@@ -122,6 +140,7 @@ export async function checkDiagnostics(options) {
     schemaVersion: SCHEMA_VERSION,
     ok: summary.fail === 0,
     target: resolvedTarget,
+    packageManager,
     summary: {
       ...summary,
       commands: commands.length
@@ -176,6 +195,25 @@ export async function checkTuiCapture(options) {
     wideCharColumns,
     hasAnsi: raw !== withoutAnsi
   };
+}
+
+function detectPackageManager(target) {
+  for (const [name, lockfile] of PACKAGE_MANAGER_LOCKFILES) {
+    if (existsSync(path.join(target, lockfile))) {
+      return { name, lockfile };
+    }
+  }
+  return { name: 'npm', lockfile: null };
+}
+
+function renderPackageScriptCommand(packageManagerName, script) {
+  if (packageManagerName === 'npm') {
+    return script === 'test' ? 'npm test' : `npm run ${script}`;
+  }
+  if (packageManagerName === 'bun') {
+    return `bun run ${script}`;
+  }
+  return `${packageManagerName} ${script}`;
 }
 
 async function buildRuleEntry(options) {

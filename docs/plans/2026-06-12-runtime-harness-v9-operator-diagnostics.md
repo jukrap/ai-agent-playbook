@@ -35,6 +35,7 @@ Root `AGENTS.md` is intentionally excluded because supported agents usually load
 Initial command candidates:
 
 - common `package.json` scripts: `check`, `test`, `test:run`, `lint`, `typecheck`, `build`
+- package manager lockfiles: `pnpm-lock.yaml`, `yarn.lock`, `package-lock.json`, and Bun lockfiles for command rendering
 - Python markers in `pyproject.toml`
 - Rust `Cargo.toml`
 - Go `go.mod`

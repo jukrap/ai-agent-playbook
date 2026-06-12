@@ -15,6 +15,9 @@ node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
 node .\bin\ai-playbook.mjs migrate path <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo>
+node .\bin\ai-playbook.mjs rules check <target-repo> --path src/example.ts --json
+node .\bin\ai-playbook.mjs diagnostics check <target-repo> --json
+node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
 ```
 
 대상 프로젝트에 이미 에이전트 문서가 있으면 먼저 `--dry-run`을 사용합니다. Bootstrap은 파일을 만들기 전에 쓰기 작업을 먼저 점검하지만, 충돌은 여전히 검토해야 합니다. 충돌을 확인하고 생성 파일이 기존 파일을 대체해야 한다고 판단한 뒤에만 `--force`를 사용합니다.
@@ -40,6 +43,14 @@ node .\bin\ai-playbook.mjs doctor <target-repo> --strict
 - `repo-onboarding`: 낯선 저장소를 바꾸기 전에 이해합니다.
 - `project-doc-system`: 흩어진 프로젝트 메모리를 정리합니다.
 - `commit-worklog-guardrails`: 커밋, PR 문구, 상세 worklog를 맞춥니다.
+
+## Operator diagnostics
+
+Agent에게 더 강한 evidence가 필요하지만 hook까지는 과할 때 read-only diagnostics를 사용합니다.
+
+- `rules check`는 path에 적용되는 project rule file을 보여줍니다. Root `AGENTS.md`는 일반 entrypoint로 유지하고, injected context로 중복하지 않습니다.
+- `diagnostics check`는 project metadata에서 local verification command 후보를 읽되 실행하지 않습니다.
+- `qa tui-check`는 terminal capture에서 width overflow, 단순 border misalignment, ANSI 존재 여부, CJK wide-character column을 확인합니다.
 
 ## 파일 배치 규칙
 

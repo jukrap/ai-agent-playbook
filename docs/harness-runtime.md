@@ -14,6 +14,9 @@ node .\bin\ai-playbook.mjs guides sync <target> [--dry-run] [--force]
 node .\bin\ai-playbook.mjs guides sync <target> --check [--diff] [--json]
 node .\bin\ai-playbook.mjs migrate path <target> [--apply] [--json]
 node .\bin\ai-playbook.mjs context <target> [--json] [--max-chars N]
+node .\bin\ai-playbook.mjs rules check <target> [--path <file>] [--json]
+node .\bin\ai-playbook.mjs diagnostics check <target> [--json]
+node .\bin\ai-playbook.mjs qa tui-check <capture-file> [--cols N] [--json]
 node .\bin\ai-playbook.mjs adapter config <target> --adapter codex|claude-code [--json]
 node .\bin\ai-playbook.mjs adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]
 node .\bin\ai-playbook.mjs plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
@@ -85,6 +88,35 @@ Use `doctor --reminder --json` when a wrapper or script needs a small non-blocki
 - `.ai-playbook/GIT.md`
 
 It does not read or re-inject root `AGENTS.md` by default. Use `--json` to return `{ schemaVersion, ok, target, sources, additionalContext, warnings }`. Use `--max-chars N` to cap injected context for hook environments.
+
+## Operator diagnostics
+
+The diagnostics commands are read-only operator signals. They help a human or agent decide what to inspect next; they do not install hooks, run project commands, write files, or call the network.
+
+`rules check` discovers portable rule files and reports which rules apply to a path:
+
+```powershell
+node .\bin\ai-playbook.mjs rules check <target> --json
+node .\bin\ai-playbook.mjs rules check <target> --path src/example.ts --json
+```
+
+Rule discovery intentionally excludes root `AGENTS.md`, because supported agents usually load it natively. Current rule sources are `.ai-playbook/rules/**/*.md`, `.github/instructions/**/*.md`, `.cursor/rules/**/*.md`, `.claude/rules/**/*.md`, `.github/copilot-instructions.md`, and `CONTEXT.md`. Directory rules may use simple frontmatter such as `alwaysApply: true` or `globs: ["src/**/*.ts"]`. JSON output returns `{ schemaVersion, ok, target, path, summary, rules, warnings }`.
+
+`diagnostics check` reads local project metadata and lists likely verification commands without executing them:
+
+```powershell
+node .\bin\ai-playbook.mjs diagnostics check <target> --json
+```
+
+It currently detects common `package.json` scripts plus basic Python, Rust, and Go project markers. A missing command set is a warning, not a failure, because some projects keep verification in runbooks or external CI.
+
+`qa tui-check` checks captured terminal output for width overflow, CJK wide-character columns, ANSI presence, and simple box-drawing alignment:
+
+```powershell
+node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
+```
+
+This command exits non-zero when overflow or border misalignment is found. It is meant for terminal UI, CLI table, log, report, and Korean/Japanese/Chinese text layout checks. Browser screenshot review still belongs in the target project's browser tooling or visual QA guide.
 
 ## Adapter config and readiness
 

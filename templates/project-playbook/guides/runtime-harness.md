@@ -15,6 +15,9 @@ node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
 node .\bin\ai-playbook.mjs migrate path <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo>
+node .\bin\ai-playbook.mjs rules check <target-repo> --path src/example.ts --json
+node .\bin\ai-playbook.mjs diagnostics check <target-repo> --json
+node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
 ```
 
 Use `--dry-run` first when the target already has agent docs. Bootstrap preflights writes before creating files, but conflicts still need review. Use `--force` only after inspecting conflicts and deciding the generated file should replace the existing one.
@@ -40,6 +43,14 @@ Use skills for behavior during the session:
 - `repo-onboarding`: understand an unfamiliar repository before changing it.
 - `project-doc-system`: clean up scattered project memory.
 - `commit-worklog-guardrails`: keep commits, PR text, and detailed worklogs aligned.
+
+## Operator diagnostics
+
+Use read-only diagnostics when an agent needs stronger evidence but a hook would be too much:
+
+- `rules check` shows which project rule files apply to a path. Keep root `AGENTS.md` as the normal entrypoint; do not duplicate it as injected context.
+- `diagnostics check` lists likely local verification commands from project metadata without running them.
+- `qa tui-check` checks terminal captures for width overflow, simple border misalignment, ANSI presence, and CJK wide-character columns.
 
 ## File placement rules
 

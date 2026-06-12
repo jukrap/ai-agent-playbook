@@ -77,6 +77,9 @@ node .\bin\ai-playbook.mjs doctor <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
 node .\bin\ai-playbook.mjs context <target-project> --json
 node .\bin\ai-playbook.mjs migrate path <target-project> --json
+node .\bin\ai-playbook.mjs rules check <target-project> --path src/example.ts --json
+node .\bin\ai-playbook.mjs diagnostics check <target-project> --json
+node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
 node .\bin\ai-playbook.mjs adapter config <target-project> --adapter codex --json
 node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
 ```
@@ -86,6 +89,8 @@ node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
 이미 `ai-playbook/`을 가진 프로젝트는 `.ai-playbook/`이 없을 때 legacy layout으로 계속 동작하지만, 새 bootstrap 결과는 `.ai-playbook/`을 사용합니다. Legacy 경로를 dot 경로로 옮기기 전에는 `migrate path --json`으로 먼저 preview합니다.
 
 Runtime hook과 plugin은 기본 설치 경로에 포함되지 않습니다. 문서와 CLI 하네스가 안정된 뒤 선택적으로 확장합니다. Codex와 Claude Code adapter에는 read-only context hook 예시, read-only `adapter config` renderer, read-only `adapter check` self-check가 있지만 자동 설치되지 않습니다. [런타임 로드맵](docs/runtime-roadmap.ko.md)을 봅니다.
+
+`rules check`, `diagnostics check`, `qa tui-check` 같은 operator diagnostics는 read-only입니다. 더 강한 runtime automation을 추가하기 전에 rule matching, local verification command 후보, terminal/CJK layout evidence를 확인할 때 사용합니다.
 
 ## 평소 작업 흐름
 

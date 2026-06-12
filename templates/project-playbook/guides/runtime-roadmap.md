@@ -15,7 +15,7 @@ Before considering hooks:
 - Keep detailed history in `worklogs/` and summarize it when it contains durable facts.
 - Use `guides sync --dry-run` from the source playbook checkout to add missing support guides without overwriting local edits.
 - Use `guides sync --check --diff --json`, `migrate path --json`, `doctor --json`, `doctor --reminder --json`, and `adapter check --json` when an adapter or automation needs a read-only health signal.
-- Use `rules check`, `diagnostics check`, and `qa tui-check` as operator-visible diagnostics before adding hooks for the same concern.
+- Use `operator check`, `rules check`, `diagnostics check`, and `qa tui-check` as operator-visible diagnostics before adding hooks for the same concern.
 
 ## Runtime Readiness Checklist
 

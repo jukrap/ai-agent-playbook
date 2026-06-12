@@ -171,6 +171,98 @@ test('qa tui-check --json reports CJK width and overflow without writing files',
   await cleanup(target);
 });
 
+test('operator check --json aggregates read-only operator signals for a path', async () => {
+  const target = await tempRepo('operator check-공백-한글-');
+  const setup = capture(target);
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], setup), 0);
+  await adaptPlaybook(target);
+  await writeFile(path.join(target, 'pnpm-lock.yaml'), 'lockfileVersion: 9.0\n');
+  await writeFile(path.join(target, 'package.json'), JSON.stringify({
+    scripts: {
+      lint: 'eslint .',
+      typecheck: 'tsc -b --pretty false'
+    }
+  }, null, 2));
+  await mkdir(path.join(target, '.ai-playbook', 'rules'), { recursive: true });
+  await mkdir(path.join(target, 'src', '기능 모듈'), { recursive: true });
+  await writeFile(path.join(target, 'src', '기능 모듈', 'example.tsx'), 'export function Example() { return null; }\n');
+  await writeFile(path.join(target, '.ai-playbook', 'rules', 'react.md'), [
+    '---',
+    'globs:',
+    '  - src/**/*.tsx',
+    '---',
+    '# React rule'
+  ].join('\n'));
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli(['operator', 'check', '.', '--path', 'src/기능 모듈/example.tsx', '--json'], io), 0);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.target, target);
+  assert.equal(report.path, 'src/기능 모듈/example.tsx');
+  assert.equal(report.summary.sections, 4);
+  assert.equal(report.summary.fail, 0);
+  assert.equal(report.sections.doctor.ok, true);
+  assert.equal(report.sections.guides.summary.missing, 0);
+  assert.equal(report.sections.diagnostics.packageManager.name, 'pnpm');
+  assert.deepEqual(report.sections.diagnostics.commands.map((command) => command.command), [
+    'pnpm lint',
+    'pnpm typecheck'
+  ]);
+  assert.equal(report.sections.rules.summary.applies, 1);
+  assert.equal(report.checks.some((check) => check.id === 'operator.rules' && check.level === 'pass'), true);
+  assert.deepEqual(report.checks.find((check) => check.id === 'operator.doctor').paths, []);
+  assert.deepEqual(report.checks.find((check) => check.id === 'operator.diagnostics').paths, []);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('operator check --json reports stale guides as a warning without failing or writing files', async () => {
+  const target = await tempRepo('operator stale-한글-');
+  const setup = capture(target);
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], setup), 0);
+  await adaptPlaybook(target);
+  await writeFile(path.join(target, '.ai-playbook', 'guides', 'runtime-harness.md'), '# locally changed guide\n');
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli(['operator', 'check', '.', '--json'], io), 0);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.sections.guides.summary.stale, 1);
+  assert.equal(report.checks.some((check) => check.id === 'operator.guides' && check.level === 'warn'), true);
+  assert.equal(report.summary.warn > 0, true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('operator check --json fails when the playbook is missing but still stays read-only', async () => {
+  const target = await tempRepo('operator missing-한글-');
+  await writeFile(path.join(target, 'package.json'), JSON.stringify({
+    scripts: {
+      test: 'node --test'
+    }
+  }, null, 2));
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli(['operator', 'check', '.', '--json'], io), 1);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, false);
+  assert.equal(report.sections.doctor.ok, false);
+  assert.equal(report.checks.some((check) => check.id === 'operator.doctor' && check.level === 'fail'), true);
+  assert.equal(report.sections.diagnostics.commands.some((command) => command.command === 'npm test'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
 function capture(cwd) {
   let stdout = '';
   let stderr = '';
@@ -186,6 +278,31 @@ function capture(cwd) {
 
 async function tempRepo(prefix) {
   return mkdtemp(path.join(os.tmpdir(), prefix));
+}
+
+async function adaptPlaybook(target) {
+  await writeFile(path.join(target, '.ai-playbook', 'START_HERE.md'), [
+    '# Start Here',
+    '',
+    '## Current objective',
+    '',
+    '- No active implementation task.'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), [
+    '# Current State',
+    '',
+    '## Baseline',
+    '',
+    '- Product shape: test fixture.',
+    '- Verification commands: fixture-defined.'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'questions.md'), [
+    '# Questions',
+    '',
+    '| Status | Question |',
+    '| --- | --- |',
+    '| Closed | Fixture has no open questions. |'
+  ].join('\n'));
 }
 
 async function listRelativeFiles(root) {

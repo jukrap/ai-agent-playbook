@@ -1,7 +1,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { SCHEMA_VERSION } from './harness.mjs';
+import { checkGuides, doctorProject, SCHEMA_VERSION } from './harness.mjs';
 
 const RULE_DIRECTORY_SOURCES = [
   ['.ai-playbook/rules', '.ai-playbook/rules'],
@@ -25,6 +25,50 @@ const PACKAGE_MANAGER_LOCKFILES = [
   ['bun', 'bun.lockb'],
   ['bun', 'bun.lock']
 ];
+
+export async function checkOperator(options) {
+  const {
+    repoRoot,
+    target,
+    filePath,
+    includeDiff = false
+  } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+
+  const resolvedTarget = path.resolve(target);
+  const [doctor, guides, diagnostics, rules] = await Promise.all([
+    doctorProject({ target: resolvedTarget }),
+    checkGuides({ repoRoot, target: resolvedTarget, includeDiff }),
+    checkDiagnostics({ target: resolvedTarget }),
+    checkRules({ target: resolvedTarget, filePath })
+  ]);
+
+  const checks = [
+    operatorCheckForDoctor(doctor),
+    operatorCheckForGuides(guides),
+    operatorCheckForDiagnostics(diagnostics),
+    operatorCheckForRules(rules)
+  ];
+  const summary = summarizeChecks(checks);
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: summary.fail === 0,
+    target: resolvedTarget,
+    ...(rules.path === undefined ? {} : { path: rules.path }),
+    summary: {
+      sections: checks.length,
+      ...summary
+    },
+    checks,
+    sections: {
+      doctor,
+      guides,
+      diagnostics,
+      rules
+    }
+  };
+}
 
 export async function checkRules(options) {
   const { target, filePath } = options;
@@ -214,6 +258,70 @@ function renderPackageScriptCommand(packageManagerName, script) {
     return `bun run ${script}`;
   }
   return `${packageManagerName} ${script}`;
+}
+
+function operatorCheckForDoctor(doctor) {
+  const level = doctor.ok ? summaryLevel(doctor.summary) : 'fail';
+  return checkResult(
+    level,
+    'operator.doctor',
+    'operator',
+    'doctor',
+    `Doctor checks: ${doctor.summary.pass} pass, ${doctor.summary.warn} warn, ${doctor.summary.fail} fail.`,
+    pathsFromChecks(doctor.checks)
+  );
+}
+
+function operatorCheckForGuides(guides) {
+  const level = guides.summary.missing > 0
+    ? 'fail'
+    : guides.summary.stale > 0
+      ? 'warn'
+      : 'pass';
+  return checkResult(
+    level,
+    'operator.guides',
+    'operator',
+    'guides',
+    `Guide templates: ${guides.summary.present} present, ${guides.summary.missing} missing, ${guides.summary.stale} stale.`,
+    guides.guides.filter((guide) => guide.status !== 'present').map((guide) => guide.path)
+  );
+}
+
+function operatorCheckForDiagnostics(diagnostics) {
+  const level = diagnostics.ok ? summaryLevel(diagnostics.summary) : 'fail';
+  return checkResult(
+    level,
+    'operator.diagnostics',
+    'operator',
+    'diagnostics',
+    `Verification command candidates: ${diagnostics.summary.commands}.`,
+    pathsFromChecks(diagnostics.checks)
+  );
+}
+
+function operatorCheckForRules(rules) {
+  const level = rules.ok ? (rules.summary.warnings > 0 ? 'warn' : 'pass') : 'fail';
+  return checkResult(
+    level,
+    'operator.rules',
+    'operator',
+    'rules',
+    `Rule matches: ${rules.summary.applies}/${rules.summary.total}; warnings: ${rules.summary.warnings}.`,
+    rules.warnings.flatMap((warning) => warning.paths ?? [])
+  );
+}
+
+function summaryLevel(summary) {
+  if ((summary.fail ?? 0) > 0) return 'fail';
+  if ((summary.warn ?? 0) > 0) return 'warn';
+  return 'pass';
+}
+
+function pathsFromChecks(checks) {
+  return [...new Set(checks
+    .filter((check) => check.level !== 'pass')
+    .flatMap((check) => check.paths ?? []))];
 }
 
 async function buildRuleEntry(options) {

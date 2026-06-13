@@ -1240,11 +1240,23 @@ function validateManagedManifest(manifest) {
   if (!Array.isArray(manifest.files)) return 'missing files';
   for (const file of manifest.files) {
     if (!file || typeof file.path !== 'string') return 'file entry missing path';
-    if (path.isAbsolute(file.path) || file.path.includes('\\')) return `non-portable path ${file.path}`;
+    if (!isPortableManagedPath(file.path)) return `non-portable path ${file.path}`;
     if (typeof file.kind !== 'string' || typeof file.source !== 'string') return `invalid entry ${file.path}`;
     if (typeof file.sourceHash !== 'string' || typeof file.targetHash !== 'string') return `missing hashes for ${file.path}`;
   }
   return null;
+}
+
+function isPortableManagedPath(value) {
+  const parts = value.split('/');
+  return !(
+    path.isAbsolute(value) ||
+    path.posix.isAbsolute(value) ||
+    /^[A-Za-z]:\//.test(value) ||
+    value.includes('\\') ||
+    value === '.' ||
+    parts.some((part) => part === '' || part === '.' || part === '..')
+  );
 }
 
 async function managedFileStatuses(target, files) {

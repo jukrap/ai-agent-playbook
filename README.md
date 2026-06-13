@@ -126,6 +126,7 @@ npx ai-agent-playbook bootstrap <target-project>
 npx ai-agent-playbook doctor <target-project>
 npx ai-agent-playbook operator check <target-project> --path src/example.ts --json
 npx ai-agent-playbook operator search <target-project> --query "auth flow" --path src/example.ts --json
+npx ai-agent-playbook operator analyze <target-project> --path src/example.ts --json
 npx ai-agent-playbook managed catalog <target-project> --json
 npx ai-agent-playbook adapter config <target-project> --adapter codex --json
 ```
@@ -140,7 +141,7 @@ Runtime hooks and plugins are not part of the default install path. Treat them a
 
 Managed project harness commands use `.ai-playbook/.ai-agent-playbook-install.json` to track files copied by this playbook. Use `managed check` before cleanup, `managed catalog` to review owned files by kind and status, `managed adopt` to add a marker to older matching installs, `managed prune` to preview removing one selected unmodified managed file, and `managed uninstall` to preview removal of all unmodified managed files. `managed adopt`, `managed prune`, and `managed uninstall` write only when `--apply` is provided.
 
-Operator diagnostics such as `operator check`, `operator search`, `operator context`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, and `qa tui-check` are operator-triggered. Use `operator check` as the combined human checkpoint for doctor, guide freshness, local verification command candidates, and rule matching before adding stronger runtime automation. Use `operator search` as a local project explorer for related source, playbook, rules, plans, and worklog matches. Use `operator context` to preview path-scoped playbook context and rule matches, and `operator map` to summarize stack, architecture, quality, and concern signals without writing an analysis file. Use `operator audit` to find broken playbook links, orphan context globs, duplicate playbook notes, legacy path drift, and managed manifest drift without writing files. Use `operator gc` as a preview-first cleanup for obsolete unmodified managed playbook files; it writes only with `--apply`. `diagnostics check` formats package scripts with the detected lockfile package manager.
+Operator diagnostics such as `operator check`, `operator search`, `operator context`, `operator analyze`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, and `qa tui-check` are operator-triggered. Use `operator check` as the combined human checkpoint for doctor, guide freshness, local verification command candidates, and rule matching before adding stronger runtime automation. Use `operator search` as a local project explorer for related source, playbook, rules, plans, and worklog matches. Use `operator context` to preview path-scoped playbook context and rule matches. Use `operator analyze` to combine diagnostics, map, rules, context, and optional AST/LSP/comment-quality setup signals without running those optional tools. Use `operator map` to summarize stack, architecture, quality, and concern signals without writing an analysis file. Use `operator audit` to find broken playbook links, orphan context globs, duplicate playbook notes, legacy path drift, and managed manifest drift without writing files. Use `operator gc` as a preview-first cleanup for obsolete unmodified managed playbook files; it writes only with `--apply`. `diagnostics check` formats package scripts with the detected lockfile package manager.
 
 ## Everyday Flow
 
@@ -164,6 +165,7 @@ npx ai-agent-playbook managed check <target-project> --json
 npx ai-agent-playbook managed catalog <target-project> --json
 npx ai-agent-playbook operator search <target-project> --query "auth flow" --json
 npx ai-agent-playbook operator context <target-project> --path src/example.ts --json
+npx ai-agent-playbook operator analyze <target-project> --path src/example.ts --json
 npx ai-agent-playbook operator map <target-project> --json
 npx ai-agent-playbook operator audit <target-project> --json
 npx ai-agent-playbook operator gc <target-project> --json
@@ -176,7 +178,7 @@ bin/                  ai-playbook CLI entrypoint
 src/                  CLI runtime implementation
 skills/
   project/            Bootstrap, onboarding, and project-memory skills
-  quality/            API boundary and UI quality skills
+  quality/            API boundary, UI quality, cleanup, and review skills
   git/                Commit, PR, push, and worklog skills
   meta/               Skill-authoring skills
   legacy/             Legacy-system maintenance skills
@@ -206,6 +208,9 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 | Quality | `api-contract-boundary` | Implementing, debugging, or reviewing frontend/backend contracts, DTOs, mocks, payloads, and adapters. |
 | Quality | `ui-style-policy` | Selecting, documenting, or enforcing a repository UI styling policy. |
 | Quality | `style-quality-review` | Reviewing or improving UI styling, responsive behavior, layout overflow, and visual regressions. |
+| Quality | `frontend-ui-polish` | Implementing or refining visible frontend UI surfaces while preserving product intent and existing design conventions. |
+| Quality | `cleanup-ai-slop` | Cleaning low-trust, overcomplicated, duplicated, or mechanically generated code while preserving behavior. |
+| Quality | `review-work-light` | Reviewing recent implementation work before handoff without starting a blocking review process. |
 | Git | `commit-worklog-guardrails` | Staging, committing, pushing, opening PRs, preparing release notes, or recording worklogs. |
 | Meta | `agent-skill-authoring` | Creating, reviewing, or reorganizing reusable agent skills and references. |
 | Legacy | `legacy-general` | Maintaining or extending legacy code with unclear flow, hidden coupling, weak tests, or mixed documentation. |

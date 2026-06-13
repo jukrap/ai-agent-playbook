@@ -16,7 +16,10 @@
 - 기능 계획: project docs나 `.ai-playbook/` 구조가 필요하면 프로세스 planning과 `project-doc-system`.
 - API integration: 구현 프로세스와 `api-contract-boundary`.
 - UI styling policy: 구현 또는 리뷰 프로세스와 `ui-style-policy`.
-- UI polishing: 리뷰 또는 검증 프로세스와 `style-quality-review`.
+- UI styling review: 리뷰 또는 검증 프로세스와 `style-quality-review`.
+- UI implementation polish: 구현 또는 검증 프로세스와 `frontend-ui-polish`.
+- Behavior-preserving cleanup: 리팩터링 또는 검증 프로세스와 `cleanup-ai-slop`.
+- Pre-handoff review: 리뷰 프로세스와 `review-work-light`.
 - 레거시 변경: 디버깅 또는 planning 프로세스와 가장 가까운 `legacy-*` 스킬.
 - Commit, push, PR, handoff: 검증 또는 branch-finishing 프로세스와 `commit-worklog-guardrails`.
 - 재사용 스킬 작성/수정: planning 또는 리뷰 프로세스와 `agent-skill-authoring`.

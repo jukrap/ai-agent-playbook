@@ -16,7 +16,10 @@ Use process skills first when they apply, then use the smallest relevant playboo
 - Feature planning: process planning plus `project-doc-system` when project docs or `.ai-playbook/` need structure.
 - API integration: implementation process plus `api-contract-boundary`.
 - UI styling policy: implementation or review process plus `ui-style-policy`.
-- UI polishing: review or verification process plus `style-quality-review`.
+- UI styling review: review or verification process plus `style-quality-review`.
+- UI implementation polish: implementation or verification process plus `frontend-ui-polish`.
+- Behavior-preserving cleanup: refactoring or verification process plus `cleanup-ai-slop`.
+- Pre-handoff review: review process plus `review-work-light`.
 - Legacy change: debugging or planning process plus the closest `legacy-*` skill.
 - Commit, push, PR, or handoff: verification or branch-finishing process plus `commit-worklog-guardrails`.
 - Creating or revising reusable skills: planning or review process plus `agent-skill-authoring`.

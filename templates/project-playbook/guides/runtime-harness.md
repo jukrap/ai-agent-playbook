@@ -22,6 +22,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 node .\bin\ai-playbook.mjs operator check <target-repo> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator search <target-repo> --query "auth flow" --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator context <target-repo> --path src/example.ts --json
+node .\bin\ai-playbook.mjs operator analyze <target-repo> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator map <target-repo> --json
 node .\bin\ai-playbook.mjs operator audit <target-repo> --json
 node .\bin\ai-playbook.mjs operator gc <target-repo> --json
@@ -63,6 +64,7 @@ Use operator-triggered diagnostics when an agent needs stronger evidence but a h
 - `operator check` combines doctor, guide freshness, diagnostics, and rule matching into one read-only human checkpoint.
 - `operator search` finds related local source, playbook, rule, plan, and worklog text without writing files.
 - `operator context` previews which path-scoped context files, rules, maps, runbooks, decisions, or guides are relevant before loading them into a session.
+- `operator analyze` combines diagnostics, map, rules, context, and optional AST/LSP/comment-quality setup signals without running optional tools.
 - `operator map` summarizes stack, architecture, quality, and concern signals without creating or updating map files.
 - `operator audit` checks playbook links, context globs, duplicate notes, legacy path drift, and managed manifest drift without writing files.
 - `operator gc` previews obsolete unmodified managed playbook files and removes them only when `--apply` is used.

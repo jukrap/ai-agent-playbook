@@ -106,7 +106,7 @@ Use `npx ai-agent-playbook skills uninstall` or `ai-playbook skills uninstall` w
 | `bootstrap <target>` | Yes unless `--dry-run` | Target project's root `AGENTS.md` and `.ai-playbook/`. |
 | `guides sync <target>` | Yes unless `--dry-run` or `--check` | Target project's `.ai-playbook/guides/`. |
 | `managed adopt/prune/uninstall` | No unless `--apply` | Target project's `.ai-playbook/` managed files. |
-| `operator check/search/context/map/audit` | No | Read-only target project diagnostics. |
+| `operator check/search/context/analyze/map/audit` | No | Read-only target project diagnostics. |
 | `adapter config/check` | No | Renders or validates local adapter settings. |
 
 ## Option 2: Fast local checkout with GitHub CLI
@@ -258,6 +258,7 @@ npx ai-agent-playbook context <target-project> --json
 npx ai-agent-playbook operator check <target-project> --path src/example.ts --json
 npx ai-agent-playbook operator search <target-project> --query "auth flow" --path src/example.ts --json
 npx ai-agent-playbook operator context <target-project> --path src/example.ts --json
+npx ai-agent-playbook operator analyze <target-project> --path src/example.ts --json
 npx ai-agent-playbook operator map <target-project> --json
 npx ai-agent-playbook operator audit <target-project> --json
 npx ai-agent-playbook operator gc <target-project> --json
@@ -291,7 +292,7 @@ npx ai-agent-playbook managed uninstall <target-project> --apply --json
 
 The optional adapter hook examples use the `context` command internally. They are read-only and must be enabled manually from `adapters/`. Use `adapter config` to render placeholder-free local settings, then use `adapter check --settings <local-settings-path>` after manually editing a local settings file.
 
-The operator diagnostics commands are also operator-triggered. `operator check` combines doctor, guide freshness, diagnostics, and rule matching into one human checkpoint. `operator search` searches local source, playbook, rules, plans, and worklogs without writing files. `operator context` previews path-scoped context files, rules, and related maps or runbooks before an agent loads them. `operator map` summarizes stack, architecture, quality, and concern signals without creating map files. `operator audit` checks playbook links, context globs, duplicate notes, legacy path drift, and managed manifest drift without writing files. `operator gc` previews obsolete unmodified managed playbook files and writes only when `--apply` is provided. `rules check` shows which portable rule files apply to a path, `diagnostics check` lists likely verification commands without running them and respects detected package manager lockfiles, and `qa tui-check` checks terminal captures for width overflow and CJK layout risk.
+The operator diagnostics commands are also operator-triggered. `operator check` combines doctor, guide freshness, diagnostics, and rule matching into one human checkpoint. `operator search` searches local source, playbook, rules, plans, and worklogs without writing files. `operator context` previews path-scoped context files, rules, and related maps or runbooks before an agent loads them. `operator analyze` combines diagnostics, map, rules, context, and optional AST/LSP/comment-quality setup signals without running optional tools. `operator map` summarizes stack, architecture, quality, and concern signals without creating map files. `operator audit` checks playbook links, context globs, duplicate notes, legacy path drift, and managed manifest drift without writing files. `operator gc` previews obsolete unmodified managed playbook files and writes only when `--apply` is provided. `rules check` shows which portable rule files apply to a path, `diagnostics check` lists likely verification commands without running them and respects detected package manager lockfiles, and `qa tui-check` checks terminal captures for width overflow and CJK layout risk.
 
 Create plan and worklog files through the CLI so paths stay predictable:
 

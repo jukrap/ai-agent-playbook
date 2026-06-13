@@ -9,7 +9,7 @@ The content is not agent-specific. Codex is one installation target. The source 
 ## Skill categories
 
 - `skills/project`: project bootstrap, onboarding, and project-memory maintenance.
-- `skills/quality`: API boundary, UI style policy, and visual quality workflows.
+- `skills/quality`: API boundary, UI style policy, visual quality, cleanup, and lightweight review workflows.
 - `skills/git`: commit, PR, push, and worklog guardrails.
 - `skills/meta`: skill-authoring and repository-maintenance skills.
 - `skills/legacy`: maintenance workflows where runtime coupling and compatibility dominate.
@@ -46,10 +46,13 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `repo-onboarding`: reads repo state and existing `.ai-playbook/` context before planning or editing.
 - `project-doc-system`: organizes `.ai-playbook/`, maps, runbooks, decisions, plans, worklogs, and archived notes.
 
-## Style policy map
+## Quality map
 
 - `ui-style-policy`: selects or documents the repository styling method across design system, CSS/classes, utility classes, or inline styles.
 - `style-quality-review`: reviews visible UI quality while preserving product intent.
+- `frontend-ui-polish`: implements or refines visible UI surfaces while preserving product intent and existing design conventions.
+- `cleanup-ai-slop`: removes low-trust code noise in a behavior-preserving, bounded cleanup.
+- `review-work-light`: reviews recent implementation work without turning review into an automatic blocking gate.
 
 ## Skill authoring map
 

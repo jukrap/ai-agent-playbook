@@ -35,11 +35,11 @@
     },
     {
       "path": "runtime-harness.md",
-      "sourceHash": "ce0113094c3a973771f27192ac155523426d7eeb1e2750e55ffc87a094f4fdae"
+      "sourceHash": "02934828e359724e3dc367e40f161cdcec2bed40722df0b3f22c19e66669e3ad"
     },
     {
       "path": "runtime-roadmap.md",
-      "sourceHash": "ce9ad333bde4a1a3dd99618aafe2d549112807d5bcdded6987e21b5ef587860c"
+      "sourceHash": "7da179a0d989dd913113cefdc8c35a2a243ca3757f3b85b6dc005de102161ca1"
     },
     {
       "path": "structural-review.md",

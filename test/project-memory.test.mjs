@@ -267,6 +267,112 @@ test('contracts list and check report active pending stale and missing appliesTo
   await cleanup(target);
 });
 
+test('contracts snapshot previews writes hashes and check reports freshness drift', async () => {
+  const target = await tempRepo('contracts snapshot-공백-한글-');
+  await mkdir(path.join(target, '.ai-playbook', 'contracts', 'active'), { recursive: true });
+  await mkdir(path.join(target, 'src', 'payments'), { recursive: true });
+  await mkdir(path.join(target, 'test', 'payments'), { recursive: true });
+  await writeFile(path.join(target, 'src', 'payments', 'cancel.ts'), 'export function cancelPayment() { return "ok"; }\n');
+  await writeFile(path.join(target, 'test', 'payments', 'cancel.test.ts'), 'test("cancel", () => {});\n');
+  await writeFile(path.join(target, '.ai-playbook', 'contracts', 'active', 'payment-cancel.md'), [
+    '---',
+    'id: payment-cancel',
+    'status: active',
+    'appliesTo:',
+    '  - src/payments/cancel.ts',
+    'freshness: 2026-06-14',
+    '---',
+    '# Payment Cancel Contract',
+    '',
+    '## Required evidence',
+    '',
+    '- test/payments/cancel.test.ts'
+  ].join('\n'));
+  const beforePreview = await listRelativeFiles(target);
+
+  const preview = capture(target);
+  assert.equal(await runCli(['contracts', 'snapshot', '.', '--json'], preview), 0);
+  const previewReport = JSON.parse(preview.out());
+  assert.equal(previewReport.schemaVersion, '1');
+  assert.equal(previewReport.ok, true);
+  assert.equal(previewReport.applied, false);
+  assert.equal(previewReport.snapshotPath, '.ai-playbook/contracts/.hashes.json');
+  assert.equal(previewReport.summary.entries >= 3, true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'contracts', '.hashes.json')), false);
+  assert.deepEqual(await listRelativeFiles(target), beforePreview);
+
+  const applied = capture(target);
+  assert.equal(await runCli(['contracts', 'snapshot', '.', '--apply', '--json'], applied), 0);
+  const appliedReport = JSON.parse(applied.out());
+  assert.equal(appliedReport.applied, true);
+  assert.equal(appliedReport.operations.some((operation) => operation.path === '.ai-playbook/contracts/.hashes.json'), true);
+  const snapshot = JSON.parse(await readFile(path.join(target, '.ai-playbook', 'contracts', '.hashes.json'), 'utf8'));
+  assert.equal(snapshot.schemaVersion, '1');
+  assert.equal(snapshot.entries.every((entry) => !path.isAbsolute(entry.path)), true);
+  assert.equal(snapshot.entries.some((entry) => entry.path === 'src/payments/cancel.ts'), true);
+  assert.equal(snapshot.entries.some((entry) => entry.path === 'test/payments/cancel.test.ts'), true);
+
+  await writeFile(path.join(target, 'src', 'payments', 'cancel.ts'), 'export function cancelPayment() { return "changed"; }\n');
+  await rm(path.join(target, 'test', 'payments', 'cancel.test.ts'));
+  const beforeCheck = await listRelativeFiles(target);
+
+  const checked = capture(target);
+  assert.equal(await runCli(['contracts', 'check', '.', '--path', 'src/payments/cancel.ts', '--json'], checked), 0);
+  const report = JSON.parse(checked.out());
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.snapshot.path, '.ai-playbook/contracts/.hashes.json');
+  assert.equal(report.warnings.some((warning) => warning.id === 'contracts.snapshot.hash-mismatch' && warning.paths.includes('src/payments/cancel.ts')), true);
+  assert.equal(report.warnings.some((warning) => warning.id === 'contracts.snapshot.evidence-missing' && warning.paths.includes('test/payments/cancel.test.ts')), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeCheck);
+  await cleanup(target);
+});
+
+test('contracts snapshot can limit to one contract and stays preview-first', async () => {
+  const target = await tempRepo('contracts snapshot one-한글-');
+  await mkdir(path.join(target, '.ai-playbook', 'contracts', 'active'), { recursive: true });
+  await mkdir(path.join(target, 'src'), { recursive: true });
+  await writeFile(path.join(target, 'src', 'a.ts'), 'export const a = 1;\n');
+  await writeFile(path.join(target, 'src', 'b.ts'), 'export const b = 1;\n');
+  await writeFile(path.join(target, '.ai-playbook', 'contracts', 'active', 'a.md'), [
+    '---',
+    'id: contract-a',
+    'status: active',
+    'appliesTo: ["src/a.ts"]',
+    '---',
+    '# Contract A',
+    '',
+    '## Required evidence',
+    '',
+    '- src/a.ts'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'contracts', 'active', 'b.md'), [
+    '---',
+    'id: contract-b',
+    'status: active',
+    'appliesTo: ["src/b.ts"]',
+    '---',
+    '# Contract B',
+    '',
+    '## Required evidence',
+    '',
+    '- src/b.ts'
+  ].join('\n'));
+  const before = await listRelativeFiles(target);
+
+  const applied = capture(target);
+  assert.equal(await runCli(['contracts', 'snapshot', '.', '--contract', 'contract-a', '--apply', '--json'], applied), 0);
+  const report = JSON.parse(applied.out());
+  assert.equal(report.summary.contracts, 1);
+  const snapshot = JSON.parse(await readFile(path.join(target, '.ai-playbook', 'contracts', '.hashes.json'), 'utf8'));
+  assert.equal(snapshot.contracts.includes('contract-a'), true);
+  assert.equal(snapshot.contracts.includes('contract-b'), false);
+  assert.equal(snapshot.entries.some((entry) => entry.path === 'src/a.ts'), true);
+  assert.equal(snapshot.entries.some((entry) => entry.path === 'src/b.ts'), false);
+  assert.equal((await listRelativeFiles(target)).filter((file) => !before.includes(file)).length, 1);
+  await cleanup(target);
+});
+
 test('contracts init previews and creates contract folders without overwriting', async () => {
   const target = await tempRepo('contracts init-한글-');
   await mkdir(path.join(target, '.ai-playbook'), { recursive: true });

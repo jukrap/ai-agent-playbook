@@ -13,8 +13,12 @@ node .\bin\ai-playbook.mjs doctor <target> --reminder [--json]
 node .\bin\ai-playbook.mjs guides sync <target> [--dry-run] [--force]
 node .\bin\ai-playbook.mjs guides sync <target> --check [--diff] [--json]
 node .\bin\ai-playbook.mjs migrate path <target> [--apply] [--json]
+node .\bin\ai-playbook.mjs managed check <target> [--json]
+node .\bin\ai-playbook.mjs managed adopt <target> [--apply] [--json]
+node .\bin\ai-playbook.mjs managed uninstall <target> [--apply] [--json]
 node .\bin\ai-playbook.mjs context <target> [--json] [--max-chars N]
 node .\bin\ai-playbook.mjs operator check <target> [--path <file>] [--diff] [--json]
+node .\bin\ai-playbook.mjs operator search <target> --query <text> [--path <file>] [--max-results N] [--json]
 node .\bin\ai-playbook.mjs rules check <target> [--path <file>] [--json]
 node .\bin\ai-playbook.mjs diagnostics check <target> [--json]
 node .\bin\ai-playbook.mjs qa tui-check <capture-file> [--cols N] [--json]
@@ -34,6 +38,7 @@ node .\bin\ai-playbook.mjs worklog summarize <target> --month YYYY-MM [--dry-run
 - `.ai-playbook/SKILLS.md`와 `.ai-playbook/GIT.md`는 project playbook의 일부로 포함됩니다.
 - `--profile <name>`이 있으면 `templates/agents/profiles/<name>/AGENTS.md`를 root `AGENTS.md`에 병합합니다.
 - `--local-only`가 있으면 대상 `.gitignore`에만 `.ai-playbook/`을 추가합니다.
+- `.ai-playbook/.ai-agent-playbook-install.json`을 써서 이 playbook이 복사한 파일을 표시합니다. Marker에는 portable relative path와 content hash만 저장합니다.
 - 기존 파일은 `--force`가 없으면 덮어쓰지 않습니다.
 - 파일을 만들기 전에 예정된 모든 쓰기 작업을 먼저 점검합니다. 충돌이 있으면 부분적인 `.ai-playbook/` 트리를 남기지 않고 충돌만 보고합니다.
 
@@ -53,6 +58,24 @@ node .\bin\ai-playbook.mjs migrate path <target> --apply --json
 `--apply`는 preview를 검토한 뒤에만 사용합니다. Apply mode는 폴더를 rename하고, root `AGENTS.md`와 playbook markdown 또는 JSON 파일의 참조를 갱신하며, 필요하면 `.gitignore`에 `.ai-playbook/`을 추가합니다. Network call, hook 설치, 관련 없는 project file 편집은 하지 않습니다.
 
 `ai-playbook/`과 `.ai-playbook/`이 둘 다 있으면 conflict를 보고하고 아무 파일도 쓰지 않습니다.
+
+## Managed manifest
+
+`managed` 명령은 project-level install marker인 `.ai-playbook/.ai-agent-playbook-install.json`을 확인하거나 관리합니다.
+
+```powershell
+node .\bin\ai-playbook.mjs managed check <target> --json
+node .\bin\ai-playbook.mjs managed adopt <target> --json
+node .\bin\ai-playbook.mjs managed adopt <target> --apply --json
+node .\bin\ai-playbook.mjs managed uninstall <target> --json
+node .\bin\ai-playbook.mjs managed uninstall <target> --apply --json
+```
+
+`managed check`는 read-only이며 `{ schemaVersion, ok, target, manifestPath, summary, files, warnings, conflicts }`를 반환합니다. Manifest가 없거나 malformed이면 실패합니다. Managed file이 없거나 로컬에서 수정되었으면 project-specific edit을 조용히 제거하지 않도록 conflict로 보고합니다.
+
+`managed adopt`는 현재 template과 일치하지만 marker가 없는 오래된 프로젝트에 사용합니다. Preview mode는 파일을 쓰지 않습니다. Apply mode는 현재 content hash가 source template hash와 일치하는 파일만 기록합니다.
+
+`managed uninstall`도 preview-first입니다. Apply mode는 수정되지 않은 managed file만 제거합니다. 수정된 파일은 보존하고 conflict로 보고합니다. 이 명령은 `.gitignore`를 편집하지 않으며, manifest가 local-only 설치였다고 표시하면 manual cleanup warning을 반환합니다.
 
 ## Doctor 점검
 
@@ -102,6 +125,15 @@ node .\bin\ai-playbook.mjs operator check <target> --path src/example.ts --diff 
 ```
 
 이 명령은 `doctor`, `guides sync --check`, `diagnostics check`, `rules check`를 하나의 report로 묶습니다. `--path`는 rule matching으로 전달됩니다. `--diff`는 `guides sync --check --diff`와 같은 첫 차이 guide detail을 포함합니다. JSON output은 `{ schemaVersion, ok, target, path, summary, checks, sections }`를 반환하며, `sections`에는 원래 `doctor`, `guides`, `diagnostics`, `rules` report가 들어갑니다. Missing guide template이나 doctor failure는 통합 check를 실패시키고, stale guide와 diagnostics warning은 warning-level operator signal로 남깁니다.
+
+`operator search`는 local read-only explorer입니다.
+
+```powershell
+node .\bin\ai-playbook.mjs operator search <target> --query "auth flow" --json
+node .\bin\ai-playbook.mjs operator search <target> --query "auth flow" --path src/example.ts --max-results 20 --json
+```
+
+이 명령은 target project의 text file을 검색하고 `.git`, `node_modules`, `dist`, `build`, `.next`, `.turbo`, `coverage` 같은 일반 generated/dependency folder는 제외합니다. JSON output은 `{ schemaVersion, ok, target, query, path, summary, results, related }`를 반환합니다. 결과에는 relative path, category, score, match count, snippet이 포함됩니다. Match가 없어도 성공 종료하며 `summary.matches: 0`을 반환합니다. `--path`가 있으면 `related.rules`가 해당 file의 matching project rule을 요약하고, `related.diagnostics`는 실행하지 않은 local verification command 후보를 나열합니다.
 
 `rules check`는 portable rule file을 찾아 특정 path에 어떤 rule이 적용되는지 보고합니다.
 

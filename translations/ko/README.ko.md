@@ -91,6 +91,7 @@ npx ai-agent-playbook migrate path <target-project> --json
 npx ai-agent-playbook managed check <target-project> --json
 npx ai-agent-playbook managed catalog <target-project> --json
 npx ai-agent-playbook operator search <target-project> --query "auth flow" --json
+npx ai-agent-playbook operator research <target-project> --query "auth flow risk" --path src/example.ts --json
 npx ai-agent-playbook operator context <target-project> --path src/example.ts --json
 npx ai-agent-playbook operator analyze <target-project> --path src/example.ts --json
 npx ai-agent-playbook operator map <target-project> --json

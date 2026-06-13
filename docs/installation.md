@@ -131,7 +131,9 @@ node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-project> --check --diff
 node .\bin\ai-playbook.mjs migrate path <target-project> --json
 node .\bin\ai-playbook.mjs managed check <target-project> --json
+node .\bin\ai-playbook.mjs managed catalog <target-project> --json
 node .\bin\ai-playbook.mjs managed adopt <target-project> --json
+node .\bin\ai-playbook.mjs managed prune <target-project> --path .ai-playbook/guides/runtime-harness.md --json
 node .\bin\ai-playbook.mjs managed uninstall <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project> --json
@@ -157,7 +159,7 @@ Use `guides sync` for projects that already have `.ai-playbook/` and only need m
 
 During the path transition, these runtime commands also support an existing legacy `ai-playbook/` folder when `.ai-playbook/` is absent. New bootstrap output uses `.ai-playbook/`. Use `migrate path --json` to preview a legacy folder move and reference updates, then add `--apply` only after reviewing the preview.
 
-Bootstrap and guide sync maintain a project-level marker at `.ai-playbook/.ai-agent-playbook-install.json`. Use `managed check` to inspect it, `managed adopt --apply` to mark older matching installs, and `managed uninstall --apply` to remove only unmodified managed files. The uninstall command preserves locally edited files and leaves `.gitignore` cleanup to the operator.
+Bootstrap and guide sync maintain a project-level marker at `.ai-playbook/.ai-agent-playbook-install.json`. Use `managed check` to inspect it, `managed catalog` to review owned files by kind and status, `managed adopt --apply` to mark older matching installs, `managed prune --apply --path <managed-path>` to remove one selected unmodified managed file, and `managed uninstall --apply` to remove all unmodified managed files. The prune and uninstall commands preserve locally edited files and leave `.gitignore` cleanup to the operator.
 
 The optional adapter hook examples use the `context` command internally. They are read-only and must be enabled manually from `adapters/`. Use `adapter config` to render placeholder-free local settings, then use `adapter check --settings <local-settings-path>` after manually editing a local settings file.
 

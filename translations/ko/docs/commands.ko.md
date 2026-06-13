@@ -1,0 +1,183 @@
+# 명령어 가이드
+
+이 문서는 AI Agent Playbook 명령어 reference입니다. 각 명령이 무엇을 하는지, 파일을 쓰는지, 어떤 순서로 실행하면 안전한지 설명합니다.
+
+설치, 업데이트, 삭제, npm 사용 방식은 [설치, 업데이트, 삭제](installation.ko.md)를 보세요. Runtime 설계와 JSON contract 설명은 [Runtime harness](harness-runtime.ko.md)를 보세요.
+
+## 명령 실행 방식
+
+아래 세 가지 형태 중 하나를 사용합니다.
+
+| 형태 | 언제 쓰나 |
+| ---- | --------- |
+| `npx ai-agent-playbook ...` | 현재 프로젝트에 dependency를 추가하지 않고 최신 배포 패키지를 실행할 때 기본으로 사용합니다. |
+| `ai-playbook ...` | `npm install -g ai-agent-playbook` 뒤에 짧은 전역 명령을 쓰고 싶을 때 사용합니다. |
+| `node .\bin\ai-playbook.mjs ...` | 이 repository를 checkout한 폴더 안에서 직접 실행할 때 사용합니다. |
+
+아래 예시의 `npx ai-agent-playbook`은 설치 방식에 따라 `ai-playbook` 또는 `node .\bin\ai-playbook.mjs`로 바꿔 실행할 수 있습니다.
+
+`<target>` 또는 `<target-project>`는 playbook을 적용하거나 검사할 대상 프로젝트 폴더입니다. 터미널이 이미 그 프로젝트 안에 있다면 `.`을 쓸 수 있습니다.
+
+## 공통 옵션
+
+| 옵션 | 의미 |
+| ---- | ---- |
+| `--dry-run` | 파일을 쓰는 작업을 미리 보기만 합니다. install, update, bootstrap, guide sync 전에 먼저 사용합니다. |
+| `--check` | 파일을 쓰지 않고 상태를 확인합니다. guide sync에서 사용합니다. |
+| `--json` | 기계가 읽기 쉬운 출력을 냅니다. 에이전트, script, 자세한 점검에 유용합니다. |
+| `--apply` | preview-first 명령의 실제 적용을 수행합니다. path migration이나 uninstall에 사용합니다. |
+| `--force` | 기본적으로 거부되는 overwrite를 허용합니다. 출력 내용을 검토한 뒤에만 사용합니다. |
+| `--force-managed` | 로컬 hash가 바뀐 managed skill도 덮어쓰거나 삭제합니다. |
+| `--force-unmanaged` | 같은 이름의 unmanaged skill을 이 playbook이 소유하도록 전환합니다. 이 playbook에서 온 것이 확실할 때만 사용합니다. |
+
+명령별 option은 필요한 곳에서 사용합니다.
+
+| 옵션 | 쓰는 곳 |
+| ---- | ------- |
+| `--path <file>` | rule, context, search, research, operator check를 한 file 또는 영역으로 좁힐 때 사용합니다. |
+| `--query <text>` | 검색 또는 조사할 주제입니다. |
+| `--max-results N` | search 또는 research 출력 개수를 제한합니다. |
+| `--max-chars N` | 생성되는 context 크기를 제한합니다. |
+| `--strict` | doctor warning도 실패로 처리합니다. |
+| `--reminder` | 전체 doctor report 대신 작은 reminder signal을 반환합니다. |
+| `--profile <name>` | 대상 stack을 확인한 뒤 stack-specific bootstrap profile을 추가합니다. |
+| `--local-only` | bootstrap 중 대상 프로젝트 `.gitignore`에 `.ai-playbook/`을 추가합니다. |
+| `--title <text>` | 생성할 plan 또는 worklog 제목입니다. |
+| `--month YYYY-MM` | worklog summary 대상 월입니다. |
+| `--cols N` | `qa tui-check`에서 기대하는 terminal width입니다. |
+
+## 처음 설정할 때
+
+재사용 스킬과 대상 프로젝트 playbook을 설정하려면 아래 순서로 시작합니다.
+
+```powershell
+npx ai-agent-playbook --help
+npx ai-agent-playbook skills install --dry-run
+npx ai-agent-playbook skills install
+npx ai-agent-playbook bootstrap <target-project> --dry-run
+npx ai-agent-playbook bootstrap <target-project>
+npx ai-agent-playbook operator check <target-project> --json
+```
+
+`skills install`은 사용자 수준 skill 폴더를 바꿉니다. `bootstrap`은 대상 프로젝트를 바꿉니다. 둘은 별도 단계입니다.
+
+## Skills
+
+Skill은 재사용 가능한 사용자 수준 지침입니다. 각 대상 repository 안이 아니라 Codex와 agent의 일반 skill root에 설치됩니다.
+
+| 명령 | 언제 쓰나 | 파일을 쓰나 | 예시 |
+| ---- | --------- | ----------- | ---- |
+| `skills check` | 이 playbook의 skill이 설치됐는지, 누락됐는지, 수정됐는지, 같은 이름의 unmanaged copy와 충돌하는지 봅니다. | 아니오 | `npx ai-agent-playbook skills check --json` |
+| `skills install` | 재사용 스킬을 처음 설치합니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook skills install --dry-run` 뒤 `npx ai-agent-playbook skills install` |
+| `skills update` | 패키지나 checkout이 바뀐 뒤 설치된 managed skill을 갱신합니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook skills update --dry-run` 뒤 `npx ai-agent-playbook skills update` |
+| `skills uninstall` | 이 playbook이 설치한 수정되지 않은 managed skill을 제거합니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook skills uninstall --dry-run` 뒤 `npx ai-agent-playbook skills uninstall` |
+
+Skills 명령은 `.ai-agent-playbook-install.json` marker와 content hash를 사용합니다. 기본적으로 다른 사람이 만든 skill은 제거하지 않습니다.
+
+## Project playbook
+
+Project playbook 명령은 대상 repository 하나의 `.ai-playbook/`을 관리합니다.
+
+| 명령 | 언제 쓰나 | 파일을 쓰나 | 예시 |
+| ---- | --------- | ----------- | ---- |
+| `bootstrap <target>` | 대상 프로젝트에 root `AGENTS.md`와 `.ai-playbook/` 구조를 만듭니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook bootstrap <target-project> --dry-run` |
+| `guides sync <target>` | 기존 `.ai-playbook/guides/`에 누락된 guide template을 복사합니다. | `--dry-run` 또는 `--check`가 없으면 예 | `npx ai-agent-playbook guides sync <target-project> --check --diff --json` |
+| `migrate path <target>` | legacy `ai-playbook/`에서 `.ai-playbook/`로 이동하는 작업을 preview하거나 적용합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook migrate path <target-project> --json` |
+| `doctor <target>` | project playbook 상태, adaptation 상태, worklog summary freshness, local path risk를 점검합니다. | 아니오 | `npx ai-agent-playbook doctor <target-project> --json` |
+| `context <target>` | 선택적 hook 또는 점검용으로 core `.ai-playbook/` 파일에서 compact context를 만듭니다. | 아니오 | `npx ai-agent-playbook context <target-project> --json` |
+
+대상 프로젝트의 `.ai-playbook/`을 `.gitignore`에 추가해야 하면 `bootstrap`에 `--local-only`를 사용합니다.
+
+## Managed files
+
+Managed 명령은 `.ai-playbook/.ai-agent-playbook-install.json`을 확인하거나 관리합니다. 파일을 제거하거나 adopt하기 전에 hash를 비교해 수정된 project memory를 보호합니다.
+
+| 명령 | 언제 쓰나 | 파일을 쓰나 | 예시 |
+| ---- | --------- | ----------- | ---- |
+| `managed check <target>` | managed marker를 확인하고 누락되거나 수정된 managed file을 보고합니다. | 아니오 | `npx ai-agent-playbook managed check <target-project> --json` |
+| `managed catalog <target>` | cleanup 전에 managed file을 kind와 status별로 봅니다. | 아니오 | `npx ai-agent-playbook managed catalog <target-project> --json` |
+| `managed adopt <target>` | 현재 template과 일치하는 오래된 playbook file에 marker를 추가합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook managed adopt <target-project> --json` |
+| `managed prune <target>` | 선택한 수정되지 않은 managed file 하나를 제거합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook managed prune <target-project> --path .ai-playbook/guides/runtime-harness.md --json` |
+| `managed uninstall <target>` | 수정되지 않은 managed playbook file 전체를 제거합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook managed uninstall <target-project> --json` |
+
+Cleanup은 먼저 preview합니다.
+
+```powershell
+npx ai-agent-playbook managed check <target-project> --json
+npx ai-agent-playbook managed uninstall <target-project> --json
+npx ai-agent-playbook managed uninstall <target-project> --apply --json
+```
+
+`managed uninstall --apply`는 로컬에서 수정한 파일을 보존하고 `.gitignore`도 수정하지 않습니다.
+
+## Operator check, search, research
+
+Operator 명령은 사람이 명시적으로 실행하는 signal입니다. 명령 설명에 따로 적힌 경우를 제외하면 hook을 설치하지 않고, project command를 실행하지 않고, network call을 하지 않고, 파일을 쓰지 않습니다.
+
+| 명령 | 언제 쓰나 | 파일을 쓰나 | 예시 |
+| ---- | --------- | ----------- | ---- |
+| `operator check <target>` | doctor, guide freshness, diagnostics, matching rules를 묶은 주요 checkpoint를 실행합니다. | 아니오 | `npx ai-agent-playbook operator check <target-project> --path src/example.ts --json` |
+| `operator search <target>` | local source, playbook file, rule, plan, worklog에서 query를 빠르게 찾습니다. | 아니오 | `npx ai-agent-playbook operator search <target-project> --query "auth flow" --json` |
+| `operator research <target>` | evidence, gaps, next steps, markdown summary text를 포함한 더 깊은 local-only 조사를 실행합니다. | 아니오 | `npx ai-agent-playbook operator research <target-project> --query "auth flow risk" --path src/example.ts --json` |
+| `operator context <target>` | 한 파일에 대한 path-scoped playbook context, rules, maps, runbooks, decisions를 미리 봅니다. | 아니오 | `npx ai-agent-playbook operator context <target-project> --path src/example.ts --json` |
+| `operator analyze <target>` | diagnostics, map, rules, context, optional local setup signal을 하나의 report로 묶습니다. | 아니오 | `npx ai-agent-playbook operator analyze <target-project> --path src/example.ts --json` |
+| `operator map <target>` | stack, source layout, quality config, test file, verification command 후보를 요약합니다. | 아니오 | `npx ai-agent-playbook operator map <target-project> --json` |
+| `operator audit <target>` | broken link, stale context glob, duplicate, manifest drift 같은 playbook drift를 확인합니다. | 아니오 | `npx ai-agent-playbook operator audit <target-project> --json` |
+| `operator gc <target>` | obsolete unmodified managed playbook file을 preview하거나 제거합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook operator gc <target-project> --json` |
+
+빠른 검색은 `operator search`를 사용합니다. 변경 여부를 결정하기 전에 더 넓은 근거가 필요하면 `operator research`를 사용합니다. 둘 다 local-only입니다.
+
+## Rules, diagnostics, TUI checks
+
+| 명령 | 언제 쓰나 | 파일을 쓰나 | 예시 |
+| ---- | --------- | ----------- | ---- |
+| `rules check <target>` | 대상 path에 적용되는 portable rule file을 봅니다. | 아니오 | `npx ai-agent-playbook rules check <target-project> --path src/example.ts --json` |
+| `diagnostics check <target>` | 실행하지 않은 상태로 local verification command 후보를 나열합니다. | 아니오 | `npx ai-agent-playbook diagnostics check <target-project> --json` |
+| `qa tui-check <capture-file>` | terminal capture의 overflow, CJK width, ANSI, box alignment 문제를 확인합니다. | 아니오 | `npx ai-agent-playbook qa tui-check .\capture.txt --cols 100 --json` |
+
+`diagnostics check`는 command 후보만 보고합니다. lint, test, build, language server를 실행하지 않습니다.
+
+## Adapter setup
+
+Adapter는 선택 사항입니다. 기본 harness는 hook이나 agent plugin 없이도 동작합니다.
+
+| 명령 | 언제 쓰나 | 파일을 쓰나 | 예시 |
+| ---- | --------- | ----------- | ---- |
+| `adapter config <target>` | Codex 또는 Claude Code용 local hook 설정을 copy-paste 가능한 형태로 렌더링합니다. | 아니오 | `npx ai-agent-playbook adapter config <target-project> --adapter codex --json` |
+| `adapter check <target>` | 선택적 adapter file, context, local settings가 준비됐는지 확인합니다. | 아니오 | `npx ai-agent-playbook adapter check <target-project> --adapter codex --settings <local-settings-path> --json` |
+
+`adapter config`는 settings file을 만들지 않습니다. Operator가 검토하고 수동으로 복사할 command와 JSON을 출력합니다.
+
+## Plan과 worklog
+
+임의의 markdown 파일을 만들지 않고 예측 가능한 project-memory 경로를 쓰고 싶을 때 사용합니다.
+
+| 명령 | 언제 쓰나 | 파일을 쓰나 | 예시 |
+| ---- | --------- | ----------- | ---- |
+| `plan new <target>` | `.ai-playbook/plans/` 아래 dated plan을 만듭니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook plan new <target-project> --title "Feature slice" --dry-run` |
+| `worklog new <target>` | `.ai-playbook/worklogs/YYYY-MM/` 아래 dated worklog를 만듭니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook worklog new <target-project> --title "Feature slice" --dry-run` |
+| `worklog summarize <target>` | monthly worklog summary를 만들거나 갱신합니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook worklog summarize <target-project> --month 2026-06 --dry-run` |
+
+기존 plan과 worklog file은 `--force`가 없으면 덮어쓰지 않습니다.
+
+## 안전한 기본 흐름
+
+새 대상 repository나 기존 대상 repository에서는 아래 순서가 가장 안전합니다.
+
+```powershell
+npx ai-agent-playbook skills install --dry-run
+npx ai-agent-playbook skills install
+npx ai-agent-playbook bootstrap <target-project> --dry-run
+npx ai-agent-playbook bootstrap <target-project> --local-only
+npx ai-agent-playbook operator check <target-project> --json
+npx ai-agent-playbook operator research <target-project> --query "project risks" --json
+```
+
+Cleanup은 먼저 preview합니다.
+
+```powershell
+npx ai-agent-playbook managed catalog <target-project> --json
+npx ai-agent-playbook managed uninstall <target-project> --json
+```
+
+Preview가 제거할 내용을 정확히 보여줄 때만 `--apply`를 추가합니다.

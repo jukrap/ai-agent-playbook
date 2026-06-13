@@ -49,6 +49,8 @@ ai-playbook skills check
 
 After a global install, replace `npx ai-agent-playbook` with `ai-playbook` in the examples below.
 
+For the full command reference, see [Command guide](commands.md).
+
 ## Skills lifecycle
 
 Reusable skills are installed into user-level skill roots, not into a target repository:
@@ -106,7 +108,8 @@ Use `npx ai-agent-playbook skills uninstall` or `ai-playbook skills uninstall` w
 | `bootstrap <target>` | Yes unless `--dry-run` | Target project's root `AGENTS.md` and `.ai-playbook/`. |
 | `guides sync <target>` | Yes unless `--dry-run` or `--check` | Target project's `.ai-playbook/guides/`. |
 | `managed adopt/prune/uninstall` | No unless `--apply` | Target project's `.ai-playbook/` managed files. |
-| `operator check/search/context/analyze/map/audit` | No | Read-only target project diagnostics. |
+| `operator check/search/research/context/analyze/map/audit` | No | Read-only target project diagnostics. |
+| `operator gc` | No unless `--apply` | Target project's obsolete unmodified managed playbook files. |
 | `adapter config/check` | No | Renders or validates local adapter settings. |
 
 ## Option 2: Fast local checkout with GitHub CLI
@@ -240,38 +243,14 @@ This is the default project harness. Runtime hooks or agent plugins are optional
 
 ### Runtime path
 
+Start project-level work with previews:
+
 ```powershell
 npx ai-agent-playbook bootstrap <target-project> --dry-run
-npx ai-agent-playbook bootstrap <target-project>
-npx ai-agent-playbook guides sync <target-project> --dry-run
-npx ai-agent-playbook guides sync <target-project> --check --diff
-npx ai-agent-playbook migrate path <target-project> --json
-npx ai-agent-playbook managed check <target-project> --json
-npx ai-agent-playbook managed catalog <target-project> --json
-npx ai-agent-playbook managed adopt <target-project> --json
-npx ai-agent-playbook managed prune <target-project> --path .ai-playbook/guides/runtime-harness.md --json
-npx ai-agent-playbook managed uninstall <target-project> --json
-npx ai-agent-playbook doctor <target-project>
-npx ai-agent-playbook doctor <target-project> --json
-npx ai-agent-playbook doctor <target-project> --reminder --json
-npx ai-agent-playbook context <target-project> --json
-npx ai-agent-playbook operator check <target-project> --path src/example.ts --json
-npx ai-agent-playbook operator search <target-project> --query "auth flow" --path src/example.ts --json
-npx ai-agent-playbook operator research <target-project> --query "auth flow risk" --path src/example.ts --json
-npx ai-agent-playbook operator context <target-project> --path src/example.ts --json
-npx ai-agent-playbook operator analyze <target-project> --path src/example.ts --json
-npx ai-agent-playbook operator map <target-project> --json
-npx ai-agent-playbook operator audit <target-project> --json
-npx ai-agent-playbook operator gc <target-project> --json
-npx ai-agent-playbook rules check <target-project> --path src/example.ts --json
-npx ai-agent-playbook diagnostics check <target-project> --json
-npx ai-agent-playbook qa tui-check .\capture.txt --cols 100 --json
-npx ai-agent-playbook adapter config <target-project> --adapter codex --json
-npx ai-agent-playbook adapter check <target-project> --adapter codex --json
-npx ai-agent-playbook adapter check <target-project> --adapter codex --settings <local-settings-path> --json
+npx ai-agent-playbook operator check <target-project> --json
 ```
 
-After a global install, replace `npx ai-agent-playbook` with `ai-playbook`. From a local checkout, replace it with `node .\bin\ai-playbook.mjs`.
+After a global install, replace `npx ai-agent-playbook` with `ai-playbook`. From a local checkout, replace it with `node .\bin\ai-playbook.mjs`. For the full list of project playbook, managed cleanup, operator, adapter, plan, and worklog commands, see [Command guide](commands.md).
 
 Use `--profile <name>` only after the target stack is known. Use `--local-only` when `.ai-playbook/` should be added to the target `.gitignore`.
 
@@ -291,9 +270,7 @@ npx ai-agent-playbook managed uninstall <target-project> --apply --json
 
 `managed uninstall --apply` removes only files tracked by `.ai-playbook/.ai-agent-playbook-install.json` whose current hash still matches the manifest. It preserves edited project memory and does not edit `.gitignore`.
 
-The optional adapter hook examples use the `context` command internally. They are read-only and must be enabled manually from `adapters/`. Use `adapter config` to render placeholder-free local settings, then use `adapter check --settings <local-settings-path>` after manually editing a local settings file.
-
-The operator diagnostics commands are also operator-triggered. `operator check` combines doctor, guide freshness, diagnostics, and rule matching into one human checkpoint. `operator search` searches local source, playbook, rules, plans, and worklogs without writing files. `operator research` is the stronger local-only investigation mode: it correlates source, tests, playbook context, rules, worklogs, diagnostics, and map signals, then reports evidence, gaps, next steps, and markdown summary text without requiring slash commands or web access. `operator context` previews path-scoped context files, rules, and related maps or runbooks before an agent loads them. `operator analyze` combines diagnostics, map, rules, context, and optional AST/LSP/comment-quality setup signals without running optional tools. `operator map` summarizes stack, architecture, quality, and concern signals without creating map files. `operator audit` checks playbook links, context globs, duplicate notes, legacy path drift, and managed manifest drift without writing files. `operator gc` previews obsolete unmodified managed playbook files and writes only when `--apply` is provided. `rules check` shows which portable rule files apply to a path, `diagnostics check` lists likely verification commands without running them and respects detected package manager lockfiles, and `qa tui-check` checks terminal captures for width overflow and CJK layout risk.
+The optional adapter hook examples use the `context` command internally. They are read-only and must be enabled manually from `adapters/`. Use `adapter config` to render placeholder-free local settings, then use `adapter check --settings <local-settings-path>` after manually editing a local settings file. See [Command guide](commands.md) for operator diagnostics, rules, diagnostics, TUI, and adapter command examples.
 
 Create plan and worklog files through the CLI so paths stay predictable:
 

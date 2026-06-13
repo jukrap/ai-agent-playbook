@@ -68,7 +68,7 @@ npm 패키지는 CLI를 설치합니다. 스킬 복사, `.ai-playbook/` 생성, 
 - `bootstrap`, `guides sync`, `managed *`, `operator *`는 대상 프로젝트 하나를 관리하거나 점검합니다.
 - Runtime hook과 adapter 설정은 선택 사항이며 기본 설치 경로에서 자동 설치되지 않습니다.
 
-업데이트, 삭제, 로컬 checkout, PowerShell 호환 경로, ownership marker, 정리 절차는 [설치, 업데이트, 삭제](docs/installation.ko.md)를 봅니다.
+명령어별 사용법은 [명령어 가이드](docs/commands.ko.md)를 봅니다. 업데이트, 삭제, 로컬 checkout, PowerShell 호환 경로, ownership marker, 정리 절차는 [설치, 업데이트, 삭제](docs/installation.ko.md)를 봅니다.
 
 ## 평소 작업 흐름
 
@@ -85,19 +85,12 @@ npx 또는 global install
 
 ```powershell
 npx ai-agent-playbook bootstrap <target-project> --local-only --dry-run
-npx ai-agent-playbook guides sync <target-project> --dry-run
-npx ai-agent-playbook guides sync <target-project> --check --diff --json
-npx ai-agent-playbook migrate path <target-project> --json
-npx ai-agent-playbook managed check <target-project> --json
-npx ai-agent-playbook managed catalog <target-project> --json
-npx ai-agent-playbook operator search <target-project> --query "auth flow" --json
-npx ai-agent-playbook operator research <target-project> --query "auth flow risk" --path src/example.ts --json
-npx ai-agent-playbook operator context <target-project> --path src/example.ts --json
-npx ai-agent-playbook operator analyze <target-project> --path src/example.ts --json
-npx ai-agent-playbook operator map <target-project> --json
-npx ai-agent-playbook operator audit <target-project> --json
-npx ai-agent-playbook operator gc <target-project> --json
+npx ai-agent-playbook bootstrap <target-project> --local-only
+npx ai-agent-playbook operator check <target-project> --json
+npx ai-agent-playbook operator research <target-project> --query "project risks" --json
 ```
+
+검색, 관리 파일 정리, adapter 설정, plan, worklog 명령은 [명령어 가이드](docs/commands.ko.md)를 봅니다.
 
 ## 저장소 지도
 
@@ -176,8 +169,9 @@ test/                 Node CLI와 adapter 테스트
 
 - [저장소 작업 규칙](AGENTS.ko.md): 이 저장소를 수정하는 에이전트를 위한 유지보수 규칙.
 - [저장소 맥락](CONTEXT.ko.md): playbook의 핵심 용어와 설계 의도.
+- [명령어 가이드](docs/commands.ko.md): 각 CLI 명령이 무엇을 하는지, 언제 쓰는지, 파일을 쓰는지 설명.
 - [설치, 업데이트, 삭제](docs/installation.ko.md): npm/npx 사용, 전역 CLI 설정, skill lifecycle, project bootstrap, cleanup, legacy PowerShell 경로.
-- [런타임 하네스](docs/harness-runtime.ko.md): CLI 명령, JSON 계약, 덮어쓰기 정책, 대상 프로젝트 적용 흐름.
+- [런타임 하네스](docs/harness-runtime.ko.md): runtime 원칙, JSON contract note, overwrite policy, 대상 프로젝트 적용 흐름.
 - [런타임 로드맵](docs/runtime-roadmap.ko.md): 단계적 강화 계획과 선택적 hook layer 경계.
 - [Codex 어댑터](adapters/codex/README.ko.md): Codex 기준 로컬 동기화 방식과 Windows용 Codex App 작업 흐름.
 - [Claude Code 어댑터](adapters/claude-code/README.ko.md): Claude Code 설정 메모와 선택적 read-only context hook 예시.

@@ -17,6 +17,8 @@ const RULE_FILE_SOURCES = [
 
 const RULE_EXTENSIONS = new Set(['.md', '.mdc']);
 const RULE_EXCLUDED_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.turbo', 'coverage']);
+const SEARCH_EXCLUDED_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.turbo', 'coverage']);
+const SEARCH_MAX_BYTES = 1_000_000;
 const PACKAGE_SCRIPT_ORDER = ['check', 'test', 'test:run', 'lint', 'typecheck', 'build'];
 const PACKAGE_MANAGER_LOCKFILES = [
   ['pnpm', 'pnpm-lock.yaml'],
@@ -67,6 +69,65 @@ export async function checkOperator(options) {
       diagnostics,
       rules
     }
+  };
+}
+
+export async function searchOperator(options) {
+  const {
+    target,
+    query,
+    filePath,
+    maxResults = 20
+  } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  if (!query || !query.trim()) throw new Error('Missing --query.');
+  if (!Number.isInteger(maxResults) || maxResults < 1 || maxResults > 100) {
+    throw new Error('Invalid --max-results; expected an integer from 1 to 100.');
+  }
+
+  const resolvedTarget = path.resolve(target);
+  const relativePath = filePath === undefined ? undefined : normalizeTargetRelativePath(resolvedTarget, filePath);
+  const files = await walkSearchFiles(resolvedTarget);
+  const results = [];
+  const normalizedQuery = query.trim().toLowerCase();
+
+  for (const file of files) {
+    const result = await searchFile({ target: resolvedTarget, file, normalizedQuery });
+    if (result) results.push(result);
+  }
+
+  results.sort((left, right) => right.score - left.score || left.path.localeCompare(right.path));
+  const limited = results.slice(0, maxResults);
+  const diagnostics = await checkDiagnostics({ target: resolvedTarget });
+  const related = {
+    diagnostics: {
+      summary: diagnostics.summary,
+      packageManager: diagnostics.packageManager,
+      commands: diagnostics.commands
+    }
+  };
+  if (relativePath !== undefined) {
+    const rules = await checkRules({ target: resolvedTarget, filePath: relativePath });
+    related.rules = {
+      summary: rules.summary,
+      rules: rules.rules.filter((rule) => rule.applies),
+      warnings: rules.warnings
+    };
+  }
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    query: query.trim(),
+    ...(relativePath === undefined ? {} : { path: relativePath }),
+    summary: {
+      matches: results.length,
+      returned: limited.length,
+      searchedFiles: files.length
+    },
+    results: limited,
+    related
   };
 }
 
@@ -239,6 +300,102 @@ export async function checkTuiCapture(options) {
     wideCharColumns,
     hasAnsi: raw !== withoutAnsi
   };
+}
+
+async function walkSearchFiles(root) {
+  const files = [];
+  await walkSearch(root, files);
+  files.sort();
+  return files;
+}
+
+async function walkSearch(current, files) {
+  const entries = await readdir(current, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      if (SEARCH_EXCLUDED_DIRS.has(entry.name)) continue;
+      await walkSearch(path.join(current, entry.name), files);
+      continue;
+    }
+    if (!entry.isFile()) continue;
+    const fullPath = path.join(current, entry.name);
+    const info = await stat(fullPath);
+    if (info.size > SEARCH_MAX_BYTES) continue;
+    files.push(fullPath);
+  }
+}
+
+async function searchFile(options) {
+  const { target, file, normalizedQuery } = options;
+  let raw;
+  try {
+    raw = await readFile(file);
+  } catch {
+    return null;
+  }
+  if (raw.includes(0)) return null;
+  const text = raw.toString('utf8');
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  const snippets = [];
+  let occurrenceCount = 0;
+
+  for (const [index, line] of lines.entries()) {
+    const lineLower = line.toLowerCase();
+    const count = occurrences(lineLower, normalizedQuery);
+    if (count === 0) continue;
+    occurrenceCount += count;
+    if (snippets.length < 3) {
+      snippets.push({
+        line: index + 1,
+        text: trimSnippet(line)
+      });
+    }
+  }
+  if (occurrenceCount === 0) return null;
+
+  const relativePath = toPortablePath(path.relative(target, file));
+  const category = searchCategory(relativePath);
+  return {
+    path: relativePath,
+    category,
+    score: occurrenceCount * 10 + categoryWeight(category),
+    matches: occurrenceCount,
+    snippets
+  };
+}
+
+function occurrences(text, search) {
+  if (!search) return 0;
+  let count = 0;
+  let index = text.indexOf(search);
+  while (index !== -1) {
+    count += 1;
+    index = text.indexOf(search, index + search.length);
+  }
+  return count;
+}
+
+function trimSnippet(line) {
+  const normalized = line.trim();
+  return normalized.length <= 180 ? normalized : `${normalized.slice(0, 177)}...`;
+}
+
+function searchCategory(relativePath) {
+  if (relativePath.startsWith('.ai-playbook/rules/')) return 'rules';
+  if (relativePath.startsWith('.ai-playbook/worklogs/')) return 'worklogs';
+  if (relativePath.startsWith('.ai-playbook/plans/')) return 'plans';
+  if (relativePath.startsWith('.ai-playbook/')) return 'playbook';
+  if (relativePath.startsWith('docs/') || relativePath.startsWith('translations/')) return 'docs';
+  if (relativePath.startsWith('templates/')) return 'templates';
+  return 'source';
+}
+
+function categoryWeight(category) {
+  if (category === 'source') return 8;
+  if (category === 'rules') return 6;
+  if (category === 'playbook') return 5;
+  if (category === 'worklogs') return 4;
+  return 1;
 }
 
 function detectPackageManager(target) {

@@ -263,6 +263,78 @@ test('operator check --json fails when the playbook is missing but still stays r
   await cleanup(target);
 });
 
+test('operator search --json finds source, playbook, rules, and worklog matches without writing files', async () => {
+  const target = await tempRepo('operator search-공백-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await adaptPlaybook(target);
+  await mkdir(path.join(target, 'src', '기능 모듈'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'rules'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'worklogs', '2026-06'), { recursive: true });
+  await writeFile(path.join(target, 'src', '기능 모듈', 'auth-flow.ts'), 'export const authFlow = "token refresh";\n');
+  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nAuth flow uses token refresh.\n');
+  await writeFile(path.join(target, '.ai-playbook', 'rules', 'auth.md'), [
+    '---',
+    'globs:',
+    '  - src/**/*.ts',
+    '---',
+    '# Auth rule',
+    '',
+    'Use token refresh checks.'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'worklogs', '2026-06', '2026-06-13-auth.md'), '# Auth worklog\n\nToken refresh was reviewed.\n');
+  await mkdir(path.join(target, 'node_modules', 'ignored'), { recursive: true });
+  await writeFile(path.join(target, 'node_modules', 'ignored', 'auth.txt'), 'token refresh ignored\n');
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli([
+    'operator',
+    'search',
+    '.',
+    '--query',
+    'token refresh',
+    '--path',
+    'src/기능 모듈/auth-flow.ts',
+    '--max-results',
+    '10',
+    '--json'
+  ], io), 0);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.query, 'token refresh');
+  assert.equal(report.path, 'src/기능 모듈/auth-flow.ts');
+  assert.equal(report.summary.matches >= 4, true);
+  assert.equal(report.results.some((result) => result.path === 'src/기능 모듈/auth-flow.ts' && result.category === 'source'), true);
+  assert.equal(report.results.some((result) => result.path === '.ai-playbook/CURRENT.md' && result.category === 'playbook'), true);
+  assert.equal(report.results.some((result) => result.path === '.ai-playbook/rules/auth.md' && result.category === 'rules'), true);
+  assert.equal(report.results.some((result) => result.category === 'worklogs'), true);
+  assert.equal(report.results.some((result) => result.path.includes('node_modules')), false);
+  assert.equal(report.results.every((result) => result.snippets.length > 0), true);
+  assert.equal(report.related.rules.summary.applies, 1);
+  assert.equal(report.related.diagnostics.summary.commands >= 0, true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('operator search --json reports no matches without failing or writing files', async () => {
+  const target = await tempRepo('operator search empty-한글-');
+  await writeFile(path.join(target, 'README.md'), '# Empty fixture\n');
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli(['operator', 'search', '.', '--query', 'does-not-exist', '--json'], io), 0);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.summary.matches, 0);
+  assert.deepEqual(report.results, []);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
 function capture(cwd) {
   let stdout = '';
   let stderr = '';

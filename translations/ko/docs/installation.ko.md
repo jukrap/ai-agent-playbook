@@ -1,10 +1,31 @@
 # 설치
 
-이 저장소는 한 번 clone한 뒤 루트 installer를 실행하는 방식이 가장 쉽습니다. 컴퓨터마다 Git 인증 방식과 PowerShell 정책이 다를 수 있어 여러 설치 방식을 지원합니다.
+이 package는 npm 또는 npx로 사용하는 방식이 가장 쉽습니다. 로컬 Git checkout과 PowerShell 스크립트는 개발, private fork, 명시적 local script를 선호하는 Windows 환경을 위해 계속 지원합니다.
 
-`<repo-url>`은 최종 Git 저장소 URL로 바꿉니다.
+## Option 1: npm 또는 npx
 
-## Option 1: GitHub CLI로 빠르게 설치
+package가 publish되어 있고 Node.js를 사용할 수 있을 때 사용합니다.
+
+```powershell
+npx ai-agent-playbook skills install --dry-run
+npx ai-agent-playbook skills install
+npx ai-agent-playbook bootstrap <target-project> --dry-run
+npx ai-agent-playbook operator check <target-project> --json
+```
+
+전역 명령으로 유지하려면 아래처럼 설치합니다.
+
+```powershell
+npm install -g ai-agent-playbook
+ai-playbook skills update
+ai-playbook operator search <target-project> --query "auth flow" --json
+```
+
+`skills install`과 `skills update`는 managed skill을 일반 Codex/agent skill directory로 동기화합니다. 로컬에서 수정한 managed skill은 `--force-managed`가 없으면 덮어쓰지 않고, 같은 이름의 다른 unmanaged skill은 `--force-unmanaged`가 없으면 덮어쓰지 않습니다.
+
+Skill 설치나 업데이트 뒤에는 다음 세션이 skill metadata를 읽도록 Codex를 재시작합니다.
+
+## Option 2: GitHub CLI로 빠른 local checkout
 
 `gh`가 설치되어 있고 인증되어 있을 때 사용합니다.
 
@@ -28,7 +49,7 @@ installer 또는 updater가 끝나면 Codex를 재시작합니다.
 
 Windows용 Codex App에서는 이 저장소를 일반 checkout으로 유지하고 그 checkout에서 PowerShell 명령을 실행합니다. Windows app 작업 흐름, 기존 프로젝트 dry run, 안전한 수동 병합 경로는 `../adapters/codex/README.ko.md`를 봅니다.
 
-## Option 2: 일반 Git 설치
+## Option 3: 일반 Git 설치
 
 GitHub CLI를 쓰지 않거나 일반 `git clone`을 선호할 때 사용합니다.
 
@@ -53,16 +74,23 @@ Set-Location $target
 ### 3. 스킬 설치
 
 ```powershell
-.\install.ps1
+node .\bin\ai-playbook.mjs skills install --dry-run
+node .\bin\ai-playbook.mjs skills install
 ```
 
-installer는 저장소를 검증하고 `skills/<category>/<skill>`의 설치형 skill을 아래 위치로 복사합니다.
+Node CLI는 `skills/<category>/<skill>`의 설치형 skill을 아래 위치로 복사합니다.
 
 - `%USERPROFILE%\.codex\skills\<skill>`
 - `%USERPROFILE%\.agents\skills\<skill>`
 - legacy skill은 `%USERPROFILE%\.agents\skills\legacys\<legacy-skill>`
 
-설치된 skill에는 `.ai-agent-playbook-install.json` ownership marker가 추가됩니다. 이후 update는 marker가 있는 managed skill, 예전 installer가 만든 것으로 보이는 동일 내용 unmanaged copy, 또는 사용자가 `-ForceUnmanaged`를 명시한 unmanaged copy만 교체합니다. Managed 설치본을 로컬에서 수정한 경우 updater는 기본적으로 덮어쓰지 않으며, 백업 후 `-ForceManaged`를 명시해야 교체합니다.
+설치된 skill에는 `.ai-agent-playbook-install.json` ownership marker가 추가됩니다. 이후 update는 marker가 있는 managed skill, 예전 installer가 만든 것으로 보이는 동일 내용 unmanaged copy, 또는 사용자가 `--force-unmanaged`를 명시한 unmanaged copy만 교체합니다. Managed 설치본을 로컬에서 수정한 경우 updater는 기본적으로 덮어쓰지 않으며, 백업 후 `--force-managed`를 명시해야 교체합니다.
+
+호환용 PowerShell 경로도 계속 사용할 수 있습니다.
+
+```powershell
+.\install.ps1
+```
 
 동기화 뒤에는 Codex를 재시작해 다음 세션이 skill metadata를 읽게 합니다.
 
@@ -85,36 +113,40 @@ Test-Path "$env:USERPROFILE\.codex\skills\commit-worklog-guardrails\SKILL.md"
 
 둘 다 `True`를 출력해야 합니다.
 
-## Option 3: 기존 clone 업데이트
+## Option 4: 기존 clone 업데이트
 
 ```powershell
 Set-Location "$env:USERPROFILE\Documents\ai-agent-playbook"
-.\update.ps1
+node .\bin\ai-playbook.mjs skills update
 ```
 
-update script는 `--ff-only`로 pull한 뒤 installer를 실행합니다. 이미 clone이 있는 컴퓨터의 일반적인 업데이트 경로입니다. 동기화 뒤에는 Codex를 재시작합니다.
+CLI update는 현재 checkout의 managed installed skill을 갱신합니다. 더 최신 source가 필요하면 먼저 checkout을 pull합니다. 동기화 뒤에는 Codex를 재시작합니다.
 
 위험한 update 전에는 dry run을 먼저 사용합니다.
 
 ```powershell
-.\update.ps1 -WhatIf
+node .\bin\ai-playbook.mjs skills update --dry-run
 ```
 
-Updater가 unmanaged conflict를 보고하면 해당 폴더를 먼저 확인합니다. 같은 이름의 skill이 이 playbook에서 온 것이 확실하거나 의도적으로 대체 가능한 경우가 아니라면 `-ForceUnmanaged`를 쓰지 않습니다.
+호환용 PowerShell updater는 여전히 `--ff-only` pull 후 installer를 실행합니다.
 
-## Option 4: 사용자 지정 경로에 수동 동기화
+```powershell
+.\update.ps1
+```
+
+Updater가 unmanaged conflict를 보고하면 해당 폴더를 먼저 확인합니다. 같은 이름의 skill이 이 playbook에서 온 것이 확실하거나 의도적으로 대체 가능한 경우가 아니라면 `--force-unmanaged` 또는 `-ForceUnmanaged`를 쓰지 않습니다.
+
+## Option 5: 사용자 지정 경로에 수동 동기화
 
 기본 skill 디렉터리가 아닌 곳을 써야 할 때만 사용합니다.
 
 ```powershell
-.\scripts\validate-skills.ps1
-.\scripts\validate-translations.ps1
-.\scripts\sync-skills.ps1 `
-  -CodexSkillsRoot "$env:USERPROFILE\.codex\skills" `
-  -AgentsSkillsRoot "$env:USERPROFILE\.agents\skills"
+node .\bin\ai-playbook.mjs skills install `
+  --codex-root "$env:USERPROFILE\.codex\skills" `
+  --agents-root "$env:USERPROFILE\.agents\skills"
 ```
 
-Sync script는 기본적으로 다른 사람이 만든 같은 이름의 skill을 삭제하거나 덮어쓰지 않습니다. Obsolete skill도 ownership marker가 이 playbook 설치본임을 증명할 때만 제거합니다.
+Skills lifecycle 명령은 기본적으로 다른 사람이 만든 같은 이름의 skill을 삭제하거나 덮어쓰지 않습니다. Obsolete skill도 ownership marker가 이 playbook 설치본임을 증명할 때만 제거합니다. 로컬 checkout workflow에는 PowerShell `scripts/sync-skills.ps1` wrapper도 계속 사용할 수 있습니다.
 
 ## 프로젝트 템플릿 적용
 
@@ -125,32 +157,32 @@ Sync script는 기본적으로 다른 사람이 만든 같은 이름의 skill을
 권장 경로는 런타임 CLI입니다.
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-project> --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-project>
-node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-project> --check --diff
-node .\bin\ai-playbook.mjs migrate path <target-project> --json
-node .\bin\ai-playbook.mjs managed check <target-project> --json
-node .\bin\ai-playbook.mjs managed catalog <target-project> --json
-node .\bin\ai-playbook.mjs managed adopt <target-project> --json
-node .\bin\ai-playbook.mjs managed prune <target-project> --path .ai-playbook/guides/runtime-harness.md --json
-node .\bin\ai-playbook.mjs managed uninstall <target-project> --json
-node .\bin\ai-playbook.mjs doctor <target-project>
-node .\bin\ai-playbook.mjs doctor <target-project> --json
-node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
-node .\bin\ai-playbook.mjs context <target-project> --json
-node .\bin\ai-playbook.mjs operator check <target-project> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator context <target-project> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator map <target-project> --json
-node .\bin\ai-playbook.mjs operator audit <target-project> --json
-node .\bin\ai-playbook.mjs operator gc <target-project> --json
-node .\bin\ai-playbook.mjs rules check <target-project> --path src/example.ts --json
-node .\bin\ai-playbook.mjs diagnostics check <target-project> --json
-node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
-node .\bin\ai-playbook.mjs adapter config <target-project> --adapter codex --json
-node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
-node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --settings <local-settings-path> --json
+npx ai-agent-playbook bootstrap <target-project> --dry-run
+npx ai-agent-playbook bootstrap <target-project>
+npx ai-agent-playbook guides sync <target-project> --dry-run
+npx ai-agent-playbook guides sync <target-project> --check --diff
+npx ai-agent-playbook migrate path <target-project> --json
+npx ai-agent-playbook managed check <target-project> --json
+npx ai-agent-playbook managed catalog <target-project> --json
+npx ai-agent-playbook managed adopt <target-project> --json
+npx ai-agent-playbook managed prune <target-project> --path .ai-playbook/guides/runtime-harness.md --json
+npx ai-agent-playbook managed uninstall <target-project> --json
+npx ai-agent-playbook doctor <target-project>
+npx ai-agent-playbook doctor <target-project> --json
+npx ai-agent-playbook doctor <target-project> --reminder --json
+npx ai-agent-playbook context <target-project> --json
+npx ai-agent-playbook operator check <target-project> --path src/example.ts --json
+npx ai-agent-playbook operator search <target-project> --query "auth flow" --path src/example.ts --json
+npx ai-agent-playbook operator context <target-project> --path src/example.ts --json
+npx ai-agent-playbook operator map <target-project> --json
+npx ai-agent-playbook operator audit <target-project> --json
+npx ai-agent-playbook operator gc <target-project> --json
+npx ai-agent-playbook rules check <target-project> --path src/example.ts --json
+npx ai-agent-playbook diagnostics check <target-project> --json
+npx ai-agent-playbook qa tui-check .\capture.txt --cols 100 --json
+npx ai-agent-playbook adapter config <target-project> --adapter codex --json
+npx ai-agent-playbook adapter check <target-project> --adapter codex --json
+npx ai-agent-playbook adapter check <target-project> --adapter codex --settings <local-settings-path> --json
 ```
 
 대상 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다. `.ai-playbook/`을 대상 `.gitignore`에 추가해야 하면 `--local-only`를 사용합니다.
@@ -168,9 +200,9 @@ Operator diagnostics 명령도 operator가 명시적으로 실행합니다. `ope
 Plan과 worklog는 CLI로 생성할 수 있습니다.
 
 ```powershell
-node .\bin\ai-playbook.mjs plan new <target-project> --title "Feature slice"
-node .\bin\ai-playbook.mjs worklog new <target-project> --title "Feature slice"
-node .\bin\ai-playbook.mjs worklog summarize <target-project> --month 2026-06
+npx ai-agent-playbook plan new <target-project> --title "Feature slice"
+npx ai-agent-playbook worklog new <target-project> --title "Feature slice"
+npx ai-agent-playbook worklog summarize <target-project> --month 2026-06
 ```
 
 일반적인 시작점:
@@ -185,12 +217,12 @@ Copy-Item .\templates\project-playbook (Join-Path $projectRoot '.ai-playbook') -
 
 ## Codex skill installer 참고
 
-Codex의 skill installer는 인증이 가능할 때 Git repository path에서 개별 skill을 설치할 수 있습니다. 하지만 이 playbook은 clone 후 `install.ps1`, 이후 `update.ps1`를 사용하는 방식을 권장합니다.
+Codex의 skill installer는 인증이 가능할 때 Git repository path에서 개별 skill을 설치할 수 있습니다. 하지만 이 playbook은 `npx ai-agent-playbook skills install` 또는 전역 `ai-playbook skills update` 경로를 권장합니다.
 
 - 저장소에 여러 skill이 있습니다.
 - 복사용 template과 docs도 함께 있습니다.
-- installer가 먼저 검증하고 `.codex`와 `.agents` layout을 함께 설치합니다.
-- 업데이트는 `.\update.ps1`로 단순합니다.
+- CLI가 `.codex`와 `.agents` layout을 함께 설치합니다.
+- PowerShell script는 local checkout workflow용으로 계속 사용할 수 있습니다.
 
 ## 외부 작업 흐름 스킬
 

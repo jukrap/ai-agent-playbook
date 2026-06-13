@@ -9,18 +9,18 @@ Claude Code는 이 저장소를 두 계층에서 사용할 수 있습니다.
 
 ## 런타임 CLI
 
-이 저장소 checkout에서 CLI를 실행합니다.
+Package publish 뒤에는 `npx ai-agent-playbook`, global install 뒤에는 `ai-playbook`, 로컬 checkout에서는 `node .\bin\ai-playbook.mjs`를 사용합니다. Adapter hook path를 settings에 보관할 때는 렌더링된 hook command가 안정적인 위치를 가리키도록 global install 또는 로컬 checkout을 권장합니다.
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
-node .\bin\ai-playbook.mjs migrate path <target-repo> --json
-node .\bin\ai-playbook.mjs doctor <target-repo> --json
-node .\bin\ai-playbook.mjs doctor <target-repo> --reminder --json
-node .\bin\ai-playbook.mjs context <target-repo> --json
-node .\bin\ai-playbook.mjs adapter config <target-repo> --adapter claude-code --json
-node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --json
-node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --settings <local-settings-path> --json
+npx ai-agent-playbook bootstrap <target-repo> --dry-run
+npx ai-agent-playbook guides sync <target-repo> --check --diff --json
+npx ai-agent-playbook migrate path <target-repo> --json
+npx ai-agent-playbook doctor <target-repo> --json
+npx ai-agent-playbook doctor <target-repo> --reminder --json
+npx ai-agent-playbook context <target-repo> --json
+npx ai-agent-playbook adapter config <target-repo> --adapter claude-code --json
+npx ai-agent-playbook adapter check <target-repo> --adapter claude-code --json
+npx ai-agent-playbook adapter check <target-repo> --adapter claude-code --settings <local-settings-path> --json
 ```
 
 선택적 adapter-local package shell은 Claude Code adapter를 고정한 같은 hook, config, check 경로를 노출합니다.

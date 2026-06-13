@@ -26,6 +26,7 @@ rg -n --glob '!docs/publishing-checklist.md' "PERSONAL_NAME|COMPANY_NAME|CUSTOME
 ```powershell
 npm run check
 npm test
+npm pack --dry-run --json
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 .\scripts\sync-skills.ps1 -WhatIf
@@ -36,6 +37,19 @@ npm test
 If skill source files changed, run `.\scripts\sync-skills.ps1` after validation.
 
 After pushing, confirm the validation workflow passes if the repository uses one.
+
+## npm package publish
+
+- Confirm `npm whoami` succeeds on the publishing machine.
+- Confirm the package name is available or already owned by the publishing account.
+- Run `npm pack --dry-run --json` and verify the tarball includes runtime files but excludes tests, translations, local references, and large image assets.
+- Publish only after repository validation passes:
+
+```powershell
+npm publish
+```
+
+If npm asks for one-time password confirmation, complete it interactively on the publishing machine. Do not store npm tokens in repository files.
 
 ## Git host setup
 

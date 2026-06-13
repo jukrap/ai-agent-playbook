@@ -41,15 +41,16 @@ The repository is agent-agnostic. Codex, Claude Code, and other coding agents ca
 
 ## Quick Start
 
-### 1. Install Skills Only
+### 1. Install Skills
 
 Use this when you want the reusable agent skills available locally, without applying a project harness to any target repository.
 
 ```powershell
-.\install.ps1
+npx ai-agent-playbook skills install --dry-run
+npx ai-agent-playbook skills install
 ```
 
-The installer validates this repository, then copies every `skills/<category>/<skill>/SKILL.md` folder into common local skill directories:
+The installer copies every `skills/<category>/<skill>/SKILL.md` folder from the package into common local skill directories:
 
 - `%USERPROFILE%\.codex\skills\<skill>`
 - `%USERPROFILE%\.agents\skills\<skill>`
@@ -57,43 +58,32 @@ The installer validates this repository, then copies every `skills/<category>/<s
 
 Restart Codex, or start a new agent session, after installation so new skill metadata is picked up.
 
+If you are working from a local checkout instead of npm, use `node .\bin\ai-playbook.mjs skills install` or the compatible `.\install.ps1` script.
+
 ### 2. Update an Existing Install
 
 ```powershell
-.\update.ps1
+npx ai-agent-playbook skills update --dry-run
+npx ai-agent-playbook skills update
 ```
 
-The updater pulls the current checkout with `--ff-only`, validates the repository, and syncs managed installed skills.
+`skills update` is idempotent. It refreshes managed skills, adopts matching older copies, and refuses locally modified managed skills unless `--force-managed` is provided.
 
 ### 3. Apply the Project Harness When Needed
 
 Use the runtime CLI only when a target project should receive a root `AGENTS.md` bootstrap and an `.ai-playbook/` project-memory folder.
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-project> --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-project>
-node .\bin\ai-playbook.mjs doctor <target-project>
-node .\bin\ai-playbook.mjs doctor <target-project> --json
-node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
-node .\bin\ai-playbook.mjs context <target-project> --json
-node .\bin\ai-playbook.mjs migrate path <target-project> --json
-node .\bin\ai-playbook.mjs managed check <target-project> --json
-node .\bin\ai-playbook.mjs managed catalog <target-project> --json
-node .\bin\ai-playbook.mjs managed adopt <target-project> --json
-node .\bin\ai-playbook.mjs managed prune <target-project> --path .ai-playbook/guides/runtime-harness.md --json
-node .\bin\ai-playbook.mjs managed uninstall <target-project> --json
-node .\bin\ai-playbook.mjs operator check <target-project> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator context <target-project> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator map <target-project> --json
-node .\bin\ai-playbook.mjs operator audit <target-project> --json
-node .\bin\ai-playbook.mjs operator gc <target-project> --json
-node .\bin\ai-playbook.mjs rules check <target-project> --path src/example.ts --json
-node .\bin\ai-playbook.mjs diagnostics check <target-project> --json
-node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
-node .\bin\ai-playbook.mjs adapter config <target-project> --adapter codex --json
-node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
+npx ai-agent-playbook bootstrap <target-project> --dry-run
+npx ai-agent-playbook bootstrap <target-project>
+npx ai-agent-playbook doctor <target-project>
+npx ai-agent-playbook operator check <target-project> --path src/example.ts --json
+npx ai-agent-playbook operator search <target-project> --query "auth flow" --path src/example.ts --json
+npx ai-agent-playbook managed catalog <target-project> --json
+npx ai-agent-playbook adapter config <target-project> --adapter codex --json
 ```
+
+After a global install, replace `npx ai-agent-playbook` with `ai-playbook`. From a local checkout, replace it with `node .\bin\ai-playbook.mjs`.
 
 Use `--local-only` when the target project's `.ai-playbook/` folder should be ignored by Git. Use `--profile <name>` only after the target stack is known.
 
@@ -108,8 +98,8 @@ Operator diagnostics such as `operator check`, `operator search`, `operator cont
 ## Everyday Flow
 
 ```text
-Clone once
-  -> install skills
+Install or run with npx
+  -> install skills with ai-playbook skills install
   -> restart the agent
   -> inspect a target project
   -> optionally bootstrap .ai-playbook/
@@ -119,17 +109,17 @@ Clone once
 For existing projects, start with a dry run and inspect conflicts before writing files:
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-project> --local-only --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-project> --check --diff --json
-node .\bin\ai-playbook.mjs migrate path <target-project> --json
-node .\bin\ai-playbook.mjs managed check <target-project> --json
-node .\bin\ai-playbook.mjs managed catalog <target-project> --json
-node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --json
-node .\bin\ai-playbook.mjs operator context <target-project> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator map <target-project> --json
-node .\bin\ai-playbook.mjs operator audit <target-project> --json
-node .\bin\ai-playbook.mjs operator gc <target-project> --json
+npx ai-agent-playbook bootstrap <target-project> --local-only --dry-run
+npx ai-agent-playbook guides sync <target-project> --dry-run
+npx ai-agent-playbook guides sync <target-project> --check --diff --json
+npx ai-agent-playbook migrate path <target-project> --json
+npx ai-agent-playbook managed check <target-project> --json
+npx ai-agent-playbook managed catalog <target-project> --json
+npx ai-agent-playbook operator search <target-project> --query "auth flow" --json
+npx ai-agent-playbook operator context <target-project> --path src/example.ts --json
+npx ai-agent-playbook operator map <target-project> --json
+npx ai-agent-playbook operator audit <target-project> --json
+npx ai-agent-playbook operator gc <target-project> --json
 ```
 
 ## Repository Map

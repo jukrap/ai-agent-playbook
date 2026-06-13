@@ -9,18 +9,18 @@ The default path is still the document and CLI harness. Do not require Claude Co
 
 ## Runtime CLI
 
-Run the CLI from this repository checkout:
+Use `npx ai-agent-playbook` after package publication, `ai-playbook` after a global install, or `node .\bin\ai-playbook.mjs` from a local checkout. For settings that persist adapter hook paths, prefer a global install or local checkout so the rendered hook command points at a stable location.
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
-node .\bin\ai-playbook.mjs migrate path <target-repo> --json
-node .\bin\ai-playbook.mjs doctor <target-repo> --json
-node .\bin\ai-playbook.mjs doctor <target-repo> --reminder --json
-node .\bin\ai-playbook.mjs context <target-repo> --json
-node .\bin\ai-playbook.mjs adapter config <target-repo> --adapter claude-code --json
-node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --json
-node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --settings <local-settings-path> --json
+npx ai-agent-playbook bootstrap <target-repo> --dry-run
+npx ai-agent-playbook guides sync <target-repo> --check --diff --json
+npx ai-agent-playbook migrate path <target-repo> --json
+npx ai-agent-playbook doctor <target-repo> --json
+npx ai-agent-playbook doctor <target-repo> --reminder --json
+npx ai-agent-playbook context <target-repo> --json
+npx ai-agent-playbook adapter config <target-repo> --adapter claude-code --json
+npx ai-agent-playbook adapter check <target-repo> --adapter claude-code --json
+npx ai-agent-playbook adapter check <target-repo> --adapter claude-code --settings <local-settings-path> --json
 ```
 
 The optional adapter-local package shell exposes the same hook, config, and check path with the Claude Code adapter fixed:

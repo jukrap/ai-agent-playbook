@@ -1,13 +1,35 @@
 {
   "name": "ai-agent-playbook",
   "version": "0.1.0",
-  "private": true,
+  "description": "Reusable AI agent skills, project playbook templates, and a small operator-controlled runtime harness.",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jukrap/ai-agent-playbook.git"
+  },
+  "keywords": [
+    "ai-agents",
+    "agent-playbook",
+    "codex",
+    "skills",
+    "runtime-harness"
+  ],
   "bin": {
     "ai-playbook": "./bin/ai-playbook.mjs"
   },
+  "files": [
+    "bin/",
+    "src/",
+    "adapters/",
+    "skills/",
+    "templates/",
+    "docs/*.md",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "check": "node --check bin/ai-playbook.mjs && node --check src/cli.mjs && node --check src/harness.mjs && node --check src/adapter-readiness.mjs && node --check src/operator-diagnostics.mjs && node --check adapters/shared/context-hook.mjs && node --check adapters/shared/package-shell.mjs && node --check adapters/codex/hook.mjs && node --check adapters/codex/package.mjs && node --check adapters/claude-code/hook.mjs && node --check adapters/claude-code/package.mjs",
+    "check": "node --check bin/ai-playbook.mjs && node --check src/cli.mjs && node --check src/harness.mjs && node --check src/adapter-readiness.mjs && node --check src/operator-diagnostics.mjs && node --check src/skills-lifecycle.mjs && node --check adapters/shared/context-hook.mjs && node --check adapters/shared/package-shell.mjs && node --check adapters/codex/hook.mjs && node --check adapters/codex/package.mjs && node --check adapters/claude-code/hook.mjs && node --check adapters/claude-code/package.mjs",
     "test": "node --test test/*.test.mjs"
   },
   "engines": {

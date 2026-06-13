@@ -1,10 +1,31 @@
 # Installation
 
-This repository is easiest to use by cloning it once, then running the root installer. Several install styles are supported because different machines may have different Git authentication and PowerShell policies.
+This package is easiest to use through npm or npx. A local Git checkout with the PowerShell scripts is still supported for development, private forks, and Windows environments that prefer explicit local scripts.
 
-Replace `<repo-url>` with the final Git repository URL.
+## Option 1: npm or npx
 
-## Option 1: Fast install with GitHub CLI
+Use this when the package has been published and Node.js is available.
+
+```powershell
+npx ai-agent-playbook skills install --dry-run
+npx ai-agent-playbook skills install
+npx ai-agent-playbook bootstrap <target-project> --dry-run
+npx ai-agent-playbook operator check <target-project> --json
+```
+
+For a persistent global command:
+
+```powershell
+npm install -g ai-agent-playbook
+ai-playbook skills update
+ai-playbook operator search <target-project> --query "auth flow" --json
+```
+
+`skills install` and `skills update` sync managed skills into the common Codex and agent skill directories. They refuse to overwrite locally edited managed skills unless `--force-managed` is provided, and they refuse different same-name unmanaged skills unless `--force-unmanaged` is provided.
+
+Restart Codex after skill installation or update so the next session can pick up skill metadata.
+
+## Option 2: Fast local checkout with GitHub CLI
 
 Use this when `gh` is installed and authenticated.
 
@@ -28,7 +49,7 @@ Restart Codex after the installer or updater finishes.
 
 For Codex App on Windows, keep this repository as a normal checkout and run PowerShell commands from that checkout. See `../adapters/codex/README.md` for the Windows app workflow, existing-project dry runs, and safe manual merge path.
 
-## Option 2: Standard Git install
+## Option 3: Standard Git install
 
 Use this when GitHub CLI is not available, or when you prefer normal `git clone`.
 
@@ -53,16 +74,23 @@ Use another local path if preferred. Keep this clone as the source of truth.
 ### 3. Install skills
 
 ```powershell
-.\install.ps1
+node .\bin\ai-playbook.mjs skills install --dry-run
+node .\bin\ai-playbook.mjs skills install
 ```
 
-The installer validates the repository and copies installable skills from `skills/<category>/<skill>` into:
+The Node CLI copies installable skills from `skills/<category>/<skill>` into:
 
 - `%USERPROFILE%\.codex\skills\<skill>`
 - `%USERPROFILE%\.agents\skills\<skill>`
 - `%USERPROFILE%\.agents\skills\legacys\<legacy-skill>` for legacy skills
 
-Installed skills receive an ownership marker named `.ai-agent-playbook-install.json`. Later updates replace only matching managed skills, matching unmanaged copies from older installs, or unmanaged copies when `-ForceUnmanaged` is explicitly provided. If a managed installed copy was edited locally, the updater refuses to overwrite it unless `-ForceManaged` is provided.
+Installed skills receive an ownership marker named `.ai-agent-playbook-install.json`. Later updates replace only matching managed skills, matching unmanaged copies from older installs, or unmanaged copies when `--force-unmanaged` is explicitly provided. If a managed installed copy was edited locally, the updater refuses to overwrite it unless `--force-managed` is provided.
+
+The compatible PowerShell path remains available:
+
+```powershell
+.\install.ps1
+```
 
 Restart Codex after syncing so the session can pick up skill metadata.
 
@@ -85,36 +113,40 @@ Test-Path "$env:USERPROFILE\.codex\skills\commit-worklog-guardrails\SKILL.md"
 
 Both should print `True`.
 
-## Option 3: Existing clone update
+## Option 4: Existing clone update
 
 ```powershell
 Set-Location "$env:USERPROFILE\Documents\ai-agent-playbook"
-.\update.ps1
+node .\bin\ai-playbook.mjs skills update
 ```
 
-The update script pulls with `--ff-only`, then runs the installer. This is the normal one-command update path for every computer that already has a clone. Restart Codex after syncing.
+The CLI update refreshes managed installed skills from the current checkout. Pull the checkout first when you want newer source content. Restart Codex after syncing.
 
 Use a dry run before risky updates:
 
 ```powershell
-.\update.ps1 -WhatIf
+node .\bin\ai-playbook.mjs skills update --dry-run
 ```
 
-If the updater reports an unmanaged conflict, inspect that folder before deciding whether this playbook should own it. Do not use `-ForceUnmanaged` unless the same-name skill is known to be from this playbook or intentionally replaceable.
+The compatible PowerShell updater still pulls with `--ff-only`, then runs the installer:
 
-## Option 4: Manual sync for custom paths
+```powershell
+.\update.ps1
+```
+
+If the updater reports an unmanaged conflict, inspect that folder before deciding whether this playbook should own it. Do not use `--force-unmanaged` or `-ForceUnmanaged` unless the same-name skill is known to be from this playbook or intentionally replaceable.
+
+## Option 5: Manual sync for custom paths
 
 Use this only when you need non-default skill directories.
 
 ```powershell
-.\scripts\validate-skills.ps1
-.\scripts\validate-translations.ps1
-.\scripts\sync-skills.ps1 `
-  -CodexSkillsRoot "$env:USERPROFILE\.codex\skills" `
-  -AgentsSkillsRoot "$env:USERPROFILE\.agents\skills"
+node .\bin\ai-playbook.mjs skills install `
+  --codex-root "$env:USERPROFILE\.codex\skills" `
+  --agents-root "$env:USERPROFILE\.agents\skills"
 ```
 
-The sync script does not remove or overwrite other people's same-name skills by default. It only removes obsolete skills when their ownership marker proves they were installed by this playbook.
+The skills lifecycle command does not remove or overwrite other people's same-name skills by default. It only removes obsolete skills when their ownership marker proves they were installed by this playbook. The PowerShell `scripts/sync-skills.ps1` wrapper remains available for local checkout workflows.
 
 ## Applying project templates
 
@@ -125,33 +157,35 @@ This is the default project harness. Runtime hooks or agent plugins are optional
 ### Runtime path
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-project> --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-project>
-node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-project> --check --diff
-node .\bin\ai-playbook.mjs migrate path <target-project> --json
-node .\bin\ai-playbook.mjs managed check <target-project> --json
-node .\bin\ai-playbook.mjs managed catalog <target-project> --json
-node .\bin\ai-playbook.mjs managed adopt <target-project> --json
-node .\bin\ai-playbook.mjs managed prune <target-project> --path .ai-playbook/guides/runtime-harness.md --json
-node .\bin\ai-playbook.mjs managed uninstall <target-project> --json
-node .\bin\ai-playbook.mjs doctor <target-project>
-node .\bin\ai-playbook.mjs doctor <target-project> --json
-node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
-node .\bin\ai-playbook.mjs context <target-project> --json
-node .\bin\ai-playbook.mjs operator check <target-project> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator context <target-project> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator map <target-project> --json
-node .\bin\ai-playbook.mjs operator audit <target-project> --json
-node .\bin\ai-playbook.mjs operator gc <target-project> --json
-node .\bin\ai-playbook.mjs rules check <target-project> --path src/example.ts --json
-node .\bin\ai-playbook.mjs diagnostics check <target-project> --json
-node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
-node .\bin\ai-playbook.mjs adapter config <target-project> --adapter codex --json
-node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
-node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --settings <local-settings-path> --json
+npx ai-agent-playbook bootstrap <target-project> --dry-run
+npx ai-agent-playbook bootstrap <target-project>
+npx ai-agent-playbook guides sync <target-project> --dry-run
+npx ai-agent-playbook guides sync <target-project> --check --diff
+npx ai-agent-playbook migrate path <target-project> --json
+npx ai-agent-playbook managed check <target-project> --json
+npx ai-agent-playbook managed catalog <target-project> --json
+npx ai-agent-playbook managed adopt <target-project> --json
+npx ai-agent-playbook managed prune <target-project> --path .ai-playbook/guides/runtime-harness.md --json
+npx ai-agent-playbook managed uninstall <target-project> --json
+npx ai-agent-playbook doctor <target-project>
+npx ai-agent-playbook doctor <target-project> --json
+npx ai-agent-playbook doctor <target-project> --reminder --json
+npx ai-agent-playbook context <target-project> --json
+npx ai-agent-playbook operator check <target-project> --path src/example.ts --json
+npx ai-agent-playbook operator search <target-project> --query "auth flow" --path src/example.ts --json
+npx ai-agent-playbook operator context <target-project> --path src/example.ts --json
+npx ai-agent-playbook operator map <target-project> --json
+npx ai-agent-playbook operator audit <target-project> --json
+npx ai-agent-playbook operator gc <target-project> --json
+npx ai-agent-playbook rules check <target-project> --path src/example.ts --json
+npx ai-agent-playbook diagnostics check <target-project> --json
+npx ai-agent-playbook qa tui-check .\capture.txt --cols 100 --json
+npx ai-agent-playbook adapter config <target-project> --adapter codex --json
+npx ai-agent-playbook adapter check <target-project> --adapter codex --json
+npx ai-agent-playbook adapter check <target-project> --adapter codex --settings <local-settings-path> --json
 ```
+
+After a global install, replace `npx ai-agent-playbook` with `ai-playbook`. From a local checkout, replace it with `node .\bin\ai-playbook.mjs`.
 
 Use `--profile <name>` only after the target stack is known. Use `--local-only` when `.ai-playbook/` should be added to the target `.gitignore`.
 
@@ -168,9 +202,9 @@ The operator diagnostics commands are also operator-triggered. `operator check` 
 Create plan and worklog files through the CLI so paths stay predictable:
 
 ```powershell
-node .\bin\ai-playbook.mjs plan new <target-project> --title "Feature slice"
-node .\bin\ai-playbook.mjs worklog new <target-project> --title "Feature slice"
-node .\bin\ai-playbook.mjs worklog summarize <target-project> --month 2026-06
+npx ai-agent-playbook plan new <target-project> --title "Feature slice"
+npx ai-agent-playbook worklog new <target-project> --title "Feature slice"
+npx ai-agent-playbook worklog summarize <target-project> --month 2026-06
 ```
 
 ### Manual path
@@ -187,12 +221,12 @@ Copy-Item .\templates\project-playbook (Join-Path $projectRoot '.ai-playbook') -
 
 ## Codex skill installer note
 
-Codex's skill installer can install individual skills from a Git repository path when authentication is available. For this playbook, cloning and running `install.ps1` once, then `update.ps1` later, is still the recommended method because:
+Codex's skill installer can install individual skills from a Git repository path when authentication is available. For this playbook, `npx ai-agent-playbook skills install` or a global `ai-playbook skills update` is the recommended path because:
 
 - the repository contains many skills,
 - it also contains copyable templates and docs,
-- the installer validates first and installs both `.codex` and `.agents` layouts,
-- updates are a simple `.\update.ps1`.
+- the CLI installs both `.codex` and `.agents` layouts,
+- PowerShell scripts remain available for local checkout workflows.
 
 ## External process skills
 

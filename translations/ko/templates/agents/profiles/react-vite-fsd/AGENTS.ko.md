@@ -16,7 +16,7 @@ React, Vite, TypeScript, pnpm, pragmatic FSD 또는 유사한 layered frontend �
 2. 실제 code, config, package scripts.
 3. `PROJECT_SPEC.md`, `PLANS.md`, `FSD.md`.
 4. `.ai-playbook/CURRENT.md`, relevant maps/runbooks/plans, latest worklog summary.
-5. `design-docs/**`와 `_reference/**`.
+5. 프로젝트 설계 문서와 로컬 참고 자료.
 6. 이 profile.
 
 ## Architecture

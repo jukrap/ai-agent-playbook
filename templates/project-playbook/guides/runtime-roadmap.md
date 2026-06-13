@@ -12,11 +12,14 @@ Before considering hooks:
 - Adapt `START_HERE.md`, `CURRENT.md`, and `questions.md` so they no longer contain template prompts.
 - Decide whether `.ai-playbook/` is committed or local-only.
 - Move durable current facts into `CURRENT.md`, maps, runbooks, or decisions.
+- Use `context status --path` to decide which path-scoped memory to read before loading extra notes.
+- Use `run start/status/record` for active evidence on long tasks.
+- Use `contracts check --path` for read-only business-rule and invariant signals.
 - Keep detailed history in `worklogs/` and summarize it when it contains durable facts.
 - Use `guides sync --dry-run` from the source playbook checkout to add missing support guides without overwriting local edits.
 - Use `guides sync --check --diff --json`, `migrate path --json`, `doctor --json`, `doctor --reminder --json`, and `adapter check --json` when an adapter or automation needs a read-only health signal.
 - Use `managed check` and `managed catalog` before cleanup, `managed prune --json` before selected removal, and `managed uninstall --json` before full uninstall previews.
-- Use `operator check`, `operator search`, `operator context`, `operator analyze`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, and `qa tui-check` as operator-visible diagnostics before adding hooks for the same concern.
+- Use `context status`, `run status`, `contracts check`, `operator check`, `operator search`, `operator context`, `operator analyze`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, and `qa tui-check` as operator-visible diagnostics before adding hooks for the same concern.
 
 ## Runtime Readiness Checklist
 

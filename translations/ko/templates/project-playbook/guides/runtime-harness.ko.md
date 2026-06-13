@@ -19,6 +19,10 @@ node .\bin\ai-playbook.mjs managed catalog <target-repo> --json
 node .\bin\ai-playbook.mjs managed prune <target-repo> --path .ai-playbook/guides/runtime-harness.md --json
 node .\bin\ai-playbook.mjs managed uninstall <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo>
+node .\bin\ai-playbook.mjs context status <target-repo> --path src/example.ts --json
+node .\bin\ai-playbook.mjs run start <target-repo> --title "short-run-title" --dry-run
+node .\bin\ai-playbook.mjs run status <target-repo> --json
+node .\bin\ai-playbook.mjs contracts check <target-repo> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator check <target-repo> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator search <target-repo> --query "auth flow" --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator context <target-repo> --path src/example.ts --json
@@ -45,6 +49,9 @@ node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
 
 ```powershell
 node .\bin\ai-playbook.mjs plan new <target-repo> --title "short-plan-title"
+node .\bin\ai-playbook.mjs run start <target-repo> --title "short-run-title" --dry-run
+node .\bin\ai-playbook.mjs run record <target-repo> --run-id short-run-title --type evidence --status pass --message "Verification passed" --evidence .ai-playbook/runs/short-run-title/evidence/verification.txt
+node .\bin\ai-playbook.mjs contracts list <target-repo> --json
 node .\bin\ai-playbook.mjs worklog new <target-repo> --title "short-worklog-title"
 node .\bin\ai-playbook.mjs worklog summarize <target-repo> --month YYYY-MM
 node .\bin\ai-playbook.mjs doctor <target-repo> --strict
@@ -76,8 +83,12 @@ Agent에게 더 강한 evidence가 필요하지만 hook까지는 과할 때 oper
 
 - 루트 `AGENTS.md`는 얇은 부트스트랩으로 유지합니다. skill/Git 정책은 `.ai-playbook/SKILLS.md`와 `.ai-playbook/GIT.md`에 둡니다.
 - 현재 사실은 `CURRENT.md`에 둡니다.
+- Path-scoped 읽기 힌트는 `context/`에 둡니다.
+- 문서 위치는 `maps/doc-map.md`에 둡니다.
 - 실행 중인 계획은 `plans/`에 둡니다.
+- 진행 중 evidence와 criteria는 `runs/`에 둡니다.
 - 상세 판단 과정과 복구용 이력은 `worklogs/YYYY-MM/`에 둡니다.
+- Business rule과 invariant는 `contracts/`에 둡니다.
 - 오래 남길 구조 사실은 `maps/`에 둡니다.
 - 반복 실행 명령과 운영 절차는 `runbooks/`에 둡니다.
 - 받아들인 선택은 `decisions/`에 둡니다.
@@ -93,8 +104,8 @@ Agent에게 더 강한 evidence가 필요하지만 hook까지는 과할 때 oper
 
 ## 유지보수 주기
 
-- 세션 시작 시 `START_HERE.md`, `CURRENT.md`, 관련 plan 또는 runbook을 읽습니다.
-- 큰 작업 중에는 milestone이 끝나거나 blocker가 해결되거나 방향이 바뀔 때 worklog를 씁니다.
-- handoff 전에는 `START_HERE.md`를 갱신하고, worklog의 오래 유지할 사실을 `CURRENT.md`, maps, runbooks, decisions로 승격합니다.
+- 세션 시작 시 `START_HERE.md`, `CURRENT.md`, 관련 context, plan, runbook, contract를 읽습니다.
+- 큰 작업 중에는 active evidence를 `runs/`에 두고, milestone이 끝나거나 blocker가 해결되거나 방향이 바뀔 때 worklog를 씁니다.
+- handoff 전에는 `START_HERE.md`를 갱신하고, runs 또는 worklogs의 오래 유지할 사실을 `CURRENT.md`, context, maps, runbooks, contracts, decisions로 승격합니다.
 - 커밋 또는 PR 전에는 `doctor`와 프로젝트별 검증을 실행합니다.
 - `doctor` warning은 조정이 필요한 항목으로 해석합니다. 방금 bootstrap한 결과는 핵심 playbook 파일을 프로젝트별 사실로 채우기 전까지 warning이 날 수 있습니다.

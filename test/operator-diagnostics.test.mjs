@@ -422,7 +422,7 @@ test('operator research --json correlates local evidence across source tests pla
   assert.equal(report.evidence.some((item) => item.category === 'worklogs'), true);
   assert.equal(report.evidence.some((item) => item.path.includes('node_modules')), false);
   assert.equal(report.related.rules.summary.applies, 1);
-  assert.equal(report.related.context.summary.matchingContextFiles, 1);
+  assert.equal(report.related.context.summary.matchingContextFiles, 2);
   assert.equal(report.related.diagnostics.summary.commands, 2);
   assert.equal(report.related.map.summary.sourceFiles >= 1, true);
   assert.equal(report.reportMarkdown.includes('## Evidence'), true);
@@ -516,7 +516,10 @@ test('operator context --json previews path-scoped playbook context without writ
   assert.equal(report.target, target);
   assert.equal(report.path, 'src/features/결제/PaymentPanel.tsx');
   assert.equal(report.summary.coreSources, 4);
-  assert.equal(report.summary.matchingContextFiles, 1);
+  assert.equal(report.summary.matchingContextFiles, 2);
+  assert.equal(report.summary.docMap, 1);
+  assert.equal(report.docMap.path, '.ai-playbook/maps/doc-map.md');
+  assert.equal(report.contexts.some((item) => item.path === '.ai-playbook/context/root.md' && item.applies && item.reason === 'alwaysApply'), true);
   assert.equal(report.contexts.some((item) => item.path === '.ai-playbook/context/frontend.md' && item.applies && item.reason === 'glob'), true);
   assert.equal(report.contexts.some((item) => item.path === '.ai-playbook/context/backend.md' && !item.applies), true);
   assert.equal(report.rules.summary.applies, 1);
@@ -579,11 +582,12 @@ test('operator analyze --json combines read-only context rules diagnostics map a
   assert.equal(report.target, target);
   assert.equal(report.path, 'src/features/검색/SearchPanel.tsx');
   assert.equal(report.summary.ruleMatches, 1);
-  assert.equal(report.summary.contextMatches, 1);
+  assert.equal(report.summary.contextMatches, 2);
   assert.equal(report.diagnostics.packageManager.name, 'pnpm');
   assert.equal(report.map.stack.languages.some((language) => language.extension === '.tsx'), true);
   assert.equal(report.rules.matches.some((rule) => rule.path === '.ai-playbook/rules/react.md'), true);
   assert.equal(report.context.matches.some((item) => item.path === '.ai-playbook/context/frontend.md'), true);
+  assert.equal(report.context.matches.some((item) => item.path === '.ai-playbook/context/root.md'), true);
   assert.equal(report.optionalTools.some((tool) => tool.id === 'ast-grep' && tool.status === 'detected'), true);
   assert.equal(report.optionalTools.some((tool) => tool.id === 'lsp' && tool.status === 'project-signals'), true);
   assert.deepEqual(await listRelativeFiles(target), before);

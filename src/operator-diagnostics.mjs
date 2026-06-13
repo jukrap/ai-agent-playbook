@@ -2,7 +2,7 @@ import { readdir, readFile, rm, rmdir, stat, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs';
 import crypto from 'node:crypto';
 import path from 'node:path';
-import { INSTALL_MANIFEST_FILE, checkGuides, doctorProject, SCHEMA_VERSION } from './harness.mjs';
+import { INSTALL_MANIFEST_FILE, checkGuides, doctorProject, SCHEMA_VERSION, validateManagedManifest } from './harness.mjs';
 
 const RULE_DIRECTORY_SOURCES = [
   ['.ai-playbook/rules', '.ai-playbook/rules'],
@@ -1226,12 +1226,13 @@ async function readOperatorManagedManifest(playbook) {
   }
   try {
     const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
-    if (!isRecord(manifest) || !Array.isArray(manifest.files)) {
+    const invalidReason = validateManagedManifest(manifest);
+    if (invalidReason) {
       return {
         ok: false,
         conflict: {
           id: 'operator.gc.manifest-invalid',
-          message: `Invalid managed manifest ${relativePath}.`,
+          message: `Invalid managed manifest ${relativePath}: ${invalidReason}.`,
           paths: [relativePath]
         }
       };

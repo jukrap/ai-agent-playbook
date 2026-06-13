@@ -44,104 +44,31 @@ It is not a slash-command pack, a Codex plugin, or an auto-running agent. The de
 
 ## Quick Start
 
-The package is published as [`ai-agent-playbook`](https://www.npmjs.com/package/ai-agent-playbook). Use `npx` for one-off commands, or install it globally when you want the shorter `ai-playbook` command.
-
-For the full setup, update, and cleanup guide, see [Install, update, and uninstall](docs/installation.md).
-
-### 1. Choose How to Run the CLI
-
-Most users should start with `npx` because it does not add this package to the current project or to the global npm prefix.
-
-`npm i` is the short alias for `npm install`; the important difference is whether you add `-g`, `-D`, or neither.
-
-| Use case                                 | Command                                  | What it means                                                                 |
-| ---------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------- |
-| Try or run one command                   | `npx ai-agent-playbook --help`           | Downloads/runs the package through npm for that command.                      |
-| Use `ai-playbook` from any directory     | `npm install -g ai-agent-playbook`       | Installs the CLI globally; then run `ai-playbook --help`.                     |
-| Pin the tool inside one project          | `npm install -D ai-agent-playbook`       | Adds it to that project's `node_modules`; then run `npx ai-playbook ...`.     |
-| Work from this repository's source clone | `node .\bin\ai-playbook.mjs --help`      | Runs the checked-out source directly.                                         |
-| Just `npm install ai-agent-playbook`     | Usually not the recommended first choice | Installs the package into the current project, but does not install skills or bootstrap `.ai-playbook/`. |
-
-Installing the npm package and installing playbook content are separate steps. `npm install` gives you the tool. `skills install` copies reusable skills into user skill roots. `bootstrap` writes a playbook into a target project.
-
-### 2. Install Reusable Skills
-
-Use this when you want the reusable agent skills available locally, without applying a project harness to any target repository.
+The package is published as [`ai-agent-playbook`](https://www.npmjs.com/package/ai-agent-playbook). The simplest path is to run it through npm with `npx`:
 
 ```powershell
+npx ai-agent-playbook --help
 npx ai-agent-playbook skills install --dry-run
 npx ai-agent-playbook skills install
+npx ai-agent-playbook bootstrap <target-project> --dry-run
+npx ai-agent-playbook bootstrap <target-project>
+npx ai-agent-playbook operator check <target-project> --json
 ```
 
-The installer copies every `skills/<category>/<skill>/SKILL.md` folder from the package into common local skill directories:
-
-- `%USERPROFILE%\.codex\skills\<skill>`
-- `%USERPROFILE%\.agents\skills\<skill>`
-- `%USERPROFILE%\.agents\skills\legacys\<legacy-skill>` for legacy skills
-
-Restart Codex, or start a new agent session, after installation so new skill metadata is picked up.
-
-If you are working from a local checkout instead of npm, use `node .\bin\ai-playbook.mjs skills install` or the compatible `.\install.ps1` script.
-
-### 3. Update or Remove Reusable Skills
-
-```powershell
-npx ai-agent-playbook skills update --dry-run
-npx ai-agent-playbook skills update
-```
-
-`skills update` is idempotent. It refreshes managed skills, adopts matching older copies, and refuses locally modified managed skills unless `--force-managed` is provided.
-
-To remove managed skills that were installed by this playbook:
-
-```powershell
-npx ai-agent-playbook skills uninstall --dry-run
-npx ai-agent-playbook skills uninstall
-```
-
-For a persistent global command:
+If you want the shorter `ai-playbook` command from any directory, install the package globally:
 
 ```powershell
 npm install -g ai-agent-playbook
 ai-playbook --help
-ai-playbook skills update
 ```
 
-Update or remove the global CLI with npm:
+The npm package installs the CLI. It does not automatically copy skills, create `.ai-playbook/`, enable hooks, or register slash commands. Keep those actions explicit:
 
-```powershell
-npm install -g ai-agent-playbook@latest
-npm uninstall -g ai-agent-playbook
-```
+- `skills install`, `skills update`, and `skills uninstall` manage reusable user-level skills.
+- `bootstrap`, `guides sync`, `managed *`, and `operator *` manage or inspect one target project.
+- Runtime hooks and adapter settings are optional and are never installed by default.
 
-`npm uninstall -g ai-agent-playbook` removes only the global CLI package. It does not delete skills already copied into `%USERPROFILE%\.codex\skills` or `%USERPROFILE%\.agents\skills`. Use `skills uninstall` for that.
-
-### 4. Apply the Project Harness When Needed
-
-Use the runtime CLI only when a target project should receive a root `AGENTS.md` bootstrap and an `.ai-playbook/` project-memory folder.
-
-```powershell
-npx ai-agent-playbook bootstrap <target-project> --dry-run
-npx ai-agent-playbook bootstrap <target-project>
-npx ai-agent-playbook doctor <target-project>
-npx ai-agent-playbook operator check <target-project> --path src/example.ts --json
-npx ai-agent-playbook operator search <target-project> --query "auth flow" --path src/example.ts --json
-npx ai-agent-playbook operator analyze <target-project> --path src/example.ts --json
-npx ai-agent-playbook managed catalog <target-project> --json
-npx ai-agent-playbook adapter config <target-project> --adapter codex --json
-```
-
-After a global install, replace `npx ai-agent-playbook` with `ai-playbook`. From a local checkout, replace it with `node .\bin\ai-playbook.mjs`.
-
-Use `--local-only` when the target project's `.ai-playbook/` folder should be ignored by Git. Use `--profile <name>` only after the target stack is known.
-
-Existing projects that already have `ai-playbook/` continue to work as a legacy layout when `.ai-playbook/` is absent, but new bootstrap output uses `.ai-playbook/`. Use `migrate path --json` to preview the legacy-to-dot path move before applying it.
-
-Runtime hooks and plugins are not part of the default install path. Treat them as optional extensions after the document and CLI harness are stable. The Codex and Claude Code adapters include read-only context hook examples, a read-only `adapter config` renderer, and a read-only `adapter check` self-check, but they are not installed automatically. See [Runtime roadmap](docs/runtime-roadmap.md).
-
-Managed project harness commands use `.ai-playbook/.ai-agent-playbook-install.json` to track files copied by this playbook. Use `managed check` before cleanup, `managed catalog` to review owned files by kind and status, `managed adopt` to add a marker to older matching installs, `managed prune` to preview removing one selected unmodified managed file, and `managed uninstall` to preview removal of all unmodified managed files. `managed adopt`, `managed prune`, and `managed uninstall` write only when `--apply` is provided.
-
-Operator diagnostics such as `operator check`, `operator search`, `operator context`, `operator analyze`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, and `qa tui-check` are operator-triggered. Use `operator check` as the combined human checkpoint for doctor, guide freshness, local verification command candidates, and rule matching before adding stronger runtime automation. Use `operator search` as a local project explorer for related source, playbook, rules, plans, and worklog matches. Use `operator context` to preview path-scoped playbook context and rule matches. Use `operator analyze` to combine diagnostics, map, rules, context, and optional AST/LSP/comment-quality setup signals without running those optional tools. Use `operator map` to summarize stack, architecture, quality, and concern signals without writing an analysis file. Use `operator audit` to find broken playbook links, orphan context globs, duplicate playbook notes, legacy path drift, and managed manifest drift without writing files. Use `operator gc` as a preview-first cleanup for obsolete unmodified managed playbook files; it writes only with `--apply`. `diagnostics check` formats package scripts with the detected lockfile package manager.
+For update, uninstall, local checkout, PowerShell compatibility, ownership markers, and cleanup details, see [Install, update, and uninstall](docs/installation.md).
 
 ## Everyday Flow
 

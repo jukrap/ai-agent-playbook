@@ -336,6 +336,126 @@ test('operator search --json reports no matches without failing or writing files
   await cleanup(target);
 });
 
+test('operator research --json correlates local evidence across source tests playbook and rules without writing files', async () => {
+  const target = await tempRepo('operator research-공백-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await adaptPlaybook(target);
+  await mkdir(path.join(target, 'src', 'features', '인증'), { recursive: true });
+  await mkdir(path.join(target, 'test'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'rules'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'context'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'worklogs', '2026-06'), { recursive: true });
+  await mkdir(path.join(target, 'node_modules', 'ignored'), { recursive: true });
+  await writeFile(path.join(target, 'package.json'), JSON.stringify({
+    scripts: {
+      test: 'node --test',
+      check: 'node --check src/features/인증/auth-flow.mjs'
+    }
+  }, null, 2));
+  await writeFile(path.join(target, 'src', 'features', '인증', 'auth-flow.mjs'), [
+    'export function refreshToken(session) {',
+    '  if (!session?.token) return "missing token";',
+    '  return `token refresh for ${session.token}`;',
+    '}'
+  ].join('\n'));
+  await writeFile(path.join(target, 'test', 'auth-flow.test.mjs'), [
+    'import { refreshToken } from "../src/features/인증/auth-flow.mjs";',
+    'test("token refresh keeps an authenticated session alive", () => {',
+    '  refreshToken({ token: "abc" });',
+    '});'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nAuth flow uses token refresh for session continuity.\n');
+  await writeFile(path.join(target, '.ai-playbook', 'rules', 'auth.md'), [
+    '---',
+    'globs:',
+    '  - src/features/인증/**/*.mjs',
+    '---',
+    '# Auth rule',
+    '',
+    'Token refresh changes require test evidence.'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'context', 'auth.md'), [
+    '---',
+    'globs:',
+    '  - src/features/인증/**/*.mjs',
+    '---',
+    '# Auth context',
+    '',
+    'The auth flow depends on token refresh.'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'worklogs', '2026-06', '2026-06-13-auth.md'), '# Auth worklog\n\nToken refresh risk was reviewed.\n');
+  await writeFile(path.join(target, 'node_modules', 'ignored', 'auth.txt'), 'token refresh ignored\n');
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli([
+    'operator',
+    'research',
+    '.',
+    '--query',
+    'token refresh auth flow',
+    '--path',
+    'src/features/인증/auth-flow.mjs',
+    '--max-results',
+    '20',
+    '--json'
+  ], io), 0);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.target, target);
+  assert.equal(report.query, 'token refresh auth flow');
+  assert.equal(report.path, 'src/features/인증/auth-flow.mjs');
+  assert.deepEqual(report.mode, {
+    localOnly: true,
+    network: false,
+    writes: false
+  });
+  assert.equal(report.summary.evidence >= 5, true);
+  assert.equal(report.summary.returned >= 5, true);
+  assert.equal(report.axes.some((axis) => axis.id === 'query'), true);
+  assert.equal(report.evidence.some((item) => item.path === 'src/features/인증/auth-flow.mjs' && item.category === 'source'), true);
+  assert.equal(report.evidence.some((item) => item.path === 'test/auth-flow.test.mjs' && item.category === 'tests'), true);
+  assert.equal(report.evidence.some((item) => item.path === '.ai-playbook/CURRENT.md' && item.category === 'playbook'), true);
+  assert.equal(report.evidence.some((item) => item.path === '.ai-playbook/rules/auth.md' && item.category === 'rules'), true);
+  assert.equal(report.evidence.some((item) => item.category === 'worklogs'), true);
+  assert.equal(report.evidence.some((item) => item.path.includes('node_modules')), false);
+  assert.equal(report.related.rules.summary.applies, 1);
+  assert.equal(report.related.context.summary.matchingContextFiles, 1);
+  assert.equal(report.related.diagnostics.summary.commands, 2);
+  assert.equal(report.related.map.summary.sourceFiles >= 1, true);
+  assert.equal(report.reportMarkdown.includes('## Evidence'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('operator research --json returns gaps and next steps for no local evidence without writing files', async () => {
+  const target = await tempRepo('operator research empty-한글-');
+  await writeFile(path.join(target, 'README.md'), '# Empty fixture\n');
+  await writeFile(path.join(target, 'package.json'), JSON.stringify({
+    scripts: {
+      test: 'node --test'
+    }
+  }, null, 2));
+  await mkdir(path.join(target, 'test'), { recursive: true });
+  await writeFile(path.join(target, 'test', 'unrelated.test.mjs'), 'test("unrelated", () => {});\n');
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli(['operator', 'research', '.', '--query', 'does-not-exist', '--json'], io), 0);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.summary.evidence, 0);
+  assert.deepEqual(report.evidence, []);
+  assert.equal(report.gaps.some((gap) => gap.id === 'research.no-local-evidence'), true);
+  assert.equal(report.nextSteps.some((step) => step.id === 'research.refine-query'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
 test('operator context --json previews path-scoped playbook context without writing files', async () => {
   const target = await tempRepo('operator context-공백-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);

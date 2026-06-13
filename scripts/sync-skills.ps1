@@ -39,8 +39,9 @@ function Get-DirectorySignature {
     return $null
   }
 
-  $fileEntries = foreach ($file in (Get-ChildItem -LiteralPath $Directory -Recurse -File | Where-Object { $_.Name -ne $markerFileName })) {
-    $relativePath = $file.FullName.Substring($Directory.Length + 1).Replace('\', '/')
+  $directoryFull = (Get-Item -LiteralPath $Directory).FullName.TrimEnd('\', '/')
+  $fileEntries = foreach ($file in (Get-ChildItem -LiteralPath $directoryFull -Recurse -File | Where-Object { $_.Name -ne $markerFileName })) {
+    $relativePath = $file.FullName.Substring($directoryFull.Length + 1).Replace('\', '/')
     $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
     [pscustomobject]@{
       RelativePath = $relativePath

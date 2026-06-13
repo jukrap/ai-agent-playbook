@@ -46,10 +46,18 @@ push 뒤 저장소가 검증 workflow를 사용한다면 통과 여부를 확인
 - 저장소 검증이 통과한 뒤에만 publish합니다.
 
 ```powershell
-npm publish
+npm publish --access public
 ```
 
 npm이 one-time password를 요구하면 publish 장비에서 대화형으로 완료합니다. npm token은 repository file에 저장하지 않습니다.
+
+Publish 뒤에는 registry와 CLI smoke path를 확인합니다.
+
+```powershell
+npm view ai-agent-playbook version
+npx --yes ai-agent-playbook@latest --help
+npx --yes ai-agent-playbook@latest skills install --dry-run
+```
 
 ## Git host 설정
 

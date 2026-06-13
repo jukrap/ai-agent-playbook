@@ -10,6 +10,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-2f9e44?style=flat-square"></a>
+  <a href="https://www.npmjs.com/package/ai-agent-playbook"><img alt="npm package" src="https://img.shields.io/npm/v/ai-agent-playbook?style=flat-square"></a>
   <img alt="Node 18 plus" src="https://img.shields.io/badge/node-18%2B-1c7ed6?style=flat-square">
   <img alt="PowerShell installer" src="https://img.shields.io/badge/installer-PowerShell-f08c00?style=flat-square">
   <img alt="Agent agnostic" src="https://img.shields.io/badge/agents-Codex%20%7C%20Claude%20Code%20%7C%20more-e03131?style=flat-square">
@@ -41,6 +42,8 @@ The repository is agent-agnostic. Codex, Claude Code, and other coding agents ca
 
 ## Quick Start
 
+The package is published as [`ai-agent-playbook`](https://www.npmjs.com/package/ai-agent-playbook). Use `npx` for one-off commands, or install it globally when you want the shorter `ai-playbook` command.
+
 ### 1. Install Skills
 
 Use this when you want the reusable agent skills available locally, without applying a project harness to any target repository.
@@ -68,6 +71,28 @@ npx ai-agent-playbook skills update
 ```
 
 `skills update` is idempotent. It refreshes managed skills, adopts matching older copies, and refuses locally modified managed skills unless `--force-managed` is provided.
+
+To remove managed skills that were installed by this playbook:
+
+```powershell
+npx ai-agent-playbook skills uninstall --dry-run
+npx ai-agent-playbook skills uninstall
+```
+
+For a persistent global command:
+
+```powershell
+npm install -g ai-agent-playbook
+ai-playbook --help
+ai-playbook skills update
+```
+
+Update or remove the global CLI with npm:
+
+```powershell
+npm install -g ai-agent-playbook@latest
+npm uninstall -g ai-agent-playbook
+```
 
 ### 3. Apply the Project Harness When Needed
 

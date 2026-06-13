@@ -21,6 +21,8 @@ node .\bin\ai-playbook.mjs operator check <target> [--path <file>] [--diff] [--j
 node .\bin\ai-playbook.mjs operator search <target> --query <text> [--path <file>] [--max-results N] [--json]
 node .\bin\ai-playbook.mjs operator context <target> --path <file> [--json]
 node .\bin\ai-playbook.mjs operator map <target> [--json]
+node .\bin\ai-playbook.mjs operator audit <target> [--json]
+node .\bin\ai-playbook.mjs operator gc <target> [--apply] [--json]
 node .\bin\ai-playbook.mjs rules check <target> [--path <file>] [--json]
 node .\bin\ai-playbook.mjs diagnostics check <target> [--json]
 node .\bin\ai-playbook.mjs qa tui-check <capture-file> [--cols N] [--json]
@@ -117,7 +119,7 @@ It does not read or re-inject root `AGENTS.md` by default. Use `--json` to retur
 
 ## Operator diagnostics
 
-The diagnostics commands are read-only operator signals. They help a human or agent decide what to inspect next; they do not install hooks, run project commands, write files, or call the network.
+The diagnostics commands are operator-triggered signals. They help a human or agent decide what to inspect next; they do not install hooks, run project commands, or call the network. The audit, check, search, context, map, rules, diagnostics, and TUI commands are read-only. `operator gc` is preview-first and writes only when `--apply` is provided.
 
 `operator check` is the combined human checkpoint:
 
@@ -152,6 +154,23 @@ node .\bin\ai-playbook.mjs operator map <target> --json
 ```
 
 It reads local project files and reports stack manifests, detected package manager, source language counts, framework dependencies, top-level structure, entrypoint candidates, module boundary directories, quality configs, test file samples, verification command candidates, TODO/debug/security signal snippets, and a compact summary. Common dependency and generated folders are excluded. JSON output returns `{ schemaVersion, ok, target, summary, stack, architecture, quality, concerns, warnings }`. It is read-only and does not create `.ai-playbook/maps/` files; use the report as evidence before deciding what to promote into durable project maps.
+
+`operator audit` checks playbook drift without writing files:
+
+```powershell
+node .\bin\ai-playbook.mjs operator audit <target> --json
+```
+
+It scans the project playbook for broken relative markdown links, context files whose `globs` no longer match any current project file, duplicate playbook markdown content, simultaneous `.ai-playbook/` and legacy `ai-playbook/` folders, and managed manifest drift. JSON output returns `{ schemaVersion, ok, target, summary, findings, sections, warnings }`. Broken internal links and malformed manifests are fail-level findings; orphan context, duplicate content, legacy path drift, and managed file drift are warning-level findings.
+
+`operator gc` is a preview-first cleanup for obsolete managed playbook files:
+
+```powershell
+node .\bin\ai-playbook.mjs operator gc <target> --json
+node .\bin\ai-playbook.mjs operator gc <target> --apply --json
+```
+
+Preview mode writes nothing. Apply mode only removes files listed in `.ai-playbook/.ai-agent-playbook-install.json` when all of these are true: the original source template no longer exists in the current checkout, the target file is still under the active playbook directory, and the current target hash still matches the manifest `targetHash`. Modified files are reported as conflicts and preserved. JSON output returns `{ schemaVersion, ok, target, applied, summary, operations, warnings, conflicts }`.
 
 `rules check` discovers portable rule files and reports which rules apply to a path:
 

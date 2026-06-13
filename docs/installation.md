@@ -141,6 +141,8 @@ node .\bin\ai-playbook.mjs operator check <target-project> --path src/example.ts
 node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator context <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator map <target-project> --json
+node .\bin\ai-playbook.mjs operator audit <target-project> --json
+node .\bin\ai-playbook.mjs operator gc <target-project> --json
 node .\bin\ai-playbook.mjs rules check <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs diagnostics check <target-project> --json
 node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
@@ -159,7 +161,7 @@ Bootstrap and guide sync maintain a project-level marker at `.ai-playbook/.ai-ag
 
 The optional adapter hook examples use the `context` command internally. They are read-only and must be enabled manually from `adapters/`. Use `adapter config` to render placeholder-free local settings, then use `adapter check --settings <local-settings-path>` after manually editing a local settings file.
 
-The operator diagnostics commands are also read-only. `operator check` combines doctor, guide freshness, diagnostics, and rule matching into one human checkpoint. `operator search` searches local source, playbook, rules, plans, and worklogs without writing files. `operator context` previews path-scoped context files, rules, and related maps or runbooks before an agent loads them. `operator map` summarizes stack, architecture, quality, and concern signals without creating map files. `rules check` shows which portable rule files apply to a path, `diagnostics check` lists likely verification commands without running them and respects detected package manager lockfiles, and `qa tui-check` checks terminal captures for width overflow and CJK layout risk.
+The operator diagnostics commands are also operator-triggered. `operator check` combines doctor, guide freshness, diagnostics, and rule matching into one human checkpoint. `operator search` searches local source, playbook, rules, plans, and worklogs without writing files. `operator context` previews path-scoped context files, rules, and related maps or runbooks before an agent loads them. `operator map` summarizes stack, architecture, quality, and concern signals without creating map files. `operator audit` checks playbook links, context globs, duplicate notes, legacy path drift, and managed manifest drift without writing files. `operator gc` previews obsolete unmodified managed playbook files and writes only when `--apply` is provided. `rules check` shows which portable rule files apply to a path, `diagnostics check` lists likely verification commands without running them and respects detected package manager lockfiles, and `qa tui-check` checks terminal captures for width overflow and CJK layout risk.
 
 Create plan and worklog files through the CLI so paths stay predictable:
 

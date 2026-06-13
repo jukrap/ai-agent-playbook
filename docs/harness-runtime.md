@@ -23,6 +23,7 @@ Use `npx ai-agent-playbook ...` for the published package, `ai-playbook ...` aft
 `skills` commands manage installable skills without requiring the PowerShell wrappers.
 
 - `skills check` is read-only and reports missing, managed, modified, adoptable, or conflicting installed skills.
+- `skills lint` is read-only and reviews source `SKILL.md` files for trigger-focused descriptions, frontmatter shape, and missing reference links before publishing.
 - `skills install` and `skills update` are idempotent sync commands. `--dry-run` writes nothing. Without `--dry-run`, they create or refresh managed skills and write `.ai-agent-playbook-install.json` markers.
 - `skills check` is read-only and exits non-zero when required installed skills are missing, locally modified, or blocked by unmanaged conflicts.
 - `skills uninstall` removes only unmodified managed skills. `--dry-run` previews the removals.
@@ -128,11 +129,13 @@ Path-scoped context lives under `.ai-playbook/context/`. Context markdown may us
 
 `contracts/` captures important business rules and invariants as markdown. Active contracts live under `.ai-playbook/contracts/active/`; drafts live under `.ai-playbook/contracts/pending/`. Contract frontmatter supports `id`, `status`, `appliesTo`, `risk`, `approvedAt`, and `freshness`.
 
-`contracts list` and `contracts check` are read-only. `contracts check --path <file> --json` reports matching active and pending contracts, missing `appliesTo` paths, stale freshness dates, pending-only matches, and empty `Required evidence` sections. It does not run tests, judge correctness, block commits, approve rules, or edit files. `contracts init` is preview-first and writes only the starter folder structure.
+`contracts list` and `contracts check` are read-only. `contracts check --path <file> --json` reports matching active and pending contracts, missing `appliesTo` paths, stale freshness dates, pending-only matches, empty `Required evidence` sections, and contract hash snapshot drift when `.ai-playbook/contracts/.hashes.json` exists. It does not run tests, judge correctness, block commits, approve rules, or edit files.
+
+`contracts snapshot` is preview-first. By default it reports the contract, `appliesTo`, and Required evidence paths that would be hashed. `--apply` writes only `.ai-playbook/contracts/.hashes.json`, with portable relative paths and hashes. The snapshot is a freshness aid for operators; it is not an approval cache. `contracts init` is preview-first and writes only the starter folder structure.
 
 ## Operator diagnostics
 
-The diagnostics commands are operator-triggered signals. They help a human or agent decide what to inspect next; they do not install hooks, run project commands, or call the network. The audit, check, search, research, context, analyze, map, rules, diagnostics, and TUI commands are read-only. `operator gc` is preview-first and writes only when `--apply` is provided.
+The diagnostics commands are operator-triggered signals. They help a human or agent decide what to inspect next; they do not install hooks, run project commands, or call the network. The audit, check, search, preflight, delta, research, context, analyze, map, rules, diagnostics, TUI, and PNG image-diff commands are read-only. `operator gc` is preview-first and writes only when `--apply` is provided.
 
 `operator check` is the combined human checkpoint:
 
@@ -166,6 +169,15 @@ npx ai-agent-playbook operator context <target> --path src/example.ts --json
 
 It reports the core context files that exist, `.ai-playbook/context/**/*.md` files whose `globs` or `alwaysApply` frontmatter applies to the path, matching project rules, `.ai-playbook/maps/doc-map.md`, and related maps, runbooks, decisions, or guides that mention the path or file name. JSON output returns `{ schemaVersion, ok, target, path, summary, coreSources, contexts, docMap, rules, related, warnings }`. This command does not write context files, run project commands, or install hooks.
 
+`operator preflight` and `operator delta` provide an explicit before/after evidence gate without blocking work:
+
+```powershell
+npx ai-agent-playbook operator preflight <target> --intent "auth flow change" --path src/example.ts --json > preflight.json
+npx ai-agent-playbook operator delta <target> --before preflight.json --json
+```
+
+Preflight returns candidate files, rule/context/contract signals, intent terms, and a portable snapshot of relative paths, hashes, sizes, and mtimes. It does not write the snapshot file; use shell redirection when you want to keep it. Delta compares that saved JSON with the current target and reports added, deleted, modified, out-of-scope, and playbook/rule/context changes. It does not judge correctness or approve completion.
+
 `operator analyze` combines the current read-only operator signals:
 
 ```powershell
@@ -188,7 +200,7 @@ It reads local project files and reports stack manifests, detected package manag
 npx ai-agent-playbook operator audit <target> --json
 ```
 
-It scans the project playbook for broken relative markdown links, context files whose `globs` no longer match any current project file, duplicate playbook markdown content, simultaneous `.ai-playbook/` and legacy `ai-playbook/` folders, and managed manifest drift. JSON output returns `{ schemaVersion, ok, target, summary, findings, sections, warnings }`. Broken internal links and malformed manifests are fail-level findings; orphan context, duplicate content, legacy path drift, and managed file drift are warning-level findings.
+It scans the project playbook for broken relative markdown links, context files whose `globs` no longer match any current project file, missing doc-map targets, contract `appliesTo` drift, duplicate playbook markdown content, simultaneous `.ai-playbook/` and legacy `ai-playbook/` folders, and managed manifest drift. JSON output returns `{ schemaVersion, ok, target, summary, findings, sections, warnings }`. Broken internal links and malformed manifests are fail-level findings; orphan context, missing doc-map targets, contract drift, duplicate content, legacy path drift, and managed file drift are warning-level findings.
 
 `operator gc` is a preview-first cleanup for obsolete managed playbook files:
 
@@ -222,6 +234,14 @@ npx ai-agent-playbook qa tui-check .\capture.txt --cols 100 --json
 ```
 
 This command exits non-zero when overflow or border misalignment is found. It is meant for terminal UI, CLI table, log, report, and Korean/Japanese/Chinese text layout checks. Browser screenshot review still belongs in the target project's browser tooling or visual QA guide.
+
+`qa image-diff` compares two PNG files without writing a diff image:
+
+```powershell
+npx ai-agent-playbook qa image-diff .\before.png .\after.png --threshold 0.01 --json
+```
+
+It returns dimensions, changed pixels, diff ratio, similarity score, and hotspot cells. It supports PNG only and does not capture browsers, manage baselines, call a visual oracle, or write files.
 
 ## Adapter config and readiness
 
@@ -288,7 +308,7 @@ These reminders are intentionally narrow. They do not run `doctor`, block tool c
 
 ## Design constraints
 
-- Keep the CLI dependency-free unless a concrete feature requires a dependency.
+- Keep the CLI dependency-light; add runtime dependencies only when a concrete read-only feature requires one.
 - Keep commands deterministic and file-system focused.
 - Do not encode project-specific product facts in the runtime.
 - Keep reusable templates relative-path based.

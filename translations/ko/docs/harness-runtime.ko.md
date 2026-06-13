@@ -23,6 +23,7 @@
 `skills` 명령은 PowerShell wrapper 없이 설치형 스킬을 관리합니다.
 
 - `skills check`는 read-only이며 missing, managed, modified, adoptable, conflict 상태를 보고합니다.
+- `skills lint`는 read-only이며 공개 전에 source `SKILL.md`의 trigger 중심 description, frontmatter 형태, missing reference link를 점검합니다.
 - `skills install`과 `skills update`는 반복 실행 가능한 sync 명령입니다. `--dry-run`은 파일을 쓰지 않습니다.
 - `skills check`는 read-only이며 필요한 설치 스킬이 없거나, 로컬에서 수정되었거나, unmanaged conflict에 막히면 non-zero로 종료합니다.
 - `skills uninstall`은 수정되지 않은 관리 대상 스킬만 제거하고, `--dry-run`으로 먼저 preview할 수 있습니다.
@@ -128,11 +129,13 @@ Path-scoped context는 `.ai-playbook/context/`에 둡니다. Context markdown은
 
 `contracts/`는 중요한 business rule과 invariant를 markdown으로 기록합니다. Active contract는 `.ai-playbook/contracts/active/`, draft는 `.ai-playbook/contracts/pending/`에 둡니다. Contract frontmatter는 `id`, `status`, `appliesTo`, `risk`, `approvedAt`, `freshness`를 지원합니다.
 
-`contracts list`와 `contracts check`는 read-only입니다. `contracts check --path <file> --json`은 matching active/pending contract, 사라진 `appliesTo` path, 오래된 freshness date, pending-only match, 비어 있는 `Required evidence` section을 보고합니다. Test를 실행하거나, 정합성을 judge하거나, commit을 막거나, rule을 승인하거나, 파일을 수정하지 않습니다. `contracts init`은 preview-first이며 starter folder structure만 씁니다.
+`contracts list`와 `contracts check`는 read-only입니다. `contracts check --path <file> --json`은 matching active/pending contract, 사라진 `appliesTo` path, 오래된 freshness date, pending-only match, 비어 있는 `Required evidence` section, 그리고 `.ai-playbook/contracts/.hashes.json`이 있을 때 contract hash snapshot drift를 보고합니다. Test를 실행하거나, 정합성을 judge하거나, commit을 막거나, rule을 승인하거나, 파일을 수정하지 않습니다.
+
+`contracts snapshot`은 preview-first입니다. 기본 모드는 hash 대상이 될 contract, `appliesTo`, Required evidence path만 보고합니다. `--apply`를 붙였을 때만 `.ai-playbook/contracts/.hashes.json` 하나를 쓰며, portable relative path와 hash만 저장합니다. 이 snapshot은 operator가 freshness를 판단하기 위한 보조 자료이지 승인 cache가 아닙니다. `contracts init`은 preview-first이며 starter folder structure만 씁니다.
 
 ## Operator diagnostics
 
-Diagnostics 명령은 operator가 명시적으로 실행하는 signal입니다. 사람이나 agent가 다음에 무엇을 확인할지 판단하게 돕지만, hook을 설치하지 않고, project command를 실행하지 않고, network call을 하지 않습니다. Audit, check, search, research, context, analyze, map, rules, diagnostics, TUI 명령은 read-only입니다. `operator gc`는 preview-first이며 `--apply`가 있을 때만 씁니다.
+Diagnostics 명령은 operator가 명시적으로 실행하는 signal입니다. 사람이나 agent가 다음에 무엇을 확인할지 판단하게 돕지만, hook을 설치하지 않고, project command를 실행하지 않고, network call을 하지 않습니다. Audit, check, search, preflight, delta, research, context, analyze, map, rules, diagnostics, TUI, PNG image-diff 명령은 read-only입니다. `operator gc`는 preview-first이며 `--apply`가 있을 때만 씁니다.
 
 `operator check`는 통합 사람 중심 checkpoint입니다.
 
@@ -166,6 +169,15 @@ npx ai-agent-playbook operator context <target> --path src/example.ts --json
 
 이 명령은 존재하는 core context file, path에 `globs` 또는 `alwaysApply` frontmatter가 적용되는 `.ai-playbook/context/**/*.md` file, matching project rule, `.ai-playbook/maps/doc-map.md`, 그리고 path나 file name을 언급하는 관련 maps, runbooks, decisions, guides를 보고합니다. JSON output은 `{ schemaVersion, ok, target, path, summary, coreSources, contexts, docMap, rules, related, warnings }`를 반환합니다. Context file을 쓰지 않고, project command를 실행하지 않고, hook을 설치하지 않습니다.
 
+`operator preflight`와 `operator delta`는 작업을 막지 않는 명시적 before/after evidence gate입니다.
+
+```powershell
+npx ai-agent-playbook operator preflight <target> --intent "auth flow change" --path src/example.ts --json > preflight.json
+npx ai-agent-playbook operator delta <target> --before preflight.json --json
+```
+
+Preflight는 candidate file, rule/context/contract signal, intent term, relative path/hash/size/mtime 기반 portable snapshot을 반환합니다. Snapshot 파일을 직접 만들지는 않으므로 보관하려면 shell redirect를 사용합니다. Delta는 저장한 JSON과 현재 target을 비교해 추가, 삭제, 수정, intent 밖 변경, playbook/rule/context 변경을 보고합니다. 정합성을 판정하거나 완료를 승인하지 않습니다.
+
 `operator analyze`는 현재 read-only operator signal을 묶어 보여줍니다.
 
 ```powershell
@@ -188,7 +200,7 @@ npx ai-agent-playbook operator map <target> --json
 npx ai-agent-playbook operator audit <target> --json
 ```
 
-project playbook의 broken relative markdown link, `globs`가 현재 project file과 더 이상 맞지 않는 context file, duplicate playbook markdown content, `.ai-playbook/`과 legacy `ai-playbook/` 동시 존재, managed manifest drift를 스캔합니다. JSON output은 `{ schemaVersion, ok, target, summary, findings, sections, warnings }`를 반환합니다. Broken internal link와 malformed manifest는 fail-level finding이고, orphan context, duplicate content, legacy path drift, managed file drift는 warning-level finding입니다.
+project playbook의 broken relative markdown link, `globs`가 현재 project file과 더 이상 맞지 않는 context file, missing doc-map target, contract `appliesTo` drift, duplicate playbook markdown content, `.ai-playbook/`과 legacy `ai-playbook/` 동시 존재, managed manifest drift를 스캔합니다. JSON output은 `{ schemaVersion, ok, target, summary, findings, sections, warnings }`를 반환합니다. Broken internal link와 malformed manifest는 fail-level finding이고, orphan context, missing doc-map target, contract drift, duplicate content, legacy path drift, managed file drift는 warning-level finding입니다.
 
 `operator gc`는 obsolete managed playbook file을 preview-first로 정리합니다.
 
@@ -222,6 +234,14 @@ npx ai-agent-playbook qa tui-check .\capture.txt --cols 100 --json
 ```
 
 Overflow 또는 border misalignment가 발견되면 이 명령은 non-zero로 종료합니다. Terminal UI, CLI table, log, report, 한국어/일본어/중국어 text layout 확인에 사용합니다. Browser screenshot review는 여전히 대상 프로젝트의 browser tooling 또는 visual QA guide가 담당합니다.
+
+`qa image-diff`는 diff image를 쓰지 않고 두 PNG를 비교합니다.
+
+```powershell
+npx ai-agent-playbook qa image-diff .\before.png .\after.png --threshold 0.01 --json
+```
+
+Dimensions, changed pixels, diff ratio, similarity score, hotspot cell을 반환합니다. PNG만 지원하며 browser capture, baseline 관리, visual oracle, 파일 쓰기를 하지 않습니다.
 
 ## Adapter config와 준비 점검
 
@@ -289,9 +309,10 @@ $env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse,Stop'
 
 ## 설계 제약
 
+- CLI는 필요한 read-only 기능이 있을 때만 runtime dependency를 추가하고, 그 외에는 의존성을 가볍게 유지합니다.
 - CLI는 대상 프로젝트의 패키지 매니저, framework, test command를 추측하지 않습니다.
 - CLI는 `.ai-playbook/`을 커밋할지 local-only로 둘지 자동 결정하지 않습니다. 사용자가 `--local-only`를 명시해야 합니다.
-- CLI는 스킬 설치를 대체하지 않습니다. 스킬은 `install.ps1`, `update.ps1`, `scripts/sync-skills.ps1` 흐름으로 관리합니다.
+- 스킬 설치와 업데이트는 Node CLI의 `skills` 명령을 기본으로 사용하고, PowerShell 스크립트는 호환 경로로 유지합니다.
 - CLI는 수동 검토를 대체하지 않습니다. 기존 agent docs가 있는 프로젝트에서는 먼저 `--dry-run`을 사용합니다.
 - 로컬 임시 자료와 참고 자료는 개발 중 참고 입력으로만 다루고, 대상 프로젝트의 지침으로 복사하지 않습니다.
 - 기본 하네스는 plugin hook, slash command, global install, network access를 요구하지 않습니다.

@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promis
 import crypto from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runCli } from '../src/cli.mjs';
@@ -456,6 +457,209 @@ test('operator research --json returns gaps and next steps for no local evidence
   await cleanup(target);
 });
 
+test('operator preflight --json collects advisory signals and a portable no-write snapshot', async () => {
+  const target = await tempRepo('operator preflight-공백-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await adaptPlaybook(target);
+  await mkdir(path.join(target, 'src', 'features', '결제'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'context'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'rules'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'contracts', 'active'), { recursive: true });
+  await writeFile(path.join(target, 'src', 'features', '결제', 'Payment Panel.tsx'), [
+    'export function PaymentPanel() {',
+    '  return "payment cancel";',
+    '}'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nPayment cancel work is active.\n');
+  await writeFile(path.join(target, '.ai-playbook', 'context', 'payments.md'), [
+    '---',
+    'globs: ["src/features/결제/**/*.tsx"]',
+    '---',
+    '# Payment context',
+    '',
+    'Payment cancel changes affect settlement state.'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'rules', 'payments.md'), [
+    '---',
+    'globs:',
+    '  - src/features/결제/**/*.tsx',
+    '---',
+    '# Payment rule',
+    '',
+    'Payment cancel changes require contract evidence.'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'contracts', 'active', 'payment-cancel.md'), [
+    '---',
+    'id: payment-cancel',
+    'status: active',
+    'appliesTo:',
+    '  - src/features/결제/**/*.tsx',
+    'freshness: 2026-06-14',
+    '---',
+    '# Payment Cancel Contract',
+    '',
+    '## Required evidence',
+    '',
+    '- test payment cancel behavior.'
+  ].join('\n'));
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli([
+    'operator',
+    'preflight',
+    '.',
+    '--intent',
+    'payment cancel contract',
+    '--path',
+    'src\\features\\결제\\Payment Panel.tsx',
+    '--max-results',
+    '10',
+    '--json'
+  ], io), 0);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.target, target);
+  assert.equal(report.intent, 'payment cancel contract');
+  assert.equal(report.path, 'src/features/결제/Payment Panel.tsx');
+  assert.equal(report.summary.candidates >= 4, true);
+  assert.equal(report.candidates.some((item) => item.path === 'src/features/결제/Payment Panel.tsx' && item.category === 'source'), true);
+  assert.equal(report.candidates.some((item) => item.path === '.ai-playbook/CURRENT.md' && item.category === 'playbook'), true);
+  assert.equal(report.candidates.some((item) => item.path === '.ai-playbook/rules/payments.md' && item.category === 'rules'), true);
+  assert.equal(report.signals.rules.summary.applies, 1);
+  assert.equal(report.signals.context.summary.matchingContextFiles >= 2, true);
+  assert.equal(report.signals.contracts.summary.matches, 1);
+  assert.equal(report.snapshot.intentTerms.includes('payment'), true);
+  assert.equal(report.snapshot.scanRange.totalFiles >= before.length, true);
+  assert.equal(report.snapshot.files.some((file) => file.path === 'src/features/결제/Payment Panel.tsx'), true);
+  assert.equal(report.snapshot.files.every((file) => !path.isAbsolute(file.path) && !file.path.includes('\\')), true);
+  assert.equal(report.snapshot.files.every((file) => /^[a-f0-9]{64}$/.test(file.hash)), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('operator preflight --json works without a path and stays read-only', async () => {
+  const target = await tempRepo('operator preflight no path-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await adaptPlaybook(target);
+  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nSmoke test evidence gate.\n');
+  await writeFile(path.join(target, 'README.md'), '# Smoke test\n\nEvidence gate smoke test.\n');
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli([
+    'operator',
+    'preflight',
+    '.',
+    '--intent',
+    'evidence gate smoke test',
+    '--max-results',
+    '5',
+    '--json'
+  ], io), 0);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal('path' in report, false);
+  assert.equal(report.candidates.some((item) => item.path === '.ai-playbook/CURRENT.md'), true);
+  assert.equal(report.snapshot.intentTerms.includes('evidence'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('operator delta --json compares a preflight snapshot without writing files', async () => {
+  const target = await tempRepo('operator delta-공백-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await adaptPlaybook(target);
+  await mkdir(path.join(target, 'src', 'features', '검색'), { recursive: true });
+  await mkdir(path.join(target, 'docs'), { recursive: true });
+  await writeFile(path.join(target, 'src', 'features', '검색', 'SearchPanel.tsx'), 'export const searchPanel = "search intent";\n');
+  await writeFile(path.join(target, 'src', 'features', '검색', 'old.ts'), 'export const oldSearch = true;\n');
+
+  const preflight = capture(target);
+  assert.equal(await runCli([
+    'operator',
+    'preflight',
+    '.',
+    '--intent',
+    'search panel',
+    '--path',
+    'src/features/검색/SearchPanel.tsx',
+    '--json'
+  ], preflight), 0);
+  const beforePath = path.join(target, 'preflight snapshot.json');
+  await writeFile(beforePath, preflight.out());
+
+  await writeFile(path.join(target, 'src', 'features', '검색', 'SearchPanel.tsx'), 'export const searchPanel = "search intent changed";\n');
+  await rm(path.join(target, 'src', 'features', '검색', 'old.ts'));
+  await writeFile(path.join(target, 'docs', 'unrelated.md'), '# Out of scope\n');
+  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nPlaybook changed after preflight.\n');
+  const beforeDelta = await listRelativeFiles(target);
+
+  const delta = capture(target);
+  assert.equal(await runCli([
+    'operator',
+    'delta',
+    '.',
+    '--before',
+    beforePath,
+    '--json'
+  ], delta), 0);
+  const report = JSON.parse(delta.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.target, target);
+  assert.equal(report.before.intent, 'search panel');
+  assert.equal(report.summary.modified >= 1, true);
+  assert.equal(report.summary.deleted >= 1, true);
+  assert.equal(report.summary.added >= 1, true);
+  assert.equal(report.changes.modified.some((item) => item.path === 'src/features/검색/SearchPanel.tsx'), true);
+  assert.equal(report.changes.deleted.some((item) => item.path === 'src/features/검색/old.ts'), true);
+  assert.equal(report.changes.added.some((item) => item.path === 'docs/unrelated.md'), true);
+  assert.equal(report.warnings.some((warning) => warning.id === 'operator.delta.intent-outside-change'), true);
+  assert.equal(report.warnings.some((warning) => warning.id === 'operator.delta.playbook-change'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeDelta);
+  await cleanup(target);
+});
+
+test('operator delta rejects malformed and unsafe preflight snapshots without writing files', async () => {
+  const target = await tempRepo('operator delta unsafe-한글-');
+  await writeFile(path.join(target, 'README.md'), '# fixture\n');
+
+  const malformedPath = path.join(target, 'malformed.json');
+  await writeFile(malformedPath, '{not-json');
+  const malformedBefore = await listRelativeFiles(target);
+  const malformed = capture(target);
+  assert.equal(await runCli(['operator', 'delta', '.', '--before', malformedPath, '--json'], malformed), 1);
+  const malformedReport = JSON.parse(malformed.out());
+  assert.equal(malformedReport.conflicts.some((conflict) => conflict.id === 'operator.delta.snapshot-malformed'), true);
+  assert.deepEqual(await listRelativeFiles(target), malformedBefore);
+
+  const unsafePath = path.join(target, 'unsafe.json');
+  await writeFile(unsafePath, JSON.stringify({
+    schemaVersion: '1',
+    target,
+    intent: 'unsafe',
+    snapshot: {
+      files: [
+        { path: '../outside.txt', hash: '0'.repeat(64), size: 1, mtimeMs: 1 },
+        { path: path.join(target, 'README.md'), hash: '0'.repeat(64), size: 1, mtimeMs: 1 }
+      ]
+    }
+  }));
+  const unsafeBefore = await listRelativeFiles(target);
+  const unsafe = capture(target);
+  assert.equal(await runCli(['operator', 'delta', '.', '--before', unsafePath, '--json'], unsafe), 1);
+  const unsafeReport = JSON.parse(unsafe.out());
+  assert.equal(unsafeReport.conflicts.some((conflict) => conflict.id === 'operator.delta.snapshot-path-invalid'), true);
+  assert.deepEqual(await listRelativeFiles(target), unsafeBefore);
+  await cleanup(target);
+});
+
 test('operator context --json previews path-scoped playbook context without writing files', async () => {
   const target = await tempRepo('operator context-공백-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
@@ -717,6 +921,56 @@ test('operator audit --json reports playbook drift without writing files', async
   await cleanup(target);
 });
 
+test('operator audit --json includes memory drift for context doc-map and contract paths', async () => {
+  const target = await tempRepo('operator audit memory drift-공백-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await adaptPlaybook(target);
+  await mkdir(path.join(target, '.ai-playbook', 'context'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'maps'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'contracts', 'active'), { recursive: true });
+  await writeFile(path.join(target, '.ai-playbook', 'context', 'orphan.md'), [
+    '---',
+    'globs:',
+    '  - src/missing/**/*.ts',
+    '---',
+    '# Orphan context'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'maps', 'doc-map.md'), [
+    '# Documentation Map',
+    '',
+    '- [Missing runbook](../runbooks/missing.md)'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'contracts', 'active', 'missing-path.md'), [
+    '---',
+    'id: missing-path',
+    'status: active',
+    'appliesTo:',
+    '  - src/contracts/missing.ts',
+    '---',
+    '# Missing Path Contract',
+    '',
+    '## Required evidence',
+    '',
+    '- Confirm missing path.'
+  ].join('\n'));
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli(['operator', 'audit', '.', '--json'], io), 1);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, false);
+  assert.equal(report.sections.memoryDrift.contextOrphans, 1);
+  assert.equal(report.sections.memoryDrift.missingDocMapTargets, 1);
+  assert.equal(report.sections.memoryDrift.contractAppliesToMissing, 1);
+  assert.equal(report.findings.some((finding) => finding.id === 'operator.audit.orphan-context'), true);
+  assert.equal(report.findings.some((finding) => finding.id === 'operator.audit.doc-map-target-missing'), true);
+  assert.equal(report.findings.some((finding) => finding.id === 'operator.audit.contract-applies-to-missing'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
 test('operator gc previews and removes only obsolete unmodified managed files', async () => {
   const target = await tempRepo('operator gc-공백-한글-');
   await mkdir(path.join(target, '.ai-playbook', 'guides'), { recursive: true });
@@ -827,6 +1081,51 @@ test('operator gc rejects non-portable manifest paths before removal', async () 
   await cleanup(target);
 });
 
+test('qa image-diff --json compares PNG images without writing files', async () => {
+  const target = await tempRepo('qa image diff-공백-한글-');
+  const reference = path.join(target, 'reference.png');
+  const same = path.join(target, 'same.png');
+  const different = path.join(target, 'different.png');
+  const mismatch = path.join(target, 'mismatch.png');
+  await writePng(reference, 2, 2, [
+    [255, 0, 0, 255], [255, 0, 0, 255],
+    [255, 0, 0, 255], [255, 0, 0, 255]
+  ]);
+  await writePng(same, 2, 2, [
+    [255, 0, 0, 255], [255, 0, 0, 255],
+    [255, 0, 0, 255], [255, 0, 0, 255]
+  ]);
+  await writePng(different, 2, 2, [
+    [255, 0, 0, 255], [0, 0, 255, 255],
+    [255, 0, 0, 255], [0, 0, 255, 255]
+  ]);
+  await writePng(mismatch, 1, 1, [[255, 0, 0, 255]]);
+  const before = await listRelativeFiles(target);
+
+  const identical = capture(target);
+  assert.equal(await runCli(['qa', 'image-diff', reference, same, '--json'], identical), 0);
+  const identicalReport = JSON.parse(identical.out());
+  assert.equal(identicalReport.schemaVersion, '1');
+  assert.equal(identicalReport.ok, true);
+  assert.equal(identicalReport.summary.changedPixels, 0);
+  assert.equal(identicalReport.summary.diffRatio, 0);
+  assert.equal(identicalReport.summary.similarityScore, 1);
+
+  const changed = capture(target);
+  assert.equal(await runCli(['qa', 'image-diff', reference, different, '--threshold', '0', '--json'], changed), 1);
+  const changedReport = JSON.parse(changed.out());
+  assert.equal(changedReport.ok, false);
+  assert.equal(changedReport.summary.changedPixels, 2);
+  assert.equal(changedReport.hotspots.length > 0, true);
+
+  const mismatched = capture(target);
+  assert.equal(await runCli(['qa', 'image-diff', reference, mismatch, '--json'], mismatched), 1);
+  const mismatchedReport = JSON.parse(mismatched.out());
+  assert.equal(mismatchedReport.conflicts.some((conflict) => conflict.id === 'qa.image-diff.dimension-mismatch'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
 function capture(cwd) {
   let stdout = '';
   let stderr = '';
@@ -842,6 +1141,58 @@ function capture(cwd) {
 
 function hashText(text) {
   return crypto.createHash('sha256').update(text).digest('hex');
+}
+
+async function writePng(file, width, height, pixels) {
+  const raw = Buffer.alloc((width * 4 + 1) * height);
+  let offset = 0;
+  let pixelIndex = 0;
+  for (let y = 0; y < height; y += 1) {
+    raw[offset] = 0;
+    offset += 1;
+    for (let x = 0; x < width; x += 1) {
+      const pixel = pixels[pixelIndex] ?? [0, 0, 0, 255];
+      pixelIndex += 1;
+      raw[offset] = pixel[0];
+      raw[offset + 1] = pixel[1];
+      raw[offset + 2] = pixel[2];
+      raw[offset + 3] = pixel[3];
+      offset += 4;
+    }
+  }
+  const chunks = [
+    pngChunk('IHDR', Buffer.concat([
+      uint32(width),
+      uint32(height),
+      Buffer.from([8, 6, 0, 0, 0])
+    ])),
+    pngChunk('IDAT', zlib.deflateSync(raw)),
+    pngChunk('IEND', Buffer.alloc(0))
+  ];
+  await writeFile(file, Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), ...chunks]));
+}
+
+function pngChunk(type, data) {
+  const typeBuffer = Buffer.from(type, 'ascii');
+  const crcInput = Buffer.concat([typeBuffer, data]);
+  return Buffer.concat([uint32(data.length), typeBuffer, data, uint32(crc32(crcInput))]);
+}
+
+function uint32(value) {
+  const buffer = Buffer.alloc(4);
+  buffer.writeUInt32BE(value >>> 0);
+  return buffer;
+}
+
+function crc32(buffer) {
+  let crc = 0xffffffff;
+  for (const byte of buffer) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0;
 }
 
 async function tempRepo(prefix) {

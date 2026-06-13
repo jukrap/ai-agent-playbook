@@ -2,7 +2,8 @@ import { readdir, readFile, rm, rmdir, stat, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs';
 import crypto from 'node:crypto';
 import path from 'node:path';
-import { INSTALL_MANIFEST_FILE, checkGuides, doctorProject, SCHEMA_VERSION, validateManagedManifest } from './harness.mjs';
+import { PNG } from 'pngjs';
+import { INSTALL_MANIFEST_FILE, checkContracts, checkGuides, doctorProject, SCHEMA_VERSION, validateManagedManifest } from './harness.mjs';
 
 const RULE_DIRECTORY_SOURCES = [
   ['.ai-playbook/rules', '.ai-playbook/rules'],
@@ -225,6 +226,180 @@ export async function searchOperator(options) {
   };
 }
 
+export async function preflightOperator(options) {
+  const {
+    target,
+    intent,
+    filePath,
+    maxResults = 20
+  } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  if (!intent || !intent.trim()) throw new Error('Missing --intent.');
+  if (!Number.isInteger(maxResults) || maxResults < 1 || maxResults > 100) {
+    throw new Error('Invalid --max-results; expected an integer from 1 to 100.');
+  }
+
+  const resolvedTarget = path.resolve(target);
+  const relativePath = filePath === undefined ? undefined : normalizeTargetRelativePath(resolvedTarget, filePath);
+  const [search, map, rules, context, contracts, snapshot] = await Promise.all([
+    searchOperator({ target: resolvedTarget, query: intent, filePath: relativePath, maxResults }),
+    mapOperator({ target: resolvedTarget }),
+    checkRules({ target: resolvedTarget, filePath: relativePath }),
+    relativePath === undefined ? preflightContextSummary({ target: resolvedTarget }) : previewOperatorContext({ target: resolvedTarget, filePath: relativePath }),
+    checkContracts({ target: resolvedTarget, filePath: relativePath }),
+    buildPreflightSnapshot({ target: resolvedTarget, intent, relativePath })
+  ]);
+  const candidates = buildPreflightCandidates({
+    searchResults: search.results,
+    relativePath,
+    rules,
+    context,
+    contracts,
+    maxResults
+  });
+  const warnings = [
+    ...(search.warnings ?? []),
+    ...(rules.warnings ?? []),
+    ...(context.warnings ?? []),
+    ...(contracts.warnings ?? [])
+  ];
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    intent,
+    ...(relativePath === undefined ? {} : { path: relativePath }),
+    summary: {
+      candidates: candidates.length,
+      snapshotFiles: snapshot.files.length,
+      warnings: warnings.length,
+      conflicts: 0
+    },
+    candidates,
+    signals: {
+      search: {
+        summary: search.summary
+      },
+      map: {
+        summary: map.summary,
+        stack: map.stack
+      },
+      rules: {
+        summary: rules.summary,
+        matches: rules.rules.filter((rule) => rule.applies),
+        warnings: rules.warnings
+      },
+      context: {
+        summary: context.summary,
+        matches: context.contexts.filter((item) => item.applies),
+        docMap: context.docMap,
+        warnings: context.warnings
+      },
+      contracts: {
+        summary: contracts.summary,
+        contracts: contracts.contracts,
+        warnings: contracts.warnings
+      }
+    },
+    snapshot,
+    warnings,
+    conflicts: []
+  };
+}
+
+export async function deltaOperator(options) {
+  const { target, beforeFile } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const before = await readPreflightFile(beforeFile);
+  if (!before.ok) {
+    return operatorDeltaError({ target: resolvedTarget, beforeFile, conflict: before.conflict });
+  }
+  const validation = validatePreflightSnapshot(before.value);
+  if (!validation.ok) {
+    return operatorDeltaError({ target: resolvedTarget, beforeFile, conflict: validation.conflict });
+  }
+
+  const currentSnapshot = await buildPreflightSnapshot({
+    target: resolvedTarget,
+    intent: before.value.intent ?? '',
+    relativePath: before.value.path
+  });
+  const beforeFiles = new Map(before.value.snapshot.files.map((file) => [file.path, file]));
+  const currentFiles = new Map(currentSnapshot.files.map((file) => [file.path, file]));
+  const added = [];
+  const deleted = [];
+  const modified = [];
+
+  for (const [filePath, current] of currentFiles) {
+    const previous = beforeFiles.get(filePath);
+    if (!previous) {
+      added.push(current);
+    } else if (previous.hash !== current.hash) {
+      modified.push({
+        path: filePath,
+        beforeHash: previous.hash,
+        afterHash: current.hash,
+        beforeSize: previous.size,
+        afterSize: current.size
+      });
+    }
+  }
+  for (const [filePath, previous] of beforeFiles) {
+    if (!currentFiles.has(filePath)) {
+      deleted.push(previous);
+    }
+  }
+
+  const changes = {
+    added: added.map(deltaFileSummary),
+    deleted: deleted.map(deltaFileSummary),
+    modified: modified.map(deltaFileSummary)
+  };
+  const allChanges = [...changes.added, ...changes.deleted, ...changes.modified];
+  const intentTerms = before.value.snapshot.intentTerms ?? researchTerms(before.value.intent ?? '');
+  const scopedPath = before.value.path;
+  const warnings = [];
+  const outside = allChanges.filter((item) => !isIntentScopedChange(item.path, intentTerms, scopedPath));
+  if (outside.length > 0) {
+    warnings.push({
+      id: 'operator.delta.intent-outside-change',
+      message: `${outside.length} changed file(s) do not appear related to the preflight intent or path.`,
+      paths: outside.slice(0, 20).map((item) => item.path)
+    });
+  }
+  const playbookChanges = allChanges.filter((item) => isPlaybookPath(item.path));
+  if (playbookChanges.length > 0) {
+    warnings.push({
+      id: 'operator.delta.playbook-change',
+      message: `${playbookChanges.length} playbook, rule, context, or contract file(s) changed after preflight.`,
+      paths: playbookChanges.slice(0, 20).map((item) => item.path)
+    });
+  }
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    before: {
+      file: beforeFile,
+      intent: before.value.intent ?? '',
+      path: before.value.path,
+      snapshotFiles: before.value.snapshot.files.length
+    },
+    summary: {
+      added: changes.added.length,
+      deleted: changes.deleted.length,
+      modified: changes.modified.length,
+      warnings: warnings.length,
+      conflicts: 0
+    },
+    changes,
+    warnings,
+    conflicts: []
+  };
+}
+
 export async function researchOperator(options) {
   const {
     target,
@@ -382,6 +557,45 @@ export async function previewOperatorContext(options) {
   };
 }
 
+async function preflightContextSummary(options) {
+  const { target } = options;
+  const warnings = [];
+  const playbook = await findPlaybookRoot(target);
+  if (!playbook) {
+    warnings.push({
+      id: 'operator.context.playbook-missing',
+      message: 'No .ai-playbook/ or legacy ai-playbook/ folder found.',
+      paths: ['.ai-playbook/']
+    });
+  }
+  const coreSources = playbook ? await collectCoreContextSources({ target, playbook }) : [];
+  const docMap = playbook ? await readOperatorDocMap({ target, playbook }) : null;
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target,
+    summary: {
+      coreSources: coreSources.length,
+      contextFiles: 0,
+      matchingContextFiles: coreSources.length,
+      ruleMatches: 0,
+      relatedFiles: 0,
+      docMap: docMap?.exists ? 1 : 0,
+      warnings: warnings.length
+    },
+    coreSources,
+    contexts: [],
+    docMap,
+    rules: {
+      summary: { total: 0, applies: 0, warnings: 0 },
+      rules: [],
+      warnings: []
+    },
+    related: [],
+    warnings
+  };
+}
+
 export async function analyzeOperator(options) {
   const { target, filePath } = options;
   await assertDirectory(target, 'Target repository does not exist');
@@ -509,7 +723,8 @@ export async function auditOperator(options) {
     links: { checked: 0, broken: 0, findings: [] },
     context: { files: 0, orphaned: 0, warnings: 0, findings: [] },
     duplicates: { groups: 0, items: [] },
-    managed: { manifest: playbook ? `${playbook.name}/${INSTALL_MANIFEST_FILE}` : null, status: 'missing-playbook', total: 0, modified: 0, missing: 0 }
+    managed: { manifest: playbook ? `${playbook.name}/${INSTALL_MANIFEST_FILE}` : null, status: 'missing-playbook', total: 0, modified: 0, missing: 0 },
+    memoryDrift: { contextOrphans: 0, missingDocMapTargets: 0, contractAppliesToMissing: 0, findings: [] }
   };
 
   if (playbook) {
@@ -531,6 +746,16 @@ export async function auditOperator(options) {
     sections.context.warnings = contextFindings.warnings;
     sections.context.findings = contextFindings.findings;
     findings.push(...contextFindings.findings);
+
+    const docMapFindings = await auditDocMapTargets({ target: resolvedTarget, playbook });
+    const contractFindings = await auditContractDrift({ target: resolvedTarget });
+    sections.memoryDrift = {
+      contextOrphans: contextFindings.orphaned,
+      missingDocMapTargets: docMapFindings.length,
+      contractAppliesToMissing: contractFindings.length,
+      findings: [...docMapFindings, ...contractFindings]
+    };
+    findings.push(...docMapFindings, ...contractFindings);
 
     const duplicateFindings = await auditDuplicateMarkdown({ target: resolvedTarget, markdownFiles });
     sections.duplicates.groups = duplicateFindings.length;
@@ -822,6 +1047,371 @@ export async function checkTuiCapture(options) {
     wideCharColumns,
     hasAnsi: raw !== withoutAnsi
   };
+}
+
+export async function checkImageDiff(options) {
+  const { reference, actual, threshold = 0 } = options;
+  const parsedThreshold = Number(threshold);
+  if (!Number.isFinite(parsedThreshold) || parsedThreshold < 0 || parsedThreshold > 1) {
+    throw new Error('Invalid --threshold; expected a number from 0 to 1.');
+  }
+  const referencePath = path.resolve(reference);
+  const actualPath = path.resolve(actual);
+  const conflicts = [];
+  const warnings = [];
+  if (!referencePath.toLowerCase().endsWith('.png')) {
+    conflicts.push({
+      id: 'qa.image-diff.unsupported-reference',
+      message: 'Reference image must be a PNG file.',
+      paths: [referencePath]
+    });
+  }
+  if (!actualPath.toLowerCase().endsWith('.png')) {
+    conflicts.push({
+      id: 'qa.image-diff.unsupported-actual',
+      message: 'Actual image must be a PNG file.',
+      paths: [actualPath]
+    });
+  }
+  if (!existsSync(referencePath)) {
+    conflicts.push({
+      id: 'qa.image-diff.reference-missing',
+      message: 'Reference image does not exist.',
+      paths: [referencePath]
+    });
+  }
+  if (!existsSync(actualPath)) {
+    conflicts.push({
+      id: 'qa.image-diff.actual-missing',
+      message: 'Actual image does not exist.',
+      paths: [actualPath]
+    });
+  }
+  if (conflicts.length > 0) {
+    return imageDiffResult({ referencePath, actualPath, threshold: parsedThreshold, summary: emptyImageDiffSummary(), hotspots: [], warnings, conflicts });
+  }
+
+  let referencePng;
+  let actualPng;
+  try {
+    referencePng = PNG.sync.read(await readFile(referencePath));
+    actualPng = PNG.sync.read(await readFile(actualPath));
+  } catch (error) {
+    conflicts.push({
+      id: 'qa.image-diff.png-parse',
+      message: `Failed to parse PNG image: ${error.message}`,
+      paths: [referencePath, actualPath]
+    });
+    return imageDiffResult({ referencePath, actualPath, threshold: parsedThreshold, summary: emptyImageDiffSummary(), hotspots: [], warnings, conflicts });
+  }
+
+  if (referencePng.width !== actualPng.width || referencePng.height !== actualPng.height) {
+    conflicts.push({
+      id: 'qa.image-diff.dimension-mismatch',
+      message: `Image dimensions differ: ${referencePng.width}x${referencePng.height} vs ${actualPng.width}x${actualPng.height}.`,
+      paths: [referencePath, actualPath]
+    });
+    return imageDiffResult({
+      referencePath,
+      actualPath,
+      threshold: parsedThreshold,
+      summary: {
+        width: referencePng.width,
+        height: referencePng.height,
+        actualWidth: actualPng.width,
+        actualHeight: actualPng.height,
+        totalPixels: 0,
+        changedPixels: 0,
+        diffRatio: 1,
+        similarityScore: 0,
+        threshold: parsedThreshold
+      },
+      hotspots: [],
+      warnings,
+      conflicts
+    });
+  }
+
+  const width = referencePng.width;
+  const height = referencePng.height;
+  const totalPixels = width * height;
+  let changedPixels = 0;
+  const changed = new Uint8Array(totalPixels);
+  for (let index = 0; index < totalPixels; index += 1) {
+    const offset = index * 4;
+    const different = referencePng.data[offset] !== actualPng.data[offset] ||
+      referencePng.data[offset + 1] !== actualPng.data[offset + 1] ||
+      referencePng.data[offset + 2] !== actualPng.data[offset + 2] ||
+      referencePng.data[offset + 3] !== actualPng.data[offset + 3];
+    if (different) {
+      changed[index] = 1;
+      changedPixels += 1;
+    }
+  }
+  const diffRatio = totalPixels === 0 ? 0 : changedPixels / totalPixels;
+  const summary = {
+    width,
+    height,
+    totalPixels,
+    changedPixels,
+    diffRatio,
+    similarityScore: 1 - diffRatio,
+    threshold: parsedThreshold
+  };
+  const hotspots = buildImageHotspots({ changed, width, height });
+  return imageDiffResult({ referencePath, actualPath, threshold: parsedThreshold, summary, hotspots, warnings, conflicts });
+}
+
+async function buildPreflightSnapshot(options) {
+  const { target, intent, relativePath } = options;
+  const files = await walkProjectFiles(target, SEARCH_EXCLUDED_DIRS);
+  const snapshotFiles = [];
+  for (const file of files) {
+    const info = await stat(file);
+    snapshotFiles.push({
+      path: toPortablePath(path.relative(target, file)),
+      hash: await hashFile(file),
+      size: info.size,
+      mtimeMs: Math.trunc(info.mtimeMs),
+      category: searchCategory(toPortablePath(path.relative(target, file)))
+    });
+  }
+  snapshotFiles.sort((left, right) => left.path.localeCompare(right.path));
+  return {
+    scanRange: {
+      root: '.',
+      totalFiles: files.length,
+      includedFiles: snapshotFiles.length,
+      excludedDirs: [...SEARCH_EXCLUDED_DIRS].sort()
+    },
+    intentTerms: researchTerms(intent),
+    ...(relativePath === undefined ? {} : { path: relativePath }),
+    files: snapshotFiles
+  };
+}
+
+function buildPreflightCandidates(options) {
+  const { searchResults, relativePath, rules, context, contracts, maxResults } = options;
+  const byPath = new Map();
+  for (const item of searchResults) {
+    byPath.set(item.path, item);
+  }
+  if (relativePath) {
+    addPreflightCandidate(byPath, relativePath, 'explicit path', 100);
+  }
+  for (const rule of rules.rules.filter((rule) => rule.applies)) {
+    addPreflightCandidate(byPath, rule.path, 'matching rule', 80);
+  }
+  for (const item of context.contexts.filter((entry) => entry.applies)) {
+    addPreflightCandidate(byPath, item.path, 'matching context', 70);
+  }
+  for (const item of context.coreSources ?? []) {
+    addPreflightCandidate(byPath, item.path, 'core playbook source', 50);
+  }
+  for (const contract of contracts.contracts) {
+    addPreflightCandidate(byPath, contract.path, 'matching contract', 75);
+  }
+  return [...byPath.values()]
+    .sort((left, right) => right.score - left.score || left.path.localeCompare(right.path))
+    .slice(0, maxResults);
+}
+
+function addPreflightCandidate(byPath, candidatePath, reason, score) {
+  if (!candidatePath || byPath.has(candidatePath)) return;
+  byPath.set(candidatePath, {
+    path: candidatePath,
+    category: searchCategory(candidatePath),
+    score,
+    matches: 0,
+    snippets: [],
+    reason
+  });
+}
+
+async function readPreflightFile(beforeFile) {
+  if (!beforeFile || beforeFile === true) {
+    return {
+      ok: false,
+      conflict: {
+        id: 'operator.delta.before-missing',
+        message: 'Missing --before preflight JSON path.',
+        paths: []
+      }
+    };
+  }
+  const resolved = path.resolve(beforeFile);
+  if (!existsSync(resolved)) {
+    return {
+      ok: false,
+      conflict: {
+        id: 'operator.delta.before-file-missing',
+        message: 'Preflight JSON file does not exist.',
+        paths: [beforeFile]
+      }
+    };
+  }
+  try {
+    return { ok: true, value: JSON.parse(await readFile(resolved, 'utf8')) };
+  } catch (error) {
+    return {
+      ok: false,
+      conflict: {
+        id: 'operator.delta.snapshot-malformed',
+        message: `Preflight JSON is malformed: ${error.message}`,
+        paths: [beforeFile]
+      }
+    };
+  }
+}
+
+function validatePreflightSnapshot(value) {
+  if (!isRecord(value) || !isRecord(value.snapshot) || !Array.isArray(value.snapshot.files)) {
+    return {
+      ok: false,
+      conflict: {
+        id: 'operator.delta.snapshot-malformed',
+        message: 'Preflight JSON does not contain snapshot.files.',
+        paths: []
+      }
+    };
+  }
+  for (const file of value.snapshot.files) {
+    if (!isRecord(file) || typeof file.path !== 'string' || !isPortableSnapshotPath(file.path)) {
+      return {
+        ok: false,
+        conflict: {
+          id: 'operator.delta.snapshot-path-invalid',
+          message: 'Preflight snapshot contains an unsafe or non-portable path.',
+          paths: [isRecord(file) && typeof file.path === 'string' ? file.path : '']
+        }
+      };
+    }
+    if (typeof file.hash !== 'string' || !/^[a-f0-9]{64}$/i.test(file.hash)) {
+      return {
+        ok: false,
+        conflict: {
+          id: 'operator.delta.snapshot-malformed',
+          message: `Preflight snapshot entry for ${file.path} has an invalid hash.`,
+          paths: [file.path]
+        }
+      };
+    }
+  }
+  return { ok: true };
+}
+
+function isPortableSnapshotPath(value) {
+  if (!value || path.isAbsolute(value) || value.includes('\\')) return false;
+  const normalized = normalizePortablePath(value);
+  if (normalized !== value) return false;
+  return !normalized.split('/').includes('..');
+}
+
+function operatorDeltaError({ target, beforeFile, conflict }) {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: false,
+    target,
+    before: {
+      file: beforeFile
+    },
+    summary: {
+      added: 0,
+      deleted: 0,
+      modified: 0,
+      warnings: 0,
+      conflicts: 1
+    },
+    changes: {
+      added: [],
+      deleted: [],
+      modified: []
+    },
+    warnings: [],
+    conflicts: [conflict]
+  };
+}
+
+function deltaFileSummary(file) {
+  return {
+    path: file.path,
+    category: searchCategory(file.path),
+    ...(file.hash ? { hash: file.hash } : {}),
+    ...(file.beforeHash ? { beforeHash: file.beforeHash } : {}),
+    ...(file.afterHash ? { afterHash: file.afterHash } : {}),
+    ...(typeof file.size === 'number' ? { size: file.size } : {}),
+    ...(typeof file.beforeSize === 'number' ? { beforeSize: file.beforeSize } : {}),
+    ...(typeof file.afterSize === 'number' ? { afterSize: file.afterSize } : {})
+  };
+}
+
+function isIntentScopedChange(filePath, intentTerms, scopedPath) {
+  if (scopedPath && (filePath === scopedPath || filePath.startsWith(`${path.posix.dirname(scopedPath)}/`))) return true;
+  const lower = filePath.toLowerCase();
+  return intentTerms.some((term) => lower.includes(term.toLowerCase()));
+}
+
+function isPlaybookPath(filePath) {
+  return filePath.startsWith('.ai-playbook/') ||
+    filePath.startsWith('ai-playbook/') ||
+    filePath.startsWith('.github/instructions/') ||
+    filePath.startsWith('.cursor/rules/') ||
+    filePath.startsWith('.claude/rules/');
+}
+
+function imageDiffResult({ referencePath, actualPath, threshold, summary, hotspots, warnings, conflicts }) {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: conflicts.length === 0 && summary.diffRatio <= threshold,
+    reference: referencePath,
+    actual: actualPath,
+    summary,
+    hotspots,
+    warnings,
+    conflicts
+  };
+}
+
+function emptyImageDiffSummary() {
+  return {
+    width: 0,
+    height: 0,
+    totalPixels: 0,
+    changedPixels: 0,
+    diffRatio: 0,
+    similarityScore: 1,
+    threshold: 0
+  };
+}
+
+function buildImageHotspots({ changed, width, height }) {
+  const grid = Math.min(4, Math.max(1, width, height));
+  const cellWidth = Math.ceil(width / grid);
+  const cellHeight = Math.ceil(height / grid);
+  const hotspots = [];
+  for (let y = 0; y < height; y += cellHeight) {
+    for (let x = 0; x < width; x += cellWidth) {
+      let changedPixels = 0;
+      let totalPixels = 0;
+      for (let yy = y; yy < Math.min(height, y + cellHeight); yy += 1) {
+        for (let xx = x; xx < Math.min(width, x + cellWidth); xx += 1) {
+          totalPixels += 1;
+          changedPixels += changed[yy * width + xx];
+        }
+      }
+      if (changedPixels === 0) continue;
+      hotspots.push({
+        x,
+        y,
+        width: Math.min(width - x, cellWidth),
+        height: Math.min(height - y, cellHeight),
+        changedPixels,
+        diffRatio: changedPixels / totalPixels
+      });
+    }
+  }
+  hotspots.sort((left, right) => right.changedPixels - left.changedPixels || left.y - right.y || left.x - right.x);
+  return hotspots.slice(0, 10);
 }
 
 async function walkSearchFiles(root) {
@@ -1574,6 +2164,41 @@ async function auditContextGlobs(options) {
     ));
   }
   return { files: files.length, orphaned, warnings, findings };
+}
+
+async function auditDocMapTargets(options) {
+  const { target, playbook } = options;
+  const docMap = path.join(playbook.absolutePath, 'maps', 'doc-map.md');
+  if (!existsSync(docMap)) return [];
+  const text = await readFile(docMap, 'utf8');
+  const relativeSource = toPortablePath(path.relative(target, docMap));
+  const findings = [];
+  for (const link of markdownLinks(text)) {
+    const resolved = resolveMarkdownLink({ file: docMap, target, href: link.href });
+    if (!resolved || existsSync(resolved.absolutePath)) continue;
+    findings.push(operatorFinding(
+      'warn',
+      'operator.audit.doc-map-target-missing',
+      'memoryDrift',
+      `${relativeSource} points at missing documentation ${resolved.relativePath}.`,
+      [relativeSource, resolved.relativePath]
+    ));
+  }
+  return findings;
+}
+
+async function auditContractDrift(options) {
+  const { target } = options;
+  const report = await checkContracts({ target });
+  return report.warnings
+    .filter((warning) => warning.id === 'contracts.applies-to-missing')
+    .map((warning) => operatorFinding(
+      'warn',
+      'operator.audit.contract-applies-to-missing',
+      'memoryDrift',
+      warning.message,
+      warning.paths
+    ));
 }
 
 async function auditDuplicateMarkdown(options) {

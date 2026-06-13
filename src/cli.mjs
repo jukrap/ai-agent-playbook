@@ -1,8 +1,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkAdapterReadiness, renderAdapterConfig } from './adapter-readiness.mjs';
-import { analyzeOperator, auditOperator, checkDiagnostics, checkOperator, checkRules, checkTuiCapture, gcOperator, mapOperator, previewOperatorContext, researchOperator, searchOperator } from './operator-diagnostics.mjs';
-import { runSkillsLifecycle } from './skills-lifecycle.mjs';
+import { analyzeOperator, auditOperator, checkDiagnostics, checkImageDiff, checkOperator, checkRules, checkTuiCapture, deltaOperator, gcOperator, mapOperator, preflightOperator, previewOperatorContext, researchOperator, searchOperator } from './operator-diagnostics.mjs';
+import { lintSkills, runSkillsLifecycle } from './skills-lifecycle.mjs';
 import {
   buildProjectContext,
   buildDoctorReminderSignal,
@@ -25,6 +25,7 @@ import {
   pruneManagedManifest,
   recordRun,
   runStatus,
+  snapshotContracts,
   startRun,
   syncGuides,
   uninstallManagedManifest,
@@ -288,6 +289,31 @@ export async function runCli(argv, io = {}) {
       return result.ok ? 0 : 1;
     }
 
+    if (command === 'contracts' && subcommand === 'snapshot') {
+      const result = await snapshotContracts({
+        target: resolveTarget(cwd, targetArg),
+        contractId: typeof parsed.flags.contract === 'string' ? parsed.flags.contract : undefined,
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        for (const operation of result.operations) {
+          write(stdout, `[PLAN] ${operation.message}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+        if (!parsed.flags.apply) {
+          write(stdout, 'Re-run with --apply to write the contract hash snapshot.\n');
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
     if (command === 'contracts' && subcommand === 'init') {
       const result = await initContracts({
         target: resolveTarget(cwd, targetArg),
@@ -322,6 +348,25 @@ export async function runCli(argv, io = {}) {
         }
         if (!parsed.flags.apply && result.operations.length > 0) {
           write(stdout, 'Re-run with --apply to perform this migration.\n');
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'skills' && subcommand === 'lint') {
+      const result = await lintSkills({ repoRoot: root });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Skills lint: ${result.ok ? 'ok' : 'needs attention'}\n`);
+        for (const skill of result.skills) {
+          write(stdout, `[${skill.status.toUpperCase()}] ${skill.path}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -489,6 +534,44 @@ export async function runCli(argv, io = {}) {
         }
       }
       return 0;
+    }
+
+    if (command === 'operator' && subcommand === 'preflight') {
+      const result = await preflightOperator({
+        target: resolveTarget(cwd, targetArg),
+        intent: parsed.flags.intent,
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        maxResults: parseMaxResults(parsed.flags['max-results'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Operator preflight: ${result.summary.candidates} candidate(s), ${result.summary.snapshotFiles} snapshot file(s)\n`);
+        for (const item of result.candidates.slice(0, 10)) {
+          const first = item.snippets[0];
+          write(stdout, `[${item.category}] ${item.path}${first ? `:${first.line} ${first.text}` : ''}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'operator' && subcommand === 'delta') {
+      const result = await deltaOperator({
+        target: resolveTarget(cwd, targetArg),
+        beforeFile: typeof parsed.flags.before === 'string' ? parsed.flags.before : undefined
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Operator delta: ${result.summary.added} added, ${result.summary.modified} modified, ${result.summary.deleted} deleted\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
     }
 
     if (command === 'operator' && subcommand === 'research') {
@@ -665,6 +748,27 @@ export async function runCli(argv, io = {}) {
       return result.ok ? 0 : 1;
     }
 
+    if (command === 'qa' && subcommand === 'image-diff') {
+      const actualArg = parsed.positionals[3];
+      const result = await checkImageDiff({
+        reference: resolveTarget(cwd, targetArg),
+        actual: resolveTarget(cwd, actualArg),
+        threshold: parseThreshold(parsed.flags.threshold)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Image diff: ${result.summary.changedPixels}/${result.summary.totalPixels} changed pixel(s)\n`);
+        for (const hotspot of result.hotspots) {
+          write(stdout, `[HOTSPOT] x=${hotspot.x} y=${hotspot.y} changed=${hotspot.changedPixels}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
     if (command === 'adapter' && subcommand === 'check') {
       const result = await checkAdapterReadiness({
         repoRoot: root,
@@ -781,6 +885,10 @@ function needsValue(key) {
     'path',
     'cols',
     'query',
+    'intent',
+    'before',
+    'contract',
+    'threshold',
     'max-results',
     'codex-root',
     'agents-root',
@@ -833,6 +941,15 @@ function parseColumns(value) {
   return parsed;
 }
 
+function parseThreshold(value) {
+  if (value === undefined || value === false) return 0;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > 1) {
+    throw new Error('Invalid --threshold; expected a number from 0 to 1.');
+  }
+  return parsed;
+}
+
 function parseMaxResults(value, defaultValue = 20) {
   if (value === undefined || value === false) return defaultValue;
   const parsed = Number(value);
@@ -852,6 +969,7 @@ Usage:
   ai-playbook guides sync <target> [--dry-run] [--force]
   ai-playbook guides sync <target> --check [--diff] [--json]
   ai-playbook skills check [--json] [--codex-root <path>] [--agents-root <path>]
+  ai-playbook skills lint [--json]
   ai-playbook skills install [--dry-run] [--json] [--force-managed] [--force-unmanaged] [--codex-root <path>] [--agents-root <path>]
   ai-playbook skills update [--dry-run] [--json] [--force-managed] [--force-unmanaged] [--codex-root <path>] [--agents-root <path>]
   ai-playbook skills uninstall [--dry-run] [--json] [--force-managed] [--codex-root <path>] [--agents-root <path>]
@@ -871,9 +989,12 @@ Usage:
   ai-playbook run summarize <target> --run-id <id> [--dry-run] [--force] [--json]
   ai-playbook contracts list <target> [--json]
   ai-playbook contracts check <target> [--path <file>] [--json]
+  ai-playbook contracts snapshot <target> [--contract <id>] [--apply] [--json]
   ai-playbook contracts init <target> [--dry-run] [--json]
   ai-playbook operator check <target> [--path <file>] [--diff] [--json]
   ai-playbook operator search <target> --query <text> [--path <file>] [--max-results N] [--json]
+  ai-playbook operator preflight <target> --intent <text> [--path <file>] [--max-results N] [--json]
+  ai-playbook operator delta <target> --before <preflight-json> [--json]
   ai-playbook operator research <target> --query <text> [--path <file>] [--max-results N] [--json]
   ai-playbook operator context <target> --path <file> [--json]
   ai-playbook operator analyze <target> [--path <file>] [--json]
@@ -883,6 +1004,7 @@ Usage:
   ai-playbook rules check <target> [--path <file>] [--json]
   ai-playbook diagnostics check <target> [--json]
   ai-playbook qa tui-check <capture-file> [--cols N] [--json]
+  ai-playbook qa image-diff <reference.png> <actual.png> [--threshold N] [--json]
   ai-playbook adapter config <target> --adapter codex|claude-code [--json]
   ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]
   ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]

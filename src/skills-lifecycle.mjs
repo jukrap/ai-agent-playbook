@@ -89,6 +89,150 @@ export async function runSkillsLifecycle(options) {
   }
 }
 
+export async function lintSkills(options) {
+  const { repoRoot } = options;
+  const resolvedRepoRoot = path.resolve(repoRoot);
+  const sourceRoot = path.join(resolvedRepoRoot, 'skills');
+  const warnings = [];
+  const conflicts = [];
+  const skills = [];
+  const skillFiles = [];
+  await collectSkillFiles(sourceRoot, skillFiles);
+  for (const skillFile of skillFiles.sort()) {
+    const skill = await lintSkillFile({ sourceRoot, skillFile });
+    skills.push(skill);
+    warnings.push(...skill.warnings);
+    conflicts.push(...skill.conflicts);
+  }
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: conflicts.length === 0,
+    command: 'skills.lint',
+    summary: {
+      skills: skills.length,
+      pass: skills.filter((skill) => skill.status === 'pass').length,
+      warn: skills.filter((skill) => skill.status === 'warn').length,
+      conflict: skills.filter((skill) => skill.status === 'conflict').length,
+      warnings: warnings.length,
+      conflicts: conflicts.length
+    },
+    skills: skills.map((skill) => ({
+      name: skill.name,
+      path: skill.path,
+      status: skill.status,
+      warnings: skill.warnings.length,
+      conflicts: skill.conflicts.length
+    })),
+    warnings,
+    conflicts
+  };
+}
+
+async function collectSkillFiles(sourceRoot, skillFiles) {
+  if (!existsSync(sourceRoot)) return;
+  const entries = await readdir(sourceRoot, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(sourceRoot, entry.name);
+    if (entry.isDirectory()) {
+      await collectSkillFiles(fullPath, skillFiles);
+    } else if (entry.isFile() && entry.name === 'SKILL.md') {
+      skillFiles.push(fullPath);
+    }
+  }
+}
+
+async function lintSkillFile(options) {
+  const { sourceRoot, skillFile } = options;
+  const skillDir = path.dirname(skillFile);
+  const relativePath = toPortablePath(path.relative(sourceRoot, skillFile));
+  const text = await readFile(skillFile, 'utf8');
+  const parsed = parseSkillMarkdown(text);
+  const name = String(parsed.frontmatter.name ?? path.basename(skillDir)).trim();
+  const description = String(parsed.frontmatter.description ?? '').trim();
+  const warnings = [];
+  const conflicts = [];
+  const keys = Object.keys(parsed.frontmatter).sort();
+  const extraKeys = keys.filter((key) => !['description', 'name'].includes(key));
+  if (!parsed.hasFrontmatter || !parsed.frontmatter.name || !parsed.frontmatter.description) {
+    conflicts.push(lintIssue('skills.lint.frontmatter-required', `${relativePath} must define name and description frontmatter.`, relativePath));
+  }
+  if (extraKeys.length > 0) {
+    conflicts.push(lintIssue('skills.lint.frontmatter-keys', `${relativePath} has unsupported frontmatter keys: ${extraKeys.join(', ')}.`, relativePath));
+  }
+  if (!description.startsWith('Use when')) {
+    warnings.push(lintIssue('skills.lint.description-trigger', `${relativePath} description should start with "Use when..." and describe trigger conditions.`, relativePath));
+  }
+  if (description.length > 100) {
+    warnings.push(lintIssue('skills.lint.description-length', `${relativePath} description is long; keep trigger text concise.`, relativePath));
+  }
+  if (/\b(this skill helps|workflow|follow(?:ing)? steps?|use this skill to)\b/i.test(description)) {
+    warnings.push(lintIssue('skills.lint.description-workflow', `${relativePath} description looks workflow-oriented rather than trigger-focused.`, relativePath));
+  }
+  for (const link of markdownLinks(parsed.body)) {
+    const resolved = resolveSkillLink(skillDir, link);
+    if (!resolved) continue;
+    if (!existsSync(resolved.absolutePath)) {
+      warnings.push(lintIssue('skills.lint.reference-missing', `${relativePath} links to missing ${resolved.relativePath}.`, [relativePath, resolved.relativePath]));
+    }
+  }
+  return {
+    name,
+    path: relativePath,
+    status: conflicts.length > 0 ? 'conflict' : warnings.length > 0 ? 'warn' : 'pass',
+    warnings,
+    conflicts
+  };
+}
+
+function parseSkillMarkdown(text) {
+  if (!text.startsWith('---\n') && !text.startsWith('---\r\n')) {
+    return { hasFrontmatter: false, frontmatter: {}, body: text };
+  }
+  const normalized = text.replace(/\r\n/g, '\n');
+  const end = normalized.indexOf('\n---\n', 4);
+  if (end === -1) return { hasFrontmatter: false, frontmatter: {}, body: text };
+  const frontmatterText = normalized.slice(4, end);
+  const frontmatter = {};
+  for (const line of frontmatterText.split('\n')) {
+    const match = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+    if (!match) continue;
+    frontmatter[match[1]] = match[2].trim().replace(/^["']|["']$/g, '');
+  }
+  return {
+    hasFrontmatter: true,
+    frontmatter,
+    body: normalized.slice(end + '\n---\n'.length)
+  };
+}
+
+function markdownLinks(text) {
+  const links = [];
+  const pattern = /!?\[[^\]]*]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)/g;
+  for (const match of text.matchAll(pattern)) {
+    links.push(match[1]);
+  }
+  return links;
+}
+
+function resolveSkillLink(skillDir, href) {
+  const trimmed = href.trim();
+  if (!trimmed || trimmed.startsWith('#') || /^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return null;
+  const withoutFragment = trimmed.split('#')[0];
+  if (!withoutFragment) return null;
+  const absolutePath = path.resolve(skillDir, withoutFragment);
+  const relativePath = toPortablePath(path.relative(skillDir, absolutePath));
+  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) return null;
+  return { absolutePath, relativePath };
+}
+
+function lintIssue(id, message, paths) {
+  return {
+    id,
+    message,
+    paths: Array.isArray(paths) ? paths : [paths]
+  };
+}
+
 function defaultCodexRoot() {
   return path.join(os.homedir(), '.codex', 'skills');
 }
@@ -388,6 +532,10 @@ function isInside(root, child) {
 
 function normalizeCase(value) {
   return process.platform === 'win32' ? value.toLowerCase() : value;
+}
+
+function toPortablePath(value) {
+  return value.split(path.sep).join('/');
 }
 
 function sameHash(left, right) {

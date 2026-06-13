@@ -39,21 +39,21 @@ function Get-DirectorySignature {
     return $null
   }
 
-  $files = Get-ChildItem -LiteralPath $Directory -Recurse -File |
-    Where-Object { $_.Name -ne $markerFileName } |
-    Sort-Object FullName
-
-  $parts = foreach ($file in $files) {
+  $fileEntries = foreach ($file in (Get-ChildItem -LiteralPath $Directory -Recurse -File | Where-Object { $_.Name -ne $markerFileName })) {
     $relativePath = $file.FullName.Substring($Directory.Length + 1).Replace('\', '/')
-    $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
-    "$relativePath=$hash"
+    $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+    [pscustomobject]@{
+      RelativePath = $relativePath
+      Part = "$relativePath=$hash"
+    }
   }
 
+  $parts = $fileEntries | Sort-Object RelativePath | ForEach-Object { $_.Part }
   $joined = [string]::Join("`n", $parts)
   $bytes = [System.Text.Encoding]::UTF8.GetBytes($joined)
   $sha = [System.Security.Cryptography.SHA256]::Create()
   try {
-    return ([System.BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '')
+    return ([System.BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '').ToLowerInvariant()
   } finally {
     $sha.Dispose()
   }

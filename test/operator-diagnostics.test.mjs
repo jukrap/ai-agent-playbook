@@ -583,6 +583,43 @@ test('operator gc previews and removes only obsolete unmodified managed files', 
   await cleanup(target);
 });
 
+test('operator gc rejects non-portable manifest paths before removal', async () => {
+  const target = await tempRepo('operator gc traversal-공백-한글-');
+  await mkdir(path.join(target, '.ai-playbook', 'guides'), { recursive: true });
+  const actualPath = '.ai-playbook/guides/obsolete.md';
+  const manifestPath = '.ai-playbook/../.ai-playbook/guides/obsolete.md';
+  const obsoleteContent = '# Obsolete\n';
+  await writeFile(path.join(target, ...actualPath.split('/')), obsoleteContent);
+  await writeFile(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json'), JSON.stringify({
+    schemaVersion: '1',
+    source: 'ai-agent-playbook',
+    playbookDir: '.ai-playbook',
+    localOnly: true,
+    installedAtUtc: '2026-06-13T00:00:00.000Z',
+    updatedAtUtc: '2026-06-13T00:00:00.000Z',
+    files: [
+      {
+        path: manifestPath,
+        kind: 'guide',
+        source: 'templates/project-playbook/guides/obsolete.md',
+        sourceHash: hashText(obsoleteContent),
+        targetHash: hashText(obsoleteContent)
+      }
+    ]
+  }, null, 2));
+  const before = await listRelativeFiles(target);
+
+  const applied = capture(target);
+  assert.equal(await runCli(['operator', 'gc', '.', '--apply', '--json'], applied), 1);
+  const report = JSON.parse(applied.out());
+
+  assert.equal(report.applied, false);
+  assert.equal(report.conflicts.some((conflict) => conflict.id === 'operator.gc.manifest-invalid'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  assert.equal(existsSync(path.join(target, ...actualPath.split('/'))), true);
+  await cleanup(target);
+});
+
 function capture(cwd) {
   let stdout = '';
   let stderr = '';

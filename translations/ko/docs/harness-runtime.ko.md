@@ -14,7 +14,9 @@ node .\bin\ai-playbook.mjs guides sync <target> [--dry-run] [--force]
 node .\bin\ai-playbook.mjs guides sync <target> --check [--diff] [--json]
 node .\bin\ai-playbook.mjs migrate path <target> [--apply] [--json]
 node .\bin\ai-playbook.mjs managed check <target> [--json]
+node .\bin\ai-playbook.mjs managed catalog <target> [--json]
 node .\bin\ai-playbook.mjs managed adopt <target> [--apply] [--json]
+node .\bin\ai-playbook.mjs managed prune <target> --path <managed-path> [--apply] [--json]
 node .\bin\ai-playbook.mjs managed uninstall <target> [--apply] [--json]
 node .\bin\ai-playbook.mjs context <target> [--json] [--max-chars N]
 node .\bin\ai-playbook.mjs operator check <target> [--path <file>] [--diff] [--json]
@@ -69,15 +71,22 @@ node .\bin\ai-playbook.mjs migrate path <target> --apply --json
 
 ```powershell
 node .\bin\ai-playbook.mjs managed check <target> --json
+node .\bin\ai-playbook.mjs managed catalog <target> --json
 node .\bin\ai-playbook.mjs managed adopt <target> --json
 node .\bin\ai-playbook.mjs managed adopt <target> --apply --json
+node .\bin\ai-playbook.mjs managed prune <target> --path .ai-playbook/guides/runtime-harness.md --json
+node .\bin\ai-playbook.mjs managed prune <target> --path .ai-playbook/guides/runtime-harness.md --apply --json
 node .\bin\ai-playbook.mjs managed uninstall <target> --json
 node .\bin\ai-playbook.mjs managed uninstall <target> --apply --json
 ```
 
 `managed check`는 read-only이며 `{ schemaVersion, ok, target, manifestPath, summary, files, warnings, conflicts }`를 반환합니다. Manifest가 없거나 malformed이면 실패합니다. Managed file이 없거나 로컬에서 수정되었으면 project-specific edit을 조용히 제거하지 않도록 conflict로 보고합니다.
 
+`managed catalog`는 read-only이며 `{ schemaVersion, ok, target, manifestPath, manifest, summary, files, warnings, conflicts }`를 반환합니다. Summary는 managed file을 kind와 status별로 묶어 operator가 어떤 bootstrap, playbook, guide file을 marker가 아직 소유하는지 삭제 전에 확인할 수 있게 합니다.
+
 `managed adopt`는 현재 template과 일치하지만 marker가 없는 오래된 프로젝트에 사용합니다. Preview mode는 파일을 쓰지 않습니다. Apply mode는 현재 content hash가 source template hash와 일치하는 파일만 기록합니다.
+
+`managed prune`은 하나의 managed file을 대상으로 하는 preview-first removal입니다. Portable relative path만 받으며 CLI 입력의 Windows-style separator를 허용합니다. Unmanaged, missing, modified, absolute path는 거부하고 `--apply`가 있을 때만 씁니다. Apply mode는 선택된 수정되지 않은 파일을 제거하고 manifest를 갱신합니다. `.gitignore`는 편집하지 않습니다.
 
 `managed uninstall`도 preview-first입니다. Apply mode는 수정되지 않은 managed file만 제거합니다. 수정된 파일은 보존하고 conflict로 보고합니다. 이 명령은 `.gitignore`를 편집하지 않으며, manifest가 local-only 설치였다고 표시하면 manual cleanup warning을 반환합니다.
 

@@ -78,7 +78,9 @@ node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
 node .\bin\ai-playbook.mjs context <target-project> --json
 node .\bin\ai-playbook.mjs migrate path <target-project> --json
 node .\bin\ai-playbook.mjs managed check <target-project> --json
+node .\bin\ai-playbook.mjs managed catalog <target-project> --json
 node .\bin\ai-playbook.mjs managed adopt <target-project> --json
+node .\bin\ai-playbook.mjs managed prune <target-project> --path .ai-playbook/guides/runtime-harness.md --json
 node .\bin\ai-playbook.mjs managed uninstall <target-project> --json
 node .\bin\ai-playbook.mjs operator check <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --path src/example.ts --json
@@ -99,7 +101,7 @@ Existing projects that already have `ai-playbook/` continue to work as a legacy 
 
 Runtime hooks and plugins are not part of the default install path. Treat them as optional extensions after the document and CLI harness are stable. The Codex and Claude Code adapters include read-only context hook examples, a read-only `adapter config` renderer, and a read-only `adapter check` self-check, but they are not installed automatically. See [Runtime roadmap](docs/runtime-roadmap.md).
 
-Managed project harness commands use `.ai-playbook/.ai-agent-playbook-install.json` to track files copied by this playbook. Use `managed check` before cleanup, `managed adopt` to add a marker to older matching installs, and `managed uninstall` to preview removal of unmodified managed files. `managed adopt` and `managed uninstall` write only when `--apply` is provided.
+Managed project harness commands use `.ai-playbook/.ai-agent-playbook-install.json` to track files copied by this playbook. Use `managed check` before cleanup, `managed catalog` to review owned files by kind and status, `managed adopt` to add a marker to older matching installs, `managed prune` to preview removing one selected unmodified managed file, and `managed uninstall` to preview removal of all unmodified managed files. `managed adopt`, `managed prune`, and `managed uninstall` write only when `--apply` is provided.
 
 Operator diagnostics such as `operator check`, `operator search`, `operator context`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, and `qa tui-check` are operator-triggered. Use `operator check` as the combined human checkpoint for doctor, guide freshness, local verification command candidates, and rule matching before adding stronger runtime automation. Use `operator search` as a local project explorer for related source, playbook, rules, plans, and worklog matches. Use `operator context` to preview path-scoped playbook context and rule matches, and `operator map` to summarize stack, architecture, quality, and concern signals without writing an analysis file. Use `operator audit` to find broken playbook links, orphan context globs, duplicate playbook notes, legacy path drift, and managed manifest drift without writing files. Use `operator gc` as a preview-first cleanup for obsolete unmodified managed playbook files; it writes only with `--apply`. `diagnostics check` formats package scripts with the detected lockfile package manager.
 
@@ -122,6 +124,7 @@ node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-project> --check --diff --json
 node .\bin\ai-playbook.mjs migrate path <target-project> --json
 node .\bin\ai-playbook.mjs managed check <target-project> --json
+node .\bin\ai-playbook.mjs managed catalog <target-project> --json
 node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --json
 node .\bin\ai-playbook.mjs operator context <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator map <target-project> --json

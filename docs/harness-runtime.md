@@ -14,7 +14,9 @@ node .\bin\ai-playbook.mjs guides sync <target> [--dry-run] [--force]
 node .\bin\ai-playbook.mjs guides sync <target> --check [--diff] [--json]
 node .\bin\ai-playbook.mjs migrate path <target> [--apply] [--json]
 node .\bin\ai-playbook.mjs managed check <target> [--json]
+node .\bin\ai-playbook.mjs managed catalog <target> [--json]
 node .\bin\ai-playbook.mjs managed adopt <target> [--apply] [--json]
+node .\bin\ai-playbook.mjs managed prune <target> --path <managed-path> [--apply] [--json]
 node .\bin\ai-playbook.mjs managed uninstall <target> [--apply] [--json]
 node .\bin\ai-playbook.mjs context <target> [--json] [--max-chars N]
 node .\bin\ai-playbook.mjs operator check <target> [--path <file>] [--diff] [--json]
@@ -69,15 +71,22 @@ If both `ai-playbook/` and `.ai-playbook/` exist, the command reports a conflict
 
 ```powershell
 node .\bin\ai-playbook.mjs managed check <target> --json
+node .\bin\ai-playbook.mjs managed catalog <target> --json
 node .\bin\ai-playbook.mjs managed adopt <target> --json
 node .\bin\ai-playbook.mjs managed adopt <target> --apply --json
+node .\bin\ai-playbook.mjs managed prune <target> --path .ai-playbook/guides/runtime-harness.md --json
+node .\bin\ai-playbook.mjs managed prune <target> --path .ai-playbook/guides/runtime-harness.md --apply --json
 node .\bin\ai-playbook.mjs managed uninstall <target> --json
 node .\bin\ai-playbook.mjs managed uninstall <target> --apply --json
 ```
 
 `managed check` is read-only and returns `{ schemaVersion, ok, target, manifestPath, summary, files, warnings, conflicts }`. Missing or malformed manifests fail the check. Missing or locally modified managed files are reported as conflicts so cleanup cannot silently remove project-specific edits.
 
+`managed catalog` is read-only and returns `{ schemaVersion, ok, target, manifestPath, manifest, summary, files, warnings, conflicts }`. The summary groups managed files by kind and status so an operator can see which bootstrap, playbook, and guide files are still owned by the marker before deleting anything.
+
 `managed adopt` is for older projects that already match the current templates but do not have a marker. Preview mode writes nothing. Apply mode records only files whose current content hash matches the source template hash.
+
+`managed prune` is a targeted preview-first removal for one managed file. It accepts only portable relative paths, allows Windows-style separators in the CLI input, refuses unmanaged, missing, modified, or absolute paths, and writes only when `--apply` is provided. Apply mode removes the selected unmodified file and updates the manifest; it does not edit `.gitignore`.
 
 `managed uninstall` is also preview-first. Apply mode removes only unmodified managed files. Modified files are preserved and reported as conflicts. The command does not edit `.gitignore`; it returns a manual cleanup warning when the manifest says the playbook was installed as local-only.
 

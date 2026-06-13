@@ -16,6 +16,10 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
+      - name: Install runtime dependencies
+        shell: pwsh
+        run: npm install --no-package-lock --ignore-scripts --no-audit --no-fund
+
       - name: Validate runtime syntax
         shell: pwsh
         run: npm run check

@@ -59,6 +59,11 @@ const CONFIG_CANDIDATES = [
   'ruff.toml',
   'pytest.ini',
   'mypy.ini',
+  'sgconfig.yml',
+  'sgconfig.yaml',
+  'ast-grep.config.yml',
+  'ast-grep.config.yaml',
+  'ast-grep.config.json',
   'Dockerfile',
   'docker-compose.yml'
 ];
@@ -269,6 +274,64 @@ export async function previewOperatorContext(options) {
     },
     related,
     warnings
+  };
+}
+
+export async function analyzeOperator(options) {
+  const { target, filePath } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+
+  const resolvedTarget = path.resolve(target);
+  const relativePath = filePath === undefined ? undefined : normalizeTargetRelativePath(resolvedTarget, filePath);
+  const [diagnostics, map, rules, context] = await Promise.all([
+    checkDiagnostics({ target: resolvedTarget }),
+    mapOperator({ target: resolvedTarget }),
+    checkRules({ target: resolvedTarget, filePath: relativePath }),
+    relativePath === undefined ? null : previewOperatorContext({ target: resolvedTarget, filePath: relativePath })
+  ]);
+  const optionalTools = buildOptionalAnalysisSignals({ map, diagnostics });
+  const matchingRules = rules.rules.filter((rule) => rule.applies);
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    ...(relativePath === undefined ? {} : { path: relativePath }),
+    summary: {
+      sourceFiles: map.summary.sourceFiles,
+      commands: diagnostics.summary.commands,
+      ruleMatches: matchingRules.length,
+      contextMatches: context ? context.summary.matchingContextFiles : 0,
+      optionalToolSignals: optionalTools.filter((tool) => ['detected', 'project-signals'].includes(tool.status)).length,
+      warnings: diagnostics.summary.warn + rules.warnings.length + (context ? context.warnings.length : 0)
+    },
+    diagnostics: {
+      packageManager: diagnostics.packageManager,
+      summary: diagnostics.summary,
+      commands: diagnostics.commands
+    },
+    map: {
+      summary: map.summary,
+      stack: map.stack,
+      architecture: map.architecture,
+      quality: map.quality,
+      concerns: map.concerns
+    },
+    rules: {
+      summary: rules.summary,
+      matches: matchingRules,
+      warnings: rules.warnings
+    },
+    ...(context ? {
+      context: {
+        summary: context.summary,
+        coreSources: context.coreSources,
+        matches: context.contexts.filter((item) => item.applies),
+        related: context.related,
+        warnings: context.warnings
+      }
+    } : {}),
+    optionalTools
   };
 }
 
@@ -973,6 +1036,62 @@ function buildQualityMap(options) {
     configs,
     commands: diagnostics.commands
   };
+}
+
+function buildOptionalAnalysisSignals(options) {
+  const { map } = options;
+  const configPaths = new Set(map.quality.configs.map((config) => config.path));
+  const scripts = new Set(map.stack.scripts);
+  const languageExtensions = new Set(map.stack.languages.map((language) => language.extension));
+  const astEvidence = [];
+  for (const config of ['sgconfig.yml', 'sgconfig.yaml', 'ast-grep.config.yml', 'ast-grep.config.yaml', 'ast-grep.config.json']) {
+    if (configPaths.has(config)) astEvidence.push(config);
+  }
+  for (const script of scripts) {
+    if (/(^|[:-])(ast-?grep|sg|structural)([:-]|$)/i.test(script)) astEvidence.push(`package.json#scripts.${script}`);
+  }
+
+  const lspEvidence = [];
+  if (configPaths.has('tsconfig.json') || configPaths.has('jsconfig.json') || languageExtensions.has('.ts') || languageExtensions.has('.tsx')) {
+    lspEvidence.push('typescript/javascript project signals');
+  }
+  if (map.stack.manifests.some((manifest) => ['pyproject.toml', 'requirements.txt'].includes(manifest.path)) || languageExtensions.has('.py')) {
+    lspEvidence.push('python project signals');
+  }
+  if (map.stack.manifests.some((manifest) => manifest.path === 'go.mod') || languageExtensions.has('.go')) {
+    lspEvidence.push('go project signals');
+  }
+  if (map.stack.manifests.some((manifest) => manifest.path === 'Cargo.toml') || languageExtensions.has('.rs')) {
+    lspEvidence.push('rust project signals');
+  }
+
+  return [
+    {
+      id: 'ast-grep',
+      category: 'structural-search',
+      status: astEvidence.length > 0 ? 'detected' : 'not-detected',
+      evidence: astEvidence,
+      nextStep: astEvidence.length > 0
+        ? 'Use the project AST search setup manually when structural evidence is needed; this command does not run it.'
+        : 'No AST search setup was detected. Use text search or add a project-specific structural search tool before relying on structural claims.'
+    },
+    {
+      id: 'lsp',
+      category: 'language-analysis',
+      status: lspEvidence.length > 0 ? 'project-signals' : 'not-detected',
+      evidence: lspEvidence,
+      nextStep: lspEvidence.length > 0
+        ? 'Use the project language tooling explicitly for definitions, references, diagnostics, or renames; no LSP server is started here.'
+        : 'No strong language-server signal was detected.'
+    },
+    {
+      id: 'comment-checker',
+      category: 'comment-quality',
+      status: 'manual',
+      evidence: [],
+      nextStep: 'Use review-work-light or cleanup-ai-slop for comment quality review; no automatic comment checker hook is configured.'
+    }
+  ];
 }
 
 async function buildConcernsMap(options) {

@@ -126,6 +126,7 @@ npx ai-agent-playbook bootstrap <target-project>
 npx ai-agent-playbook doctor <target-project>
 npx ai-agent-playbook operator check <target-project> --path src/example.ts --json
 npx ai-agent-playbook operator search <target-project> --query "auth flow" --path src/example.ts --json
+npx ai-agent-playbook operator analyze <target-project> --path src/example.ts --json
 npx ai-agent-playbook managed catalog <target-project> --json
 npx ai-agent-playbook adapter config <target-project> --adapter codex --json
 ```
@@ -145,6 +146,7 @@ Managed project harness 명령은 `.ai-playbook/.ai-agent-playbook-install.json`
 - `operator check`: doctor, guide freshness, 로컬 검증 명령 후보, rule matching을 한 번에 보는 사람 중심 checkpoint입니다.
 - `operator search`: 관련 source, playbook, rules, plans, worklogs를 찾는 로컬 프로젝트 탐색 명령입니다.
 - `operator context`: path-scoped playbook context와 rule match를 미리 보여줍니다.
+- `operator analyze`: diagnostics, map, rules, context, optional AST/LSP/comment-quality setup signal을 묶어 보여주되 optional tool을 실행하지 않습니다.
 - `operator map`: stack, architecture, quality, concern signal을 분석 파일 작성 없이 요약합니다.
 - `operator audit`: 파일을 쓰지 않고 playbook link, orphan context glob, duplicate note, legacy path drift, managed manifest drift를 확인합니다.
 - `operator gc`: obsolete unmodified managed playbook file을 preview-first로 정리하며 `--apply`가 있을 때만 파일을 씁니다.
@@ -172,6 +174,7 @@ npx ai-agent-playbook managed check <target-project> --json
 npx ai-agent-playbook managed catalog <target-project> --json
 npx ai-agent-playbook operator search <target-project> --query "auth flow" --json
 npx ai-agent-playbook operator context <target-project> --path src/example.ts --json
+npx ai-agent-playbook operator analyze <target-project> --path src/example.ts --json
 npx ai-agent-playbook operator map <target-project> --json
 npx ai-agent-playbook operator audit <target-project> --json
 npx ai-agent-playbook operator gc <target-project> --json
@@ -184,7 +187,7 @@ bin/                  ai-playbook CLI 진입점
 src/                  CLI 런타임 구현
 skills/
   project/            bootstrap, onboarding, project-memory 스킬
-  quality/            API boundary와 UI quality 스킬
+  quality/            API boundary, UI quality, cleanup, review 스킬
   git/                commit, PR, push, worklog 스킬
   meta/               skill-authoring 스킬
   legacy/             legacy-system maintenance 스킬
@@ -214,6 +217,9 @@ test/                 Node CLI와 adapter 테스트
 | Quality | `api-contract-boundary` | 프론트엔드/백엔드 계약, DTO, mock, payload, adapter를 구현·디버깅·검토할 때. |
 | Quality | `ui-style-policy` | 저장소 UI 스타일 정책을 선택, 문서화, 강제할 때. |
 | Quality | `style-quality-review` | UI 스타일, 반응형 동작, 레이아웃 넘침, 시각적 회귀를 검토하거나 개선할 때. |
+| Quality | `frontend-ui-polish` | 제품 의도와 기존 디자인 관례를 보존하면서 보이는 프론트엔드 UI를 구현하거나 다듬을 때. |
+| Quality | `cleanup-ai-slop` | 신뢰가 낮거나 과하게 복잡하거나 중복된 코드를 동작 변경 없이 정리할 때. |
+| Quality | `review-work-light` | blocking review process 없이 최근 구현 작업을 인수인계 전에 검토할 때. |
 | Git | `commit-worklog-guardrails` | staging, commit, push, PR, release note, worklog를 다룰 때. |
 | Meta | `agent-skill-authoring` | 재사용 agent skill과 reference를 만들거나 검토·재정리할 때. |
 | Legacy | `legacy-general` | 흐름이 불명확하고 결합이 숨겨져 있거나 test/documentation이 약한 레거시 코드를 유지보수할 때. |

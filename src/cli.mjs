@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkAdapterReadiness, renderAdapterConfig } from './adapter-readiness.mjs';
-import { auditOperator, checkDiagnostics, checkOperator, checkRules, checkTuiCapture, gcOperator, mapOperator, previewOperatorContext, searchOperator } from './operator-diagnostics.mjs';
+import { analyzeOperator, auditOperator, checkDiagnostics, checkOperator, checkRules, checkTuiCapture, gcOperator, mapOperator, previewOperatorContext, searchOperator } from './operator-diagnostics.mjs';
 import { runSkillsLifecycle } from './skills-lifecycle.mjs';
 import {
   buildProjectContext,
@@ -337,6 +337,27 @@ export async function runCli(argv, io = {}) {
       return 0;
     }
 
+    if (command === 'operator' && subcommand === 'analyze') {
+      const result = await analyzeOperator({
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Operator analyze: ${result.summary.sourceFiles} source file(s), ${result.summary.ruleMatches} rule match(es)\n`);
+        if (result.summary.contextMatches > 0) {
+          write(stdout, `Context matches: ${result.summary.contextMatches}\n`);
+        }
+        for (const tool of result.optionalTools) {
+          if (tool.status !== 'not-detected') {
+            write(stdout, `[${tool.status.toUpperCase()}] ${tool.id}: ${tool.nextStep}\n`);
+          }
+        }
+      }
+      return 0;
+    }
+
     if (command === 'operator' && subcommand === 'map') {
       const result = await mapOperator({ target: resolveTarget(cwd, targetArg) });
       if (parsed.flags.json) {
@@ -605,5 +626,39 @@ function parseMaxResults(value) {
 }
 
 function helpText() {
-  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook doctor <target> --reminder [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--diff] [--json]\n  ai-playbook skills check [--json] [--codex-root <path>] [--agents-root <path>]\n  ai-playbook skills install [--dry-run] [--json] [--force-managed] [--force-unmanaged] [--codex-root <path>] [--agents-root <path>]\n  ai-playbook skills update [--dry-run] [--json] [--force-managed] [--force-unmanaged] [--codex-root <path>] [--agents-root <path>]\n  ai-playbook skills uninstall [--dry-run] [--json] [--force-managed] [--codex-root <path>] [--agents-root <path>]\n  ai-playbook migrate path <target> [--apply] [--json]\n  ai-playbook managed check <target> [--json]\n  ai-playbook managed catalog <target> [--json]\n  ai-playbook managed adopt <target> [--apply] [--json]\n  ai-playbook managed prune <target> --path <managed-path> [--apply] [--json]\n  ai-playbook managed uninstall <target> [--apply] [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook operator check <target> [--path <file>] [--diff] [--json]\n  ai-playbook operator search <target> --query <text> [--path <file>] [--max-results N] [--json]\n  ai-playbook operator context <target> --path <file> [--json]\n  ai-playbook operator map <target> [--json]\n  ai-playbook operator audit <target> [--json]\n  ai-playbook operator gc <target> [--apply] [--json]\n  ai-playbook rules check <target> [--path <file>] [--json]\n  ai-playbook diagnostics check <target> [--json]\n  ai-playbook qa tui-check <capture-file> [--cols N] [--json]\n  ai-playbook adapter config <target> --adapter codex|claude-code [--json]\n  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
+  return `ai-playbook
+
+Usage:
+  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]
+  ai-playbook doctor <target> [--strict] [--json]
+  ai-playbook doctor <target> --reminder [--json]
+  ai-playbook guides sync <target> [--dry-run] [--force]
+  ai-playbook guides sync <target> --check [--diff] [--json]
+  ai-playbook skills check [--json] [--codex-root <path>] [--agents-root <path>]
+  ai-playbook skills install [--dry-run] [--json] [--force-managed] [--force-unmanaged] [--codex-root <path>] [--agents-root <path>]
+  ai-playbook skills update [--dry-run] [--json] [--force-managed] [--force-unmanaged] [--codex-root <path>] [--agents-root <path>]
+  ai-playbook skills uninstall [--dry-run] [--json] [--force-managed] [--codex-root <path>] [--agents-root <path>]
+  ai-playbook migrate path <target> [--apply] [--json]
+  ai-playbook managed check <target> [--json]
+  ai-playbook managed catalog <target> [--json]
+  ai-playbook managed adopt <target> [--apply] [--json]
+  ai-playbook managed prune <target> --path <managed-path> [--apply] [--json]
+  ai-playbook managed uninstall <target> [--apply] [--json]
+  ai-playbook context <target> [--json] [--max-chars N]
+  ai-playbook operator check <target> [--path <file>] [--diff] [--json]
+  ai-playbook operator search <target> --query <text> [--path <file>] [--max-results N] [--json]
+  ai-playbook operator context <target> --path <file> [--json]
+  ai-playbook operator analyze <target> [--path <file>] [--json]
+  ai-playbook operator map <target> [--json]
+  ai-playbook operator audit <target> [--json]
+  ai-playbook operator gc <target> [--apply] [--json]
+  ai-playbook rules check <target> [--path <file>] [--json]
+  ai-playbook diagnostics check <target> [--json]
+  ai-playbook qa tui-check <capture-file> [--cols N] [--json]
+  ai-playbook adapter config <target> --adapter codex|claude-code [--json]
+  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]
+  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
+  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
+  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]
+`;
 }

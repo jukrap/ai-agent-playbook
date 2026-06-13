@@ -406,6 +406,89 @@ test('operator context --json previews path-scoped playbook context without writ
   await cleanup(target);
 });
 
+test('operator analyze --json combines read-only context rules diagnostics map and optional tool signals', async () => {
+  const target = await tempRepo('operator analyze-공백-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await adaptPlaybook(target);
+  await mkdir(path.join(target, 'src', 'features', '검색'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'context'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'rules'), { recursive: true });
+  await writeFile(path.join(target, 'pnpm-lock.yaml'), 'lockfileVersion: 9.0\n');
+  await writeFile(path.join(target, 'package.json'), JSON.stringify({
+    scripts: {
+      check: 'tsc --noEmit',
+      'ast-grep': 'ast-grep scan'
+    },
+    devDependencies: {
+      typescript: 'latest'
+    }
+  }, null, 2));
+  await writeFile(path.join(target, 'tsconfig.json'), '{}\n');
+  await writeFile(path.join(target, 'sgconfig.yml'), 'ruleDirs: []\n');
+  await writeFile(path.join(target, 'src', 'features', '검색', 'SearchPanel.tsx'), 'export function SearchPanel() { return null; }\n');
+  await writeFile(path.join(target, '.ai-playbook', 'context', 'frontend.md'), [
+    '---',
+    'globs:',
+    '  - src/features/**/*.tsx',
+    '---',
+    '# Frontend context',
+    '',
+    'SearchPanel is a visible UI surface.'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'rules', 'react.md'), [
+    '---',
+    'globs: ["src/features/**/*.tsx"]',
+    '---',
+    '# React rule'
+  ].join('\n'));
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli([
+    'operator',
+    'analyze',
+    '.',
+    '--path',
+    'src/features/검색/SearchPanel.tsx',
+    '--json'
+  ], io), 0);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.target, target);
+  assert.equal(report.path, 'src/features/검색/SearchPanel.tsx');
+  assert.equal(report.summary.ruleMatches, 1);
+  assert.equal(report.summary.contextMatches, 1);
+  assert.equal(report.diagnostics.packageManager.name, 'pnpm');
+  assert.equal(report.map.stack.languages.some((language) => language.extension === '.tsx'), true);
+  assert.equal(report.rules.matches.some((rule) => rule.path === '.ai-playbook/rules/react.md'), true);
+  assert.equal(report.context.matches.some((item) => item.path === '.ai-playbook/context/frontend.md'), true);
+  assert.equal(report.optionalTools.some((tool) => tool.id === 'ast-grep' && tool.status === 'detected'), true);
+  assert.equal(report.optionalTools.some((tool) => tool.id === 'lsp' && tool.status === 'project-signals'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('operator analyze --json reports missing optional analysis tools without failing or writing files', async () => {
+  const target = await tempRepo('operator analyze minimal-한글-');
+  await writeFile(path.join(target, 'README.md'), '# Minimal fixture\n');
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli(['operator', 'analyze', '.', '--json'], io), 0);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.summary.optionalToolSignals, 0);
+  assert.equal(report.optionalTools.some((tool) => tool.id === 'ast-grep' && tool.status === 'not-detected'), true);
+  assert.equal(report.optionalTools.some((tool) => tool.id === 'lsp' && tool.status === 'not-detected'), true);
+  assert.equal(report.optionalTools.some((tool) => tool.id === 'comment-checker' && tool.status === 'manual'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
 test('operator map --json reports stack architecture quality and concerns without writing files', async () => {
   const target = await tempRepo('operator map-공백-한글-');
   await mkdir(path.join(target, 'src', 'app'), { recursive: true });

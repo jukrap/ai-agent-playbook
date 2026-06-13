@@ -25,6 +25,9 @@ Use installed playbook skills for recurring repository concerns:
 - `api-contract-boundary`: changing or reviewing API integration.
 - `ui-style-policy`: selecting or documenting UI styling policy.
 - `style-quality-review`: reviewing visible UI style without redesigning.
+- `frontend-ui-polish`: implementing or refining visible UI surfaces while preserving product intent.
+- `cleanup-ai-slop`: cleaning low-trust code in a bounded behavior-preserving way.
+- `review-work-light`: reviewing recent implementation work before handoff without automatic blocking.
 - `commit-worklog-guardrails`: staging, committing, pushing, PR bodies, or worklogs.
 - `legacy-*`: changing legacy systems with hidden coupling or compatibility constraints.
 

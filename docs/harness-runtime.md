@@ -1,41 +1,57 @@
 # Runtime Harness
 
-`ai-playbook` is the executable surface for applying this repository to a target project. It does not call an AI model. It copies templates, checks project-memory health, and creates predictable plan/worklog files so agents stop inventing ad hoc markdown paths.
+`ai-playbook` is the executable surface for installing reusable skills and applying this repository to a target project. It does not call an AI model. It copies templates, checks project-memory health, and creates predictable plan/worklog files so agents stop inventing ad hoc markdown paths.
 
 This CLI and the project playbook are the default harness. Runtime hooks or plugins are optional extensions and should stay outside the default path until their behavior is explicit, local, and easy to disable. See `docs/runtime-roadmap.md` for the staged design.
 
 ## Command surface
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]
-node .\bin\ai-playbook.mjs doctor <target> [--strict] [--json]
-node .\bin\ai-playbook.mjs doctor <target> --reminder [--json]
-node .\bin\ai-playbook.mjs guides sync <target> [--dry-run] [--force]
-node .\bin\ai-playbook.mjs guides sync <target> --check [--diff] [--json]
-node .\bin\ai-playbook.mjs migrate path <target> [--apply] [--json]
-node .\bin\ai-playbook.mjs managed check <target> [--json]
-node .\bin\ai-playbook.mjs managed catalog <target> [--json]
-node .\bin\ai-playbook.mjs managed adopt <target> [--apply] [--json]
-node .\bin\ai-playbook.mjs managed prune <target> --path <managed-path> [--apply] [--json]
-node .\bin\ai-playbook.mjs managed uninstall <target> [--apply] [--json]
-node .\bin\ai-playbook.mjs context <target> [--json] [--max-chars N]
-node .\bin\ai-playbook.mjs operator check <target> [--path <file>] [--diff] [--json]
-node .\bin\ai-playbook.mjs operator search <target> --query <text> [--path <file>] [--max-results N] [--json]
-node .\bin\ai-playbook.mjs operator context <target> --path <file> [--json]
-node .\bin\ai-playbook.mjs operator map <target> [--json]
-node .\bin\ai-playbook.mjs operator audit <target> [--json]
-node .\bin\ai-playbook.mjs operator gc <target> [--apply] [--json]
-node .\bin\ai-playbook.mjs rules check <target> [--path <file>] [--json]
-node .\bin\ai-playbook.mjs diagnostics check <target> [--json]
-node .\bin\ai-playbook.mjs qa tui-check <capture-file> [--cols N] [--json]
-node .\bin\ai-playbook.mjs adapter config <target> --adapter codex|claude-code [--json]
-node .\bin\ai-playbook.mjs adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]
-node .\bin\ai-playbook.mjs plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
-node .\bin\ai-playbook.mjs worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
-node .\bin\ai-playbook.mjs worklog summarize <target> --month YYYY-MM [--dry-run] [--force]
+npx ai-agent-playbook skills check [--json] [--codex-root <path>] [--agents-root <path>]
+npx ai-agent-playbook skills install [--dry-run] [--json] [--force-managed] [--force-unmanaged] [--codex-root <path>] [--agents-root <path>]
+npx ai-agent-playbook skills update [--dry-run] [--json] [--force-managed] [--force-unmanaged] [--codex-root <path>] [--agents-root <path>]
+npx ai-agent-playbook skills uninstall [--dry-run] [--json] [--force-managed] [--codex-root <path>] [--agents-root <path>]
+npx ai-agent-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]
+npx ai-agent-playbook doctor <target> [--strict] [--json]
+npx ai-agent-playbook doctor <target> --reminder [--json]
+npx ai-agent-playbook guides sync <target> [--dry-run] [--force]
+npx ai-agent-playbook guides sync <target> --check [--diff] [--json]
+npx ai-agent-playbook migrate path <target> [--apply] [--json]
+npx ai-agent-playbook managed check <target> [--json]
+npx ai-agent-playbook managed catalog <target> [--json]
+npx ai-agent-playbook managed adopt <target> [--apply] [--json]
+npx ai-agent-playbook managed prune <target> --path <managed-path> [--apply] [--json]
+npx ai-agent-playbook managed uninstall <target> [--apply] [--json]
+npx ai-agent-playbook context <target> [--json] [--max-chars N]
+npx ai-agent-playbook operator check <target> [--path <file>] [--diff] [--json]
+npx ai-agent-playbook operator search <target> --query <text> [--path <file>] [--max-results N] [--json]
+npx ai-agent-playbook operator context <target> --path <file> [--json]
+npx ai-agent-playbook operator map <target> [--json]
+npx ai-agent-playbook operator audit <target> [--json]
+npx ai-agent-playbook operator gc <target> [--apply] [--json]
+npx ai-agent-playbook rules check <target> [--path <file>] [--json]
+npx ai-agent-playbook diagnostics check <target> [--json]
+npx ai-agent-playbook qa tui-check <capture-file> [--cols N] [--json]
+npx ai-agent-playbook adapter config <target> --adapter codex|claude-code [--json]
+npx ai-agent-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]
+npx ai-agent-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
+npx ai-agent-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
+npx ai-agent-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]
 ```
 
-After publishing, the same CLI can be exposed through the package `bin` as `ai-playbook`.
+After a global install, replace `npx ai-agent-playbook` with `ai-playbook`. From a local checkout, replace either form with `node .\bin\ai-playbook.mjs`.
+
+## Skills lifecycle
+
+`skills` commands manage installable skills without requiring the PowerShell wrappers.
+
+- `skills check` is read-only and reports missing, managed, modified, adoptable, or conflicting installed skills.
+- `skills install` and `skills update` are idempotent sync commands. `--dry-run` writes nothing. Without `--dry-run`, they create or refresh managed skills and write `.ai-agent-playbook-install.json` markers.
+- `skills check` is read-only and exits non-zero when required installed skills are missing, locally modified, or blocked by unmanaged conflicts.
+- `skills uninstall` removes only unmodified managed skills. `--dry-run` previews the removals.
+- Managed skills are replaced only when their current hash still matches the marker, unless `--force-managed` is provided.
+- Same-name unmanaged skills are adopted only when their content matches the source, unless `--force-unmanaged` is provided.
+- Default roots are the user's `.codex/skills` and `.agents/skills`; legacy skills are also placed under `.agents/skills/legacys/`.
 
 ## Bootstrap behavior
 
@@ -55,8 +71,8 @@ Compatibility: new bootstrap output uses `.ai-playbook/`. Runtime commands still
 `migrate path` helps projects move from the legacy `ai-playbook/` folder to `.ai-playbook/`.
 
 ```powershell
-node .\bin\ai-playbook.mjs migrate path <target> --json
-node .\bin\ai-playbook.mjs migrate path <target> --apply --json
+npx ai-agent-playbook migrate path <target> --json
+npx ai-agent-playbook migrate path <target> --apply --json
 ```
 
 The default mode is a no-write preview. It reports the planned folder move, root/playbook reference updates from `ai-playbook/` to `.ai-playbook/`, and whether `.gitignore` should add `.ai-playbook/` while keeping the legacy ignore entry during the transition.
@@ -70,14 +86,14 @@ If both `ai-playbook/` and `.ai-playbook/` exist, the command reports a conflict
 `managed` commands inspect or maintain the project-level install marker at `.ai-playbook/.ai-agent-playbook-install.json`.
 
 ```powershell
-node .\bin\ai-playbook.mjs managed check <target> --json
-node .\bin\ai-playbook.mjs managed catalog <target> --json
-node .\bin\ai-playbook.mjs managed adopt <target> --json
-node .\bin\ai-playbook.mjs managed adopt <target> --apply --json
-node .\bin\ai-playbook.mjs managed prune <target> --path .ai-playbook/guides/runtime-harness.md --json
-node .\bin\ai-playbook.mjs managed prune <target> --path .ai-playbook/guides/runtime-harness.md --apply --json
-node .\bin\ai-playbook.mjs managed uninstall <target> --json
-node .\bin\ai-playbook.mjs managed uninstall <target> --apply --json
+npx ai-agent-playbook managed check <target> --json
+npx ai-agent-playbook managed catalog <target> --json
+npx ai-agent-playbook managed adopt <target> --json
+npx ai-agent-playbook managed adopt <target> --apply --json
+npx ai-agent-playbook managed prune <target> --path .ai-playbook/guides/runtime-harness.md --json
+npx ai-agent-playbook managed prune <target> --path .ai-playbook/guides/runtime-harness.md --apply --json
+npx ai-agent-playbook managed uninstall <target> --json
+npx ai-agent-playbook managed uninstall <target> --apply --json
 ```
 
 `managed check` is read-only and returns `{ schemaVersion, ok, target, manifestPath, summary, files, warnings, conflicts }`. Missing or malformed manifests fail the check. Missing or locally modified managed files are reported as conflicts so cleanup cannot silently remove project-specific edits.
@@ -133,8 +149,8 @@ The diagnostics commands are operator-triggered signals. They help a human or ag
 `operator check` is the combined human checkpoint:
 
 ```powershell
-node .\bin\ai-playbook.mjs operator check <target> --json
-node .\bin\ai-playbook.mjs operator check <target> --path src/example.ts --diff --json
+npx ai-agent-playbook operator check <target> --json
+npx ai-agent-playbook operator check <target> --path src/example.ts --diff --json
 ```
 
 It aggregates `doctor`, `guides sync --check`, `diagnostics check`, and `rules check` into one report. `--path` is forwarded to rule matching. `--diff` includes the same first-difference guide details as `guides sync --check --diff`. JSON output returns `{ schemaVersion, ok, target, path, summary, checks, sections }`, where `sections` contains the original `doctor`, `guides`, `diagnostics`, and `rules` reports. Missing guide templates or doctor failures fail the combined check; stale guides and diagnostics warnings stay as warning-level operator signals.
@@ -142,8 +158,8 @@ It aggregates `doctor`, `guides sync --check`, `diagnostics check`, and `rules c
 `operator search` is a local read-only explorer:
 
 ```powershell
-node .\bin\ai-playbook.mjs operator search <target> --query "auth flow" --json
-node .\bin\ai-playbook.mjs operator search <target> --query "auth flow" --path src/example.ts --max-results 20 --json
+npx ai-agent-playbook operator search <target> --query "auth flow" --json
+npx ai-agent-playbook operator search <target> --query "auth flow" --path src/example.ts --max-results 20 --json
 ```
 
 It scans text files under the target project and excludes common generated or dependency folders such as `.git`, `node_modules`, `dist`, `build`, `.next`, `.turbo`, and `coverage`. JSON output returns `{ schemaVersion, ok, target, query, path, summary, results, related }`. Results include relative path, category, score, match count, and snippets. No-match searches exit successfully with `summary.matches: 0`. When `--path` is provided, `related.rules` summarizes matching project rules for that file; `related.diagnostics` lists local verification command candidates without running them.
@@ -151,7 +167,7 @@ It scans text files under the target project and excludes common generated or de
 `operator context` previews path-scoped playbook context without injecting it:
 
 ```powershell
-node .\bin\ai-playbook.mjs operator context <target> --path src/example.ts --json
+npx ai-agent-playbook operator context <target> --path src/example.ts --json
 ```
 
 It reports the core context files that exist, `.ai-playbook/context/**/*.md` files whose `globs` or `alwaysApply` frontmatter applies to the path, matching project rules, and related maps, runbooks, decisions, or guides that mention the path or file name. JSON output returns `{ schemaVersion, ok, target, path, summary, coreSources, contexts, rules, related, warnings }`. This command does not write context files, run project commands, or install hooks.
@@ -159,7 +175,7 @@ It reports the core context files that exist, `.ai-playbook/context/**/*.md` fil
 `operator map` summarizes the local codebase shape:
 
 ```powershell
-node .\bin\ai-playbook.mjs operator map <target> --json
+npx ai-agent-playbook operator map <target> --json
 ```
 
 It reads local project files and reports stack manifests, detected package manager, source language counts, framework dependencies, top-level structure, entrypoint candidates, module boundary directories, quality configs, test file samples, verification command candidates, TODO/debug/security signal snippets, and a compact summary. Common dependency and generated folders are excluded. JSON output returns `{ schemaVersion, ok, target, summary, stack, architecture, quality, concerns, warnings }`. It is read-only and does not create `.ai-playbook/maps/` files; use the report as evidence before deciding what to promote into durable project maps.
@@ -167,7 +183,7 @@ It reads local project files and reports stack manifests, detected package manag
 `operator audit` checks playbook drift without writing files:
 
 ```powershell
-node .\bin\ai-playbook.mjs operator audit <target> --json
+npx ai-agent-playbook operator audit <target> --json
 ```
 
 It scans the project playbook for broken relative markdown links, context files whose `globs` no longer match any current project file, duplicate playbook markdown content, simultaneous `.ai-playbook/` and legacy `ai-playbook/` folders, and managed manifest drift. JSON output returns `{ schemaVersion, ok, target, summary, findings, sections, warnings }`. Broken internal links and malformed manifests are fail-level findings; orphan context, duplicate content, legacy path drift, and managed file drift are warning-level findings.
@@ -175,8 +191,8 @@ It scans the project playbook for broken relative markdown links, context files 
 `operator gc` is a preview-first cleanup for obsolete managed playbook files:
 
 ```powershell
-node .\bin\ai-playbook.mjs operator gc <target> --json
-node .\bin\ai-playbook.mjs operator gc <target> --apply --json
+npx ai-agent-playbook operator gc <target> --json
+npx ai-agent-playbook operator gc <target> --apply --json
 ```
 
 Preview mode writes nothing. Apply mode only removes files listed in `.ai-playbook/.ai-agent-playbook-install.json` when all of these are true: the original source template no longer exists in the current checkout, the target file is still under the active playbook directory, and the current target hash still matches the manifest `targetHash`. Modified files are reported as conflicts and preserved. JSON output returns `{ schemaVersion, ok, target, applied, summary, operations, warnings, conflicts }`.
@@ -184,8 +200,8 @@ Preview mode writes nothing. Apply mode only removes files listed in `.ai-playbo
 `rules check` discovers portable rule files and reports which rules apply to a path:
 
 ```powershell
-node .\bin\ai-playbook.mjs rules check <target> --json
-node .\bin\ai-playbook.mjs rules check <target> --path src/example.ts --json
+npx ai-agent-playbook rules check <target> --json
+npx ai-agent-playbook rules check <target> --path src/example.ts --json
 ```
 
 Rule discovery intentionally excludes root `AGENTS.md`, because supported agents usually load it natively. Current rule sources are `.ai-playbook/rules/**/*.md`, `.github/instructions/**/*.md`, `.cursor/rules/**/*.md`, `.claude/rules/**/*.md`, `.github/copilot-instructions.md`, and `CONTEXT.md`. Directory rules may use simple frontmatter such as `alwaysApply: true` or `globs: ["src/**/*.ts"]`. JSON output returns `{ schemaVersion, ok, target, path, summary, rules, warnings }`.
@@ -193,7 +209,7 @@ Rule discovery intentionally excludes root `AGENTS.md`, because supported agents
 `diagnostics check` reads local project metadata and lists likely verification commands without executing them:
 
 ```powershell
-node .\bin\ai-playbook.mjs diagnostics check <target> --json
+npx ai-agent-playbook diagnostics check <target> --json
 ```
 
 It currently detects common `package.json` scripts plus basic Python, Rust, and Go project markers. Package scripts are rendered with the detected package manager from lockfiles such as `pnpm-lock.yaml`, `yarn.lock`, `package-lock.json`, or Bun lockfiles. JSON output includes `packageManager`. A missing command set is a warning, not a failure, because some projects keep verification in runbooks or external CI.
@@ -201,7 +217,7 @@ It currently detects common `package.json` scripts plus basic Python, Rust, and 
 `qa tui-check` checks captured terminal output for width overflow, CJK wide-character columns, ANSI presence, and simple box-drawing alignment:
 
 ```powershell
-node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
+npx ai-agent-playbook qa tui-check .\capture.txt --cols 100 --json
 ```
 
 This command exits non-zero when overflow or border misalignment is found. It is meant for terminal UI, CLI table, log, report, and Korean/Japanese/Chinese text layout checks. Browser screenshot review still belongs in the target project's browser tooling or visual QA guide.
@@ -211,8 +227,8 @@ This command exits non-zero when overflow or border misalignment is found. It is
 `adapter config` renders copy-paste-safe local hook configuration for manual setup. It is read-only: it does not create settings files, install hooks, edit project files, or call the network.
 
 ```powershell
-node .\bin\ai-playbook.mjs adapter config <target> --adapter codex --json
-node .\bin\ai-playbook.mjs adapter config <target> --adapter claude-code --json
+npx ai-agent-playbook adapter config <target> --adapter codex --json
+npx ai-agent-playbook adapter config <target> --adapter claude-code --json
 ```
 
 Use `--json` to return `{ schemaVersion, ok, target, adapter, hookCommand, config, warnings }`. `hookCommand` and `config` use the current checkout path and do not include `<path-to-ai-agent-playbook>` placeholders. A missing `.ai-playbook/` folder is reported as a warning, not as a config rendering failure.
@@ -220,9 +236,9 @@ Use `--json` to return `{ schemaVersion, ok, target, adapter, hookCommand, confi
 `adapter check` is a read-only self-check before manually enabling an optional hook adapter.
 
 ```powershell
-node .\bin\ai-playbook.mjs adapter check <target> --adapter codex --json
-node .\bin\ai-playbook.mjs adapter check <target> --adapter claude-code --json
-node .\bin\ai-playbook.mjs adapter check <target> --adapter codex --settings <local-settings-path> --json
+npx ai-agent-playbook adapter check <target> --adapter codex --json
+npx ai-agent-playbook adapter check <target> --adapter claude-code --json
+npx ai-agent-playbook adapter check <target> --adapter codex --settings <local-settings-path> --json
 ```
 
 The command verifies the target path, `.ai-playbook/`, non-empty core context, adapter hook files, example settings, supported hook JSON for `SessionStart` and `PostCompact`, and quiet behavior for unsupported events or missing playbook context. It does not install hooks, write project files, call the network, or require a global command.

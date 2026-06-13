@@ -15,6 +15,8 @@ node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
 node .\bin\ai-playbook.mjs migrate path <target-repo> --json
 node .\bin\ai-playbook.mjs managed check <target-repo> --json
+node .\bin\ai-playbook.mjs managed catalog <target-repo> --json
+node .\bin\ai-playbook.mjs managed prune <target-repo> --path .ai-playbook/guides/runtime-harness.md --json
 node .\bin\ai-playbook.mjs managed uninstall <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo>
 node .\bin\ai-playbook.mjs operator check <target-repo> --path src/example.ts --json
@@ -34,7 +36,7 @@ Use `guides sync` after the target already has `.ai-playbook/` and you only want
 
 If the project still has a legacy `ai-playbook/` folder, use `migrate path --json` to preview the move to `.ai-playbook/`, reference updates, and `.gitignore` change. Add `--apply` only after reviewing the preview. If both paths exist, stop and merge manually.
 
-Use `managed check` to inspect the project-level install marker. Use `managed adopt --apply` only when older copied files match current templates, and use `managed uninstall --apply` only after previewing which unmodified files would be removed. Locally edited files are preserved.
+Use `managed check` to inspect the project-level install marker and `managed catalog` to see owned files by kind and status. Use `managed adopt --apply` only when older copied files match current templates, `managed prune --apply --path <managed-path>` only after previewing a selected unmodified file, and `managed uninstall --apply` only after previewing which unmodified files would be removed. Locally edited files are preserved.
 
 ## Active project flow
 

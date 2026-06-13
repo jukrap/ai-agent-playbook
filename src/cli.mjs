@@ -8,12 +8,14 @@ import {
   bootstrapProject,
   checkGuides,
   checkManagedManifest,
+  catalogManagedManifest,
   createPlan,
   createWorklog,
   doctorProject,
   migratePlaybookPath,
   parseMaxChars,
   adoptManagedManifest,
+  pruneManagedManifest,
   syncGuides,
   uninstallManagedManifest,
   summarizeWorklogs
@@ -167,6 +169,22 @@ export async function runCli(argv, io = {}) {
       return result.ok ? 0 : 1;
     }
 
+    if (command === 'managed' && subcommand === 'catalog') {
+      const result = await catalogManagedManifest({ target: resolveTarget(cwd, targetArg) });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Managed catalog: ${result.summary.total} file(s)\n`);
+        for (const file of result.files) {
+          write(stdout, `[${file.status.toUpperCase()}] ${file.kind} ${file.path}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
     if (command === 'managed' && subcommand === 'adopt') {
       const result = await adoptManagedManifest({
         repoRoot: root,
@@ -181,6 +199,31 @@ export async function runCli(argv, io = {}) {
         }
         if (!parsed.flags.apply) {
           write(stdout, 'Re-run with --apply to write the managed manifest.\n');
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'managed' && subcommand === 'prune') {
+      const result = await pruneManagedManifest({
+        target: resolveTarget(cwd, targetArg),
+        managedPath: parsed.flags.path,
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        for (const operation of result.operations) {
+          write(stdout, `[PLAN] ${operation.message}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+        if (!parsed.flags.apply && result.operations.length > 0) {
+          write(stdout, 'Re-run with --apply to remove the selected managed file.\n');
         }
       }
       return result.ok ? 0 : 1;
@@ -530,5 +573,5 @@ function parseMaxResults(value) {
 }
 
 function helpText() {
-  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook doctor <target> --reminder [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--diff] [--json]\n  ai-playbook migrate path <target> [--apply] [--json]\n  ai-playbook managed check <target> [--json]\n  ai-playbook managed adopt <target> [--apply] [--json]\n  ai-playbook managed uninstall <target> [--apply] [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook operator check <target> [--path <file>] [--diff] [--json]\n  ai-playbook operator search <target> --query <text> [--path <file>] [--max-results N] [--json]\n  ai-playbook operator context <target> --path <file> [--json]\n  ai-playbook operator map <target> [--json]\n  ai-playbook operator audit <target> [--json]\n  ai-playbook operator gc <target> [--apply] [--json]\n  ai-playbook rules check <target> [--path <file>] [--json]\n  ai-playbook diagnostics check <target> [--json]\n  ai-playbook qa tui-check <capture-file> [--cols N] [--json]\n  ai-playbook adapter config <target> --adapter codex|claude-code [--json]\n  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
+  return `ai-playbook\n\nUsage:\n  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]\n  ai-playbook doctor <target> [--strict] [--json]\n  ai-playbook doctor <target> --reminder [--json]\n  ai-playbook guides sync <target> [--dry-run] [--force]\n  ai-playbook guides sync <target> --check [--diff] [--json]\n  ai-playbook migrate path <target> [--apply] [--json]\n  ai-playbook managed check <target> [--json]\n  ai-playbook managed catalog <target> [--json]\n  ai-playbook managed adopt <target> [--apply] [--json]\n  ai-playbook managed prune <target> --path <managed-path> [--apply] [--json]\n  ai-playbook managed uninstall <target> [--apply] [--json]\n  ai-playbook context <target> [--json] [--max-chars N]\n  ai-playbook operator check <target> [--path <file>] [--diff] [--json]\n  ai-playbook operator search <target> --query <text> [--path <file>] [--max-results N] [--json]\n  ai-playbook operator context <target> --path <file> [--json]\n  ai-playbook operator map <target> [--json]\n  ai-playbook operator audit <target> [--json]\n  ai-playbook operator gc <target> [--apply] [--json]\n  ai-playbook rules check <target> [--path <file>] [--json]\n  ai-playbook diagnostics check <target> [--json]\n  ai-playbook qa tui-check <capture-file> [--cols N] [--json]\n  ai-playbook adapter config <target> --adapter codex|claude-code [--json]\n  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]\n  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]\n  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]\n`;
 }

@@ -15,6 +15,8 @@ node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
 node .\bin\ai-playbook.mjs migrate path <target-repo> --json
 node .\bin\ai-playbook.mjs managed check <target-repo> --json
+node .\bin\ai-playbook.mjs managed catalog <target-repo> --json
+node .\bin\ai-playbook.mjs managed prune <target-repo> --path .ai-playbook/guides/runtime-harness.md --json
 node .\bin\ai-playbook.mjs managed uninstall <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo>
 node .\bin\ai-playbook.mjs operator check <target-repo> --path src/example.ts --json
@@ -34,7 +36,7 @@ node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
 
 프로젝트가 아직 legacy `ai-playbook/` 폴더를 사용한다면 `migrate path --json`으로 `.ai-playbook/` 이동, 참조 갱신, `.gitignore` 변경을 먼저 preview합니다. Preview를 검토한 뒤에만 `--apply`를 추가합니다. 두 경로가 모두 있으면 멈추고 수동으로 병합합니다.
 
-`managed check`로 project-level install marker를 확인합니다. 오래전에 복사한 파일이 현재 template과 일치할 때만 `managed adopt --apply`를 사용하고, 어떤 수정되지 않은 파일이 제거될지 preview한 뒤에만 `managed uninstall --apply`를 사용합니다. 로컬에서 수정된 파일은 보존됩니다.
+`managed check`로 project-level install marker를 확인하고 `managed catalog`로 소유 파일을 kind/status별로 봅니다. 오래전에 복사한 파일이 현재 template과 일치할 때만 `managed adopt --apply`를 사용하고, 선택한 수정되지 않은 파일을 preview한 뒤에만 `managed prune --apply --path <managed-path>`를 사용하며, 어떤 수정되지 않은 파일이 제거될지 preview한 뒤에만 `managed uninstall --apply`를 사용합니다. 로컬에서 수정된 파일은 보존됩니다.
 
 ## 진행 중 프로젝트 흐름
 

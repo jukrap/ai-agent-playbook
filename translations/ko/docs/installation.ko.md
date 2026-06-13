@@ -130,11 +130,15 @@ node .\bin\ai-playbook.mjs bootstrap <target-project>
 node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-project> --check --diff
 node .\bin\ai-playbook.mjs migrate path <target-project> --json
+node .\bin\ai-playbook.mjs managed check <target-project> --json
+node .\bin\ai-playbook.mjs managed adopt <target-project> --json
+node .\bin\ai-playbook.mjs managed uninstall <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
 node .\bin\ai-playbook.mjs context <target-project> --json
 node .\bin\ai-playbook.mjs operator check <target-project> --path src/example.ts --json
+node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --path src/example.ts --json
 node .\bin\ai-playbook.mjs rules check <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs diagnostics check <target-project> --json
 node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
@@ -149,9 +153,11 @@ node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --sett
 
 경로 전환 기간에는 `.ai-playbook/`이 없고 기존 `ai-playbook/` 폴더만 있는 프로젝트도 runtime 명령이 지원합니다. 새 bootstrap 결과는 `.ai-playbook/`을 사용합니다. Legacy 폴더 이동과 참조 갱신은 먼저 `migrate path --json`으로 preview하고, 검토한 뒤에만 `--apply`를 추가합니다.
 
+Bootstrap과 guide sync는 project-level marker인 `.ai-playbook/.ai-agent-playbook-install.json`을 관리합니다. `managed check`로 확인하고, 오래된 matching install에는 `managed adopt --apply`를, 수정되지 않은 managed file 제거에는 `managed uninstall --apply`를 사용합니다. Uninstall 명령은 로컬에서 수정된 파일을 보존하고 `.gitignore` 정리는 operator에게 맡깁니다.
+
 선택적 adapter hook 예시는 내부적으로 `context` 명령을 사용합니다. 이 예시는 read-only이며 `adapters/`에서 수동으로 활성화해야 합니다. `adapter config`로 placeholder 없는 local 설정을 렌더링한 뒤, local settings file을 수동으로 편집한 후 `adapter check --settings <local-settings-path>`로 확인합니다.
 
-Operator diagnostics 명령도 read-only입니다. `operator check`는 doctor, guide freshness, diagnostics, rule matching을 하나의 human checkpoint로 묶습니다. `rules check`는 path에 적용되는 portable rule file을 보여주고, `diagnostics check`는 실행하지 않은 상태로 verification command 후보를 나열하며 감지한 package manager lockfile을 반영합니다. `qa tui-check`는 terminal capture의 width overflow와 CJK layout risk를 확인합니다.
+Operator diagnostics 명령도 read-only입니다. `operator check`는 doctor, guide freshness, diagnostics, rule matching을 하나의 human checkpoint로 묶습니다. `operator search`는 파일을 쓰지 않고 local source, playbook, rules, plans, worklogs를 검색합니다. `rules check`는 path에 적용되는 portable rule file을 보여주고, `diagnostics check`는 실행하지 않은 상태로 verification command 후보를 나열하며 감지한 package manager lockfile을 반영합니다. `qa tui-check`는 terminal capture의 width overflow와 CJK layout risk를 확인합니다.
 
 Plan과 worklog는 CLI로 생성할 수 있습니다.
 

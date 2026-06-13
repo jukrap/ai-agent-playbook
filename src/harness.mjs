@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, rename, stat, writeFile, copyFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rename, rm, rmdir, stat, writeFile, copyFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -28,6 +28,8 @@ export const CONTEXT_SOURCE_FILES = [
   'GIT.md'
 ];
 export const GUIDE_MANIFEST_FILE = 'manifest.json';
+export const INSTALL_MANIFEST_FILE = '.ai-agent-playbook-install.json';
+export const INSTALL_SOURCE = 'ai-agent-playbook';
 
 const OBSOLETE_STYLE_SKILLS = [
   'design-system-first',
@@ -159,6 +161,13 @@ export async function bootstrapProject(options) {
   if (localOnly) {
     await ensureGitignoreEntry(target, `${DEFAULT_PLAYBOOK_DIR}/`, { dryRun: false, operations });
   }
+  await writeBootstrapManifest({
+    repoRoot,
+    target,
+    agentContent,
+    localOnly,
+    profile
+  });
 
   return {
     ok: conflicts.length === 0,
@@ -593,10 +602,178 @@ export async function syncGuides(options) {
     operations,
     conflicts
   });
+  if (!dryRun && conflicts.length === 0) {
+    await updateGuideManifestEntries({ repoRoot, target });
+  }
 
   return {
     ok: conflicts.length === 0,
     operations,
+    conflicts
+  };
+}
+
+export async function checkManagedManifest(options) {
+  const { target } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const manifestRelativePath = `${playbook.dir}/${INSTALL_MANIFEST_FILE}`;
+  const manifestPath = path.join(playbook.root, INSTALL_MANIFEST_FILE);
+  const base = {
+    schemaVersion: SCHEMA_VERSION,
+    ok: false,
+    target: resolvedTarget,
+    manifestPath: manifestRelativePath,
+    summary: { total: 0, present: 0, modified: 0, missing: 0 },
+    files: [],
+    warnings: [],
+    conflicts: []
+  };
+
+  const manifestResult = await readManagedManifest(resolvedTarget, playbook);
+  if (!manifestResult.ok) {
+    base.conflicts.push(manifestResult.conflict);
+    return base;
+  }
+
+  const files = await managedFileStatuses(resolvedTarget, manifestResult.manifest.files);
+  const summary = summarizeManagedFiles(files);
+  const conflicts = files
+    .filter((file) => file.status === 'modified' || file.status === 'missing')
+    .map((file) => ({
+      id: file.status === 'modified' ? 'managed.file.modified' : 'managed.file.missing',
+      message: `${file.path} is ${file.status}.`,
+      paths: [file.path]
+    }));
+
+  return {
+    ...base,
+    ok: conflicts.length === 0,
+    summary,
+    files,
+    warnings: [],
+    conflicts
+  };
+}
+
+export async function adoptManagedManifest(options) {
+  const { repoRoot, target, apply = false } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const candidates = await matchingManifestCandidates({ repoRoot, target: resolvedTarget, playbook });
+  const localOnly = await hasGitignoreEntry(resolvedTarget, `${playbook.dir}/`);
+  const operations = candidates.map((file) => ({
+    id: 'managed.adopt-file',
+    action: 'adopt',
+    message: `Adopt ${file.path}.`,
+    paths: [file.path]
+  }));
+  operations.push({
+    id: 'managed.write-manifest',
+    action: 'write-manifest',
+    message: `Write ${playbook.dir}/${INSTALL_MANIFEST_FILE}.`,
+    paths: [`${playbook.dir}/${INSTALL_MANIFEST_FILE}`]
+  });
+
+  if (apply) {
+    await writeManagedManifest(resolvedTarget, playbook, {
+      localOnly,
+      files: candidates,
+      installedAtUtc: new Date().toISOString()
+    });
+  }
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    applied: Boolean(apply),
+    summary: {
+      adopted: candidates.length,
+      operations: operations.length,
+      warnings: 0,
+      conflicts: 0
+    },
+    operations,
+    warnings: [],
+    conflicts: []
+  };
+}
+
+export async function uninstallManagedManifest(options) {
+  const { target, apply = false } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const manifestResult = await readManagedManifest(resolvedTarget, playbook);
+  const warnings = [];
+  const operations = [];
+  if (!manifestResult.ok) {
+    return {
+      schemaVersion: SCHEMA_VERSION,
+      ok: false,
+      target: resolvedTarget,
+      applied: false,
+      summary: { removable: 0, conflicts: 1, warnings: 0 },
+      operations,
+      warnings,
+      conflicts: [manifestResult.conflict]
+    };
+  }
+
+  const files = await managedFileStatuses(resolvedTarget, manifestResult.manifest.files);
+  const removable = files.filter((file) => file.status === 'present');
+  const conflicts = files
+    .filter((file) => file.status === 'modified')
+    .map((file) => ({
+      id: 'managed.file.modified',
+      message: `${file.path} has local edits and will not be removed.`,
+      paths: [file.path]
+    }));
+
+  for (const file of removable) {
+    operations.push({
+      id: 'managed.remove-file',
+      action: 'remove',
+      message: `Remove ${file.path}.`,
+      paths: [file.path]
+    });
+  }
+  if (manifestResult.manifest.localOnly) {
+    warnings.push({
+      id: 'managed.gitignore.manual-cleanup',
+      message: `Review .gitignore manually for the ${playbook.dir}/ local-only entry.`,
+      paths: ['.gitignore', `${playbook.dir}/`]
+    });
+  }
+
+  if (apply) {
+    for (const file of removable) {
+      await rm(path.join(resolvedTarget, ...file.path.split('/')), { force: true });
+    }
+    if (conflicts.length === 0) {
+      await rm(path.join(playbook.root, INSTALL_MANIFEST_FILE), { force: true });
+    }
+    await removeEmptyManagedDirectories(resolvedTarget, playbook.root, removable.map((file) => file.path));
+  }
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: conflicts.length === 0,
+    target: resolvedTarget,
+    applied: Boolean(apply && removable.length > 0),
+    summary: {
+      removable: removable.length,
+      conflicts: conflicts.length,
+      warnings: warnings.length
+    },
+    operations,
+    warnings,
     conflicts
   };
 }
@@ -825,6 +1002,254 @@ async function ensureGitignoreEntry(target, entry, context) {
   }
 }
 
+async function writeBootstrapManifest(options) {
+  const { repoRoot, target, agentContent, localOnly, profile } = options;
+  const playbook = resolvePlaybookLayout(target);
+  const files = await sourceTemplateManifestEntries({
+    repoRoot,
+    target,
+    playbook,
+    includeOnlyExistingAndMatching: false
+  });
+  const agentHash = hashContent(agentContent);
+  files.push({
+    path: 'AGENTS.md',
+    kind: 'bootstrap',
+    source: profile
+      ? `templates/agents/global/AGENTS.md+templates/agents/profiles/${profile}/AGENTS.md`
+      : 'templates/agents/global/AGENTS.md',
+    sourceHash: agentHash,
+    targetHash: await hashFile(path.join(target, 'AGENTS.md'))
+  });
+  await writeManagedManifest(target, playbook, {
+    localOnly,
+    files,
+    installedAtUtc: new Date().toISOString()
+  });
+}
+
+async function updateGuideManifestEntries(options) {
+  const { repoRoot, target } = options;
+  const playbook = resolvePlaybookLayout(target);
+  const existing = await readManagedManifest(target, playbook);
+  const existingFiles = existing.ok ? existing.manifest.files : [];
+  const guideEntries = await sourceGuideManifestEntries({ repoRoot, target, playbook });
+  const merged = mergeManagedFiles(existingFiles, guideEntries);
+  await writeManagedManifest(target, playbook, {
+    localOnly: existing.ok ? Boolean(existing.manifest.localOnly) : await hasGitignoreEntry(target, `${playbook.dir}/`),
+    files: merged,
+    installedAtUtc: existing.ok ? existing.manifest.installedAtUtc : new Date().toISOString()
+  });
+}
+
+async function writeManagedManifest(target, playbook, options) {
+  const installedAtUtc = options.installedAtUtc ?? new Date().toISOString();
+  const now = new Date().toISOString();
+  const files = [...options.files].sort((left, right) => left.path.localeCompare(right.path));
+  const manifest = {
+    schemaVersion: SCHEMA_VERSION,
+    source: INSTALL_SOURCE,
+    playbookDir: playbook.dir,
+    localOnly: Boolean(options.localOnly),
+    installedAtUtc,
+    updatedAtUtc: now,
+    files
+  };
+  const manifestPath = path.join(playbook.root, INSTALL_MANIFEST_FILE);
+  await mkdir(path.dirname(manifestPath), { recursive: true });
+  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+}
+
+async function readManagedManifest(target, playbook = resolvePlaybookLayout(target)) {
+  const manifestPath = path.join(playbook.root, INSTALL_MANIFEST_FILE);
+  const relativePath = `${playbook.dir}/${INSTALL_MANIFEST_FILE}`;
+  if (!existsSync(manifestPath)) {
+    return {
+      ok: false,
+      conflict: {
+        id: 'managed.manifest.missing',
+        message: `Missing managed manifest ${relativePath}.`,
+        paths: [relativePath]
+      }
+    };
+  }
+  let manifest;
+  try {
+    manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  } catch (error) {
+    return {
+      ok: false,
+      conflict: {
+        id: 'managed.manifest.malformed',
+        message: `Could not parse ${relativePath}: ${error.message}`,
+        paths: [relativePath]
+      }
+    };
+  }
+  const invalidReason = validateManagedManifest(manifest);
+  if (invalidReason) {
+    return {
+      ok: false,
+      conflict: {
+        id: 'managed.manifest.invalid',
+        message: `${relativePath} is invalid: ${invalidReason}`,
+        paths: [relativePath]
+      }
+    };
+  }
+  return { ok: true, manifest };
+}
+
+function validateManagedManifest(manifest) {
+  if (manifest?.schemaVersion !== SCHEMA_VERSION) return 'schemaVersion mismatch';
+  if (manifest.source !== INSTALL_SOURCE) return 'source mismatch';
+  if (typeof manifest.playbookDir !== 'string') return 'missing playbookDir';
+  if (!Array.isArray(manifest.files)) return 'missing files';
+  for (const file of manifest.files) {
+    if (!file || typeof file.path !== 'string') return 'file entry missing path';
+    if (path.isAbsolute(file.path) || file.path.includes('\\')) return `non-portable path ${file.path}`;
+    if (typeof file.kind !== 'string' || typeof file.source !== 'string') return `invalid entry ${file.path}`;
+    if (typeof file.sourceHash !== 'string' || typeof file.targetHash !== 'string') return `missing hashes for ${file.path}`;
+  }
+  return null;
+}
+
+async function managedFileStatuses(target, files) {
+  const statuses = [];
+  for (const file of files) {
+    const fullPath = path.join(target, ...file.path.split('/'));
+    if (!existsSync(fullPath)) {
+      statuses.push({ ...file, status: 'missing' });
+      continue;
+    }
+    const targetHash = await hashFile(fullPath);
+    statuses.push({
+      ...file,
+      status: targetHash === file.targetHash ? 'present' : 'modified',
+      currentHash: targetHash
+    });
+  }
+  statuses.sort((left, right) => left.path.localeCompare(right.path));
+  return statuses;
+}
+
+function summarizeManagedFiles(files) {
+  return {
+    total: files.length,
+    present: files.filter((file) => file.status === 'present').length,
+    modified: files.filter((file) => file.status === 'modified').length,
+    missing: files.filter((file) => file.status === 'missing').length
+  };
+}
+
+async function matchingManifestCandidates(options) {
+  return sourceTemplateManifestEntries({
+    ...options,
+    includeOnlyExistingAndMatching: true
+  });
+}
+
+async function sourceTemplateManifestEntries(options) {
+  const { repoRoot, target, playbook, includeOnlyExistingAndMatching } = options;
+  const sourceRoot = path.join(repoRoot, 'templates', 'project-playbook');
+  const sourceFiles = await walkFiles(sourceRoot, (file) => file !== path.join(sourceRoot, INSTALL_MANIFEST_FILE));
+  const entries = [];
+  for (const sourceFile of sourceFiles) {
+    const rel = toPortablePath(path.relative(sourceRoot, sourceFile));
+    const targetPath = `${playbook.dir}/${rel}`;
+    const targetFile = path.join(target, ...targetPath.split('/'));
+    if (!existsSync(targetFile)) {
+      if (includeOnlyExistingAndMatching) continue;
+      continue;
+    }
+    const sourceHash = await hashFile(sourceFile);
+    const targetHash = await hashFile(targetFile);
+    if (includeOnlyExistingAndMatching && sourceHash !== targetHash) continue;
+    entries.push({
+      path: targetPath,
+      kind: rel.startsWith('guides/') ? 'guide' : 'playbook',
+      source: `templates/project-playbook/${rel}`,
+      sourceHash,
+      targetHash
+    });
+  }
+
+  const rootAgent = path.join(repoRoot, 'templates', 'agents', 'global', 'AGENTS.md');
+  const targetAgent = path.join(target, 'AGENTS.md');
+  if (existsSync(targetAgent)) {
+    const sourceHash = await hashFile(rootAgent);
+    const targetHash = await hashFile(targetAgent);
+    if (!includeOnlyExistingAndMatching || sourceHash === targetHash) {
+      entries.push({
+        path: 'AGENTS.md',
+        kind: 'bootstrap',
+        source: 'templates/agents/global/AGENTS.md',
+        sourceHash,
+        targetHash
+      });
+    }
+  }
+
+  return entries.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+async function sourceGuideManifestEntries(options) {
+  const { repoRoot, target, playbook } = options;
+  const sourceRoot = path.join(repoRoot, 'templates', 'project-playbook', 'guides');
+  const sourceGuides = await loadGuideManifest(sourceRoot);
+  const entries = [];
+  for (const guide of sourceGuides) {
+    const rel = toPortablePath(guide.path);
+    const targetPath = `${playbook.dir}/guides/${rel}`;
+    const targetFile = path.join(target, ...targetPath.split('/'));
+    if (!existsSync(targetFile)) continue;
+    entries.push({
+      path: targetPath,
+      kind: 'guide',
+      source: `templates/project-playbook/guides/${rel}`,
+      sourceHash: guide.sourceHash ?? await hashFile(path.join(sourceRoot, ...rel.split('/'))),
+      targetHash: await hashFile(targetFile)
+    });
+  }
+  return entries;
+}
+
+function mergeManagedFiles(existingFiles, updates) {
+  const byPath = new Map(existingFiles.map((file) => [file.path, file]));
+  for (const update of updates) {
+    byPath.set(update.path, update);
+  }
+  return [...byPath.values()].sort((left, right) => left.path.localeCompare(right.path));
+}
+
+async function hasGitignoreEntry(target, entry) {
+  const file = path.join(target, '.gitignore');
+  if (!existsSync(file)) return false;
+  const lines = (await readFile(file, 'utf8')).split(/\r?\n/).map((line) => line.trim());
+  return lines.includes(entry);
+}
+
+async function removeEmptyManagedDirectories(target, playbookRoot, managedPaths) {
+  const directories = [...new Set(managedPaths
+    .map((managedPath) => path.dirname(path.join(target, ...managedPath.split('/'))))
+    .filter((directory) => directory.startsWith(playbookRoot)))]
+    .sort((left, right) => right.length - left.length);
+
+  for (const directory of directories) {
+    if (directory === target) continue;
+    try {
+      await rmdir(directory);
+    } catch {
+      // Non-empty directories are intentionally preserved.
+    }
+  }
+  try {
+    await rmdir(playbookRoot);
+  } catch {
+    // Keep playbook root when modified files, manifest, or user files remain.
+  }
+}
+
 async function playbookReferenceUpdatePlan(target, playbookRoot) {
   const candidates = [];
   for (const rootFile of ['AGENTS.md']) {
@@ -929,6 +1354,10 @@ async function loadGuideManifestFallback(sourceRoot) {
 
 async function hashFile(file) {
   const content = await readFile(file);
+  return createHash('sha256').update(content).digest('hex');
+}
+
+function hashContent(content) {
   return createHash('sha256').update(content).digest('hex');
 }
 

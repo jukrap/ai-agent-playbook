@@ -14,8 +14,11 @@ node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
 node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
 node .\bin\ai-playbook.mjs migrate path <target-repo> --json
+node .\bin\ai-playbook.mjs managed check <target-repo> --json
+node .\bin\ai-playbook.mjs managed uninstall <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo>
 node .\bin\ai-playbook.mjs operator check <target-repo> --path src/example.ts --json
+node .\bin\ai-playbook.mjs operator search <target-repo> --query "auth flow" --path src/example.ts --json
 node .\bin\ai-playbook.mjs rules check <target-repo> --path src/example.ts --json
 node .\bin\ai-playbook.mjs diagnostics check <target-repo> --json
 node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
@@ -26,6 +29,8 @@ node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
 대상 프로젝트에 이미 `.ai-playbook/`이 있고 새 playbook checkout의 누락된 가이드만 가져오고 싶다면 `guides sync`를 사용합니다. 기본값은 기존 가이드, 루트 정책, 현재 프로젝트 메모, plan, worklog를 유지합니다. Local edit을 교체하기 전 stale guide를 검토하려면 `guides sync --check --diff --json`을 사용합니다.
 
 프로젝트가 아직 legacy `ai-playbook/` 폴더를 사용한다면 `migrate path --json`으로 `.ai-playbook/` 이동, 참조 갱신, `.gitignore` 변경을 먼저 preview합니다. Preview를 검토한 뒤에만 `--apply`를 추가합니다. 두 경로가 모두 있으면 멈추고 수동으로 병합합니다.
+
+`managed check`로 project-level install marker를 확인합니다. 오래전에 복사한 파일이 현재 template과 일치할 때만 `managed adopt --apply`를 사용하고, 어떤 수정되지 않은 파일이 제거될지 preview한 뒤에만 `managed uninstall --apply`를 사용합니다. 로컬에서 수정된 파일은 보존됩니다.
 
 ## 진행 중 프로젝트 흐름
 
@@ -50,6 +55,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo> --strict
 Agent에게 더 강한 evidence가 필요하지만 hook까지는 과할 때 read-only diagnostics를 사용합니다.
 
 - `operator check`는 doctor, guide freshness, diagnostics, rule matching을 하나의 read-only human checkpoint로 묶습니다.
+- `operator search`는 파일을 쓰지 않고 관련 local source, playbook, rule, plan, worklog text를 찾습니다.
 - `rules check`는 path에 적용되는 project rule file을 보여줍니다. Root `AGENTS.md`는 일반 entrypoint로 유지하고, injected context로 중복하지 않습니다.
 - `diagnostics check`는 project metadata에서 local verification command 후보를 읽되 실행하지 않고, package script를 렌더링할 때 lockfile에서 감지한 package manager를 사용합니다.
 - `qa tui-check`는 terminal capture에서 width overflow, 단순 border misalignment, ANSI 존재 여부, CJK wide-character column을 확인합니다.

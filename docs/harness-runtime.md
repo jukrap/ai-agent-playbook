@@ -13,8 +13,12 @@ node .\bin\ai-playbook.mjs doctor <target> --reminder [--json]
 node .\bin\ai-playbook.mjs guides sync <target> [--dry-run] [--force]
 node .\bin\ai-playbook.mjs guides sync <target> --check [--diff] [--json]
 node .\bin\ai-playbook.mjs migrate path <target> [--apply] [--json]
+node .\bin\ai-playbook.mjs managed check <target> [--json]
+node .\bin\ai-playbook.mjs managed adopt <target> [--apply] [--json]
+node .\bin\ai-playbook.mjs managed uninstall <target> [--apply] [--json]
 node .\bin\ai-playbook.mjs context <target> [--json] [--max-chars N]
 node .\bin\ai-playbook.mjs operator check <target> [--path <file>] [--diff] [--json]
+node .\bin\ai-playbook.mjs operator search <target> --query <text> [--path <file>] [--max-results N] [--json]
 node .\bin\ai-playbook.mjs rules check <target> [--path <file>] [--json]
 node .\bin\ai-playbook.mjs diagnostics check <target> [--json]
 node .\bin\ai-playbook.mjs qa tui-check <capture-file> [--cols N] [--json]
@@ -34,6 +38,7 @@ After publishing, the same CLI can be exposed through the package `bin` as `ai-p
 - Includes `.ai-playbook/SKILLS.md` and `.ai-playbook/GIT.md` as part of the project playbook.
 - Merges a stack profile into `AGENTS.md` when `--profile <name>` is provided.
 - Appends `.ai-playbook/` to `.gitignore` only when `--local-only` is provided.
+- Writes `.ai-playbook/.ai-agent-playbook-install.json` to mark files copied by this playbook. The marker stores only portable relative paths and content hashes.
 - Refuses to overwrite existing files unless `--force` is provided.
 - Preflights all planned writes before creating files. If a conflict is found, the command reports it without leaving a partial `.ai-playbook/` tree behind.
 
@@ -53,6 +58,24 @@ The default mode is a no-write preview. It reports the planned folder move, root
 Use `--apply` only after reviewing the preview. Apply mode renames the folder, updates references in the root `AGENTS.md` and playbook markdown or JSON files, and appends `.ai-playbook/` to `.gitignore` when needed. It does not call the network, install hooks, or edit unrelated project files.
 
 If both `ai-playbook/` and `.ai-playbook/` exist, the command reports a conflict and writes nothing.
+
+## Managed manifest
+
+`managed` commands inspect or maintain the project-level install marker at `.ai-playbook/.ai-agent-playbook-install.json`.
+
+```powershell
+node .\bin\ai-playbook.mjs managed check <target> --json
+node .\bin\ai-playbook.mjs managed adopt <target> --json
+node .\bin\ai-playbook.mjs managed adopt <target> --apply --json
+node .\bin\ai-playbook.mjs managed uninstall <target> --json
+node .\bin\ai-playbook.mjs managed uninstall <target> --apply --json
+```
+
+`managed check` is read-only and returns `{ schemaVersion, ok, target, manifestPath, summary, files, warnings, conflicts }`. Missing or malformed manifests fail the check. Missing or locally modified managed files are reported as conflicts so cleanup cannot silently remove project-specific edits.
+
+`managed adopt` is for older projects that already match the current templates but do not have a marker. Preview mode writes nothing. Apply mode records only files whose current content hash matches the source template hash.
+
+`managed uninstall` is also preview-first. Apply mode removes only unmodified managed files. Modified files are preserved and reported as conflicts. The command does not edit `.gitignore`; it returns a manual cleanup warning when the manifest says the playbook was installed as local-only.
 
 ## Doctor checks
 
@@ -102,6 +125,15 @@ node .\bin\ai-playbook.mjs operator check <target> --path src/example.ts --diff 
 ```
 
 It aggregates `doctor`, `guides sync --check`, `diagnostics check`, and `rules check` into one report. `--path` is forwarded to rule matching. `--diff` includes the same first-difference guide details as `guides sync --check --diff`. JSON output returns `{ schemaVersion, ok, target, path, summary, checks, sections }`, where `sections` contains the original `doctor`, `guides`, `diagnostics`, and `rules` reports. Missing guide templates or doctor failures fail the combined check; stale guides and diagnostics warnings stay as warning-level operator signals.
+
+`operator search` is a local read-only explorer:
+
+```powershell
+node .\bin\ai-playbook.mjs operator search <target> --query "auth flow" --json
+node .\bin\ai-playbook.mjs operator search <target> --query "auth flow" --path src/example.ts --max-results 20 --json
+```
+
+It scans text files under the target project and excludes common generated or dependency folders such as `.git`, `node_modules`, `dist`, `build`, `.next`, `.turbo`, and `coverage`. JSON output returns `{ schemaVersion, ok, target, query, path, summary, results, related }`. Results include relative path, category, score, match count, and snippets. No-match searches exit successfully with `summary.matches: 0`. When `--path` is provided, `related.rules` summarizes matching project rules for that file; `related.diagnostics` lists local verification command candidates without running them.
 
 `rules check` discovers portable rule files and reports which rules apply to a path:
 

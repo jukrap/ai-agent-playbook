@@ -14,8 +14,11 @@ node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
 node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
 node .\bin\ai-playbook.mjs migrate path <target-repo> --json
+node .\bin\ai-playbook.mjs managed check <target-repo> --json
+node .\bin\ai-playbook.mjs managed uninstall <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo>
 node .\bin\ai-playbook.mjs operator check <target-repo> --path src/example.ts --json
+node .\bin\ai-playbook.mjs operator search <target-repo> --query "auth flow" --path src/example.ts --json
 node .\bin\ai-playbook.mjs rules check <target-repo> --path src/example.ts --json
 node .\bin\ai-playbook.mjs diagnostics check <target-repo> --json
 node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
@@ -26,6 +29,8 @@ Use `--dry-run` first when the target already has agent docs. Bootstrap prefligh
 Use `guides sync` after the target already has `.ai-playbook/` and you only want missing guide files from a newer playbook checkout. By default it keeps existing guides, root policies, current project notes, plans, and worklogs. Use `guides sync --check --diff --json` when reviewing stale guides before replacing local edits.
 
 If the project still has a legacy `ai-playbook/` folder, use `migrate path --json` to preview the move to `.ai-playbook/`, reference updates, and `.gitignore` change. Add `--apply` only after reviewing the preview. If both paths exist, stop and merge manually.
+
+Use `managed check` to inspect the project-level install marker. Use `managed adopt --apply` only when older copied files match current templates, and use `managed uninstall --apply` only after previewing which unmodified files would be removed. Locally edited files are preserved.
 
 ## Active project flow
 
@@ -50,6 +55,7 @@ Use skills for behavior during the session:
 Use read-only diagnostics when an agent needs stronger evidence but a hook would be too much:
 
 - `operator check` combines doctor, guide freshness, diagnostics, and rule matching into one read-only human checkpoint.
+- `operator search` finds related local source, playbook, rule, plan, and worklog text without writing files.
 - `rules check` shows which project rule files apply to a path. Keep root `AGENTS.md` as the normal entrypoint; do not duplicate it as injected context.
 - `diagnostics check` lists likely local verification commands from project metadata without running them, using the package manager detected from lockfiles when it renders package scripts.
 - `qa tui-check` checks terminal captures for width overflow, simple border misalignment, ANSI presence, and CJK wide-character columns.

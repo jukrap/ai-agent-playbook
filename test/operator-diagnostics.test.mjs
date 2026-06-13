@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import crypto from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -466,6 +467,122 @@ test('operator map --json reports stack architecture quality and concerns withou
   await cleanup(target);
 });
 
+test('operator audit --json reports playbook drift without writing files', async () => {
+  const target = await tempRepo('operator audit-공백-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await adaptPlaybook(target);
+  await mkdir(path.join(target, '.ai-playbook', 'context'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'maps'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'runbooks'), { recursive: true });
+  await mkdir(path.join(target, 'ai-playbook'), { recursive: true });
+  await writeFile(path.join(target, '.ai-playbook', 'maps', 'broken.md'), [
+    '# Broken references',
+    '',
+    '[missing](../runbooks/missing.md)'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'maps', 'duplicate-a.md'), '# Same\n\nDuplicate signal\n');
+  await writeFile(path.join(target, '.ai-playbook', 'runbooks', 'duplicate-b.md'), '# Same\n\nDuplicate signal\n');
+  await writeFile(path.join(target, '.ai-playbook', 'context', 'orphan.md'), [
+    '---',
+    'globs:',
+    '  - src/missing/**/*.ts',
+    '---',
+    '# Orphan context'
+  ].join('\n'));
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli(['operator', 'audit', '.', '--json'], io), 1);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, false);
+  assert.equal(report.target, target);
+  assert.equal(report.summary.findings >= 4, true);
+  assert.equal(report.findings.some((finding) => finding.id === 'operator.audit.broken-link' && finding.level === 'fail'), true);
+  assert.equal(report.findings.some((finding) => finding.id === 'operator.audit.orphan-context' && finding.level === 'warn'), true);
+  assert.equal(report.findings.some((finding) => finding.id === 'operator.audit.duplicate-content' && finding.level === 'warn'), true);
+  assert.equal(report.findings.some((finding) => finding.id === 'operator.audit.legacy-playbook' && finding.level === 'warn'), true);
+  assert.equal(report.sections.links.broken, 1);
+  assert.equal(report.sections.context.orphaned, 1);
+  assert.equal(report.sections.duplicates.groups, 1);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('operator gc previews and removes only obsolete unmodified managed files', async () => {
+  const target = await tempRepo('operator gc-공백-한글-');
+  await mkdir(path.join(target, '.ai-playbook', 'guides'), { recursive: true });
+  const obsoletePath = '.ai-playbook/guides/obsolete.md';
+  const editedPath = '.ai-playbook/guides/edited-obsolete.md';
+  const currentPath = '.ai-playbook/guides/runtime-harness.md';
+  const obsoleteContent = '# Obsolete\n';
+  const editedOriginal = '# Edited original\n';
+  const currentContent = await readFile(path.join(repoRoot, 'templates', 'project-playbook', 'guides', 'runtime-harness.md'), 'utf8');
+  await writeFile(path.join(target, ...obsoletePath.split('/')), obsoleteContent);
+  await writeFile(path.join(target, ...editedPath.split('/')), `${editedOriginal}local edit\n`);
+  await writeFile(path.join(target, ...currentPath.split('/')), currentContent);
+  await writeFile(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json'), JSON.stringify({
+    schemaVersion: '1',
+    source: 'ai-agent-playbook',
+    playbookDir: '.ai-playbook',
+    localOnly: true,
+    installedAtUtc: '2026-06-13T00:00:00.000Z',
+    updatedAtUtc: '2026-06-13T00:00:00.000Z',
+    files: [
+      {
+        path: obsoletePath,
+        kind: 'guide',
+        source: 'templates/project-playbook/guides/obsolete.md',
+        sourceHash: hashText(obsoleteContent),
+        targetHash: hashText(obsoleteContent)
+      },
+      {
+        path: editedPath,
+        kind: 'guide',
+        source: 'templates/project-playbook/guides/edited-obsolete.md',
+        sourceHash: hashText(editedOriginal),
+        targetHash: hashText(editedOriginal)
+      },
+      {
+        path: currentPath,
+        kind: 'guide',
+        source: 'templates/project-playbook/guides/runtime-harness.md',
+        sourceHash: hashText(currentContent),
+        targetHash: hashText(currentContent)
+      }
+    ]
+  }, null, 2));
+  const before = await listRelativeFiles(target);
+
+  const preview = capture(target);
+  assert.equal(await runCli(['operator', 'gc', '.', '--json'], preview), 1);
+  const previewReport = JSON.parse(preview.out());
+
+  assert.equal(previewReport.schemaVersion, '1');
+  assert.equal(previewReport.ok, false);
+  assert.equal(previewReport.applied, false);
+  assert.equal(previewReport.summary.removable, 1);
+  assert.equal(previewReport.operations.some((operation) => operation.id === 'operator.gc.remove-obsolete-managed-file' && operation.paths.includes(obsoletePath)), true);
+  assert.equal(previewReport.conflicts.some((conflict) => conflict.id === 'operator.gc.modified-obsolete-managed-file' && conflict.paths.includes(editedPath)), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const applied = capture(target);
+  assert.equal(await runCli(['operator', 'gc', '.', '--apply', '--json'], applied), 1);
+  const appliedReport = JSON.parse(applied.out());
+  const after = await listRelativeFiles(target);
+  const manifest = JSON.parse(await readFile(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
+
+  assert.equal(appliedReport.applied, true);
+  assert.equal(after.includes(obsoletePath), false);
+  assert.equal(after.includes(editedPath), true);
+  assert.equal(after.includes(currentPath), true);
+  assert.equal(manifest.files.some((file) => file.path === obsoletePath), false);
+  assert.equal(manifest.files.some((file) => file.path === editedPath), true);
+  assert.equal(manifest.files.some((file) => file.path === currentPath), true);
+  await cleanup(target);
+});
+
 function capture(cwd) {
   let stdout = '';
   let stderr = '';
@@ -477,6 +594,10 @@ function capture(cwd) {
     out: () => stdout,
     err: () => stderr
   };
+}
+
+function hashText(text) {
+  return crypto.createHash('sha256').update(text).digest('hex');
 }
 
 async function tempRepo(prefix) {

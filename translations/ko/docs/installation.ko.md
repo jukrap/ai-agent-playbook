@@ -141,6 +141,8 @@ node .\bin\ai-playbook.mjs operator check <target-project> --path src/example.ts
 node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator context <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator map <target-project> --json
+node .\bin\ai-playbook.mjs operator audit <target-project> --json
+node .\bin\ai-playbook.mjs operator gc <target-project> --json
 node .\bin\ai-playbook.mjs rules check <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs diagnostics check <target-project> --json
 node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
@@ -159,7 +161,7 @@ Bootstrap과 guide sync는 project-level marker인 `.ai-playbook/.ai-agent-playb
 
 선택적 adapter hook 예시는 내부적으로 `context` 명령을 사용합니다. 이 예시는 read-only이며 `adapters/`에서 수동으로 활성화해야 합니다. `adapter config`로 placeholder 없는 local 설정을 렌더링한 뒤, local settings file을 수동으로 편집한 후 `adapter check --settings <local-settings-path>`로 확인합니다.
 
-Operator diagnostics 명령도 read-only입니다. `operator check`는 doctor, guide freshness, diagnostics, rule matching을 하나의 human checkpoint로 묶습니다. `operator search`는 파일을 쓰지 않고 local source, playbook, rules, plans, worklogs를 검색합니다. `operator context`는 agent가 context를 읽기 전에 path-scoped context file, rule, 관련 map/runbook을 미리 보여줍니다. `operator map`은 map file을 만들지 않고 stack, architecture, quality, concern signal을 요약합니다. `rules check`는 path에 적용되는 portable rule file을 보여주고, `diagnostics check`는 실행하지 않은 상태로 verification command 후보를 나열하며 감지한 package manager lockfile을 반영합니다. `qa tui-check`는 terminal capture의 width overflow와 CJK layout risk를 확인합니다.
+Operator diagnostics 명령도 operator가 명시적으로 실행합니다. `operator check`는 doctor, guide freshness, diagnostics, rule matching을 하나의 human checkpoint로 묶습니다. `operator search`는 파일을 쓰지 않고 local source, playbook, rules, plans, worklogs를 검색합니다. `operator context`는 agent가 context를 읽기 전에 path-scoped context file, rule, 관련 map/runbook을 미리 보여줍니다. `operator map`은 map file을 만들지 않고 stack, architecture, quality, concern signal을 요약합니다. `operator audit`는 파일을 쓰지 않고 playbook link, context glob, duplicate note, legacy path drift, managed manifest drift를 확인합니다. `operator gc`는 obsolete unmodified managed playbook file을 preview하고 `--apply`가 있을 때만 씁니다. `rules check`는 path에 적용되는 portable rule file을 보여주고, `diagnostics check`는 실행하지 않은 상태로 verification command 후보를 나열하며 감지한 package manager lockfile을 반영합니다. `qa tui-check`는 terminal capture의 width overflow와 CJK layout risk를 확인합니다.
 
 Plan과 worklog는 CLI로 생성할 수 있습니다.
 

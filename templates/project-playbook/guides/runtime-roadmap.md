@@ -16,7 +16,7 @@ Before considering hooks:
 - Use `guides sync --dry-run` from the source playbook checkout to add missing support guides without overwriting local edits.
 - Use `guides sync --check --diff --json`, `migrate path --json`, `doctor --json`, `doctor --reminder --json`, and `adapter check --json` when an adapter or automation needs a read-only health signal.
 - Use `managed check` before cleanup or uninstall previews.
-- Use `operator check`, `operator search`, `operator context`, `operator map`, `rules check`, `diagnostics check`, and `qa tui-check` as operator-visible diagnostics before adding hooks for the same concern.
+- Use `operator check`, `operator search`, `operator context`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, and `qa tui-check` as operator-visible diagnostics before adding hooks for the same concern.
 
 ## Runtime Readiness Checklist
 

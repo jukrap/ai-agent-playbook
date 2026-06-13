@@ -1,12 +1,33 @@
-# Installation
+# Install, Update, and Uninstall
 
 This package is easiest to use through npm or npx. A local Git checkout with the PowerShell scripts is still supported for development, private forks, and Windows environments that prefer explicit local scripts.
 
-## Option 1: npm or npx
+There are three separate layers:
+
+1. The npm package installs the `ai-playbook` CLI and bundled source files.
+2. `skills install` copies reusable skills into user-level skill roots.
+3. `bootstrap` copies a project playbook into one target repository.
+
+Installing the npm package by itself does not copy skills, create `.ai-playbook/`, enable hooks, or register slash commands. Those actions stay explicit.
+
+## Choose a CLI install style
 
 Use this when Node.js is available. The public package is [`ai-agent-playbook`](https://www.npmjs.com/package/ai-agent-playbook).
 
-For one-off commands:
+`npm i` is the short alias for `npm install`; scope flags decide where the package goes.
+
+| Goal | Command | Result |
+| ---- | ------- | ------ |
+| Try the tool or run occasional commands | `npx ai-agent-playbook --help` | npm downloads/runs the package for that command. No project dependency is added. |
+| Use `ai-playbook` from any directory | `npm install -g ai-agent-playbook` | Installs a global CLI command. Use `npm install -g ai-agent-playbook@latest` to update it. |
+| Pin the tool in one project | `npm install -D ai-agent-playbook` | Adds a dev dependency and `node_modules/ai-agent-playbook`; run it with `npx ai-playbook ...`. |
+| Work from a source checkout | `node .\bin\ai-playbook.mjs --help` | Runs the checked-out repository directly. |
+
+Avoid treating plain `npm install ai-agent-playbook` as the normal first step unless you intentionally want this package as a runtime dependency of the current project. It installs under the current project's `node_modules`, but it still does not install skills or bootstrap a project playbook.
+
+## Recommended first-time setup
+
+Start with read-only previews:
 
 ```powershell
 npx ai-agent-playbook --help
@@ -16,36 +37,77 @@ npx ai-agent-playbook bootstrap <target-project> --dry-run
 npx ai-agent-playbook operator check <target-project> --json
 ```
 
-Update or remove managed local skills:
+Restart Codex or start a new agent session after skill installation so new skill metadata is picked up.
 
-```powershell
-npx ai-agent-playbook skills update --dry-run
-npx ai-agent-playbook skills update
-npx ai-agent-playbook skills uninstall --dry-run
-npx ai-agent-playbook skills uninstall
-```
-
-For a persistent global command:
+Use a global install only when you want the shorter command:
 
 ```powershell
 npm install -g ai-agent-playbook
 ai-playbook --help
-ai-playbook skills update
-ai-playbook operator search <target-project> --query "auth flow" --json
+ai-playbook skills check
 ```
 
-Update or remove the global CLI:
+After a global install, replace `npx ai-agent-playbook` with `ai-playbook` in the examples below.
+
+## Skills lifecycle
+
+Reusable skills are installed into user-level skill roots, not into a target repository:
+
+- `%USERPROFILE%\.codex\skills\<skill>`
+- `%USERPROFILE%\.agents\skills\<skill>`
+- `%USERPROFILE%\.agents\skills\legacys\<legacy-skill>` for legacy skills
+
+Install or update managed local skills:
+
+```powershell
+npx ai-agent-playbook skills check --json
+npx ai-agent-playbook skills install --dry-run
+npx ai-agent-playbook skills install
+npx ai-agent-playbook skills update --dry-run
+npx ai-agent-playbook skills update
+```
+
+Remove managed local skills:
+
+```powershell
+npx ai-agent-playbook skills uninstall --dry-run
+npx ai-agent-playbook skills uninstall
+```
+
+`skills install` and `skills update` are idempotent. They sync managed skills into the common Codex and agent skill directories. They refuse to overwrite locally edited managed skills unless `--force-managed` is provided, and they refuse different same-name unmanaged skills unless `--force-unmanaged` is provided.
+
+`skills uninstall` removes only unmodified managed skills installed by this playbook. Run it with `--dry-run` first. If a managed skill was edited locally, uninstall stops until you either keep it or intentionally pass `--force-managed`.
+
+The ownership marker is `.ai-agent-playbook-install.json` inside each installed skill folder. The marker stores `source: "ai-agent-playbook"` and hashes so the CLI can distinguish this playbook's managed copies from other people's skills.
+
+Restart Codex after skill installation or update so the next session can pick up skill metadata.
+
+## Global CLI lifecycle
+
+The global npm package and the copied skills are separate. Removing the global package does not remove copied skills.
 
 ```powershell
 npm install -g ai-agent-playbook@latest
 npm uninstall -g ai-agent-playbook
 ```
 
-`skills install` and `skills update` sync managed skills into the common Codex and agent skill directories. They refuse to overwrite locally edited managed skills unless `--force-managed` is provided, and they refuse different same-name unmanaged skills unless `--force-unmanaged` is provided.
+Use `npx ai-agent-playbook skills uninstall` or `ai-playbook skills uninstall` when you want to remove copied skills.
 
-`skills uninstall` removes only unmodified managed skills installed by this playbook. Run it with `--dry-run` first.
+## What writes files
 
-Restart Codex after skill installation or update so the next session can pick up skill metadata.
+| Command | Writes by default? | Target |
+| ------- | ------------------ | ------ |
+| `npx ai-agent-playbook --help` | No | Prints CLI help. |
+| `npm install -g ai-agent-playbook` | Yes | npm global package location only. |
+| `npm install -D ai-agent-playbook` | Yes | Current project's `package.json`, lockfile, and `node_modules`. |
+| `skills check` | No | Reports skill status. |
+| `skills install` / `skills update` | Yes unless `--dry-run` | User skill roots. |
+| `skills uninstall` | Yes unless `--dry-run` | Removes managed skills from user skill roots. |
+| `bootstrap <target>` | Yes unless `--dry-run` | Target project's root `AGENTS.md` and `.ai-playbook/`. |
+| `guides sync <target>` | Yes unless `--dry-run` or `--check` | Target project's `.ai-playbook/guides/`. |
+| `managed adopt/prune/uninstall` | No unless `--apply` | Target project's `.ai-playbook/` managed files. |
+| `operator check/search/context/map/audit` | No | Read-only target project diagnostics. |
+| `adapter config/check` | No | Renders or validates local adapter settings. |
 
 ## Option 2: Fast local checkout with GitHub CLI
 
@@ -170,9 +232,9 @@ node .\bin\ai-playbook.mjs skills install `
 
 The skills lifecycle command does not remove or overwrite other people's same-name skills by default. It only removes obsolete skills when their ownership marker proves they were installed by this playbook. The PowerShell `scripts/sync-skills.ps1` wrapper remains available for local checkout workflows.
 
-## Applying project templates
+## Project playbook install, update, and removal
 
-Templates are not installed automatically as skills. Use the runtime CLI for the normal path, or copy/adapt templates manually when you need tighter control.
+Templates are not installed automatically as skills. Skills are reusable user-level guidance; the project playbook is per-repository project memory. Use the runtime CLI for the normal path, or copy/adapt templates manually when you need tighter control.
 
 This is the default project harness. Runtime hooks or agent plugins are optional extensions and are not installed by `install.ps1`, `update.ps1`, or the current CLI.
 
@@ -216,6 +278,16 @@ Use `guides sync` for projects that already have `.ai-playbook/` and only need m
 During the path transition, these runtime commands also support an existing legacy `ai-playbook/` folder when `.ai-playbook/` is absent. New bootstrap output uses `.ai-playbook/`. Use `migrate path --json` to preview a legacy folder move and reference updates, then add `--apply` only after reviewing the preview.
 
 Bootstrap and guide sync maintain a project-level marker at `.ai-playbook/.ai-agent-playbook-install.json`. Use `managed check` to inspect it, `managed catalog` to review owned files by kind and status, `managed adopt --apply` to mark older matching installs, `managed prune --apply --path <managed-path>` to remove one selected unmodified managed file, and `managed uninstall --apply` to remove all unmodified managed files. The prune and uninstall commands preserve locally edited files and leave `.gitignore` cleanup to the operator.
+
+Use this preview-first flow when removing a project playbook from a target repository:
+
+```powershell
+npx ai-agent-playbook managed check <target-project> --json
+npx ai-agent-playbook managed uninstall <target-project> --json
+npx ai-agent-playbook managed uninstall <target-project> --apply --json
+```
+
+`managed uninstall --apply` removes only files tracked by `.ai-playbook/.ai-agent-playbook-install.json` whose current hash still matches the manifest. It preserves edited project memory and does not edit `.gitignore`.
 
 The optional adapter hook examples use the `context` command internally. They are read-only and must be enabled manually from `adapters/`. Use `adapter config` to render placeholder-free local settings, then use `adapter check --settings <local-settings-path>` after manually editing a local settings file.
 

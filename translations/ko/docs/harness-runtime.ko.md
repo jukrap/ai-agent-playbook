@@ -4,6 +4,14 @@
 
 이 CLI와 project playbook이 기본 하네스입니다. Runtime hook 또는 plugin은 선택 확장이며, 동작이 명시적이고 local이며 쉽게 끌 수 있기 전까지 기본 경로 밖에 둡니다. 단계적 설계는 `runtime-roadmap.ko.md`를 봅니다.
 
+설치 범위는 구분해서 봅니다.
+
+- `npx ai-agent-playbook ...`은 현재 프로젝트에 package를 추가하지 않고 published package를 실행합니다.
+- `npm install -g ai-agent-playbook`은 `ai-playbook` 명령을 global로 설치합니다.
+- `npm install -D ai-agent-playbook`은 한 프로젝트에 CLI를 고정하지만 skill을 복사하거나 `.ai-playbook/`을 만들지 않습니다.
+- `skills install`과 `skills update`는 사용자 수준 skill copy만 씁니다.
+- `bootstrap`, `guides sync`, `managed` 명령은 project-level playbook 작업입니다.
+
 ## 명령
 
 ```powershell

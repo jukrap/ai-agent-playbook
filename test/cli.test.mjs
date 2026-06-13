@@ -1,5 +1,6 @@
 import { mkdir, mkdtemp, readFile, readdir, rm, stat, utimes, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -900,6 +901,45 @@ test('managed prune refuses unmanaged modified missing and absolute paths withou
   await cleanup(target);
 });
 
+test('managed manifest rejects parent traversal paths before removal', async () => {
+  const root = await tempRepo('managed traversal-공백-한글-');
+  const target = path.join(root, 'target');
+  const playbook = path.join(target, '.ai-playbook');
+  await mkdir(playbook, { recursive: true });
+  const victim = path.join(root, 'victim.txt');
+  const victimContent = 'do not remove outside target\n';
+  await writeFile(victim, victimContent);
+  await writeFile(path.join(playbook, '.ai-agent-playbook-install.json'), JSON.stringify({
+    schemaVersion: '1',
+    source: 'ai-agent-playbook',
+    playbookDir: '.ai-playbook',
+    localOnly: true,
+    installedAtUtc: '2026-06-13T00:00:00.000Z',
+    updatedAtUtc: '2026-06-13T00:00:00.000Z',
+    files: [
+      {
+        path: '../victim.txt',
+        kind: 'playbook',
+        source: 'templates/project-playbook/victim.txt',
+        sourceHash: hashText(victimContent),
+        targetHash: hashText(victimContent)
+      }
+    ]
+  }, null, 2));
+
+  const checked = capture(target);
+  assert.equal(await runCli(['managed', 'check', '.', '--json'], checked), 1);
+  const checkedReport = JSON.parse(checked.out());
+  assert.equal(checkedReport.conflicts.some((conflict) => conflict.id === 'managed.manifest.invalid'), true);
+
+  const removed = capture(target);
+  assert.equal(await runCli(['managed', 'uninstall', '.', '--apply', '--json'], removed), 1);
+  const removedReport = JSON.parse(removed.out());
+  assert.equal(removedReport.conflicts.some((conflict) => conflict.id === 'managed.manifest.invalid'), true);
+  assert.equal(existsSync(victim), true);
+  await cleanup(root);
+});
+
 function capture(cwd) {
   let stdout = '';
   let stderr = '';
@@ -915,6 +955,10 @@ function capture(cwd) {
 
 async function tempRepo(prefix = '.ai-playbook-test-') {
   return mkdtemp(path.join(os.tmpdir(), prefix));
+}
+
+function hashText(text) {
+  return createHash('sha256').update(text).digest('hex');
 }
 
 async function writePlaybookFixture(target, dirName, currentSignal) {

@@ -803,6 +803,103 @@ test('managed uninstall previews removals and preserves modified managed files w
   await cleanup(target);
 });
 
+test('managed catalog reports kind and status summaries without writing files', async () => {
+  const target = await tempRepo('managed catalog-공백-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nEdited facts to keep.\n');
+  await rm(path.join(target, '.ai-playbook', 'GIT.md'));
+  const before = await listRelativeFiles(target);
+
+  const catalog = capture(target);
+  assert.equal(await runCli(['managed', 'catalog', '.', '--json'], catalog), 1);
+  const report = JSON.parse(catalog.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, false);
+  assert.equal(report.target, target);
+  assert.equal(report.manifestPath, '.ai-playbook/.ai-agent-playbook-install.json');
+  assert.equal(report.manifest.playbookDir, '.ai-playbook');
+  assert.equal(report.summary.total > 0, true);
+  assert.equal(report.summary.byKind.playbook > 0, true);
+  assert.equal(report.summary.byKind.guide > 0, true);
+  assert.equal(report.summary.byKind.bootstrap, 1);
+  assert.equal(report.summary.byStatus.modified >= 1, true);
+  assert.equal(report.summary.byStatus.missing >= 1, true);
+  assert.equal(report.files.some((file) => file.path === '.ai-playbook/CURRENT.md' && file.status === 'modified'), true);
+  assert.equal(report.files.some((file) => file.path === '.ai-playbook/GIT.md' && file.status === 'missing'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('managed prune previews and removes only a selected unchanged managed file', async () => {
+  const target = await tempRepo('managed prune-공백-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  const selected = '.ai-playbook/guides/runtime-harness.md';
+  const windowsStyleSelected = '.ai-playbook\\guides\\runtime-harness.md';
+  const before = await listRelativeFiles(target);
+
+  const preview = capture(target);
+  assert.equal(await runCli(['managed', 'prune', '.', '--path', windowsStyleSelected, '--json'], preview), 0);
+  const previewReport = JSON.parse(preview.out());
+
+  assert.equal(previewReport.schemaVersion, '1');
+  assert.equal(previewReport.ok, true);
+  assert.equal(previewReport.applied, false);
+  assert.equal(previewReport.summary.selected, 1);
+  assert.equal(previewReport.summary.removable, 1);
+  assert.equal(previewReport.operations.some((operation) => operation.id === 'managed.prune.remove-file' && operation.paths.includes(selected)), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const applied = capture(target);
+  assert.equal(await runCli(['managed', 'prune', '.', '--path', selected, '--apply', '--json'], applied), 0);
+  const appliedReport = JSON.parse(applied.out());
+  const after = await listRelativeFiles(target);
+  const manifest = JSON.parse(await readFile(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
+
+  assert.equal(appliedReport.applied, true);
+  assert.equal(after.includes(selected), false);
+  assert.equal(after.includes('.ai-playbook/CURRENT.md'), true);
+  assert.equal(manifest.files.some((file) => file.path === selected), false);
+  assert.equal(manifest.files.some((file) => file.path === '.ai-playbook/CURRENT.md'), true);
+  await cleanup(target);
+});
+
+test('managed prune refuses unmanaged modified missing and absolute paths without writing files', async () => {
+  const target = await tempRepo('managed prune conflict-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nEdited facts to keep.\n');
+  await rm(path.join(target, '.ai-playbook', 'GIT.md'));
+
+  const modifiedBefore = await listRelativeFiles(target);
+  const modified = capture(target);
+  assert.equal(await runCli(['managed', 'prune', '.', '--path', '.ai-playbook/CURRENT.md', '--json'], modified), 1);
+  const modifiedReport = JSON.parse(modified.out());
+  assert.equal(modifiedReport.conflicts.some((conflict) => conflict.id === 'managed.prune.file-modified'), true);
+  assert.deepEqual(await listRelativeFiles(target), modifiedBefore);
+
+  const missingBefore = await listRelativeFiles(target);
+  const missing = capture(target);
+  assert.equal(await runCli(['managed', 'prune', '.', '--path', '.ai-playbook/GIT.md', '--json'], missing), 1);
+  const missingReport = JSON.parse(missing.out());
+  assert.equal(missingReport.conflicts.some((conflict) => conflict.id === 'managed.prune.file-missing'), true);
+  assert.deepEqual(await listRelativeFiles(target), missingBefore);
+
+  const unmanagedBefore = await listRelativeFiles(target);
+  const unmanaged = capture(target);
+  assert.equal(await runCli(['managed', 'prune', '.', '--path', '.ai-playbook/not-managed.md', '--json'], unmanaged), 1);
+  const unmanagedReport = JSON.parse(unmanaged.out());
+  assert.equal(unmanagedReport.conflicts.some((conflict) => conflict.id === 'managed.prune.file-unmanaged'), true);
+  assert.deepEqual(await listRelativeFiles(target), unmanagedBefore);
+
+  const absoluteBefore = await listRelativeFiles(target);
+  const absolute = capture(target);
+  assert.equal(await runCli(['managed', 'prune', '.', '--path', path.join(target, '.ai-playbook', 'README.md'), '--json'], absolute), 1);
+  const absoluteReport = JSON.parse(absolute.out());
+  assert.equal(absoluteReport.conflicts.some((conflict) => conflict.id === 'managed.prune.path-invalid'), true);
+  assert.deepEqual(await listRelativeFiles(target), absoluteBefore);
+  await cleanup(target);
+});
+
 function capture(cwd) {
   let stdout = '';
   let stderr = '';

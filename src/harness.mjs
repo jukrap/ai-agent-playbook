@@ -658,6 +658,64 @@ export async function checkManagedManifest(options) {
   };
 }
 
+export async function catalogManagedManifest(options) {
+  const { target } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const manifestRelativePath = `${playbook.dir}/${INSTALL_MANIFEST_FILE}`;
+  const base = {
+    schemaVersion: SCHEMA_VERSION,
+    ok: false,
+    target: resolvedTarget,
+    manifestPath: manifestRelativePath,
+    manifest: null,
+    summary: {
+      total: 0,
+      present: 0,
+      modified: 0,
+      missing: 0,
+      byKind: {},
+      byStatus: {}
+    },
+    files: [],
+    warnings: [],
+    conflicts: []
+  };
+
+  const manifestResult = await readManagedManifest(resolvedTarget, playbook);
+  if (!manifestResult.ok) {
+    return {
+      ...base,
+      conflicts: [manifestResult.conflict]
+    };
+  }
+
+  const files = await managedFileStatuses(resolvedTarget, manifestResult.manifest.files);
+  const summary = {
+    ...summarizeManagedFiles(files),
+    byKind: countBy(files, 'kind'),
+    byStatus: countBy(files, 'status')
+  };
+  const conflicts = managedStatusConflicts(files);
+
+  return {
+    ...base,
+    ok: conflicts.length === 0,
+    manifest: {
+      source: manifestResult.manifest.source,
+      playbookDir: manifestResult.manifest.playbookDir,
+      localOnly: Boolean(manifestResult.manifest.localOnly),
+      installedAtUtc: manifestResult.manifest.installedAtUtc,
+      updatedAtUtc: manifestResult.manifest.updatedAtUtc
+    },
+    summary,
+    files,
+    conflicts
+  };
+}
+
 export async function adoptManagedManifest(options) {
   const { repoRoot, target, apply = false } = options;
   await assertDirectory(target, 'Target repository does not exist');
@@ -702,6 +760,80 @@ export async function adoptManagedManifest(options) {
     warnings: [],
     conflicts: []
   };
+}
+
+export async function pruneManagedManifest(options) {
+  const { target, managedPath, apply = false } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const operations = [];
+  const warnings = [];
+  const conflicts = [];
+
+  const manifestResult = await readManagedManifest(resolvedTarget, playbook);
+  if (!manifestResult.ok) {
+    return managedPruneResult({ target: resolvedTarget, apply, applied: false, operations, warnings, conflicts: [manifestResult.conflict] });
+  }
+
+  const selected = normalizeManagedPath(managedPath);
+  if (!selected.ok) {
+    conflicts.push({
+      id: selected.missing ? 'managed.prune.path-missing' : 'managed.prune.path-invalid',
+      message: selected.missing
+        ? 'Missing --path for managed prune.'
+        : `Refusing non-portable managed path: ${managedPath}`,
+      paths: managedPath ? [String(managedPath)] : []
+    });
+    return managedPruneResult({ target: resolvedTarget, apply, applied: false, operations, warnings, conflicts });
+  }
+
+  const entry = manifestResult.manifest.files.find((file) => file.path === selected.path);
+  if (!entry) {
+    conflicts.push({
+      id: 'managed.prune.file-unmanaged',
+      message: `${selected.path} is not listed in the managed manifest.`,
+      paths: [selected.path]
+    });
+    return managedPruneResult({ target: resolvedTarget, apply, applied: false, operations, warnings, conflicts });
+  }
+
+  const [file] = await managedFileStatuses(resolvedTarget, [entry]);
+  if (file.status === 'missing') {
+    conflicts.push({
+      id: 'managed.prune.file-missing',
+      message: `${file.path} is already missing; review the manifest before pruning it.`,
+      paths: [file.path]
+    });
+  } else if (file.status === 'modified') {
+    conflicts.push({
+      id: 'managed.prune.file-modified',
+      message: `${file.path} has local edits and will not be removed.`,
+      paths: [file.path]
+    });
+  } else {
+    operations.push({
+      id: 'managed.prune.remove-file',
+      action: 'remove',
+      message: `Remove ${file.path}.`,
+      paths: [file.path]
+    });
+  }
+
+  let applied = false;
+  if (apply && conflicts.length === 0 && operations.length > 0) {
+    await rm(path.join(resolvedTarget, ...file.path.split('/')), { force: true });
+    await writeManagedManifest(resolvedTarget, playbook, {
+      localOnly: Boolean(manifestResult.manifest.localOnly),
+      installedAtUtc: manifestResult.manifest.installedAtUtc,
+      files: manifestResult.manifest.files.filter((item) => item.path !== file.path)
+    });
+    await removeEmptyManagedDirectories(resolvedTarget, playbook.root, [file.path]);
+    applied = true;
+  }
+
+  return managedPruneResult({ target: resolvedTarget, apply, applied, operations, warnings, conflicts });
 }
 
 export async function uninstallManagedManifest(options) {
@@ -1011,8 +1143,9 @@ async function writeBootstrapManifest(options) {
     playbook,
     includeOnlyExistingAndMatching: false
   });
+  const playbookFiles = files.filter((file) => file.path !== 'AGENTS.md');
   const agentHash = hashContent(agentContent);
-  files.push({
+  playbookFiles.push({
     path: 'AGENTS.md',
     kind: 'bootstrap',
     source: profile
@@ -1023,7 +1156,7 @@ async function writeBootstrapManifest(options) {
   });
   await writeManagedManifest(target, playbook, {
     localOnly,
-    files,
+    files: playbookFiles,
     installedAtUtc: new Date().toISOString()
   });
 }
@@ -1140,6 +1273,62 @@ function summarizeManagedFiles(files) {
     modified: files.filter((file) => file.status === 'modified').length,
     missing: files.filter((file) => file.status === 'missing').length
   };
+}
+
+function countBy(items, key) {
+  return items.reduce((counts, item) => {
+    const value = item[key] ?? 'unknown';
+    counts[value] = (counts[value] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
+function managedStatusConflicts(files) {
+  return files
+    .filter((file) => file.status === 'modified' || file.status === 'missing')
+    .map((file) => ({
+      id: file.status === 'modified' ? 'managed.file.modified' : 'managed.file.missing',
+      message: `${file.path} is ${file.status}.`,
+      paths: [file.path]
+    }));
+}
+
+function managedPruneResult(options) {
+  const { target, apply, applied, operations, warnings, conflicts } = options;
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: conflicts.length === 0,
+    target,
+    applied: Boolean(applied),
+    summary: {
+      selected: operations.length + conflicts.length,
+      removable: operations.length,
+      conflicts: conflicts.length,
+      warnings: warnings.length
+    },
+    operations,
+    warnings,
+    conflicts
+  };
+}
+
+function normalizeManagedPath(value) {
+  if (value === undefined || value === false || String(value).trim() === '') {
+    return { ok: false, missing: true };
+  }
+  const raw = String(value).trim();
+  const normalized = raw.replace(/\\/g, '/').replace(/^\.\/+/, '');
+  const parts = normalized.split('/');
+  if (
+    path.isAbsolute(raw) ||
+    path.posix.isAbsolute(normalized) ||
+    /^[A-Za-z]:\//.test(normalized) ||
+    normalized === '.' ||
+    parts.some((part) => part === '..' || part === '')
+  ) {
+    return { ok: false };
+  }
+  return { ok: true, path: normalized };
 }
 
 async function matchingManifestCandidates(options) {

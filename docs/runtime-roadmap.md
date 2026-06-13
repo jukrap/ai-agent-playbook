@@ -19,7 +19,7 @@ The default path stays simple: install skills, bootstrap `.ai-playbook/` when a 
 - `guides sync` adds missing guide templates without replacing local edits by default, and `guides sync --check --diff --json` reports stale guides with source and target hashes plus the first differing line.
 - `migrate path` previews and optionally applies the legacy `ai-playbook/` to `.ai-playbook/` folder move, reference updates, and `.gitignore` transition.
 - `plan`, `worklog`, and `worklog summarize` keep active plans, detailed history, and monthly summaries in predictable paths.
-- `managed check`, `managed adopt`, and `managed uninstall` use a project-level marker to inspect, adopt, or remove only unmodified files copied by this playbook.
+- `managed check`, `managed catalog`, `managed adopt`, `managed prune`, and `managed uninstall` use a project-level marker to inspect, catalog, adopt, or remove only selected unmodified files copied by this playbook.
 - `operator check`, `operator search`, `operator context`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, and `qa tui-check` provide operator-triggered diagnostics for combined health review, local search, path-scoped context preview, codebase mapping, playbook drift audit, preview-first managed cleanup, rule matching, verification command discovery, and terminal/CJK layout evidence.
 - The installer and updater use managed markers and hashes so local skill edits and unmanaged same-name skills are not overwritten silently.
 - `doctor --json`, `doctor --reminder --json`, `guides sync --check --json`, `context --json`, `adapter config --json`, and `adapter check --json` provide a small machine-readable core for future adapters.
@@ -35,7 +35,7 @@ Keep improving these areas before making hooks part of any default install path:
 - Maintain the guide manifest so `guides sync --check --json` can report stale guides without overwriting project-specific edits.
 - Use `guides sync --check --diff --json` before overwriting stale guide files so local edits stay visible.
 - Use `migrate path --json` before applying legacy folder moves so path changes stay explicit and reversible by normal Git review.
-- Use `managed check` before cleanup and `managed uninstall --json` before any managed removal.
+- Use `managed check` and `managed catalog` before cleanup, `managed prune --json` before selected managed removal, and `managed uninstall --json` before full managed removal.
 - Use `operator check --path`, `operator search --query`, `operator context --path`, `operator map`, `operator audit`, `operator gc`, `rules check --path`, `diagnostics check`, and `qa tui-check` as operator-visible evidence before considering stronger runtime automation.
 - Make migration from existing agent docs preserve history, classify current rules, and record remaining uncertainty in `.ai-playbook/questions.md`.
 - Treat `worklog summarize` as a promotion checkpoint: durable facts belong in `CURRENT.md`, maps, runbooks, or decisions, not only in history.
@@ -105,7 +105,7 @@ These can be implemented before a full plugin exists:
 - For a concrete V4+ execution plan and next-session handoff, see `docs/plans/2026-06-11-runtime-harness-v4-plus.md`.
 - Verify in real projects whether rendered adapter settings reduce setup mistakes without adding noise.
 - Verify in real projects whether `migrate path --json` catches common legacy path references without touching unrelated files.
-- Verify whether the managed marker, combined operator check, local search, path-scoped context preview, codebase map summary, playbook drift audit, preview-first managed cleanup, rule matching, diagnostics command discovery, and TUI layout checks reduce review misses before promoting any hook-driven diagnostics.
+- Verify whether the managed marker, managed catalog, selected managed prune, combined operator check, local search, path-scoped context preview, codebase map summary, playbook drift audit, preview-first managed cleanup, rule matching, diagnostics command discovery, and TUI layout checks reduce review misses before promoting any hook-driven diagnostics.
 - Candidates still requiring caution: continuation, blocking feedback, and any automatic doctor execution after cost and noise are proven acceptable.
 
 ## Process Skill Compatibility

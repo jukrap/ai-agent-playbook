@@ -78,7 +78,9 @@ node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
 node .\bin\ai-playbook.mjs context <target-project> --json
 node .\bin\ai-playbook.mjs migrate path <target-project> --json
 node .\bin\ai-playbook.mjs managed check <target-project> --json
+node .\bin\ai-playbook.mjs managed catalog <target-project> --json
 node .\bin\ai-playbook.mjs managed adopt <target-project> --json
+node .\bin\ai-playbook.mjs managed prune <target-project> --path .ai-playbook/guides/runtime-harness.md --json
 node .\bin\ai-playbook.mjs managed uninstall <target-project> --json
 node .\bin\ai-playbook.mjs operator check <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --path src/example.ts --json
@@ -99,7 +101,7 @@ node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --json
 
 Runtime hook과 plugin은 기본 설치 경로에 포함되지 않습니다. 문서와 CLI 하네스가 안정된 뒤 선택적으로 확장합니다. Codex와 Claude Code adapter에는 read-only context hook 예시, read-only `adapter config` renderer, read-only `adapter check` self-check가 있지만 자동 설치되지 않습니다. [런타임 로드맵](docs/runtime-roadmap.ko.md)을 봅니다.
 
-Managed project harness 명령은 `.ai-playbook/.ai-agent-playbook-install.json`으로 이 playbook이 복사한 파일을 추적합니다. 정리 전에는 `managed check`를 사용하고, 기존 matching install에는 `managed adopt`를, 수정되지 않은 managed file 제거 preview에는 `managed uninstall`을 사용합니다. `managed adopt`와 `managed uninstall`은 `--apply`가 있을 때만 파일을 씁니다.
+Managed project harness 명령은 `.ai-playbook/.ai-agent-playbook-install.json`으로 이 playbook이 복사한 파일을 추적합니다. 정리 전에는 `managed check`를 사용하고, `managed catalog`로 소유 파일을 kind/status별로 검토하고, 기존 matching install에는 `managed adopt`를, 선택한 수정되지 않은 managed file 제거 preview에는 `managed prune`을, 전체 수정되지 않은 managed file 제거 preview에는 `managed uninstall`을 사용합니다. `managed adopt`, `managed prune`, `managed uninstall`은 `--apply`가 있을 때만 파일을 씁니다.
 
 `operator check`, `operator search`, `operator context`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, `qa tui-check` 같은 operator diagnostics는 operator가 명시적으로 실행합니다. 더 강한 runtime automation을 추가하기 전에 `operator check`를 doctor, guide freshness, local verification command 후보, rule matching을 함께 보는 human checkpoint로 사용합니다. `operator search`는 관련 source, playbook, rules, plans, worklogs를 찾는 local project explorer로 사용합니다. `operator context`는 path-scoped playbook context와 rule match를 미리 보여주고, `operator map`은 stack, architecture, quality, concern signal을 analysis file 작성 없이 요약합니다. `operator audit`는 파일을 쓰지 않고 playbook link, orphan context glob, duplicate note, legacy path drift, managed manifest drift를 확인합니다. `operator gc`는 obsolete unmodified managed playbook file을 preview-first로 정리하며 `--apply`가 있을 때만 씁니다. `diagnostics check`는 lockfile에서 감지한 package manager로 package script 명령을 포맷합니다.
 
@@ -122,6 +124,7 @@ node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-project> --check --diff --json
 node .\bin\ai-playbook.mjs migrate path <target-project> --json
 node .\bin\ai-playbook.mjs managed check <target-project> --json
+node .\bin\ai-playbook.mjs managed catalog <target-project> --json
 node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --json
 node .\bin\ai-playbook.mjs operator context <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator map <target-project> --json

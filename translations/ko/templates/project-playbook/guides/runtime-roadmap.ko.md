@@ -15,7 +15,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 - Detailed history는 `worklogs/`에 두고 durable fact가 있으면 summary를 만듭니다.
 - Source playbook checkout에서 `guides sync --dry-run`을 사용해 local edit을 덮어쓰지 않고 누락된 support guide를 확인합니다.
 - Adapter나 automation이 read-only health signal을 필요로 하면 `guides sync --check --diff --json`, `migrate path --json`, `doctor --json`, `doctor --reminder --json`, `adapter check --json`을 사용합니다.
-- Cleanup이나 uninstall preview 전에는 `managed check`를 사용합니다.
+- Cleanup 전에는 `managed check`와 `managed catalog`를 사용하고, 선택 제거 전에는 `managed prune --json`, 전체 uninstall preview 전에는 `managed uninstall --json`을 사용합니다.
 - 같은 관심사에 hook을 추가하기 전에 `operator check`, `operator search`, `operator context`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, `qa tui-check`를 operator-visible diagnostics로 먼저 사용합니다.
 
 ## Runtime 준비 체크리스트

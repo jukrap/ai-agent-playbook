@@ -131,7 +131,9 @@ node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-project> --check --diff
 node .\bin\ai-playbook.mjs migrate path <target-project> --json
 node .\bin\ai-playbook.mjs managed check <target-project> --json
+node .\bin\ai-playbook.mjs managed catalog <target-project> --json
 node .\bin\ai-playbook.mjs managed adopt <target-project> --json
+node .\bin\ai-playbook.mjs managed prune <target-project> --path .ai-playbook/guides/runtime-harness.md --json
 node .\bin\ai-playbook.mjs managed uninstall <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project> --json
@@ -157,7 +159,7 @@ node .\bin\ai-playbook.mjs adapter check <target-project> --adapter codex --sett
 
 경로 전환 기간에는 `.ai-playbook/`이 없고 기존 `ai-playbook/` 폴더만 있는 프로젝트도 runtime 명령이 지원합니다. 새 bootstrap 결과는 `.ai-playbook/`을 사용합니다. Legacy 폴더 이동과 참조 갱신은 먼저 `migrate path --json`으로 preview하고, 검토한 뒤에만 `--apply`를 추가합니다.
 
-Bootstrap과 guide sync는 project-level marker인 `.ai-playbook/.ai-agent-playbook-install.json`을 관리합니다. `managed check`로 확인하고, 오래된 matching install에는 `managed adopt --apply`를, 수정되지 않은 managed file 제거에는 `managed uninstall --apply`를 사용합니다. Uninstall 명령은 로컬에서 수정된 파일을 보존하고 `.gitignore` 정리는 operator에게 맡깁니다.
+Bootstrap과 guide sync는 project-level marker인 `.ai-playbook/.ai-agent-playbook-install.json`을 관리합니다. `managed check`로 확인하고, `managed catalog`로 소유 파일을 kind/status별로 검토하고, 오래된 matching install에는 `managed adopt --apply`를, 선택한 수정되지 않은 managed file 제거에는 `managed prune --apply --path <managed-path>`를, 전체 수정되지 않은 managed file 제거에는 `managed uninstall --apply`를 사용합니다. Prune과 uninstall 명령은 로컬에서 수정된 파일을 보존하고 `.gitignore` 정리는 operator에게 맡깁니다.
 
 선택적 adapter hook 예시는 내부적으로 `context` 명령을 사용합니다. 이 예시는 read-only이며 `adapters/`에서 수동으로 활성화해야 합니다. `adapter config`로 placeholder 없는 local 설정을 렌더링한 뒤, local settings file을 수동으로 편집한 후 `adapter check --settings <local-settings-path>`로 확인합니다.
 

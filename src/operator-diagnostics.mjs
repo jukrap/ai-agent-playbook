@@ -18,7 +18,9 @@ const RULE_FILE_SOURCES = [
 const RULE_EXTENSIONS = new Set(['.md', '.mdc']);
 const RULE_EXCLUDED_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.turbo', 'coverage']);
 const SEARCH_EXCLUDED_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.turbo', 'coverage']);
+const MAP_EXCLUDED_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.turbo', 'coverage', '.ai-playbook', 'ai-playbook', '_reference']);
 const SEARCH_MAX_BYTES = 1_000_000;
+const MAP_MAX_BYTES = 1_000_000;
 const PACKAGE_SCRIPT_ORDER = ['check', 'test', 'test:run', 'lint', 'typecheck', 'build'];
 const PACKAGE_MANAGER_LOCKFILES = [
   ['pnpm', 'pnpm-lock.yaml'],
@@ -27,6 +29,91 @@ const PACKAGE_MANAGER_LOCKFILES = [
   ['bun', 'bun.lockb'],
   ['bun', 'bun.lock']
 ];
+const CORE_CONTEXT_FILES = ['START_HERE.md', 'CURRENT.md', 'SKILLS.md', 'GIT.md'];
+const PLAYBOOK_DIR_CANDIDATES = ['.ai-playbook', 'ai-playbook'];
+const RELATED_CONTEXT_DIRS = ['maps', 'runbooks', 'decisions', 'guides'];
+const MARKDOWN_EXTENSIONS = new Set(['.md', '.mdc']);
+const SOURCE_EXTENSIONS = new Set([
+  '.js', '.mjs', '.cjs', '.jsx', '.ts', '.tsx',
+  '.py', '.go', '.rs', '.java', '.kt', '.kts',
+  '.rb', '.php', '.dart', '.cs', '.swift',
+  '.cpp', '.cc', '.cxx', '.c', '.h', '.hpp',
+  '.vue', '.svelte'
+]);
+const TEST_FILE_PATTERN = /(^|[/.\\])(__tests__|tests?|specs?)([/.\\]|$)|[._-](test|spec)\.[^.]+$/i;
+const CONFIG_CANDIDATES = [
+  'tsconfig.json',
+  'jsconfig.json',
+  'vitest.config.ts',
+  'vitest.config.js',
+  'jest.config.js',
+  'jest.config.ts',
+  'playwright.config.ts',
+  'playwright.config.js',
+  'eslint.config.js',
+  '.eslintrc',
+  '.eslintrc.json',
+  '.prettierrc',
+  'ruff.toml',
+  'pytest.ini',
+  'mypy.ini',
+  'Dockerfile',
+  'docker-compose.yml'
+];
+const STACK_MANIFESTS = [
+  'package.json',
+  'pnpm-lock.yaml',
+  'yarn.lock',
+  'package-lock.json',
+  'bun.lock',
+  'bun.lockb',
+  'pyproject.toml',
+  'requirements.txt',
+  'Pipfile',
+  'go.mod',
+  'Cargo.toml',
+  'pom.xml',
+  'build.gradle',
+  'build.gradle.kts',
+  'composer.json',
+  'Gemfile',
+  'Makefile',
+  'Dockerfile'
+];
+const FRAMEWORK_DEPENDENCIES = [
+  ['react', ['react', '@vitejs/plugin-react', 'next']],
+  ['nextjs', ['next']],
+  ['vue', ['vue', 'nuxt']],
+  ['vite', ['vite', '@vitejs/plugin-react']],
+  ['express', ['express']],
+  ['nestjs', ['@nestjs/core']],
+  ['fastify', ['fastify']],
+  ['prisma', ['prisma', '@prisma/client']],
+  ['vitest', ['vitest']],
+  ['jest', ['jest']],
+  ['playwright', ['@playwright/test', 'playwright']],
+  ['typescript', ['typescript']]
+];
+const MODULE_BOUNDARY_DIRS = [
+  'src',
+  'src/app',
+  'src/pages',
+  'src/features',
+  'src/entities',
+  'src/shared',
+  'app',
+  'pages',
+  'components',
+  'server',
+  'packages',
+  'apps'
+];
+const ENTRYPOINT_BASENAMES = new Set(['main', 'index', 'app', 'server', 'client']);
+const CONCERN_PATTERNS = {
+  todos: /\b(TODO|FIXME|HACK|XXX|DEPRECATED)\b/gi,
+  debugArtifacts: /\b(console\.log|debugger|binding\.pry|pdb\.set_trace|import pdb)\b/gi,
+  securitySignals: /\b(eval\s*\(|dangerouslySetInnerHTML|innerHTML\s*=|document\.write\s*\()/gi
+};
 
 export async function checkOperator(options) {
   const {
@@ -128,6 +215,94 @@ export async function searchOperator(options) {
     },
     results: limited,
     related
+  };
+}
+
+export async function previewOperatorContext(options) {
+  const { target, filePath } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  if (!filePath || typeof filePath !== 'string') throw new Error('Missing --path.');
+
+  const resolvedTarget = path.resolve(target);
+  const relativePath = normalizeTargetRelativePath(resolvedTarget, filePath);
+  const warnings = [];
+  const playbook = await findPlaybookRoot(resolvedTarget);
+  if (!playbook) {
+    warnings.push({
+      id: 'operator.context.playbook-missing',
+      message: 'No .ai-playbook/ or legacy ai-playbook/ folder found.',
+      paths: ['.ai-playbook/']
+    });
+  }
+
+  const [coreSources, contexts, rules, related] = await Promise.all([
+    playbook ? collectCoreContextSources({ target: resolvedTarget, playbook }) : [],
+    playbook ? collectPathContextFiles({ target: resolvedTarget, playbook, relativePath, warnings }) : [],
+    checkRules({ target: resolvedTarget, filePath: relativePath }),
+    playbook ? collectRelatedContextFiles({ target: resolvedTarget, playbook, relativePath }) : []
+  ]);
+
+  const matchingContexts = contexts.filter((item) => item.applies);
+  const matchingRules = rules.rules.filter((rule) => rule.applies);
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    path: relativePath,
+    summary: {
+      coreSources: coreSources.length,
+      contextFiles: contexts.length,
+      matchingContextFiles: matchingContexts.length,
+      ruleMatches: matchingRules.length,
+      relatedFiles: related.length,
+      warnings: warnings.length + rules.warnings.length
+    },
+    coreSources,
+    contexts,
+    rules: {
+      summary: rules.summary,
+      rules: matchingRules,
+      warnings: rules.warnings
+    },
+    related,
+    warnings
+  };
+}
+
+export async function mapOperator(options) {
+  const { target } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+
+  const resolvedTarget = path.resolve(target);
+  const files = await walkProjectFiles(resolvedTarget, MAP_EXCLUDED_DIRS);
+  const sourceFiles = files.filter((file) => SOURCE_EXTENSIONS.has(path.extname(file).toLowerCase()));
+  const [diagnostics, packageInfo, topLevelEntries] = await Promise.all([
+    checkDiagnostics({ target: resolvedTarget }),
+    readPackageInfo(resolvedTarget),
+    collectTopLevelEntries(resolvedTarget)
+  ]);
+  const stack = buildStackMap({ target: resolvedTarget, files, sourceFiles, diagnostics, packageInfo });
+  const architecture = await buildArchitectureMap({ target: resolvedTarget, files, sourceFiles, topLevelEntries });
+  const quality = buildQualityMap({ target: resolvedTarget, files, diagnostics });
+  const concerns = await buildConcernsMap({ target: resolvedTarget, sourceFiles });
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    summary: {
+      files: files.length,
+      sourceFiles: sourceFiles.length,
+      manifests: stack.manifests.length,
+      testFiles: quality.testFiles.count,
+      concerns: concerns.todos.count + concerns.debugArtifacts.count + concerns.securitySignals.count
+    },
+    stack,
+    architecture,
+    quality,
+    concerns,
+    warnings: []
   };
 }
 
@@ -309,6 +484,29 @@ async function walkSearchFiles(root) {
   return files;
 }
 
+async function walkProjectFiles(root, excludedDirs) {
+  const files = [];
+  await walkProject(root, files, excludedDirs);
+  files.sort();
+  return files;
+}
+
+async function walkProject(current, files, excludedDirs) {
+  const entries = await readdir(current, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      if (excludedDirs.has(entry.name)) continue;
+      await walkProject(path.join(current, entry.name), files, excludedDirs);
+      continue;
+    }
+    if (!entry.isFile()) continue;
+    const fullPath = path.join(current, entry.name);
+    const info = await stat(fullPath);
+    if (info.size > MAP_MAX_BYTES) continue;
+    files.push(fullPath);
+  }
+}
+
 async function walkSearch(current, files) {
   const entries = await readdir(current, { withFileTypes: true });
   for (const entry of entries) {
@@ -362,6 +560,288 @@ async function searchFile(options) {
     matches: occurrenceCount,
     snippets
   };
+}
+
+async function findPlaybookRoot(target) {
+  for (const candidate of PLAYBOOK_DIR_CANDIDATES) {
+    const root = path.join(target, candidate);
+    if (!existsSync(root)) continue;
+    const info = await stat(root);
+    if (info.isDirectory()) {
+      return { name: candidate, absolutePath: root };
+    }
+  }
+  return null;
+}
+
+async function collectCoreContextSources(options) {
+  const { target, playbook } = options;
+  const sources = [];
+  for (const fileName of CORE_CONTEXT_FILES) {
+    const absolutePath = path.join(playbook.absolutePath, fileName);
+    if (!existsSync(absolutePath)) continue;
+    const info = await stat(absolutePath);
+    if (!info.isFile()) continue;
+    sources.push({
+      path: toPortablePath(path.relative(target, absolutePath)),
+      category: 'core',
+      bytes: info.size
+    });
+  }
+  return sources;
+}
+
+async function collectPathContextFiles(options) {
+  const { target, playbook, relativePath, warnings } = options;
+  const contextRoot = path.join(playbook.absolutePath, 'context');
+  const files = await walkMarkdownFiles(contextRoot);
+  const entries = [];
+  for (const file of files) {
+    const text = await readFile(file, 'utf8');
+    const parsed = parseRuleFile(text);
+    const contextPath = toPortablePath(path.relative(target, file));
+    for (const diagnostic of parsed.diagnostics) {
+      warnings.push({
+        id: 'operator.context.frontmatter',
+        message: diagnostic,
+        paths: [contextPath]
+      });
+    }
+    const match = matchRule({ frontmatter: parsed.frontmatter, isSingleFile: false, relativePath });
+    entries.push({
+      path: contextPath,
+      source: `${playbook.name}/context`,
+      applies: match.applies,
+      reason: match.reason,
+      globs: parsed.frontmatter.globs,
+      alwaysApply: parsed.frontmatter.alwaysApply,
+      bytes: Buffer.byteLength(text, 'utf8')
+    });
+  }
+  entries.sort((left, right) => Number(right.applies) - Number(left.applies) || left.path.localeCompare(right.path));
+  return entries;
+}
+
+async function collectRelatedContextFiles(options) {
+  const { target, playbook, relativePath } = options;
+  const terms = searchTermsForPath(relativePath);
+  const related = [];
+  for (const directory of RELATED_CONTEXT_DIRS) {
+    const root = path.join(playbook.absolutePath, directory);
+    const files = await walkMarkdownFiles(root);
+    for (const file of files) {
+      const result = await scoreRelatedFile({ target, file, terms, category: directory });
+      if (result) related.push(result);
+    }
+  }
+  related.sort((left, right) => right.score - left.score || left.path.localeCompare(right.path));
+  return related.slice(0, 10);
+}
+
+async function walkMarkdownFiles(root) {
+  if (!existsSync(root)) return [];
+  const files = [];
+  await walkMarkdown(root, files);
+  files.sort();
+  return files;
+}
+
+async function walkMarkdown(current, files) {
+  const entries = await readdir(current, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(current, entry.name);
+    if (entry.isDirectory()) {
+      await walkMarkdown(fullPath, files);
+    } else if (entry.isFile() && MARKDOWN_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+      files.push(fullPath);
+    }
+  }
+}
+
+function searchTermsForPath(relativePath) {
+  const normalized = normalizePortablePath(relativePath);
+  const segments = normalized.split('/').filter(Boolean);
+  const basename = segments.at(-1) ?? normalized;
+  const stem = basename.replace(/\.[^.]+$/, '');
+  const camelParts = stem.split(/(?=[A-Z])|[^A-Za-z0-9가-힣_]+/).filter((part) => part.length >= 3);
+  return [...new Set([normalized, basename, stem, ...segments.slice(0, -1), ...camelParts].map((item) => item.toLowerCase()).filter((item) => item.length >= 3))];
+}
+
+async function scoreRelatedFile(options) {
+  const { target, file, terms, category } = options;
+  let raw;
+  try {
+    raw = await readFile(file);
+  } catch {
+    return null;
+  }
+  if (raw.includes(0)) return null;
+  const text = raw.toString('utf8');
+  const lower = text.toLowerCase();
+  const pathText = normalizePortablePath(path.relative(target, file)).toLowerCase();
+  let score = 0;
+  for (const term of terms) {
+    score += occurrences(lower, term) * 10;
+    score += occurrences(pathText, term) * 4;
+  }
+  if (score === 0) return null;
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  const snippets = [];
+  for (const [index, line] of lines.entries()) {
+    const lineLower = line.toLowerCase();
+    if (!terms.some((term) => lineLower.includes(term))) continue;
+    snippets.push({ line: index + 1, text: trimSnippet(line) });
+    if (snippets.length >= 2) break;
+  }
+  return {
+    path: toPortablePath(path.relative(target, file)),
+    category,
+    score,
+    snippets
+  };
+}
+
+async function readPackageInfo(target) {
+  const file = path.join(target, 'package.json');
+  if (!existsSync(file)) return { ok: false, dependencies: {}, scripts: {} };
+  try {
+    const parsed = JSON.parse(await readFile(file, 'utf8'));
+    return {
+      ok: true,
+      dependencies: {
+        ...(isRecord(parsed.dependencies) ? parsed.dependencies : {}),
+        ...(isRecord(parsed.devDependencies) ? parsed.devDependencies : {}),
+        ...(isRecord(parsed.peerDependencies) ? parsed.peerDependencies : {})
+      },
+      scripts: isRecord(parsed.scripts) ? parsed.scripts : {}
+    };
+  } catch (error) {
+    return { ok: false, error: error.message, dependencies: {}, scripts: {} };
+  }
+}
+
+function buildStackMap(options) {
+  const { target, files, sourceFiles, diagnostics, packageInfo } = options;
+  const relativeFiles = new Set(files.map((file) => toPortablePath(path.relative(target, file))));
+  const manifests = STACK_MANIFESTS.filter((manifest) => relativeFiles.has(manifest)).map((manifest) => ({ path: manifest }));
+  const languageCounts = new Map();
+  for (const file of sourceFiles) {
+    const ext = path.extname(file).toLowerCase();
+    languageCounts.set(ext, (languageCounts.get(ext) ?? 0) + 1);
+  }
+  const languages = [...languageCounts.entries()]
+    .map(([extension, count]) => ({ extension, count }))
+    .sort((left, right) => right.count - left.count || left.extension.localeCompare(right.extension));
+  const dependencyNames = new Set(Object.keys(packageInfo.dependencies).map((name) => name.toLowerCase()));
+  const frameworks = [];
+  for (const [name, candidates] of FRAMEWORK_DEPENDENCIES) {
+    const matches = candidates.filter((candidate) => dependencyNames.has(candidate));
+    if (matches.length > 0) frameworks.push({ name, source: 'package.json', matches });
+  }
+  return {
+    packageManager: diagnostics.packageManager,
+    manifests,
+    languages,
+    frameworks,
+    scripts: Object.keys(packageInfo.scripts).sort()
+  };
+}
+
+async function buildArchitectureMap(options) {
+  const { target, files, sourceFiles, topLevelEntries } = options;
+  const relativeFiles = new Set(files.map((file) => toPortablePath(path.relative(target, file))));
+  const entrypoints = sourceFiles
+    .map((file) => toPortablePath(path.relative(target, file)))
+    .filter((file) => ENTRYPOINT_BASENAMES.has(path.basename(file, path.extname(file)).toLowerCase()))
+    .map((file) => ({ path: file }))
+    .slice(0, 20);
+  const moduleBoundaries = [];
+  for (const candidate of MODULE_BOUNDARY_DIRS) {
+    const absolutePath = path.join(target, ...candidate.split('/'));
+    if (!existsSync(absolutePath)) continue;
+    const info = await stat(absolutePath);
+    if (!info.isDirectory()) continue;
+    moduleBoundaries.push({ path: candidate });
+  }
+  return {
+    topLevel: topLevelEntries,
+    entrypoints,
+    moduleBoundaries,
+    configFiles: ['vite.config.ts', 'vite.config.js', 'next.config.js', 'next.config.mjs'].filter((file) => relativeFiles.has(file)).map((file) => ({ path: file }))
+  };
+}
+
+function buildQualityMap(options) {
+  const { target, files, diagnostics } = options;
+  const relativeFiles = files.map((file) => toPortablePath(path.relative(target, file)));
+  const relativeSet = new Set(relativeFiles);
+  const testFiles = relativeFiles.filter((file) => TEST_FILE_PATTERN.test(file) && !file.includes('node_modules/'));
+  const configs = [];
+  for (const candidate of CONFIG_CANDIDATES) {
+    if (relativeSet.has(candidate)) configs.push({ path: candidate });
+  }
+  for (const file of relativeFiles) {
+    if (/^\.github\/workflows\/[^/]+\.(ya?ml)$/i.test(file)) {
+      configs.push({ path: file });
+    }
+  }
+  configs.sort((left, right) => left.path.localeCompare(right.path));
+  return {
+    testFiles: {
+      count: testFiles.length,
+      samples: testFiles.slice(0, 20)
+    },
+    configs,
+    commands: diagnostics.commands
+  };
+}
+
+async function buildConcernsMap(options) {
+  const { target, sourceFiles } = options;
+  const aggregate = {
+    todos: { count: 0, samples: [] },
+    debugArtifacts: { count: 0, samples: [] },
+    securitySignals: { count: 0, samples: [] }
+  };
+  for (const file of sourceFiles) {
+    let raw;
+    try {
+      raw = await readFile(file);
+    } catch {
+      continue;
+    }
+    if (raw.includes(0)) continue;
+    const text = raw.toString('utf8');
+    const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+    for (const [index, line] of lines.entries()) {
+      for (const [category, pattern] of Object.entries(CONCERN_PATTERNS)) {
+        pattern.lastIndex = 0;
+        const matches = line.match(pattern);
+        if (!matches) continue;
+        aggregate[category].count += matches.length;
+        if (aggregate[category].samples.length < 10) {
+          aggregate[category].samples.push({
+            path: toPortablePath(path.relative(target, file)),
+            line: index + 1,
+            text: trimSnippet(line)
+          });
+        }
+      }
+    }
+  }
+  return aggregate;
+}
+
+async function collectTopLevelEntries(target) {
+  const entries = await readdir(target, { withFileTypes: true });
+  return entries
+    .filter((entry) => !MAP_EXCLUDED_DIRS.has(entry.name))
+    .map((entry) => ({
+      path: entry.name,
+      type: entry.isDirectory() ? 'directory' : entry.isFile() ? 'file' : 'other'
+    }))
+    .sort((left, right) => left.path.localeCompare(right.path))
+    .slice(0, 40);
 }
 
 function occurrences(text, search) {

@@ -19,6 +19,8 @@ node .\bin\ai-playbook.mjs managed uninstall <target> [--apply] [--json]
 node .\bin\ai-playbook.mjs context <target> [--json] [--max-chars N]
 node .\bin\ai-playbook.mjs operator check <target> [--path <file>] [--diff] [--json]
 node .\bin\ai-playbook.mjs operator search <target> --query <text> [--path <file>] [--max-results N] [--json]
+node .\bin\ai-playbook.mjs operator context <target> --path <file> [--json]
+node .\bin\ai-playbook.mjs operator map <target> [--json]
 node .\bin\ai-playbook.mjs rules check <target> [--path <file>] [--json]
 node .\bin\ai-playbook.mjs diagnostics check <target> [--json]
 node .\bin\ai-playbook.mjs qa tui-check <capture-file> [--cols N] [--json]
@@ -134,6 +136,22 @@ node .\bin\ai-playbook.mjs operator search <target> --query "auth flow" --path s
 ```
 
 이 명령은 target project의 text file을 검색하고 `.git`, `node_modules`, `dist`, `build`, `.next`, `.turbo`, `coverage` 같은 일반 generated/dependency folder는 제외합니다. JSON output은 `{ schemaVersion, ok, target, query, path, summary, results, related }`를 반환합니다. 결과에는 relative path, category, score, match count, snippet이 포함됩니다. Match가 없어도 성공 종료하며 `summary.matches: 0`을 반환합니다. `--path`가 있으면 `related.rules`가 해당 file의 matching project rule을 요약하고, `related.diagnostics`는 실행하지 않은 local verification command 후보를 나열합니다.
+
+`operator context`는 path-scoped playbook context를 주입하지 않고 미리 보여줍니다.
+
+```powershell
+node .\bin\ai-playbook.mjs operator context <target> --path src/example.ts --json
+```
+
+이 명령은 존재하는 core context file, path에 `globs` 또는 `alwaysApply` frontmatter가 적용되는 `.ai-playbook/context/**/*.md` file, matching project rule, 그리고 path나 file name을 언급하는 관련 maps, runbooks, decisions, guides를 보고합니다. JSON output은 `{ schemaVersion, ok, target, path, summary, coreSources, contexts, rules, related, warnings }`를 반환합니다. Context file을 쓰지 않고, project command를 실행하지 않고, hook을 설치하지 않습니다.
+
+`operator map`은 local codebase shape를 요약합니다.
+
+```powershell
+node .\bin\ai-playbook.mjs operator map <target> --json
+```
+
+이 명령은 local project file을 읽어 stack manifest, 감지한 package manager, source language count, framework dependency, top-level structure, entrypoint 후보, module boundary directory, quality config, test file sample, verification command 후보, TODO/debug/security signal snippet, compact summary를 보고합니다. 일반 dependency/generated folder는 제외합니다. JSON output은 `{ schemaVersion, ok, target, summary, stack, architecture, quality, concerns, warnings }`를 반환합니다. Read-only이며 `.ai-playbook/maps/` file을 만들지 않습니다. Durable project map으로 승격할 내용을 결정하기 전 evidence로 사용합니다.
 
 `rules check`는 portable rule file을 찾아 특정 path에 어떤 rule이 적용되는지 보고합니다.
 

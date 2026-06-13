@@ -5,7 +5,7 @@
 <h1 align="center">AI Agent Playbook</h1>
 
 <p align="center">
-  A bright, reusable playbook for AI agents that need to work carefully inside real software repositories.
+  A practical, reusable playbook for AI agents that need to work carefully inside real software repositories.
 </p>
 
 <p align="center">

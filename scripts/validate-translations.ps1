@@ -16,11 +16,39 @@ foreach ($file in $translatedSkillFiles) {
   $errors += "Translation tree must not contain installable SKILL.md: $($file.FullName)"
 }
 
+$excludedDirs = @(
+  '.git',
+  '.next',
+  '.turbo',
+  '_reference',
+  '_work',
+  'build',
+  'coverage',
+  'dist',
+  'node_modules'
+)
+
+function Test-IsExcludedPath {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$FullName
+  )
+
+  $rel = $FullName.Substring($Root.Length + 1)
+  $parts = $rel -split '[\\/]'
+  foreach ($part in $parts) {
+    if ($excludedDirs -contains $part) {
+      return $true
+    }
+  }
+
+  return $false
+}
+
 $sourceMdFiles = Get-ChildItem -LiteralPath $Root -Recurse -Filter '*.md' -File |
   Where-Object {
     $_.FullName -notlike "$translationRoot*" -and
-    $_.FullName -notlike (Join-Path $Root '_reference\*') -and
-    $_.FullName -notlike (Join-Path $Root '_work\*')
+    -not (Test-IsExcludedPath -FullName $_.FullName)
   }
 
 foreach ($file in $sourceMdFiles) {

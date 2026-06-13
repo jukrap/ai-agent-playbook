@@ -65,7 +65,7 @@ ai-playbook --help
 The npm package installs the CLI. It does not automatically copy skills, create `.ai-playbook/`, enable hooks, or register slash commands. Keep those actions explicit:
 
 - `skills install`, `skills update`, and `skills uninstall` manage reusable user-level skills.
-- `bootstrap`, `guides sync`, `managed *`, and `operator *` manage or inspect one target project.
+- `bootstrap`, `guides sync`, `managed *`, `contracts *`, `operator *`, and `qa *` manage or inspect one target project.
 - Runtime hooks and adapter settings are optional and are never installed by default.
 
 For command-by-command usage, see [Command guide](docs/commands.md). For update, uninstall, local checkout, PowerShell compatibility, ownership markers, and cleanup details, see [Install, update, and uninstall](docs/installation.md).
@@ -87,6 +87,7 @@ For existing projects, start with a dry run and inspect conflicts before writing
 npx ai-agent-playbook bootstrap <target-project> --local-only --dry-run
 npx ai-agent-playbook bootstrap <target-project> --local-only
 npx ai-agent-playbook operator check <target-project> --json
+npx ai-agent-playbook operator preflight <target-project> --intent "planned change" --json
 npx ai-agent-playbook operator research <target-project> --query "project risks" --json
 ```
 

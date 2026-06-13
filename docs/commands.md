@@ -36,6 +36,7 @@ Command-specific options appear where they are needed:
 | ------ | -------- |
 | `--path <file>` | Limit rule, context, search, research, or operator checks to one file or area. |
 | `--query <text>` | Search or research topic. |
+| `--intent <text>` | Planned work description for `operator preflight`. |
 | `--max-results N` | Limit search or research output. |
 | `--max-chars N` | Limit generated context size. |
 | `--strict` | Treat doctor warnings as failures. |
@@ -49,6 +50,9 @@ Command-specific options appear where they are needed:
 | `--type note|criterion|evidence|blocker|cleanup` | Event type for `run record`. |
 | `--status pass|fail|blocked|info` | Event status for `run record`. |
 | `--evidence <path>` | Portable relative evidence path for `run record`. |
+| `--before <preflight-json>` | JSON file previously saved from `operator preflight --json`. |
+| `--contract <id>` | Limit `contracts snapshot` to one contract id. |
+| `--threshold N` | Allowed image diff ratio from `0` to `1`; `0` means any changed pixel fails. |
 
 ## First-time setup
 
@@ -72,6 +76,7 @@ Skills are reusable user-level guidance. They are installed under common Codex a
 | Command | When to use it | Writes files? | Example |
 | ------- | -------------- | ------------- | ------- |
 | `skills check` | See whether this playbook's skills are installed, missing, modified, or blocked by same-name unmanaged copies. | No | `npx ai-agent-playbook skills check --json` |
+| `skills lint` | Review source `SKILL.md` files for trigger-focused descriptions, frontmatter shape, and missing reference links before publishing. | No | `npx ai-agent-playbook skills lint --json` |
 | `skills install` | Install reusable skills for the first time. | Yes, unless `--dry-run` | `npx ai-agent-playbook skills install --dry-run` then `npx ai-agent-playbook skills install` |
 | `skills update` | Refresh installed managed skills after the package or checkout changes. | Yes, unless `--dry-run` | `npx ai-agent-playbook skills update --dry-run` then `npx ai-agent-playbook skills update` |
 | `skills uninstall` | Remove unmodified managed skills installed by this playbook. | Yes, unless `--dry-run` | `npx ai-agent-playbook skills uninstall --dry-run` then `npx ai-agent-playbook skills uninstall` |
@@ -127,6 +132,8 @@ Operator commands are explicit human-triggered signals. They do not install hook
 | ------- | -------------- | ------------- | ------- |
 | `operator check <target>` | Run the main human checkpoint: doctor, guide freshness, diagnostics, and matching rules. | No | `npx ai-agent-playbook operator check <target-project> --path src/example.ts --json` |
 | `operator search <target>` | Search local source, playbook files, rules, plans, and worklogs for a query. | No | `npx ai-agent-playbook operator search <target-project> --query "auth flow" --json` |
+| `operator preflight <target>` | Capture advisory evidence before editing: intent terms, candidate files, rule/context/contract signals, and a portable file snapshot. | No | `npx ai-agent-playbook operator preflight <target-project> --intent "auth flow change" --path src/example.ts --json > preflight.json` |
+| `operator delta <target>` | Compare a saved preflight JSON file with the current target and report added, deleted, modified, out-of-scope, and playbook changes. | No | `npx ai-agent-playbook operator delta <target-project> --before preflight.json --json` |
 | `operator research <target>` | Run a deeper local-only investigation with evidence, gaps, next steps, and markdown summary text. | No | `npx ai-agent-playbook operator research <target-project> --query "auth flow risk" --path src/example.ts --json` |
 | `operator context <target>` | Preview path-scoped playbook context, rules, maps, runbooks, and decisions for one file. | No | `npx ai-agent-playbook operator context <target-project> --path src/example.ts --json` |
 | `operator analyze <target>` | Combine diagnostics, map, rules, context, and optional local setup signals in one report. | No | `npx ai-agent-playbook operator analyze <target-project> --path src/example.ts --json` |
@@ -135,6 +142,8 @@ Operator commands are explicit human-triggered signals. They do not install hook
 | `operator gc <target>` | Preview or remove obsolete unmodified managed playbook files. | No unless `--apply` | `npx ai-agent-playbook operator gc <target-project> --json` |
 
 Use `operator search` for quick lookup. Use `operator research` when you want broader evidence before deciding what to inspect or change. Both are local-only.
+
+Use `operator preflight` before a risky edit when you want a reviewable baseline. The command does not write the JSON file itself; redirect it if you want to keep it. After the edit, pass that saved JSON to `operator delta`. Delta reports what changed, not whether the implementation is correct.
 
 ## Runs and evidence
 
@@ -157,9 +166,10 @@ Contracts capture important business rules and invariants. They are checked expl
 | ------- | -------------- | ------------- | ------- |
 | `contracts list <target>` | List active and pending contracts under `.ai-playbook/contracts/`. | No | `npx ai-agent-playbook contracts list <target-project> --json` |
 | `contracts check <target>` | Show active or pending contracts that apply to a path and warn about stale or incomplete contract notes. | No | `npx ai-agent-playbook contracts check <target-project> --path src/example.ts --json` |
+| `contracts snapshot <target>` | Preview or write `.ai-playbook/contracts/.hashes.json` with relative path hashes for contract, appliesTo, and evidence files. | No unless `--apply` | `npx ai-agent-playbook contracts snapshot <target-project> --json` then `npx ai-agent-playbook contracts snapshot <target-project> --apply --json` |
 | `contracts init <target>` | Create starter `.ai-playbook/contracts/README.md` plus `active/` and `pending/` folders. | Yes, unless `--dry-run` | `npx ai-agent-playbook contracts init <target-project> --dry-run --json` |
 
-Contract markdown supports frontmatter: `id`, `status`, `appliesTo`, `risk`, `approvedAt`, and `freshness`. `contracts check` warns when an `appliesTo` path is missing, a matching contract is pending, `freshness` is older than 90 days, or the `Required evidence` section is empty.
+Contract markdown supports frontmatter: `id`, `status`, `appliesTo`, `risk`, `approvedAt`, and `freshness`. `contracts check` warns when an `appliesTo` path is missing, a matching contract is pending, `freshness` is older than 90 days, or the `Required evidence` section is empty. If a contract hash snapshot exists, `contracts check` also warns when tracked contract, appliesTo, or evidence files changed or disappeared.
 
 ## Rules, diagnostics, and TUI checks
 
@@ -168,8 +178,11 @@ Contract markdown supports frontmatter: `id`, `status`, `appliesTo`, `risk`, `ap
 | `rules check <target>` | See which portable rule files apply to a target path. | No | `npx ai-agent-playbook rules check <target-project> --path src/example.ts --json` |
 | `diagnostics check <target>` | List likely local verification commands without running them. | No | `npx ai-agent-playbook diagnostics check <target-project> --json` |
 | `qa tui-check <capture-file>` | Check captured terminal output for overflow, CJK width, ANSI, and box alignment issues. | No | `npx ai-agent-playbook qa tui-check .\capture.txt --cols 100 --json` |
+| `qa image-diff <reference.png> <actual.png>` | Compare two PNG files and return changed pixels, diff ratio, similarity score, and hotspot grid without creating a diff image. | No | `npx ai-agent-playbook qa image-diff .\before.png .\after.png --threshold 0.01 --json` |
 
 `diagnostics check` reports command candidates only. It does not run lint, tests, builds, or language servers.
+
+`qa image-diff` supports PNG only. It does not capture browsers, store baselines, create visual oracles, or write diff images.
 
 ## Adapter setup
 
@@ -204,6 +217,7 @@ npx ai-agent-playbook skills install
 npx ai-agent-playbook bootstrap <target-project> --dry-run
 npx ai-agent-playbook bootstrap <target-project> --local-only
 npx ai-agent-playbook operator check <target-project> --json
+npx ai-agent-playbook operator preflight <target-project> --intent "planned change" --json > preflight.json
 npx ai-agent-playbook operator research <target-project> --query "project risks" --json
 ```
 

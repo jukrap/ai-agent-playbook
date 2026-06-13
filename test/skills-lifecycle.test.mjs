@@ -187,12 +187,54 @@ test('skills uninstall removes unmodified managed skills and preserves modified 
   await cleanup(root);
 });
 
-function capture(cwd) {
+test('skills lint --json reports trigger and reference quality without writing files', async () => {
+  const root = await tempRepo('skills lint-공백-한글-');
+  await mkdir(path.join(root, 'skills', 'project', 'good-skill', 'references'), { recursive: true });
+  await mkdir(path.join(root, 'skills', 'project', 'bad-skill'), { recursive: true });
+  await writeFile(path.join(root, 'skills', 'project', 'good-skill', 'SKILL.md'), [
+    '---',
+    'name: good-skill',
+    'description: Use when checking a focused project bootstrap edge case.',
+    '---',
+    '# Good Skill',
+    '',
+    'Read [details](references/details.md).'
+  ].join('\n'));
+  await writeFile(path.join(root, 'skills', 'project', 'good-skill', 'references', 'details.md'), '# Details\n');
+  await writeFile(path.join(root, 'skills', 'project', 'bad-skill', 'SKILL.md'), [
+    '---',
+    'name: bad-skill',
+    'description: This skill helps you do many things by following a long workflow that should have been reference material instead of a trigger.',
+    'owner: local',
+    '---',
+    '# Bad Skill',
+    '',
+    'Read [missing](references/missing.md).'
+  ].join('\n'));
+  const before = await listRelativeFiles(root);
+
+  const io = capture(root, root);
+  assert.equal(await runCli(['skills', 'lint', '--json'], io), 1);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, false);
+  assert.equal(report.summary.skills, 2);
+  assert.equal(report.skills.some((skill) => skill.name === 'good-skill' && skill.status === 'pass'), true);
+  assert.equal(report.warnings.some((warning) => warning.id === 'skills.lint.description-trigger'), true);
+  assert.equal(report.warnings.some((warning) => warning.id === 'skills.lint.description-length'), true);
+  assert.equal(report.warnings.some((warning) => warning.id === 'skills.lint.reference-missing'), true);
+  assert.equal(report.conflicts.some((conflict) => conflict.id === 'skills.lint.frontmatter-keys'), true);
+  assert.deepEqual(await listRelativeFiles(root), before);
+  await cleanup(root);
+});
+
+function capture(cwd, overrideRepoRoot = repoRoot) {
   let stdout = '';
   let stderr = '';
   return {
     cwd,
-    repoRoot,
+    repoRoot: overrideRepoRoot,
     stdout: { write: (text) => { stdout += text; } },
     stderr: { write: (text) => { stderr += text; } },
     out: () => stdout,

@@ -65,7 +65,7 @@ ai-playbook --help
 npm 패키지는 CLI를 설치합니다. 스킬 복사, `.ai-playbook/` 생성, hook 활성화, slash command 등록은 자동으로 하지 않습니다. 이 작업들은 명시적으로 실행합니다.
 
 - `skills install`, `skills update`, `skills uninstall`은 사용자 수준 재사용 스킬을 관리합니다.
-- `bootstrap`, `guides sync`, `managed *`, `operator *`는 대상 프로젝트 하나를 관리하거나 점검합니다.
+- `bootstrap`, `guides sync`, `managed *`, `contracts *`, `operator *`, `qa *`는 대상 프로젝트 하나를 관리하거나 점검합니다.
 - Runtime hook과 adapter 설정은 선택 사항이며 기본 설치 경로에서 자동 설치되지 않습니다.
 
 명령어별 사용법은 [명령어 가이드](docs/commands.ko.md)를 봅니다. 업데이트, 삭제, 로컬 checkout, PowerShell 호환 경로, ownership marker, 정리 절차는 [설치, 업데이트, 삭제](docs/installation.ko.md)를 봅니다.
@@ -87,6 +87,7 @@ npx 또는 global install
 npx ai-agent-playbook bootstrap <target-project> --local-only --dry-run
 npx ai-agent-playbook bootstrap <target-project> --local-only
 npx ai-agent-playbook operator check <target-project> --json
+npx ai-agent-playbook operator preflight <target-project> --intent "planned change" --json
 npx ai-agent-playbook operator research <target-project> --query "project risks" --json
 ```
 

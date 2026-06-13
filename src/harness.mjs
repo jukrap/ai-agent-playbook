@@ -1385,6 +1385,7 @@ export async function checkContracts(options) {
       warnings.push(memoryWarning('contracts.evidence-missing', `${contract.id} has no Required evidence content.`, [contract.path]));
     }
   }
+  const snapshot = await readContractSnapshot({ target: resolvedTarget, playbook, warnings, contracts: matches, pathCache });
   return {
     schemaVersion: SCHEMA_VERSION,
     ok: true,
@@ -1398,8 +1399,103 @@ export async function checkContracts(options) {
       warnings: warnings.length
     },
     contracts: matches,
+    snapshot,
     warnings,
     conflicts: []
+  };
+}
+
+export async function snapshotContracts(options) {
+  const { target, contractId, apply = false } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const warnings = [];
+  const conflicts = [];
+  const contracts = await collectContracts({ target: resolvedTarget, playbook, warnings });
+  const selected = contractId === undefined
+    ? contracts
+    : contracts.filter((contract) => contract.id === contractId);
+  if (contractId !== undefined && selected.length === 0) {
+    conflicts.push(memoryWarning('contracts.snapshot.contract-missing', `No contract matched ${contractId}.`, []));
+  }
+  const pathCache = createContractPathCache(resolvedTarget);
+  const entries = new Map();
+  for (const contract of selected) {
+    await addSnapshotEntry(entries, {
+      target: resolvedTarget,
+      portablePath: contract.path,
+      kind: 'contract',
+      sourceContract: contract.id
+    });
+    for (const appliesTo of contract.appliesTo) {
+      const paths = await expandContractPath({ target: resolvedTarget, pathCache, pattern: appliesTo });
+      if (paths.length === 0) {
+        warnings.push(memoryWarning('contracts.snapshot.applies-to-missing', `${contract.id} appliesTo has no current file for ${appliesTo}.`, [contract.path, appliesTo]));
+      }
+      for (const portablePath of paths) {
+        await addSnapshotEntry(entries, {
+          target: resolvedTarget,
+          portablePath,
+          kind: 'appliesTo',
+          sourceContract: contract.id
+        });
+      }
+    }
+    for (const evidence of contract.requiredEvidence) {
+      const portableEvidence = normalizePortablePath(evidence);
+      if (!isSafePortablePath(portableEvidence)) {
+        warnings.push(memoryWarning('contracts.snapshot.evidence-invalid', `${contract.id} evidence path is not portable: ${evidence}.`, [contract.path]));
+        continue;
+      }
+      if (!existsSync(path.join(resolvedTarget, ...portableEvidence.split('/')))) {
+        warnings.push(memoryWarning('contracts.snapshot.evidence-missing', `${contract.id} evidence path is missing: ${portableEvidence}.`, [contract.path, portableEvidence]));
+        continue;
+      }
+      await addSnapshotEntry(entries, {
+        target: resolvedTarget,
+        portablePath: portableEvidence,
+        kind: 'evidence',
+        sourceContract: contract.id
+      });
+    }
+  }
+
+  const snapshotPath = `${playbook.dir}/contracts/.hashes.json`;
+  const snapshot = {
+    schemaVersion: SCHEMA_VERSION,
+    source: 'ai-agent-playbook',
+    generatedAtUtc: new Date().toISOString(),
+    contracts: selected.map((contract) => contract.id),
+    entries: [...entries.values()].sort((left, right) => left.path.localeCompare(right.path) || left.kind.localeCompare(right.kind))
+  };
+  const operations = [{
+    id: 'contracts.snapshot.write',
+    action: apply ? 'write' : 'preview',
+    path: snapshotPath,
+    message: `${apply ? 'Write' : 'Preview'} contract hash snapshot.`
+  }];
+  if (apply && conflicts.length === 0) {
+    const fullPath = path.join(resolvedTarget, ...snapshotPath.split('/'));
+    await mkdir(path.dirname(fullPath), { recursive: true });
+    await writeFile(fullPath, `${JSON.stringify(snapshot, null, 2)}\n`);
+  }
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: conflicts.length === 0,
+    target: resolvedTarget,
+    applied: apply && conflicts.length === 0,
+    snapshotPath,
+    summary: {
+      contracts: selected.length,
+      entries: snapshot.entries.length,
+      operations: operations.length,
+      warnings: warnings.length,
+      conflicts: conflicts.length
+    },
+    operations,
+    warnings,
+    conflicts
   };
 }
 
@@ -1548,6 +1644,18 @@ function normalizePortablePath(value) {
     .replace(/\\/g, '/')
     .replace(/^\.\/+/, '')
     .replace(/\/+/g, '/');
+}
+
+function isSafePortablePath(value) {
+  const normalized = normalizePortablePath(value);
+  return Boolean(
+    normalized &&
+    normalized === value &&
+    !path.isAbsolute(value) &&
+    !path.posix.isAbsolute(normalized) &&
+    !/^[A-Za-z]:[\\/]/.test(value) &&
+    !normalized.split('/').some((part) => part === '..' || part === '')
+  );
 }
 
 function normalizeFrontmatterList(value) {
@@ -1715,6 +1823,10 @@ function memoryWarning(id, message, paths = []) {
 
 function memoryConflict(id, message, paths = []) {
   return { id, message, paths };
+}
+
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 async function latestRunId(playbookRoot) {
@@ -1887,12 +1999,111 @@ async function collectContracts(options) {
         freshness: parsed.frontmatter.freshness ?? null,
         matchesPath,
         stale: isStaleDate(parsed.frontmatter.freshness),
-        hasRequiredEvidence: hasRequiredEvidence(parsed.body)
+        hasRequiredEvidence: hasRequiredEvidence(parsed.body),
+        requiredEvidence: extractRequiredEvidencePaths(parsed.body)
       });
     }
   }
   contracts.sort((left, right) => left.status.localeCompare(right.status) || left.path.localeCompare(right.path));
   return contracts;
+}
+
+async function readContractSnapshot(options) {
+  const { target, playbook, warnings, contracts, pathCache } = options;
+  const snapshotPath = `${playbook.dir}/contracts/.hashes.json`;
+  const fullPath = path.join(target, ...snapshotPath.split('/'));
+  if (!existsSync(fullPath)) {
+    return { path: snapshotPath, exists: false, entries: 0 };
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(await readFile(fullPath, 'utf8'));
+  } catch (error) {
+    warnings.push(memoryWarning('contracts.snapshot.malformed', `Contract snapshot is malformed: ${error.message}.`, [snapshotPath]));
+    return { path: snapshotPath, exists: true, entries: 0, malformed: true };
+  }
+  if (!isRecord(parsed) || !Array.isArray(parsed.entries)) {
+    warnings.push(memoryWarning('contracts.snapshot.malformed', 'Contract snapshot does not contain entries.', [snapshotPath]));
+    return { path: snapshotPath, exists: true, entries: 0, malformed: true };
+  }
+  const entries = new Map();
+  for (const entry of parsed.entries) {
+    if (!isRecord(entry) || typeof entry.path !== 'string' || typeof entry.hash !== 'string') continue;
+    if (!isSafePortablePath(entry.path)) {
+      warnings.push(memoryWarning('contracts.snapshot.path-invalid', `Contract snapshot contains unsafe path ${entry.path}.`, [snapshotPath]));
+      continue;
+    }
+    entries.set(entry.path, entry);
+  }
+  for (const contract of contracts) {
+    await checkSnapshotPath({ target, entries, portablePath: contract.path, kind: 'contract', contract, warnings });
+    for (const appliesTo of contract.appliesTo) {
+      const paths = await expandContractPath({ target, pathCache, pattern: appliesTo });
+      for (const portablePath of paths) {
+        await checkSnapshotPath({ target, entries, portablePath, kind: 'appliesTo', contract, warnings });
+      }
+    }
+    for (const evidence of contract.requiredEvidence) {
+      const portablePath = normalizePortablePath(evidence);
+      if (!isSafePortablePath(portablePath)) continue;
+      const fullEvidencePath = path.join(target, ...portablePath.split('/'));
+      if (!existsSync(fullEvidencePath)) {
+        warnings.push(memoryWarning('contracts.snapshot.evidence-missing', `${contract.id} evidence path is missing after snapshot: ${portablePath}.`, [contract.path, portablePath]));
+        continue;
+      }
+      await checkSnapshotPath({ target, entries, portablePath, kind: 'evidence', contract, warnings });
+    }
+  }
+  const generatedAtUtc = typeof parsed.generatedAtUtc === 'string' ? parsed.generatedAtUtc : null;
+  return {
+    path: snapshotPath,
+    exists: true,
+    generatedAtUtc,
+    entries: entries.size
+  };
+}
+
+async function checkSnapshotPath(options) {
+  const { target, entries, portablePath, kind, contract, warnings } = options;
+  const entry = entries.get(portablePath);
+  const fullPath = path.join(target, ...portablePath.split('/'));
+  if (!entry) {
+    warnings.push(memoryWarning('contracts.snapshot.missing-hash', `${contract.id} has no snapshot hash for ${portablePath}.`, [contract.path, portablePath]));
+    return;
+  }
+  if (!existsSync(fullPath)) {
+    warnings.push(memoryWarning(kind === 'evidence' ? 'contracts.snapshot.evidence-missing' : 'contracts.snapshot.path-missing', `${contract.id} snapshot path is missing: ${portablePath}.`, [contract.path, portablePath]));
+    return;
+  }
+  const currentHash = await hashFile(fullPath);
+  if (currentHash !== entry.hash) {
+    warnings.push(memoryWarning('contracts.snapshot.hash-mismatch', `${contract.id} snapshot hash differs for ${portablePath}.`, [contract.path, portablePath]));
+  }
+}
+
+async function addSnapshotEntry(entries, options) {
+  const { target, portablePath, kind, sourceContract } = options;
+  const normalized = normalizePortablePath(portablePath);
+  if (!isSafePortablePath(normalized)) return;
+  const fullPath = path.join(target, ...normalized.split('/'));
+  if (!existsSync(fullPath)) return;
+  entries.set(`${kind}:${sourceContract}:${normalized}`, {
+    path: normalized,
+    kind,
+    sourceContract,
+    hash: await hashFile(fullPath)
+  });
+}
+
+async function expandContractPath(options) {
+  const { target, pathCache, pattern } = options;
+  const normalized = normalizePortablePath(pattern);
+  if (!isSafePortablePath(normalized)) return [];
+  if (!hasGlobPattern(normalized)) {
+    return existsSync(path.join(target, ...normalized.split('/'))) ? [normalized] : [];
+  }
+  const files = await pathCache.files();
+  return files.filter((file) => globMatches(normalized, file));
 }
 
 function createContractPathCache(target) {
@@ -1945,6 +2156,29 @@ function hasRequiredEvidence(body) {
   const match = normalized.match(/^##\s+Required evidence\s*\n([\s\S]*?)(?:\n##\s+|$)/im);
   if (!match) return false;
   return match[1].split('\n').some((line) => line.trim() && !line.trim().startsWith('<!--'));
+}
+
+function extractRequiredEvidencePaths(body) {
+  const normalized = body.replace(/\r\n/g, '\n');
+  const match = normalized.match(/^##\s+Required evidence\s*\n([\s\S]*?)(?:\n##\s+|$)/im);
+  if (!match) return [];
+  const paths = [];
+  for (const line of match[1].split('\n')) {
+    const cleaned = line
+      .trim()
+      .replace(/^[-*]\s+/, '')
+      .replace(/^\d+\.\s+/, '');
+    if (!cleaned || cleaned.startsWith('<!--')) continue;
+    const markdownLink = cleaned.match(/\[[^\]]+]\(([^)]+)\)/);
+    const backtick = cleaned.match(/`([^`]+)`/);
+    const candidate = markdownLink?.[1] ?? backtick?.[1] ?? cleaned.split(/\s+/)[0];
+    if (!candidate || /^[a-z][a-z0-9+.-]*:/i.test(candidate)) continue;
+    const portable = normalizePortablePath(candidate.replace(/[),.;:]$/g, ''));
+    if (portable.includes('/') && isSafePortablePath(portable)) {
+      paths.push(portable);
+    }
+  }
+  return [...new Set(paths)];
 }
 
 function isStaleDate(value) {

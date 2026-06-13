@@ -200,32 +200,49 @@ test/                 Node CLI and adapter tests
 
 Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in `references/`.
 
-| Category | Skill | Use when |
-| -------- | ----- | -------- |
-| Project | `project-bootstrap` | Starting a new project, inheriting a repository, or setting up project memory and root agent guidance. |
-| Project | `repo-onboarding` | Opening an unfamiliar repository before planning architecture, tooling, edits, or workflow answers. |
-| Project | `project-doc-system` | Creating, reorganizing, or reviewing project AI docs, maps, runbooks, decisions, plans, and worklogs. |
-| Quality | `api-contract-boundary` | Implementing, debugging, or reviewing frontend/backend contracts, DTOs, mocks, payloads, and adapters. |
-| Quality | `ui-style-policy` | Selecting, documenting, or enforcing a repository UI styling policy. |
-| Quality | `style-quality-review` | Reviewing or improving UI styling, responsive behavior, layout overflow, and visual regressions. |
-| Quality | `frontend-ui-polish` | Implementing or refining visible frontend UI surfaces while preserving product intent and existing design conventions. |
-| Quality | `cleanup-ai-slop` | Cleaning low-trust, overcomplicated, duplicated, or mechanically generated code while preserving behavior. |
-| Quality | `review-work-light` | Reviewing recent implementation work before handoff without starting a blocking review process. |
-| Git | `commit-worklog-guardrails` | Staging, committing, pushing, opening PRs, preparing release notes, or recording worklogs. |
-| Meta | `agent-skill-authoring` | Creating, reviewing, or reorganizing reusable agent skills and references. |
-| Legacy | `legacy-general` | Maintaining or extending legacy code with unclear flow, hidden coupling, weak tests, or mixed documentation. |
-| Legacy | `legacy-risk-check` | Changing legacy code that may affect shared state, CSS/JS, selectors, templates, forms, APIs, builds, or deploys. |
-| Legacy | `legacy-feature-addition` | Adding behavior, screens, fields, business rules, or integrations without rewriting the host system. |
-| Legacy | `legacy-jquery-web` | Maintaining jQuery, plugins, direct DOM manipulation, global scripts, AJAX callbacks, or script-order coupling. |
-| Legacy | `legacy-server-rendered-web` | Maintaining templates, controllers, form posts, server validation, sessions, layouts, and partials. |
-| Legacy | `legacy-php-lamp` | Maintaining PHP/LAMP pages with includes, sessions, mixed HTML/PHP, direct SQL, globals, or shared hosting limits. |
-| Legacy | `legacy-java-spring-mvc` | Maintaining Spring MVC, JSP, Servlet, MyBatis, WAR deployment, XML config, or server-rendered Java apps. |
-| Legacy | `legacy-dotnet-webforms` | Maintaining ASP.NET Web Forms, .NET Framework, code-behind, ViewState, Web.config, IIS, or old enterprise .NET apps. |
-| Legacy | `legacy-android-webview-hybrid` | Maintaining Android WebView apps with web assets, JavaScript bridges, permissions, or device APIs. |
-| Legacy | `legacy-ie-activex-compat` | Maintaining intranet systems that depend on IE mode, ActiveX, old browser APIs, or compatibility constraints. |
-| Legacy | `legacy-database-heavy-system` | Maintaining stored procedures, triggers, views, direct SQL, scheduled jobs, or database-shaped business rules. |
-| Legacy | `legacy-reporting-printing` | Maintaining reports, print preview, PDF/Excel export, labels, barcodes, invoices, or printer-specific flows. |
-| Legacy | `legacy-batch-file-transfer` | Maintaining scheduled batches, cron jobs, Windows Task Scheduler, CSV/Excel import/export, SFTP, or file drops. |
+### Project
+
+- `project-bootstrap`: start a new project, inherit a repository, or set up project memory and root agent guidance.
+- `repo-onboarding`: inspect an unfamiliar repository before planning architecture, tooling, edits, or workflow answers.
+- `project-doc-system`: create, reorganize, or review project AI docs, maps, runbooks, decisions, plans, and worklogs.
+
+### Quality
+
+- `api-contract-boundary`: implement, debug, or review frontend/backend contracts, DTOs, mocks, payloads, and adapters.
+- `ui-style-policy`: select, document, or enforce a repository UI styling policy.
+- `style-quality-review`: review or improve UI styling, responsive behavior, layout overflow, and visual regressions.
+- `frontend-ui-polish`: implement or refine visible frontend UI surfaces while preserving product intent and existing design conventions.
+- `cleanup-ai-slop`: clean low-trust, overcomplicated, duplicated, or mechanically generated code while preserving behavior.
+- `review-work-light`: review recent implementation work before handoff without starting a blocking review process.
+
+### Git and Meta
+
+- `commit-worklog-guardrails`: stage, commit, push, open PRs, prepare release notes, or record worklogs.
+- `agent-skill-authoring`: create, review, or reorganize reusable agent skills and references.
+
+### Legacy
+
+General legacy work:
+
+- `legacy-general`: maintain or extend legacy code with unclear flow, hidden coupling, weak tests, or mixed documentation.
+- `legacy-risk-check`: check hidden blast radius before changes that may affect shared state, CSS/JS, selectors, templates, forms, APIs, builds, or deploys.
+- `legacy-feature-addition`: add behavior, screens, fields, business rules, or integrations without rewriting the host system.
+
+Web, mobile, and compatibility surfaces:
+
+- `legacy-jquery-web`: maintain jQuery, plugins, direct DOM manipulation, global scripts, AJAX callbacks, or script-order coupling.
+- `legacy-server-rendered-web`: maintain templates, controllers, form posts, server validation, sessions, layouts, and partials.
+- `legacy-php-lamp`: maintain PHP/LAMP pages with includes, sessions, mixed HTML/PHP, direct SQL, globals, or shared hosting limits.
+- `legacy-android-webview-hybrid`: maintain Android WebView apps with web assets, JavaScript bridges, permissions, or device APIs.
+- `legacy-ie-activex-compat`: maintain intranet systems that depend on IE mode, ActiveX, old browser APIs, or compatibility constraints.
+
+Enterprise stacks and data-heavy flows:
+
+- `legacy-java-spring-mvc`: maintain Spring MVC, JSP, Servlet, MyBatis, WAR deployment, XML config, or server-rendered Java apps.
+- `legacy-dotnet-webforms`: maintain ASP.NET Web Forms, .NET Framework, code-behind, ViewState, Web.config, IIS, or old enterprise .NET apps.
+- `legacy-database-heavy-system`: maintain stored procedures, triggers, views, direct SQL, scheduled jobs, or database-shaped business rules.
+- `legacy-reporting-printing`: maintain reports, print preview, PDF/Excel export, labels, barcodes, invoices, or printer-specific flows.
+- `legacy-batch-file-transfer`: maintain scheduled batches, cron jobs, Windows Task Scheduler, CSV/Excel import/export, SFTP, or file drops.
 
 ## Documentation
 

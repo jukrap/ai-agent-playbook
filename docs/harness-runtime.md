@@ -34,6 +34,7 @@ npx ai-agent-playbook context <target> [--json] [--max-chars N]
 npx ai-agent-playbook operator check <target> [--path <file>] [--diff] [--json]
 npx ai-agent-playbook operator search <target> --query <text> [--path <file>] [--max-results N] [--json]
 npx ai-agent-playbook operator context <target> --path <file> [--json]
+npx ai-agent-playbook operator analyze <target> [--path <file>] [--json]
 npx ai-agent-playbook operator map <target> [--json]
 npx ai-agent-playbook operator audit <target> [--json]
 npx ai-agent-playbook operator gc <target> [--apply] [--json]
@@ -152,7 +153,7 @@ It does not read or re-inject root `AGENTS.md` by default. Use `--json` to retur
 
 ## Operator diagnostics
 
-The diagnostics commands are operator-triggered signals. They help a human or agent decide what to inspect next; they do not install hooks, run project commands, or call the network. The audit, check, search, context, map, rules, diagnostics, and TUI commands are read-only. `operator gc` is preview-first and writes only when `--apply` is provided.
+The diagnostics commands are operator-triggered signals. They help a human or agent decide what to inspect next; they do not install hooks, run project commands, or call the network. The audit, check, search, context, analyze, map, rules, diagnostics, and TUI commands are read-only. `operator gc` is preview-first and writes only when `--apply` is provided.
 
 `operator check` is the combined human checkpoint:
 
@@ -179,6 +180,15 @@ npx ai-agent-playbook operator context <target> --path src/example.ts --json
 ```
 
 It reports the core context files that exist, `.ai-playbook/context/**/*.md` files whose `globs` or `alwaysApply` frontmatter applies to the path, matching project rules, and related maps, runbooks, decisions, or guides that mention the path or file name. JSON output returns `{ schemaVersion, ok, target, path, summary, coreSources, contexts, rules, related, warnings }`. This command does not write context files, run project commands, or install hooks.
+
+`operator analyze` combines the current read-only operator signals:
+
+```powershell
+npx ai-agent-playbook operator analyze <target> --json
+npx ai-agent-playbook operator analyze <target> --path src/example.ts --json
+```
+
+It returns diagnostics, codebase map, matching rules, optional path-scoped context, and optional analysis setup signals in one report. AST, LSP, and comment-quality tools are reported as local setup signals only. This command does not install tools, run language servers, run structural search, edit files, or call the network.
 
 `operator map` summarizes the local codebase shape:
 

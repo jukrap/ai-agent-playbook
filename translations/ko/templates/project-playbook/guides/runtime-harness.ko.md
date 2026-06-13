@@ -22,6 +22,7 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 node .\bin\ai-playbook.mjs operator check <target-repo> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator search <target-repo> --query "auth flow" --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator context <target-repo> --path src/example.ts --json
+node .\bin\ai-playbook.mjs operator analyze <target-repo> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator map <target-repo> --json
 node .\bin\ai-playbook.mjs operator audit <target-repo> --json
 node .\bin\ai-playbook.mjs operator gc <target-repo> --json
@@ -63,6 +64,7 @@ Agent에게 더 강한 evidence가 필요하지만 hook까지는 과할 때 oper
 - `operator check`는 doctor, guide freshness, diagnostics, rule matching을 하나의 read-only human checkpoint로 묶습니다.
 - `operator search`는 파일을 쓰지 않고 관련 local source, playbook, rule, plan, worklog text를 찾습니다.
 - `operator context`는 session에 읽어 들이기 전에 관련 path-scoped context file, rule, map, runbook, decision, guide를 미리 보여줍니다.
+- `operator analyze`는 diagnostics, map, rules, context, optional AST/LSP/comment-quality setup signal을 묶어 보여주되 optional tool을 실행하지 않습니다.
 - `operator map`은 map file을 만들거나 갱신하지 않고 stack, architecture, quality, concern signal을 요약합니다.
 - `operator audit`는 파일을 쓰지 않고 playbook link, context glob, duplicate note, legacy path drift, managed manifest drift를 확인합니다.
 - `operator gc`는 obsolete unmodified managed playbook file을 preview하고 `--apply`가 있을 때만 제거합니다.

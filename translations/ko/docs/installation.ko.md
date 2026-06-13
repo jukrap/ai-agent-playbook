@@ -106,7 +106,7 @@ npm uninstall -g ai-agent-playbook
 | `bootstrap <target>` | `--dry-run`이 없으면 예 | 대상 프로젝트의 루트 `AGENTS.md`와 `.ai-playbook/`을 변경합니다. |
 | `guides sync <target>` | `--dry-run` 또는 `--check`가 없으면 예 | 대상 프로젝트의 `.ai-playbook/guides/`를 변경합니다. |
 | `managed adopt/prune/uninstall` | `--apply`가 없으면 아니오 | 대상 프로젝트의 `.ai-playbook/` managed file을 변경합니다. |
-| `operator check/search/context/map/audit` | 아니오 | 대상 프로젝트를 read-only로 진단합니다. |
+| `operator check/search/context/analyze/map/audit` | 아니오 | 대상 프로젝트를 read-only로 진단합니다. |
 | `adapter config/check` | 아니오 | local adapter 설정을 렌더링하거나 검증합니다. |
 
 ## Option 2: GitHub CLI로 빠른 local checkout
@@ -258,6 +258,7 @@ npx ai-agent-playbook context <target-project> --json
 npx ai-agent-playbook operator check <target-project> --path src/example.ts --json
 npx ai-agent-playbook operator search <target-project> --query "auth flow" --path src/example.ts --json
 npx ai-agent-playbook operator context <target-project> --path src/example.ts --json
+npx ai-agent-playbook operator analyze <target-project> --path src/example.ts --json
 npx ai-agent-playbook operator map <target-project> --json
 npx ai-agent-playbook operator audit <target-project> --json
 npx ai-agent-playbook operator gc <target-project> --json
@@ -289,7 +290,7 @@ npx ai-agent-playbook managed uninstall <target-project> --apply --json
 
 선택적 adapter hook 예시는 내부적으로 `context` 명령을 사용합니다. 이 예시는 read-only이며 `adapters/`에서 수동으로 활성화해야 합니다. `adapter config`로 placeholder 없는 local 설정을 렌더링한 뒤, local settings file을 수동으로 편집한 후 `adapter check --settings <local-settings-path>`로 확인합니다.
 
-Operator diagnostics 명령도 operator가 명시적으로 실행합니다. `operator check`는 doctor, guide freshness, diagnostics, rule matching을 하나의 사람 중심 checkpoint로 묶습니다. `operator search`는 파일을 쓰지 않고 local source, playbook, rules, plans, worklogs를 검색합니다. `operator context`는 agent가 context를 읽기 전에 path-scoped context file, rule, 관련 map/runbook을 미리 보여줍니다. `operator map`은 map file을 만들지 않고 stack, architecture, quality, concern signal을 요약합니다. `operator audit`는 파일을 쓰지 않고 playbook link, context glob, duplicate note, legacy path drift, managed manifest drift를 확인합니다. `operator gc`는 obsolete unmodified managed playbook file을 preview하고 `--apply`가 있을 때만 씁니다. `rules check`는 path에 적용되는 portable rule file을 보여주고, `diagnostics check`는 실행하지 않은 상태로 verification command 후보를 나열하며 감지한 package manager lockfile을 반영합니다. `qa tui-check`는 terminal capture의 width overflow와 CJK layout risk를 확인합니다.
+Operator diagnostics 명령도 operator가 명시적으로 실행합니다. `operator check`는 doctor, guide freshness, diagnostics, rule matching을 하나의 사람 중심 checkpoint로 묶습니다. `operator search`는 파일을 쓰지 않고 local source, playbook, rules, plans, worklogs를 검색합니다. `operator context`는 agent가 context를 읽기 전에 path-scoped context file, rule, 관련 map/runbook을 미리 보여줍니다. `operator analyze`는 diagnostics, map, rules, context, optional AST/LSP/comment-quality setup signal을 묶어 보여주되 optional tool을 실행하지 않습니다. `operator map`은 map file을 만들지 않고 stack, architecture, quality, concern signal을 요약합니다. `operator audit`는 파일을 쓰지 않고 playbook link, context glob, duplicate note, legacy path drift, managed manifest drift를 확인합니다. `operator gc`는 obsolete unmodified managed playbook file을 preview하고 `--apply`가 있을 때만 씁니다. `rules check`는 path에 적용되는 portable rule file을 보여주고, `diagnostics check`는 실행하지 않은 상태로 verification command 후보를 나열하며 감지한 package manager lockfile을 반영합니다. `qa tui-check`는 terminal capture의 width overflow와 CJK layout risk를 확인합니다.
 
 Plan과 worklog는 CLI로 생성할 수 있습니다.
 

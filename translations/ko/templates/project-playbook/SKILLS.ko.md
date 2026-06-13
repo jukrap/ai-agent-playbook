@@ -25,6 +25,9 @@
 - `api-contract-boundary`: API 연동 변경 또는 리뷰.
 - `ui-style-policy`: UI 스타일 정책 선택 또는 문서화.
 - `style-quality-review`: 재설계 없이 눈에 보이는 UI 스타일 리뷰.
+- `frontend-ui-polish`: 제품 의도를 보존하면서 보이는 UI surface를 구현하거나 다듬을 때.
+- `cleanup-ai-slop`: 신뢰가 낮아 보이는 코드를 범위를 제한해 동작 보존 방식으로 정리할 때.
+- `review-work-light`: automatic blocking 없이 최근 구현 작업을 인수인계 전에 검토할 때.
 - `commit-worklog-guardrails`: staging, commit, push, PR 본문, worklog.
 - `legacy-*`: 숨은 결합이나 호환성 제약이 있는 레거시 시스템 변경.
 

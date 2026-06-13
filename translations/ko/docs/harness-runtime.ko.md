@@ -293,5 +293,6 @@ $env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse,Stop'
 - CLI는 `.ai-playbook/`을 커밋할지 local-only로 둘지 자동 결정하지 않습니다. 사용자가 `--local-only`를 명시해야 합니다.
 - CLI는 스킬 설치를 대체하지 않습니다. 스킬은 `install.ps1`, `update.ps1`, `scripts/sync-skills.ps1` 흐름으로 관리합니다.
 - CLI는 수동 검토를 대체하지 않습니다. 기존 agent docs가 있는 프로젝트에서는 먼저 `--dry-run`을 사용합니다.
+- 로컬 임시 자료와 참고 자료는 개발 중 참고 입력으로만 다루고, 대상 프로젝트의 지침으로 복사하지 않습니다.
 - 기본 하네스는 plugin hook, slash command, global install, network access를 요구하지 않습니다.
 - 선택적 hook adapter는 context나 reminder만 주입해야 하며 tool output을 다시 쓰거나 project file을 자동 편집하지 않습니다.

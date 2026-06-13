@@ -16,7 +16,7 @@ Use this profile for React, Vite, TypeScript, pnpm, and pragmatic FSD or a simil
 2. Actual code, config, and package scripts.
 3. `PROJECT_SPEC.md`, `PLANS.md`, `FSD.md`.
 4. `.ai-playbook/CURRENT.md`, relevant maps/runbooks/plans, and the latest worklog summary.
-5. `design-docs/**` and `_reference/**`.
+5. Project design docs and local reference material.
 6. This profile.
 
 ## Architecture

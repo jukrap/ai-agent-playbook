@@ -49,6 +49,8 @@ ai-playbook skills check
 
 전역 설치 후에는 아래 예시의 `npx ai-agent-playbook`을 `ai-playbook`으로 바꿔 실행할 수 있습니다.
 
+전체 명령어 reference는 [명령어 가이드](commands.ko.md)를 봅니다.
+
 ## 스킬 lifecycle
 
 재사용 스킬은 대상 저장소가 아니라 사용자 수준 스킬 루트에 설치됩니다.
@@ -106,7 +108,8 @@ npm uninstall -g ai-agent-playbook
 | `bootstrap <target>` | `--dry-run`이 없으면 예 | 대상 프로젝트의 루트 `AGENTS.md`와 `.ai-playbook/`을 변경합니다. |
 | `guides sync <target>` | `--dry-run` 또는 `--check`가 없으면 예 | 대상 프로젝트의 `.ai-playbook/guides/`를 변경합니다. |
 | `managed adopt/prune/uninstall` | `--apply`가 없으면 아니오 | 대상 프로젝트의 `.ai-playbook/` managed file을 변경합니다. |
-| `operator check/search/context/analyze/map/audit` | 아니오 | 대상 프로젝트를 read-only로 진단합니다. |
+| `operator check/search/research/context/analyze/map/audit` | 아니오 | 대상 프로젝트를 read-only로 진단합니다. |
+| `operator gc` | `--apply`가 없으면 아니오 | 대상 프로젝트의 obsolete unmodified managed playbook file을 변경합니다. |
 | `adapter config/check` | 아니오 | local adapter 설정을 렌더링하거나 검증합니다. |
 
 ## Option 2: GitHub CLI로 빠른 local checkout
@@ -238,38 +241,14 @@ Skills lifecycle 명령은 기본적으로 다른 사람이 만든 같은 이름
 
 이 경로가 기본 project harness입니다. Runtime hook 또는 agent plugin은 선택 확장이며 `install.ps1`, `update.ps1`, 현재 CLI가 설치하지 않습니다.
 
-권장 경로는 런타임 CLI입니다.
+Project-level 작업은 preview로 시작합니다.
 
 ```powershell
 npx ai-agent-playbook bootstrap <target-project> --dry-run
-npx ai-agent-playbook bootstrap <target-project>
-npx ai-agent-playbook guides sync <target-project> --dry-run
-npx ai-agent-playbook guides sync <target-project> --check --diff
-npx ai-agent-playbook migrate path <target-project> --json
-npx ai-agent-playbook managed check <target-project> --json
-npx ai-agent-playbook managed catalog <target-project> --json
-npx ai-agent-playbook managed adopt <target-project> --json
-npx ai-agent-playbook managed prune <target-project> --path .ai-playbook/guides/runtime-harness.md --json
-npx ai-agent-playbook managed uninstall <target-project> --json
-npx ai-agent-playbook doctor <target-project>
-npx ai-agent-playbook doctor <target-project> --json
-npx ai-agent-playbook doctor <target-project> --reminder --json
-npx ai-agent-playbook context <target-project> --json
-npx ai-agent-playbook operator check <target-project> --path src/example.ts --json
-npx ai-agent-playbook operator search <target-project> --query "auth flow" --path src/example.ts --json
-npx ai-agent-playbook operator research <target-project> --query "auth flow risk" --path src/example.ts --json
-npx ai-agent-playbook operator context <target-project> --path src/example.ts --json
-npx ai-agent-playbook operator analyze <target-project> --path src/example.ts --json
-npx ai-agent-playbook operator map <target-project> --json
-npx ai-agent-playbook operator audit <target-project> --json
-npx ai-agent-playbook operator gc <target-project> --json
-npx ai-agent-playbook rules check <target-project> --path src/example.ts --json
-npx ai-agent-playbook diagnostics check <target-project> --json
-npx ai-agent-playbook qa tui-check .\capture.txt --cols 100 --json
-npx ai-agent-playbook adapter config <target-project> --adapter codex --json
-npx ai-agent-playbook adapter check <target-project> --adapter codex --json
-npx ai-agent-playbook adapter check <target-project> --adapter codex --settings <local-settings-path> --json
+npx ai-agent-playbook operator check <target-project> --json
 ```
+
+전역 설치 후에는 `npx ai-agent-playbook`을 `ai-playbook`으로 바꿔 실행합니다. Local checkout에서는 `node .\bin\ai-playbook.mjs`로 바꿔 실행합니다. Project playbook, managed cleanup, operator, adapter, plan, worklog 명령 전체 목록은 [명령어 가이드](commands.ko.md)를 봅니다.
 
 대상 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다. `.ai-playbook/`을 대상 `.gitignore`에 추가해야 하면 `--local-only`를 사용합니다.
 
@@ -289,9 +268,7 @@ npx ai-agent-playbook managed uninstall <target-project> --apply --json
 
 `managed uninstall --apply`는 `.ai-playbook/.ai-agent-playbook-install.json`에 기록되어 있고 현재 hash가 manifest와 같은 파일만 제거합니다. 수정된 project memory는 보존하며 `.gitignore`는 수정하지 않습니다.
 
-선택적 adapter hook 예시는 내부적으로 `context` 명령을 사용합니다. 이 예시는 read-only이며 `adapters/`에서 수동으로 활성화해야 합니다. `adapter config`로 placeholder 없는 local 설정을 렌더링한 뒤, local settings file을 수동으로 편집한 후 `adapter check --settings <local-settings-path>`로 확인합니다.
-
-Operator diagnostics 명령도 operator가 명시적으로 실행합니다. `operator check`는 doctor, guide freshness, diagnostics, rule matching을 하나의 사람 중심 checkpoint로 묶습니다. `operator search`는 파일을 쓰지 않고 local source, playbook, rules, plans, worklogs를 검색합니다. `operator research`는 더 강한 local-only 조사 모드입니다. Source, tests, playbook context, rules, worklogs, diagnostics, map signal을 연결하고 evidence, gaps, next steps, markdown summary text를 반환하며 slash command나 web access가 필요하지 않습니다. `operator context`는 agent가 context를 읽기 전에 path-scoped context file, rule, 관련 map/runbook을 미리 보여줍니다. `operator analyze`는 diagnostics, map, rules, context, optional AST/LSP/comment-quality setup signal을 묶어 보여주되 optional tool을 실행하지 않습니다. `operator map`은 map file을 만들지 않고 stack, architecture, quality, concern signal을 요약합니다. `operator audit`는 파일을 쓰지 않고 playbook link, context glob, duplicate note, legacy path drift, managed manifest drift를 확인합니다. `operator gc`는 obsolete unmodified managed playbook file을 preview하고 `--apply`가 있을 때만 씁니다. `rules check`는 path에 적용되는 portable rule file을 보여주고, `diagnostics check`는 실행하지 않은 상태로 verification command 후보를 나열하며 감지한 package manager lockfile을 반영합니다. `qa tui-check`는 terminal capture의 width overflow와 CJK layout risk를 확인합니다.
+선택적 adapter hook 예시는 내부적으로 `context` 명령을 사용합니다. 이 예시는 read-only이며 `adapters/`에서 수동으로 활성화해야 합니다. `adapter config`로 placeholder 없는 local 설정을 렌더링한 뒤, local settings file을 수동으로 편집한 후 `adapter check --settings <local-settings-path>`로 확인합니다. Operator diagnostics, rules, diagnostics, TUI, adapter 명령 예시는 [명령어 가이드](commands.ko.md)를 봅니다.
 
 Plan과 worklog는 CLI로 생성할 수 있습니다.
 

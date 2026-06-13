@@ -1,7 +1,8 @@
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { readdir, readFile, rm, rmdir, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import crypto from 'node:crypto';
 import path from 'node:path';
-import { checkGuides, doctorProject, SCHEMA_VERSION } from './harness.mjs';
+import { INSTALL_MANIFEST_FILE, checkGuides, doctorProject, SCHEMA_VERSION } from './harness.mjs';
 
 const RULE_DIRECTORY_SOURCES = [
   ['.ai-playbook/rules', '.ai-playbook/rules'],
@@ -33,6 +34,7 @@ const CORE_CONTEXT_FILES = ['START_HERE.md', 'CURRENT.md', 'SKILLS.md', 'GIT.md'
 const PLAYBOOK_DIR_CANDIDATES = ['.ai-playbook', 'ai-playbook'];
 const RELATED_CONTEXT_DIRS = ['maps', 'runbooks', 'decisions', 'guides'];
 const MARKDOWN_EXTENSIONS = new Set(['.md', '.mdc']);
+const PLAYBOOK_AUDIT_DIRS = ['context', 'maps', 'runbooks', 'decisions', 'guides', 'plans', 'worklogs'];
 const SOURCE_EXTENSIONS = new Set([
   '.js', '.mjs', '.cjs', '.jsx', '.ts', '.tsx',
   '.py', '.go', '.rs', '.java', '.kt', '.kts',
@@ -304,6 +306,183 @@ export async function mapOperator(options) {
     concerns,
     warnings: []
   };
+}
+
+export async function auditOperator(options) {
+  const { target } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+
+  const resolvedTarget = path.resolve(target);
+  const findings = [];
+  const playbook = await findPlaybookRoot(resolvedTarget);
+  const dotPlaybook = path.join(resolvedTarget, '.ai-playbook');
+  const legacyPlaybook = path.join(resolvedTarget, 'ai-playbook');
+  const bothPlaybookPathsExist = existsSync(dotPlaybook) && existsSync(legacyPlaybook);
+  if (!playbook) {
+    findings.push(operatorFinding(
+      'fail',
+      'operator.audit.playbook-missing',
+      'playbook',
+      'No .ai-playbook/ or legacy ai-playbook/ folder found.',
+      ['.ai-playbook/']
+    ));
+  }
+  if (bothPlaybookPathsExist) {
+    findings.push(operatorFinding(
+      'warn',
+      'operator.audit.legacy-playbook',
+      'playbook',
+      'Both .ai-playbook/ and legacy ai-playbook/ exist; review legacy cleanup after migration.',
+      ['.ai-playbook/', 'ai-playbook/']
+    ));
+  }
+
+  const sections = {
+    links: { checked: 0, broken: 0, findings: [] },
+    context: { files: 0, orphaned: 0, warnings: 0, findings: [] },
+    duplicates: { groups: 0, items: [] },
+    managed: { manifest: playbook ? `${playbook.name}/${INSTALL_MANIFEST_FILE}` : null, status: 'missing-playbook', total: 0, modified: 0, missing: 0 }
+  };
+
+  if (playbook) {
+    const markdownFiles = await collectPlaybookMarkdownFiles(playbook.absolutePath);
+    const projectFiles = await walkProjectFiles(resolvedTarget, MAP_EXCLUDED_DIRS);
+    const linkFindings = await auditMarkdownLinks({ target: resolvedTarget, markdownFiles });
+    sections.links.checked = markdownFiles.length;
+    sections.links.broken = linkFindings.length;
+    sections.links.findings = linkFindings;
+    findings.push(...linkFindings);
+
+    const contextFindings = await auditContextGlobs({
+      target: resolvedTarget,
+      playbook,
+      projectFiles: projectFiles.map((file) => toPortablePath(path.relative(resolvedTarget, file)))
+    });
+    sections.context.files = contextFindings.files;
+    sections.context.orphaned = contextFindings.orphaned;
+    sections.context.warnings = contextFindings.warnings;
+    sections.context.findings = contextFindings.findings;
+    findings.push(...contextFindings.findings);
+
+    const duplicateFindings = await auditDuplicateMarkdown({ target: resolvedTarget, markdownFiles });
+    sections.duplicates.groups = duplicateFindings.length;
+    sections.duplicates.items = duplicateFindings.map((finding) => ({ paths: finding.paths }));
+    findings.push(...duplicateFindings);
+
+    const managed = await auditManagedManifest({ target: resolvedTarget, playbook });
+    sections.managed = managed.section;
+    findings.push(...managed.findings);
+  }
+
+  const summary = summarizeChecks(findings);
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: summary.fail === 0,
+    target: resolvedTarget,
+    summary: {
+      findings: findings.length,
+      ...summary
+    },
+    findings,
+    sections,
+    warnings: findings.filter((finding) => finding.level === 'warn')
+  };
+}
+
+export async function gcOperator(options) {
+  const { repoRoot, target, apply = false } = options;
+  await assertDirectory(repoRoot, 'Repository root does not exist');
+  await assertDirectory(target, 'Target repository does not exist');
+
+  const resolvedRepoRoot = path.resolve(repoRoot);
+  const resolvedTarget = path.resolve(target);
+  const playbook = await findPlaybookRoot(resolvedTarget);
+  const operations = [];
+  const warnings = [];
+  const conflicts = [];
+  if (!playbook) {
+    conflicts.push({
+      id: 'operator.gc.playbook-missing',
+      message: 'No .ai-playbook/ or legacy ai-playbook/ folder found.',
+      paths: ['.ai-playbook/']
+    });
+    return operatorGcResult({ target: resolvedTarget, apply, applied: false, operations, warnings, conflicts });
+  }
+
+  const manifestResult = await readOperatorManagedManifest(playbook);
+  if (!manifestResult.ok) {
+    conflicts.push(manifestResult.conflict);
+    return operatorGcResult({ target: resolvedTarget, apply, applied: false, operations, warnings, conflicts });
+  }
+
+  const removedPaths = [];
+  const files = manifestResult.manifest.files;
+  for (const entry of files) {
+    if (!isRecord(entry) || typeof entry.path !== 'string' || typeof entry.source !== 'string') continue;
+    const sourcePath = safeJoin(resolvedRepoRoot, entry.source);
+    if (sourcePath && existsSync(sourcePath)) continue;
+
+    const targetPath = safeJoin(resolvedTarget, entry.path);
+    if (!targetPath) {
+      conflicts.push({
+        id: 'operator.gc.unsafe-managed-path',
+        message: `${entry.path} is outside the target repository and will not be removed.`,
+        paths: [entry.path]
+      });
+      continue;
+    }
+    if (!entry.path.startsWith(`${playbook.name}/`)) {
+      conflicts.push({
+        id: 'operator.gc.protected-managed-file',
+        message: `${entry.path} is outside ${playbook.name}/ and will not be removed by operator gc.`,
+        paths: [entry.path]
+      });
+      continue;
+    }
+    if (!existsSync(targetPath)) {
+      warnings.push({
+        id: 'operator.gc.missing-obsolete-managed-file',
+        message: `${entry.path} is already missing.`,
+        paths: [entry.path]
+      });
+      continue;
+    }
+    const currentHash = await hashFile(targetPath);
+    if (currentHash !== entry.targetHash) {
+      conflicts.push({
+        id: 'operator.gc.modified-obsolete-managed-file',
+        message: `${entry.path} has local edits and will not be removed.`,
+        paths: [entry.path]
+      });
+      continue;
+    }
+    operations.push({
+      id: 'operator.gc.remove-obsolete-managed-file',
+      action: 'remove',
+      message: `Remove obsolete managed file ${entry.path}.`,
+      paths: [entry.path]
+    });
+    removedPaths.push(entry.path);
+  }
+
+  let applied = false;
+  if (apply && removedPaths.length > 0) {
+    for (const relativePath of removedPaths) {
+      const targetPath = safeJoin(resolvedTarget, relativePath);
+      if (!targetPath) continue;
+      await rm(targetPath, { force: true });
+      await removeEmptyParents(path.dirname(targetPath), playbook.absolutePath);
+    }
+    const updatedManifest = {
+      ...manifestResult.manifest,
+      updatedAtUtc: new Date().toISOString(),
+      files: files.filter((entry) => !removedPaths.includes(entry.path))
+    };
+    await writeFile(manifestResult.path, `${JSON.stringify(updatedManifest, null, 2)}\n`);
+    applied = true;
+  }
+
+  return operatorGcResult({ target: resolvedTarget, apply, applied, operations, warnings, conflicts });
 }
 
 export async function checkRules(options) {
@@ -842,6 +1021,283 @@ async function collectTopLevelEntries(target) {
     }))
     .sort((left, right) => left.path.localeCompare(right.path))
     .slice(0, 40);
+}
+
+async function collectPlaybookMarkdownFiles(playbookRoot) {
+  const files = [];
+  for (const directory of PLAYBOOK_AUDIT_DIRS) {
+    const root = path.join(playbookRoot, directory);
+    files.push(...await walkMarkdownFiles(root));
+  }
+  for (const file of CORE_CONTEXT_FILES) {
+    const fullPath = path.join(playbookRoot, file);
+    if (existsSync(fullPath)) files.push(fullPath);
+  }
+  return [...new Set(files)].sort();
+}
+
+async function auditMarkdownLinks(options) {
+  const { target, markdownFiles } = options;
+  const findings = [];
+  for (const file of markdownFiles) {
+    let text;
+    try {
+      text = await readFile(file, 'utf8');
+    } catch {
+      continue;
+    }
+    const relativeSource = toPortablePath(path.relative(target, file));
+    for (const link of markdownLinks(text)) {
+      const resolved = resolveMarkdownLink({ file, target, href: link.href });
+      if (!resolved || existsSync(resolved.absolutePath)) continue;
+      findings.push(operatorFinding(
+        'fail',
+        'operator.audit.broken-link',
+        'references',
+        `${relativeSource} links to missing ${resolved.relativePath}.`,
+        [relativeSource, resolved.relativePath]
+      ));
+    }
+  }
+  return findings;
+}
+
+async function auditContextGlobs(options) {
+  const { target, playbook, projectFiles } = options;
+  const contextRoot = path.join(playbook.absolutePath, 'context');
+  const files = await walkMarkdownFiles(contextRoot);
+  const findings = [];
+  let orphaned = 0;
+  let warnings = 0;
+  for (const file of files) {
+    const relativePath = toPortablePath(path.relative(target, file));
+    const text = await readFile(file, 'utf8');
+    const parsed = parseRuleFile(text);
+    for (const diagnostic of parsed.diagnostics) {
+      warnings += 1;
+      findings.push(operatorFinding(
+        'warn',
+        'operator.audit.context-frontmatter',
+        'context',
+        diagnostic,
+        [relativePath]
+      ));
+    }
+    if (parsed.frontmatter.alwaysApply || parsed.frontmatter.globs.length === 0) continue;
+    const matchesAny = parsed.frontmatter.globs.some((glob) => projectFiles.some((projectFile) => globMatches(glob, projectFile)));
+    if (matchesAny) continue;
+    orphaned += 1;
+    findings.push(operatorFinding(
+      'warn',
+      'operator.audit.orphan-context',
+      'context',
+      `${relativePath} has globs that do not match any current project file.`,
+      [relativePath]
+    ));
+  }
+  return { files: files.length, orphaned, warnings, findings };
+}
+
+async function auditDuplicateMarkdown(options) {
+  const { target, markdownFiles } = options;
+  const byHash = new Map();
+  for (const file of markdownFiles) {
+    let raw;
+    try {
+      raw = await readFile(file);
+    } catch {
+      continue;
+    }
+    const text = raw.toString('utf8').trim();
+    if (!text) continue;
+    const hash = sha256(raw);
+    const relativePath = toPortablePath(path.relative(target, file));
+    const paths = byHash.get(hash) ?? [];
+    paths.push(relativePath);
+    byHash.set(hash, paths);
+  }
+  return [...byHash.values()]
+    .filter((paths) => paths.length > 1)
+    .map((paths) => operatorFinding(
+      'warn',
+      'operator.audit.duplicate-content',
+      'duplicates',
+      `Duplicate playbook content appears in ${paths.length} files.`,
+      paths
+    ));
+}
+
+async function auditManagedManifest(options) {
+  const { target, playbook } = options;
+  const findings = [];
+  const manifestResult = await readOperatorManagedManifest(playbook);
+  if (!manifestResult.ok) {
+    findings.push(operatorFinding(
+      manifestResult.conflict.id === 'operator.gc.manifest-missing' ? 'warn' : 'fail',
+      manifestResult.conflict.id.replace('operator.gc.', 'operator.audit.'),
+      'managed',
+      manifestResult.conflict.message,
+      manifestResult.conflict.paths
+    ));
+    return {
+      section: { manifest: `${playbook.name}/${INSTALL_MANIFEST_FILE}`, status: 'unavailable', total: 0, modified: 0, missing: 0 },
+      findings
+    };
+  }
+
+  let modified = 0;
+  let missing = 0;
+  for (const entry of manifestResult.manifest.files) {
+    if (!isRecord(entry) || typeof entry.path !== 'string') continue;
+    const targetPath = safeJoin(target, entry.path);
+    if (!targetPath || !existsSync(targetPath)) {
+      missing += 1;
+      findings.push(operatorFinding(
+        'warn',
+        'operator.audit.managed-file-missing',
+        'managed',
+        `${entry.path} is listed in the managed manifest but is missing.`,
+        [entry.path]
+      ));
+      continue;
+    }
+    const currentHash = await hashFile(targetPath);
+    if (currentHash !== entry.targetHash) {
+      modified += 1;
+      findings.push(operatorFinding(
+        'warn',
+        'operator.audit.managed-file-modified',
+        'managed',
+        `${entry.path} differs from the managed manifest hash.`,
+        [entry.path]
+      ));
+    }
+  }
+  return {
+    section: {
+      manifest: `${playbook.name}/${INSTALL_MANIFEST_FILE}`,
+      status: 'present',
+      total: manifestResult.manifest.files.length,
+      modified,
+      missing
+    },
+    findings
+  };
+}
+
+function markdownLinks(text) {
+  const links = [];
+  const pattern = /!?\[[^\]]*]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)/g;
+  for (const match of text.matchAll(pattern)) {
+    links.push({ href: match[1] });
+  }
+  return links;
+}
+
+function resolveMarkdownLink({ file, target, href }) {
+  const trimmed = href.trim();
+  if (!trimmed || trimmed.startsWith('#')) return null;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return null;
+  const withoutFragment = trimmed.split('#')[0];
+  if (!withoutFragment) return null;
+  let decoded = withoutFragment;
+  try {
+    decoded = decodeURI(withoutFragment);
+  } catch {
+    decoded = withoutFragment;
+  }
+  const absolutePath = path.resolve(path.dirname(file), decoded);
+  const relativePath = normalizeTargetRelativePath(target, absolutePath);
+  return { absolutePath, relativePath };
+}
+
+async function readOperatorManagedManifest(playbook) {
+  const manifestPath = path.join(playbook.absolutePath, INSTALL_MANIFEST_FILE);
+  const relativePath = `${playbook.name}/${INSTALL_MANIFEST_FILE}`;
+  if (!existsSync(manifestPath)) {
+    return {
+      ok: false,
+      conflict: {
+        id: 'operator.gc.manifest-missing',
+        message: `Missing managed manifest ${relativePath}.`,
+        paths: [relativePath]
+      }
+    };
+  }
+  try {
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+    if (!isRecord(manifest) || !Array.isArray(manifest.files)) {
+      return {
+        ok: false,
+        conflict: {
+          id: 'operator.gc.manifest-invalid',
+          message: `Invalid managed manifest ${relativePath}.`,
+          paths: [relativePath]
+        }
+      };
+    }
+    return { ok: true, path: manifestPath, manifest };
+  } catch (error) {
+    return {
+      ok: false,
+      conflict: {
+        id: 'operator.gc.manifest-malformed',
+        message: `Could not parse ${relativePath}: ${error.message}`,
+        paths: [relativePath]
+      }
+    };
+  }
+}
+
+function operatorGcResult(options) {
+  const { target, apply, applied, operations, warnings, conflicts } = options;
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: conflicts.length === 0,
+    target,
+    applied: Boolean(applied),
+    summary: {
+      removable: operations.length,
+      removed: apply && applied ? operations.length : 0,
+      warnings: warnings.length,
+      conflicts: conflicts.length
+    },
+    operations,
+    warnings,
+    conflicts
+  };
+}
+
+async function hashFile(file) {
+  return sha256(await readFile(file));
+}
+
+function sha256(value) {
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+function safeJoin(root, relativePath) {
+  const resolvedRoot = path.resolve(root);
+  const resolved = path.resolve(resolvedRoot, ...normalizePortablePath(relativePath).split('/'));
+  if (resolved !== resolvedRoot && !resolved.startsWith(`${resolvedRoot}${path.sep}`)) return null;
+  return resolved;
+}
+
+async function removeEmptyParents(startDir, stopDir) {
+  const resolvedStop = path.resolve(stopDir);
+  let current = path.resolve(startDir);
+  while (current !== resolvedStop && current.startsWith(`${resolvedStop}${path.sep}`)) {
+    try {
+      await rmdir(current);
+    } catch {
+      break;
+    }
+    current = path.dirname(current);
+  }
+}
+
+function operatorFinding(level, id, category, message, paths = []) {
+  return { id, level, category, message, paths };
 }
 
 function occurrences(text, search) {

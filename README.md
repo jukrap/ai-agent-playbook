@@ -84,6 +84,8 @@ node .\bin\ai-playbook.mjs operator check <target-project> --path src/example.ts
 node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator context <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator map <target-project> --json
+node .\bin\ai-playbook.mjs operator audit <target-project> --json
+node .\bin\ai-playbook.mjs operator gc <target-project> --json
 node .\bin\ai-playbook.mjs rules check <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs diagnostics check <target-project> --json
 node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
@@ -99,7 +101,7 @@ Runtime hooks and plugins are not part of the default install path. Treat them a
 
 Managed project harness commands use `.ai-playbook/.ai-agent-playbook-install.json` to track files copied by this playbook. Use `managed check` before cleanup, `managed adopt` to add a marker to older matching installs, and `managed uninstall` to preview removal of unmodified managed files. `managed adopt` and `managed uninstall` write only when `--apply` is provided.
 
-Operator diagnostics such as `operator check`, `operator search`, `operator context`, `operator map`, `rules check`, `diagnostics check`, and `qa tui-check` are read-only. Use `operator check` as the combined human checkpoint for doctor, guide freshness, local verification command candidates, and rule matching before adding stronger runtime automation. Use `operator search` as a local project explorer for related source, playbook, rules, plans, and worklog matches. Use `operator context` to preview path-scoped playbook context and rule matches, and `operator map` to summarize stack, architecture, quality, and concern signals without writing an analysis file. `diagnostics check` formats package scripts with the detected lockfile package manager.
+Operator diagnostics such as `operator check`, `operator search`, `operator context`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, and `qa tui-check` are operator-triggered. Use `operator check` as the combined human checkpoint for doctor, guide freshness, local verification command candidates, and rule matching before adding stronger runtime automation. Use `operator search` as a local project explorer for related source, playbook, rules, plans, and worklog matches. Use `operator context` to preview path-scoped playbook context and rule matches, and `operator map` to summarize stack, architecture, quality, and concern signals without writing an analysis file. Use `operator audit` to find broken playbook links, orphan context globs, duplicate playbook notes, legacy path drift, and managed manifest drift without writing files. Use `operator gc` as a preview-first cleanup for obsolete unmodified managed playbook files; it writes only with `--apply`. `diagnostics check` formats package scripts with the detected lockfile package manager.
 
 ## Everyday Flow
 
@@ -123,6 +125,8 @@ node .\bin\ai-playbook.mjs managed check <target-project> --json
 node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --json
 node .\bin\ai-playbook.mjs operator context <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator map <target-project> --json
+node .\bin\ai-playbook.mjs operator audit <target-project> --json
+node .\bin\ai-playbook.mjs operator gc <target-project> --json
 ```
 
 ## Repository Map

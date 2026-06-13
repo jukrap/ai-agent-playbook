@@ -68,7 +68,7 @@ The npm package installs the CLI. It does not automatically copy skills, create 
 - `bootstrap`, `guides sync`, `managed *`, and `operator *` manage or inspect one target project.
 - Runtime hooks and adapter settings are optional and are never installed by default.
 
-For update, uninstall, local checkout, PowerShell compatibility, ownership markers, and cleanup details, see [Install, update, and uninstall](docs/installation.md).
+For command-by-command usage, see [Command guide](docs/commands.md). For update, uninstall, local checkout, PowerShell compatibility, ownership markers, and cleanup details, see [Install, update, and uninstall](docs/installation.md).
 
 ## Everyday Flow
 
@@ -85,19 +85,12 @@ For existing projects, start with a dry run and inspect conflicts before writing
 
 ```powershell
 npx ai-agent-playbook bootstrap <target-project> --local-only --dry-run
-npx ai-agent-playbook guides sync <target-project> --dry-run
-npx ai-agent-playbook guides sync <target-project> --check --diff --json
-npx ai-agent-playbook migrate path <target-project> --json
-npx ai-agent-playbook managed check <target-project> --json
-npx ai-agent-playbook managed catalog <target-project> --json
-npx ai-agent-playbook operator search <target-project> --query "auth flow" --json
-npx ai-agent-playbook operator research <target-project> --query "auth flow risk" --path src/example.ts --json
-npx ai-agent-playbook operator context <target-project> --path src/example.ts --json
-npx ai-agent-playbook operator analyze <target-project> --path src/example.ts --json
-npx ai-agent-playbook operator map <target-project> --json
-npx ai-agent-playbook operator audit <target-project> --json
-npx ai-agent-playbook operator gc <target-project> --json
+npx ai-agent-playbook bootstrap <target-project> --local-only
+npx ai-agent-playbook operator check <target-project> --json
+npx ai-agent-playbook operator research <target-project> --query "project risks" --json
 ```
+
+See [Command guide](docs/commands.md) for search, managed cleanup, adapter setup, plan, and worklog commands.
 
 ## Repository Map
 
@@ -176,8 +169,9 @@ Enterprise stacks and data-heavy flows:
 
 - [Repository working rules](AGENTS.md): maintenance rules for agents editing this repository.
 - [Repository context](CONTEXT.md): core terms and design intent for the playbook.
+- [Command guide](docs/commands.md): what each CLI command does, when to use it, and whether it writes files.
 - [Install, update, and uninstall](docs/installation.md): npm/npx usage, global CLI setup, skill lifecycle, project bootstrap, cleanup, and legacy PowerShell paths.
-- [Runtime harness](docs/harness-runtime.md): CLI commands, JSON contracts, overwrite policy, and target-project flow.
+- [Runtime harness](docs/harness-runtime.md): runtime principles, JSON contract notes, overwrite policy, and target-project flow.
 - [Runtime roadmap](docs/runtime-roadmap.md): staged hardening plan and optional hook-layer boundaries.
 - [Codex adapter](adapters/codex/README.md): Codex-specific local sync behavior and Codex App on Windows workflow.
 - [Claude Code adapter](adapters/claude-code/README.md): Claude Code setup notes and optional read-only context hook example.

@@ -4,24 +4,46 @@
 
 ## Option 1: npm 또는 npx
 
-package가 publish되어 있고 Node.js를 사용할 수 있을 때 사용합니다.
+Node.js를 사용할 수 있을 때 사용합니다. Public package는 [`ai-agent-playbook`](https://www.npmjs.com/package/ai-agent-playbook)입니다.
+
+한 번만 실행할 명령:
 
 ```powershell
+npx ai-agent-playbook --help
 npx ai-agent-playbook skills install --dry-run
 npx ai-agent-playbook skills install
 npx ai-agent-playbook bootstrap <target-project> --dry-run
 npx ai-agent-playbook operator check <target-project> --json
 ```
 
+Managed local skill 업데이트 또는 제거:
+
+```powershell
+npx ai-agent-playbook skills update --dry-run
+npx ai-agent-playbook skills update
+npx ai-agent-playbook skills uninstall --dry-run
+npx ai-agent-playbook skills uninstall
+```
+
 전역 명령으로 유지하려면 아래처럼 설치합니다.
 
 ```powershell
 npm install -g ai-agent-playbook
+ai-playbook --help
 ai-playbook skills update
 ai-playbook operator search <target-project> --query "auth flow" --json
 ```
 
+Global CLI 업데이트 또는 삭제:
+
+```powershell
+npm install -g ai-agent-playbook@latest
+npm uninstall -g ai-agent-playbook
+```
+
 `skills install`과 `skills update`는 managed skill을 일반 Codex/agent skill directory로 동기화합니다. 로컬에서 수정한 managed skill은 `--force-managed`가 없으면 덮어쓰지 않고, 같은 이름의 다른 unmanaged skill은 `--force-unmanaged`가 없으면 덮어쓰지 않습니다.
+
+`skills uninstall`은 이 playbook이 설치한 수정되지 않은 managed skill만 제거합니다. 먼저 `--dry-run`으로 확인합니다.
 
 Skill 설치나 업데이트 뒤에는 다음 세션이 skill metadata를 읽도록 Codex를 재시작합니다.
 

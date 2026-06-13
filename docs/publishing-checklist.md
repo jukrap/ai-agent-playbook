@@ -46,10 +46,18 @@ After pushing, confirm the validation workflow passes if the repository uses one
 - Publish only after repository validation passes:
 
 ```powershell
-npm publish
+npm publish --access public
 ```
 
 If npm asks for one-time password confirmation, complete it interactively on the publishing machine. Do not store npm tokens in repository files.
+
+After publishing, verify the registry and CLI smoke path:
+
+```powershell
+npm view ai-agent-playbook version
+npx --yes ai-agent-playbook@latest --help
+npx --yes ai-agent-playbook@latest skills install --dry-run
+```
 
 ## Git host setup
 

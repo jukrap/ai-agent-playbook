@@ -4,24 +4,46 @@ This package is easiest to use through npm or npx. A local Git checkout with the
 
 ## Option 1: npm or npx
 
-Use this when the package has been published and Node.js is available.
+Use this when Node.js is available. The public package is [`ai-agent-playbook`](https://www.npmjs.com/package/ai-agent-playbook).
+
+For one-off commands:
 
 ```powershell
+npx ai-agent-playbook --help
 npx ai-agent-playbook skills install --dry-run
 npx ai-agent-playbook skills install
 npx ai-agent-playbook bootstrap <target-project> --dry-run
 npx ai-agent-playbook operator check <target-project> --json
 ```
 
+Update or remove managed local skills:
+
+```powershell
+npx ai-agent-playbook skills update --dry-run
+npx ai-agent-playbook skills update
+npx ai-agent-playbook skills uninstall --dry-run
+npx ai-agent-playbook skills uninstall
+```
+
 For a persistent global command:
 
 ```powershell
 npm install -g ai-agent-playbook
+ai-playbook --help
 ai-playbook skills update
 ai-playbook operator search <target-project> --query "auth flow" --json
 ```
 
+Update or remove the global CLI:
+
+```powershell
+npm install -g ai-agent-playbook@latest
+npm uninstall -g ai-agent-playbook
+```
+
 `skills install` and `skills update` sync managed skills into the common Codex and agent skill directories. They refuse to overwrite locally edited managed skills unless `--force-managed` is provided, and they refuse different same-name unmanaged skills unless `--force-unmanaged` is provided.
+
+`skills uninstall` removes only unmodified managed skills installed by this playbook. Run it with `--dry-run` first.
 
 Restart Codex after skill installation or update so the next session can pick up skill metadata.
 

@@ -1,6 +1,6 @@
 # Runtime Harness
 
-`ai-playbook` is the executable surface for installing reusable skills and applying this repository to a target project. It does not call an AI model. It copies templates, checks project-memory health, and creates predictable plan/worklog files so agents stop inventing ad hoc markdown paths.
+`ai-playbook` is the executable surface for installing reusable skills and applying this repository to a target project. It does not call an AI model. It copies templates, checks project-memory health, and creates predictable context, run, contract, plan, and worklog files so agents stop inventing ad hoc markdown paths.
 
 This CLI and the project playbook are the default harness. Runtime hooks or plugins are optional extensions and should stay outside the default path until their behavior is explicit, local, and easy to disable. See `docs/runtime-roadmap.md` for the staged design.
 
@@ -111,6 +111,25 @@ Use `doctor --reminder --json` when a wrapper or script needs a small non-blocki
 
 It does not read or re-inject root `AGENTS.md` by default. Use `--json` to return `{ schemaVersion, ok, target, sources, additionalContext, warnings }`. Use `--max-chars N` to cap injected context for hook environments.
 
+Path-scoped context lives under `.ai-playbook/context/`. Context markdown may use frontmatter fields `id`, `globs`, `alwaysApply`, `freshness`, and `priority`, with body sections such as `When to read`, `Current facts`, `Do not assume`, and `Verification hints`.
+
+`context list` and `context status` are read-only. `context status --path <file> --json` returns `{ schemaVersion, ok, target, path, summary, contexts, docMap, warnings, conflicts }` so an operator can see which context files apply to a path and whether `.ai-playbook/maps/doc-map.md` exists. `context init` is preview-first and writes starter context and documentation-map files only when `--dry-run` is omitted.
+
+## Runs ledger
+
+`runs/` captures in-progress execution state and evidence. It is different from `worklogs/`:
+
+- `runs/` is for the current task: criteria, evidence, blockers, cleanup, and resumable status.
+- `worklogs/` is for durable history after milestones, blockers, direction changes, or long debugging.
+
+`run start` creates `.ai-playbook/runs/<run-id>/` with `brief.md`, `criteria.json`, `ledger.jsonl`, `evidence/`, and `summary.md`. The ledger is append-only JSONL. `run record` appends note, criterion, evidence, blocker, or cleanup events and rejects local absolute paths or credential-looking messages. `run status` is read-only. `run summarize` is preview-first and renders the ledger into `summary.md`.
+
+## Contracts
+
+`contracts/` captures important business rules and invariants as markdown. Active contracts live under `.ai-playbook/contracts/active/`; drafts live under `.ai-playbook/contracts/pending/`. Contract frontmatter supports `id`, `status`, `appliesTo`, `risk`, `approvedAt`, and `freshness`.
+
+`contracts list` and `contracts check` are read-only. `contracts check --path <file> --json` reports matching active and pending contracts, missing `appliesTo` paths, stale freshness dates, pending-only matches, and empty `Required evidence` sections. It does not run tests, judge correctness, block commits, approve rules, or edit files. `contracts init` is preview-first and writes only the starter folder structure.
+
 ## Operator diagnostics
 
 The diagnostics commands are operator-triggered signals. They help a human or agent decide what to inspect next; they do not install hooks, run project commands, or call the network. The audit, check, search, research, context, analyze, map, rules, diagnostics, and TUI commands are read-only. `operator gc` is preview-first and writes only when `--apply` is provided.
@@ -145,7 +164,7 @@ Use it when quick search is too shallow and the operator wants a broader evidenc
 npx ai-agent-playbook operator context <target> --path src/example.ts --json
 ```
 
-It reports the core context files that exist, `.ai-playbook/context/**/*.md` files whose `globs` or `alwaysApply` frontmatter applies to the path, matching project rules, and related maps, runbooks, decisions, or guides that mention the path or file name. JSON output returns `{ schemaVersion, ok, target, path, summary, coreSources, contexts, rules, related, warnings }`. This command does not write context files, run project commands, or install hooks.
+It reports the core context files that exist, `.ai-playbook/context/**/*.md` files whose `globs` or `alwaysApply` frontmatter applies to the path, matching project rules, `.ai-playbook/maps/doc-map.md`, and related maps, runbooks, decisions, or guides that mention the path or file name. JSON output returns `{ schemaVersion, ok, target, path, summary, coreSources, contexts, docMap, rules, related, warnings }`. This command does not write context files, run project commands, or install hooks.
 
 `operator analyze` combines the current read-only operator signals:
 
@@ -261,6 +280,8 @@ These reminders are intentionally narrow. They do not run `doctor`, block tool c
 ## Scaffold rules
 
 - Plans are created under `.ai-playbook/plans/YYYY-MM-DD-<slug>.md`.
+- Runs are created under `.ai-playbook/runs/<run-id>/`.
+- Contract starters are created under `.ai-playbook/contracts/`.
 - Worklogs are created under `.ai-playbook/worklogs/YYYY-MM/YYYY-MM-DD-<slug>.md`.
 - Monthly summaries are created under `.ai-playbook/worklogs/summaries/YYYY-MM.md`.
 - Existing files are not overwritten unless `--force` is provided.

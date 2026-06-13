@@ -42,9 +42,13 @@ Command-specific options appear where they are needed:
 | `--reminder` | Return a small doctor reminder signal instead of the full report. |
 | `--profile <name>` | Add a stack-specific bootstrap profile after the target stack is known. |
 | `--local-only` | Add `.ai-playbook/` to the target project's `.gitignore` during bootstrap. |
-| `--title <text>` | Title for a generated plan or worklog. |
+| `--title <text>` | Title for a generated plan, worklog, or run. |
 | `--month YYYY-MM` | Month for a worklog summary. |
 | `--cols N` | Expected terminal width for `qa tui-check`. |
+| `--run-id <id>` | Select one run under `.ai-playbook/runs/`. |
+| `--type note|criterion|evidence|blocker|cleanup` | Event type for `run record`. |
+| `--status pass|fail|blocked|info` | Event status for `run record`. |
+| `--evidence <path>` | Portable relative evidence path for `run record`. |
 
 ## First-time setup
 
@@ -85,8 +89,13 @@ Project playbook commands manage `.ai-playbook/` in one target repository.
 | `migrate path <target>` | Preview or apply the legacy `ai-playbook/` to `.ai-playbook/` folder migration. | No unless `--apply` | `npx ai-agent-playbook migrate path <target-project> --json` |
 | `doctor <target>` | Check project playbook health, adaptation status, worklog summary freshness, and local-path risk. | No | `npx ai-agent-playbook doctor <target-project> --json` |
 | `context <target>` | Build compact project context from core `.ai-playbook/` files for optional hooks or inspection. | No | `npx ai-agent-playbook context <target-project> --json` |
+| `context list <target>` | List `.ai-playbook/context/**/*.md` files and their frontmatter. | No | `npx ai-agent-playbook context list <target-project> --json` |
+| `context status <target>` | Show which path-scoped context files apply to one file and whether `maps/doc-map.md` exists. | No | `npx ai-agent-playbook context status <target-project> --path src/example.ts --json` |
+| `context init <target>` | Create starter `context/root.md`, `_registry.json`, and `maps/doc-map.md`. | Yes, unless `--dry-run` | `npx ai-agent-playbook context init <target-project> --dry-run --json` |
 
 Use `--local-only` with `bootstrap` when the target project's `.ai-playbook/` should be added to that project's `.gitignore`.
+
+Context files support markdown frontmatter: `id`, `globs`, `alwaysApply`, `freshness`, and `priority`. Use `context status` before loading more project memory for a path. It is read-only and safe to run often.
 
 ## Managed files
 
@@ -126,6 +135,31 @@ Operator commands are explicit human-triggered signals. They do not install hook
 | `operator gc <target>` | Preview or remove obsolete unmodified managed playbook files. | No unless `--apply` | `npx ai-agent-playbook operator gc <target-project> --json` |
 
 Use `operator search` for quick lookup. Use `operator research` when you want broader evidence before deciding what to inspect or change. Both are local-only.
+
+## Runs and evidence
+
+Runs track in-progress work. They are useful when a task is long enough that the next agent should see evidence, criteria, blockers, and cleanup state before reading a full worklog.
+
+| Command | When to use it | Writes files? | Example |
+| ------- | -------------- | ------------- | ------- |
+| `run start <target>` | Create `.ai-playbook/runs/<run-id>/` with a brief, criteria file, append-only ledger, evidence folder, and summary. | Yes, unless `--dry-run` | `npx ai-agent-playbook run start <target-project> --title "Auth flow" --dry-run --json` |
+| `run status <target>` | Read the latest run or one selected run and summarize events, criteria, blockers, evidence, and cleanup. | No | `npx ai-agent-playbook run status <target-project> --run-id auth-flow --json` |
+| `run record <target>` | Append a note, criterion, evidence, blocker, or cleanup event to `ledger.jsonl`. | Yes | `npx ai-agent-playbook run record <target-project> --run-id auth-flow --type evidence --status pass --message "Auth flow test passed" --evidence .ai-playbook/runs/auth-flow/evidence/auth.txt --json` |
+| `run summarize <target>` | Render the append-only ledger into `summary.md`. | Yes, unless `--dry-run` | `npx ai-agent-playbook run summarize <target-project> --run-id auth-flow --dry-run --json` |
+
+`run record` rejects messages that look like local absolute paths or credential assignments. Evidence paths must be portable relative paths. Runs do not replace worklogs: use runs while executing, then promote durable facts to `CURRENT.md`, maps, runbooks, decisions, contracts, or worklogs.
+
+## Contracts
+
+Contracts capture important business rules and invariants. They are checked explicitly and read-only; there is no LLM judge, pre-commit block, or automatic approval.
+
+| Command | When to use it | Writes files? | Example |
+| ------- | -------------- | ------------- | ------- |
+| `contracts list <target>` | List active and pending contracts under `.ai-playbook/contracts/`. | No | `npx ai-agent-playbook contracts list <target-project> --json` |
+| `contracts check <target>` | Show active or pending contracts that apply to a path and warn about stale or incomplete contract notes. | No | `npx ai-agent-playbook contracts check <target-project> --path src/example.ts --json` |
+| `contracts init <target>` | Create starter `.ai-playbook/contracts/README.md` plus `active/` and `pending/` folders. | Yes, unless `--dry-run` | `npx ai-agent-playbook contracts init <target-project> --dry-run --json` |
+
+Contract markdown supports frontmatter: `id`, `status`, `appliesTo`, `risk`, `approvedAt`, and `freshness`. `contracts check` warns when an `appliesTo` path is missing, a matching contract is pending, `freshness` is older than 90 days, or the `Required evidence` section is empty.
 
 ## Rules, diagnostics, and TUI checks
 

@@ -19,6 +19,10 @@ node .\bin\ai-playbook.mjs managed catalog <target-repo> --json
 node .\bin\ai-playbook.mjs managed prune <target-repo> --path .ai-playbook/guides/runtime-harness.md --json
 node .\bin\ai-playbook.mjs managed uninstall <target-repo> --json
 node .\bin\ai-playbook.mjs doctor <target-repo>
+node .\bin\ai-playbook.mjs context status <target-repo> --path src/example.ts --json
+node .\bin\ai-playbook.mjs run start <target-repo> --title "short-run-title" --dry-run
+node .\bin\ai-playbook.mjs run status <target-repo> --json
+node .\bin\ai-playbook.mjs contracts check <target-repo> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator check <target-repo> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator search <target-repo> --query "auth flow" --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator context <target-repo> --path src/example.ts --json
@@ -45,6 +49,9 @@ Use the CLI for repeatable file placement:
 
 ```powershell
 node .\bin\ai-playbook.mjs plan new <target-repo> --title "short-plan-title"
+node .\bin\ai-playbook.mjs run start <target-repo> --title "short-run-title" --dry-run
+node .\bin\ai-playbook.mjs run record <target-repo> --run-id short-run-title --type evidence --status pass --message "Verification passed" --evidence .ai-playbook/runs/short-run-title/evidence/verification.txt
+node .\bin\ai-playbook.mjs contracts list <target-repo> --json
 node .\bin\ai-playbook.mjs worklog new <target-repo> --title "short-worklog-title"
 node .\bin\ai-playbook.mjs worklog summarize <target-repo> --month YYYY-MM
 node .\bin\ai-playbook.mjs doctor <target-repo> --strict
@@ -76,8 +83,12 @@ Use operator-triggered diagnostics when an agent needs stronger evidence but a h
 
 - Keep root `AGENTS.md` as a thin bootstrap. Keep skill and Git policy in `.ai-playbook/SKILLS.md` and `.ai-playbook/GIT.md`.
 - Keep current facts in `CURRENT.md`.
+- Keep path-scoped reading hints in `context/`.
+- Keep documentation locations in `maps/doc-map.md`.
 - Keep active execution plans in `plans/`.
+- Keep in-progress evidence and criteria in `runs/`.
 - Keep detailed reasoning and recovery history in `worklogs/YYYY-MM/`.
+- Keep business rules and invariants in `contracts/`.
 - Keep durable structure facts in `maps/`.
 - Keep repeatable commands and operational procedures in `runbooks/`.
 - Keep accepted choices in `decisions/`.
@@ -93,8 +104,8 @@ Use local-only mode when the notes may include private context, unfinished analy
 
 ## Maintenance cadence
 
-- At the start of a session, read `START_HERE.md`, `CURRENT.md`, and the relevant plan or runbook.
-- During large work, write a worklog when a milestone completes, a blocker is resolved, or the direction changes.
-- Before a handoff, update `START_HERE.md` and promote durable facts from worklogs into `CURRENT.md`, maps, runbooks, or decisions.
+- At the start of a session, read `START_HERE.md`, `CURRENT.md`, and the relevant context, plan, runbook, or contract.
+- During large work, use `runs/` for active evidence and write a worklog when a milestone completes, a blocker is resolved, or the direction changes.
+- Before a handoff, update `START_HERE.md` and promote durable facts from runs or worklogs into `CURRENT.md`, context, maps, runbooks, contracts, or decisions.
 - Before commit or PR, run `doctor` and project-specific verification.
 - Treat `doctor` warnings as adaptation prompts. A fresh bootstrap is allowed to warn until core playbook files are filled with project-specific facts.

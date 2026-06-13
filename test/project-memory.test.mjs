@@ -1,0 +1,291 @@
+import { existsSync } from 'node:fs';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { runCli } from '../src/cli.mjs';
+
+const repoRoot = path.resolve(import.meta.dirname, '..');
+
+test('context status parses frontmatter and matches Windows spaced non-ASCII paths without writing files', async () => {
+  const target = await tempRepo('context status-공백-한글-');
+  await mkdir(path.join(target, '.ai-playbook', 'context'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'maps'), { recursive: true });
+  await mkdir(path.join(target, 'src', '기능 모듈'), { recursive: true });
+  await writeFile(path.join(target, 'src', '기능 모듈', 'Payment Panel.tsx'), 'export function PaymentPanel() { return null; }\n');
+  await writeFile(path.join(target, '.ai-playbook', 'context', 'root.md'), [
+    '---',
+    'id: root',
+    'alwaysApply: true',
+    'freshness: 2026-06-14',
+    'priority: high',
+    '---',
+    '# Root Context'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'context', 'frontend.md'), [
+    '---',
+    'id: frontend',
+    'globs: ["src/**/*.tsx"]',
+    'freshness: 2026-06-14',
+    'priority: high',
+    '---',
+    '# Frontend Context',
+    '',
+    '## When to read',
+    'Visible UI changes.'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'context', 'backend.md'), [
+    '---',
+    'id: backend',
+    'globs:',
+    '  - server/**/*.ts',
+    'priority: low',
+    '---',
+    '# Backend Context'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'maps', 'doc-map.md'), '# Documentation Map\n\nRead CURRENT.md before worklogs.\n');
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli([
+    'context',
+    'status',
+    '.',
+    '--path',
+    'src\\기능 모듈\\Payment Panel.tsx',
+    '--json'
+  ], io), 0);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.path, 'src/기능 모듈/Payment Panel.tsx');
+  assert.equal(report.summary.total, 3);
+  assert.equal(report.summary.applies, 2);
+  assert.equal(report.contexts.some((item) => item.id === 'root' && item.applies && item.reason === 'alwaysApply'), true);
+  assert.equal(report.contexts.some((item) => item.id === 'frontend' && item.applies && item.reason === 'glob'), true);
+  assert.equal(report.contexts.some((item) => item.id === 'backend' && !item.applies), true);
+  assert.equal(report.docMap.path, '.ai-playbook/maps/doc-map.md');
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const listed = capture(target);
+  assert.equal(await runCli(['context', 'list', '.', '--json'], listed), 0);
+  const listReport = JSON.parse(listed.out());
+  assert.equal(listReport.schemaVersion, '1');
+  assert.equal(listReport.ok, true);
+  assert.equal(listReport.summary.total, 3);
+  assert.equal(listReport.contexts.some((item) => item.id === 'frontend' && item.priority === 'high'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('context init previews and creates context root and doc-map templates', async () => {
+  const target = await tempRepo('context init-한글-');
+  await mkdir(path.join(target, '.ai-playbook'), { recursive: true });
+  const before = await listRelativeFiles(target);
+
+  const preview = capture(target);
+  assert.equal(await runCli(['context', 'init', '.', '--dry-run', '--json'], preview), 0);
+  const previewReport = JSON.parse(preview.out());
+  assert.equal(previewReport.applied, false);
+  assert.equal(previewReport.operations.some((operation) => operation.path === '.ai-playbook/context/root.md'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const applied = capture(target);
+  assert.equal(await runCli(['context', 'init', '.', '--json'], applied), 0);
+  const appliedReport = JSON.parse(applied.out());
+  assert.equal(appliedReport.applied, true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'context', 'root.md')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'context', '_registry.json')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'maps', 'doc-map.md')), true);
+  await cleanup(target);
+});
+
+test('run commands create append-only evidence ledger and summarize without unsafe paths', async () => {
+  const target = await tempRepo('run ledger-공백-한글-');
+  await mkdir(path.join(target, '.ai-playbook'), { recursive: true });
+  const before = await listRelativeFiles(target);
+
+  const preview = capture(target);
+  assert.equal(await runCli(['run', 'start', '.', '--title', 'Auth Flow', '--dry-run', '--json'], preview), 0);
+  const previewReport = JSON.parse(preview.out());
+  assert.equal(previewReport.applied, false);
+  assert.equal(previewReport.runId, 'auth-flow');
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const started = capture(target);
+  assert.equal(await runCli(['run', 'start', '.', '--title', 'Auth Flow', '--json'], started), 0);
+  const startedReport = JSON.parse(started.out());
+  assert.equal(startedReport.applied, true);
+  assert.equal(startedReport.runId, 'auth-flow');
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'runs', 'auth-flow', 'ledger.jsonl')), true);
+
+  const recorded = capture(target);
+  assert.equal(await runCli([
+    'run',
+    'record',
+    '.',
+    '--run-id',
+    'auth-flow',
+    '--type',
+    'evidence',
+    '--message',
+    'Auth flow test passed',
+    '--status',
+    'pass',
+    '--evidence',
+    '.ai-playbook/runs/auth-flow/evidence/auth.txt',
+    '--json'
+  ], recorded), 0);
+  const ledger = await readFile(path.join(target, '.ai-playbook', 'runs', 'auth-flow', 'ledger.jsonl'), 'utf8');
+  const events = ledger.trim().split('\n').map((line) => JSON.parse(line));
+  assert.equal(events.some((event) => event.type === 'evidence' && event.status === 'pass'), true);
+
+  const rejected = capture(target);
+  assert.equal(await runCli([
+    'run',
+    'record',
+    '.',
+    '--run-id',
+    'auth-flow',
+    '--type',
+    'note',
+    '--message',
+    'C:\\Users\\home\\secret.txt',
+    '--json'
+  ], rejected), 1);
+  const rejectedReport = JSON.parse(rejected.out());
+  assert.equal(rejectedReport.conflicts.some((conflict) => conflict.id === 'run.record.unsafe-message'), true);
+
+  const status = capture(target);
+  assert.equal(await runCli(['run', 'status', '.', '--run-id', 'auth-flow', '--json'], status), 0);
+  const statusReport = JSON.parse(status.out());
+  assert.equal(statusReport.summary.events, 2);
+  assert.equal(statusReport.summary.evidence, 1);
+  assert.equal(statusReport.summary.cleanup, 0);
+
+  const summarizePreview = capture(target);
+  const summaryBefore = await readFile(path.join(target, '.ai-playbook', 'runs', 'auth-flow', 'summary.md'), 'utf8');
+  assert.equal(await runCli(['run', 'summarize', '.', '--run-id', 'auth-flow', '--dry-run', '--json'], summarizePreview), 0);
+  assert.equal(await readFile(path.join(target, '.ai-playbook', 'runs', 'auth-flow', 'summary.md'), 'utf8'), summaryBefore);
+
+  const summarized = capture(target);
+  assert.equal(await runCli(['run', 'summarize', '.', '--run-id', 'auth-flow', '--force', '--json'], summarized), 0);
+  assert.match(await readFile(path.join(target, '.ai-playbook', 'runs', 'auth-flow', 'summary.md'), 'utf8'), /Auth flow test passed/);
+  await cleanup(target);
+});
+
+test('contracts list and check report active pending stale and missing appliesTo without writing files', async () => {
+  const target = await tempRepo('contracts-공백-한글-');
+  await mkdir(path.join(target, '.ai-playbook', 'contracts', 'active'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'contracts', 'pending'), { recursive: true });
+  await mkdir(path.join(target, 'src', 'payments'), { recursive: true });
+  await writeFile(path.join(target, 'src', 'payments', 'cancel.ts'), 'export function cancelPayment() {}\n');
+  await writeFile(path.join(target, '.ai-playbook', 'contracts', 'active', 'payment-cancel.md'), [
+    '---',
+    'id: payment-cancel',
+    'status: active',
+    'appliesTo:',
+    '  - src/payments/cancel.ts',
+    '  - src/payments/missing.ts',
+    'risk: high',
+    'freshness: 2026-01-01',
+    '---',
+    '# Payment Cancel Contract',
+    '',
+    '## Purpose',
+    'Settlement-safe cancellation.',
+    '',
+    '## Required evidence',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'contracts', 'pending', 'payment-refund.md'), [
+    '---',
+    'id: payment-refund',
+    'status: pending',
+    'appliesTo: ["src/payments/cancel.ts"]',
+    '---',
+    '# Payment Refund Contract'
+  ].join('\n'));
+  const before = await listRelativeFiles(target);
+
+  const listed = capture(target);
+  assert.equal(await runCli(['contracts', 'list', '.', '--json'], listed), 0);
+  const listReport = JSON.parse(listed.out());
+  assert.equal(listReport.summary.active, 1);
+  assert.equal(listReport.summary.pending, 1);
+
+  const checked = capture(target);
+  assert.equal(await runCli(['contracts', 'check', '.', '--path', 'src/payments/cancel.ts', '--json'], checked), 0);
+  const report = JSON.parse(checked.out());
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.summary.matches, 2);
+  assert.equal(report.contracts.some((contract) => contract.id === 'payment-cancel' && contract.status === 'active'), true);
+  assert.equal(report.warnings.some((warning) => warning.id === 'contracts.applies-to-missing'), true);
+  assert.equal(report.warnings.some((warning) => warning.id === 'contracts.stale'), true);
+  assert.equal(report.warnings.some((warning) => warning.id === 'contracts.evidence-missing'), true);
+  assert.equal(report.warnings.some((warning) => warning.id === 'contracts.pending-match'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('contracts init previews and creates contract folders without overwriting', async () => {
+  const target = await tempRepo('contracts init-한글-');
+  await mkdir(path.join(target, '.ai-playbook'), { recursive: true });
+  const before = await listRelativeFiles(target);
+
+  const preview = capture(target);
+  assert.equal(await runCli(['contracts', 'init', '.', '--dry-run', '--json'], preview), 0);
+  const previewReport = JSON.parse(preview.out());
+  assert.equal(previewReport.applied, false);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const applied = capture(target);
+  assert.equal(await runCli(['contracts', 'init', '.', '--json'], applied), 0);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'contracts', 'README.md')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'contracts', 'active')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'contracts', 'pending')), true);
+  await cleanup(target);
+});
+
+function capture(cwd) {
+  let stdout = '';
+  let stderr = '';
+  return {
+    cwd,
+    repoRoot,
+    stdout: { write: (text) => { stdout += text; } },
+    stderr: { write: (text) => { stderr += text; } },
+    out: () => stdout,
+    err: () => stderr
+  };
+}
+
+async function tempRepo(prefix = '.ai-playbook-test-') {
+  return mkdtemp(path.join(os.tmpdir(), prefix));
+}
+
+async function listRelativeFiles(root) {
+  const files = [];
+  await walk(root, root, files);
+  files.sort();
+  return files;
+}
+
+async function walk(root, current, files) {
+  const entries = await readdir(current, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(current, entry.name);
+    if (entry.isDirectory()) {
+      await walk(root, fullPath, files);
+    } else if (entry.isFile()) {
+      files.push(fullPath.slice(root.length + 1).split(path.sep).join('/'));
+    }
+  }
+}
+
+async function cleanup(target) {
+  await rm(target, { recursive: true, force: true });
+}

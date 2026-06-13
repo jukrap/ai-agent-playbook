@@ -107,6 +107,13 @@ Use `npx ai-agent-playbook skills uninstall` or `ai-playbook skills uninstall` w
 | `skills uninstall` | Yes unless `--dry-run` | Removes managed skills from user skill roots. |
 | `bootstrap <target>` | Yes unless `--dry-run` | Target project's root `AGENTS.md` and `.ai-playbook/`. |
 | `guides sync <target>` | Yes unless `--dry-run` or `--check` | Target project's `.ai-playbook/guides/`. |
+| `context init` | Yes unless `--dry-run` | Target project's `.ai-playbook/context/` and `.ai-playbook/maps/doc-map.md`. |
+| `context list/status` | No | Read-only path-scoped project memory inspection. |
+| `run start/summarize` | Yes unless `--dry-run` | Target project's `.ai-playbook/runs/`. |
+| `run record` | Yes | Appends one event to a selected run ledger. |
+| `run status` | No | Read-only run status inspection. |
+| `contracts init` | Yes unless `--dry-run` | Target project's `.ai-playbook/contracts/`. |
+| `contracts list/check` | No | Read-only contract inspection. |
 | `managed adopt/prune/uninstall` | No unless `--apply` | Target project's `.ai-playbook/` managed files. |
 | `operator check/search/research/context/analyze/map/audit` | No | Read-only target project diagnostics. |
 | `operator gc` | No unless `--apply` | Target project's obsolete unmodified managed playbook files. |
@@ -250,7 +257,7 @@ npx ai-agent-playbook bootstrap <target-project> --dry-run
 npx ai-agent-playbook operator check <target-project> --json
 ```
 
-After a global install, replace `npx ai-agent-playbook` with `ai-playbook`. From a local checkout, replace it with `node .\bin\ai-playbook.mjs`. For the full list of project playbook, managed cleanup, operator, adapter, plan, and worklog commands, see [Command guide](commands.md).
+After a global install, replace `npx ai-agent-playbook` with `ai-playbook`. From a local checkout, replace it with `node .\bin\ai-playbook.mjs`. For the full list of project playbook, context, runs, contracts, managed cleanup, operator, adapter, plan, and worklog commands, see [Command guide](commands.md).
 
 Use `--profile <name>` only after the target stack is known. Use `--local-only` when `.ai-playbook/` should be added to the target `.gitignore`.
 
@@ -272,9 +279,12 @@ npx ai-agent-playbook managed uninstall <target-project> --apply --json
 
 The optional adapter hook examples use the `context` command internally. They are read-only and must be enabled manually from `adapters/`. Use `adapter config` to render placeholder-free local settings, then use `adapter check --settings <local-settings-path>` after manually editing a local settings file. See [Command guide](commands.md) for operator diagnostics, rules, diagnostics, TUI, and adapter command examples.
 
-Create plan and worklog files through the CLI so paths stay predictable:
+Create context, run, contract, plan, and worklog files through the CLI so paths stay predictable:
 
 ```powershell
+npx ai-agent-playbook context init <target-project> --dry-run
+npx ai-agent-playbook run start <target-project> --title "Feature slice" --dry-run
+npx ai-agent-playbook contracts init <target-project> --dry-run
 npx ai-agent-playbook plan new <target-project> --title "Feature slice"
 npx ai-agent-playbook worklog new <target-project> --title "Feature slice"
 npx ai-agent-playbook worklog summarize <target-project> --month 2026-06

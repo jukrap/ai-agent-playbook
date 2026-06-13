@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkAdapterReadiness, renderAdapterConfig } from './adapter-readiness.mjs';
-import { analyzeOperator, auditOperator, checkDiagnostics, checkOperator, checkRules, checkTuiCapture, gcOperator, mapOperator, previewOperatorContext, searchOperator } from './operator-diagnostics.mjs';
+import { analyzeOperator, auditOperator, checkDiagnostics, checkOperator, checkRules, checkTuiCapture, gcOperator, mapOperator, previewOperatorContext, researchOperator, searchOperator } from './operator-diagnostics.mjs';
 import { runSkillsLifecycle } from './skills-lifecycle.mjs';
 import {
   buildProjectContext,
@@ -318,6 +318,31 @@ export async function runCli(argv, io = {}) {
       return 0;
     }
 
+    if (command === 'operator' && subcommand === 'research') {
+      const result = await researchOperator({
+        target: resolveTarget(cwd, targetArg),
+        query: parsed.flags.query,
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        maxResults: parseMaxResults(parsed.flags['max-results'], 50)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Operator research: ${result.summary.evidence} evidence item(s), ${result.summary.gaps} gap(s)\n`);
+        for (const item of result.evidence.slice(0, 10)) {
+          const first = item.snippets[0];
+          write(stdout, `[${item.category}] ${item.path}${first ? `:${first.line} ${first.text}` : ''}\n`);
+        }
+        if (result.gaps.length > 0) {
+          write(stdout, 'Gaps:\n');
+          for (const gap of result.gaps) {
+            write(stdout, `- ${gap.message}\n`);
+          }
+        }
+      }
+      return 0;
+    }
+
     if (command === 'operator' && subcommand === 'context') {
       const result = await previewOperatorContext({
         target: resolveTarget(cwd, targetArg),
@@ -616,8 +641,8 @@ function parseColumns(value) {
   return parsed;
 }
 
-function parseMaxResults(value) {
-  if (value === undefined || value === false) return 20;
+function parseMaxResults(value, defaultValue = 20) {
+  if (value === undefined || value === false) return defaultValue;
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 1 || parsed > 100) {
     throw new Error('Invalid --max-results; expected an integer from 1 to 100.');
@@ -647,6 +672,7 @@ Usage:
   ai-playbook context <target> [--json] [--max-chars N]
   ai-playbook operator check <target> [--path <file>] [--diff] [--json]
   ai-playbook operator search <target> --query <text> [--path <file>] [--max-results N] [--json]
+  ai-playbook operator research <target> --query <text> [--path <file>] [--max-results N] [--json]
   ai-playbook operator context <target> --path <file> [--json]
   ai-playbook operator analyze <target> [--path <file>] [--json]
   ai-playbook operator map <target> [--json]

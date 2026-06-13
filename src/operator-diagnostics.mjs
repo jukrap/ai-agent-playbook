@@ -225,6 +225,108 @@ export async function searchOperator(options) {
   };
 }
 
+export async function researchOperator(options) {
+  const {
+    target,
+    query,
+    filePath,
+    maxResults = 50
+  } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  if (!query || !query.trim()) throw new Error('Missing --query.');
+  if (!Number.isInteger(maxResults) || maxResults < 1 || maxResults > 100) {
+    throw new Error('Invalid --max-results; expected an integer from 1 to 100.');
+  }
+
+  const resolvedTarget = path.resolve(target);
+  const relativePath = filePath === undefined ? undefined : normalizeTargetRelativePath(resolvedTarget, filePath);
+  const axes = buildResearchAxes({ query: query.trim(), relativePath });
+  const allTerms = [...new Set(axes.flatMap((axis) => axis.terms))];
+  const files = await walkSearchFiles(resolvedTarget);
+  const evidence = [];
+
+  for (const file of files) {
+    const result = await researchFile({
+      target: resolvedTarget,
+      file,
+      axes,
+      allTerms
+    });
+    if (result) evidence.push(result);
+  }
+
+  evidence.sort((left, right) => right.score - left.score || left.path.localeCompare(right.path));
+  const limited = evidence.slice(0, maxResults);
+  const [diagnostics, map, rules, context] = await Promise.all([
+    checkDiagnostics({ target: resolvedTarget }),
+    mapOperator({ target: resolvedTarget }),
+    relativePath === undefined ? null : checkRules({ target: resolvedTarget, filePath: relativePath }),
+    relativePath === undefined ? null : previewOperatorContext({ target: resolvedTarget, filePath: relativePath })
+  ]);
+  const gaps = buildResearchGaps({ evidence, relativePath, rules, context, map });
+  const nextSteps = buildResearchNextSteps({ query: query.trim(), relativePath, evidence, gaps, diagnostics });
+  const summary = {
+    axes: axes.length,
+    searchedFiles: files.length,
+    evidence: evidence.length,
+    returned: limited.length,
+    categories: summarizeEvidenceCategories(evidence),
+    gaps: gaps.length,
+    commands: diagnostics.summary.commands
+  };
+  const result = {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    query: query.trim(),
+    ...(relativePath === undefined ? {} : { path: relativePath }),
+    mode: {
+      localOnly: true,
+      network: false,
+      writes: false
+    },
+    summary,
+    axes,
+    evidence: limited,
+    gaps,
+    nextSteps,
+    related: {
+      diagnostics: {
+        summary: diagnostics.summary,
+        packageManager: diagnostics.packageManager,
+        commands: diagnostics.commands
+      },
+      map: {
+        summary: map.summary,
+        stack: map.stack,
+        architecture: map.architecture,
+        quality: map.quality,
+        concerns: map.concerns
+      },
+      ...(rules ? {
+        rules: {
+          summary: rules.summary,
+          rules: rules.rules.filter((rule) => rule.applies),
+          warnings: rules.warnings
+        }
+      } : {}),
+      ...(context ? {
+        context: {
+          summary: context.summary,
+          coreSources: context.coreSources,
+          matches: context.contexts.filter((item) => item.applies),
+          related: context.related,
+          warnings: context.warnings
+        }
+      } : {})
+    }
+  };
+  return {
+    ...result,
+    reportMarkdown: buildResearchMarkdown(result)
+  };
+}
+
 export async function previewOperatorContext(options) {
   const { target, filePath } = options;
   await assertDirectory(target, 'Target repository does not exist');
@@ -802,6 +904,246 @@ async function searchFile(options) {
     matches: occurrenceCount,
     snippets
   };
+}
+
+function buildResearchAxes(options) {
+  const { query, relativePath } = options;
+  const queryTerms = researchTerms(query);
+  const axes = [
+    {
+      id: 'query',
+      description: 'Direct matches for the requested research topic.',
+      terms: queryTerms
+    }
+  ];
+  if (relativePath !== undefined) {
+    axes.push({
+      id: 'path',
+      description: 'Path-scoped terms from the file or area under review.',
+      terms: searchTermsForPath(relativePath)
+    });
+  }
+  axes.push({
+    id: 'quality',
+    description: 'Verification, tests, risks, and follow-up evidence around the topic.',
+    terms: ['test', 'tests', 'spec', 'check', 'verify', 'risk', 'todo', 'fixme', 'warning']
+  });
+  return axes.map((axis) => ({
+    ...axis,
+    terms: [...new Set(axis.terms.map((term) => term.toLowerCase()).filter((term) => term.length >= 3))]
+  })).filter((axis) => axis.terms.length > 0);
+}
+
+function researchTerms(query) {
+  const normalized = query.trim().toLowerCase();
+  const parts = normalized
+    .split(/[^\p{L}\p{N}_-]+/gu)
+    .map((part) => part.trim())
+    .filter((part) => part.length >= 3);
+  const phrase = normalized.length >= 3 ? [normalized] : [];
+  return [...new Set([...phrase, ...parts])];
+}
+
+async function researchFile(options) {
+  const { target, file, axes, allTerms } = options;
+  let raw;
+  try {
+    raw = await readFile(file);
+  } catch {
+    return null;
+  }
+  if (raw.includes(0)) return null;
+
+  const text = raw.toString('utf8');
+  const lowerText = text.toLowerCase();
+  const relativePath = toPortablePath(path.relative(target, file));
+  const lowerPath = relativePath.toLowerCase();
+  const matchedTerms = [];
+  const matchedAxes = [];
+  let score = categoryWeight(searchCategory(relativePath));
+  let matches = 0;
+  let anchored = false;
+
+  for (const axis of axes) {
+    let axisMatches = 0;
+    for (const term of axis.terms) {
+      const textMatches = occurrences(lowerText, term);
+      const pathMatches = occurrences(lowerPath, term);
+      const total = textMatches + pathMatches;
+      if (total === 0) continue;
+      axisMatches += total;
+      matches += total;
+      score += textMatches * (term.includes(' ') ? 30 : 8);
+      score += pathMatches * 5;
+      matchedTerms.push(term);
+    }
+    if (axisMatches > 0) {
+      if (axis.id !== 'quality') anchored = true;
+      matchedAxes.push({
+        id: axis.id,
+        matches: axisMatches
+      });
+    }
+  }
+  if (matches === 0 || !anchored) return null;
+
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  const snippets = researchSnippets(lines, allTerms);
+  return {
+    path: relativePath,
+    category: searchCategory(relativePath),
+    score,
+    matches,
+    matchedTerms: [...new Set(matchedTerms)].slice(0, 20),
+    axes: matchedAxes,
+    snippets
+  };
+}
+
+function researchSnippets(lines, terms) {
+  const snippets = [];
+  for (const [index, line] of lines.entries()) {
+    const lineLower = line.toLowerCase();
+    const lineTerms = terms.filter((term) => lineLower.includes(term));
+    if (lineTerms.length === 0) continue;
+    snippets.push({
+      line: index + 1,
+      text: trimSnippet(line),
+      terms: lineTerms.slice(0, 8)
+    });
+    if (snippets.length >= 4) break;
+  }
+  return snippets;
+}
+
+function summarizeEvidenceCategories(evidence) {
+  const categories = {};
+  for (const item of evidence) {
+    categories[item.category] = (categories[item.category] ?? 0) + 1;
+  }
+  return categories;
+}
+
+function buildResearchGaps(options) {
+  const { evidence, relativePath, rules, context, map } = options;
+  const categories = summarizeEvidenceCategories(evidence);
+  const gaps = [];
+  if (evidence.length === 0) {
+    gaps.push({
+      id: 'research.no-local-evidence',
+      message: 'No local files matched the research query.',
+      severity: 'info'
+    });
+  }
+  if (!relativePath) {
+    gaps.push({
+      id: 'research.path-not-provided',
+      message: 'No --path was provided, so path-scoped rules and context were not evaluated.',
+      severity: 'info'
+    });
+  }
+  if ((categories.tests ?? 0) === 0 && map.summary.testFiles > 0) {
+    gaps.push({
+      id: 'research.no-matching-tests',
+      message: 'The repository has tests, but no matching test evidence was found for this query.',
+      severity: 'warn'
+    });
+  }
+  if ((categories.rules ?? 0) === 0 && rules && rules.summary.applies > 0) {
+    gaps.push({
+      id: 'research.no-matching-rule-text',
+      message: 'Path-scoped rules apply, but their text did not strongly match the query terms.',
+      severity: 'info'
+    });
+  }
+  if (context && context.summary.matchingContextFiles === 0) {
+    gaps.push({
+      id: 'research.no-path-context',
+      message: 'No path-scoped playbook context matched the requested path.',
+      severity: 'info'
+    });
+  }
+  return gaps;
+}
+
+function buildResearchNextSteps(options) {
+  const { query, relativePath, evidence, gaps, diagnostics } = options;
+  const steps = [];
+  if (evidence.length === 0) {
+    steps.push({
+      id: 'research.refine-query',
+      command: `operator research <target> --query "${query}" --path <file> --json`,
+      reason: 'Add a path or narrower term to connect the query to local evidence.'
+    });
+  }
+  if (relativePath) {
+    steps.push({
+      id: 'research.inspect-context',
+      command: `operator context <target> --path ${relativePath} --json`,
+      reason: 'Review the exact path-scoped context and rules before changing code.'
+    });
+  }
+  if (diagnostics.commands.length > 0) {
+    steps.push({
+      id: 'research.verify-locally',
+      command: diagnostics.commands[0].command,
+      reason: 'Run the most relevant local verification command after any implementation change.'
+    });
+  }
+  if (gaps.some((gap) => gap.id === 'research.no-matching-tests')) {
+    steps.push({
+      id: 'research.find-tests',
+      command: `operator search <target> --query "${query}" --max-results 50 --json`,
+      reason: 'Broaden local search before deciding that no test coverage exists.'
+    });
+  }
+  return steps;
+}
+
+function buildResearchMarkdown(result) {
+  const lines = [
+    `# Operator Research: ${result.query}`,
+    '',
+    '## Mode',
+    '',
+    `- Local only: ${result.mode.localOnly}`,
+    `- Network: ${result.mode.network}`,
+    `- Writes files: ${result.mode.writes}`,
+    '',
+    '## Summary',
+    '',
+    `- Searched files: ${result.summary.searchedFiles}`,
+    `- Evidence items: ${result.summary.evidence}`,
+    `- Gaps: ${result.summary.gaps}`,
+    '',
+    '## Evidence',
+    ''
+  ];
+  if (result.evidence.length === 0) {
+    lines.push('- No local evidence matched the query.');
+  } else {
+    for (const item of result.evidence.slice(0, 20)) {
+      const first = item.snippets[0];
+      lines.push(`- ${item.path} (${item.category}, score ${item.score})${first ? `: line ${first.line} - ${first.text}` : ''}`);
+    }
+  }
+  lines.push('', '## Gaps', '');
+  if (result.gaps.length === 0) {
+    lines.push('- No major local evidence gaps found.');
+  } else {
+    for (const gap of result.gaps) {
+      lines.push(`- ${gap.message}`);
+    }
+  }
+  lines.push('', '## Next Steps', '');
+  if (result.nextSteps.length === 0) {
+    lines.push('- Review the evidence above and decide whether implementation work is warranted.');
+  } else {
+    for (const step of result.nextSteps) {
+      lines.push(`- ${step.reason}${step.command ? ` (${step.command})` : ''}`);
+    }
+  }
+  return `${lines.join('\n')}\n`;
 }
 
 async function findPlaybookRoot(target) {
@@ -1443,6 +1785,7 @@ function searchCategory(relativePath) {
   if (relativePath.startsWith('.ai-playbook/')) return 'playbook';
   if (relativePath.startsWith('docs/') || relativePath.startsWith('translations/')) return 'docs';
   if (relativePath.startsWith('templates/')) return 'templates';
+  if (TEST_FILE_PATTERN.test(relativePath)) return 'tests';
   return 'source';
 }
 

@@ -33,6 +33,7 @@ npx ai-agent-playbook managed uninstall <target> [--apply] [--json]
 npx ai-agent-playbook context <target> [--json] [--max-chars N]
 npx ai-agent-playbook operator check <target> [--path <file>] [--diff] [--json]
 npx ai-agent-playbook operator search <target> --query <text> [--path <file>] [--max-results N] [--json]
+npx ai-agent-playbook operator research <target> --query <text> [--path <file>] [--max-results N] [--json]
 npx ai-agent-playbook operator context <target> --path <file> [--json]
 npx ai-agent-playbook operator analyze <target> [--path <file>] [--json]
 npx ai-agent-playbook operator map <target> [--json]
@@ -153,7 +154,7 @@ It does not read or re-inject root `AGENTS.md` by default. Use `--json` to retur
 
 ## Operator diagnostics
 
-The diagnostics commands are operator-triggered signals. They help a human or agent decide what to inspect next; they do not install hooks, run project commands, or call the network. The audit, check, search, context, analyze, map, rules, diagnostics, and TUI commands are read-only. `operator gc` is preview-first and writes only when `--apply` is provided.
+The diagnostics commands are operator-triggered signals. They help a human or agent decide what to inspect next; they do not install hooks, run project commands, or call the network. The audit, check, search, research, context, analyze, map, rules, diagnostics, and TUI commands are read-only. `operator gc` is preview-first and writes only when `--apply` is provided.
 
 `operator check` is the combined human checkpoint:
 
@@ -172,6 +173,15 @@ npx ai-agent-playbook operator search <target> --query "auth flow" --path src/ex
 ```
 
 It scans text files under the target project and excludes common generated or dependency folders such as `.git`, `node_modules`, `dist`, `build`, `.next`, `.turbo`, and `coverage`. JSON output returns `{ schemaVersion, ok, target, query, path, summary, results, related }`. Results include relative path, category, score, match count, and snippets. No-match searches exit successfully with `summary.matches: 0`. When `--path` is provided, `related.rules` summarizes matching project rules for that file; `related.diagnostics` lists local verification command candidates without running them.
+
+`operator research` is the explicit deep local research mode:
+
+```powershell
+npx ai-agent-playbook operator research <target> --query "auth flow risk" --json
+npx ai-agent-playbook operator research <target> --query "auth flow risk" --path src/example.ts --max-results 50 --json
+```
+
+Use it when quick search is too shallow and the operator wants a broader evidence report. It expands the query into research axes, scans local text files, correlates source, tests, `.ai-playbook/`, rules, plans, worklogs, diagnostics, and codebase map signals, and returns `gaps`, `nextSteps`, and a `reportMarkdown` summary. JSON output returns `{ schemaVersion, ok, target, query, path, mode, summary, axes, evidence, gaps, nextSteps, related, reportMarkdown }`. `mode` is always `{ localOnly: true, network: false, writes: false }` in this version. It does not require slash commands, does not call an AI model, does not browse the web, and does not create report files.
 
 `operator context` previews path-scoped playbook context without injecting it:
 

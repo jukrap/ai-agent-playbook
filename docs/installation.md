@@ -130,11 +130,15 @@ node .\bin\ai-playbook.mjs bootstrap <target-project>
 node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-project> --check --diff
 node .\bin\ai-playbook.mjs migrate path <target-project> --json
+node .\bin\ai-playbook.mjs managed check <target-project> --json
+node .\bin\ai-playbook.mjs managed adopt <target-project> --json
+node .\bin\ai-playbook.mjs managed uninstall <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project>
 node .\bin\ai-playbook.mjs doctor <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
 node .\bin\ai-playbook.mjs context <target-project> --json
 node .\bin\ai-playbook.mjs operator check <target-project> --path src/example.ts --json
+node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --path src/example.ts --json
 node .\bin\ai-playbook.mjs rules check <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs diagnostics check <target-project> --json
 node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
@@ -149,9 +153,11 @@ Use `guides sync` for projects that already have `.ai-playbook/` and only need m
 
 During the path transition, these runtime commands also support an existing legacy `ai-playbook/` folder when `.ai-playbook/` is absent. New bootstrap output uses `.ai-playbook/`. Use `migrate path --json` to preview a legacy folder move and reference updates, then add `--apply` only after reviewing the preview.
 
+Bootstrap and guide sync maintain a project-level marker at `.ai-playbook/.ai-agent-playbook-install.json`. Use `managed check` to inspect it, `managed adopt --apply` to mark older matching installs, and `managed uninstall --apply` to remove only unmodified managed files. The uninstall command preserves locally edited files and leaves `.gitignore` cleanup to the operator.
+
 The optional adapter hook examples use the `context` command internally. They are read-only and must be enabled manually from `adapters/`. Use `adapter config` to render placeholder-free local settings, then use `adapter check --settings <local-settings-path>` after manually editing a local settings file.
 
-The operator diagnostics commands are also read-only. `operator check` combines doctor, guide freshness, diagnostics, and rule matching into one human checkpoint. `rules check` shows which portable rule files apply to a path, `diagnostics check` lists likely verification commands without running them and respects detected package manager lockfiles, and `qa tui-check` checks terminal captures for width overflow and CJK layout risk.
+The operator diagnostics commands are also read-only. `operator check` combines doctor, guide freshness, diagnostics, and rule matching into one human checkpoint. `operator search` searches local source, playbook, rules, plans, and worklogs without writing files. `rules check` shows which portable rule files apply to a path, `diagnostics check` lists likely verification commands without running them and respects detected package manager lockfiles, and `qa tui-check` checks terminal captures for width overflow and CJK layout risk.
 
 Create plan and worklog files through the CLI so paths stay predictable:
 

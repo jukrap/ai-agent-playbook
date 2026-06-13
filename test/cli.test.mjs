@@ -661,6 +661,148 @@ test('migrate path reports conflicts when both playbook paths exist without writ
   await cleanup(target);
 });
 
+test('bootstrap writes a managed manifest and managed check validates it', async () => {
+  const dryRunTarget = await tempRepo('managed dryrun-공백-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only', '--dry-run'], capture(dryRunTarget)), 0);
+  assert.equal(existsSync(path.join(dryRunTarget, '.ai-playbook', '.ai-agent-playbook-install.json')), false);
+  await cleanup(dryRunTarget);
+
+  const target = await tempRepo('managed bootstrap-공백-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  const manifestPath = path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json');
+  assert.equal(existsSync(manifestPath), true);
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+
+  assert.equal(manifest.schemaVersion, '1');
+  assert.equal(manifest.source, 'ai-agent-playbook');
+  assert.equal(manifest.playbookDir, '.ai-playbook');
+  assert.equal(manifest.localOnly, true);
+  assert.equal(manifest.files.some((file) => file.path === 'AGENTS.md'), true);
+  assert.equal(manifest.files.some((file) => file.path === '.ai-playbook/CURRENT.md'), true);
+  assert.equal(manifest.files.some((file) => file.path === '.gitignore'), false);
+  assert.equal(manifest.files.every((file) => !path.isAbsolute(file.path)), true);
+
+  const checked = capture(target);
+  assert.equal(await runCli(['managed', 'check', '.', '--json'], checked), 0);
+  const report = JSON.parse(checked.out());
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.manifestPath, '.ai-playbook/.ai-agent-playbook-install.json');
+  assert.equal(report.summary.present, manifest.files.length);
+  assert.equal(report.summary.modified, 0);
+  assert.equal(report.summary.missing, 0);
+  await cleanup(target);
+});
+
+test('managed check reports missing, modified, and malformed manifest states without writing files', async () => {
+  const missing = await tempRepo('managed missing-한글-');
+  const missingBefore = await listRelativeFiles(missing);
+  const missingCheck = capture(missing);
+  assert.equal(await runCli(['managed', 'check', '.', '--json'], missingCheck), 1);
+  const missingReport = JSON.parse(missingCheck.out());
+  assert.equal(missingReport.ok, false);
+  assert.equal(missingReport.conflicts.some((conflict) => conflict.id === 'managed.manifest.missing'), true);
+  assert.deepEqual(await listRelativeFiles(missing), missingBefore);
+  await cleanup(missing);
+
+  const malformed = await tempRepo('managed malformed-공백-');
+  await mkdir(path.join(malformed, '.ai-playbook'), { recursive: true });
+  await writeFile(path.join(malformed, '.ai-playbook', '.ai-agent-playbook-install.json'), '{not-json');
+  const malformedBefore = await listRelativeFiles(malformed);
+  const malformedCheck = capture(malformed);
+  assert.equal(await runCli(['managed', 'check', '.', '--json'], malformedCheck), 1);
+  const malformedReport = JSON.parse(malformedCheck.out());
+  assert.equal(malformedReport.ok, false);
+  assert.equal(malformedReport.conflicts.some((conflict) => conflict.id === 'managed.manifest.malformed'), true);
+  assert.deepEqual(await listRelativeFiles(malformed), malformedBefore);
+  await cleanup(malformed);
+
+  const modified = await tempRepo('managed modified-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(modified)), 0);
+  await writeFile(path.join(modified, '.ai-playbook', 'CURRENT.md'), '# Current\n\nEdited local project facts.\n');
+  await rm(path.join(modified, '.ai-playbook', 'GIT.md'));
+  const modifiedBefore = await listRelativeFiles(modified);
+  const modifiedCheck = capture(modified);
+  assert.equal(await runCli(['managed', 'check', '.', '--json'], modifiedCheck), 1);
+  const modifiedReport = JSON.parse(modifiedCheck.out());
+  assert.equal(modifiedReport.ok, false);
+  assert.equal(modifiedReport.summary.modified, 1);
+  assert.equal(modifiedReport.summary.missing, 1);
+  assert.equal(modifiedReport.files.some((file) => file.path === '.ai-playbook/CURRENT.md' && file.status === 'modified'), true);
+  assert.equal(modifiedReport.files.some((file) => file.path === '.ai-playbook/GIT.md' && file.status === 'missing'), true);
+  assert.deepEqual(await listRelativeFiles(modified), modifiedBefore);
+  await cleanup(modified);
+});
+
+test('guides sync updates managed manifest and check mode stays read-only', async () => {
+  const target = await tempRepo('managed guides-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await rm(path.join(target, '.ai-playbook', 'guides', 'harness-migration.md'));
+  const beforeCheck = await listRelativeFiles(target);
+
+  const checked = capture(target);
+  assert.equal(await runCli(['guides', 'sync', '.', '--check', '--json'], checked), 1);
+  assert.deepEqual(await listRelativeFiles(target), beforeCheck);
+
+  assert.equal(await runCli(['guides', 'sync', '.'], capture(target)), 0);
+  const manifest = JSON.parse(await readFile(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
+  const guideEntry = manifest.files.find((file) => file.path === '.ai-playbook/guides/harness-migration.md');
+  assert.equal(guideEntry.kind, 'guide');
+  assert.match(guideEntry.sourceHash, /^[a-f0-9]{64}$/);
+  assert.match(guideEntry.targetHash, /^[a-f0-9]{64}$/);
+  await cleanup(target);
+});
+
+test('managed adopt previews and records matching existing playbook files only when applied', async () => {
+  const target = await tempRepo('managed adopt-공백-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await rm(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json'));
+  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nAlready adapted.\n');
+  const before = await listRelativeFiles(target);
+
+  const preview = capture(target);
+  assert.equal(await runCli(['managed', 'adopt', '.', '--json'], preview), 0);
+  const previewReport = JSON.parse(preview.out());
+  assert.equal(previewReport.applied, false);
+  assert.equal(previewReport.operations.some((operation) => operation.action === 'write-manifest'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const applied = capture(target);
+  assert.equal(await runCli(['managed', 'adopt', '.', '--apply', '--json'], applied), 0);
+  const report = JSON.parse(applied.out());
+  assert.equal(report.applied, true);
+  assert.equal(report.summary.adopted > 0, true);
+  const manifest = JSON.parse(await readFile(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
+  assert.equal(manifest.files.some((file) => file.path === '.ai-playbook/SKILLS.md'), true);
+  assert.equal(manifest.files.some((file) => file.path === '.ai-playbook/CURRENT.md'), false);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'CURRENT.md')), true);
+  await cleanup(target);
+});
+
+test('managed uninstall previews removals and preserves modified managed files when applied', async () => {
+  const target = await tempRepo('managed uninstall-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nEdited facts to keep.\n');
+  const before = await listRelativeFiles(target);
+
+  const preview = capture(target);
+  assert.equal(await runCli(['managed', 'uninstall', '.', '--json'], preview), 1);
+  const previewReport = JSON.parse(preview.out());
+  assert.equal(previewReport.applied, false);
+  assert.equal(previewReport.conflicts.some((conflict) => conflict.id === 'managed.file.modified'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const applied = capture(target);
+  assert.equal(await runCli(['managed', 'uninstall', '.', '--apply', '--json'], applied), 1);
+  const report = JSON.parse(applied.out());
+  assert.equal(report.applied, true);
+  assert.equal(existsSync(path.join(target, 'AGENTS.md')), false);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'CURRENT.md')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json')), true);
+  assert.equal(report.warnings.some((warning) => warning.id === 'managed.gitignore.manual-cleanup'), true);
+  await cleanup(target);
+});
+
 function capture(cwd) {
   let stdout = '';
   let stderr = '';

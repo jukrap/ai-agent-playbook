@@ -77,7 +77,11 @@ node .\bin\ai-playbook.mjs doctor <target-project> --json
 node .\bin\ai-playbook.mjs doctor <target-project> --reminder --json
 node .\bin\ai-playbook.mjs context <target-project> --json
 node .\bin\ai-playbook.mjs migrate path <target-project> --json
+node .\bin\ai-playbook.mjs managed check <target-project> --json
+node .\bin\ai-playbook.mjs managed adopt <target-project> --json
+node .\bin\ai-playbook.mjs managed uninstall <target-project> --json
 node .\bin\ai-playbook.mjs operator check <target-project> --path src/example.ts --json
+node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --path src/example.ts --json
 node .\bin\ai-playbook.mjs rules check <target-project> --path src/example.ts --json
 node .\bin\ai-playbook.mjs diagnostics check <target-project> --json
 node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
@@ -91,7 +95,9 @@ Existing projects that already have `ai-playbook/` continue to work as a legacy 
 
 Runtime hooks and plugins are not part of the default install path. Treat them as optional extensions after the document and CLI harness are stable. The Codex and Claude Code adapters include read-only context hook examples, a read-only `adapter config` renderer, and a read-only `adapter check` self-check, but they are not installed automatically. See [Runtime roadmap](docs/runtime-roadmap.md).
 
-Operator diagnostics such as `operator check`, `rules check`, `diagnostics check`, and `qa tui-check` are read-only. Use `operator check` as the combined human checkpoint for doctor, guide freshness, local verification command candidates, and rule matching before adding stronger runtime automation. `diagnostics check` formats package scripts with the detected lockfile package manager.
+Managed project harness commands use `.ai-playbook/.ai-agent-playbook-install.json` to track files copied by this playbook. Use `managed check` before cleanup, `managed adopt` to add a marker to older matching installs, and `managed uninstall` to preview removal of unmodified managed files. `managed adopt` and `managed uninstall` write only when `--apply` is provided.
+
+Operator diagnostics such as `operator check`, `operator search`, `rules check`, `diagnostics check`, and `qa tui-check` are read-only. Use `operator check` as the combined human checkpoint for doctor, guide freshness, local verification command candidates, and rule matching before adding stronger runtime automation. Use `operator search` as a local project explorer for related source, playbook, rules, plans, and worklog matches. `diagnostics check` formats package scripts with the detected lockfile package manager.
 
 ## Everyday Flow
 
@@ -111,6 +117,8 @@ node .\bin\ai-playbook.mjs bootstrap <target-project> --local-only --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-project> --dry-run
 node .\bin\ai-playbook.mjs guides sync <target-project> --check --diff --json
 node .\bin\ai-playbook.mjs migrate path <target-project> --json
+node .\bin\ai-playbook.mjs managed check <target-project> --json
+node .\bin\ai-playbook.mjs operator search <target-project> --query "auth flow" --json
 ```
 
 ## Repository Map

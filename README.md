@@ -29,6 +29,8 @@ It helps coding agents stop guessing. The playbook nudges agents to inspect the 
 
 The repository is agent-agnostic. Codex, Claude Code, and other coding agents can use the same source material, while `adapters/` keeps agent-specific setup notes separate.
 
+It is not a slash-command pack, a Codex plugin, or an auto-running agent. The default model is operator-in-the-loop: a human or agent explicitly runs the CLI, reviews dry-run output, then chooses whether to write files.
+
 ## What You Get
 
 | Piece             | What it does                                                                                        | Where it lives     |
@@ -44,7 +46,25 @@ The repository is agent-agnostic. Codex, Claude Code, and other coding agents ca
 
 The package is published as [`ai-agent-playbook`](https://www.npmjs.com/package/ai-agent-playbook). Use `npx` for one-off commands, or install it globally when you want the shorter `ai-playbook` command.
 
-### 1. Install Skills
+For the full setup, update, and cleanup guide, see [Install, update, and uninstall](docs/installation.md).
+
+### 1. Choose How to Run the CLI
+
+Most users should start with `npx` because it does not add this package to the current project or to the global npm prefix.
+
+`npm i` is the short alias for `npm install`; the important difference is whether you add `-g`, `-D`, or neither.
+
+| Use case                                 | Command                                  | What it means                                                                 |
+| ---------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------- |
+| Try or run one command                   | `npx ai-agent-playbook --help`           | Downloads/runs the package through npm for that command.                      |
+| Use `ai-playbook` from any directory     | `npm install -g ai-agent-playbook`       | Installs the CLI globally; then run `ai-playbook --help`.                     |
+| Pin the tool inside one project          | `npm install -D ai-agent-playbook`       | Adds it to that project's `node_modules`; then run `npx ai-playbook ...`.     |
+| Work from this repository's source clone | `node .\bin\ai-playbook.mjs --help`      | Runs the checked-out source directly.                                         |
+| Just `npm install ai-agent-playbook`     | Usually not the recommended first choice | Installs the package into the current project, but does not install skills or bootstrap `.ai-playbook/`. |
+
+Installing the npm package and installing playbook content are separate steps. `npm install` gives you the tool. `skills install` copies reusable skills into user skill roots. `bootstrap` writes a playbook into a target project.
+
+### 2. Install Reusable Skills
 
 Use this when you want the reusable agent skills available locally, without applying a project harness to any target repository.
 
@@ -63,7 +83,7 @@ Restart Codex, or start a new agent session, after installation so new skill met
 
 If you are working from a local checkout instead of npm, use `node .\bin\ai-playbook.mjs skills install` or the compatible `.\install.ps1` script.
 
-### 2. Update an Existing Install
+### 3. Update or Remove Reusable Skills
 
 ```powershell
 npx ai-agent-playbook skills update --dry-run
@@ -94,7 +114,9 @@ npm install -g ai-agent-playbook@latest
 npm uninstall -g ai-agent-playbook
 ```
 
-### 3. Apply the Project Harness When Needed
+`npm uninstall -g ai-agent-playbook` removes only the global CLI package. It does not delete skills already copied into `%USERPROFILE%\.codex\skills` or `%USERPROFILE%\.agents\skills`. Use `skills uninstall` for that.
+
+### 4. Apply the Project Harness When Needed
 
 Use the runtime CLI only when a target project should receive a root `AGENTS.md` bootstrap and an `.ai-playbook/` project-memory folder.
 
@@ -123,12 +145,12 @@ Operator diagnostics such as `operator check`, `operator search`, `operator cont
 ## Everyday Flow
 
 ```text
-Install or run with npx
-  -> install skills with ai-playbook skills install
+npx or global install
+  -> skills install or update
   -> restart the agent
-  -> inspect a target project
-  -> optionally bootstrap .ai-playbook/
-  -> plan, worklog, verify, and hand off with consistent paths
+  -> inspect the target project
+  -> bootstrap .ai-playbook/ only when the project needs local playbook files
+  -> use operator checks/search and managed cleanup as explicit commands
 ```
 
 For existing projects, start with a dry run and inspect conflicts before writing files:
@@ -172,23 +194,39 @@ test/                 Node CLI and adapter tests
 .github/              GitHub Actions validation workflow
 ```
 
-## Skill Shelf
+## Skill Catalog
 
-| Category | Skills                                                                                                                                                                                                                                                                                                                                             |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Project  | `project-bootstrap`, `repo-onboarding`, `project-doc-system`                                                                                                                                                                                                                                                                                       |
-| Quality  | `api-contract-boundary`, `ui-style-policy`, `style-quality-review`                                                                                                                                                                                                                                                                                 |
-| Git      | `commit-worklog-guardrails`                                                                                                                                                                                                                                                                                                                        |
-| Meta     | `agent-skill-authoring`                                                                                                                                                                                                                                                                                                                            |
-| Legacy   | `legacy-general`, `legacy-feature-addition`, `legacy-risk-check`, `legacy-jquery-web`, `legacy-server-rendered-web`, `legacy-php-lamp`, `legacy-java-spring-mvc`, `legacy-dotnet-webforms`, `legacy-android-webview-hybrid`, `legacy-ie-activex-compat`, `legacy-database-heavy-system`, `legacy-reporting-printing`, `legacy-batch-file-transfer` |
+Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in `references/`.
 
-Each `SKILL.md` stays short and trigger-focused. Longer reusable detail belongs in `references/`.
+| Category | Skill | Use when |
+| -------- | ----- | -------- |
+| Project | `project-bootstrap` | Starting a new project, inheriting a repository, or setting up project memory and root agent guidance. |
+| Project | `repo-onboarding` | Opening an unfamiliar repository before planning architecture, tooling, edits, or workflow answers. |
+| Project | `project-doc-system` | Creating, reorganizing, or reviewing project AI docs, maps, runbooks, decisions, plans, and worklogs. |
+| Quality | `api-contract-boundary` | Implementing, debugging, or reviewing frontend/backend contracts, DTOs, mocks, payloads, and adapters. |
+| Quality | `ui-style-policy` | Selecting, documenting, or enforcing a repository UI styling policy. |
+| Quality | `style-quality-review` | Reviewing or improving UI styling, responsive behavior, layout overflow, and visual regressions. |
+| Git | `commit-worklog-guardrails` | Staging, committing, pushing, opening PRs, preparing release notes, or recording worklogs. |
+| Meta | `agent-skill-authoring` | Creating, reviewing, or reorganizing reusable agent skills and references. |
+| Legacy | `legacy-general` | Maintaining or extending legacy code with unclear flow, hidden coupling, weak tests, or mixed documentation. |
+| Legacy | `legacy-risk-check` | Changing legacy code that may affect shared state, CSS/JS, selectors, templates, forms, APIs, builds, or deploys. |
+| Legacy | `legacy-feature-addition` | Adding behavior, screens, fields, business rules, or integrations without rewriting the host system. |
+| Legacy | `legacy-jquery-web` | Maintaining jQuery, plugins, direct DOM manipulation, global scripts, AJAX callbacks, or script-order coupling. |
+| Legacy | `legacy-server-rendered-web` | Maintaining templates, controllers, form posts, server validation, sessions, layouts, and partials. |
+| Legacy | `legacy-php-lamp` | Maintaining PHP/LAMP pages with includes, sessions, mixed HTML/PHP, direct SQL, globals, or shared hosting limits. |
+| Legacy | `legacy-java-spring-mvc` | Maintaining Spring MVC, JSP, Servlet, MyBatis, WAR deployment, XML config, or server-rendered Java apps. |
+| Legacy | `legacy-dotnet-webforms` | Maintaining ASP.NET Web Forms, .NET Framework, code-behind, ViewState, Web.config, IIS, or old enterprise .NET apps. |
+| Legacy | `legacy-android-webview-hybrid` | Maintaining Android WebView apps with web assets, JavaScript bridges, permissions, or device APIs. |
+| Legacy | `legacy-ie-activex-compat` | Maintaining intranet systems that depend on IE mode, ActiveX, old browser APIs, or compatibility constraints. |
+| Legacy | `legacy-database-heavy-system` | Maintaining stored procedures, triggers, views, direct SQL, scheduled jobs, or database-shaped business rules. |
+| Legacy | `legacy-reporting-printing` | Maintaining reports, print preview, PDF/Excel export, labels, barcodes, invoices, or printer-specific flows. |
+| Legacy | `legacy-batch-file-transfer` | Maintaining scheduled batches, cron jobs, Windows Task Scheduler, CSV/Excel import/export, SFTP, or file drops. |
 
 ## Documentation
 
 - [Repository working rules](AGENTS.md): maintenance rules for agents editing this repository.
 - [Repository context](CONTEXT.md): core terms and design intent for the playbook.
-- [Installation](docs/installation.md): first install, existing-clone update, custom skill paths, and Codex restart notes.
+- [Install, update, and uninstall](docs/installation.md): npm/npx usage, global CLI setup, skill lifecycle, project bootstrap, cleanup, and legacy PowerShell paths.
 - [Runtime harness](docs/harness-runtime.md): CLI commands, JSON contracts, overwrite policy, and target-project flow.
 - [Runtime roadmap](docs/runtime-roadmap.md): staged hardening plan and optional hook-layer boundaries.
 - [Codex adapter](adapters/codex/README.md): Codex-specific local sync behavior and Codex App on Windows workflow.

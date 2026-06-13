@@ -19,6 +19,8 @@ node .\bin\ai-playbook.mjs managed uninstall <target> [--apply] [--json]
 node .\bin\ai-playbook.mjs context <target> [--json] [--max-chars N]
 node .\bin\ai-playbook.mjs operator check <target> [--path <file>] [--diff] [--json]
 node .\bin\ai-playbook.mjs operator search <target> --query <text> [--path <file>] [--max-results N] [--json]
+node .\bin\ai-playbook.mjs operator context <target> --path <file> [--json]
+node .\bin\ai-playbook.mjs operator map <target> [--json]
 node .\bin\ai-playbook.mjs rules check <target> [--path <file>] [--json]
 node .\bin\ai-playbook.mjs diagnostics check <target> [--json]
 node .\bin\ai-playbook.mjs qa tui-check <capture-file> [--cols N] [--json]
@@ -134,6 +136,22 @@ node .\bin\ai-playbook.mjs operator search <target> --query "auth flow" --path s
 ```
 
 It scans text files under the target project and excludes common generated or dependency folders such as `.git`, `node_modules`, `dist`, `build`, `.next`, `.turbo`, and `coverage`. JSON output returns `{ schemaVersion, ok, target, query, path, summary, results, related }`. Results include relative path, category, score, match count, and snippets. No-match searches exit successfully with `summary.matches: 0`. When `--path` is provided, `related.rules` summarizes matching project rules for that file; `related.diagnostics` lists local verification command candidates without running them.
+
+`operator context` previews path-scoped playbook context without injecting it:
+
+```powershell
+node .\bin\ai-playbook.mjs operator context <target> --path src/example.ts --json
+```
+
+It reports the core context files that exist, `.ai-playbook/context/**/*.md` files whose `globs` or `alwaysApply` frontmatter applies to the path, matching project rules, and related maps, runbooks, decisions, or guides that mention the path or file name. JSON output returns `{ schemaVersion, ok, target, path, summary, coreSources, contexts, rules, related, warnings }`. This command does not write context files, run project commands, or install hooks.
+
+`operator map` summarizes the local codebase shape:
+
+```powershell
+node .\bin\ai-playbook.mjs operator map <target> --json
+```
+
+It reads local project files and reports stack manifests, detected package manager, source language counts, framework dependencies, top-level structure, entrypoint candidates, module boundary directories, quality configs, test file samples, verification command candidates, TODO/debug/security signal snippets, and a compact summary. Common dependency and generated folders are excluded. JSON output returns `{ schemaVersion, ok, target, summary, stack, architecture, quality, concerns, warnings }`. It is read-only and does not create `.ai-playbook/maps/` files; use the report as evidence before deciding what to promote into durable project maps.
 
 `rules check` discovers portable rule files and reports which rules apply to a path:
 

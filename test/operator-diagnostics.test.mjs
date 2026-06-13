@@ -335,6 +335,137 @@ test('operator search --json reports no matches without failing or writing files
   await cleanup(target);
 });
 
+test('operator context --json previews path-scoped playbook context without writing files', async () => {
+  const target = await tempRepo('operator context-공백-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await adaptPlaybook(target);
+  await mkdir(path.join(target, 'src', 'features', '결제'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'context'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'rules'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'maps'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'runbooks'), { recursive: true });
+  await writeFile(path.join(target, 'src', 'features', '결제', 'PaymentPanel.tsx'), 'export function PaymentPanel() { return null; }\n');
+  await writeFile(path.join(target, '.ai-playbook', 'context', 'frontend.md'), [
+    '---',
+    'globs:',
+    '  - src/features/**/*.tsx',
+    '---',
+    '# Frontend context',
+    '',
+    'PaymentPanel uses route-level state.'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'context', 'backend.md'), [
+    '---',
+    'globs:',
+    '  - server/**/*.ts',
+    '---',
+    '# Backend context'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'rules', 'react.md'), [
+    '---',
+    'globs: ["src/features/**/*.tsx"]',
+    '---',
+    '# React rule'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'maps', 'repo-map.md'), [
+    '# Repo Map',
+    '',
+    'The payment feature lives in `src/features/결제/PaymentPanel.tsx`.'
+  ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'runbooks', 'payment.md'), [
+    '# Payment runbook',
+    '',
+    'PaymentPanel manual smoke checks live here.'
+  ].join('\n'));
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli([
+    'operator',
+    'context',
+    '.',
+    '--path',
+    'src/features/결제/PaymentPanel.tsx',
+    '--json'
+  ], io), 0);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.target, target);
+  assert.equal(report.path, 'src/features/결제/PaymentPanel.tsx');
+  assert.equal(report.summary.coreSources, 4);
+  assert.equal(report.summary.matchingContextFiles, 1);
+  assert.equal(report.contexts.some((item) => item.path === '.ai-playbook/context/frontend.md' && item.applies && item.reason === 'glob'), true);
+  assert.equal(report.contexts.some((item) => item.path === '.ai-playbook/context/backend.md' && !item.applies), true);
+  assert.equal(report.rules.summary.applies, 1);
+  assert.equal(report.related.some((item) => item.path === '.ai-playbook/maps/repo-map.md' && item.category === 'maps'), true);
+  assert.equal(report.related.some((item) => item.path === '.ai-playbook/runbooks/payment.md' && item.category === 'runbooks'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('operator map --json reports stack architecture quality and concerns without writing files', async () => {
+  const target = await tempRepo('operator map-공백-한글-');
+  await mkdir(path.join(target, 'src', 'app'), { recursive: true });
+  await mkdir(path.join(target, 'src', 'features', '검색'), { recursive: true });
+  await mkdir(path.join(target, 'tests'), { recursive: true });
+  await mkdir(path.join(target, '.github', 'workflows'), { recursive: true });
+  await mkdir(path.join(target, 'node_modules', 'ignored'), { recursive: true });
+  await writeFile(path.join(target, 'pnpm-lock.yaml'), 'lockfileVersion: 9.0\n');
+  await writeFile(path.join(target, 'package.json'), JSON.stringify({
+    scripts: {
+      check: 'tsc --noEmit',
+      test: 'vitest run'
+    },
+    dependencies: {
+      '@vitejs/plugin-react': 'latest',
+      react: 'latest',
+      vite: 'latest'
+    },
+    devDependencies: {
+      vitest: 'latest',
+      typescript: 'latest'
+    }
+  }, null, 2));
+  await writeFile(path.join(target, 'tsconfig.json'), '{}\n');
+  await writeFile(path.join(target, 'vitest.config.ts'), 'export default {};\n');
+  await writeFile(path.join(target, '.github', 'workflows', 'validate.yml'), 'name: validate\n');
+  await writeFile(path.join(target, 'src', 'app', 'main.tsx'), 'import React from "react";\n');
+  await writeFile(path.join(target, 'src', 'features', '검색', 'SearchPanel.tsx'), [
+    'export function SearchPanel() {',
+    '  // TODO: remove debug log',
+    '  console.log("debug");',
+    '  return <div dangerouslySetInnerHTML={{ __html: "" }} />;',
+    '}'
+  ].join('\n'));
+  await writeFile(path.join(target, 'tests', 'SearchPanel.test.tsx'), 'test("search", () => {});\n');
+  await writeFile(path.join(target, 'node_modules', 'ignored', 'Hidden.test.ts'), 'test("ignored", () => {});\n');
+  const before = await listRelativeFiles(target);
+
+  const io = capture(target);
+  assert.equal(await runCli(['operator', 'map', '.', '--json'], io), 0);
+  const report = JSON.parse(io.out());
+
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.target, target);
+  assert.equal(report.summary.sourceFiles >= 2, true);
+  assert.equal(report.stack.packageManager.name, 'pnpm');
+  assert.equal(report.stack.frameworks.some((framework) => framework.name === 'react'), true);
+  assert.equal(report.stack.languages.some((language) => language.extension === '.tsx'), true);
+  assert.equal(report.architecture.entrypoints.some((entry) => entry.path === 'src/app/main.tsx'), true);
+  assert.equal(report.architecture.moduleBoundaries.some((boundary) => boundary.path === 'src/features'), true);
+  assert.equal(report.quality.testFiles.count, 1);
+  assert.equal(report.quality.configs.some((config) => config.path === 'vitest.config.ts'), true);
+  assert.equal(report.quality.commands.some((command) => command.command === 'pnpm test'), true);
+  assert.equal(report.concerns.todos.count, 1);
+  assert.equal(report.concerns.debugArtifacts.count, 1);
+  assert.equal(report.concerns.securitySignals.count, 1);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
 function capture(cwd) {
   let stdout = '';
   let stderr = '';

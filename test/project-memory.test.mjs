@@ -142,6 +142,22 @@ test('run commands create append-only evidence ledger and summarize without unsa
   const events = ledger.trim().split('\n').map((line) => JSON.parse(line));
   assert.equal(events.some((event) => event.type === 'evidence' && event.status === 'pass'), true);
 
+  const criterion = capture(target);
+  assert.equal(await runCli([
+    'run',
+    'record',
+    '.',
+    '--run-id',
+    'auth-flow',
+    '--type',
+    'criterion',
+    '--message',
+    'Auth criterion passed',
+    '--status',
+    'pass',
+    '--json'
+  ], criterion), 0);
+
   const rejected = capture(target);
   assert.equal(await runCli([
     'run',
@@ -161,9 +177,12 @@ test('run commands create append-only evidence ledger and summarize without unsa
   const status = capture(target);
   assert.equal(await runCli(['run', 'status', '.', '--run-id', 'auth-flow', '--json'], status), 0);
   const statusReport = JSON.parse(status.out());
-  assert.equal(statusReport.summary.events, 2);
+  assert.equal(statusReport.summary.events, 3);
+  assert.equal(statusReport.summary.criteria, 1);
+  assert.equal(statusReport.summary.openCriteria, 0);
   assert.equal(statusReport.summary.evidence, 1);
   assert.equal(statusReport.summary.cleanup, 0);
+  assert.equal(statusReport.criteria.some((item) => item.source === 'ledger' && item.message === 'Auth criterion passed'), true);
 
   const summarizePreview = capture(target);
   const summaryBefore = await readFile(path.join(target, '.ai-playbook', 'runs', 'auth-flow', 'summary.md'), 'utf8');
@@ -171,8 +190,9 @@ test('run commands create append-only evidence ledger and summarize without unsa
   assert.equal(await readFile(path.join(target, '.ai-playbook', 'runs', 'auth-flow', 'summary.md'), 'utf8'), summaryBefore);
 
   const summarized = capture(target);
-  assert.equal(await runCli(['run', 'summarize', '.', '--run-id', 'auth-flow', '--force', '--json'], summarized), 0);
+  assert.equal(await runCli(['run', 'summarize', '.', '--run-id', 'auth-flow', '--json'], summarized), 0);
   assert.match(await readFile(path.join(target, '.ai-playbook', 'runs', 'auth-flow', 'summary.md'), 'utf8'), /Auth flow test passed/);
+  assert.match(await readFile(path.join(target, '.ai-playbook', 'runs', 'auth-flow', 'summary.md'), 'utf8'), /Auth criterion passed/);
   await cleanup(target);
 });
 
@@ -200,6 +220,21 @@ test('contracts list and check report active pending stale and missing appliesTo
     '## Required evidence',
     ''
   ].join('\n'));
+  await writeFile(path.join(target, '.ai-playbook', 'contracts', 'active', 'payment-glob.md'), [
+    '---',
+    'id: payment-glob',
+    'status: active',
+    'appliesTo:',
+    '  - src/payments/**/*.ts',
+    'risk: medium',
+    'freshness: 2026-06-14',
+    '---',
+    '# Payment Glob Contract',
+    '',
+    '## Required evidence',
+    '',
+    '- Run payment contract tests.'
+  ].join('\n'));
   await writeFile(path.join(target, '.ai-playbook', 'contracts', 'pending', 'payment-refund.md'), [
     '---',
     'id: payment-refund',
@@ -213,7 +248,7 @@ test('contracts list and check report active pending stale and missing appliesTo
   const listed = capture(target);
   assert.equal(await runCli(['contracts', 'list', '.', '--json'], listed), 0);
   const listReport = JSON.parse(listed.out());
-  assert.equal(listReport.summary.active, 1);
+  assert.equal(listReport.summary.active, 2);
   assert.equal(listReport.summary.pending, 1);
 
   const checked = capture(target);
@@ -221,9 +256,10 @@ test('contracts list and check report active pending stale and missing appliesTo
   const report = JSON.parse(checked.out());
   assert.equal(report.schemaVersion, '1');
   assert.equal(report.ok, true);
-  assert.equal(report.summary.matches, 2);
+  assert.equal(report.summary.matches, 3);
   assert.equal(report.contracts.some((contract) => contract.id === 'payment-cancel' && contract.status === 'active'), true);
-  assert.equal(report.warnings.some((warning) => warning.id === 'contracts.applies-to-missing'), true);
+  assert.equal(report.contracts.some((contract) => contract.id === 'payment-glob' && contract.status === 'active'), true);
+  assert.equal(report.warnings.filter((warning) => warning.id === 'contracts.applies-to-missing').length, 1);
   assert.equal(report.warnings.some((warning) => warning.id === 'contracts.stale'), true);
   assert.equal(report.warnings.some((warning) => warning.id === 'contracts.evidence-missing'), true);
   assert.equal(report.warnings.some((warning) => warning.id === 'contracts.pending-match'), true);

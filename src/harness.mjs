@@ -33,6 +33,7 @@ export const INSTALL_SOURCE = 'ai-agent-playbook';
 export const CONTEXT_DIR = 'context';
 export const RUNS_DIR = 'runs';
 export const CONTRACTS_DIR = 'contracts';
+const RUN_SUMMARY_MARKER = '<!-- ai-playbook-run-summary -->';
 
 const OBSOLETE_STYLE_SKILLS = [
   'design-system-first',
@@ -72,6 +73,16 @@ const CORE_TEMPLATE_MARKERS = [
     ]
   }
 ];
+
+const CONTRACT_GLOB_EXCLUDED_DIRS = new Set([
+  '.git',
+  'node_modules',
+  'dist',
+  'build',
+  '.next',
+  '.turbo',
+  'coverage'
+]);
 
 export function slugifyTitle(title) {
   const slug = title
@@ -1117,7 +1128,7 @@ export async function startRun(options) {
     },
     {
       path: `${runRoot}/summary.md`,
-      content: `# ${title} Run Summary\n\nStatus: active\nRun ID: ${runId}\n\n## Evidence\n\n- No evidence recorded yet.\n`
+      content: `${RUN_SUMMARY_MARKER}\n# ${title} Run Summary\n\nStatus: active\nRun ID: ${runId}\n\n## Evidence\n\n- No evidence recorded yet.\n`
     }
   ];
   const result = await writeMemoryFiles({ target: resolvedTarget, files, dryRun, command: 'run.start' });
@@ -1223,7 +1234,8 @@ export async function runStatus(options) {
     conflicts.push(memoryConflict('run.status.missing-ledger', `Missing ${playbook.dir}/runs/${selectedRunId}/ledger.jsonl.`, [`${playbook.dir}/runs/${selectedRunId}/ledger.jsonl`]));
   }
   const events = existsSync(ledgerPath) ? await readLedgerEvents(ledgerPath, warnings, `${playbook.dir}/runs/${selectedRunId}/ledger.jsonl`) : [];
-  const criteria = existsSync(criteriaPath) ? await readCriteria(criteriaPath, warnings, `${playbook.dir}/runs/${selectedRunId}/criteria.json`) : [];
+  const criteriaFile = existsSync(criteriaPath) ? await readCriteria(criteriaPath, warnings, `${playbook.dir}/runs/${selectedRunId}/criteria.json`) : [];
+  const criteria = mergeCriteriaWithLedgerEvents(criteriaFile, events);
   return runStatusResult({
     target: resolvedTarget,
     runId: selectedRunId,
@@ -1246,17 +1258,20 @@ export async function summarizeRun(options) {
   const file = path.join(playbook.root, 'runs', normalizedRunId, 'summary.md');
   const content = buildRunSummaryMarkdown({ runId: normalizedRunId, events: status.events, criteria: status.criteria });
   if (existsSync(file) && !force && !dryRun) {
-    return {
-      schemaVersion: SCHEMA_VERSION,
-      ok: false,
-      target: resolvedTarget,
-      runId: normalizedRunId,
-      applied: false,
-      summary: { operations: 0, warnings: 0, conflicts: 1 },
-      operations: [],
-      warnings: [],
-      conflicts: [memoryConflict('run.summarize.exists', `Refusing to overwrite ${runRoot}/summary.md without --force.`, [`${runRoot}/summary.md`])]
-    };
+    const existing = await readFile(file, 'utf8');
+    if (isUserEditedRunSummary(existing, normalizedRunId)) {
+      return {
+        schemaVersion: SCHEMA_VERSION,
+        ok: false,
+        target: resolvedTarget,
+        runId: normalizedRunId,
+        applied: false,
+        summary: { operations: 0, warnings: 0, conflicts: 1 },
+        operations: [],
+        warnings: [],
+        conflicts: [memoryConflict('run.summarize.exists', `Refusing to overwrite edited ${runRoot}/summary.md without --force.`, [`${runRoot}/summary.md`])]
+      };
+    }
   }
   const operations = [{
     id: 'run.summarize.write-summary',
@@ -1353,9 +1368,10 @@ export async function checkContracts(options) {
   const warnings = [];
   const contracts = await collectContracts({ target: resolvedTarget, playbook, warnings, relativePath });
   const matches = relativePath === undefined ? contracts : contracts.filter((contract) => contract.matchesPath);
+  const pathCache = createContractPathCache(resolvedTarget);
   for (const contract of matches) {
     for (const appliesTo of contract.appliesTo) {
-      if (!existsSync(path.join(resolvedTarget, ...appliesTo.split('/')))) {
+      if (!await contractAppliesToExists(pathCache, appliesTo)) {
         warnings.push(memoryWarning('contracts.applies-to-missing', `${contract.id} references missing path ${appliesTo}.`, [contract.path, appliesTo]));
       }
     }
@@ -1774,6 +1790,25 @@ async function readCriteria(file, warnings, portablePath) {
   }
 }
 
+function mergeCriteriaWithLedgerEvents(criteria, events) {
+  const fileCriteria = criteria.map((criterion) => ({
+    ...criterion,
+    source: criterion.source ?? 'criteria'
+  }));
+  const ledgerCriteria = events
+    .filter((event) => event.type === 'criterion')
+    .map((event, index) => ({
+      id: event.id ?? `ledger-${index + 1}`,
+      status: event.status ?? 'info',
+      message: event.message ?? 'criterion',
+      source: 'ledger',
+      timeUtc: event.timeUtc ?? null,
+      evidence: event.evidence ?? null,
+      paths: Array.isArray(event.paths) ? event.paths : []
+    }));
+  return [...fileCriteria, ...ledgerCriteria];
+}
+
 function summarizeRunState(options) {
   const { events, criteria, warnings, conflicts } = options;
   return {
@@ -1793,6 +1828,7 @@ function summarizeRunState(options) {
 function buildRunSummaryMarkdown(options) {
   const { runId, events, criteria } = options;
   const lines = [
+    RUN_SUMMARY_MARKER,
     `# ${runId} Run Summary`,
     '',
     '## Criteria',
@@ -1815,6 +1851,14 @@ function buildRunSummaryMarkdown(options) {
   }
   lines.push('');
   return `${lines.join('\n')}\n`;
+}
+
+function isUserEditedRunSummary(text, runId) {
+  return !(
+    text.includes(RUN_SUMMARY_MARKER) ||
+    text.includes(`Run ID: ${runId}`) ||
+    text.startsWith(`# ${runId} Run Summary\n`)
+  );
 }
 
 async function collectContracts(options) {
@@ -1849,6 +1893,51 @@ async function collectContracts(options) {
   }
   contracts.sort((left, right) => left.status.localeCompare(right.status) || left.path.localeCompare(right.path));
   return contracts;
+}
+
+function createContractPathCache(target) {
+  let filesPromise = null;
+  return {
+    target,
+    async files() {
+      filesPromise ??= walkContractFiles(target);
+      return filesPromise;
+    }
+  };
+}
+
+async function contractAppliesToExists(cache, appliesTo) {
+  const normalized = normalizePortablePath(appliesTo);
+  if (!hasGlobPattern(normalized)) {
+    return existsSync(path.join(cache.target, ...normalized.split('/')));
+  }
+  const files = await cache.files();
+  return files.some((file) => globMatches(normalized, file));
+}
+
+function hasGlobPattern(value) {
+  return /[*?]/.test(value);
+}
+
+async function walkContractFiles(root) {
+  const files = [];
+  await walkContractFilesInto(root, root, files);
+  files.sort();
+  return files;
+}
+
+async function walkContractFilesInto(root, current, files) {
+  if (!existsSync(current)) return;
+  const entries = await readdir(current, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      if (CONTRACT_GLOB_EXCLUDED_DIRS.has(entry.name)) continue;
+      await walkContractFilesInto(root, path.join(current, entry.name), files);
+      continue;
+    }
+    if (!entry.isFile()) continue;
+    files.push(normalizePortablePath(path.relative(root, path.join(current, entry.name))));
+  }
 }
 
 function hasRequiredEvidence(body) {

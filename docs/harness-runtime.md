@@ -292,6 +292,6 @@ These reminders are intentionally narrow. They do not run `doctor`, block tool c
 - Keep commands deterministic and file-system focused.
 - Do not encode project-specific product facts in the runtime.
 - Keep reusable templates relative-path based.
-- Treat `_reference/` and `_work/` as local development material, never target-project input.
+- Treat local scratch and reference material as development-only input, never as target-project guidance.
 - Do not require plugin hooks, slash commands, global installs, or network access for the default harness.
 - Optional hook adapters should inject context or reminders only; they should not rewrite tool output or edit project files automatically.

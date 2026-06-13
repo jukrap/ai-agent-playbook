@@ -18,7 +18,7 @@
 - `.ai-playbook/plans/**`: active execution plans only.
 - `.ai-playbook/worklogs/**`: detailed milestone, blocker, direction-change, debugging records.
 - `.ai-playbook/archive/**`: stale plans, old handoffs, retired notes.
-- `design-docs/**`, `_reference/**`: secondary references.
+- 프로젝트 설계 문서와 로컬 참고 자료: secondary references.
 - `.ai-playbook/guides/runtime-roadmap.md`: runtime hook이 project docs를 대체하지 않고 보강해도 되는지 판단하는 선택적 guidance.
 
 ## Source-of-truth priority

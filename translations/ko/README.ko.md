@@ -209,32 +209,49 @@ test/                 Node CLI와 adapter 테스트
 
 각 `SKILL.md`는 짧고 상황 중심으로 유지합니다. 더 긴 재사용 상세 내용은 `references/`에 둡니다.
 
-| 분류 | 스킬 | 언제 쓰는가 |
-| ---- | ---- | ----------- |
-| Project | `project-bootstrap` | 새 프로젝트 시작, 기존 저장소 인수, 프로젝트 메모리와 루트 에이전트 지침 설정. |
-| Project | `repo-onboarding` | 낯선 저장소에서 아키텍처, 도구, 수정 방향, 작업 흐름을 답하기 전에 먼저 살필 때. |
-| Project | `project-doc-system` | 프로젝트 AI 문서, map, runbook, decision, plan, worklog를 만들거나 재정리할 때. |
-| Quality | `api-contract-boundary` | 프론트엔드/백엔드 계약, DTO, mock, payload, adapter를 구현·디버깅·검토할 때. |
-| Quality | `ui-style-policy` | 저장소 UI 스타일 정책을 선택, 문서화, 강제할 때. |
-| Quality | `style-quality-review` | UI 스타일, 반응형 동작, 레이아웃 넘침, 시각적 회귀를 검토하거나 개선할 때. |
-| Quality | `frontend-ui-polish` | 제품 의도와 기존 디자인 관례를 보존하면서 보이는 프론트엔드 UI를 구현하거나 다듬을 때. |
-| Quality | `cleanup-ai-slop` | 신뢰가 낮거나 과하게 복잡하거나 중복된 코드를 동작 변경 없이 정리할 때. |
-| Quality | `review-work-light` | blocking review process 없이 최근 구현 작업을 인수인계 전에 검토할 때. |
-| Git | `commit-worklog-guardrails` | staging, commit, push, PR, release note, worklog를 다룰 때. |
-| Meta | `agent-skill-authoring` | 재사용 agent skill과 reference를 만들거나 검토·재정리할 때. |
-| Legacy | `legacy-general` | 흐름이 불명확하고 결합이 숨겨져 있거나 test/documentation이 약한 레거시 코드를 유지보수할 때. |
-| Legacy | `legacy-risk-check` | 공유 상태, CSS/JS, selector, template, form, API, build, deploy에 영향을 줄 수 있는 레거시 변경 전. |
-| Legacy | `legacy-feature-addition` | 주변 architecture를 다시 쓰지 않고 동작, 화면, 필드, 규칙, integration을 추가할 때. |
-| Legacy | `legacy-jquery-web` | jQuery, plugin, direct DOM, global script, AJAX callback, script order coupling을 유지보수할 때. |
-| Legacy | `legacy-server-rendered-web` | template, controller, form post, server validation, session, layout, partial을 유지보수할 때. |
-| Legacy | `legacy-php-lamp` | include, session, mixed HTML/PHP, direct SQL, global, shared hosting 제약이 있는 PHP/LAMP를 유지보수할 때. |
-| Legacy | `legacy-java-spring-mvc` | Spring MVC, JSP, Servlet, MyBatis, WAR, XML config, server-rendered Java app을 유지보수할 때. |
-| Legacy | `legacy-dotnet-webforms` | ASP.NET Web Forms, .NET Framework, code-behind, ViewState, Web.config, IIS를 유지보수할 때. |
-| Legacy | `legacy-android-webview-hybrid` | Android WebView, web asset, JavaScript bridge, permission, device API를 유지보수할 때. |
-| Legacy | `legacy-ie-activex-compat` | IE mode, ActiveX, old browser API, compatibility constraint가 필요한 intranet system을 유지보수할 때. |
-| Legacy | `legacy-database-heavy-system` | stored procedure, trigger, view, direct SQL, scheduled job처럼 데이터베이스에 강하게 묶인 업무 규칙을 유지보수할 때. |
-| Legacy | `legacy-reporting-printing` | report, print preview, PDF/Excel export, label, barcode, invoice, printer-specific flow를 유지보수할 때. |
-| Legacy | `legacy-batch-file-transfer` | scheduled batch, cron, Windows Task Scheduler, CSV/Excel import/export, SFTP, file drop을 유지보수할 때. |
+### 프로젝트
+
+- `project-bootstrap`: 새 프로젝트 시작, 기존 저장소 인수, 프로젝트 메모리와 루트 에이전트 지침 설정.
+- `repo-onboarding`: 낯선 저장소에서 아키텍처, 도구, 수정 방향, 작업 흐름을 답하기 전에 먼저 살필 때.
+- `project-doc-system`: 프로젝트 AI 문서, map, runbook, decision, plan, worklog를 만들거나 재정리할 때.
+
+### 품질
+
+- `api-contract-boundary`: 프론트엔드/백엔드 계약, DTO, mock, payload, adapter를 구현·디버깅·검토할 때.
+- `ui-style-policy`: 저장소 UI 스타일 정책을 선택, 문서화, 강제할 때.
+- `style-quality-review`: UI 스타일, 반응형 동작, 레이아웃 넘침, 시각적 회귀를 검토하거나 개선할 때.
+- `frontend-ui-polish`: 제품 의도와 기존 디자인 관례를 보존하면서 보이는 프론트엔드 UI를 구현하거나 다듬을 때.
+- `cleanup-ai-slop`: 신뢰가 낮거나 과하게 복잡하거나 중복된 코드를 동작 변경 없이 정리할 때.
+- `review-work-light`: 차단형 리뷰 절차 없이 최근 구현 작업을 인수인계 전에 검토할 때.
+
+### Git과 메타
+
+- `commit-worklog-guardrails`: staging, commit, push, PR, release note, worklog를 다룰 때.
+- `agent-skill-authoring`: 재사용 agent skill과 reference를 만들거나 검토·재정리할 때.
+
+### 레거시
+
+일반 레거시 작업:
+
+- `legacy-general`: 흐름이 불명확하고 결합이 숨겨져 있거나 test/documentation이 약한 레거시 코드를 유지보수할 때.
+- `legacy-risk-check`: 공유 상태, CSS/JS, selector, template, form, API, build, deploy에 영향을 줄 수 있는 변경 전.
+- `legacy-feature-addition`: 주변 architecture를 다시 쓰지 않고 동작, 화면, 필드, 규칙, integration을 추가할 때.
+
+웹, 모바일, 호환성 화면:
+
+- `legacy-jquery-web`: jQuery, plugin, direct DOM, global script, AJAX callback, script order coupling을 유지보수할 때.
+- `legacy-server-rendered-web`: template, controller, form post, server validation, session, layout, partial을 유지보수할 때.
+- `legacy-php-lamp`: include, session, mixed HTML/PHP, direct SQL, global, shared hosting 제약이 있는 PHP/LAMP를 유지보수할 때.
+- `legacy-android-webview-hybrid`: Android WebView, web asset, JavaScript bridge, permission, device API를 유지보수할 때.
+- `legacy-ie-activex-compat`: IE mode, ActiveX, old browser API, compatibility constraint가 필요한 intranet system을 유지보수할 때.
+
+엔터프라이즈 스택과 데이터 중심 흐름:
+
+- `legacy-java-spring-mvc`: Spring MVC, JSP, Servlet, MyBatis, WAR, XML config, server-rendered Java app을 유지보수할 때.
+- `legacy-dotnet-webforms`: ASP.NET Web Forms, .NET Framework, code-behind, ViewState, Web.config, IIS를 유지보수할 때.
+- `legacy-database-heavy-system`: stored procedure, trigger, view, direct SQL, scheduled job처럼 데이터베이스에 강하게 묶인 업무 규칙을 유지보수할 때.
+- `legacy-reporting-printing`: report, print preview, PDF/Excel export, label, barcode, invoice, printer-specific flow를 유지보수할 때.
+- `legacy-batch-file-transfer`: scheduled batch, cron, Windows Task Scheduler, CSV/Excel import/export, SFTP, file drop을 유지보수할 때.
 
 ## 문서
 

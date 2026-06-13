@@ -15,7 +15,7 @@ test('package metadata exposes ai-playbook bin and is publishable', async () => 
   assert.equal(packageJson.name, 'ai-agent-playbook');
   assert.notEqual(packageJson.private, true);
   assert.deepEqual(packageJson.bin, {
-    'ai-playbook': './bin/ai-playbook.mjs'
+    'ai-playbook': 'bin/ai-playbook.mjs'
   });
   assert.equal(packageJson.license, 'MIT');
   assert.equal(packageJson.repository.type, 'git');

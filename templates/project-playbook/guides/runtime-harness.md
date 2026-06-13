@@ -21,6 +21,8 @@ node .\bin\ai-playbook.mjs operator check <target-repo> --path src/example.ts --
 node .\bin\ai-playbook.mjs operator search <target-repo> --query "auth flow" --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator context <target-repo> --path src/example.ts --json
 node .\bin\ai-playbook.mjs operator map <target-repo> --json
+node .\bin\ai-playbook.mjs operator audit <target-repo> --json
+node .\bin\ai-playbook.mjs operator gc <target-repo> --json
 node .\bin\ai-playbook.mjs rules check <target-repo> --path src/example.ts --json
 node .\bin\ai-playbook.mjs diagnostics check <target-repo> --json
 node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
@@ -54,12 +56,14 @@ Use skills for behavior during the session:
 
 ## Operator diagnostics
 
-Use read-only diagnostics when an agent needs stronger evidence but a hook would be too much:
+Use operator-triggered diagnostics when an agent needs stronger evidence but a hook would be too much:
 
 - `operator check` combines doctor, guide freshness, diagnostics, and rule matching into one read-only human checkpoint.
 - `operator search` finds related local source, playbook, rule, plan, and worklog text without writing files.
 - `operator context` previews which path-scoped context files, rules, maps, runbooks, decisions, or guides are relevant before loading them into a session.
 - `operator map` summarizes stack, architecture, quality, and concern signals without creating or updating map files.
+- `operator audit` checks playbook links, context globs, duplicate notes, legacy path drift, and managed manifest drift without writing files.
+- `operator gc` previews obsolete unmodified managed playbook files and removes them only when `--apply` is used.
 - `rules check` shows which project rule files apply to a path. Keep root `AGENTS.md` as the normal entrypoint; do not duplicate it as injected context.
 - `diagnostics check` lists likely local verification commands from project metadata without running them, using the package manager detected from lockfiles when it renders package scripts.
 - `qa tui-check` checks terminal captures for width overflow, simple border misalignment, ANSI presence, and CJK wide-character columns.

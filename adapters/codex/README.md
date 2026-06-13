@@ -1,6 +1,6 @@
 # Codex adapter
 
-Codex can use the skills in this repository after they are copied into its skill directory.
+Codex can use the skills in this repository after they are copied into its skill directory with the npm CLI or a local checkout.
 
 ## Codex App on Windows
 
@@ -16,12 +16,11 @@ Codex has two different `AGENTS.md` layers:
 Recommended first setup:
 
 ```powershell
-$playbookRepo = '<path-to-ai-agent-playbook>'
-Set-Location -LiteralPath $playbookRepo
-.\install.ps1
+npx ai-agent-playbook skills install --dry-run
+npx ai-agent-playbook skills install
 ```
 
-After syncing skills, restart Codex App or start a new session so skill metadata is refreshed.
+After syncing skills, restart Codex App or start a new session so skill metadata is refreshed. From a local checkout, use `node .\bin\ai-playbook.mjs skills install` or the compatible `.\install.ps1` script.
 
 Optional personal Codex global setup:
 
@@ -37,10 +36,8 @@ Do not put project-specific rules in the Codex home global file. Use the target 
 For an existing project, do not overwrite its root agent docs on the first pass. Start with a dry run:
 
 ```powershell
-$playbookRepo = '<path-to-ai-agent-playbook>'
 $targetRepo = '<path-to-target-project>'
-Set-Location -LiteralPath $playbookRepo
-node .\bin\ai-playbook.mjs bootstrap $targetRepo --local-only --dry-run
+npx ai-agent-playbook bootstrap $targetRepo --local-only --dry-run
 ```
 
 If the target already has `AGENTS.md` or `.ai-playbook/`, inspect the conflict instead of using `--force`. A safer trial path is to scaffold into a temporary folder, inspect the generated files, then manually merge only the pieces the project needs:
@@ -49,7 +46,7 @@ If the target already has `AGENTS.md` or `.ai-playbook/`, inspect the conflict i
 $scratch = Join-Path $env:TEMP 'ai-playbook-scaffold'
 Remove-Item -LiteralPath $scratch -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Path $scratch | Out-Null
-node .\bin\ai-playbook.mjs bootstrap $scratch --local-only
+npx ai-agent-playbook bootstrap $scratch --local-only
 ```
 
 For a legacy or documentation-heavy project, usually add only `.ai-playbook/START_HERE.md`, `CURRENT.md`, and a docs map first. Keep existing worklogs and plans in place until a human has reviewed the migration.
@@ -59,14 +56,18 @@ For a legacy or documentation-heavy project, usually add only `.ai-playbook/STAR
 For the full new-computer setup, see `../../docs/installation.md`. From the repository root, use this once after cloning:
 
 ```powershell
-.\install.ps1
+node .\bin\ai-playbook.mjs skills install
 ```
+
+The compatible PowerShell path remains available with `.\install.ps1`.
 
 For later updates on the same computer:
 
 ```powershell
-.\update.ps1
+node .\bin\ai-playbook.mjs skills update
 ```
+
+The compatible PowerShell updater remains available with `.\update.ps1`.
 
 To override only the Codex target directory:
 
@@ -92,28 +93,28 @@ Do not edit files under the local installed skill directory as the source of tru
 
 ## Runtime CLI
 
-The repository also includes a small Node CLI for project harness setup and maintenance. It is not an installed Codex skill; run it from this repository checkout.
+The repository also includes a small Node CLI for project harness setup and maintenance. It is not an installed Codex skill. Use `npx ai-agent-playbook` after package publication, `ai-playbook` after a global install, or `node .\bin\ai-playbook.mjs` from a local checkout. For settings that persist adapter hook paths, prefer a global install or local checkout so the rendered hook command points at a stable location.
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
-node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
-node .\bin\ai-playbook.mjs migrate path <target-repo> --json
-node .\bin\ai-playbook.mjs doctor <target-repo> --strict
-node .\bin\ai-playbook.mjs doctor <target-repo> --json
-node .\bin\ai-playbook.mjs doctor <target-repo> --reminder --json
-node .\bin\ai-playbook.mjs context <target-repo> --json
-node .\bin\ai-playbook.mjs adapter config <target-repo> --adapter codex --json
-node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --json
-node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --settings <local-settings-path> --json
-node .\bin\ai-playbook.mjs plan new <target-repo> --title "short-plan-title"
-node .\bin\ai-playbook.mjs worklog new <target-repo> --title "short-worklog-title"
+npx ai-agent-playbook bootstrap <target-repo> --dry-run
+npx ai-agent-playbook bootstrap <target-repo> --local-only
+npx ai-agent-playbook guides sync <target-repo> --dry-run
+npx ai-agent-playbook guides sync <target-repo> --check --diff --json
+npx ai-agent-playbook migrate path <target-repo> --json
+npx ai-agent-playbook doctor <target-repo> --strict
+npx ai-agent-playbook doctor <target-repo> --json
+npx ai-agent-playbook doctor <target-repo> --reminder --json
+npx ai-agent-playbook context <target-repo> --json
+npx ai-agent-playbook adapter config <target-repo> --adapter codex --json
+npx ai-agent-playbook adapter check <target-repo> --adapter codex --json
+npx ai-agent-playbook adapter check <target-repo> --adapter codex --settings <local-settings-path> --json
+npx ai-agent-playbook plan new <target-repo> --title "short-plan-title"
+npx ai-agent-playbook worklog new <target-repo> --title "short-worklog-title"
 ```
 
 Use the CLI when a project needs repeatable root `AGENTS.md` and `.ai-playbook/` scaffolding. Use installed skills when the agent needs reusable working behavior during a coding session.
 
-Codex App does not need `ai-playbook` to be installed as a global command. The stable invocation is:
+Codex App does not need `ai-playbook` to be installed as a global command. From a local checkout, the stable invocation remains:
 
 ```powershell
 node .\bin\ai-playbook.mjs <command>

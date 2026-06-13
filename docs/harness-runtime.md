@@ -4,6 +4,14 @@
 
 This CLI and the project playbook are the default harness. Runtime hooks or plugins are optional extensions and should stay outside the default path until their behavior is explicit, local, and easy to disable. See `docs/runtime-roadmap.md` for the staged design.
 
+Keep the install scopes separate:
+
+- `npx ai-agent-playbook ...` runs the published package without adding it to the current project.
+- `npm install -g ai-agent-playbook` installs the `ai-playbook` command globally.
+- `npm install -D ai-agent-playbook` pins the CLI in one project but does not copy skills or create `.ai-playbook/`.
+- `skills install` and `skills update` write only user-level skill copies.
+- `bootstrap`, `guides sync`, and `managed` commands are the project-level playbook operations.
+
 ## Command surface
 
 ```powershell

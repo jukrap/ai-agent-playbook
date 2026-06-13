@@ -18,9 +18,9 @@ The default path stays simple: install skills, bootstrap `.ai-playbook/` when a 
 - `doctor` already checks minimum layout, root policy placement, local-only policy, template adaptation, worklog summary freshness, obsolete skill references, and fixed local paths.
 - `guides sync` adds missing guide templates without replacing local edits by default, and `guides sync --check --diff --json` reports stale guides with source and target hashes plus the first differing line.
 - `migrate path` previews and optionally applies the legacy `ai-playbook/` to `.ai-playbook/` folder move, reference updates, and `.gitignore` transition.
-- `plan`, `worklog`, and `worklog summarize` keep active plans, detailed history, and monthly summaries in predictable paths.
+- `context`, `run`, `contracts`, `plan`, `worklog`, and `worklog summarize` keep path-scoped memory, active evidence, contract notes, plans, detailed history, and monthly summaries in predictable paths.
 - `managed check`, `managed catalog`, `managed adopt`, `managed prune`, and `managed uninstall` use a project-level marker to inspect, catalog, adopt, or remove only selected unmodified files copied by this playbook.
-- `operator check`, `operator search`, `operator context`, `operator analyze`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, and `qa tui-check` provide operator-triggered diagnostics for combined health review, local search, path-scoped context preview, analysis signal aggregation, codebase mapping, playbook drift audit, preview-first managed cleanup, rule matching, verification command discovery, and terminal/CJK layout evidence.
+- `context status`, `run status`, `contracts check`, `operator check`, `operator search`, `operator context`, `operator analyze`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, and `qa tui-check` provide operator-triggered diagnostics for path-scoped memory, run evidence, contract signals, combined health review, local search, context preview, analysis signal aggregation, codebase mapping, playbook drift audit, preview-first managed cleanup, rule matching, verification command discovery, and terminal/CJK layout evidence.
 - The installer and updater use managed markers and hashes so local skill edits and unmanaged same-name skills are not overwritten silently.
 - `doctor --json`, `doctor --reminder --json`, `guides sync --check --json`, `context --json`, `adapter config --json`, and `adapter check --json` provide a small machine-readable core for future adapters.
 
@@ -36,7 +36,7 @@ Keep improving these areas before making hooks part of any default install path:
 - Use `guides sync --check --diff --json` before overwriting stale guide files so local edits stay visible.
 - Use `migrate path --json` before applying legacy folder moves so path changes stay explicit and reversible by normal Git review.
 - Use `managed check` and `managed catalog` before cleanup, `managed prune --json` before selected managed removal, and `managed uninstall --json` before full managed removal.
-- Use `operator check --path`, `operator search --query`, `operator context --path`, `operator analyze --path`, `operator map`, `operator audit`, `operator gc`, `rules check --path`, `diagnostics check`, and `qa tui-check` as operator-visible evidence before considering stronger runtime automation.
+- Use `context status --path`, `run status`, `contracts check --path`, `operator check --path`, `operator search --query`, `operator context --path`, `operator analyze --path`, `operator map`, `operator audit`, `operator gc`, `rules check --path`, `diagnostics check`, and `qa tui-check` as operator-visible evidence before considering stronger runtime automation.
 - Make migration from existing agent docs preserve history, classify current rules, and record remaining uncertainty in `.ai-playbook/questions.md`.
 - Treat `worklog summarize` as a promotion checkpoint: durable facts belong in `CURRENT.md`, maps, runbooks, or decisions, not only in history.
 

@@ -7,18 +7,28 @@ import {
   buildProjectContext,
   buildDoctorReminderSignal,
   bootstrapProject,
+  checkContracts,
   checkGuides,
   checkManagedManifest,
   catalogManagedManifest,
+  contextStatus,
   createPlan,
   createWorklog,
   doctorProject,
+  initContext,
+  initContracts,
+  listContexts,
+  listContracts,
   migratePlaybookPath,
   parseMaxChars,
   adoptManagedManifest,
   pruneManagedManifest,
+  recordRun,
+  runStatus,
+  startRun,
   syncGuides,
   uninstallManagedManifest,
+  summarizeRun,
   summarizeWorklogs
 } from './harness.mjs';
 
@@ -113,6 +123,50 @@ export async function runCli(argv, io = {}) {
       return 0;
     }
 
+    if (command === 'context' && subcommand === 'list') {
+      const result = await listContexts({ target: resolveTarget(cwd, targetArg) });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Context files: ${result.summary.total}\n`);
+        for (const context of result.contexts) {
+          write(stdout, `[${context.priority}] ${context.path}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'context' && subcommand === 'status') {
+      const result = await contextStatus({
+        target: resolveTarget(cwd, targetArg),
+        filePath: parsed.flags.path
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Context matches: ${result.summary.applies}/${result.summary.total}\n`);
+        for (const context of result.contexts) {
+          write(stdout, `[${context.applies ? 'MATCH' : 'SKIP'}] ${context.path} (${context.reason})\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'context' && subcommand === 'init') {
+      const result = await initContext({
+        target: resolveTarget(cwd, targetArg),
+        dryRun: Boolean(parsed.flags['dry-run'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        for (const operation of result.operations) {
+          write(stdout, `[${operation.action.toUpperCase()}] ${operation.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
     if (command === 'context') {
       const result = await buildProjectContext({
         target: resolveTarget(cwd, subcommand),
@@ -125,6 +179,125 @@ export async function runCli(argv, io = {}) {
       } else {
         for (const warning of result.warnings) {
           write(stderr, `[WARN] ${warning.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'run' && subcommand === 'start') {
+      const result = await startRun({
+        target: resolveTarget(cwd, targetArg),
+        title: parsed.flags.title,
+        dryRun: Boolean(parsed.flags['dry-run'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Run: ${result.runId}\n`);
+        for (const operation of result.operations) {
+          write(stdout, `[${operation.action.toUpperCase()}] ${operation.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'run' && subcommand === 'status') {
+      const result = await runStatus({
+        target: resolveTarget(cwd, targetArg),
+        runId: typeof parsed.flags['run-id'] === 'string' ? parsed.flags['run-id'] : undefined
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Run status: ${result.runId ?? 'none'} (${result.summary.events} event(s))\n`);
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'run' && subcommand === 'record') {
+      const result = await recordRun({
+        target: resolveTarget(cwd, targetArg),
+        runId: parsed.flags['run-id'],
+        type: parsed.flags.type,
+        message: parsed.flags.message,
+        status: parsed.flags.status === true ? undefined : parsed.flags.status,
+        evidence: parsed.flags.evidence
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        for (const operation of result.operations) {
+          write(stdout, `[${operation.action.toUpperCase()}] ${operation.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'run' && subcommand === 'summarize') {
+      const result = await summarizeRun({
+        target: resolveTarget(cwd, targetArg),
+        runId: parsed.flags['run-id'],
+        dryRun: Boolean(parsed.flags['dry-run']),
+        force: Boolean(parsed.flags.force)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        for (const operation of result.operations) {
+          write(stdout, `[${operation.action.toUpperCase()}] ${operation.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'contracts' && subcommand === 'list') {
+      const result = await listContracts({ target: resolveTarget(cwd, targetArg) });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Contracts: ${result.summary.total} (${result.summary.active} active, ${result.summary.pending} pending)\n`);
+        for (const contract of result.contracts) {
+          write(stdout, `[${contract.status.toUpperCase()}] ${contract.path}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'contracts' && subcommand === 'check') {
+      const result = await checkContracts({
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Contract matches: ${result.summary.matches}/${result.summary.total}\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'contracts' && subcommand === 'init') {
+      const result = await initContracts({
+        target: resolveTarget(cwd, targetArg),
+        dryRun: Boolean(parsed.flags['dry-run'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        for (const operation of result.operations) {
+          write(stdout, `[${operation.action.toUpperCase()}] ${operation.message}\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -597,7 +770,26 @@ export function parseArgs(argv) {
 }
 
 function needsValue(key) {
-  return ['profile', 'title', 'date', 'month', 'max-chars', 'adapter', 'settings', 'path', 'cols', 'query', 'max-results', 'codex-root', 'agents-root'].includes(key);
+  return [
+    'profile',
+    'title',
+    'date',
+    'month',
+    'max-chars',
+    'adapter',
+    'settings',
+    'path',
+    'cols',
+    'query',
+    'max-results',
+    'codex-root',
+    'agents-root',
+    'run-id',
+    'type',
+    'message',
+    'status',
+    'evidence'
+  ].includes(key);
 }
 
 function resolveTarget(cwd, value) {
@@ -670,6 +862,16 @@ Usage:
   ai-playbook managed prune <target> --path <managed-path> [--apply] [--json]
   ai-playbook managed uninstall <target> [--apply] [--json]
   ai-playbook context <target> [--json] [--max-chars N]
+  ai-playbook context list <target> [--json]
+  ai-playbook context status <target> --path <file> [--json]
+  ai-playbook context init <target> [--dry-run] [--json]
+  ai-playbook run start <target> --title <text> [--dry-run] [--json]
+  ai-playbook run status <target> [--run-id <id>] [--json]
+  ai-playbook run record <target> --run-id <id> --type note|criterion|evidence|blocker|cleanup --message <text> [--status pass|fail|blocked|info] [--evidence <path>] [--json]
+  ai-playbook run summarize <target> --run-id <id> [--dry-run] [--force] [--json]
+  ai-playbook contracts list <target> [--json]
+  ai-playbook contracts check <target> [--path <file>] [--json]
+  ai-playbook contracts init <target> [--dry-run] [--json]
   ai-playbook operator check <target> [--path <file>] [--diff] [--json]
   ai-playbook operator search <target> --query <text> [--path <file>] [--max-results N] [--json]
   ai-playbook operator research <target> --query <text> [--path <file>] [--max-results N] [--json]

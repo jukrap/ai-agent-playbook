@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1",
+  "contexts": [
+    {
+      "id": "root",
+      "file": "root.md",
+      "alwaysApply": true,
+      "priority": "high"
+    }
+  ]
+}

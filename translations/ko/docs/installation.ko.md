@@ -107,6 +107,13 @@ npm uninstall -g ai-agent-playbook
 | `skills uninstall` | `--dry-run`이 없으면 예 | 사용자 스킬 루트에서 관리 대상 스킬을 제거합니다. |
 | `bootstrap <target>` | `--dry-run`이 없으면 예 | 대상 프로젝트의 루트 `AGENTS.md`와 `.ai-playbook/`을 변경합니다. |
 | `guides sync <target>` | `--dry-run` 또는 `--check`가 없으면 예 | 대상 프로젝트의 `.ai-playbook/guides/`를 변경합니다. |
+| `context init` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-playbook/context/`와 `.ai-playbook/maps/doc-map.md`를 변경합니다. |
+| `context list/status` | 아니오 | Path-scoped project memory를 read-only로 점검합니다. |
+| `run start/summarize` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-playbook/runs/`를 변경합니다. |
+| `run record` | 예 | 선택한 run ledger에 event 하나를 append합니다. |
+| `run status` | 아니오 | Run 상태를 read-only로 점검합니다. |
+| `contracts init` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-playbook/contracts/`를 변경합니다. |
+| `contracts list/check` | 아니오 | Contract를 read-only로 점검합니다. |
 | `managed adopt/prune/uninstall` | `--apply`가 없으면 아니오 | 대상 프로젝트의 `.ai-playbook/` managed file을 변경합니다. |
 | `operator check/search/research/context/analyze/map/audit` | 아니오 | 대상 프로젝트를 read-only로 진단합니다. |
 | `operator gc` | `--apply`가 없으면 아니오 | 대상 프로젝트의 obsolete unmodified managed playbook file을 변경합니다. |
@@ -248,7 +255,7 @@ npx ai-agent-playbook bootstrap <target-project> --dry-run
 npx ai-agent-playbook operator check <target-project> --json
 ```
 
-전역 설치 후에는 `npx ai-agent-playbook`을 `ai-playbook`으로 바꿔 실행합니다. Local checkout에서는 `node .\bin\ai-playbook.mjs`로 바꿔 실행합니다. Project playbook, managed cleanup, operator, adapter, plan, worklog 명령 전체 목록은 [명령어 가이드](commands.ko.md)를 봅니다.
+전역 설치 후에는 `npx ai-agent-playbook`을 `ai-playbook`으로 바꿔 실행합니다. Local checkout에서는 `node .\bin\ai-playbook.mjs`로 바꿔 실행합니다. Project playbook, context, runs, contracts, managed cleanup, operator, adapter, plan, worklog 명령 전체 목록은 [명령어 가이드](commands.ko.md)를 봅니다.
 
 대상 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다. `.ai-playbook/`을 대상 `.gitignore`에 추가해야 하면 `--local-only`를 사용합니다.
 
@@ -270,9 +277,12 @@ npx ai-agent-playbook managed uninstall <target-project> --apply --json
 
 선택적 adapter hook 예시는 내부적으로 `context` 명령을 사용합니다. 이 예시는 read-only이며 `adapters/`에서 수동으로 활성화해야 합니다. `adapter config`로 placeholder 없는 local 설정을 렌더링한 뒤, local settings file을 수동으로 편집한 후 `adapter check --settings <local-settings-path>`로 확인합니다. Operator diagnostics, rules, diagnostics, TUI, adapter 명령 예시는 [명령어 가이드](commands.ko.md)를 봅니다.
 
-Plan과 worklog는 CLI로 생성할 수 있습니다.
+Context, run, contract, plan, worklog는 CLI로 생성할 수 있습니다.
 
 ```powershell
+npx ai-agent-playbook context init <target-project> --dry-run
+npx ai-agent-playbook run start <target-project> --title "Feature slice" --dry-run
+npx ai-agent-playbook contracts init <target-project> --dry-run
 npx ai-agent-playbook plan new <target-project> --title "Feature slice"
 npx ai-agent-playbook worklog new <target-project> --title "Feature slice"
 npx ai-agent-playbook worklog summarize <target-project> --month 2026-06

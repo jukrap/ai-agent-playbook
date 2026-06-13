@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, rename, rm, rmdir, stat, writeFile, copyFile } from 'node:fs/promises';
+import { appendFile, mkdir, readdir, readFile, rename, rm, rmdir, stat, writeFile, copyFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -30,6 +30,10 @@ export const CONTEXT_SOURCE_FILES = [
 export const GUIDE_MANIFEST_FILE = 'manifest.json';
 export const INSTALL_MANIFEST_FILE = '.ai-agent-playbook-install.json';
 export const INSTALL_SOURCE = 'ai-agent-playbook';
+export const CONTEXT_DIR = 'context';
+export const RUNS_DIR = 'runs';
+export const CONTRACTS_DIR = 'contracts';
+const RUN_SUMMARY_MARKER = '<!-- ai-playbook-run-summary -->';
 
 const OBSOLETE_STYLE_SKILLS = [
   'design-system-first',
@@ -69,6 +73,16 @@ const CORE_TEMPLATE_MARKERS = [
     ]
   }
 ];
+
+const CONTRACT_GLOB_EXCLUDED_DIRS = new Set([
+  '.git',
+  'node_modules',
+  'dist',
+  'build',
+  '.next',
+  '.turbo',
+  'coverage'
+]);
 
 export function slugifyTitle(title) {
   const slug = title
@@ -948,6 +962,447 @@ export async function summarizeWorklogs(options) {
   return writeScaffold(file, content, { dryRun, force });
 }
 
+export async function listContexts(options) {
+  const { target } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const warnings = [];
+  const contexts = await collectContextEntries({ target: resolvedTarget, playbook, warnings });
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    summary: {
+      total: contexts.length,
+      warnings: warnings.length
+    },
+    contexts,
+    warnings,
+    conflicts: []
+  };
+}
+
+export async function contextStatus(options) {
+  const { target, filePath } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  if (!filePath || typeof filePath !== 'string') throw new Error('Missing --path.');
+  const resolvedTarget = path.resolve(target);
+  const relativePath = normalizeTargetRelativePath(resolvedTarget, filePath);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const warnings = [];
+  const contexts = await collectContextEntries({ target: resolvedTarget, playbook, relativePath, warnings });
+  const docMap = await readDocMap({ target: resolvedTarget, playbook });
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    path: relativePath,
+    summary: {
+      total: contexts.length,
+      applies: contexts.filter((context) => context.applies).length,
+      warnings: warnings.length
+    },
+    contexts,
+    docMap,
+    warnings,
+    conflicts: []
+  };
+}
+
+export async function initContext(options) {
+  const { target, dryRun = false } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const files = [
+    {
+      path: `${playbook.dir}/context/root.md`,
+      content: [
+        '---',
+        'id: root',
+        'alwaysApply: true',
+        `freshness: ${todayIso()}`,
+        'priority: high',
+        '---',
+        '# Root Context',
+        '',
+        '## When to read',
+        '',
+        'Read for project-wide conventions that apply to every path.',
+        '',
+        '## Current facts',
+        '',
+        '- Replace with durable project-wide facts after repo inspection.',
+        '',
+        '## Do not assume',
+        '',
+        '- Do not treat this template as adapted until project facts are added.',
+        '',
+        '## Verification hints',
+        '',
+        '- Record project-specific verification commands after discovery.',
+        ''
+      ].join('\n')
+    },
+    {
+      path: `${playbook.dir}/context/_registry.json`,
+      content: `${JSON.stringify({
+        schemaVersion: SCHEMA_VERSION,
+        contexts: [
+          {
+            id: 'root',
+            file: 'root.md',
+            alwaysApply: true,
+            priority: 'high'
+          }
+        ]
+      }, null, 2)}\n`
+    },
+    {
+      path: `${playbook.dir}/maps/doc-map.md`,
+      content: [
+        '# Documentation Map',
+        '',
+        'Use this map to find the right project memory or public documentation quickly.',
+        '',
+        '## Start here',
+        '',
+        '- README.md',
+        `- ${playbook.dir}/START_HERE.md`,
+        `- ${playbook.dir}/CURRENT.md`,
+        '',
+        '## Commands and setup',
+        '',
+        '- docs/commands.md',
+        '- docs/installation.md',
+        '',
+        '## Runtime harness',
+        '',
+        '- docs/harness-runtime.md',
+        '- docs/runtime-roadmap.md',
+        '',
+        '## Project memory',
+        '',
+        `- ${playbook.dir}/maps/`,
+        `- ${playbook.dir}/runbooks/`,
+        `- ${playbook.dir}/decisions/`,
+        `- ${playbook.dir}/plans/`,
+        `- ${playbook.dir}/worklogs/`,
+        ''
+      ].join('\n')
+    }
+  ];
+  return writeMemoryFiles({ target: resolvedTarget, files, dryRun, command: 'context.init' });
+}
+
+export async function startRun(options) {
+  const { target, title, dryRun = false } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  requireTitle(title);
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const runId = slugifyTitle(title);
+  const runRoot = `${playbook.dir}/runs/${runId}`;
+  const startedAt = new Date().toISOString();
+  const files = [
+    {
+      path: `${runRoot}/brief.md`,
+      content: `# ${title}\n\nStarted: ${startedAt}\n\n## Goal\n\nRecord the requested outcome.\n\n## Constraints\n\n- Keep evidence local and redact secrets.\n`
+    },
+    {
+      path: `${runRoot}/criteria.json`,
+      content: `${JSON.stringify({ schemaVersion: SCHEMA_VERSION, criteria: [] }, null, 2)}\n`
+    },
+    {
+      path: `${runRoot}/ledger.jsonl`,
+      content: `${JSON.stringify({
+        schemaVersion: SCHEMA_VERSION,
+        timeUtc: startedAt,
+        type: 'note',
+        status: 'info',
+        message: `Run started: ${title}`,
+        evidence: null,
+        paths: []
+      })}\n`
+    },
+    {
+      path: `${runRoot}/summary.md`,
+      content: `${RUN_SUMMARY_MARKER}\n# ${title} Run Summary\n\nStatus: active\nRun ID: ${runId}\n\n## Evidence\n\n- No evidence recorded yet.\n`
+    }
+  ];
+  const result = await writeMemoryFiles({ target: resolvedTarget, files, dryRun, command: 'run.start' });
+  const evidenceDir = path.join(resolvedTarget, playbook.dir, 'runs', runId, 'evidence');
+  if (!dryRun && result.ok) {
+    await mkdir(evidenceDir, { recursive: true });
+  } else {
+    result.operations.push({
+      id: 'run.mkdir-evidence',
+      action: 'mkdir',
+      path: `${runRoot}/evidence/`,
+      message: `Create ${runRoot}/evidence/.`
+    });
+    result.summary.operations += 1;
+  }
+  return {
+    ...result,
+    runId,
+    runPath: runRoot
+  };
+}
+
+export async function recordRun(options) {
+  const { target, runId, type, message, status = 'info', evidence } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const normalizedRunId = normalizeRunId(runId);
+  const conflicts = [];
+  const warnings = [];
+  const allowedTypes = new Set(['note', 'criterion', 'evidence', 'blocker', 'cleanup']);
+  const allowedStatuses = new Set(['pass', 'fail', 'blocked', 'info']);
+  if (!allowedTypes.has(type)) {
+    conflicts.push(memoryConflict('run.record.invalid-type', `Invalid --type ${type}.`, []));
+  }
+  if (!allowedStatuses.has(status)) {
+    conflicts.push(memoryConflict('run.record.invalid-status', `Invalid --status ${status}.`, []));
+  }
+  if (!message || !String(message).trim()) {
+    conflicts.push(memoryConflict('run.record.missing-message', 'Missing --message.', []));
+  }
+  if (isUnsafeRecordText(message)) {
+    conflicts.push(memoryConflict('run.record.unsafe-message', 'Refusing to record a message that looks like a local absolute path or secret.', []));
+  }
+  const evidencePath = evidence === undefined || evidence === false ? null : normalizePortableUserPath(evidence);
+  if (evidencePath === false) {
+    conflicts.push(memoryConflict('run.record.unsafe-evidence', `Refusing non-portable evidence path: ${evidence}`, []));
+  }
+  const ledgerPath = path.join(playbook.root, 'runs', normalizedRunId, 'ledger.jsonl');
+  const relativeLedgerPath = `${playbook.dir}/runs/${normalizedRunId}/ledger.jsonl`;
+  if (!existsSync(ledgerPath)) {
+    conflicts.push(memoryConflict('run.record.missing-ledger', `Missing run ledger ${relativeLedgerPath}.`, [relativeLedgerPath]));
+  }
+  if (conflicts.length === 0) {
+    const event = {
+      schemaVersion: SCHEMA_VERSION,
+      timeUtc: new Date().toISOString(),
+      type,
+      status,
+      message: String(message).trim(),
+      evidence: evidencePath,
+      paths: evidencePath ? [evidencePath] : []
+    };
+    await appendFile(ledgerPath, `${JSON.stringify(event)}\n`);
+  }
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: conflicts.length === 0,
+    target: resolvedTarget,
+    runId: normalizedRunId,
+    applied: conflicts.length === 0,
+    summary: {
+      warnings: warnings.length,
+      conflicts: conflicts.length
+    },
+    operations: conflicts.length === 0 ? [{
+      id: 'run.record.append-ledger',
+      action: 'append',
+      path: relativeLedgerPath,
+      message: `Append ${type} event to ${relativeLedgerPath}.`
+    }] : [],
+    warnings,
+    conflicts
+  };
+}
+
+export async function runStatus(options) {
+  const { target, runId } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const selectedRunId = runId ? normalizeRunId(runId) : await latestRunId(playbook.root);
+  const warnings = [];
+  const conflicts = [];
+  if (!selectedRunId) {
+    conflicts.push(memoryConflict('run.status.missing-run', 'No run id was provided and no runs exist.', [`${playbook.dir}/runs/`]));
+    return runStatusResult({ target: resolvedTarget, runId: null, summary: emptyRunSummary(), criteria: [], events: [], warnings, conflicts });
+  }
+  const runRoot = path.join(playbook.root, 'runs', selectedRunId);
+  const ledgerPath = path.join(runRoot, 'ledger.jsonl');
+  const criteriaPath = path.join(runRoot, 'criteria.json');
+  if (!existsSync(ledgerPath)) {
+    conflicts.push(memoryConflict('run.status.missing-ledger', `Missing ${playbook.dir}/runs/${selectedRunId}/ledger.jsonl.`, [`${playbook.dir}/runs/${selectedRunId}/ledger.jsonl`]));
+  }
+  const events = existsSync(ledgerPath) ? await readLedgerEvents(ledgerPath, warnings, `${playbook.dir}/runs/${selectedRunId}/ledger.jsonl`) : [];
+  const criteriaFile = existsSync(criteriaPath) ? await readCriteria(criteriaPath, warnings, `${playbook.dir}/runs/${selectedRunId}/criteria.json`) : [];
+  const criteria = mergeCriteriaWithLedgerEvents(criteriaFile, events);
+  return runStatusResult({
+    target: resolvedTarget,
+    runId: selectedRunId,
+    summary: summarizeRunState({ events, criteria, warnings, conflicts }),
+    criteria,
+    events,
+    warnings,
+    conflicts
+  });
+}
+
+export async function summarizeRun(options) {
+  const { target, runId, dryRun = false, force = false } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const normalizedRunId = normalizeRunId(runId);
+  const status = await runStatus({ target: resolvedTarget, runId: normalizedRunId });
+  const runRoot = `${playbook.dir}/runs/${normalizedRunId}`;
+  const file = path.join(playbook.root, 'runs', normalizedRunId, 'summary.md');
+  const content = buildRunSummaryMarkdown({ runId: normalizedRunId, events: status.events, criteria: status.criteria });
+  if (existsSync(file) && !force && !dryRun) {
+    const existing = await readFile(file, 'utf8');
+    if (isUserEditedRunSummary(existing, normalizedRunId)) {
+      return {
+        schemaVersion: SCHEMA_VERSION,
+        ok: false,
+        target: resolvedTarget,
+        runId: normalizedRunId,
+        applied: false,
+        summary: { operations: 0, warnings: 0, conflicts: 1 },
+        operations: [],
+        warnings: [],
+        conflicts: [memoryConflict('run.summarize.exists', `Refusing to overwrite edited ${runRoot}/summary.md without --force.`, [`${runRoot}/summary.md`])]
+      };
+    }
+  }
+  const operations = [{
+    id: 'run.summarize.write-summary',
+    action: 'write',
+    path: `${runRoot}/summary.md`,
+    message: `Write ${runRoot}/summary.md.`
+  }];
+  if (!dryRun) {
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, content);
+  }
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    runId: normalizedRunId,
+    applied: !dryRun,
+    summary: {
+      operations: operations.length,
+      warnings: 0,
+      conflicts: 0
+    },
+    operations,
+    warnings: [],
+    conflicts: []
+  };
+}
+
+export async function initContracts(options) {
+  const { target, dryRun = false } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const files = [
+    {
+      path: `${playbook.dir}/contracts/README.md`,
+      content: [
+        '# Contracts',
+        '',
+        'Contracts capture important business rules, invariants, and verification expectations.',
+        '',
+        'Use `active/` for approved contracts and `pending/` for drafts.',
+        '',
+        'Contract checks are read-only in this playbook. They do not block commits or call an AI judge.',
+        ''
+      ].join('\n')
+    }
+  ];
+  const result = await writeMemoryFiles({ target: resolvedTarget, files, dryRun, command: 'contracts.init' });
+  for (const directory of [`${playbook.dir}/contracts/active/`, `${playbook.dir}/contracts/pending/`]) {
+    result.operations.push({
+      id: 'contracts.mkdir',
+      action: 'mkdir',
+      path: directory,
+      message: `Create ${directory}.`
+    });
+    result.summary.operations += 1;
+    if (!dryRun) {
+      await mkdir(path.join(resolvedTarget, ...directory.split('/')), { recursive: true });
+    }
+  }
+  return result;
+}
+
+export async function listContracts(options) {
+  const { target } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const warnings = [];
+  const contracts = await collectContracts({ target: resolvedTarget, playbook, warnings });
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    summary: {
+      total: contracts.length,
+      active: contracts.filter((contract) => contract.status === 'active').length,
+      pending: contracts.filter((contract) => contract.status === 'pending').length,
+      warnings: warnings.length
+    },
+    contracts,
+    warnings,
+    conflicts: []
+  };
+}
+
+export async function checkContracts(options) {
+  const { target, filePath } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const relativePath = filePath === undefined ? undefined : normalizeTargetRelativePath(resolvedTarget, filePath);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const warnings = [];
+  const contracts = await collectContracts({ target: resolvedTarget, playbook, warnings, relativePath });
+  const matches = relativePath === undefined ? contracts : contracts.filter((contract) => contract.matchesPath);
+  const pathCache = createContractPathCache(resolvedTarget);
+  for (const contract of matches) {
+    for (const appliesTo of contract.appliesTo) {
+      if (!await contractAppliesToExists(pathCache, appliesTo)) {
+        warnings.push(memoryWarning('contracts.applies-to-missing', `${contract.id} references missing path ${appliesTo}.`, [contract.path, appliesTo]));
+      }
+    }
+    if (contract.status === 'pending') {
+      warnings.push(memoryWarning('contracts.pending-match', `${contract.id} is pending and matches the requested path.`, [contract.path]));
+    }
+    if (isStaleDate(contract.freshness)) {
+      warnings.push(memoryWarning('contracts.stale', `${contract.id} freshness is older than 90 days.`, [contract.path]));
+    }
+    if (!contract.hasRequiredEvidence) {
+      warnings.push(memoryWarning('contracts.evidence-missing', `${contract.id} has no Required evidence content.`, [contract.path]));
+    }
+  }
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    ...(relativePath === undefined ? {} : { path: relativePath }),
+    summary: {
+      total: contracts.length,
+      matches: matches.length,
+      active: matches.filter((contract) => contract.status === 'active').length,
+      pending: matches.filter((contract) => contract.status === 'pending').length,
+      warnings: warnings.length
+    },
+    contracts: matches,
+    warnings,
+    conflicts: []
+  };
+}
+
 function result(level, id, category, name, message, paths = []) {
   return { id, level, category, name, message, paths };
 }
@@ -975,6 +1430,529 @@ function checkIdForPlaybookFile(file) {
 
 function toPortablePath(value) {
   return value.split(path.sep).join('/');
+}
+
+async function collectContextEntries(options) {
+  const { target, playbook, relativePath, warnings } = options;
+  const contextRoot = path.join(playbook.root, CONTEXT_DIR);
+  const files = await walkFiles(contextRoot, (file) => file.endsWith('.md'));
+  const entries = [];
+  for (const file of files) {
+    const relative = normalizePortablePath(path.relative(target, file));
+    const contextRelative = normalizePortablePath(path.relative(contextRoot, file));
+    const text = await readFile(file, 'utf8');
+    const parsed = parseMemoryMarkdown(text);
+    const id = String(parsed.frontmatter.id ?? path.basename(file, path.extname(file))).trim();
+    const globs = normalizeFrontmatterList(parsed.frontmatter.globs);
+    const alwaysApply = parsed.frontmatter.alwaysApply === true || parsed.frontmatter.alwaysApply === 'true';
+    const match = matchContext({ alwaysApply, globs, relativePath });
+    entries.push({
+      id,
+      path: relative,
+      contextPath: contextRelative,
+      source: `${playbook.dir}/${CONTEXT_DIR}`,
+      globs,
+      alwaysApply,
+      freshness: parsed.frontmatter.freshness ?? null,
+      priority: parsed.frontmatter.priority ?? 'normal',
+      applies: match.applies,
+      reason: match.reason,
+      bytes: Buffer.byteLength(text, 'utf8')
+    });
+  }
+  entries.sort((left, right) => {
+    if (left.applies !== right.applies) return left.applies ? -1 : 1;
+    const priority = priorityRank(right.priority) - priorityRank(left.priority);
+    return priority || left.path.localeCompare(right.path);
+  });
+  return entries;
+}
+
+async function readDocMap(options) {
+  const { target, playbook } = options;
+  const file = path.join(playbook.root, 'maps', 'doc-map.md');
+  const relative = normalizePortablePath(path.relative(target, file));
+  if (!existsSync(file)) {
+    return {
+      path: relative,
+      exists: false,
+      bytes: 0
+    };
+  }
+  const text = await readFile(file, 'utf8');
+  return {
+    path: relative,
+    exists: true,
+    bytes: Buffer.byteLength(text, 'utf8')
+  };
+}
+
+async function writeMemoryFiles(options) {
+  const { target, files, dryRun, command } = options;
+  const operations = [];
+  const warnings = [];
+  const conflicts = [];
+  for (const file of files) {
+    const portablePath = normalizePortablePath(file.path);
+    const fullPath = path.join(target, ...portablePath.split('/'));
+    if (existsSync(fullPath)) {
+      operations.push({
+        id: `${command}.keep-existing`,
+        action: 'keep',
+        path: portablePath,
+        message: `Keep existing ${portablePath}.`
+      });
+      continue;
+    }
+    operations.push({
+      id: `${command}.write-file`,
+      action: 'write',
+      path: portablePath,
+      message: `Write ${portablePath}.`
+    });
+    if (!dryRun) {
+      await mkdir(path.dirname(fullPath), { recursive: true });
+      await writeFile(fullPath, file.content);
+    }
+  }
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: conflicts.length === 0,
+    target,
+    applied: !dryRun && conflicts.length === 0,
+    summary: {
+      operations: operations.length,
+      warnings: warnings.length,
+      conflicts: conflicts.length
+    },
+    operations,
+    warnings,
+    conflicts
+  };
+}
+
+function normalizeTargetRelativePath(target, filePath) {
+  const raw = String(filePath);
+  const resolved = path.isAbsolute(raw) || /^[A-Za-z]:[\\/]/.test(raw)
+    ? path.resolve(raw)
+    : path.resolve(target, raw);
+  const relative = path.relative(target, resolved);
+  if (relative && !relative.startsWith('..') && !path.isAbsolute(relative)) {
+    return normalizePortablePath(relative);
+  }
+  return normalizePortablePath(raw);
+}
+
+function normalizePortablePath(value) {
+  return String(value)
+    .replace(/\\/g, '/')
+    .replace(/^\.\/+/, '')
+    .replace(/\/+/g, '/');
+}
+
+function normalizeFrontmatterList(value) {
+  if (value === undefined || value === null || value === false) return [];
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  return [String(value).trim()].filter(Boolean);
+}
+
+function matchContext(options) {
+  const { alwaysApply, globs, relativePath } = options;
+  if (alwaysApply) return { applies: true, reason: 'alwaysApply' };
+  if (!relativePath) return { applies: false, reason: 'requiresPath' };
+  if (globs.some((glob) => globMatches(glob, relativePath))) {
+    return { applies: true, reason: 'glob' };
+  }
+  return { applies: false, reason: 'noMatch' };
+}
+
+function priorityRank(priority) {
+  const normalized = String(priority ?? '').toLowerCase();
+  if (normalized === 'critical') return 4;
+  if (normalized === 'high') return 3;
+  if (normalized === 'medium') return 2;
+  if (normalized === 'low') return 1;
+  return 0;
+}
+
+function parseMemoryMarkdown(text) {
+  if (!text.startsWith('---\n') && !text.startsWith('---\r\n')) {
+    return { frontmatter: {}, body: text };
+  }
+  const normalized = text.replace(/\r\n/g, '\n');
+  const end = normalized.indexOf('\n---\n', 4);
+  if (end === -1) return { frontmatter: {}, body: text };
+  const rawFrontmatter = normalized.slice(4, end);
+  const body = normalized.slice(end + 5);
+  return {
+    frontmatter: parseFrontmatter(rawFrontmatter),
+    body
+  };
+}
+
+function parseFrontmatter(text) {
+  const result = {};
+  const lines = text.split('\n');
+  let currentKey = null;
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const listMatch = line.match(/^\s*-\s+(.+)$/);
+    if (listMatch && currentKey) {
+      if (!Array.isArray(result[currentKey])) result[currentKey] = [];
+      result[currentKey].push(parseFrontmatterValue(listMatch[1]));
+      continue;
+    }
+    const keyMatch = line.match(/^([A-Za-z0-9_-]+):(?:\s*(.*))?$/);
+    if (!keyMatch) {
+      currentKey = null;
+      continue;
+    }
+    const [, key, rawValue = ''] = keyMatch;
+    currentKey = key;
+    if (rawValue.trim() === '') {
+      result[key] = [];
+    } else {
+      result[key] = parseFrontmatterValue(rawValue);
+    }
+  }
+  return result;
+}
+
+function parseFrontmatterValue(raw) {
+  const value = String(raw).trim();
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  if (value === 'null') return null;
+  if (value.startsWith('[') && value.endsWith(']')) {
+    const inner = value.slice(1, -1).trim();
+    if (!inner) return [];
+    return inner.split(',').map((item) => stripQuotes(item.trim())).filter(Boolean);
+  }
+  return stripQuotes(value);
+}
+
+function stripQuotes(value) {
+  return value.replace(/^["']|["']$/g, '');
+}
+
+function globMatches(glob, relativePath) {
+  const normalizedGlob = normalizePortablePath(glob);
+  const normalizedPath = normalizePortablePath(relativePath);
+  if (normalizedGlob === normalizedPath) return true;
+  return globToRegex(normalizedGlob).test(normalizedPath);
+}
+
+function globToRegex(glob) {
+  let source = '';
+  for (let index = 0; index < glob.length; index += 1) {
+    const char = glob[index];
+    const next = glob[index + 1];
+    if (char === '*' && next === '*') {
+      const after = glob[index + 2];
+      if (after === '/') {
+        source += '(?:.*/)?';
+        index += 2;
+      } else {
+        source += '.*';
+        index += 1;
+      }
+    } else if (char === '*') {
+      source += '[^/]*';
+    } else if (char === '?') {
+      source += '[^/]';
+    } else {
+      source += escapeRegex(char);
+    }
+  }
+  return new RegExp(`^${source}$`);
+}
+
+function escapeRegex(value) {
+  return value.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
+}
+
+function normalizeRunId(runId) {
+  if (!runId || !String(runId).trim()) throw new Error('Missing --run-id.');
+  const normalized = normalizePortablePath(String(runId).trim());
+  if (
+    normalized.includes('/') ||
+    normalized.includes('..') ||
+    path.isAbsolute(normalized) ||
+    /^[A-Za-z]:[\\/]/.test(normalized)
+  ) {
+    throw new Error('Invalid --run-id; expected a portable id.');
+  }
+  return normalized;
+}
+
+function normalizePortableUserPath(value) {
+  if (!value || !String(value).trim()) return null;
+  const raw = String(value).trim();
+  const normalized = normalizePortablePath(raw);
+  if (
+    path.isAbsolute(raw) ||
+    path.posix.isAbsolute(normalized) ||
+    /^[A-Za-z]:[\\/]/.test(raw) ||
+    normalized.split('/').some((part) => part === '..' || part === '')
+  ) {
+    return false;
+  }
+  return normalized;
+}
+
+function isUnsafeRecordText(value) {
+  const text = String(value ?? '');
+  return (
+    /[A-Za-z]:[\\/]/.test(text) ||
+    /(^|\s)\/(?:Users|home|var|etc|tmp)\//.test(text) ||
+    /\b(?:api[_-]?key|token|secret|password)\s*[:=]/i.test(text)
+  );
+}
+
+function memoryWarning(id, message, paths = []) {
+  return { id, message, paths };
+}
+
+function memoryConflict(id, message, paths = []) {
+  return { id, message, paths };
+}
+
+async function latestRunId(playbookRoot) {
+  const runsRoot = path.join(playbookRoot, RUNS_DIR);
+  if (!existsSync(runsRoot)) return null;
+  const entries = await readdir(runsRoot, { withFileTypes: true });
+  const directories = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const fullPath = path.join(runsRoot, entry.name);
+    directories.push({ name: entry.name, mtimeMs: (await stat(fullPath)).mtimeMs });
+  }
+  directories.sort((left, right) => right.mtimeMs - left.mtimeMs || right.name.localeCompare(left.name));
+  return directories[0]?.name ?? null;
+}
+
+function runStatusResult(options) {
+  const { target, runId, summary, criteria, events, warnings, conflicts } = options;
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: conflicts.length === 0,
+    target,
+    runId,
+    summary,
+    criteria,
+    events,
+    warnings,
+    conflicts
+  };
+}
+
+function emptyRunSummary() {
+  return {
+    events: 0,
+    criteria: 0,
+    openCriteria: 0,
+    evidence: 0,
+    pass: 0,
+    fail: 0,
+    blocked: 0,
+    cleanup: 0,
+    warnings: 0,
+    conflicts: 0
+  };
+}
+
+async function readLedgerEvents(file, warnings, portablePath) {
+  const text = await readFile(file, 'utf8');
+  const events = [];
+  const lines = text.split(/\r?\n/);
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index].trim();
+    if (!line) continue;
+    try {
+      events.push(JSON.parse(line));
+    } catch (error) {
+      warnings.push(memoryWarning('run.ledger.malformed-line', `Could not parse ${portablePath}:${index + 1}: ${error.message}`, [portablePath]));
+    }
+  }
+  return events;
+}
+
+async function readCriteria(file, warnings, portablePath) {
+  try {
+    const parsed = JSON.parse(await readFile(file, 'utf8'));
+    if (Array.isArray(parsed)) return parsed;
+    if (Array.isArray(parsed.criteria)) return parsed.criteria;
+    warnings.push(memoryWarning('run.criteria.invalid', `${portablePath} does not contain a criteria array.`, [portablePath]));
+    return [];
+  } catch (error) {
+    warnings.push(memoryWarning('run.criteria.malformed', `Could not parse ${portablePath}: ${error.message}`, [portablePath]));
+    return [];
+  }
+}
+
+function mergeCriteriaWithLedgerEvents(criteria, events) {
+  const fileCriteria = criteria.map((criterion) => ({
+    ...criterion,
+    source: criterion.source ?? 'criteria'
+  }));
+  const ledgerCriteria = events
+    .filter((event) => event.type === 'criterion')
+    .map((event, index) => ({
+      id: event.id ?? `ledger-${index + 1}`,
+      status: event.status ?? 'info',
+      message: event.message ?? 'criterion',
+      source: 'ledger',
+      timeUtc: event.timeUtc ?? null,
+      evidence: event.evidence ?? null,
+      paths: Array.isArray(event.paths) ? event.paths : []
+    }));
+  return [...fileCriteria, ...ledgerCriteria];
+}
+
+function summarizeRunState(options) {
+  const { events, criteria, warnings, conflicts } = options;
+  return {
+    events: events.length,
+    criteria: criteria.length,
+    openCriteria: criteria.filter((item) => !['pass', 'done'].includes(String(item.status ?? '').toLowerCase())).length,
+    evidence: events.filter((event) => event.type === 'evidence').length,
+    pass: events.filter((event) => event.status === 'pass').length,
+    fail: events.filter((event) => event.status === 'fail').length,
+    blocked: events.filter((event) => event.status === 'blocked' || event.type === 'blocker').length,
+    cleanup: events.filter((event) => event.type === 'cleanup').length,
+    warnings: warnings.length,
+    conflicts: conflicts.length
+  };
+}
+
+function buildRunSummaryMarkdown(options) {
+  const { runId, events, criteria } = options;
+  const lines = [
+    RUN_SUMMARY_MARKER,
+    `# ${runId} Run Summary`,
+    '',
+    '## Criteria',
+    ''
+  ];
+  if (criteria.length === 0) {
+    lines.push('- No criteria recorded.');
+  } else {
+    for (const criterion of criteria) {
+      lines.push(`- [${criterion.status ?? 'info'}] ${criterion.message ?? criterion.id ?? 'criterion'}`);
+    }
+  }
+  lines.push('', '## Ledger', '');
+  if (events.length === 0) {
+    lines.push('- No events recorded.');
+  } else {
+    for (const event of events) {
+      lines.push(`- ${event.timeUtc ?? 'unknown'} [${event.type ?? 'note'}/${event.status ?? 'info'}] ${event.message ?? ''}`.trimEnd());
+    }
+  }
+  lines.push('');
+  return `${lines.join('\n')}\n`;
+}
+
+function isUserEditedRunSummary(text, runId) {
+  return !(
+    text.includes(RUN_SUMMARY_MARKER) ||
+    text.includes(`Run ID: ${runId}`) ||
+    text.startsWith(`# ${runId} Run Summary\n`)
+  );
+}
+
+async function collectContracts(options) {
+  const { target, playbook, warnings, relativePath } = options;
+  const contracts = [];
+  for (const status of ['active', 'pending']) {
+    const root = path.join(playbook.root, CONTRACTS_DIR, status);
+    const files = await walkFiles(root, (file) => file.endsWith('.md'));
+    for (const file of files) {
+      const relative = normalizePortablePath(path.relative(target, file));
+      const text = await readFile(file, 'utf8');
+      const parsed = parseMemoryMarkdown(text);
+      const appliesTo = normalizeFrontmatterList(parsed.frontmatter.appliesTo);
+      const contractStatus = String(parsed.frontmatter.status ?? status);
+      const matchesPath = relativePath === undefined
+        ? false
+        : appliesTo.some((item) => globMatches(item, relativePath));
+      contracts.push({
+        id: String(parsed.frontmatter.id ?? path.basename(file, path.extname(file))),
+        path: relative,
+        status: contractStatus,
+        folder: status,
+        appliesTo,
+        risk: parsed.frontmatter.risk ?? null,
+        approvedAt: parsed.frontmatter.approvedAt ?? null,
+        freshness: parsed.frontmatter.freshness ?? null,
+        matchesPath,
+        stale: isStaleDate(parsed.frontmatter.freshness),
+        hasRequiredEvidence: hasRequiredEvidence(parsed.body)
+      });
+    }
+  }
+  contracts.sort((left, right) => left.status.localeCompare(right.status) || left.path.localeCompare(right.path));
+  return contracts;
+}
+
+function createContractPathCache(target) {
+  let filesPromise = null;
+  return {
+    target,
+    async files() {
+      filesPromise ??= walkContractFiles(target);
+      return filesPromise;
+    }
+  };
+}
+
+async function contractAppliesToExists(cache, appliesTo) {
+  const normalized = normalizePortablePath(appliesTo);
+  if (!hasGlobPattern(normalized)) {
+    return existsSync(path.join(cache.target, ...normalized.split('/')));
+  }
+  const files = await cache.files();
+  return files.some((file) => globMatches(normalized, file));
+}
+
+function hasGlobPattern(value) {
+  return /[*?]/.test(value);
+}
+
+async function walkContractFiles(root) {
+  const files = [];
+  await walkContractFilesInto(root, root, files);
+  files.sort();
+  return files;
+}
+
+async function walkContractFilesInto(root, current, files) {
+  if (!existsSync(current)) return;
+  const entries = await readdir(current, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      if (CONTRACT_GLOB_EXCLUDED_DIRS.has(entry.name)) continue;
+      await walkContractFilesInto(root, path.join(current, entry.name), files);
+      continue;
+    }
+    if (!entry.isFile()) continue;
+    files.push(normalizePortablePath(path.relative(root, path.join(current, entry.name))));
+  }
+}
+
+function hasRequiredEvidence(body) {
+  const normalized = body.replace(/\r\n/g, '\n');
+  const match = normalized.match(/^##\s+Required evidence\s*\n([\s\S]*?)(?:\n##\s+|$)/im);
+  if (!match) return false;
+  return match[1].split('\n').some((line) => line.trim() && !line.trim().startsWith('<!--'));
+}
+
+function isStaleDate(value) {
+  if (!value) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return false;
+  const ageMs = Date.now() - date.getTime();
+  return ageMs > 90 * 24 * 60 * 60 * 1000;
 }
 
 function truncateText(text, maxChars) {

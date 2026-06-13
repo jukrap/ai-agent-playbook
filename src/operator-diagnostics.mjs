@@ -350,6 +350,7 @@ export async function previewOperatorContext(options) {
     checkRules({ target: resolvedTarget, filePath: relativePath }),
     playbook ? collectRelatedContextFiles({ target: resolvedTarget, playbook, relativePath }) : []
   ]);
+  const docMap = playbook ? await readOperatorDocMap({ target: resolvedTarget, playbook }) : null;
 
   const matchingContexts = contexts.filter((item) => item.applies);
   const matchingRules = rules.rules.filter((rule) => rule.applies);
@@ -365,10 +366,12 @@ export async function previewOperatorContext(options) {
       matchingContextFiles: matchingContexts.length,
       ruleMatches: matchingRules.length,
       relatedFiles: related.length,
+      docMap: docMap?.exists ? 1 : 0,
       warnings: warnings.length + rules.warnings.length
     },
     coreSources,
     contexts,
+    docMap,
     rules: {
       summary: rules.summary,
       rules: matchingRules,
@@ -1193,17 +1196,31 @@ async function collectPathContextFiles(options) {
     }
     const match = matchRule({ frontmatter: parsed.frontmatter, isSingleFile: false, relativePath });
     entries.push({
+      id: parsed.frontmatter.id ?? path.basename(file, path.extname(file)),
       path: contextPath,
       source: `${playbook.name}/context`,
       applies: match.applies,
       reason: match.reason,
       globs: parsed.frontmatter.globs,
       alwaysApply: parsed.frontmatter.alwaysApply,
+      freshness: parsed.frontmatter.freshness ?? null,
+      priority: parsed.frontmatter.priority ?? 'normal',
       bytes: Buffer.byteLength(text, 'utf8')
     });
   }
   entries.sort((left, right) => Number(right.applies) - Number(left.applies) || left.path.localeCompare(right.path));
   return entries;
+}
+
+async function readOperatorDocMap(options) {
+  const { target, playbook } = options;
+  const file = path.join(playbook.absolutePath, 'maps', 'doc-map.md');
+  const relative = toPortablePath(path.relative(target, file));
+  if (!existsSync(file)) {
+    return { path: relative, exists: false, bytes: 0 };
+  }
+  const info = await stat(file);
+  return { path: relative, exists: true, bytes: info.size };
 }
 
 async function collectRelatedContextFiles(options) {
@@ -1938,6 +1955,10 @@ function parseRuleFile(text) {
       frontmatter.globs.push(...globs);
       index += consumed;
       if (diagnostic) diagnostics.push(diagnostic);
+      continue;
+    }
+    if (['id', 'freshness', 'priority', 'status', 'risk', 'approvedAt'].includes(key)) {
+      frontmatter[key] = unquote(rawValue.trim());
     }
   }
 

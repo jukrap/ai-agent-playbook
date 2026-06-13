@@ -1233,7 +1233,7 @@ async function readManagedManifest(target, playbook = resolvePlaybookLayout(targ
   return { ok: true, manifest };
 }
 
-function validateManagedManifest(manifest) {
+export function validateManagedManifest(manifest) {
   if (manifest?.schemaVersion !== SCHEMA_VERSION) return 'schemaVersion mismatch';
   if (manifest.source !== INSTALL_SOURCE) return 'source mismatch';
   if (typeof manifest.playbookDir !== 'string') return 'missing playbookDir';
@@ -1242,6 +1242,7 @@ function validateManagedManifest(manifest) {
     if (!file || typeof file.path !== 'string') return 'file entry missing path';
     if (!isPortableManagedPath(file.path)) return `non-portable path ${file.path}`;
     if (typeof file.kind !== 'string' || typeof file.source !== 'string') return `invalid entry ${file.path}`;
+    if (!isPortableManagedPath(file.source)) return `non-portable source ${file.source}`;
     if (typeof file.sourceHash !== 'string' || typeof file.targetHash !== 'string') return `missing hashes for ${file.path}`;
   }
   return null;

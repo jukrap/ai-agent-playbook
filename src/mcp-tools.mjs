@@ -29,7 +29,8 @@ import {
   lspReferences,
   lspStatus,
   lspSymbols,
-  runAstGrepSearch
+  runAstGrepSearch,
+  sourceFunctionClones
 } from './deep-analysis.mjs';
 
 const READ_ONLY = {
@@ -146,6 +147,15 @@ export function registerPlaybookMcpTools(server, options) {
       target: targetSchema,
       path: pathSchema
     }, (args) => analyzeOperator({ target: args.target, filePath: args.path, deep: true })),
+    tool('source_function_clones', 'Find exact normalized function-body clone cues in local source files.', {
+      target: targetSchema,
+      path: pathSchema,
+      maxResults: maxResultsSchema
+    }, (args) => sourceFunctionClones({
+      target: args.target,
+      path: args.path,
+      maxResults: args.maxResults ?? 20
+    })),
     tool('ast_grep_search', 'Run read-only AST-grep structural search.', {
       target: targetSchema,
       pattern: z.string().min(1),

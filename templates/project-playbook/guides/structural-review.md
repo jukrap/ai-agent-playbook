@@ -24,6 +24,12 @@ Examples:
 - For ordinary chat, summarize the top one to three findings.
 - For formal reviews, include scan range, confidence limits, and exact files or lines when useful.
 
+## Duplicate and clone cues
+
+- Treat `operator analyze --deep` and `source_function_clones` results as starting points for review, not proof that code is semantically equivalent.
+- Before proposing cleanup, compare callers, contracts, side effects, tests, and naming intent.
+- If a clone cue is useful but not immediately actionable, record the current scan range and freshness in a map or worklog instead of starting a broad rewrite.
+
 ## Refactor planning
 
 Prefer one small next slice by default:

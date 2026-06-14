@@ -643,7 +643,7 @@ export async function runCli(argv, io = {}) {
           }
         }
         if (result.deep) {
-          write(stdout, `Deep: ${result.deep.summary.astGrepMatches} AST match(es), ${result.deep.summary.lspSymbols} LSP symbol(s)\n`);
+          write(stdout, `Deep: ${result.deep.summary.astGrepMatches} AST match(es), ${result.deep.summary.lspSymbols} LSP symbol(s), ${result.deep.summary.functionCloneGroups} function clone group(s)\n`);
         }
       }
       return 0;

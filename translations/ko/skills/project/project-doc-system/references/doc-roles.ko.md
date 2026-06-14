@@ -9,10 +9,10 @@
 - `FSD.md`: repository가 실제로 FSD를 사용할 때만 architecture boundary rules.
 - `.ai-playbook/README.md`: agent-facing project memory index and source-of-truth rules.
 - `.ai-playbook/START_HERE.md`: 다음 agent를 위한 가장 짧은 resume guide.
-- `.ai-playbook/CURRENT.md`: current baseline, active risks, decisions that still matter.
+- `.ai-playbook/CURRENT.md`: current baseline, working vocabulary, active risks, decisions that still matter.
 - `.ai-playbook/SKILLS.md`: project-level skill selection policy.
 - `.ai-playbook/GIT.md`: 짧은 Git, commit, PR, push policy.
-- `.ai-playbook/maps/**`: repository, runtime, API, route, data, risk maps.
+- `.ai-playbook/maps/**`: repository, runtime, API, route, data, risk, structural evidence maps.
 - `.ai-playbook/runbooks/**`: repeatable commands and operational procedures.
 - `.ai-playbook/decisions/**`: durable decisions with rationale and evidence.
 - `.ai-playbook/plans/**`: active execution plans only.
@@ -33,8 +33,9 @@
 ## Cleanup rules
 
 - 루트 에이전트 지침은 안정적인 진입점이 될 만큼 짧게 유지합니다.
-- current project truth는 `.ai-playbook/CURRENT.md`에 둡니다.
+- current project truth와 stable shared term은 `.ai-playbook/CURRENT.md`에 둡니다.
 - structural facts는 `.ai-playbook/maps/`에 둡니다.
+- duplicate 또는 clone signal은 scan range, freshness, confidence limit가 명확할 때만 maps에 둡니다.
 - repeated commands는 `.ai-playbook/runbooks/`에 둡니다.
 - live plans는 `.ai-playbook/plans/`에 둡니다.
 - detailed history는 `.ai-playbook/worklogs/`에 둡니다.

@@ -7,8 +7,10 @@
 - API payload, DTO, adapter, schema, or persistence mismatches.
 - UI overflow, loading, empty, error, disabled, focus, and responsive states.
 - Local-only files, generated artifacts, personal paths, branch names, credentials, or internal URLs.
+- Exact clone or duplicate-code cues that were acted on without checking callers, behavior, and tests.
 - Unrelated refactors mixed into the requested change.
 - Comments or docs that contradict the new behavior.
+- Project vocabulary, maps, or decisions that now contradict the changed code.
 - Verification commands that were skipped despite touching shared code.
 
 ## Severity

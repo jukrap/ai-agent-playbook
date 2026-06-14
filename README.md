@@ -58,6 +58,8 @@ npx ai-agent-playbook operator check <target-project> --json
 
 New to this playbook? Start with [First 10 minutes](docs/quick-start.md). It explains what `npx`, global install, skills, and project bootstrap do before you write files.
 
+In examples, names inside angle brackets are placeholders. Replace `<target-project>` with the project folder you want to inspect, or use `.` when your terminal is already inside that project. Quote paths that contain spaces, and keep private local paths out of shared issues, docs, and PRs.
+
 If your AI app supports MCP, register a local server command such as `npx ai-agent-playbook mcp`. Then you can ask the AI to inspect playbook context, run operator search, or do deep local analysis without remembering every CLI command. MCP tools are read-only in this version.
 
 If you want the shorter `ai-playbook` command from any directory, install the package globally:

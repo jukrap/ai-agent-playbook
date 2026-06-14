@@ -21,6 +21,29 @@
 
 `<target>` 또는 `<target-project>`는 playbook을 적용하거나 검사할 대상 프로젝트 폴더입니다. 터미널이 이미 그 프로젝트 안에 있다면 `.`을 쓸 수 있습니다.
 
+### 예시 입력 방법
+
+- 꺾쇠괄호를 그대로 입력하지 않습니다. `<target-project>`, `<file>`, `<text>`, `<run-id>` 같은 placeholder를 실제 값으로 바꿉니다.
+- 이미 대상 프로젝트 폴더 안에 있다면 target으로 `.`을 쓰는 편이 간단합니다.
+- 공백이 있는 경로나 문장은 따옴표로 감쌉니다. 예: `".\example app"`, `"auth flow change"`.
+- `--path <file>`은 보통 target project 안의 경로입니다. 예: `src/example.ts`. 절대 경로일 필요는 없습니다.
+- 익숙하지 않다면 명령은 한 줄로 입력합니다. PowerShell에서 긴 명령을 여러 줄로 나눌 때만 backtick을 사용합니다.
+- `> preflight.json` 같은 redirection은 shell이 처리합니다. CLI는 JSON을 출력하고, shell이 파일로 저장합니다.
+- 공유 예시에는 개인 폴더, 고객명, credential, internal URL을 넣지 않습니다. 대신 `<target-project>` 같은 placeholder를 사용합니다.
+
+터미널이 대상 프로젝트 안에 있다면 아래처럼 쓸 수 있습니다.
+
+```powershell
+npx ai-agent-playbook operator check . --json
+npx ai-agent-playbook operator search . --query "auth flow" --json
+```
+
+대상 경로에 공백이 있으면 따옴표로 감쌉니다.
+
+```powershell
+npx ai-agent-playbook bootstrap ".\example app" --dry-run
+```
+
 ## 공통 옵션
 
 | 옵션 | 의미 |

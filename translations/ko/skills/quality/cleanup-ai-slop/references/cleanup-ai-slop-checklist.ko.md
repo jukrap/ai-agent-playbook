@@ -3,6 +3,7 @@
 ## 정리 대상
 
 - 이름만 다른 반복 helper function.
+- Caller, side effect, test를 확인한 뒤의 exact normalized function-body clone cue.
 - 실제 contract에서는 발생할 수 없는 과도한 defensive branch.
 - Local meaning을 알 수 있는데도 `data`, `result`, `item`, `handleThing`처럼 generic한 이름.
 - Code를 그대로 반복하거나 명백한 assignment를 설명하거나 오래된 assumption을 보존하는 comment.
@@ -17,6 +18,7 @@
 - 더 깔끔한 설계가 가능하다는 이유만으로 behavior를 바꾸지 않습니다.
 - 요청에 migration work가 포함되지 않았다면 exported API, route name, public type, database field, persisted key를 rename하지 않습니다.
 - 실제 duplication 또는 risk를 줄이지 않는 새 abstraction은 만들지 않습니다.
+- Exact clone cue를 function들이 서로 교체 가능하다는 증거로 취급하지 않습니다.
 - Cleanup을 unrelated feature work와 섞지 않습니다.
 - 저장소가 touched file formatting을 이미 수행하지 않는다면 formatting-only edit은 분리합니다.
 

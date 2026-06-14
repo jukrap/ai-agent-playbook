@@ -36,9 +36,9 @@ It is not a slash-command pack, a Codex plugin, or an auto-running agent. The de
 | Piece             | What it does                                                                                        | Where it lives     |
 | ----------------- | --------------------------------------------------------------------------------------------------- | ------------------ |
 | Reusable skills   | Trigger-focused operating guides for onboarding, docs, quality, Git, meta work, and legacy systems. | `skills/`          |
-| Project templates | Copyable root agent rules, stack profiles, and project-memory files.                                | `templates/`       |
+| Project templates | Copyable root agent rules, stack profiles, and project-memory files for current facts, vocabulary, maps, decisions, and evidence. | `templates/`       |
 | Runtime harness   | A small CLI for bootstrapping `.ai-playbook/`, health checks, context, runs, contracts, plans, and worklogs. | `bin/`, `src/`     |
-| MCP tools         | Local read-only tools for AI apps: context, operator checks, search, research, contracts, managed state, image diff, AST search, and TypeScript/JavaScript analysis. | `src/`             |
+| MCP tools         | Local read-only tools for AI apps: context, operator checks, search, research, contracts, managed state, image diff, AST search, exact function-body clone cues, and TypeScript/JavaScript analysis. | `src/`             |
 | Human docs        | Installation, classification, maintenance, publishing, and translation notes.                       | `docs/`            |
 | Translations      | Korean reading copies that mirror English source files.                                             | `translations/ko/` |
 | Agent adapters    | Setup notes for specific agent environments.                                                        | `adapters/`        |

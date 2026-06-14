@@ -79,7 +79,7 @@ Command-specific options appear where they are needed:
 | `--before <preflight-json>` | JSON file previously saved from `operator preflight --json`. |
 | `--contract <id>` | Limit `contracts snapshot` to one contract id. |
 | `--threshold N` | Allowed image diff ratio from `0` to `1`; `0` means any changed pixel fails. |
-| `--deep` | Add AST-grep and TypeScript/JavaScript language-analysis signals to `operator analyze`. |
+| `--deep` | Add AST-grep, exact function-body clone cues, and TypeScript/JavaScript language-analysis signals to `operator analyze`. |
 
 ## First-time setup
 
@@ -129,6 +129,8 @@ Use `--local-only` with `bootstrap` when the target project's `.ai-playbook/` sh
 
 Context files support markdown frontmatter: `id`, `globs`, `alwaysApply`, `freshness`, and `priority`. Use `context status` before loading more project memory for a path. It is read-only and safe to run often.
 
+Use `CURRENT.md` for current baseline facts, active risks, decisions, and project-specific working vocabulary. Put larger structural facts, scan ranges, and clone or duplicate-code cues in maps so they stay reviewable without turning `CURRENT.md` into a long report.
+
 ## Managed files
 
 Managed commands inspect or maintain `.ai-playbook/.ai-agent-playbook-install.json`. They protect edited project memory by comparing hashes before removing or adopting files.
@@ -163,7 +165,7 @@ Operator commands are explicit human-triggered signals. They do not install hook
 | `operator delta <target>` | Compare a saved preflight JSON file with the current target and report added, deleted, modified, out-of-scope, and playbook changes. | No | `npx ai-agent-playbook operator delta <target-project> --before preflight.json --json` |
 | `operator research <target>` | Run a deeper local-only investigation with evidence, gaps, next steps, and markdown summary text. | No | `npx ai-agent-playbook operator research <target-project> --query "auth flow risk" --path src/example.ts --json` |
 | `operator context <target>` | Preview path-scoped playbook context, rules, maps, runbooks, and decisions for one file. | No | `npx ai-agent-playbook operator context <target-project> --path src/example.ts --json` |
-| `operator analyze <target>` | Combine diagnostics, map, rules, context, and optional local setup signals in one report. Add `--deep` when you want AST and language-analysis signals. | No | `npx ai-agent-playbook operator analyze <target-project> --deep --path src/example.ts --json` |
+| `operator analyze <target>` | Combine diagnostics, map, rules, context, and optional local setup signals in one report. Add `--deep` when you want AST, clone, and language-analysis signals. | No | `npx ai-agent-playbook operator analyze <target-project> --deep --path src/example.ts --json` |
 | `operator map <target>` | Summarize stack, source layout, quality config, test files, and verification command candidates. | No | `npx ai-agent-playbook operator map <target-project> --json` |
 | `operator audit <target>` | Check playbook drift such as broken links, stale context globs, duplicates, and manifest drift. | No | `npx ai-agent-playbook operator audit <target-project> --json` |
 | `operator gc <target>` | Preview or remove obsolete unmodified managed playbook files. | No unless `--apply` | `npx ai-agent-playbook operator gc <target-project> --json` |
@@ -172,7 +174,7 @@ Use `operator search` for quick lookup. Use `operator research` when you want br
 
 Use `operator preflight` before a risky edit when you want a reviewable baseline. The command does not write the JSON file itself; redirect it if you want to keep it. After the edit, pass that saved JSON to `operator delta`. Delta reports what changed, not whether the implementation is correct.
 
-Use `operator analyze --deep` when text search is not enough and you want structural and language signals. Deep mode adds local AST-grep search plus TypeScript/JavaScript diagnostics, symbols, references, and definitions. It still does not write files, run project commands, rename symbols, rewrite AST matches, or call the network.
+Use `operator analyze --deep` when text search is not enough and you want structural and language signals. Deep mode adds local AST-grep search, exact normalized function-body clone cues, and TypeScript/JavaScript diagnostics, symbols, references, and definitions. The JSON output includes `summary.functionCloneGroups` and `deep.functionClones`; clone cues are review starting points only and do not claim semantic equivalence. It still does not write files, run project commands, rename symbols, rewrite AST matches, or call the network.
 
 ## Runs and evidence
 
@@ -234,7 +236,7 @@ The server exposes read-only tools for:
 - playbook context: `playbook_context`, `context_status`, `context_list`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules and project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
-- QA and deep analysis: `qa_image_diff`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`
+- QA and deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`
 
 The MCP layer is read-only in this version. It does not expose bootstrap, install, update, uninstall, prune, snapshot apply, run record, rename, rewrite, or any command that writes files.
 

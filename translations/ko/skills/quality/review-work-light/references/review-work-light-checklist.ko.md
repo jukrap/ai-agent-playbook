@@ -7,8 +7,10 @@
 - API payload, DTO, adapter, schema, persistence mismatch.
 - UI overflow, loading, empty, error, disabled, focus, responsive state.
 - Local-only file, generated artifact, personal path, branch name, credential, internal URL.
+- Caller, behavior, test를 확인하지 않고 처리한 exact clone 또는 duplicate-code cue.
 - 요청 범위를 벗어난 refactor.
 - 새 behavior와 충돌하는 comment 또는 docs.
+- 변경된 code와 이제 충돌하는 project vocabulary, maps, decisions.
 - Shared code를 건드렸는데 skip된 verification command.
 
 ## 심각도

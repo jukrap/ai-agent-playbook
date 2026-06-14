@@ -3,6 +3,7 @@
 ## Cleanup targets
 
 - Repeated helper functions that do the same thing with different names.
+- Exact normalized function-body clone cues after checking callers, side effects, and tests.
 - Overly defensive branches that cannot happen under the real contract.
 - Generic names such as `data`, `result`, `item`, or `handleThing` when local meaning is knowable.
 - Comments that restate code, explain obvious assignments, or preserve outdated assumptions.
@@ -17,6 +18,7 @@
 - Do not change behavior just because a cleaner design is available.
 - Do not rename exported APIs, route names, public types, database fields, or persisted keys unless the request includes migration work.
 - Do not replace a local pattern with a new abstraction unless it removes real duplication or risk.
+- Do not treat an exact clone cue as proof that the functions are interchangeable.
 - Do not combine cleanup with unrelated feature work.
 - Keep formatting-only edits separate when the repository does not already format touched files.
 

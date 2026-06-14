@@ -45,6 +45,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'diagnostics_check',
       'qa_image_diff',
       'operator_analyze_deep',
+      'source_function_clones',
       'ast_grep_search',
       'lsp_status',
       'lsp_diagnostics',
@@ -81,6 +82,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
 test('operator analyze --deep reports AST and LSP read-only signals without writing files', async () => {
   const target = await tempRepo('deep analyze-공백-한글-');
   await mkdir(path.join(target, 'src', 'features', '검색'), { recursive: true });
+  await mkdir(path.join(target, 'src', 'shared'), { recursive: true });
   await writeFile(path.join(target, 'package.json'), JSON.stringify({
     scripts: { check: 'tsc --noEmit' },
     dependencies: { typescript: '^6.0.3' }
@@ -91,10 +93,36 @@ test('operator analyze --deep reports AST and LSP read-only signals without writ
   }, null, 2));
   await writeFile(path.join(target, 'src', 'features', '검색', 'SearchPanel.ts'), [
     'export function SearchPanel(query: string) {',
-    '  return query.trim();',
+    '  const normalized = query.trim().toLowerCase();',
+    '  const parts = normalized.split(/\\s+/).filter(Boolean);',
+    '  return parts.join("-");',
     '}',
     '',
     'export const searchValue = SearchPanel("demo");',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(target, 'src', 'shared', 'format.ts'), [
+    'export function formatSearchLabel(query: string) {',
+    '  // Different comments and whitespace should still match the normalized body.',
+    '  const normalized = query.trim().toLowerCase();',
+    '',
+    '  const parts = normalized.split(/\\s+/).filter(Boolean);',
+    '  return parts.join("-");',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(target, 'src', 'shared', 'different.ts'), [
+    'export function SearchPanel(query: string) {',
+    '  return query.trim().toUpperCase();',
+    '}',
+    '',
+    'export function tiny(value: string) {',
+    '  return value;',
+    '}',
+    '',
+    'export function tinyAgain(value: string) {',
+    '  return value;',
+    '}',
     ''
   ].join('\n'));
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
@@ -119,6 +147,119 @@ test('operator analyze --deep reports AST and LSP read-only signals without writ
   assert.equal(report.deep.lsp.status.ok, true);
   assert.equal(report.deep.lsp.symbols.symbols.some((symbol) => symbol.name === 'SearchPanel'), true);
   assert.equal(report.deep.lsp.diagnostics.ok, true);
+  assert.equal(report.summary.functionCloneGroups, 0);
+  assert.equal(report.deep.summary.functionCloneGroups, 0);
+  assert.equal(report.deep.functionClones.summary.groups, 0);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const allChecked = capture(target);
+  assert.equal(await runCli(['operator', 'analyze', '.', '--deep', '--json'], allChecked), 0);
+  const allReport = JSON.parse(allChecked.out());
+  assert.equal(allReport.summary.functionCloneGroups, 1);
+  assert.equal(allReport.deep.summary.functionCloneGroups, 1);
+  assert.equal(allReport.deep.functionClones.summary.groups, 1);
+  assert.deepEqual(
+    allReport.deep.functionClones.groups[0].items.map((item) => item.path).sort(),
+    ['src/features/검색/SearchPanel.ts', 'src/shared/format.ts']
+  );
+  assert.equal(
+    allReport.deep.functionClones.groups.some((group) => group.items.some((item) => item.name === 'tiny')),
+    false
+  );
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('mcp source_function_clones returns exact function-body cues for a path without writing files', async () => {
+  const target = await tempRepo('function clones-공백-한글-');
+  await mkdir(path.join(target, 'src', '범위'), { recursive: true });
+  await mkdir(path.join(target, 'src', 'other'), { recursive: true });
+  await writeFile(path.join(target, 'tsconfig.json'), JSON.stringify({
+    compilerOptions: { strict: true, target: 'ES2022', module: 'ESNext' },
+    include: ['src/**/*.ts']
+  }, null, 2));
+  await writeFile(path.join(target, 'src', '범위', 'first.ts'), [
+    'export function loadUserName(value: string) {',
+    '  const cleaned = value.trim().toLowerCase();',
+    '  const segments = cleaned.split(":").filter(Boolean);',
+    '  return segments.map((segment) => segment.toUpperCase()).join("/");',
+    '}',
+    '',
+    'export const sameArrow = (value: string) => {',
+    '  const cleaned = value.trim().toLowerCase();',
+    '  const segments = cleaned.split(":").filter(Boolean);',
+    '  return segments.map((segment) => segment.toUpperCase()).join("/");',
+    '};',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(target, 'src', '범위', 'second.ts'), [
+    'export function loadUserName(value: string) {',
+    '  const cleaned = value.trim().toUpperCase();',
+    '  const segments = cleaned.split(":").filter(Boolean);',
+    '  return segments.join("/");',
+    '}',
+    '',
+    'export function trivialOne(value: string) {',
+    '  return value;',
+    '}',
+    '',
+    'export function trivialTwo(value: string) {',
+    '  return value;',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(target, 'src', 'other', 'third.ts'), [
+    'export function outside(value: string) {',
+    '  const cleaned = value.trim().toLowerCase();',
+    '  const segments = cleaned.split(":").filter(Boolean);',
+    '  return segments.map((segment) => segment.toUpperCase()).join("/");',
+    '}',
+    ''
+  ].join('\n'));
+  const before = await listRelativeFiles(target);
+
+  const { client, transport } = await connectMcp();
+  try {
+    const scoped = await client.callTool({
+      name: 'source_function_clones',
+      arguments: {
+        target,
+        path: 'src/범위',
+        maxResults: 10
+      }
+    });
+    assert.equal(scoped.isError, undefined);
+    assert.equal(scoped.structuredContent.ok, true);
+    assert.deepEqual(scoped.structuredContent.mode, { localOnly: true, network: false, writes: false });
+    assert.equal(scoped.structuredContent.path, 'src/범위');
+    assert.equal(scoped.structuredContent.summary.groups, 1);
+    assert.deepEqual(
+      scoped.structuredContent.groups[0].items.map((item) => item.path).sort(),
+      ['src/범위/first.ts', 'src/범위/first.ts']
+    );
+    assert.equal(
+      scoped.structuredContent.groups.some((group) => group.items.some((item) => item.name === 'trivialOne')),
+      false
+    );
+
+    const all = await client.callTool({
+      name: 'source_function_clones',
+      arguments: {
+        target,
+        maxResults: 10
+      }
+    });
+    assert.equal(all.structuredContent.ok, true);
+    assert.equal(all.structuredContent.summary.groups, 1);
+    assert.deepEqual(
+      all.structuredContent.groups[0].items.map((item) => item.path).sort(),
+      ['src/other/third.ts', 'src/범위/first.ts', 'src/범위/first.ts']
+    );
+  } finally {
+    await client.close();
+    await transport.close();
+  }
+
   assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
 });

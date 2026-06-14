@@ -24,6 +24,12 @@
 - 일반 대화에서는 가장 중요한 발견 1~3개를 요약합니다.
 - 정식 리뷰에는 스캔 범위, 신뢰 한계, 유용한 정확한 파일/라인을 포함합니다.
 
+## 중복과 clone 단서
+
+- `operator analyze --deep`와 `source_function_clones` 결과는 리뷰 시작점으로만 다루고, 코드가 의미적으로 같다는 증명으로 보지 않습니다.
+- 정리를 제안하기 전에 caller, contract, side effect, test, naming intent를 비교합니다.
+- Clone 단서가 유용하지만 바로 실행할 수 없다면 넓은 rewrite를 시작하지 말고 현재 scan range와 freshness를 map 또는 worklog에 기록합니다.
+
 ## 리팩터링 계획
 
 기본은 가장 작은 다음 단위 하나를 선호합니다.

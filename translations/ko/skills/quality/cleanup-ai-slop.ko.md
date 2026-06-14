@@ -6,7 +6,7 @@
 
 1. 정리 범위를 file, function, component, 최근 diff 중 하나로 제한합니다.
 2. Logic을 바꾸기 전에 기존 test, focused regression test, 또는 concrete manual evidence로 기대 동작을 고정합니다.
-3. Dead code, redundant branch, vague name, needless abstraction, duplicated constant, misleading comment를 작은 단계로 제거합니다.
+3. Dead code, redundant branch, vague name, needless abstraction, duplicated constant, behavior check를 통과한 exact clone cue, misleading comment를 작은 단계로 제거합니다.
 4. 사용자가 behavior change를 명시적으로 요청하지 않았다면 public contract, data shape, UI behavior, error handling, side effect를 보존합니다.
 5. 가장 좁고 유용한 verification을 다시 실행하고 남은 risk를 요약합니다.
 

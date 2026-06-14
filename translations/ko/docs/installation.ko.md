@@ -2,6 +2,8 @@
 
 이 패키지는 npm 또는 npx로 사용하는 방식이 가장 쉽습니다. 로컬 Git checkout과 PowerShell 스크립트는 개발, private fork, 명시적 local script를 선호하는 Windows 환경을 위해 계속 지원합니다.
 
+처음 사용하는 경우에는 [처음 10분 사용법](quick-start.ko.md)을 먼저 보고, 업데이트, 삭제, 로컬 checkout, cleanup 세부 사항이 필요할 때 이 문서로 돌아오는 흐름을 권장합니다.
+
 세 계층은 서로 다릅니다.
 
 1. npm 패키지는 `ai-playbook` CLI와 함께 묶인 원본 파일을 설치합니다.

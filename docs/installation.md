@@ -2,6 +2,8 @@
 
 This package is easiest to use through npm or npx. A local Git checkout with the PowerShell scripts is still supported for development, private forks, and Windows environments that prefer explicit local scripts.
 
+If you are using the playbook for the first time, start with [First 10 minutes](quick-start.md), then return here for update, uninstall, local checkout, and cleanup details.
+
 There are three separate layers:
 
 1. The npm package installs the `ai-playbook` CLI and bundled source files.

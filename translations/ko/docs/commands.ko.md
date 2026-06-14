@@ -2,6 +2,8 @@
 
 이 문서는 AI Agent Playbook 명령어 reference입니다. 각 명령이 무엇을 하는지, 파일을 쓰는지, 어떤 순서로 실행하면 안전한지 설명합니다.
 
+처음 사용하는 경우에는 전체 reference를 보기 전에 [처음 10분 사용법](quick-start.ko.md)을 먼저 읽는 것을 권장합니다.
+
 설치, 업데이트, 삭제, npm 사용 방식은 [설치, 업데이트, 삭제](installation.ko.md)를 보세요. Runtime 설계와 JSON contract 설명은 [Runtime harness](harness-runtime.ko.md)를 보세요.
 
 ## 명령 실행 방식

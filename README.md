@@ -55,6 +55,8 @@ npx ai-agent-playbook bootstrap <target-project>
 npx ai-agent-playbook operator check <target-project> --json
 ```
 
+New to this playbook? Start with [First 10 minutes](docs/quick-start.md). It explains what `npx`, global install, skills, and project bootstrap do before you write files.
+
 If you want the shorter `ai-playbook` command from any directory, install the package globally:
 
 ```powershell
@@ -170,6 +172,7 @@ Enterprise stacks and data-heavy flows:
 
 - [Repository working rules](AGENTS.md): maintenance rules for agents editing this repository.
 - [Repository context](CONTEXT.md): core terms and design intent for the playbook.
+- [First 10 minutes](docs/quick-start.md): beginner-friendly first run, glossary, and safe command order.
 - [Command guide](docs/commands.md): what each CLI command does, when to use it, and whether it writes files.
 - [Install, update, and uninstall](docs/installation.md): npm/npx usage, global CLI setup, skill lifecycle, project bootstrap, cleanup, and legacy PowerShell paths.
 - [Runtime harness](docs/harness-runtime.md): runtime principles, JSON contract notes, overwrite policy, and target-project flow.

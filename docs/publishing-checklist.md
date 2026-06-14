@@ -42,6 +42,7 @@ After pushing, confirm the validation workflow passes if the repository uses one
 
 - Confirm `npm whoami` succeeds on the publishing machine.
 - Confirm the package name is available or already owned by the publishing account.
+- If README or packaged docs changed and the npm package page should reflect them, bump the patch version before publishing. npm cannot republish the same version.
 - Run `npm pack --dry-run --json` and verify the tarball includes runtime files but excludes tests, translations, local references, and large image assets.
 - Publish only after repository validation passes:
 

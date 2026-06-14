@@ -190,31 +190,11 @@ Enterprise stacks and data-heavy flows:
 - [Translation policy](docs/translation-policy.md): English source and Korean translation rules.
 - [Publishing checklist](docs/publishing-checklist.md): pre-publish hygiene checks.
 
-## Maintenance Checks
+## For Maintainers
 
-Run the project-defined checks before claiming repository edits are complete:
+This README is the public entry point for users. If you are editing this source repository, read [Repository working rules](AGENTS.md) and [Maintenance workflow](docs/maintenance.md) first. Release hygiene lives in [Publishing checklist](docs/publishing-checklist.md).
 
-```powershell
-npm run check
-npm test
-.\scripts\validate-skills.ps1
-.\scripts\validate-translations.ps1
-.\scripts\sync-skills.ps1 -WhatIf
-```
-
-If installed local copies need to be updated after source edits, run:
-
-```powershell
-.\scripts\sync-skills.ps1
-```
-
-## Publishing Notes
-
-- Keep English source files canonical.
-- Update Korean translations in the same change as English source edits.
-- Do not commit personal absolute paths, company names, credentials, internal URLs, branch names, or PR numbers.
-- Do not edit installed skill copies as the source of truth. Edit this repository, validate, then sync.
-- Confirm templates do not claim a stack, package manager, or workflow unless the profile explicitly says so.
+Keep English source files canonical, update Korean translations with English source edits, and do not commit personal paths, credentials, internal URLs, branch names, PR numbers, or installed local skill copies.
 
 ## License
 

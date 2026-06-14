@@ -21,6 +21,29 @@ In the examples below, replace `npx ai-agent-playbook` with `ai-playbook` or `no
 
 `<target>` or `<target-project>` means the project folder you want to inspect, bootstrap, or clean up. It can be `.` when your terminal is already inside that project.
 
+### How to type examples
+
+- Do not type angle brackets literally. Replace placeholders such as `<target-project>`, `<file>`, `<text>`, and `<run-id>` with real values.
+- Prefer `.` for the target when you are already in the project folder.
+- Quote paths and text that contain spaces: `".\example app"` or `"auth flow change"`.
+- `--path <file>` is usually a path inside the target project, such as `src/example.ts`; it does not need to be an absolute path.
+- Keep commands on one line when you are unsure. In PowerShell, use a backtick only when you intentionally split a long command across lines.
+- Redirection such as `> preflight.json` is handled by your shell. The CLI prints JSON; the shell writes the file.
+- Avoid putting personal folders, customer names, credentials, or internal URLs in shared examples. Use placeholders like `<target-project>` instead.
+
+For example, when your terminal is inside the target project:
+
+```powershell
+npx ai-agent-playbook operator check . --json
+npx ai-agent-playbook operator search . --query "auth flow" --json
+```
+
+When the target path contains spaces, quote it:
+
+```powershell
+npx ai-agent-playbook bootstrap ".\example app" --dry-run
+```
+
 ## Common options
 
 | Option | Meaning |

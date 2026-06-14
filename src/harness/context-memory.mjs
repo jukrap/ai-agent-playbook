@@ -1,0 +1,145 @@
+import path from 'node:path';
+import {
+  SCHEMA_VERSION,
+  assertDirectory,
+  collectContextEntries,
+  normalizeTargetRelativePath,
+  readDocMap,
+  resolvePlaybookLayout,
+  todayIso,
+  writeMemoryFiles
+} from './core.mjs';
+
+export async function listContexts(options) {
+  const { target } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const warnings = [];
+  const contexts = await collectContextEntries({ target: resolvedTarget, playbook, warnings });
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    summary: {
+      total: contexts.length,
+      warnings: warnings.length
+    },
+    contexts,
+    warnings,
+    conflicts: []
+  };
+}
+
+export async function contextStatus(options) {
+  const { target, filePath } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  if (!filePath || typeof filePath !== 'string') throw new Error('Missing --path.');
+  const resolvedTarget = path.resolve(target);
+  const relativePath = normalizeTargetRelativePath(resolvedTarget, filePath);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const warnings = [];
+  const contexts = await collectContextEntries({ target: resolvedTarget, playbook, relativePath, warnings });
+  const docMap = await readDocMap({ target: resolvedTarget, playbook });
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    path: relativePath,
+    summary: {
+      total: contexts.length,
+      applies: contexts.filter((context) => context.applies).length,
+      warnings: warnings.length
+    },
+    contexts,
+    docMap,
+    warnings,
+    conflicts: []
+  };
+}
+
+export async function initContext(options) {
+  const { target, dryRun = false } = options;
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const files = [
+    {
+      path: `${playbook.dir}/context/root.md`,
+      content: [
+        '---',
+        'id: root',
+        'alwaysApply: true',
+        `freshness: ${todayIso()}`,
+        'priority: high',
+        '---',
+        '# Root Context',
+        '',
+        '## When to read',
+        '',
+        'Read for project-wide conventions that apply to every path.',
+        '',
+        '## Current facts',
+        '',
+        '- Replace with durable project-wide facts after repo inspection.',
+        '',
+        '## Do not assume',
+        '',
+        '- Do not treat this template as adapted until project facts are added.',
+        '',
+        '## Verification hints',
+        '',
+        '- Record project-specific verification commands after discovery.',
+        ''
+      ].join('\n')
+    },
+    {
+      path: `${playbook.dir}/context/_registry.json`,
+      content: `${JSON.stringify({
+        schemaVersion: SCHEMA_VERSION,
+        contexts: [
+          {
+            id: 'root',
+            file: 'root.md',
+            alwaysApply: true,
+            priority: 'high'
+          }
+        ]
+      }, null, 2)}\n`
+    },
+    {
+      path: `${playbook.dir}/maps/doc-map.md`,
+      content: [
+        '# Documentation Map',
+        '',
+        'Use this map to find the right project memory or public documentation quickly.',
+        '',
+        '## Start here',
+        '',
+        '- README.md',
+        `- ${playbook.dir}/START_HERE.md`,
+        `- ${playbook.dir}/CURRENT.md`,
+        '',
+        '## Commands and setup',
+        '',
+        '- docs/commands.md',
+        '- docs/installation.md',
+        '',
+        '## Runtime harness',
+        '',
+        '- docs/harness-runtime.md',
+        '- docs/runtime-roadmap.md',
+        '',
+        '## Project memory',
+        '',
+        `- ${playbook.dir}/maps/`,
+        `- ${playbook.dir}/runbooks/`,
+        `- ${playbook.dir}/decisions/`,
+        `- ${playbook.dir}/plans/`,
+        `- ${playbook.dir}/worklogs/`,
+        ''
+      ].join('\n')
+    }
+  ];
+  return writeMemoryFiles({ target: resolvedTarget, files, dryRun, command: 'context.init' });
+}

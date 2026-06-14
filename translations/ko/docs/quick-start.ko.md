@@ -30,6 +30,14 @@ ai-playbook --help
 
 그 뒤에는 `ai-playbook ...`과 `npx ai-agent-playbook ...`이 같은 종류의 명령이라고 보면 됩니다. 아래 예시는 부담이 가장 적은 `npx`를 기준으로 씁니다.
 
+## 예시 명령 읽는 법
+
+- 꺾쇠괄호를 그대로 입력하지 않습니다. `<target-project>`는 검사할 프로젝트 폴더로 바꿉니다.
+- 터미널이 이미 그 프로젝트 안에 있다면 target으로 `.`을 쓸 수 있습니다.
+- 공백이 있는 경로나 문장은 따옴표로 감쌉니다. 예: `".\example app"`, `"auth flow change"`.
+- 옵션은 `--`로 시작합니다. 예를 들어 `--dry-run`은 쓰기 작업을 미리 보여주고, `--json`은 구조화된 출력을 보여줍니다.
+- 공유 문서, 이슈, PR에는 개인 폴더, 고객명, credential, internal URL을 넣지 않습니다. 다른 사람에게 보여줄 예시는 `<target-project>` 같은 placeholder를 사용합니다.
+
 ## 2. 스킬 설치 미리 보기
 
 스킬은 agent가 참고하는 재사용 guidance입니다. 모든 프로젝트에 복사되는 파일이 아닙니다.

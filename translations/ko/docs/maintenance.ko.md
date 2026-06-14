@@ -46,6 +46,9 @@
 - 스킬로 호출되는 절차 안내는 스킬 참고 자료에 둡니다.
 - 두 파일의 한국어 번역도 같은 변경에서 갱신합니다.
 - 정책이 로컬 에이전트 설정에서 온 경우 특정 장비 경로를 제거하고 이식 가능한 규칙만 남깁니다.
+- Commit message는 Conventional Commit type/scope를 사용합니다. 제목과 본문은 사용자 또는 저장소의 작업 언어에 맞추고, 한국어 작업에서는 type/scope는 영어로 두되 제목과 본문은 한국어로 씁니다.
+- 아주 작은 변경만 제목만 있는 commit을 사용합니다. 여러 파일, runtime, packaging, 문서 구조 변경은 짧은 본문과 실제 실행한 검증 섹션을 함께 씁니다.
+- PR 본문은 리뷰어가 기대하는 언어가 분명하면 그 언어를 사용하고, 실제 diff 범위와 실제 검증만 적습니다. Public docs에는 placeholder, agent signature, branch name, PR number를 남기지 않습니다.
 
 ## 예시 갱신
 

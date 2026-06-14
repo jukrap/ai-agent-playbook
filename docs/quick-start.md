@@ -30,6 +30,14 @@ ai-playbook --help
 
 From that point on, `ai-playbook ...` and `npx ai-agent-playbook ...` mean the same kind of command. The examples below use `npx` because it is the lowest-commitment path.
 
+## How to read the examples
+
+- Do not type angle brackets literally. Replace `<target-project>` with the project folder you want to inspect.
+- Use `.` as the target when your terminal is already inside that project.
+- Quote paths or text that contain spaces: `".\example app"` or `"auth flow change"`.
+- Options start with `--`. For example, `--dry-run` previews a write, and `--json` prints structured output.
+- Keep personal folders, customer names, credentials, and internal URLs out of shared docs, issues, and PRs. Use placeholders such as `<target-project>` when writing examples for others.
+
 ## 2. Preview skill installation
 
 Skills are reusable guidance for the agent. They are not copied into every project.

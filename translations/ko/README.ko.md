@@ -58,6 +58,8 @@ npx ai-agent-playbook operator check <target-project> --json
 
 처음 쓰는 경우에는 [처음 10분 사용법](docs/quick-start.ko.md)부터 봅니다. `npx`, global install, skills, project bootstrap이 각각 무엇을 하는지 파일을 쓰기 전에 설명합니다.
 
+예시에서 꺾쇠괄호 안의 이름은 placeholder입니다. `<target-project>`는 검사할 프로젝트 폴더로 바꾸거나, 터미널이 이미 그 프로젝트 안에 있다면 `.`을 씁니다. 공백이 있는 경로는 따옴표로 감싸고, 공유 이슈, 문서, PR에는 개인 로컬 경로를 넣지 않습니다.
+
 사용 중인 AI 앱이 MCP를 지원한다면 `npx ai-agent-playbook mcp` 같은 로컬 서버 명령을 등록할 수 있습니다. 그러면 명령어를 전부 외우지 않아도 AI에게 playbook context 점검, operator search, deep local analysis를 자연어로 요청할 수 있습니다. 이 버전의 MCP 도구는 read-only입니다.
 
 어느 디렉터리에서든 짧은 `ai-playbook` 명령을 쓰고 싶다면 전역으로 설치합니다.

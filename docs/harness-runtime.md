@@ -24,7 +24,7 @@ Use `npx ai-agent-playbook ...` for the published package, `ai-playbook ...` aft
 The short role split is:
 
 - CLI: explicit human/operator commands, including preview-first writes.
-- MCP: read-only AI tool calls for context, diagnostics, search, contracts, managed state, QA, AST search, and TypeScript/JavaScript analysis.
+- MCP: read-only AI tool calls for context, diagnostics, search, contracts, managed state, QA, AST search, exact function-body clone cues, and TypeScript/JavaScript analysis.
 - Skills: reusable working guidance loaded by agent environments.
 - `.ai-playbook/`: target-project memory, runs, contracts, guides, plans, and worklogs.
 - Adapters: optional environment-specific hook/config rendering; never the default install path.
@@ -37,7 +37,7 @@ Start the local server with:
 npx ai-agent-playbook mcp
 ```
 
-An MCP-capable AI app can register that command and then call tools such as `operator_search`, `operator_research`, `operator_analyze_deep`, `ast_grep_search`, `lsp_symbols`, `contracts_check`, `managed_check`, and `qa_image_diff`.
+An MCP-capable AI app can register that command and then call tools such as `operator_search`, `operator_research`, `operator_analyze_deep`, `source_function_clones`, `ast_grep_search`, `lsp_symbols`, `contracts_check`, `managed_check`, and `qa_image_diff`.
 
 The MCP server exposes only read-only tools. It does not expose bootstrap, skill install/update/uninstall, managed apply operations, contract snapshot apply, run record, AST rewrite/apply, LSP rename, automatic doctor execution, or blocking/continuation behavior.
 
@@ -133,7 +133,7 @@ Use `doctor --reminder --json` when a wrapper or script needs a small non-blocki
 - `.ai-playbook/SKILLS.md`
 - `.ai-playbook/GIT.md`
 
-It does not read or re-inject root `AGENTS.md` by default. Use `--json` to return `{ schemaVersion, ok, target, sources, additionalContext, warnings }`. Use `--max-chars N` to cap injected context for hook environments.
+`CURRENT.md` is the place for current facts, active risks, decisions, and short project vocabulary. Larger structural facts, scan ranges, and duplicate or clone cues belong in maps. The context command does not read or re-inject root `AGENTS.md` by default. Use `--json` to return `{ schemaVersion, ok, target, sources, additionalContext, warnings }`. Use `--max-chars N` to cap injected context for hook environments.
 
 Path-scoped context lives under `.ai-playbook/context/`. Context markdown may use frontmatter fields `id`, `globs`, `alwaysApply`, `freshness`, and `priority`, with body sections such as `When to read`, `Current facts`, `Do not assume`, and `Verification hints`.
 
@@ -215,7 +215,7 @@ Use `--deep` when stronger local analysis is useful:
 npx ai-agent-playbook operator analyze <target> --deep --path src/example.ts --json
 ```
 
-Deep mode adds local AST-grep structural search plus TypeScript/JavaScript status, diagnostics, symbols, references, and definitions. It is still read-only. It does not rename symbols, rewrite AST matches, run project commands, or call the network.
+Deep mode adds local AST-grep structural search, exact normalized function-body clone cues, and TypeScript/JavaScript status, diagnostics, symbols, references, and definitions. Clone cues are review starting points only; they do not claim semantic equivalence. Deep mode is still read-only. It does not rename symbols, rewrite AST matches, run project commands, or call the network.
 
 `operator map` summarizes the local codebase shape:
 

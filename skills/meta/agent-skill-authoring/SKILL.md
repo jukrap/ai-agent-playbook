@@ -15,8 +15,9 @@ Create small reusable skills that are easy for agents to discover and hard to mi
 4. Move long rules, examples, API details, and checklists into one-level `references/*.md` files.
 5. Add scripts only for deterministic repeated work such as validation, formatting, or artifact generation.
 6. Test the trigger with two or three realistic requests and near misses; tighten wording if the skill would load too often.
-7. Check for conflict with existing skills and project instructions before adding another skill.
-8. Update indexes, translations, validation metadata, and installed copies through the repository maintenance workflow.
+7. Check whether an existing skill, template, or project guide can be strengthened before adding another skill.
+8. Check for conflict with existing skills and project instructions before adding another skill.
+9. Update indexes, translations, validation metadata, and installed copies through the repository maintenance workflow.
 
 ## Boundaries
 

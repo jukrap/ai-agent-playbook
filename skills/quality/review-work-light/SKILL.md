@@ -11,8 +11,8 @@ Review the change for likely misses before handoff.
 
 1. Inspect the current diff, touched files, and relevant tests or docs.
 2. Review behavior first: regressions, edge cases, data contracts, state transitions, errors, and cleanup safety.
-3. Review maintainability second: duplication, naming, local style, documentation drift, and overbroad changes.
-4. Check whether the verification evidence matches the risk of the change.
+3. Review maintainability second: duplication or clone cues, naming, local style, documentation drift, and overbroad changes.
+4. Check whether the verification evidence matches the risk of the change, especially for shared code or generated signals.
 5. Report findings first. If there are no findings, state remaining test gaps or residual risk.
 
 ## Reference

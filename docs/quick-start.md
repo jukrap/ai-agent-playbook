@@ -8,8 +8,8 @@ AI Agent Playbook has four separate layers:
 | ----- | ------------- | ---------------- |
 | CLI package | The `ai-playbook` command and bundled source files. | npm cache, global npm location, or one project `node_modules`. |
 | Skills | Reusable agent guidance such as onboarding, review, UI polish, and legacy maintenance. | User-level skill folders such as `.codex/skills` and `.agents/skills`. |
-| Project playbook | Local project memory under `.ai-playbook/`. | One target project repository. |
-| MCP tools | Optional read-only tools an AI app can call for context, search, diagnostics, AST search, and TypeScript/JavaScript analysis. | Registered in the AI app as a local stdio server command. |
+| Project playbook | Local project memory under `.ai-playbook/`, including current facts, working vocabulary, maps, runs, contracts, and worklogs. | One target project repository. |
+| MCP tools | Optional read-only tools an AI app can call for context, search, diagnostics, AST search, function-body clone cues, and TypeScript/JavaScript analysis. | Registered in the AI app as a local stdio server command. |
 
 Installing the npm package does not install skills, add `.ai-playbook/` to a project, or register MCP settings. Those steps stay explicit.
 

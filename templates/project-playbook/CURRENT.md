@@ -12,6 +12,13 @@ Keep facts here only after they are confirmed by code, configuration, command ou
 - Verification commands:
 - Local-only docs policy:
 
+## Working vocabulary
+
+- Term:
+  - Meaning:
+  - Evidence or source:
+  - Where to inspect:
+
 ## Current decisions
 
 - Decision:
@@ -33,6 +40,7 @@ Keep facts here only after they are confirmed by code, configuration, command ou
 ## Next maintenance
 
 - Promote durable facts from recent worklogs into this file.
+- Promote stable project terms into Working vocabulary when repeated naming confusion appears.
 - Archive stale plans when the work completes or changes direction.
 - Remove or revise facts when code and docs diverge.
 - Link to maps, runbooks, and decisions for detail instead of turning this file into a long report.

@@ -159,7 +159,7 @@ This project does not edit your MCP settings automatically. `adapter config <tar
 | `contracts list/check` | No | Read-only contract inspection. |
 | `managed adopt/prune/uninstall` | No unless `--apply` | Target project's `.ai-playbook/` managed files. |
 | `operator check/search/research/context/analyze/map/audit` | No | Read-only target project diagnostics. |
-| `operator analyze --deep` | No | Read-only AST-grep and TypeScript/JavaScript analysis signals. |
+| `operator analyze --deep` | No | Read-only AST-grep, exact function-body clone, and TypeScript/JavaScript analysis signals. |
 | `operator gc` | No unless `--apply` | Target project's obsolete unmodified managed playbook files. |
 | `adapter config/check` | No | Renders or validates local adapter settings. |
 

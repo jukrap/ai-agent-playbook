@@ -9,10 +9,10 @@
 - `FSD.md`: architecture boundary rules only when the repo actually uses FSD.
 - `.ai-playbook/README.md`: agent-facing project memory index and source-of-truth rules.
 - `.ai-playbook/START_HERE.md`: shortest resume guide for the next agent.
-- `.ai-playbook/CURRENT.md`: current baseline, active risks, and decisions that still matter.
+- `.ai-playbook/CURRENT.md`: current baseline, working vocabulary, active risks, and decisions that still matter.
 - `.ai-playbook/SKILLS.md`: project-level skill selection policy.
 - `.ai-playbook/GIT.md`: short Git, commit, PR, and push policy.
-- `.ai-playbook/maps/**`: repository, runtime, API, route, data, and risk maps.
+- `.ai-playbook/maps/**`: repository, runtime, API, route, data, risk, and structural evidence maps.
 - `.ai-playbook/runbooks/**`: repeatable commands and operational procedures.
 - `.ai-playbook/decisions/**`: durable decisions with rationale and evidence.
 - `.ai-playbook/plans/**`: active execution plans only.
@@ -33,8 +33,9 @@
 ## Cleanup rules
 
 - Keep root agent instructions short enough to be a stable entrypoint.
-- Keep current project truth in `.ai-playbook/CURRENT.md`.
+- Keep current project truth and stable shared terms in `.ai-playbook/CURRENT.md`.
 - Keep structural facts in `.ai-playbook/maps/`.
+- Keep duplicate or clone signals in maps only when scan range, freshness, and confidence limits are clear.
 - Keep repeated commands in `.ai-playbook/runbooks/`.
 - Keep live plans in `.ai-playbook/plans/`.
 - Keep detailed history in `.ai-playbook/worklogs/`.

@@ -103,7 +103,8 @@ export async function analyzeOperator(options) {
       ruleMatches: matchingRules.length,
       contextMatches: context ? context.summary.matchingContextFiles : 0,
       optionalToolSignals: optionalTools.filter((tool) => ['detected', 'project-signals'].includes(tool.status)).length,
-      deepSignals: deepReport ? deepReport.summary.astGrepMatches + deepReport.summary.lspSymbols : 0,
+      functionCloneGroups: deepReport ? deepReport.summary.functionCloneGroups : 0,
+      deepSignals: deepReport ? deepReport.summary.astGrepMatches + deepReport.summary.lspSymbols + deepReport.summary.functionCloneGroups : 0,
       warnings: diagnostics.summary.warn + rules.warnings.length + (context ? context.warnings.length : 0) + (deepReport ? deepReport.summary.warnings : 0)
     },
     diagnostics: {

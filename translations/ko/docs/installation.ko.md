@@ -159,7 +159,7 @@ Global install 뒤에는 짧은 형태도 사용할 수 있습니다.
 | `contracts list/check` | 아니오 | Contract를 read-only로 점검합니다. |
 | `managed adopt/prune/uninstall` | `--apply`가 없으면 아니오 | 대상 프로젝트의 `.ai-playbook/` managed file을 변경합니다. |
 | `operator check/search/research/context/analyze/map/audit` | 아니오 | 대상 프로젝트를 read-only로 진단합니다. |
-| `operator analyze --deep` | 아니오 | AST-grep과 TypeScript/JavaScript 분석 signal을 read-only로 반환합니다. |
+| `operator analyze --deep` | 아니오 | AST-grep, 정확한 함수 본문 중복 단서, TypeScript/JavaScript 분석 signal을 read-only로 반환합니다. |
 | `operator gc` | `--apply`가 없으면 아니오 | 대상 프로젝트의 obsolete unmodified managed playbook file을 변경합니다. |
 | `adapter config/check` | 아니오 | local adapter 설정을 렌더링하거나 검증합니다. |
 

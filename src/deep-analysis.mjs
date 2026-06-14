@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { readdir, readFile, stat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { Lang, parse } from '@ast-grep/napi';
 import ts from 'typescript';
@@ -8,7 +9,16 @@ import { SCHEMA_VERSION } from './harness.mjs';
 const EXCLUDED_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.turbo', 'coverage']);
 const TEXT_MAX_BYTES = 1_000_000;
 const DEFAULT_MAX_RESULTS = 20;
+const MIN_FUNCTION_CLONE_BODY_CHARS = 40;
 const TS_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
+const SCANNER_TRIVIA_KINDS = new Set([
+  ts.SyntaxKind.SingleLineCommentTrivia,
+  ts.SyntaxKind.MultiLineCommentTrivia,
+  ts.SyntaxKind.NewLineTrivia,
+  ts.SyntaxKind.WhitespaceTrivia,
+  ts.SyntaxKind.ShebangTrivia,
+  ts.SyntaxKind.ConflictMarkerTrivia
+]);
 const AST_LANGUAGE_BY_EXTENSION = new Map([
   ['.js', Lang.JavaScript],
   ['.mjs', Lang.JavaScript],
@@ -43,7 +53,7 @@ export async function runDeepAnalysis(options) {
     ? query.trim()
     : 'function $NAME($$$) { $$$ }';
 
-  const [astGrep, statusReport, diagnosticsReport, symbolsReport] = await Promise.all([
+  const [astGrep, statusReport, diagnosticsReport, symbolsReport, functionClones] = await Promise.all([
     runAstGrepSearch({
       target: resolvedTarget,
       pattern: astPattern,
@@ -54,7 +64,8 @@ export async function runDeepAnalysis(options) {
     lspDiagnostics({ target: resolvedTarget, path: relativePath }),
     relativePath === undefined
       ? lspSymbols({ target: resolvedTarget, maxResults })
-      : lspSymbols({ target: resolvedTarget, path: relativePath, maxResults })
+      : lspSymbols({ target: resolvedTarget, path: relativePath, maxResults }),
+    sourceFunctionClones({ target: resolvedTarget, path: relativePath, maxResults })
   ]);
 
   return {
@@ -70,14 +81,87 @@ export async function runDeepAnalysis(options) {
       lspDiagnostics: diagnosticsReport.summary.total,
       lspErrors: diagnosticsReport.summary.errors,
       lspSymbols: symbolsReport.summary.symbols,
-      warnings: astGrep.warnings.length + statusReport.warnings.length + diagnosticsReport.warnings.length + symbolsReport.warnings.length
+      functionCloneGroups: functionClones.summary.groups,
+      warnings: astGrep.warnings.length
+        + statusReport.warnings.length
+        + diagnosticsReport.warnings.length
+        + symbolsReport.warnings.length
+        + functionClones.warnings.length
     },
     astGrep,
+    functionClones,
     lsp: {
       status: statusReport,
       diagnostics: diagnosticsReport,
       symbols: symbolsReport
     }
+  };
+}
+
+export async function sourceFunctionClones(options) {
+  const resolvedTarget = await assertTarget(options.target);
+  const relativePath = options.path === undefined && options.filePath === undefined
+    ? undefined
+    : normalizeTargetRelativePath(resolvedTarget, options.path ?? options.filePath);
+  const project = await loadTypeScriptProject(resolvedTarget, relativePath);
+  const files = filterByRelativePath(project.files, resolvedTarget, relativePath);
+  const limit = parseMaxResults(options.maxResults ?? DEFAULT_MAX_RESULTS);
+  const warnings = [];
+  const collected = [];
+
+  for (const file of files) {
+    const text = await readTextFile(file);
+    if (text === null) continue;
+    const sourceFile = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, scriptKindForPath(file));
+    collectFunctionCloneCandidates({ target: resolvedTarget, file, sourceFile, collected });
+  }
+  if (project.files.length === 0) {
+    warnings.push({
+      id: 'source.function-clones.no-files',
+      message: 'No TypeScript or JavaScript files were available for function clone analysis.',
+      paths: []
+    });
+  }
+
+  const buckets = new Map();
+  for (const candidate of collected) {
+    const items = buckets.get(candidate.normalizedBody) ?? [];
+    items.push(candidate.item);
+    buckets.set(candidate.normalizedBody, items);
+  }
+
+  const allGroups = [...buckets.entries()]
+    .filter(([, items]) => items.length > 1)
+    .map(([normalizedBody, items]) => ({
+      kind: 'exact-normalized-function-body',
+      hash: hashNormalizedBody(normalizedBody),
+      count: items.length,
+      bodyChars: normalizedBody.length,
+      items: items.sort(compareCloneItems)
+    }))
+    .sort(compareCloneGroups);
+  const groups = allGroups.slice(0, limit);
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: resolvedTarget,
+    ...(relativePath === undefined ? {} : { path: relativePath }),
+    mode: {
+      localOnly: true,
+      network: false,
+      writes: false
+    },
+    summary: {
+      files: files.length,
+      functions: collected.length,
+      groups: allGroups.length,
+      returned: groups.length,
+      warnings: warnings.length
+    },
+    groups,
+    warnings,
+    conflicts: []
   };
 }
 
@@ -618,6 +702,86 @@ function collectSymbolsFromSource(options) {
     else if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) addSymbol(node, node.name, 'variable');
     ts.forEachChild(node, visit);
   }
+}
+
+function collectFunctionCloneCandidates(options) {
+  const { target, file, sourceFile, collected } = options;
+  visit(sourceFile);
+
+  function addCandidate(node, body) {
+    const normalizedBody = normalizeFunctionBody(body.getText(sourceFile));
+    if (normalizedBody.length < MIN_FUNCTION_CLONE_BODY_CHARS) return;
+    const position = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
+    collected.push({
+      normalizedBody,
+      item: {
+        path: toPortablePath(path.relative(target, file)),
+        line: position.line + 1,
+        column: position.character + 1,
+        name: functionLikeName(node, sourceFile),
+        syntax: functionLikeSyntax(node),
+        bodyChars: normalizedBody.length
+      }
+    });
+  }
+
+  function visit(node) {
+    if (ts.isFunctionDeclaration(node) && node.body) {
+      addCandidate(node, node.body);
+    } else if (ts.isMethodDeclaration(node) && node.body) {
+      addCandidate(node, node.body);
+    } else if (ts.isFunctionExpression(node) && node.body) {
+      addCandidate(node, node.body);
+    } else if (ts.isArrowFunction(node)) {
+      addCandidate(node, node.body);
+    }
+    ts.forEachChild(node, visit);
+  }
+}
+
+function normalizeFunctionBody(bodyText) {
+  const scanner = ts.createScanner(ts.ScriptTarget.Latest, false, ts.LanguageVariant.Standard, bodyText);
+  const parts = [];
+  let token = scanner.scan();
+  while (token !== ts.SyntaxKind.EndOfFileToken) {
+    if (!SCANNER_TRIVIA_KINDS.has(token)) parts.push(scanner.getTokenText());
+    token = scanner.scan();
+  }
+  return parts.join('');
+}
+
+function functionLikeName(node, sourceFile) {
+  if (node.name) return node.name.getText(sourceFile);
+  const parent = node.parent;
+  if (ts.isVariableDeclaration(parent) && ts.isIdentifier(parent.name)) return parent.name.text;
+  if (ts.isPropertyAssignment(parent) && parent.name) return parent.name.getText(sourceFile);
+  return '(anonymous)';
+}
+
+function functionLikeSyntax(node) {
+  if (ts.isFunctionDeclaration(node)) return 'function-declaration';
+  if (ts.isMethodDeclaration(node)) return 'method';
+  if (ts.isFunctionExpression(node)) return 'function-expression';
+  if (ts.isArrowFunction(node)) return 'arrow-function';
+  return 'function';
+}
+
+function hashNormalizedBody(value) {
+  return createHash('sha256').update(value).digest('hex').slice(0, 16);
+}
+
+function compareCloneItems(a, b) {
+  return a.path.localeCompare(b.path)
+    || a.line - b.line
+    || a.column - b.column
+    || a.name.localeCompare(b.name);
+}
+
+function compareCloneGroups(a, b) {
+  return b.count - a.count
+    || a.items[0].path.localeCompare(b.items[0].path)
+    || a.items[0].line - b.items[0].line
+    || a.hash.localeCompare(b.hash);
 }
 
 function hasExportModifier(node) {

@@ -46,6 +46,9 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 - Keep skill-triggered procedural guidance in the skill reference.
 - Update Korean translations for both files in the same change.
 - If the policy came from local agent settings, remove machine-specific paths and keep the portable rule.
+- Commit messages use Conventional Commit type/scope. Use the user's or repository's working language for the subject and body; for Korean work, keep the type/scope in English and write the subject/body in Korean.
+- Use a title-only commit only for very small changes. For multi-file, runtime, packaging, or documentation-structure changes, include a short body and a verification section with commands actually run.
+- PR bodies should follow the reviewer's expected language when known, summarize real diff scope, list real verification, and avoid placeholders, agent signatures, branch names, or PR numbers inside public docs.
 
 ## Updating examples
 

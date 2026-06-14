@@ -13,6 +13,7 @@ This repository contains reusable AI agent skills and project templates. Keep co
 - Update Korean translations in the same change as English source edits.
 - Validate skills and translations after editing.
 - Sync installed local copies only from this repository.
+- For commits and PRs, use Conventional Commit type/scope, write the subject/body in the user's or repository's working language, and include a body plus verification notes for non-trivial changes.
 
 ## Skill structure
 

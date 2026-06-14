@@ -2,6 +2,8 @@
 
 `ai-playbook`은 재사용 스킬을 설치하고 이 저장소를 대상 프로젝트에 적용하기 위한 실행 표면입니다. AI 모델을 호출하지 않습니다. 템플릿을 복사하고, 프로젝트 메모리 상태를 점검하고, 예측 가능한 context, run, contract, plan, worklog 파일을 만들어 에이전트가 임의의 markdown 경로를 계속 새로 만들지 않게 합니다.
 
+MCP 서버는 AI 앱을 위한 read-only 도구 표면입니다. MCP를 지원하는 앱이 같은 로컬 진단과 분석 helper를 호출할 수 있게 하므로, 사용자가 모든 CLI 명령을 외울 필요가 줄어듭니다. 이 버전에서는 여전히 local stdio, no-network, no-write입니다.
+
 이 CLI와 project playbook이 기본 하네스입니다. Runtime hook 또는 plugin은 선택 확장이며, 동작이 명시적이고 local이며 쉽게 끌 수 있기 전까지 기본 경로 밖에 둡니다. 단계적 설계는 `runtime-roadmap.ko.md`를 봅니다.
 
 설치 범위는 구분해서 봅니다.
@@ -9,6 +11,7 @@
 - `npx ai-agent-playbook ...`은 현재 프로젝트에 패키지를 추가하지 않고 배포된 패키지를 실행합니다.
 - `npm install -g ai-agent-playbook`은 `ai-playbook` 명령을 전역으로 설치합니다.
 - `npm install -D ai-agent-playbook`은 한 프로젝트에 CLI를 고정하지만 스킬을 복사하거나 `.ai-playbook/`을 만들지 않습니다.
+- `ai-playbook mcp`는 AI 앱용 로컬 stdio MCP 서버를 시작합니다. 그 자체로 project file을 쓰지는 않습니다.
 - `skills install`과 `skills update`는 사용자 수준 스킬 복사본만 씁니다.
 - `bootstrap`, `guides sync`, `managed` 명령은 project-level playbook 작업입니다.
 
@@ -17,6 +20,26 @@
 자세한 명령어 reference는 [명령어 가이드](commands.ko.md)에 둡니다. 이 문서는 runtime 동작과 안전 규칙에 집중합니다.
 
 배포 패키지는 `npx ai-agent-playbook ...`, 전역 설치 뒤에는 `ai-playbook ...`, local checkout에서는 `node .\bin\ai-playbook.mjs ...` 형태로 실행합니다.
+
+역할을 짧게 나누면 아래와 같습니다.
+
+- CLI: 사람이 명시적으로 실행하는 operator 명령입니다. Preview-first write도 여기에 속합니다.
+- MCP: AI가 호출하는 read-only 도구입니다. Context, diagnostics, search, contracts, managed state, QA, AST search, TypeScript/JavaScript analysis를 다룹니다.
+- Skills: 에이전트 환경이 읽는 재사용 작업 지침입니다.
+- `.ai-playbook/`: 대상 프로젝트의 memory, runs, contracts, guides, plans, worklogs입니다.
+- Adapters: 환경별 선택적 hook/config 렌더링입니다. 기본 설치 경로가 아닙니다.
+
+## MCP 도구 표면
+
+로컬 서버는 아래 명령으로 시작합니다.
+
+```powershell
+npx ai-agent-playbook mcp
+```
+
+MCP를 지원하는 AI 앱은 이 명령을 등록한 뒤 `operator_search`, `operator_research`, `operator_analyze_deep`, `ast_grep_search`, `lsp_symbols`, `contracts_check`, `managed_check`, `qa_image_diff` 같은 도구를 호출할 수 있습니다.
+
+MCP 서버는 read-only 도구만 노출합니다. Bootstrap, skill install/update/uninstall, managed apply 작업, contract snapshot apply, run record, AST rewrite/apply, LSP rename, automatic doctor execution, blocking/continuation 동작은 노출하지 않습니다.
 
 ## Skills lifecycle
 
@@ -185,6 +208,14 @@ npx ai-agent-playbook operator analyze <target> --path src/example.ts --json
 ```
 
 Diagnostics, codebase map, matching rules, optional path-scoped context, optional analysis setup signal을 하나의 report로 반환합니다. AST, LSP, comment-quality tool은 local setup signal로만 보고합니다. 이 명령은 tool 설치, language server 실행, structural search 실행, file edit, network call을 하지 않습니다.
+
+더 강한 로컬 분석이 필요하면 `--deep`을 사용합니다.
+
+```powershell
+npx ai-agent-playbook operator analyze <target> --deep --path src/example.ts --json
+```
+
+Deep mode는 local AST-grep structural search와 TypeScript/JavaScript status, diagnostics, symbols, references, definitions를 추가합니다. 그래도 read-only입니다. Symbol rename, AST match rewrite, project command 실행, network call은 하지 않습니다.
 
 `operator map`은 local codebase shape를 요약합니다.
 

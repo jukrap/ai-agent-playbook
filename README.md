@@ -23,13 +23,13 @@
 
 ## What This Is
 
-AI Agent Playbook is a small shelf of reusable agent skills, project templates, project-memory guides, and a dependency-light runtime CLI.
+AI Agent Playbook is a small shelf of reusable agent skills, project templates, project-memory guides, a dependency-light runtime CLI, and a local MCP tool server for read-only analysis.
 
 It helps coding agents stop guessing. The playbook nudges agents to inspect the repository first, respect local rules, keep API boundaries clear, write useful worklogs, and verify changes before calling work done.
 
 The repository is agent-agnostic. Codex, Claude Code, and other coding agents can use the same source material, while `adapters/` keeps agent-specific setup notes separate.
 
-It is not a slash-command pack, a Codex plugin, or an auto-running agent. The default model is operator-in-the-loop: a human or agent explicitly runs the CLI, reviews dry-run output, then chooses whether to write files.
+It is not a slash-command pack, a Codex plugin, or an auto-running agent. The default model is operator-in-the-loop: a human or agent explicitly runs the CLI, reviews dry-run output, then chooses whether to write files. MCP is an optional local tool surface so an AI app can call read-only diagnostics by name when you ask in natural language.
 
 ## What You Get
 
@@ -38,6 +38,7 @@ It is not a slash-command pack, a Codex plugin, or an auto-running agent. The de
 | Reusable skills   | Trigger-focused operating guides for onboarding, docs, quality, Git, meta work, and legacy systems. | `skills/`          |
 | Project templates | Copyable root agent rules, stack profiles, and project-memory files.                                | `templates/`       |
 | Runtime harness   | A small CLI for bootstrapping `.ai-playbook/`, health checks, context, runs, contracts, plans, and worklogs. | `bin/`, `src/`     |
+| MCP tools         | Local read-only tools for AI apps: context, operator checks, search, research, contracts, managed state, image diff, AST search, and TypeScript/JavaScript analysis. | `src/`             |
 | Human docs        | Installation, classification, maintenance, publishing, and translation notes.                       | `docs/`            |
 | Translations      | Korean reading copies that mirror English source files.                                             | `translations/ko/` |
 | Agent adapters    | Setup notes for specific agent environments.                                                        | `adapters/`        |
@@ -57,6 +58,8 @@ npx ai-agent-playbook operator check <target-project> --json
 
 New to this playbook? Start with [First 10 minutes](docs/quick-start.md). It explains what `npx`, global install, skills, and project bootstrap do before you write files.
 
+If your AI app supports MCP, register a local server command such as `npx ai-agent-playbook mcp`. Then you can ask the AI to inspect playbook context, run operator search, or do deep local analysis without remembering every CLI command. MCP tools are read-only in this version.
+
 If you want the shorter `ai-playbook` command from any directory, install the package globally:
 
 ```powershell
@@ -68,6 +71,7 @@ The npm package installs the CLI. It does not automatically copy skills, create 
 
 - `skills install`, `skills update`, and `skills uninstall` manage reusable user-level skills.
 - `bootstrap`, `guides sync`, `managed *`, `contracts *`, `operator *`, and `qa *` manage or inspect one target project.
+- `mcp` starts a local stdio MCP server for AI apps. It does not write files by itself.
 - Runtime hooks and adapter settings are optional and are never installed by default.
 
 For command-by-command usage, see [Command guide](docs/commands.md). For update, uninstall, local checkout, PowerShell compatibility, ownership markers, and cleanup details, see [Install, update, and uninstall](docs/installation.md).

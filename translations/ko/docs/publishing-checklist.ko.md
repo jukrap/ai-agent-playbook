@@ -42,6 +42,7 @@ push 뒤 저장소가 검증 workflow를 사용한다면 통과 여부를 확인
 
 - publish할 장비에서 `npm whoami`가 성공하는지 확인합니다.
 - 패키지 이름을 사용할 수 있거나 publish 계정이 이미 소유하고 있는지 확인합니다.
+- README 또는 패키지에 포함되는 문서가 바뀌었고 npm package page에 반영해야 한다면 publish 전에 patch version을 올립니다. npm은 같은 version을 다시 publish할 수 없습니다.
 - `npm pack --dry-run --json`으로 tarball에 runtime file이 포함되고 test, translations, local reference, 큰 image asset이 제외되는지 확인합니다.
 - 저장소 검증이 통과한 뒤에만 publish합니다.
 

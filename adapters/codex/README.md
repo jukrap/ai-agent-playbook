@@ -105,6 +105,7 @@ npx ai-agent-playbook doctor <target-repo> --strict
 npx ai-agent-playbook doctor <target-repo> --json
 npx ai-agent-playbook doctor <target-repo> --reminder --json
 npx ai-agent-playbook context <target-repo> --json
+npx ai-agent-playbook mcp
 npx ai-agent-playbook adapter config <target-repo> --adapter codex --json
 npx ai-agent-playbook adapter check <target-repo> --adapter codex --json
 npx ai-agent-playbook adapter check <target-repo> --adapter codex --settings <local-settings-path> --json
@@ -113,6 +114,8 @@ npx ai-agent-playbook worklog new <target-repo> --title "short-worklog-title"
 ```
 
 Use the CLI when a project needs repeatable root `AGENTS.md` and `.ai-playbook/` scaffolding. Use installed skills when the agent needs reusable working behavior during a coding session.
+
+Use MCP when Codex or another AI app can call local tools directly. Register `npx ai-agent-playbook mcp` or, after a global install, `ai-playbook mcp` as the local stdio server command. The MCP surface is read-only in this version and is separate from Codex hook setup.
 
 Codex App does not need `ai-playbook` to be installed as a global command. From a local checkout, the stable invocation remains:
 
@@ -168,6 +171,8 @@ node .\bin\ai-playbook.mjs adapter config <target-repo> --adapter codex --json
 ```
 
 The renderer is read-only. It prints a hook command and copy-pasteable config using this checkout's absolute hook path, without writing settings files or leaving placeholder paths in the output.
+
+The JSON output also includes an MCP settings example using `npx ai-agent-playbook mcp`, plus a global-install variant using `ai-playbook mcp`. Review and copy it manually if your AI app supports MCP.
 
 Then run the adapter check:
 

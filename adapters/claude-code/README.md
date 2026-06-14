@@ -18,6 +18,7 @@ npx ai-agent-playbook migrate path <target-repo> --json
 npx ai-agent-playbook doctor <target-repo> --json
 npx ai-agent-playbook doctor <target-repo> --reminder --json
 npx ai-agent-playbook context <target-repo> --json
+npx ai-agent-playbook mcp
 npx ai-agent-playbook adapter config <target-repo> --adapter claude-code --json
 npx ai-agent-playbook adapter check <target-repo> --adapter claude-code --json
 npx ai-agent-playbook adapter check <target-repo> --adapter claude-code --settings <local-settings-path> --json
@@ -32,6 +33,8 @@ node .\adapters\claude-code\package.mjs hook
 ```
 
 This shell is not installed automatically, does not write settings, and is only a packaging convenience. Prefer the main CLI for the default document harness.
+
+Use MCP when Claude Code or another AI app can call local tools directly. Register `npx ai-agent-playbook mcp` or, after a global install, `ai-playbook mcp` as the local stdio server command. The MCP surface is read-only in this version and is separate from hook setup.
 
 Use `doctor --reminder --json` only as a small read-only local signal for wrappers or scripts. The hook example does not run doctor automatically.
 
@@ -70,6 +73,8 @@ node .\bin\ai-playbook.mjs adapter config <target-repo> --adapter claude-code --
 ```
 
 The renderer is read-only. It prints a hook command and copy-pasteable config using this checkout's absolute hook path, without writing settings files or leaving placeholder paths in the output.
+
+The JSON output also includes an MCP settings example using `npx ai-agent-playbook mcp`, plus a global-install variant using `ai-playbook mcp`. Review and copy it manually if your AI app supports MCP.
 
 Then run the adapter check:
 

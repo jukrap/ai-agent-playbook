@@ -9,8 +9,9 @@ There are three separate layers:
 1. The npm package installs the `ai-playbook` CLI and bundled source files.
 2. `skills install` copies reusable skills into user-level skill roots.
 3. `bootstrap` copies a project playbook into one target repository.
+4. `mcp` starts a local stdio server only when an MCP-capable AI app launches it.
 
-Installing the npm package by itself does not copy skills, create `.ai-playbook/`, enable hooks, or register slash commands. Those actions stay explicit.
+Installing the npm package by itself does not copy skills, create `.ai-playbook/`, enable hooks, register MCP settings, or register slash commands. Those actions stay explicit.
 
 ## Choose a CLI install style
 
@@ -24,6 +25,7 @@ Use this when Node.js is available. The public package is [`ai-agent-playbook`](
 | Use `ai-playbook` from any directory | `npm install -g ai-agent-playbook` | Installs a global CLI command. Use `npm install -g ai-agent-playbook@latest` to update it. |
 | Pin the tool in one project | `npm install -D ai-agent-playbook` | Adds a dev dependency and `node_modules/ai-agent-playbook`; run it with `npx ai-playbook ...`. |
 | Work from a source checkout | `node .\bin\ai-playbook.mjs --help` | Runs the checked-out repository directly. |
+| Let an AI app call read-only tools | `npx ai-agent-playbook mcp` | Use this as the app's local stdio MCP server command. |
 
 Avoid treating plain `npm install ai-agent-playbook` as the normal first step unless you intentionally want this package as a runtime dependency of the current project. It installs under the current project's `node_modules`, but it still does not install skills or bootstrap a project playbook.
 
@@ -97,11 +99,50 @@ npm uninstall -g ai-agent-playbook
 
 Use `npx ai-agent-playbook skills uninstall` or `ai-playbook skills uninstall` when you want to remove copied skills.
 
+## MCP registration
+
+MCP is optional. Use it when an AI app supports local MCP servers and you want the agent to call playbook tools directly instead of asking you to remember CLI commands.
+
+The recommended server command is:
+
+```powershell
+npx ai-agent-playbook mcp
+```
+
+A typical MCP settings entry looks like this:
+
+```json
+{
+  "mcpServers": {
+    "ai-playbook": {
+      "command": "npx",
+      "args": ["ai-agent-playbook", "mcp"]
+    }
+  }
+}
+```
+
+After a global install, the shorter variant is:
+
+```json
+{
+  "mcpServers": {
+    "ai-playbook": {
+      "command": "ai-playbook",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+This project does not edit your MCP settings automatically. `adapter config <target> --adapter codex --json` renders the same examples so you can review and copy them manually. The MCP tools exposed in this version are read-only.
+
 ## What writes files
 
 | Command | Writes by default? | Target |
 | ------- | ------------------ | ------ |
 | `npx ai-agent-playbook --help` | No | Prints CLI help. |
+| `npx ai-agent-playbook mcp` | No | Starts a local stdio MCP server for an AI app. |
 | `npm install -g ai-agent-playbook` | Yes | npm global package location only. |
 | `npm install -D ai-agent-playbook` | Yes | Current project's `package.json`, lockfile, and `node_modules`. |
 | `skills check` | No | Reports skill status. |
@@ -118,6 +159,7 @@ Use `npx ai-agent-playbook skills uninstall` or `ai-playbook skills uninstall` w
 | `contracts list/check` | No | Read-only contract inspection. |
 | `managed adopt/prune/uninstall` | No unless `--apply` | Target project's `.ai-playbook/` managed files. |
 | `operator check/search/research/context/analyze/map/audit` | No | Read-only target project diagnostics. |
+| `operator analyze --deep` | No | Read-only AST-grep and TypeScript/JavaScript analysis signals. |
 | `operator gc` | No unless `--apply` | Target project's obsolete unmodified managed playbook files. |
 | `adapter config/check` | No | Renders or validates local adapter settings. |
 

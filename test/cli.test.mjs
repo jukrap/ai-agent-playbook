@@ -433,6 +433,13 @@ test('adapter config --json renders local hook config without writing files', as
     assert.match(report.hookCommand, new RegExp(adapter === 'codex' ? 'adapters[/\\\\]codex[/\\\\]hook\\.mjs' : 'adapters[/\\\\]claude-code[/\\\\]hook\\.mjs'));
     assert.equal(report.config.hooks.SessionStart[0].hooks[0].command, report.hookCommand);
     assert.equal(report.config.hooks.PostCompact[0].hooks[0].command, report.hookCommand);
+    assert.equal(report.mcp.command, 'npx');
+    assert.deepEqual(report.mcp.args, ['ai-agent-playbook', 'mcp']);
+    assert.equal(report.mcp.config.mcpServers['ai-playbook'].command, 'npx');
+    assert.deepEqual(report.mcp.config.mcpServers['ai-playbook'].args, ['ai-agent-playbook', 'mcp']);
+    assert.equal(report.mcp.globalCommand.command, 'ai-playbook');
+    assert.deepEqual(report.mcp.globalCommand.args, ['mcp']);
+    assert.doesNotMatch(JSON.stringify(report.mcp), /<path-to-ai-agent-playbook>/);
     assert.equal(report.warnings.some((warning) => warning.id === 'config.playbook.missing'), true);
   }
 

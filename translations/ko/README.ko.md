@@ -55,6 +55,8 @@ npx ai-agent-playbook bootstrap <target-project>
 npx ai-agent-playbook operator check <target-project> --json
 ```
 
+처음 쓰는 경우에는 [처음 10분 사용법](docs/quick-start.ko.md)부터 봅니다. `npx`, global install, skills, project bootstrap이 각각 무엇을 하는지 파일을 쓰기 전에 설명합니다.
+
 어느 디렉터리에서든 짧은 `ai-playbook` 명령을 쓰고 싶다면 전역으로 설치합니다.
 
 ```powershell
@@ -170,6 +172,7 @@ test/                 Node CLI와 adapter 테스트
 
 - [저장소 작업 규칙](AGENTS.ko.md): 이 저장소를 수정하는 에이전트를 위한 유지보수 규칙.
 - [저장소 맥락](CONTEXT.ko.md): playbook의 핵심 용어와 설계 의도.
+- [처음 10분 사용법](docs/quick-start.ko.md): 처음 실행 순서, 용어, 안전한 명령 순서.
 - [명령어 가이드](docs/commands.ko.md): 각 CLI 명령이 무엇을 하는지, 언제 쓰는지, 파일을 쓰는지 설명.
 - [설치, 업데이트, 삭제](docs/installation.ko.md): npm/npx 사용, 전역 CLI 설정, skill lifecycle, project bootstrap, cleanup, legacy PowerShell 경로.
 - [런타임 하네스](docs/harness-runtime.ko.md): runtime 원칙, JSON contract note, overwrite policy, 대상 프로젝트 적용 흐름.

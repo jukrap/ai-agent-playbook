@@ -190,31 +190,11 @@ test/                 Node CLI와 adapter 테스트
 - [번역 정책](docs/translation-policy.ko.md): 영어 원문과 한국어 번역본 관리 규칙.
 - [공개 체크리스트](docs/publishing-checklist.ko.md): 공개 전 위생 점검.
 
-## 유지보수 검증
+## 유지보수 담당자용
 
-저장소 편집이 끝났다고 말하기 전에 프로젝트에서 정한 검증을 실행합니다.
+이 README는 사용자를 위한 공개 진입점입니다. 이 원본 저장소를 수정한다면 먼저 [저장소 작업 규칙](AGENTS.ko.md)과 [유지보수 작업 흐름](docs/maintenance.ko.md)을 읽습니다. 릴리스 전 위생 점검은 [공개 체크리스트](docs/publishing-checklist.ko.md)에 둡니다.
 
-```powershell
-npm run check
-npm test
-.\scripts\validate-skills.ps1
-.\scripts\validate-translations.ps1
-.\scripts\sync-skills.ps1 -WhatIf
-```
-
-소스 편집 뒤 설치된 로컬 복사본을 갱신해야 하면 아래를 실행합니다.
-
-```powershell
-.\scripts\sync-skills.ps1
-```
-
-## 공개 준비 메모
-
-- 영어 원문 파일이 기준 원본입니다.
-- 영어 원문을 바꾸면 같은 변경에서 한국어 번역도 갱신합니다.
-- 개인 절대 경로, 회사명, credential, 내부 URL, branch name, PR number를 커밋하지 않습니다.
-- 설치된 스킬 복사본을 원본처럼 수정하지 않습니다. 이 저장소를 수정하고, 검증한 뒤, 동기화합니다.
-- profile이 명시하지 않은 stack, package manager, workflow를 template이 단정하지 않는지 확인합니다.
+영어 원문을 기준으로 유지하고, 영어 원문을 바꾸면 한국어 번역도 같은 변경에서 갱신합니다. 개인 경로, credential, 내부 URL, branch name, PR number, 설치된 로컬 스킬 복사본은 commit하지 않습니다.
 
 ## 라이선스
 

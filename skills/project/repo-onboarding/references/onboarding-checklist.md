@@ -16,7 +16,8 @@ Use platform-appropriate equivalents when a command is unavailable.
 - Current branch, upstream, remotes, dirty files.
 - Package manager and lockfile.
 - Runtime versions and project scripts.
-- README, root agent rules, and `.ai-playbook/` reading order.
+- README, root agent rules, `.ai-playbook/` reading order, and current working vocabulary.
+- Map freshness, scan range, and confidence limits for structural or duplicate-code claims.
 - Existing architecture and import boundaries.
 - Test/lint/build commands actually defined by the project.
 - Local-only docs or generated files that must not be staged.
@@ -33,6 +34,6 @@ Give a short state summary:
 
 - `Stack`: confirmed technologies.
 - `Commands`: confirmed verification commands.
-- `Docs`: source-of-truth files, `.ai-playbook/` state, and latest worklog summary.
+- `Docs`: source-of-truth files, `.ai-playbook/` state, working vocabulary, map freshness, and latest worklog summary.
 - `Git`: branch/remotes/dirty concerns.
 - `Open questions`: only what cannot be discovered locally.

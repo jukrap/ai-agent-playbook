@@ -11,7 +11,7 @@ Clean code that looks low-trust without changing what it does.
 
 1. Define the cleanup scope by file, function, component, or recently changed diff.
 2. Lock expected behavior with existing tests, a focused regression test, or concrete manual evidence before changing logic.
-3. Remove noise in small steps: dead code, redundant branches, vague names, needless abstraction, duplicated constants, and misleading comments.
+3. Remove noise in small steps: dead code, redundant branches, vague names, needless abstraction, duplicated constants, exact clone cues that survive behavior checks, and misleading comments.
 4. Preserve public contracts, data shapes, UI behavior, error handling, and side effects unless the user explicitly requests behavior change.
 5. Re-run the narrowest useful verification and summarize residual risk.
 

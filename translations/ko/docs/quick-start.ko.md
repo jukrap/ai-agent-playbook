@@ -8,8 +8,8 @@ AI Agent Playbook에는 서로 다른 네 계층이 있습니다.
 | ---- | ---- | --------- |
 | CLI 패키지 | `ai-playbook` 명령과 함께 묶인 원본 파일입니다. | npm cache, npm global 위치, 또는 특정 프로젝트의 `node_modules`. |
 | 스킬 | 온보딩, 리뷰, UI polish, 레거시 유지보수 같은 재사용 agent guidance입니다. | `.codex/skills`, `.agents/skills` 같은 사용자 수준 skill folder. |
-| Project playbook | `.ai-playbook/` 아래의 로컬 project memory입니다. | 대상 프로젝트 저장소 하나. |
-| MCP 도구 | AI 앱이 context, search, diagnostics, AST search, TypeScript/JavaScript analysis를 호출할 수 있는 선택적 read-only 도구입니다. | AI 앱에 local stdio server command로 등록합니다. |
+| Project playbook | `.ai-playbook/` 아래의 로컬 project memory입니다. current facts, working vocabulary, maps, runs, contracts, worklogs를 포함합니다. | 대상 프로젝트 저장소 하나. |
+| MCP 도구 | AI 앱이 context, search, diagnostics, AST search, 함수 본문 중복 단서, TypeScript/JavaScript analysis를 호출할 수 있는 선택적 read-only 도구입니다. | AI 앱에 local stdio server command로 등록합니다. |
 
 npm 패키지를 설치해도 스킬 설치, 프로젝트 `.ai-playbook/` 생성, MCP 설정 등록은 자동으로 일어나지 않습니다. 이 단계들은 명시적으로 실행합니다.
 

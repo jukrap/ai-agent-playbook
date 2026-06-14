@@ -21,6 +21,8 @@ The default path stays simple: install skills, bootstrap `.ai-playbook/` when a 
 - `context`, `run`, `contracts`, `plan`, `worklog`, and `worklog summarize` keep path-scoped memory, active evidence, contract notes, plans, detailed history, and monthly summaries in predictable paths.
 - `managed check`, `managed catalog`, `managed adopt`, `managed prune`, and `managed uninstall` use a project-level marker to inspect, catalog, adopt, or remove only selected unmodified files copied by this playbook.
 - `context status`, `run status`, `contracts check`, `contracts snapshot`, `operator check`, `operator search`, `operator preflight`, `operator delta`, `operator context`, `operator analyze`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, `skills lint`, `qa tui-check`, and `qa image-diff` provide operator-triggered diagnostics for path-scoped memory, run evidence, contract freshness, combined health review, local search, before/after evidence comparison, context preview, analysis signal aggregation, codebase mapping, playbook drift audit, preview-first managed cleanup, rule matching, verification command discovery, skill quality review, terminal/CJK layout evidence, and small PNG comparison.
+- `ai-playbook mcp` exposes a local read-only MCP tool surface so agent apps can call context, operator diagnostics, search, contracts, managed state, QA, AST search, and TypeScript/JavaScript analysis without requiring slash commands or a remote server.
+- `operator analyze --deep` adds explicit AST-grep and TypeScript/JavaScript language-analysis signals while keeping the default `operator analyze` path light.
 - The installer and updater use managed markers and hashes so local skill edits and unmanaged same-name skills are not overwritten silently.
 - `doctor --json`, `doctor --reminder --json`, `guides sync --check --json`, `context --json`, `adapter config --json`, and `adapter check --json` provide a small machine-readable core for future adapters.
 
@@ -37,6 +39,7 @@ Keep improving these areas before making hooks part of any default install path:
 - Use `migrate path --json` before applying legacy folder moves so path changes stay explicit and reversible by normal Git review.
 - Use `managed check` and `managed catalog` before cleanup, `managed prune --json` before selected managed removal, and `managed uninstall --json` before full managed removal.
 - Use `context status --path`, `run status`, `contracts check --path`, `contracts snapshot --json`, `operator check --path`, `operator search --query`, `operator preflight --intent`, `operator delta --before`, `operator context --path`, `operator analyze --path`, `operator map`, `operator audit`, `operator gc`, `rules check --path`, `diagnostics check`, `skills lint`, `qa tui-check`, and `qa image-diff` as operator-visible evidence before considering stronger runtime automation.
+- Use `operator analyze --deep`, `ast_grep_search`, and the read-only `lsp_*` MCP tools only when stronger local analysis is worth the extra scan cost.
 - Make migration from existing agent docs preserve history, classify current rules, and record remaining uncertainty in `.ai-playbook/questions.md`.
 - Treat `worklog summarize` as a promotion checkpoint: durable facts belong in `CURRENT.md`, maps, runbooks, or decisions, not only in history.
 
@@ -52,6 +55,7 @@ Runtime hooks should be designed as thin adapters over the document harness:
 - **Context injector:** emit additional context through the runtime's supported hook JSON contract and keep debug logs on stderr.
 - **Doctor reminder:** prefer the small `doctor --reminder --json` signal or a short reminder to run `doctor`; avoid automatic full checks on every session until cost and noise are proven acceptable.
 - **Command layer:** keep `node .\bin\ai-playbook.mjs ...` as the stable invocation. Global commands and plugin commands are conveniences only.
+- **MCP layer:** keep `ai-playbook mcp` as a local stdio server with read-only tools first. Do not expose write, rewrite, rename, install, or blocking behavior until there is a separate reviewed design.
 
 ## Risks of Going Runtime-First
 
@@ -106,6 +110,7 @@ These can be implemented before a full plugin exists:
 - Verify in real projects whether rendered adapter settings reduce setup mistakes without adding noise.
 - Verify in real projects whether `migrate path --json` catches common legacy path references without touching unrelated files.
 - Verify whether the managed marker, managed catalog, selected managed prune, combined operator check, local search, preflight/delta evidence comparison, contract hash snapshots, path-scoped context preview, analysis signal aggregation, codebase map summary, playbook drift audit, preview-first managed cleanup, rule matching, diagnostics command discovery, skill linting, TUI layout checks, and PNG image comparison reduce review misses before promoting any hook-driven diagnostics.
+- Verify whether MCP tool use reduces command memorization without hiding decisions that should remain visible in `.ai-playbook/`.
 - Candidates still requiring caution: continuation, blocking feedback, and any automatic doctor execution after cost and noise are proven acceptable.
 
 ## Process Skill Compatibility

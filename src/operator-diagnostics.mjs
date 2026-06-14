@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import { PNG } from 'pngjs';
 import { INSTALL_MANIFEST_FILE, checkContracts, checkGuides, doctorProject, SCHEMA_VERSION, validateManagedManifest } from './harness.mjs';
+import { runDeepAnalysis } from './deep-analysis.mjs';
 
 const RULE_DIRECTORY_SOURCES = [
   ['.ai-playbook/rules', '.ai-playbook/rules'],
@@ -597,7 +598,7 @@ async function preflightContextSummary(options) {
 }
 
 export async function analyzeOperator(options) {
-  const { target, filePath } = options;
+  const { target, filePath, deep = false } = options;
   await assertDirectory(target, 'Target repository does not exist');
 
   const resolvedTarget = path.resolve(target);
@@ -610,6 +611,9 @@ export async function analyzeOperator(options) {
   ]);
   const optionalTools = buildOptionalAnalysisSignals({ map, diagnostics });
   const matchingRules = rules.rules.filter((rule) => rule.applies);
+  const deepReport = deep
+    ? await runDeepAnalysis({ target: resolvedTarget, filePath: relativePath })
+    : undefined;
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -622,7 +626,8 @@ export async function analyzeOperator(options) {
       ruleMatches: matchingRules.length,
       contextMatches: context ? context.summary.matchingContextFiles : 0,
       optionalToolSignals: optionalTools.filter((tool) => ['detected', 'project-signals'].includes(tool.status)).length,
-      warnings: diagnostics.summary.warn + rules.warnings.length + (context ? context.warnings.length : 0)
+      deepSignals: deepReport ? deepReport.summary.astGrepMatches + deepReport.summary.lspSymbols : 0,
+      warnings: diagnostics.summary.warn + rules.warnings.length + (context ? context.warnings.length : 0) + (deepReport ? deepReport.summary.warnings : 0)
     },
     diagnostics: {
       packageManager: diagnostics.packageManager,
@@ -650,7 +655,8 @@ export async function analyzeOperator(options) {
         warnings: context.warnings
       }
     } : {}),
-    optionalTools
+    optionalTools,
+    ...(deepReport ? { deep: deepReport } : {})
   };
 }
 

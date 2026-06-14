@@ -2,6 +2,8 @@
 
 `ai-playbook` is the executable surface for installing reusable skills and applying this repository to a target project. It does not call an AI model. It copies templates, checks project-memory health, and creates predictable context, run, contract, plan, and worklog files so agents stop inventing ad hoc markdown paths.
 
+The MCP server is the AI-facing read-only tool surface. It lets an MCP-capable app call the same local diagnostics and analysis helpers without the user memorizing every CLI command. It is still local stdio, no-network, and no-write in this version.
+
 This CLI and the project playbook are the default harness. Runtime hooks or plugins are optional extensions and should stay outside the default path until their behavior is explicit, local, and easy to disable. See `docs/runtime-roadmap.md` for the staged design.
 
 Keep the install scopes separate:
@@ -9,6 +11,7 @@ Keep the install scopes separate:
 - `npx ai-agent-playbook ...` runs the published package without adding it to the current project.
 - `npm install -g ai-agent-playbook` installs the `ai-playbook` command globally.
 - `npm install -D ai-agent-playbook` pins the CLI in one project but does not copy skills or create `.ai-playbook/`.
+- `ai-playbook mcp` starts a local stdio MCP server for an AI app. It does not write project files by itself.
 - `skills install` and `skills update` write only user-level skill copies.
 - `bootstrap`, `guides sync`, and `managed` commands are the project-level playbook operations.
 
@@ -17,6 +20,26 @@ Keep the install scopes separate:
 The detailed command reference lives in [Command guide](commands.md). Keep this file focused on runtime behavior and safety rules.
 
 Use `npx ai-agent-playbook ...` for the published package, `ai-playbook ...` after a global install, or `node .\bin\ai-playbook.mjs ...` from a local checkout.
+
+The short role split is:
+
+- CLI: explicit human/operator commands, including preview-first writes.
+- MCP: read-only AI tool calls for context, diagnostics, search, contracts, managed state, QA, AST search, and TypeScript/JavaScript analysis.
+- Skills: reusable working guidance loaded by agent environments.
+- `.ai-playbook/`: target-project memory, runs, contracts, guides, plans, and worklogs.
+- Adapters: optional environment-specific hook/config rendering; never the default install path.
+
+## MCP tool surface
+
+Start the local server with:
+
+```powershell
+npx ai-agent-playbook mcp
+```
+
+An MCP-capable AI app can register that command and then call tools such as `operator_search`, `operator_research`, `operator_analyze_deep`, `ast_grep_search`, `lsp_symbols`, `contracts_check`, `managed_check`, and `qa_image_diff`.
+
+The MCP server exposes only read-only tools. It does not expose bootstrap, skill install/update/uninstall, managed apply operations, contract snapshot apply, run record, AST rewrite/apply, LSP rename, automatic doctor execution, or blocking/continuation behavior.
 
 ## Skills lifecycle
 
@@ -185,6 +208,14 @@ npx ai-agent-playbook operator analyze <target> --path src/example.ts --json
 ```
 
 It returns diagnostics, codebase map, matching rules, optional path-scoped context, and optional analysis setup signals in one report. AST, LSP, and comment-quality tools are reported as local setup signals only. This command does not install tools, run language servers, run structural search, edit files, or call the network.
+
+Use `--deep` when stronger local analysis is useful:
+
+```powershell
+npx ai-agent-playbook operator analyze <target> --deep --path src/example.ts --json
+```
+
+Deep mode adds local AST-grep structural search plus TypeScript/JavaScript status, diagnostics, symbols, references, and definitions. It is still read-only. It does not rename symbols, rewrite AST matches, run project commands, or call the network.
 
 `operator map` summarizes the local codebase shape:
 

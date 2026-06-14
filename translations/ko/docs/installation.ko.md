@@ -9,8 +9,9 @@
 1. npm 패키지는 `ai-playbook` CLI와 함께 묶인 원본 파일을 설치합니다.
 2. `skills install`은 재사용 스킬을 사용자 수준 스킬 루트에 복사합니다.
 3. `bootstrap`은 대상 저장소 하나에 project playbook을 복사합니다.
+4. `mcp`는 MCP를 지원하는 AI 앱이 실행할 때만 로컬 stdio 서버를 시작합니다.
 
-npm 패키지 설치만으로는 스킬 복사, `.ai-playbook/` 생성, hook 활성화, slash command 등록이 일어나지 않습니다. 그런 작업은 명시적으로 실행해야 합니다.
+npm 패키지 설치만으로는 스킬 복사, `.ai-playbook/` 생성, hook 활성화, MCP 설정 등록, slash command 등록이 일어나지 않습니다. 그런 작업은 명시적으로 실행해야 합니다.
 
 ## CLI 설치 방식 선택
 
@@ -24,6 +25,7 @@ Node.js를 사용할 수 있을 때 사용합니다. 공개 패키지는 [`ai-ag
 | 어느 디렉터리에서든 `ai-playbook` 사용 | `npm install -g ai-agent-playbook` | global CLI 명령을 설치합니다. 업데이트는 `npm install -g ai-agent-playbook@latest`를 사용합니다. |
 | 한 프로젝트에 도구 고정 | `npm install -D ai-agent-playbook` | dev dependency와 `node_modules/ai-agent-playbook`을 추가합니다. 실행은 `npx ai-playbook ...`을 사용합니다. |
 | source checkout에서 작업 | `node .\bin\ai-playbook.mjs --help` | checkout된 repository를 직접 실행합니다. |
+| AI 앱이 read-only 도구를 호출하게 하기 | `npx ai-agent-playbook mcp` | AI 앱의 local stdio MCP server command로 등록합니다. |
 
 그냥 `npm install ai-agent-playbook`을 일반적인 첫 단계처럼 쓰지는 않는 편이 좋습니다. 현재 프로젝트의 runtime dependency처럼 추가하고 싶을 때만 사용합니다. 이 명령은 현재 프로젝트의 `node_modules`에 설치하지만, 그래도 스킬 설치나 project playbook bootstrap은 하지 않습니다.
 
@@ -97,11 +99,50 @@ npm uninstall -g ai-agent-playbook
 
 복사된 스킬을 제거하려면 `npx ai-agent-playbook skills uninstall` 또는 `ai-playbook skills uninstall`을 사용합니다.
 
+## MCP 등록
+
+MCP는 선택 사항입니다. 로컬 MCP server를 지원하는 AI 앱에서 에이전트가 CLI 명령을 외우지 않아도 playbook 도구를 직접 호출하게 하고 싶을 때 사용합니다.
+
+권장 server command는 아래와 같습니다.
+
+```powershell
+npx ai-agent-playbook mcp
+```
+
+일반적인 MCP settings 항목은 아래 형태입니다.
+
+```json
+{
+  "mcpServers": {
+    "ai-playbook": {
+      "command": "npx",
+      "args": ["ai-agent-playbook", "mcp"]
+    }
+  }
+}
+```
+
+Global install 뒤에는 짧은 형태도 사용할 수 있습니다.
+
+```json
+{
+  "mcpServers": {
+    "ai-playbook": {
+      "command": "ai-playbook",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+이 프로젝트는 사용자의 MCP settings를 자동으로 수정하지 않습니다. `adapter config <target> --adapter codex --json`도 같은 예시를 렌더링하므로 검토 후 수동으로 복사할 수 있습니다. 이 버전에서 노출하는 MCP 도구는 read-only입니다.
+
 ## 어떤 명령이 파일을 쓰는가
 
 | 명령 | 기본으로 쓰는가? | 대상 |
 | ---- | ---------------- | ---- |
 | `npx ai-agent-playbook --help` | 아니오 | CLI help를 출력합니다. |
+| `npx ai-agent-playbook mcp` | 아니오 | AI 앱용 로컬 stdio MCP 서버를 시작합니다. |
 | `npm install -g ai-agent-playbook` | 예 | npm 전역 패키지 위치만 변경합니다. |
 | `npm install -D ai-agent-playbook` | 예 | 현재 프로젝트의 `package.json`, lockfile, `node_modules`를 변경합니다. |
 | `skills check` | 아니오 | 스킬 상태를 보고합니다. |
@@ -118,6 +159,7 @@ npm uninstall -g ai-agent-playbook
 | `contracts list/check` | 아니오 | Contract를 read-only로 점검합니다. |
 | `managed adopt/prune/uninstall` | `--apply`가 없으면 아니오 | 대상 프로젝트의 `.ai-playbook/` managed file을 변경합니다. |
 | `operator check/search/research/context/analyze/map/audit` | 아니오 | 대상 프로젝트를 read-only로 진단합니다. |
+| `operator analyze --deep` | 아니오 | AST-grep과 TypeScript/JavaScript 분석 signal을 read-only로 반환합니다. |
 | `operator gc` | `--apply`가 없으면 아니오 | 대상 프로젝트의 obsolete unmodified managed playbook file을 변경합니다. |
 | `adapter config/check` | 아니오 | local adapter 설정을 렌더링하거나 검증합니다. |
 

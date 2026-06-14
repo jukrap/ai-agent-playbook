@@ -15,6 +15,7 @@ Use one of these forms:
 | `npx ai-agent-playbook ...` | Best default for trying the latest published package without adding it to a project. |
 | `ai-playbook ...` | Use after `npm install -g ai-agent-playbook` when you want a short global command. |
 | `node .\bin\ai-playbook.mjs ...` | Use inside a local source checkout of this repository. |
+| `npx ai-agent-playbook mcp` | Register this as a local stdio MCP server command when an AI app should call read-only playbook tools for you. |
 
 In the examples below, replace `npx ai-agent-playbook` with `ai-playbook` or `node .\bin\ai-playbook.mjs` when that matches your setup.
 
@@ -55,6 +56,7 @@ Command-specific options appear where they are needed:
 | `--before <preflight-json>` | JSON file previously saved from `operator preflight --json`. |
 | `--contract <id>` | Limit `contracts snapshot` to one contract id. |
 | `--threshold N` | Allowed image diff ratio from `0` to `1`; `0` means any changed pixel fails. |
+| `--deep` | Add AST-grep and TypeScript/JavaScript language-analysis signals to `operator analyze`. |
 
 ## First-time setup
 
@@ -138,7 +140,7 @@ Operator commands are explicit human-triggered signals. They do not install hook
 | `operator delta <target>` | Compare a saved preflight JSON file with the current target and report added, deleted, modified, out-of-scope, and playbook changes. | No | `npx ai-agent-playbook operator delta <target-project> --before preflight.json --json` |
 | `operator research <target>` | Run a deeper local-only investigation with evidence, gaps, next steps, and markdown summary text. | No | `npx ai-agent-playbook operator research <target-project> --query "auth flow risk" --path src/example.ts --json` |
 | `operator context <target>` | Preview path-scoped playbook context, rules, maps, runbooks, and decisions for one file. | No | `npx ai-agent-playbook operator context <target-project> --path src/example.ts --json` |
-| `operator analyze <target>` | Combine diagnostics, map, rules, context, and optional local setup signals in one report. | No | `npx ai-agent-playbook operator analyze <target-project> --path src/example.ts --json` |
+| `operator analyze <target>` | Combine diagnostics, map, rules, context, and optional local setup signals in one report. Add `--deep` when you want AST and language-analysis signals. | No | `npx ai-agent-playbook operator analyze <target-project> --deep --path src/example.ts --json` |
 | `operator map <target>` | Summarize stack, source layout, quality config, test files, and verification command candidates. | No | `npx ai-agent-playbook operator map <target-project> --json` |
 | `operator audit <target>` | Check playbook drift such as broken links, stale context globs, duplicates, and manifest drift. | No | `npx ai-agent-playbook operator audit <target-project> --json` |
 | `operator gc <target>` | Preview or remove obsolete unmodified managed playbook files. | No unless `--apply` | `npx ai-agent-playbook operator gc <target-project> --json` |
@@ -146,6 +148,8 @@ Operator commands are explicit human-triggered signals. They do not install hook
 Use `operator search` for quick lookup. Use `operator research` when you want broader evidence before deciding what to inspect or change. Both are local-only.
 
 Use `operator preflight` before a risky edit when you want a reviewable baseline. The command does not write the JSON file itself; redirect it if you want to keep it. After the edit, pass that saved JSON to `operator delta`. Delta reports what changed, not whether the implementation is correct.
+
+Use `operator analyze --deep` when text search is not enough and you want structural and language signals. Deep mode adds local AST-grep search plus TypeScript/JavaScript diagnostics, symbols, references, and definitions. It still does not write files, run project commands, rename symbols, rewrite AST matches, or call the network.
 
 ## Runs and evidence
 
@@ -186,6 +190,31 @@ Contract markdown supports frontmatter: `id`, `status`, `appliesTo`, `risk`, `ap
 
 `qa image-diff` supports PNG only. It does not capture browsers, store baselines, create visual oracles, or write diff images.
 
+## MCP tools for AI apps
+
+MCP is for AI apps that can call tools directly. It does not replace the CLI. It makes the read-only CLI signals easier for an AI to discover and call during a natural-language task.
+
+Register this local stdio command in your MCP-capable app:
+
+```powershell
+npx ai-agent-playbook mcp
+```
+
+If you installed globally, this equivalent command is shorter:
+
+```powershell
+ai-playbook mcp
+```
+
+The server exposes read-only tools for:
+
+- playbook context: `playbook_context`, `context_status`, `context_list`
+- operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
+- rules and project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
+- QA and deep analysis: `qa_image_diff`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`
+
+The MCP layer is read-only in this version. It does not expose bootstrap, install, update, uninstall, prune, snapshot apply, run record, rename, rewrite, or any command that writes files.
+
 ## Adapter setup
 
 Adapters are optional. The default harness works without hooks or agent plugins.
@@ -196,6 +225,8 @@ Adapters are optional. The default harness works without hooks or agent plugins.
 | `adapter check <target>` | Check whether optional adapter files, context, and local settings are ready. | No | `npx ai-agent-playbook adapter check <target-project> --adapter codex --settings <local-settings-path> --json` |
 
 `adapter config` does not create a settings file. It prints the command and JSON that an operator can review and copy manually.
+
+`adapter config --json` also includes a reviewable MCP server example using `npx ai-agent-playbook mcp`, plus the global-install variant using `ai-playbook mcp`.
 
 ## Plans and worklogs
 

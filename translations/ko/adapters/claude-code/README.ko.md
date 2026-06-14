@@ -18,6 +18,7 @@ npx ai-agent-playbook migrate path <target-repo> --json
 npx ai-agent-playbook doctor <target-repo> --json
 npx ai-agent-playbook doctor <target-repo> --reminder --json
 npx ai-agent-playbook context <target-repo> --json
+npx ai-agent-playbook mcp
 npx ai-agent-playbook adapter config <target-repo> --adapter claude-code --json
 npx ai-agent-playbook adapter check <target-repo> --adapter claude-code --json
 npx ai-agent-playbook adapter check <target-repo> --adapter claude-code --settings <local-settings-path> --json
@@ -32,6 +33,8 @@ node .\adapters\claude-code\package.mjs hook
 ```
 
 이 shell은 자동 설치되지 않고 settings를 쓰지 않으며 packaging 편의 기능일 뿐입니다. 기본 문서 하네스에는 main CLI를 우선 사용합니다.
+
+Claude Code 또는 다른 AI 앱이 로컬 도구를 직접 호출할 수 있다면 MCP를 사용합니다. `npx ai-agent-playbook mcp` 또는 global install 뒤 `ai-playbook mcp`를 local stdio server command로 등록합니다. 이 버전의 MCP 표면은 read-only이며 hook 설정과 별개입니다.
 
 `doctor --reminder --json`은 wrapper나 script가 작은 read-only local signal만 필요할 때 사용합니다. Hook 예시는 doctor를 자동 실행하지 않습니다.
 
@@ -70,6 +73,8 @@ node .\bin\ai-playbook.mjs adapter config <target-repo> --adapter claude-code --
 ```
 
 Renderer는 read-only입니다. 이 checkout의 absolute hook path를 사용한 hook command와 붙여 넣을 수 있는 config를 출력하며, settings file을 쓰거나 output에 placeholder path를 남기지 않습니다.
+
+JSON output은 `npx ai-agent-playbook mcp`를 쓰는 MCP settings 예시와 global install용 `ai-playbook mcp` 예시도 함께 포함합니다. AI 앱이 MCP를 지원하면 검토 후 수동으로 복사합니다.
 
 그 다음 adapter check를 실행합니다.
 

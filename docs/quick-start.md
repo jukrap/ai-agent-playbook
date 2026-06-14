@@ -2,15 +2,16 @@
 
 This guide is for a first-time user who only wants to know what to run, what changes files, and what to expect.
 
-AI Agent Playbook has three separate layers:
+AI Agent Playbook has four separate layers:
 
 | Layer | What it means | Installed where? |
 | ----- | ------------- | ---------------- |
 | CLI package | The `ai-playbook` command and bundled source files. | npm cache, global npm location, or one project `node_modules`. |
 | Skills | Reusable agent guidance such as onboarding, review, UI polish, and legacy maintenance. | User-level skill folders such as `.codex/skills` and `.agents/skills`. |
 | Project playbook | Local project memory under `.ai-playbook/`. | One target project repository. |
+| MCP tools | Optional read-only tools an AI app can call for context, search, diagnostics, AST search, and TypeScript/JavaScript analysis. | Registered in the AI app as a local stdio server command. |
 
-Installing the npm package does not install skills or add `.ai-playbook/` to a project. Those steps stay explicit.
+Installing the npm package does not install skills, add `.ai-playbook/` to a project, or register MCP settings. Those steps stay explicit.
 
 ## 1. Run the CLI without installing it globally
 
@@ -97,6 +98,16 @@ npx ai-agent-playbook operator delta <target-project> --before preflight.json --
 
 Delta reports what changed. It does not judge whether the implementation is correct.
 
+## Optional: let an AI app call tools for you
+
+If your AI app supports MCP, register this local server command:
+
+```powershell
+npx ai-agent-playbook mcp
+```
+
+This is optional for the first 10 minutes. It lets the AI call read-only tools such as operator search, deep analysis, contracts check, and image diff without asking you to remember each CLI command.
+
 ## 7. Update or remove later
 
 Update installed skills:
@@ -133,6 +144,7 @@ Managed uninstall preserves edited project memory and does not edit `.gitignore`
 | `skills install` | Copy reusable skills to user-level skill folders. |
 | `bootstrap` | Copy project-memory files to one target project. |
 | `operator check` | Read-only project health checkpoint. |
+| `mcp` | Start a local read-only MCP server for an AI app. |
 | `--dry-run` | Preview a write operation without changing files. |
 | `--apply` | Perform a preview-first managed operation. |
 | `--json` | Print machine-readable output for agents and scripts. |
@@ -142,6 +154,7 @@ Managed uninstall preserves edited project memory and does not edit `.gitignore`
 - It does not add slash commands.
 - It does not install a Codex plugin.
 - It does not run automatically in the background.
+- It does not register MCP settings automatically.
 - It does not block commits.
 - It does not remove other people's skills by default.
 

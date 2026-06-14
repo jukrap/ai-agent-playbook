@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { checkAdapterReadiness, renderAdapterConfig } from './adapter-readiness.mjs';
 import { analyzeOperator, auditOperator, checkDiagnostics, checkImageDiff, checkOperator, checkRules, checkTuiCapture, deltaOperator, gcOperator, mapOperator, preflightOperator, previewOperatorContext, researchOperator, searchOperator } from './operator-diagnostics.mjs';
 import { lintSkills, runSkillsLifecycle } from './skills-lifecycle.mjs';
+import { runMcpServer } from './mcp-server.mjs';
 import {
   buildProjectContext,
   buildDoctorReminderSignal,
@@ -49,6 +50,11 @@ export async function runCli(argv, io = {}) {
     }
 
     const [command, subcommand, targetArg] = parsed.positionals;
+    if (command === 'mcp') {
+      await runMcpServer({ repoRoot: root });
+      return 0;
+    }
+
     if (command === 'bootstrap') {
       const target = resolveTarget(cwd, subcommand);
       const result = await bootstrapProject({
@@ -621,7 +627,8 @@ export async function runCli(argv, io = {}) {
     if (command === 'operator' && subcommand === 'analyze') {
       const result = await analyzeOperator({
         target: resolveTarget(cwd, targetArg),
-        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        deep: Boolean(parsed.flags.deep)
       });
       if (parsed.flags.json) {
         writeJson(stdout, result);
@@ -634,6 +641,9 @@ export async function runCli(argv, io = {}) {
           if (tool.status !== 'not-detected') {
             write(stdout, `[${tool.status.toUpperCase()}] ${tool.id}: ${tool.nextStep}\n`);
           }
+        }
+        if (result.deep) {
+          write(stdout, `Deep: ${result.deep.summary.astGrepMatches} AST match(es), ${result.deep.summary.lspSymbols} LSP symbol(s)\n`);
         }
       }
       return 0;
@@ -799,6 +809,7 @@ export async function runCli(argv, io = {}) {
       } else {
         write(stdout, `Adapter config: ${result.adapter}\n`);
         write(stdout, `Hook command: ${result.hookCommand}\n`);
+        write(stdout, `MCP command: ${result.mcp.command} ${result.mcp.args.join(' ')}\n`);
         for (const warning of result.warnings) {
           write(stdout, `[WARN] ${warning.message}\n`);
         }
@@ -964,6 +975,7 @@ function helpText() {
 
 Usage:
   ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]
+  ai-playbook mcp
   ai-playbook doctor <target> [--strict] [--json]
   ai-playbook doctor <target> --reminder [--json]
   ai-playbook guides sync <target> [--dry-run] [--force]
@@ -997,7 +1009,7 @@ Usage:
   ai-playbook operator delta <target> --before <preflight-json> [--json]
   ai-playbook operator research <target> --query <text> [--path <file>] [--max-results N] [--json]
   ai-playbook operator context <target> --path <file> [--json]
-  ai-playbook operator analyze <target> [--path <file>] [--json]
+  ai-playbook operator analyze <target> [--deep] [--path <file>] [--json]
   ai-playbook operator map <target> [--json]
   ai-playbook operator audit <target> [--json]
   ai-playbook operator gc <target> [--apply] [--json]

@@ -56,6 +56,7 @@ export async function renderAdapterConfig(options) {
 
   const hookCommand = adapterHookCommand(repoRoot, adapterConfig);
   const config = await adapterExampleWithCommand(repoRoot, adapterConfig, hookCommand);
+  const mcp = renderMcpConfig();
   return {
     schemaVersion: SCHEMA_VERSION,
     ok: true,
@@ -63,6 +64,7 @@ export async function renderAdapterConfig(options) {
     adapter,
     hookCommand,
     config,
+    mcp,
     warnings
   };
 }
@@ -165,6 +167,33 @@ function adapterConfigFor(adapter) {
 function adapterHookCommand(repoRoot, adapterConfig) {
   const hookPath = path.resolve(repoRoot, ...adapterConfig.hookPath.split('/'));
   return `node "${hookPath.replace(/"/g, '\\"')}"`;
+}
+
+function renderMcpConfig() {
+  const npxCommand = {
+    command: 'npx',
+    args: ['ai-agent-playbook', 'mcp']
+  };
+  const globalCommand = {
+    command: 'ai-playbook',
+    args: ['mcp']
+  };
+  return {
+    ...npxCommand,
+    config: {
+      mcpServers: {
+        'ai-playbook': npxCommand
+      }
+    },
+    globalCommand: {
+      ...globalCommand,
+      config: {
+        mcpServers: {
+          'ai-playbook': globalCommand
+        }
+      }
+    }
+  };
 }
 
 async function adapterExampleWithCommand(repoRoot, adapterConfig, hookCommand) {

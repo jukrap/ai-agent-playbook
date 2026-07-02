@@ -153,6 +153,7 @@ These commands expose the v2 capability model and generated local runtime surfac
 | `reference inventory <reference-dir>` | Summarize a local reference collection before deciding what to adopt. | No | `npx ai-agent-playbook reference inventory _reference --json` |
 | `reference ledger-check <target>` | Validate a reference adoption ledger for status values and local-only leaks. | No | `npx ai-agent-playbook reference ledger-check <target-project> --json` |
 | `runtime capability-history <target>` | Summarize local append-only capability history without running benchmarks or telemetry. | No | `npx ai-agent-playbook runtime capability-history <target-project> --json` |
+| `runtime schema-check <target>` | Validate runtime eval, witness, evidence-envelope, artifact, or source-registry JSON without writing files. | No | `npx ai-agent-playbook runtime schema-check <target-project> --path .ai-playbook/runtime/reports/evals/example.json --json` |
 | `index build <target>` | Preview or write `.ai-playbook/runtime/indexes/file-inventory.json`. | No unless `--apply` | `npx ai-agent-playbook index build <target-project> --json` |
 | `index status <target>` | Check whether the runtime file inventory exists. | No | `npx ai-agent-playbook index status <target-project> --json` |
 | `index search <target>` | Search local project text without writing the runtime index. | No | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
@@ -169,6 +170,8 @@ These commands expose the v2 capability model and generated local runtime surfac
 `reference ledger-check` validates `.ai-playbook/knowledge/reference-adoption-ledger.md` by default. It checks adoption statuses, local absolute paths, internal URLs, secret-like tokens, and oversized excerpts without writing files. Use `--path <ledger.md>` to check a different ledger inside the target project. JSON output includes `summary.capabilities` so adoption status can be reviewed by capability area. Add `--strict` when oversized fenced excerpts should fail the check instead of only warning.
 
 `runtime capability-history` reads `.ai-playbook/runtime/reports/capability-history.jsonl` when present. It groups entries by capability, reports the latest status, latest duration, baseline, and drift, and omits non-portable evidence paths from output instead of echoing machine-local paths. Missing history is a valid empty state.
+
+`runtime schema-check` reads a target-relative JSON file and validates compact local schemas such as `runtime.eval-definition`, `runtime.eval-run-report`, `runtime.capability-witness`, `runtime.evidence-envelope`, `runtime.source-registry`, or the generic runtime artifact envelope. It detects known `kind` values automatically; use `--kind <kind>` when checking ambiguous evidence envelopes. The command is read-only. Compact schema checks report local absolute paths, credential-looking values, and oversized inline evidence as conflicts.
 
 `write-gate preview` returns a `transaction.invocationId` and planned `transaction.advisoryPath` under `.ai-playbook/runtime/reports/write-gate/`. The preview stays read-only; the transaction fields are a stable handoff for later post-write or advisory-file work.
 

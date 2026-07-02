@@ -17,6 +17,7 @@ import {
   checkGuides,
   checkManagedManifest,
   checkCanonFacts,
+  checkRuntimeSchema,
   checkReferenceAdoptionLedger,
   catalogManagedManifest,
   contextStatus,
@@ -612,6 +613,26 @@ export async function runCli(argv, io = {}) {
         writeJson(stdout, result);
       } else {
         write(stdout, `Capability history: ${result.summary.entries} entr${result.summary.entries === 1 ? 'y' : 'ies'}, ${result.summary.capabilities} capability signal(s)\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'runtime' && subcommand === 'schema-check') {
+      const result = await checkRuntimeSchema({
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : '',
+        kind: typeof parsed.flags.kind === 'string' ? parsed.flags.kind : undefined
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Runtime schema: ${result.ok ? 'ok' : 'needs attention'} (${result.summary.conflicts} conflict(s))\n`);
         for (const warning of result.warnings) {
           write(stdout, `[WARN] ${warning.message}\n`);
         }
@@ -1334,7 +1355,8 @@ function needsValue(key) {
     'type',
     'message',
     'status',
-    'evidence'
+    'evidence',
+    'kind'
   ].includes(key);
 }
 
@@ -1424,6 +1446,7 @@ Usage:
   ai-playbook reference ledger-check <target> [--path <ledger.md>] [--strict] [--json]
   ai-playbook layout status <target> [--json]
   ai-playbook runtime capability-history <target> [--json]
+  ai-playbook runtime schema-check <target> --path <json> [--kind <kind>] [--json]
   ai-playbook index build <target> [--apply] [--json]
   ai-playbook index status <target> [--json]
   ai-playbook index search <target> --query <text> [--max-results N] [--json]

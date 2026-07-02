@@ -61,6 +61,8 @@ Runtime artifact JSON must keep a stable evidence envelope: `schemaVersion`, `ki
 
 `runtime capability-history` reads `.ai-playbook/runtime/reports/capability-history.jsonl` as an optional append-only local signal. It summarizes capability status, latest duration, baseline, and drift without running benchmarks, contacting networks, or enabling telemetry. Entries should use portable evidence paths; non-portable paths are omitted from output and reported as warnings.
 
+`runtime schema-check` validates target-relative JSON without writing files. It supports the generic runtime artifact envelope plus compact schemas for eval definitions, eval run reports, capability witnesses, evidence envelopes, and `.ai-playbook/knowledge/sources.json`. Compact schema checks reject local absolute paths, credential-looking values, invalid enum values, non-portable artifact paths, and oversized inline evidence, so generated reports and source registry entries stay reviewable before any canon or documentation promotion.
+
 ## Workflow run records
 
 `workflow run-preview` is the current implemented workflow command. It reads a target-local recipe first, falls back to the bundled recipe, parses the run contract, and returns generated evidence without writing files.

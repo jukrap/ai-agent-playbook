@@ -32,6 +32,7 @@ export { buildRuntimeIndex, runtimeIndexStatus, searchRuntimeIndex } from './run
 export { previewCapabilityHistory } from './runtime/capability-history.mjs';
 export { buildDependencyInventoryIndex } from './runtime/dependency-inventory.mjs';
 export { buildRouteApiHintsIndex } from './runtime/route-api-hints.mjs';
+export { checkRuntimeSchema, validateRuntimeSchema } from './runtime/schemas.mjs';
 export { buildSymbolOutlineIndex } from './runtime/symbol-outline.mjs';
 export { previewWorkflowRun, startWorkflowRun } from './runtime/workflow-runs.mjs';
 export { checkCanonFacts, draftCanonFacts, promoteCanonFacts } from './memory/canon.mjs';

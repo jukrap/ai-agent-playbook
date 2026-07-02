@@ -150,6 +150,7 @@ These commands expose the v2 capability model and generated local runtime surfac
 | `index search <target>` | Search local project text without writing the runtime index. | No | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
 | `canon draft <target>` | Draft promotion-ready fact candidates from runtime index and reports. | No | `npx ai-agent-playbook canon draft <target-project> --json` |
 | `canon check <target>` | Check promoted canon facts in memory against runtime evidence and current files. | No | `npx ai-agent-playbook canon check <target-project> --json` |
+| `canon promote <target>` | Preview or write reviewed canon facts from a runtime report into memory or knowledge references. | No unless `--apply --reviewed` | `npx ai-agent-playbook canon promote <target-project> --source .ai-playbook/runtime/reports/example.json --to .ai-playbook/memory/maps/canon.json --json` |
 | `write-gate preview <target>` | Preview write risk for an intent and optional path before editing. | No | `npx ai-agent-playbook write-gate preview <target-project> --intent "change auth flow" --path src/example.ts --json` |
 | `write-gate advisory <target>` | Preview or save a pre-write advisory report under playbook runtime. | No unless `--apply` | `npx ai-agent-playbook write-gate advisory <target-project> --intent "change auth flow" --path src/example.ts --apply --json` |
 | `write-gate post-check <target>` | Compare a saved advisory snapshot with current files after editing. | No | `npx ai-agent-playbook write-gate post-check <target-project> --advisory .ai-playbook/runtime/reports/write-gate/pre-write-advisory.<id>.json --json` |
@@ -163,6 +164,8 @@ These commands expose the v2 capability model and generated local runtime surfac
 `write-gate post-check` reads a saved advisory and compares its snapshot with current files. If the advisory is missing, invalid, or lacks a snapshot, the command reports `summary.status: "unknown"` instead of claiming the change is clean.
 
 `canon draft` proposes facts from `.ai-playbook/runtime/indexes/file-inventory.json` and JSON reports under `.ai-playbook/runtime/reports/`. `canon check` reads promoted JSON facts under `.ai-playbook/memory/` or a specific `--path <canon-json>` and reports `verified`, `missing`, `stale`, `changed`, and `unverified` states without writing files.
+
+`canon promote` accepts `--source <runtime-index-or-report-json>` and `--to <memory-or-reference-json>`. The source must be a JSON file under `.ai-playbook/runtime/indexes/` or `.ai-playbook/runtime/reports/`. It writes only when both `--apply` and `--reviewed` are present, and only to JSON files under `.ai-playbook/memory/` or `.ai-playbook/knowledge/references/`.
 
 Runtime output lives under `.ai-playbook/runtime/`. Do not copy generated output into `.ai-playbook/memory/` until it has been reviewed and promoted intentionally.
 

@@ -45,6 +45,7 @@ test('harness facade keeps the public runtime exports', () => {
     'migratePlaybookPath',
     'parseMaxChars',
     'postCheckWriteGate',
+    'promoteCanonFacts',
     'previewWriteGate',
     'pruneManagedManifest',
     'recordRun',

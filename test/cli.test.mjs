@@ -205,6 +205,54 @@ test('canon draft and check keep runtime evidence read-only until promotion', as
   assert.equal(draftReport.facts.some((fact) => fact.kind === 'write-gate-advisory'), true);
   assert.deepEqual(await listRelativeFiles(target), beforeDraft);
 
+  const promotedMemoryPath = '.ai-playbook/memory/maps/promoted-canon.json';
+  const promotePreview = capture(target);
+  assert.equal(await runCli(['canon', 'promote', '.', '--source', advisoryPath, '--to', promotedMemoryPath, '--json'], promotePreview), 0);
+  const promotePreviewReport = JSON.parse(promotePreview.out());
+  assert.equal(promotePreviewReport.applied, false);
+  assert.equal(promotePreviewReport.mode.writes, false);
+  assert.equal(promotePreviewReport.summary.facts > 0, true);
+  assert.equal(existsSync(path.join(target, ...promotedMemoryPath.split('/'))), false);
+  assert.deepEqual(await listRelativeFiles(target), beforeDraft);
+
+  const blockedPromotion = capture(target);
+  assert.equal(await runCli(['canon', 'promote', '.', '--source', advisoryPath, '--to', 'docs/canon.json', '--json'], blockedPromotion), 1);
+  const blockedPromotionReport = JSON.parse(blockedPromotion.out());
+  assert.equal(blockedPromotionReport.conflicts.some((conflict) => conflict.id === 'canon.promote.destination-not-allowed'), true);
+
+  const blockedSource = capture(target);
+  assert.equal(await runCli(['canon', 'promote', '.', '--source', '.ai-playbook/runtime/tmp/loose.json', '--to', promotedMemoryPath, '--json'], blockedSource), 1);
+  const blockedSourceReport = JSON.parse(blockedSource.out());
+  assert.equal(blockedSourceReport.conflicts.some((conflict) => conflict.id === 'canon.promote.source-not-runtime'), true);
+
+  const blockedDestinationType = capture(target);
+  assert.equal(await runCli(['canon', 'promote', '.', '--source', advisoryPath, '--to', '.ai-playbook/memory/maps/promoted-canon.md', '--json'], blockedDestinationType), 1);
+  const blockedDestinationTypeReport = JSON.parse(blockedDestinationType.out());
+  assert.equal(blockedDestinationTypeReport.conflicts.some((conflict) => conflict.id === 'canon.promote.destination-not-json'), true);
+
+  const unreviewedPromotion = capture(target);
+  assert.equal(await runCli(['canon', 'promote', '.', '--source', advisoryPath, '--to', promotedMemoryPath, '--apply', '--json'], unreviewedPromotion), 1);
+  const unreviewedPromotionReport = JSON.parse(unreviewedPromotion.out());
+  assert.equal(unreviewedPromotionReport.conflicts.some((conflict) => conflict.id === 'canon.promote.review-required'), true);
+  assert.equal(existsSync(path.join(target, ...promotedMemoryPath.split('/'))), false);
+
+  const promotedReferencePath = '.ai-playbook/knowledge/references/promoted-canon.json';
+  const appliedPromotion = capture(target);
+  assert.equal(await runCli(['canon', 'promote', '.', '--source', advisoryPath, '--to', promotedReferencePath, '--apply', '--reviewed', '--json'], appliedPromotion), 0);
+  const appliedPromotionReport = JSON.parse(appliedPromotion.out());
+  assert.equal(appliedPromotionReport.applied, true);
+  assert.equal(appliedPromotionReport.mode.writes, true);
+  assert.equal(existsSync(path.join(target, ...promotedReferencePath.split('/'))), true);
+  const promotedJson = JSON.parse(await readFile(path.join(target, ...promotedReferencePath.split('/')), 'utf8'));
+  assert.equal(promotedJson.kind, 'canon.fact-set');
+  assert.equal(promotedJson.audit.reviewed, true);
+  assert.equal(promotedJson.facts.length, appliedPromotionReport.summary.facts);
+
+  const promotedCheck = capture(target);
+  assert.equal(await runCli(['canon', 'check', '.', '--path', promotedReferencePath, '--json'], promotedCheck), 0);
+  const promotedCheckReport = JSON.parse(promotedCheck.out());
+  assert.equal(promotedCheckReport.summary.verified, promotedJson.facts.length);
+
   await writeFile(path.join(target, 'src', 'changed.ts'), 'export const changed = "after";\n');
   await mkdir(path.join(target, '.ai-playbook', 'memory', 'maps'), { recursive: true });
   await writeFile(path.join(target, '.ai-playbook', 'memory', 'maps', 'canon.json'), `${JSON.stringify({

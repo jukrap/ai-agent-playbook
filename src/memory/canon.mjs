@@ -1,4 +1,4 @@
-import { readFile, stat } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
@@ -83,6 +83,133 @@ export async function checkCanonFacts({ target, filePath }) {
     summary: summarizeCheckedFacts(checkedFacts, warnings, conflicts),
     sources: loaded.sources,
     facts: checkedFacts,
+    warnings,
+    conflicts
+  };
+}
+
+export async function promoteCanonFacts({ target, sourcePath, toPath, apply = false, reviewed = false }) {
+  await assertDirectory(target, 'Target repository does not exist');
+  if (!sourcePath || !String(sourcePath).trim()) throw new Error('Missing --source.');
+  if (!toPath || !String(toPath).trim()) throw new Error('Missing --to.');
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const warnings = [];
+  const conflicts = [];
+  const source = resolveTargetFile(resolvedTarget, sourcePath);
+  const destination = resolveTargetFile(resolvedTarget, toPath);
+
+  if (!source.ok || !isAllowedPromotionSource(playbook, source.fullPath)) {
+    conflicts.push({
+      id: 'canon.promote.source-not-runtime',
+      message: 'Canon promotion source must be a runtime index/report JSON inside the active playbook.',
+      paths: [normalizePortablePath(String(sourcePath))]
+    });
+  } else if (!existsSync(source.fullPath)) {
+    conflicts.push({
+      id: 'canon.promote.source-missing',
+      message: `Canon promotion source is missing: ${source.path}.`,
+      paths: [source.path]
+    });
+  }
+
+  if (!destination.ok || !isAllowedPromotionDestination(playbook, destination.fullPath)) {
+    conflicts.push({
+      id: 'canon.promote.destination-not-allowed',
+      message: 'Canon promotion destination must stay inside playbook memory or knowledge/references.',
+      paths: [normalizePortablePath(String(toPath))]
+    });
+  } else if (!isJsonFile(destination.path)) {
+    conflicts.push({
+      id: 'canon.promote.destination-not-json',
+      message: 'Canon promotion destination must be a JSON file.',
+      paths: [destination.path]
+    });
+  }
+  if (apply && !reviewed) {
+    conflicts.push({
+      id: 'canon.promote.review-required',
+      message: 'Use --reviewed with --apply after reviewing the proposed canon facts.',
+      paths: destination.ok ? [destination.path] : []
+    });
+  }
+  if (apply && destination.ok && existsSync(destination.fullPath)) {
+    conflicts.push({
+      id: 'canon.promote.destination-exists',
+      message: `Refusing to overwrite existing canon file: ${destination.path}.`,
+      paths: [destination.path]
+    });
+  }
+
+  let facts = [];
+  let sourceReport = null;
+  const sourceReadable = source.ok && existsSync(source.fullPath) && isAllowedPromotionSource(playbook, source.fullPath);
+  if (sourceReadable) {
+    sourceReport = await readJsonReport({ target: resolvedTarget, file: source.fullPath, relativePath: source.path });
+    if (sourceReport && !sourceReport.ok) {
+      conflicts.push({
+        id: 'canon.promote.source-malformed',
+        message: `Could not parse promotion source ${source.path}: ${sourceReport.message}`,
+        paths: [source.path]
+      });
+    } else if (sourceReport?.ok) {
+      facts = [draftFactFromReport(sourceReport)];
+    }
+  }
+
+  if (facts.length === 0 && conflicts.length === 0) {
+    warnings.push({
+      id: 'canon.promote.no-facts',
+      message: 'No canon facts could be drafted from the source report.',
+      paths: source.ok ? [source.path] : []
+    });
+  }
+
+  const now = new Date().toISOString();
+  const document = buildPromotionDocument({
+    sourcePath: source.ok ? source.path : normalizePortablePath(String(sourcePath)),
+    destinationPath: destination.ok ? destination.path : normalizePortablePath(String(toPath)),
+    facts,
+    reviewed: Boolean(reviewed),
+    generatedAt: now,
+    applied: Boolean(apply && conflicts.length === 0)
+  });
+  const shouldWrite = Boolean(apply && conflicts.length === 0);
+  if (!apply && conflicts.length === 0) {
+    warnings.push({
+      id: 'canon.promote.preview-only',
+      message: 'Canon promotion was previewed only. Add --apply --reviewed to write the reviewed facts.',
+      paths: destination.ok ? [destination.path] : []
+    });
+  }
+  if (shouldWrite) {
+    await mkdir(path.dirname(destination.fullPath), { recursive: true });
+    await writeFile(destination.fullPath, `${JSON.stringify(document, null, 2)}\n`);
+  }
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: conflicts.length === 0,
+    target: resolvedTarget,
+    mode: { localOnly: true, network: false, writes: shouldWrite },
+    applied: shouldWrite,
+    sourceReport: source.ok ? source.path : normalizePortablePath(String(sourcePath)),
+    destination: destination.ok ? destination.path : normalizePortablePath(String(toPath)),
+    reviewed: Boolean(reviewed),
+    summary: {
+      facts: facts.length,
+      operations: 1,
+      warnings: warnings.length,
+      conflicts: conflicts.length
+    },
+    factIds: facts.map((fact) => fact.id),
+    operations: [{
+      id: 'canon.promote.write',
+      action: 'write',
+      path: destination.ok ? destination.path : normalizePortablePath(String(toPath)),
+      applied: shouldWrite
+    }],
+    document,
     warnings,
     conflicts
   };
@@ -173,6 +300,35 @@ function draftRuntimeReportFact(report) {
       warnings: value.warnings?.length ?? 0,
       conflicts: value.conflicts?.length ?? 0
     }
+  };
+}
+
+function draftFactFromReport(report) {
+  return normalizePortablePath(report.path).endsWith(INDEX_REPORT)
+    ? draftIndexFact(report)
+    : draftRuntimeReportFact(report);
+}
+
+function buildPromotionDocument({ sourcePath, destinationPath, facts, reviewed, generatedAt, applied }) {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'canon.fact-set',
+    audit: {
+      sourceReport: sourcePath,
+      destination: destinationPath,
+      reviewed,
+      generatedAt,
+      promotedAt: applied ? generatedAt : null,
+      note: 'Generated from reviewed runtime evidence; keep runtime output separate from trusted memory.'
+    },
+    facts: facts.map((fact) => ({
+      ...fact,
+      promotion: {
+        sourceReport: sourcePath,
+        reviewed,
+        promotedAt: applied ? generatedAt : null
+      }
+    }))
   };
 }
 
@@ -500,6 +656,35 @@ function summarizeCheckedFacts(facts, warnings, conflicts) {
 
 function reportObject(report) {
   return isRecord(report.value) ? report.value : {};
+}
+
+function isInsideRuntime(playbook, fullPath) {
+  if (!fullPath) return false;
+  const runtimeRoot = path.resolve(playbook.root, 'runtime');
+  const relative = path.relative(runtimeRoot, fullPath);
+  return Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative);
+}
+
+function isAllowedPromotionSource(playbook, fullPath) {
+  if (!isInsideRuntime(playbook, fullPath)) return false;
+  const relative = normalizePortablePath(path.relative(playbook.root, fullPath));
+  if (!isJsonFile(relative)) return false;
+  return relative.startsWith('runtime/indexes/') || relative.startsWith('runtime/reports/');
+}
+
+function isAllowedPromotionDestination(playbook, fullPath) {
+  if (!fullPath) return false;
+  return [
+    path.resolve(playbook.root, 'memory'),
+    path.resolve(playbook.root, 'knowledge', 'references')
+  ].some((root) => {
+    const relative = path.relative(root, fullPath);
+    return Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative);
+  });
+}
+
+function isJsonFile(portablePath) {
+  return normalizePortablePath(portablePath).toLowerCase().endsWith('.json');
 }
 
 function resolveTargetFile(target, portablePath) {

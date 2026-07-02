@@ -69,6 +69,7 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `runtime-index-cache-design`: reviews runtime reports, indexes, graphs, caches, artifact schemas, invalidation, canon promotion, and generated evidence boundaries.
 - `capability-witness-history`: reviews append-only capability witnesses, baseline comparison, skipped/degraded status, and runtime reliability history.
 - `pre-action-fact-gate`: gathers concrete facts before broad, destructive, owner-creating, or high-blast-radius actions.
+- `evidence-locator-integrity`: checks reopenable evidence locators, scan ranges, freshness, confidence, source boundaries, and generated-evidence caveats.
 - `agent-skill-authoring`: reusable skill structure, trigger descriptions, references, and skill/template boundaries.
 
 ## Delivery and verification map

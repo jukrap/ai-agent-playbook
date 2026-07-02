@@ -172,6 +172,7 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `runtime-index-cache-design`: design or review runtime reports, indexes, graphs, caches, artifact schemas, invalidation, canon promotion, generated evidence, or local-only runtime storage.
 - `capability-witness-history`: design or review append-only capability witnesses, baseline comparison, skipped/degraded status, and runtime reliability history.
 - `pre-action-fact-gate`: gather concrete facts before broad, destructive, owner-creating, or high-blast-radius actions.
+- `evidence-locator-integrity`: check claims, reports, citations, memory updates, or handoffs for reopenable locators, scan ranges, freshness, confidence, source boundaries, and generated-evidence caveats.
 - `boundary-review`: review FSD, layered, DDD, monorepo, package ownership, dependency direction, and coupling boundaries.
 - `feature-slice-boundary`: change or review FSD, feature-sliced, vertical-slice, feature-first, route-level, module-level, or component-domain boundaries.
 - `domain-model-change`: change or review domain entities, aggregates, value objects, services, policies, use cases, repositories, adapters, invariants, or transaction boundaries.

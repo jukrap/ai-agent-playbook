@@ -8,6 +8,7 @@ import {
   catalogManagedManifest,
   checkCanonFacts,
   checkContracts,
+  checkEvidenceLocators,
   checkManagedManifest,
   checkReferenceAdoptionLedger,
   checkRuntimeSchema,
@@ -104,6 +105,13 @@ export function registerPlaybookMcpTools(server, options) {
       target: args.target,
       filePath: args.path,
       kind: args.kind
+    })),
+    tool('evidence_locator_check', 'Validate JSON or Markdown evidence locators, scan ranges, source boundaries, and safe values without writing files.', {
+      target: targetSchema,
+      path: z.string().min(1).describe('JSON or Markdown path inside the target project.')
+    }, (args) => checkEvidenceLocators({
+      target: args.target,
+      filePath: args.path
     })),
     tool('index_search', 'Search local project files without writing the runtime index.', {
       target: targetSchema,

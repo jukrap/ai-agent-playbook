@@ -6,6 +6,7 @@ import { lintSkills, runSkillsLifecycle } from './skills-lifecycle.mjs';
 import { runMcpServer } from './mcp-server.mjs';
 import {
   buildRuntimeIndex,
+  buildSymbolOutlineIndex,
   buildProjectContext,
   buildDoctorReminderSignal,
   bootstrapProject,
@@ -575,6 +576,19 @@ export async function runCli(argv, io = {}) {
           const first = item.snippets[0];
           write(stdout, `[${item.category}] ${item.path}${first ? `:${first.line} ${first.text}` : ''}\n`);
         }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'index' && subcommand === 'symbol-outline') {
+      const result = await buildSymbolOutlineIndex({
+        target: resolveTarget(cwd, targetArg),
+        maxEntries: parseMaxResults(parsed.flags['max-results'], 100)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Symbol outline: ${result.summary.entries} symbol(s), ${result.summary.filesScanned} file(s), preview\n`);
       }
       return result.ok ? 0 : 1;
     }
@@ -1296,6 +1310,7 @@ Usage:
   ai-playbook index build <target> [--apply] [--json]
   ai-playbook index status <target> [--json]
   ai-playbook index search <target> --query <text> [--max-results N] [--json]
+  ai-playbook index symbol-outline <target> [--max-results N] [--json]
   ai-playbook canon draft <target> [--max-results N] [--json]
   ai-playbook canon check <target> [--path <canon-json>] [--json]
   ai-playbook canon promote <target> --source <runtime-report> --to <memory-json> [--apply] [--reviewed] [--json]

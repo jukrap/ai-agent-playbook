@@ -28,5 +28,6 @@ export { capabilityCatalog, skillCatalog, workflowCatalog } from './catalog/taxo
 export { checkReferenceAdoptionLedger, inventoryReferenceDirectory } from './catalog/reference-adoption.mjs';
 export { describePlaybookLayout, migratePlaybookLayout } from './layout/playbook-layout-v2.mjs';
 export { buildRuntimeIndex, runtimeIndexStatus, searchRuntimeIndex } from './runtime/indexes.mjs';
+export { buildSymbolOutlineIndex } from './runtime/symbol-outline.mjs';
 export { checkCanonFacts, draftCanonFacts, promoteCanonFacts } from './memory/canon.mjs';
 export { createWriteGateAdvisory, postCheckWriteGate, previewWriteGate } from './operator/write-gate.mjs';

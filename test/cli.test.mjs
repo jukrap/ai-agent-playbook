@@ -46,8 +46,10 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   const target = await tempRepo('harness os-v2-공백-');
   await mkdir(path.join(target, 'src'), { recursive: true });
   await mkdir(path.join(target, 'src', 'runtime'), { recursive: true });
-  await writeFile(path.join(target, 'src', 'feature.ts'), 'export const featureFlag = "harness-os";\n');
+  await writeFile(path.join(target, 'src', 'feature.ts'), 'export const featureFlag = "harness-os";\nexport function calculateFeature() {\n  return featureFlag;\n}\nexport const DashboardPanel = () => null;\n');
   await writeFile(path.join(target, 'src', 'runtime', 'index.ts'), 'export const runtimeSource = true;\n');
+  await writeFile(path.join(target, 'src', 'service.py'), 'def process_event(value):\n    return value\n');
+  await writeFile(path.join(target, 'src', 'App.java'), 'public class App {\n  public void handle() {}\n}\n');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
 
   const catalog = capture(target);
@@ -94,6 +96,23 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   assert.equal(await runCli(['index', 'search', '.', '--query', 'harness-os', '--json'], search), 0);
   const searchReport = JSON.parse(search.out());
   assert.equal(searchReport.summary.matches >= 1, true);
+
+  await mkdir(path.join(target, '.ai-playbook', 'runtime', 'indexes'), { recursive: true });
+  await writeFile(path.join(target, '.ai-playbook', 'runtime', 'indexes', 'generated.ts'), 'export const generatedIgnored = true;\n');
+  const symbolOutline = capture(target);
+  assert.equal(await runCli(['index', 'symbol-outline', '.', '--json'], symbolOutline), 0);
+  const symbolOutlineReport = JSON.parse(symbolOutline.out());
+  assert.equal(symbolOutlineReport.kind, 'runtime.symbol-outline');
+  assert.equal(symbolOutlineReport.mode.writes, false);
+  assert.equal(symbolOutlineReport.summary.entries >= 6, true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'runtime', 'indexes', 'symbol-outline.json')), false);
+  assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/feature.ts' && entry.kind === 'constant' && entry.name === 'featureFlag'), true);
+  assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/feature.ts' && entry.kind === 'function' && entry.name === 'calculateFeature'), true);
+  assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/feature.ts' && entry.kind === 'component' && entry.name === 'DashboardPanel'), true);
+  assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/runtime/index.ts' && entry.name === 'runtimeSource'), true);
+  assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/service.py' && entry.kind === 'function' && entry.name === 'process_event'), true);
+  assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/App.java' && entry.kind === 'class' && entry.name === 'App'), true);
+  assert.equal(symbolOutlineReport.entries.some((entry) => entry.name === 'generatedIgnored'), false);
 
   const gate = capture(target);
   assert.equal(await runCli(['write-gate', 'preview', '.', '--intent', 'edit runtime report', '--path', '.ai-playbook/runtime/indexes/file-inventory.json', '--json'], gate), 1);

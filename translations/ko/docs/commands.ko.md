@@ -148,6 +148,7 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 | `index build <target>` | `.ai-playbook/runtime/indexes/file-inventory.json` 생성을 preview하거나 씁니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook index build <target-project> --json` |
 | `index status <target>` | runtime file inventory 존재 여부를 확인합니다. | 아니오 | `npx ai-agent-playbook index status <target-project> --json` |
 | `index search <target>` | runtime index를 쓰지 않고 local project text를 검색합니다. | 아니오 | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
+| `index symbol-outline <target>` | function, class, component, method, binding hint를 file, line, confidence, source pattern metadata와 함께 preview합니다. | 아니오 | `npx ai-agent-playbook index symbol-outline <target-project> --json` |
 | `canon draft <target>` | runtime index와 report에서 promotion-ready fact 후보를 작성합니다. | 아니오 | `npx ai-agent-playbook canon draft <target-project> --json` |
 | `canon check <target>` | memory에 승격된 canon fact를 runtime evidence와 현재 file 기준으로 확인합니다. | 아니오 | `npx ai-agent-playbook canon check <target-project> --json` |
 | `canon promote <target>` | runtime report의 reviewed canon fact를 memory 또는 knowledge references로 preview하거나 씁니다. | `--apply --reviewed`가 있을 때만 예 | `npx ai-agent-playbook canon promote <target-project> --source .ai-playbook/runtime/reports/example.json --to .ai-playbook/memory/maps/canon.json --json` |

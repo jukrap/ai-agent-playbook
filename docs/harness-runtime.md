@@ -29,6 +29,14 @@ The short role split is:
 - `.ai-playbook/`: target-project memory, runs, contracts, guides, plans, and worklogs.
 - Adapters: optional environment-specific hook/config rendering; never the default install path.
 
+## Runtime indexes
+
+Runtime indexes are generated evidence, not trusted memory. They belong under `.ai-playbook/runtime/indexes/` when written, and they should be promoted into memory only through an explicit canon review.
+
+`index build` can write the file inventory with `--apply`. `index search` is always read-only and scans local text on demand. `index symbol-outline` is a read-only preview in this batch: it returns function, class, component, method, and binding hints with file, line, language, confidence, and source pattern metadata, but does not create `.ai-playbook/runtime/indexes/symbol-outline.json`.
+
+The symbol outline uses lightweight local patterns for common JS/TS, Python, Java, Kotlin, C#, Go, PHP, Ruby, and Rust source files. It skips dependency/generated folders, large files, and `.ai-playbook/runtime/`. Treat low-confidence entries as navigation hints, not canonical architecture.
+
 ## MCP tool surface
 
 Start the local server with:

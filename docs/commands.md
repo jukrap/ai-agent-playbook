@@ -148,6 +148,7 @@ These commands expose the v2 capability model and generated local runtime surfac
 | `index build <target>` | Preview or write `.ai-playbook/runtime/indexes/file-inventory.json`. | No unless `--apply` | `npx ai-agent-playbook index build <target-project> --json` |
 | `index status <target>` | Check whether the runtime file inventory exists. | No | `npx ai-agent-playbook index status <target-project> --json` |
 | `index search <target>` | Search local project text without writing the runtime index. | No | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
+| `index symbol-outline <target>` | Preview function, class, component, method, and binding hints with file, line, confidence, and source pattern metadata. | No | `npx ai-agent-playbook index symbol-outline <target-project> --json` |
 | `canon draft <target>` | Draft promotion-ready fact candidates from runtime index and reports. | No | `npx ai-agent-playbook canon draft <target-project> --json` |
 | `canon check <target>` | Check promoted canon facts in memory against runtime evidence and current files. | No | `npx ai-agent-playbook canon check <target-project> --json` |
 | `canon promote <target>` | Preview or write reviewed canon facts from a runtime report into memory or knowledge references. | No unless `--apply --reviewed` | `npx ai-agent-playbook canon promote <target-project> --source .ai-playbook/runtime/reports/example.json --to .ai-playbook/memory/maps/canon.json --json` |

@@ -25,6 +25,7 @@ Default read-only additions:
 - `workflow_run_preview`
 - `playbook_layout`
 - `index_status`
+- `runtime_schema_check`
 - `index_search`
 - `symbol_outline`
 - `dependency_inventory`

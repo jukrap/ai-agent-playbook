@@ -63,6 +63,8 @@ Runtime artifact JSON must keep a stable evidence envelope: `schemaVersion`, `ki
 
 `runtime schema-check` validates target-relative JSON without writing files. It supports the generic runtime artifact envelope plus compact schemas for eval definitions, eval run reports, capability witnesses, evidence envelopes, and `.ai-playbook/knowledge/sources.json`. Compact schema checks reject local absolute paths, credential-looking values, invalid enum values, non-portable artifact paths, and oversized inline evidence, so generated reports and source registry entries stay reviewable before any canon or documentation promotion.
 
+`graph preview` builds a read-only `runtime.repo-graph` report from current file inventory, symbol outline, dependency inventory, and route/API/data hints. It records compact nodes and source-backed edges for review, but it remains generated runtime evidence. Use canon or documentation promotion before moving stable facts into memory maps.
+
 ## Workflow run records
 
 `workflow run-preview` is the current implemented workflow command. It reads a target-local recipe first, falls back to the bundled recipe, parses the run contract, and returns generated evidence without writing files.

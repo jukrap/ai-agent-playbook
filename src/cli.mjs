@@ -38,6 +38,7 @@ import {
   postCheckWriteGate,
   previewCapabilityHistory,
   previewHarnessConfig,
+  previewRepoGraph,
   previewWorkflowRun,
   promoteCanonFacts,
   previewWriteGate,
@@ -721,6 +722,21 @@ export async function runCli(argv, io = {}) {
         writeJson(stdout, result);
       } else {
         write(stdout, `Route/API hints: ${result.summary.hints} hint(s), ${result.summary.filesScanned} file(s), preview\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'graph' && subcommand === 'preview') {
+      const maxResults = parseMaxResults(parsed.flags['max-results'], 100);
+      const result = await previewRepoGraph({
+        target: resolveTarget(cwd, targetArg),
+        maxNodes: maxResults,
+        maxEdges: maxResults * 2
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Repo graph: ${result.summary.nodes} node(s), ${result.summary.edges} edge(s), preview\n`);
       }
       return result.ok ? 0 : 1;
     }
@@ -1453,6 +1469,7 @@ Usage:
   ai-playbook index symbol-outline <target> [--max-results N] [--json]
   ai-playbook index dependency-inventory <target> [--json]
   ai-playbook index route-api-hints <target> [--max-results N] [--json]
+  ai-playbook graph preview <target> [--max-results N] [--json]
   ai-playbook canon draft <target> [--max-results N] [--json]
   ai-playbook canon check <target> [--path <canon-json>] [--json]
   ai-playbook canon promote <target> --source <runtime-report> --to <memory-json> [--apply] [--reviewed] [--json]

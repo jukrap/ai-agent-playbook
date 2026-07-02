@@ -160,6 +160,7 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 | `index symbol-outline <target>` | function, class, component, method, binding hint를 file, line, confidence, source pattern metadata와 함께 preview합니다. | 아니오 | `npx ai-agent-playbook index symbol-outline <target-project> --json` |
 | `index dependency-inventory <target>` | dependency manifest, lockfile, container base image, package script, CI action usage를 script 실행이나 network scan 없이 preview합니다. | 아니오 | `npx ai-agent-playbook index dependency-inventory <target-project> --json` |
 | `index route-api-hints <target>` | route, client API, SQL query, migration, data-object hint를 source pattern metadata와 함께 preview합니다. | 아니오 | `npx ai-agent-playbook index route-api-hints <target-project> --json` |
+| `graph preview <target>` | runtime file, symbol, route/API, dependency signal을 조합한 compact generated graph를 preview합니다. | 아니오 | `npx ai-agent-playbook graph preview <target-project> --json` |
 | `canon draft <target>` | runtime index와 report에서 promotion-ready fact 후보를 작성합니다. | 아니오 | `npx ai-agent-playbook canon draft <target-project> --json` |
 | `canon check <target>` | memory에 승격된 canon fact를 runtime evidence와 현재 file 기준으로 확인합니다. | 아니오 | `npx ai-agent-playbook canon check <target-project> --json` |
 | `canon promote <target>` | runtime report의 reviewed canon fact를 memory 또는 knowledge references로 preview하거나 씁니다. | `--apply --reviewed`가 있을 때만 예 | `npx ai-agent-playbook canon promote <target-project> --source .ai-playbook/runtime/reports/example.json --to .ai-playbook/memory/maps/canon.json --json` |
@@ -172,6 +173,8 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 `runtime capability-history`는 존재할 때 `.ai-playbook/runtime/reports/capability-history.jsonl`을 읽습니다. Entry를 capability별로 묶고 latest status, latest duration, baseline, drift를 보고하며, machine-local path를 그대로 출력하지 않도록 non-portable evidence path는 output에서 생략합니다. History가 없으면 정상적인 empty state입니다.
 
 `runtime schema-check`는 target-relative JSON file을 읽고 `runtime.eval-definition`, `runtime.eval-run-report`, `runtime.capability-witness`, `runtime.evidence-envelope`, `runtime.source-registry` 또는 generic runtime artifact envelope 같은 compact local schema를 검증합니다. 알려진 `kind` 값은 자동 감지하며, 모호한 evidence envelope를 확인할 때는 `--kind <kind>`를 사용할 수 있습니다. 이 명령은 read-only입니다. Compact schema check는 local absolute path, credential처럼 보이는 값, oversized inline evidence를 conflict로 보고합니다.
+
+`graph preview`는 기존 read-only runtime signal을 조합해 compact `runtime.repo-graph` report를 만듭니다. File, doc, symbol, route, data, package node와 `contains`, `defines-route`, `mentions`, `uses-package` 같은 source-backed edge를 포함합니다. Graph는 generated evidence일 뿐입니다. Report를 durable memory로 취급하지 말고 검토된 fact만 별도로 promote합니다.
 
 `write-gate preview`는 `.ai-playbook/runtime/reports/write-gate/` 아래 planned `transaction.advisoryPath`와 `transaction.invocationId`를 반환합니다. Preview는 read-only를 유지하며, transaction field는 이후 post-write 또는 advisory file 작업의 안정적인 handoff로 씁니다.
 

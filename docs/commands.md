@@ -160,6 +160,7 @@ These commands expose the v2 capability model and generated local runtime surfac
 | `index symbol-outline <target>` | Preview function, class, component, method, and binding hints with file, line, confidence, and source pattern metadata. | No | `npx ai-agent-playbook index symbol-outline <target-project> --json` |
 | `index dependency-inventory <target>` | Preview dependency manifests, lockfiles, container base images, package scripts, and CI action usage without executing scripts or network scans. | No | `npx ai-agent-playbook index dependency-inventory <target-project> --json` |
 | `index route-api-hints <target>` | Preview route, client API, SQL query, migration, and data-object hints with source pattern metadata. | No | `npx ai-agent-playbook index route-api-hints <target-project> --json` |
+| `graph preview <target>` | Preview a compact generated graph over runtime file, symbol, route/API, and dependency signals. | No | `npx ai-agent-playbook graph preview <target-project> --json` |
 | `canon draft <target>` | Draft promotion-ready fact candidates from runtime index and reports. | No | `npx ai-agent-playbook canon draft <target-project> --json` |
 | `canon check <target>` | Check promoted canon facts in memory against runtime evidence and current files. | No | `npx ai-agent-playbook canon check <target-project> --json` |
 | `canon promote <target>` | Preview or write reviewed canon facts from a runtime report into memory or knowledge references. | No unless `--apply --reviewed` | `npx ai-agent-playbook canon promote <target-project> --source .ai-playbook/runtime/reports/example.json --to .ai-playbook/memory/maps/canon.json --json` |
@@ -172,6 +173,8 @@ These commands expose the v2 capability model and generated local runtime surfac
 `runtime capability-history` reads `.ai-playbook/runtime/reports/capability-history.jsonl` when present. It groups entries by capability, reports the latest status, latest duration, baseline, and drift, and omits non-portable evidence paths from output instead of echoing machine-local paths. Missing history is a valid empty state.
 
 `runtime schema-check` reads a target-relative JSON file and validates compact local schemas such as `runtime.eval-definition`, `runtime.eval-run-report`, `runtime.capability-witness`, `runtime.evidence-envelope`, `runtime.source-registry`, or the generic runtime artifact envelope. It detects known `kind` values automatically; use `--kind <kind>` when checking ambiguous evidence envelopes. The command is read-only. Compact schema checks report local absolute paths, credential-looking values, and oversized inline evidence as conflicts.
+
+`graph preview` combines existing read-only runtime signals into a compact `runtime.repo-graph` report. It includes file, doc, symbol, route, data, and package nodes plus source-backed edges such as `contains`, `defines-route`, `mentions`, and `uses-package`. The graph is generated evidence only; promote reviewed facts separately instead of treating the report as durable memory.
 
 `write-gate preview` returns a `transaction.invocationId` and planned `transaction.advisoryPath` under `.ai-playbook/runtime/reports/write-gate/`. The preview stays read-only; the transaction fields are a stable handoff for later post-write or advisory-file work.
 

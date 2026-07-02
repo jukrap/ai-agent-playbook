@@ -16,6 +16,7 @@ import {
   checkReferenceAdoptionLedger,
   catalogManagedManifest,
   contextStatus,
+  createWriteGateAdvisory,
   createPlan,
   createWorklog,
   doctorProject,
@@ -588,6 +589,30 @@ export async function runCli(argv, io = {}) {
         write(stdout, `Write gate: ${result.ok ? 'ok' : 'blocked'} (${result.summary.candidates} candidate(s), ${result.summary.blockers} blocker(s))\n`);
         for (const blocker of result.blockers) {
           write(stdout, `[BLOCKER] ${blocker.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'write-gate' && subcommand === 'advisory') {
+      const result = await createWriteGateAdvisory({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        intent: typeof parsed.flags.intent === 'string' ? parsed.flags.intent : '',
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        maxResults: parseMaxResults(parsed.flags['max-results']),
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Write-gate advisory: ${result.ok ? 'ok' : 'blocked'} (${result.advisory.written ? 'written' : 'preview'})\n`);
+        write(stdout, `Advisory: ${result.advisory.path}\n`);
+        for (const blocker of result.blockers) {
+          write(stdout, `[BLOCKER] ${blocker.message}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -1186,6 +1211,7 @@ Usage:
   ai-playbook index status <target> [--json]
   ai-playbook index search <target> --query <text> [--max-results N] [--json]
   ai-playbook write-gate preview <target> --intent <text> [--path <file>] [--max-results N] [--json]
+  ai-playbook write-gate advisory <target> --intent <text> [--path <file>] [--max-results N] [--apply] [--json]
   ai-playbook managed check <target> [--json]
   ai-playbook managed catalog <target> [--json]
   ai-playbook managed adopt <target> [--apply] [--json]

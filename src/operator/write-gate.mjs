@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { preflightOperator } from '../operator-diagnostics.mjs';
 import { normalizePortablePath, normalizeTargetRelativePath, resolvePlaybookLayout, SCHEMA_VERSION } from '../harness/core.mjs';
 
@@ -76,6 +77,90 @@ export async function previewWriteGate({ repoRoot, target, intent, filePath, max
   };
 }
 
+export async function createWriteGateAdvisory({ repoRoot, target, intent, filePath, maxResults = 20, apply = false }) {
+  const preview = await previewWriteGate({ repoRoot, target, intent, filePath, maxResults });
+  const resolvedTarget = path.resolve(target);
+  const advisoryPath = preview.transaction.advisoryPath;
+  const advisoryTarget = resolveAdvisoryTarget({ target: resolvedTarget, advisoryPath });
+  const conflicts = [...(preview.conflicts ?? [])];
+  if (!advisoryTarget.ok) {
+    conflicts.push({
+      id: 'write-gate.advisory-path-invalid',
+      message: 'Advisory output path must stay inside playbook runtime reports.',
+      paths: [advisoryPath]
+    });
+  }
+
+  const generatedAt = new Date().toISOString();
+  const shouldWrite = Boolean(apply && preview.ok && advisoryTarget.ok && conflicts.length === 0);
+  const transaction = {
+    ...preview.transaction,
+    lifecycle: shouldWrite ? 'pre-write-advisory' : 'pre-write-advisory-preview',
+    applied: shouldWrite
+  };
+  const manifest = {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'write-gate.pre-write-advisory',
+    generatedAt,
+    target: resolvedTarget,
+    intent: String(intent),
+    path: preview.path,
+    scanRange: preview.path ? [preview.path] : preview.candidates.map((item) => item.path),
+    advisoryPath,
+    invocationId: transaction.invocationId
+  };
+  const advisoryDocument = {
+    ...preview,
+    transaction,
+    manifest,
+    generatedAt,
+    conflicts
+  };
+
+  if (shouldWrite) {
+    await mkdir(path.dirname(advisoryTarget.fullPath), { recursive: true });
+    await writeFile(advisoryTarget.fullPath, `${JSON.stringify(advisoryDocument, null, 2)}\n`);
+  }
+
+  const warnings = [
+    ...(preview.warnings ?? []),
+    ...(apply ? [] : [{
+      id: 'write-gate.advisory-dry-run',
+      message: 'Advisory was previewed only. Add --apply to write the runtime report.',
+      paths: [advisoryPath]
+    }])
+  ];
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: preview.ok && conflicts.length === 0,
+    target: resolvedTarget,
+    repoRoot: repoRoot ? path.resolve(repoRoot) : null,
+    mode: { localOnly: true, network: false, writes: shouldWrite },
+    transaction,
+    advisory: {
+      path: advisoryPath,
+      written: shouldWrite,
+      manifest
+    },
+    summary: {
+      ...preview.summary,
+      warnings: warnings.length,
+      conflicts: conflicts.length,
+      operations: 1
+    },
+    operations: [{
+      id: 'write-gate.advisory.write',
+      action: 'write',
+      path: advisoryPath,
+      applied: shouldWrite
+    }],
+    blockers: preview.blockers,
+    warnings,
+    conflicts
+  };
+}
+
 function isPlaybookRuntimePath(filePath) {
   const portablePath = normalizePortablePath(filePath);
   return (
@@ -84,4 +169,13 @@ function isPlaybookRuntimePath(filePath) {
     portablePath === 'ai-playbook/runtime' ||
     portablePath.startsWith('ai-playbook/runtime/')
   );
+}
+
+function resolveAdvisoryTarget({ target, advisoryPath }) {
+  const playbook = resolvePlaybookLayout(target);
+  const fullPath = path.resolve(target, ...advisoryPath.split('/'));
+  const allowedRoot = path.resolve(playbook.root, 'runtime', 'reports', 'write-gate');
+  const relative = path.relative(allowedRoot, fullPath);
+  const ok = Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative);
+  return { ok, fullPath, allowedRoot };
 }

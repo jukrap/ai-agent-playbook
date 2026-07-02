@@ -76,6 +76,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     ]) {
       assert.equal(names.includes(expected), true, `missing MCP tool ${expected}`);
     }
+    assert.equal(names.includes('write_gate_advisory'), false);
     assert.equal(listed.tools.every((tool) => tool.annotations?.readOnlyHint === true), true);
 
     const resources = await client.listResources();

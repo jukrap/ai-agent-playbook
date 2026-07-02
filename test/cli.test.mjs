@@ -111,6 +111,32 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   assert.equal(sourceGateReport.ok, true);
   assert.equal(sourceGateReport.blockers.some((blocker) => blocker.id === 'write-gate.runtime-target'), false);
 
+  const beforeAdvisory = await listRelativeFiles(target);
+  const advisoryDryRun = capture(target);
+  assert.equal(await runCli(['write-gate', 'advisory', '.', '--intent', 'edit runtime source module', '--path', 'src/runtime/index.ts', '--json'], advisoryDryRun), 0);
+  const advisoryDryRunReport = JSON.parse(advisoryDryRun.out());
+  assert.equal(advisoryDryRunReport.ok, true);
+  assert.equal(advisoryDryRunReport.transaction.lifecycle, 'pre-write-advisory-preview');
+  assert.equal(advisoryDryRunReport.transaction.applied, false);
+  assert.equal(advisoryDryRunReport.advisory.written, false);
+  assert.match(advisoryDryRunReport.advisory.path, /^\.ai-playbook\/runtime\/reports\/write-gate\/pre-write-advisory\.[0-9a-f-]{36}\.json$/);
+  assert.deepEqual(await listRelativeFiles(target), beforeAdvisory);
+
+  const advisoryApply = capture(target);
+  assert.equal(await runCli(['write-gate', 'advisory', '.', '--intent', 'edit runtime source module', '--path', 'src/runtime/index.ts', '--apply', '--json'], advisoryApply), 0);
+  const advisoryApplyReport = JSON.parse(advisoryApply.out());
+  assert.equal(advisoryApplyReport.ok, true);
+  assert.equal(advisoryApplyReport.transaction.lifecycle, 'pre-write-advisory');
+  assert.equal(advisoryApplyReport.transaction.applied, true);
+  assert.equal(advisoryApplyReport.advisory.written, true);
+  assert.equal(advisoryApplyReport.operations[0].applied, true);
+  const advisoryFile = path.join(target, ...advisoryApplyReport.advisory.path.split('/'));
+  assert.equal(existsSync(advisoryFile), true);
+  const advisoryJson = JSON.parse(await readFile(advisoryFile, 'utf8'));
+  assert.equal(advisoryJson.manifest.kind, 'write-gate.pre-write-advisory');
+  assert.equal(advisoryJson.transaction.invocationId, advisoryApplyReport.transaction.invocationId);
+  assert.equal(advisoryJson.intent, 'edit runtime source module');
+
   await cleanup(target);
 });
 

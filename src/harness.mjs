@@ -29,6 +29,7 @@ export { checkReferenceAdoptionLedger, inventoryReferenceDirectory } from './cat
 export { HARNESS_CONFIG_FILES, previewHarnessConfig } from './core/config.mjs';
 export { describePlaybookLayout, migratePlaybookLayout } from './layout/playbook-layout-v2.mjs';
 export { buildRuntimeIndex, runtimeIndexStatus, searchRuntimeIndex } from './runtime/indexes.mjs';
+export { previewCapabilityHistory } from './runtime/capability-history.mjs';
 export { buildDependencyInventoryIndex } from './runtime/dependency-inventory.mjs';
 export { buildRouteApiHintsIndex } from './runtime/route-api-hints.mjs';
 export { buildSymbolOutlineIndex } from './runtime/symbol-outline.mjs';

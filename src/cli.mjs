@@ -35,6 +35,7 @@ import {
   migratePlaybookPath,
   parseMaxChars,
   postCheckWriteGate,
+  previewCapabilityHistory,
   previewHarnessConfig,
   previewWorkflowRun,
   promoteCanonFacts,
@@ -574,6 +575,22 @@ export async function runCli(argv, io = {}) {
       } else {
         write(stdout, `Playbook layout: ${result.layout.version} (${result.layout.activeRoot})\n`);
         write(stdout, `Missing: ${result.summary.missingDirectories} directory item(s), ${result.summary.missingFiles} file(s)\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'runtime' && subcommand === 'capability-history') {
+      const result = await previewCapabilityHistory({ target: resolveTarget(cwd, targetArg) });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Capability history: ${result.summary.entries} entr${result.summary.entries === 1 ? 'y' : 'ies'}, ${result.summary.capabilities} capability signal(s)\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
       }
       return result.ok ? 0 : 1;
     }
@@ -1378,6 +1395,7 @@ Usage:
   ai-playbook reference inventory <reference-dir> [--max-results N] [--json]
   ai-playbook reference ledger-check <target> [--path <ledger.md>] [--strict] [--json]
   ai-playbook layout status <target> [--json]
+  ai-playbook runtime capability-history <target> [--json]
   ai-playbook index build <target> [--apply] [--json]
   ai-playbook index status <target> [--json]
   ai-playbook index search <target> --query <text> [--max-results N] [--json]

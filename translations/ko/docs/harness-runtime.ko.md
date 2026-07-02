@@ -59,6 +59,8 @@ Symbol outline은 JS/TS, Python, Java, Kotlin, C#, Go, PHP, Ruby, Rust source fi
 
 Runtime artifact JSON은 안정적인 evidence envelope를 유지해야 합니다. 필수 field는 `schemaVersion`, `kind`, `target`, `mode`, `generatedAt`, `summary`, `warnings`, `conflicts`입니다. Canon promotion은 이 envelope를 만족하지 않는 runtime source를 거부하므로, 오래되었거나 malformed된 generated evidence가 조용히 trusted memory로 승격되지 않습니다.
 
+`runtime capability-history`는 optional append-only local signal로 `.ai-playbook/runtime/reports/capability-history.jsonl`을 읽습니다. Benchmark 실행, network 접속, telemetry 활성화 없이 capability status, latest duration, baseline, drift를 요약합니다. Entry는 portable evidence path를 사용해야 하며, non-portable path는 output에서 생략하고 warning으로 보고합니다.
+
 ## MCP 도구 표면
 
 로컬 서버는 아래 명령으로 시작합니다.

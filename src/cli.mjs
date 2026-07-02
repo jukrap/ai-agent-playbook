@@ -502,7 +502,8 @@ export async function runCli(argv, io = {}) {
     if (command === 'reference' && subcommand === 'ledger-check') {
       const result = await checkReferenceAdoptionLedger({
         target: resolveTarget(cwd, targetArg),
-        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        strict: Boolean(parsed.flags.strict)
       });
       if (parsed.flags.json) {
         writeJson(stdout, result);
@@ -1179,7 +1180,7 @@ Usage:
   ai-playbook catalog check [--json]
   ai-playbook workflow list [--json]
   ai-playbook reference inventory <reference-dir> [--max-results N] [--json]
-  ai-playbook reference ledger-check <target> [--path <ledger.md>] [--json]
+  ai-playbook reference ledger-check <target> [--path <ledger.md>] [--strict] [--json]
   ai-playbook layout status <target> [--json]
   ai-playbook index build <target> [--apply] [--json]
   ai-playbook index status <target> [--json]

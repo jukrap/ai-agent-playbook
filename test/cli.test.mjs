@@ -154,6 +154,18 @@ test('reference inventory summarizes local reference collections without writing
 test('reference ledger check validates statuses and local-only leaks without writing files', async () => {
   const target = await tempRepo('reference ledger-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  const customLedgerPath = path.join(target, '.ai-playbook', 'knowledge', 'custom-reference-ledger.md');
+  await writeFile(customLedgerPath, [
+    '# Custom Reference Adoption Ledger',
+    '',
+    '| Status | Reference ID | Capability | Useful Pattern | Local Adoption | Risk/Noise | Decision Date |',
+    '| --- | --- | --- | --- | --- | --- | --- |',
+    '| reviewed | security-pack | security | summarize source pattern | local validator | none | 2026-07-03 |',
+    '```text',
+    ...Array.from({ length: 21 }, (_, index) => `example excerpt line ${index + 1}`),
+    '```',
+    ''
+  ].join('\n'));
   const before = await listRelativeFiles(target);
 
   const clean = capture(target);
@@ -161,6 +173,7 @@ test('reference ledger check validates statuses and local-only leaks without wri
   const cleanReport = JSON.parse(clean.out());
   assert.equal(cleanReport.ok, true);
   assert.equal(cleanReport.summary.statuses.new, 1);
+  assert.equal(cleanReport.summary.capabilities.uncategorized.statuses.new, 1);
 
   const ledgerPath = path.join(target, '.ai-playbook', 'knowledge', 'reference-adoption-ledger.md');
   await writeFile(ledgerPath, [
@@ -180,7 +193,23 @@ test('reference ledger check validates statuses and local-only leaks without wri
   assert.equal(dirtyReport.conflicts.some((conflict) => conflict.id === 'reference-ledger.invalid-status'), true);
   assert.equal(dirtyReport.conflicts.some((conflict) => conflict.id === 'reference-ledger.local-absolute-path'), true);
   assert.equal(dirtyReport.conflicts.some((conflict) => conflict.id === 'reference-ledger.secret-like-token'), true);
+  assert.equal(dirtyReport.summary.capabilities['runtime-index-canon'].statuses.adopted, 1);
   assert.equal(existsSync(ledgerPath), true);
+
+  const loose = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-check', '.', '--path', '.ai-playbook/knowledge/custom-reference-ledger.md', '--json'], loose), 0);
+  const looseReport = JSON.parse(loose.out());
+  assert.equal(looseReport.ok, true);
+  assert.equal(looseReport.path, '.ai-playbook/knowledge/custom-reference-ledger.md');
+  assert.equal(looseReport.summary.capabilities.security.statuses.reviewed, 1);
+  assert.equal(looseReport.warnings.some((warning) => warning.id === 'reference-ledger.large-excerpt'), true);
+
+  const strict = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-check', '.', '--path', '.ai-playbook/knowledge/custom-reference-ledger.md', '--strict', '--json'], strict), 1);
+  const strictReport = JSON.parse(strict.out());
+  assert.equal(strictReport.ok, false);
+  assert.equal(strictReport.conflicts.some((conflict) => conflict.id === 'reference-ledger.large-excerpt'), true);
+
   assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
 });

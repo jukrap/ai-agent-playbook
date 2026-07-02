@@ -68,10 +68,12 @@ export function registerPlaybookMcpTools(server, options) {
     })),
     tool('reference_ledger_check', 'Validate a project reference adoption ledger for statuses and local-only leaks.', {
       target: targetSchema,
-      path: pathSchema.describe('Optional ledger path inside the target project.')
+      path: pathSchema.describe('Optional ledger path inside the target project.'),
+      strict: z.boolean().optional().describe('Treat oversized excerpts as conflicts instead of warnings.')
     }, (args) => checkReferenceAdoptionLedger({
       target: args.target,
-      filePath: args.path
+      filePath: args.path,
+      strict: Boolean(args.strict)
     })),
     tool('playbook_layout', 'Describe whether a target playbook has the v2 layout.', {
       target: targetSchema

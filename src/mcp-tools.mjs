@@ -776,6 +776,45 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- Separate source data issues from transformation, query, and presentation issues.'
   ]));
 
+  server.registerPrompt('data_pipeline_review', {
+    title: 'Data pipeline review',
+    description: 'Route data contract, lineage, quality, reporting, instrumentation, retrieval, migration, and repair reviews through the right evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      scope: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS data pipeline review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Scope: ${args.scope ?? '<dataset, report, event, retrieval index, pipeline, or metric>'}`,
+    `Intent: ${args.intent ?? '<review intent>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe data-integrity-review',
+    '- operator_search for metric, query, event, ETL, dashboard, retrieval, and reconciliation references',
+    '- operator_map for lineage, producer, transformation, consumer, and ownership hints',
+    '- route_api_hints for route, API, SQL, migration, and data-object hints',
+    '- dependency_inventory for warehouse, ETL, scheduler, BI, document loader, or retrieval package context',
+    '- write_gate_preview before suggesting edits',
+    '',
+    'Optional evidence:',
+    '- index_status when generated indexes, retrieval artifacts, or runtime evidence are involved',
+    '- contracts_check when data contracts or durable invariants exist',
+    '- canon_check before promoting data facts into trusted memory',
+    '',
+    'Stop conditions:',
+    '- Review type is unclear: contract/lineage, quality observability, reporting, migration integrity, instrumentation, or retrieval ingestion',
+    '- Dataset grain, owner, source freshness, access model, denominator, or consumer impact is unknown',
+    '- Source data, sampled rows, event payloads, or retrieval evidence are required but unavailable',
+    '- Repair, backfill, or provider behavior cannot be bounded by dry-run, sample, or rollback evidence',
+    '',
+    'Verification expectations:',
+    '- State which review type applies and which data skills should be read.',
+    '- Name available source counts, sampled rows, reconciliation queries, lineage/contract evidence, quality checks, event payload samples, retrieval evaluation, freshness, and caveats.',
+    '- Keep generated evidence separate from durable memory until reviewed.'
+  ]));
+
   server.registerPrompt('database_change_review', {
     title: 'Database change review',
     description: 'Review schema migration, query performance, data integrity, rollback, and database consumer evidence.',

@@ -1,14 +1,13 @@
 # Data Integrity Review
 
-Inputs: dataset or report scope, source and target grain, owners, freshness target, known caveats.
+Inputs: dataset scope, report scope, event scope, retrieval scope, source and target grain, contract owner, lineage scope, quality dimensions, freshness target, consumer list, access model, known caveats.
 
-Outputs: metric/data definition notes, reconciliation checks, data issue classification, handoff or contract update.
+Outputs: metric/data definition notes, contract and lineage notes, quality check plan, reconciliation checks, data issue classification, instrumentation caveats, retrieval caveats, handoff note, contract update.
 
-Skills: data pipeline review, analytics reporting review, data migration integrity, database change safety when storage changes are involved.
+Skills: data pipeline review, data contract lineage review, data quality observability, analytics reporting review, analytics instrumentation review, knowledge retrieval pipeline review, data migration integrity, database change safety when storage changes are involved.
 
-Tools: `route-api-hints`, `operator search`, `operator map`, `workflow run-preview`, query/report checks when available.
+Tools: `route-api-hints`, `operator search`, `operator map`, `dependency inventory`, `index status`, `workflow run-preview`, `canon check`, `write-gate preview`, query checks, report checks, event checks, retrieval checks.
 
-Stop conditions: unknown metric owner, inaccessible source data, unclear grain or denominator, unreviewed destructive repair.
+Stop conditions: unknown metric or contract owner, inaccessible source data, unclear grain or denominator, unknown freshness target, unbounded quality check or repair, unknown retrieval access control, unknown event consent/privacy status, unreviewed destructive repair.
 
-Verification: source counts, sampled rows, reconciliation queries, report/dashboard consistency, freshness and caveat review.
-
+Verification: source counts, sampled rows, reconciliation queries, contract/lineage review, quality check evidence, report/dashboard consistency, event payload samples, retrieval evaluation, freshness and caveat review.

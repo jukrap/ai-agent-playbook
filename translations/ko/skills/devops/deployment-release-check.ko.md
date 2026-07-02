@@ -14,3 +14,5 @@ Release readiness와 deploy/rollback review를 위한 primary DevOps skill입니
 Release 또는 deployment를 승인하기 전에 `references/release-gates.md`를 읽습니다.
 
 Deploy가 artifact, data, config, feature flag, runtime topology를 바꾸면 `references/rollback-readiness.md`를 읽습니다.
+
+pass, block, advisory-only, accepted-risk release decision을 기록할 때 `references/gate-decision-contract.md`를 읽습니다.

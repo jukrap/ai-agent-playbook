@@ -13,6 +13,8 @@ Harness OS MCP defaults to read-only analysis and catalog access.
 
 The default MCP server exposes read-only tools, resources, and prompts. Tools are annotated as read-only and should not write project files.
 
+Default prompts route review work through required evidence, optional evidence, stop conditions, and verification expectations. They do not grant write access or promote generated runtime hints into memory.
+
 Default read-only additions:
 
 - `capability_catalog`

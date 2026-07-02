@@ -13,6 +13,8 @@ Harness OS MCP의 기본값은 read-only 분석과 catalog 접근입니다.
 
 기본 MCP server는 read-only tool, resource, prompt를 노출합니다. Tool은 read-only로 annotate되며 프로젝트 파일을 쓰지 않아야 합니다.
 
+기본 prompt는 review 작업을 required evidence, optional evidence, stop condition, verification expectation에 맞춰 안내합니다. Prompt 자체는 쓰기 권한을 열지 않으며 generated runtime hint를 memory로 승격하지 않습니다.
+
 기본 read-only 추가 항목:
 
 - `capability_catalog`

@@ -149,6 +149,7 @@ These commands expose the v2 capability model and generated local runtime surfac
 | `catalog check` | Validate skill taxonomy, duplicate names, wrapper routes, and wrapper references. | No | `npx ai-agent-playbook catalog check --json` |
 | `workflow list` | List built-in workflow recipes. | No | `npx ai-agent-playbook workflow list --json` |
 | `workflow run-preview <target>` | Preview a workflow run manifest from a target or bundled recipe without creating run files. | No | `npx ai-agent-playbook workflow run-preview <target-project> --recipe backend-contract-change --json` |
+| `workflow run-start <target>` | Preview or create a bounded scaffold-tier run record under `.ai-playbook/workflows/runs/`. | No unless `--apply` | `npx ai-agent-playbook workflow run-start <target-project> --recipe deployment-release --json` |
 | `reference inventory <reference-dir>` | Summarize a local reference collection before deciding what to adopt. | No | `npx ai-agent-playbook reference inventory _reference --json` |
 | `reference ledger-check <target>` | Validate a reference adoption ledger for status values and local-only leaks. | No | `npx ai-agent-playbook reference ledger-check <target-project> --json` |
 | `runtime capability-history <target>` | Summarize local append-only capability history without running benchmarks or telemetry. | No | `npx ai-agent-playbook runtime capability-history <target-project> --json` |
@@ -240,6 +241,8 @@ Runs track in-progress work. They are useful when a task is long enough that the
 | `run summarize <target>` | Render the append-only ledger into `summary.md`. | Yes, unless `--dry-run` | `npx ai-agent-playbook run summarize <target-project> --run-id auth-flow --dry-run --json` |
 
 `run record` rejects messages that look like local absolute paths or credential assignments. Evidence paths must be portable relative paths. Runs do not replace worklogs: use runs while executing, then promote durable facts to `CURRENT.md`, maps, runbooks, decisions, contracts, or worklogs.
+
+`workflow run-start` is separate from the older `run start` ledger. It uses workflow recipes and writes only new scaffold files under `.ai-playbook/workflows/runs/` when `--apply` is present. Without `--apply`, it returns the planned files without writing.
 
 ## Contracts
 

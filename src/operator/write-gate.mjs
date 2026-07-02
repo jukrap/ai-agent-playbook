@@ -1,6 +1,7 @@
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { preflightOperator } from '../operator-diagnostics.mjs';
-import { normalizePortablePath, normalizeTargetRelativePath, SCHEMA_VERSION } from '../harness/core.mjs';
+import { normalizePortablePath, normalizeTargetRelativePath, resolvePlaybookLayout, SCHEMA_VERSION } from '../harness/core.mjs';
 
 export async function previewWriteGate({ repoRoot, target, intent, filePath, maxResults = 20 }) {
   if (!intent || !String(intent).trim()) throw new Error('Missing --intent.');
@@ -11,6 +12,9 @@ export async function previewWriteGate({ repoRoot, target, intent, filePath, max
     maxResults
   });
   const normalizedPath = filePath ? normalizeTargetRelativePath(target, filePath) : null;
+  const invocationId = randomUUID();
+  const playbook = resolvePlaybookLayout(path.resolve(target));
+  const advisoryPath = `${playbook.dir}/runtime/reports/write-gate/pre-write-advisory.${invocationId}.json`;
   const blockers = [];
   const rules = preflight.rules?.rules ?? [];
   const contextMatches = preflight.context?.contexts?.filter((item) => item.applies) ?? [];
@@ -30,6 +34,12 @@ export async function previewWriteGate({ repoRoot, target, intent, filePath, max
     target: path.resolve(target),
     repoRoot: repoRoot ? path.resolve(repoRoot) : null,
     mode: { localOnly: true, network: false, writes: false },
+    transaction: {
+      invocationId,
+      lifecycle: 'pre-write-preview',
+      advisoryPath,
+      applied: false
+    },
     intent: String(intent),
     path: normalizedPath,
     summary: {

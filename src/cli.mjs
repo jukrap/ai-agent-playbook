@@ -13,6 +13,7 @@ import {
   checkContracts,
   checkGuides,
   checkManagedManifest,
+  checkReferenceAdoptionLedger,
   catalogManagedManifest,
   contextStatus,
   createPlan,
@@ -493,6 +494,25 @@ export async function runCli(argv, io = {}) {
         write(stdout, `Reference inventory: ${result.summary.projects}/${result.summary.totalProjects} project(s), ${result.summary.files} file(s)\n`);
         for (const project of result.projects) {
           write(stdout, `[${project.id}] ${project.candidateCapabilities.join(', ') || 'unclassified'} (${project.files} file(s))\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'ledger-check') {
+      const result = await checkReferenceAdoptionLedger({
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Reference ledger: ${result.ok ? 'ok' : 'needs attention'} (${result.summary.entries} entr${result.summary.entries === 1 ? 'y' : 'ies'})\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -1159,6 +1179,7 @@ Usage:
   ai-playbook catalog check [--json]
   ai-playbook workflow list [--json]
   ai-playbook reference inventory <reference-dir> [--max-results N] [--json]
+  ai-playbook reference ledger-check <target> [--path <ledger.md>] [--json]
   ai-playbook layout status <target> [--json]
   ai-playbook index build <target> [--apply] [--json]
   ai-playbook index status <target> [--json]

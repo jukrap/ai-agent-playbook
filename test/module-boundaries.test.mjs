@@ -27,6 +27,7 @@ test('harness facade keeps the public runtime exports', () => {
     'checkContracts',
     'checkGuides',
     'checkManagedManifest',
+    'checkReferenceAdoptionLedger',
     'contextStatus',
     'createPlan',
     'createWorklog',

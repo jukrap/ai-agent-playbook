@@ -38,6 +38,17 @@ Backend and security skills use capability-first names:
 
 Stack profiles belong under the relevant primary skill reference tree. For backend change safety, Java, Kotlin, Go, Python, Node, .NET, and PHP details live under `skills/backend/backend-change-safety/references/stacks/` instead of creating stack-first primary skills.
 
+## Architecture Boundary Pack
+
+Architecture skills separate broad boundary review from feature slicing, domain modeling, and monorepo/package ownership:
+
+- `architecture/boundary-review`: broad architecture boundaries, dependency direction, public APIs, ownership, and coupling review.
+- `architecture/feature-slice-boundary`: FSD, feature-sliced, vertical-slice, feature-first, route-level, module-level, and component-domain boundaries.
+- `architecture/domain-model-change`: domain entities, aggregates, value objects, services, policies, use cases, repositories, adapters, invariants, and transaction boundaries.
+- `architecture/monorepo-package-boundary`: workspace packages, package exports, dependency graphs, generated types, build graphs, versioning, and cross-package release impact.
+
+Architecture guidance should verify the repository's actual pattern before recommending FSD, DDD, clean architecture, layered architecture, or monorepo restructuring.
+
 ## Delivery And Testing Pack
 
 Delivery testing skills separate release confidence planning, flaky test stabilization, and fixture/test-data design:

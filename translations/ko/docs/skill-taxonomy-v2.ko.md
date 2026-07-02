@@ -38,6 +38,17 @@ Backend와 security skill은 capability-first name을 씁니다.
 
 Stack profile은 관련 primary skill reference tree 아래에 둡니다. Backend change safety의 Java, Kotlin, Go, Python, Node, .NET, PHP 세부사항은 stack-first primary skill을 만들지 않고 `skills/backend/backend-change-safety/references/stacks/` 아래에 둡니다.
 
+## Architecture Boundary Pack
+
+Architecture skill은 broad boundary review를 feature slicing, domain modeling, monorepo/package ownership과 분리합니다.
+
+- `architecture/boundary-review`: broad architecture boundary, dependency direction, public API, ownership, coupling review.
+- `architecture/feature-slice-boundary`: FSD, feature-sliced, vertical-slice, feature-first, route-level, module-level, component-domain boundary.
+- `architecture/domain-model-change`: domain entity, aggregate, value object, service, policy, use case, repository, adapter, invariant, transaction boundary.
+- `architecture/monorepo-package-boundary`: workspace package, package export, dependency graph, generated type, build graph, versioning, cross-package release impact.
+
+Architecture guidance는 FSD, DDD, clean architecture, layered architecture, monorepo restructuring을 권하기 전에 repository의 실제 pattern을 검증해야 합니다.
+
 ## Delivery And Testing Pack
 
 Delivery testing skill은 release confidence planning, flaky test stabilization, fixture/test-data design을 분리합니다.

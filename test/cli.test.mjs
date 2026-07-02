@@ -280,6 +280,24 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   assert.equal(routeApiHintsReport.hints.some((hint) => hint.kind === 'data' && hint.operation === 'update' && hint.name === 'matching'), false);
   assert.equal(existsSync(path.join(target, '.ai-playbook', 'runtime', 'indexes', 'route-api-hints.json')), false);
 
+  const beforeGraph = await listRelativeFiles(target);
+  const repoGraph = capture(target);
+  assert.equal(await runCli(['graph', 'preview', '.', '--max-results', '100', '--json'], repoGraph), 0);
+  const repoGraphReport = JSON.parse(repoGraph.out());
+  assert.equal(repoGraphReport.kind, 'runtime.repo-graph');
+  assert.equal(repoGraphReport.mode.writes, false);
+  assert.equal(repoGraphReport.summary.nodes > 0, true);
+  assert.equal(repoGraphReport.summary.edges > 0, true);
+  assert.equal(repoGraphReport.nodes.some((node) => node.kind === 'file' && node.path === 'src/feature.ts'), true);
+  assert.equal(repoGraphReport.nodes.some((node) => node.kind === 'symbol' && node.label === 'calculateFeature'), true);
+  assert.equal(repoGraphReport.nodes.some((node) => node.kind === 'route' && node.label === '/api/users'), true);
+  assert.equal(repoGraphReport.nodes.some((node) => node.kind === 'package' && node.path === 'package.json'), true);
+  assert.equal(repoGraphReport.edges.some((edge) => edge.kind === 'contains'), true);
+  assert.equal(repoGraphReport.edges.some((edge) => edge.kind === 'defines-route'), true);
+  assert.equal(repoGraphReport.nodes.some((node) => node.label === 'generatedIgnored'), false);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'runtime', 'graphs', 'repo-graph.json')), false);
+  assert.deepEqual(await listRelativeFiles(target), beforeGraph);
+
   const gate = capture(target);
   assert.equal(await runCli(['write-gate', 'preview', '.', '--intent', 'edit runtime report', '--path', '.ai-playbook/runtime/indexes/file-inventory.json', '--json'], gate), 1);
   const gateReport = JSON.parse(gate.out());

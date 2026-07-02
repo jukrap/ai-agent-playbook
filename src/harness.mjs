@@ -31,6 +31,7 @@ export { describePlaybookLayout, migratePlaybookLayout } from './layout/playbook
 export { buildRuntimeIndex, runtimeIndexStatus, searchRuntimeIndex } from './runtime/indexes.mjs';
 export { previewCapabilityHistory } from './runtime/capability-history.mjs';
 export { buildDependencyInventoryIndex } from './runtime/dependency-inventory.mjs';
+export { previewRepoGraph } from './runtime/repo-graph.mjs';
 export { buildRouteApiHintsIndex } from './runtime/route-api-hints.mjs';
 export { checkRuntimeSchema, validateRuntimeSchema } from './runtime/schemas.mjs';
 export { buildSymbolOutlineIndex } from './runtime/symbol-outline.mjs';

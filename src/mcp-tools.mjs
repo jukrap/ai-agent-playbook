@@ -567,6 +567,40 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- Separate local evidence from external deployment status claims.'
   ]));
 
+  server.registerPrompt('mobile_release_review', {
+    title: 'Mobile release review',
+    description: 'Review mobile release, signing, device permission, offline sync, WebView bridge, and rollback evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      platform: z.string().optional(),
+      artifact: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS mobile release review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Platform: ${args.platform ?? '<iOS, Android, Expo, React Native, Flutter, or hybrid target>'}`,
+    `Artifact: ${args.artifact ?? '<IPA, APK, AAB, internal build, OTA channel, or release artifact>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe mobile-release',
+    '- dependency_inventory for package, native project, build, CI, and distribution signals',
+    '- operator_search for signing, provisioning, build profile, permissions, offline sync, WebView bridge, and release cleanup references',
+    '- write_gate_preview before suggesting mobile release, config, permission, or bridge edits',
+    '',
+    'Optional evidence:',
+    '- route_api_hints for sync API, WebView routes, deep links, and backend contract hints',
+    '- diagnostics_check for build, test, install, launch, and release verification command candidates',
+    '',
+    'Stop conditions:',
+    '- Signing state, target device coverage, release artifact, rollback path, or store/distribution owner is unknown',
+    '- Release build may expose a debug bridge, local endpoint, dev menu, or broad inspection surface',
+    '- Permission expansion, offline/sync data path, or WebView bridge behavior lacks verification evidence',
+    '',
+    'Verification expectations:',
+    '- Name build, artifact, install/launch, permission grant/deny, offline/network transition, WebView bridge, smoke, and rollback checks actually available.',
+    '- Separate emulator/simulator evidence from real-device evidence and do not submit to stores or access credentials from prompt evidence alone.'
+  ]));
+
   server.registerPrompt('connector_integration_review', {
     title: 'Connector integration review',
     description: 'Review connector, adapter, webhook, OAuth, registration, credential, retry, and integration contract evidence.',

@@ -92,6 +92,12 @@ export const WORKFLOW_RECIPES = [
     outputs: ['memory/contracts', 'workflows/runs']
   },
   {
+    id: 'architecture-boundary-review',
+    title: 'Architecture Boundary Review',
+    category: 'architecture',
+    outputs: ['runtime/reports', 'memory/decisions', 'workflows/worklogs']
+  },
+  {
     id: 'database-migration',
     title: 'Database Migration',
     category: 'database',

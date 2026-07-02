@@ -149,6 +149,7 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 | `catalog check` | skill taxonomy, duplicate name, wrapper route, wrapper reference를 검증합니다. | 아니오 | `npx ai-agent-playbook catalog check --json` |
 | `workflow list` | built-in workflow recipe를 나열합니다. | 아니오 | `npx ai-agent-playbook workflow list --json` |
 | `workflow run-preview <target>` | target 또는 bundled recipe에서 workflow run manifest를 run file 생성 없이 preview합니다. | 아니오 | `npx ai-agent-playbook workflow run-preview <target-project> --recipe backend-contract-change --json` |
+| `workflow run-start <target>` | `.ai-playbook/workflows/runs/` 아래 제한된 scaffold-tier run record를 preview하거나 생성합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook workflow run-start <target-project> --recipe deployment-release --json` |
 | `reference inventory <reference-dir>` | 채택할 항목을 판단하기 전에 local reference collection을 요약합니다. | 아니오 | `npx ai-agent-playbook reference inventory _reference --json` |
 | `reference ledger-check <target>` | reference adoption ledger의 status 값과 local-only leak를 검증합니다. | 아니오 | `npx ai-agent-playbook reference ledger-check <target-project> --json` |
 | `runtime capability-history <target>` | benchmark나 telemetry를 실행하지 않고 local append-only capability history를 요약합니다. | 아니오 | `npx ai-agent-playbook runtime capability-history <target-project> --json` |
@@ -240,6 +241,8 @@ Runs는 진행 중 작업 상태를 추적합니다. 작업이 길어져 다음 
 | `run summarize <target>` | append-only ledger를 사람이 읽는 `summary.md`로 정리합니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook run summarize <target-project> --run-id auth-flow --dry-run --json` |
 
 `run record`는 로컬 절대경로나 credential assignment처럼 보이는 message를 거부합니다. Evidence path는 portable relative path만 허용합니다. Runs는 worklog를 대체하지 않습니다. 실행 중에는 runs를 쓰고, 오래 남길 사실은 `CURRENT.md`, maps, runbooks, decisions, contracts, worklogs로 승격합니다.
+
+`workflow run-start`는 기존 `run start` ledger와 별도입니다. Workflow recipe를 사용하고, `--apply`가 있을 때만 `.ai-playbook/workflows/runs/` 아래 새 scaffold file을 씁니다. `--apply`가 없으면 파일을 쓰지 않고 planned file을 반환합니다.
 
 ## Contracts
 

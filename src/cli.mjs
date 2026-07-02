@@ -49,6 +49,7 @@ import {
   skillCatalog,
   snapshotContracts,
   startRun,
+  startWorkflowRun,
   syncGuides,
   uninstallManagedManifest,
   workflowCatalog,
@@ -528,6 +529,32 @@ export async function runCli(argv, io = {}) {
         write(stdout, `Workflow run preview: ${result.recipe.id} (${result.recipe.source}), ${result.summary.verification} verification item(s)\n`);
       } else {
         write(stdout, `Workflow run preview: ${result.recipe.id} has ${result.summary.conflicts} conflict(s)\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'workflow' && subcommand === 'run-start') {
+      const result = await startWorkflowRun({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        recipeId: parsed.flags.recipe,
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else if (result.ok) {
+        write(stdout, `Workflow run start: ${result.runId} (${result.applied ? 'applied' : 'dry-run'})\n`);
+        for (const operation of result.operations) {
+          write(stdout, `[${operation.action.toUpperCase()}] ${operation.message}\n`);
+        }
+        if (!parsed.flags.apply) {
+          write(stdout, 'Re-run with --apply to create workflow run files.\n');
+        }
+      } else {
+        write(stdout, `Workflow run start: ${result.recipe.id} has ${result.summary.conflicts} conflict(s)\n`);
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
       }
       return result.ok ? 0 : 1;
     }
@@ -1392,6 +1419,7 @@ Usage:
   ai-playbook catalog check [--json]
   ai-playbook workflow list [--json]
   ai-playbook workflow run-preview <target> --recipe <recipe-id> [--json]
+  ai-playbook workflow run-start <target> --recipe <recipe-id> [--apply] [--json]
   ai-playbook reference inventory <reference-dir> [--max-results N] [--json]
   ai-playbook reference ledger-check <target> [--path <ledger.md>] [--strict] [--json]
   ai-playbook layout status <target> [--json]

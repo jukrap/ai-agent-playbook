@@ -64,6 +64,7 @@ test('harness facade keeps the public runtime exports', () => {
     'slugifyTitle',
     'snapshotContracts',
     'startRun',
+    'startWorkflowRun',
     'summarizeRun',
     'summarizeWorklogs',
     'syncGuides',

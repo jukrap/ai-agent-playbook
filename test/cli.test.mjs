@@ -76,6 +76,10 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   const bareWorkflowPreviewReport = JSON.parse(bareWorkflowPreview.out());
   assert.equal(bareWorkflowPreviewReport.recipe.source, 'bundled');
   assert.equal(bareWorkflowPreviewReport.mode.writes, false);
+  const missingPlaybookRunStart = capture(bareWorkflowTarget);
+  assert.equal(await runCli(['workflow', 'run-start', '.', '--recipe', 'backend-contract-change', '--apply', '--json'], missingPlaybookRunStart), 1);
+  const missingPlaybookRunStartReport = JSON.parse(missingPlaybookRunStart.out());
+  assert.equal(missingPlaybookRunStartReport.conflicts.some((conflict) => conflict.id === 'workflow-run-start.playbook-missing'), true);
   await cleanup(bareWorkflowTarget);
 
   const target = await tempRepo('harness os-v2-공백-');
@@ -137,6 +141,27 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   assert.equal(workflowPreviewReport.manifest.skills.some((skill) => skill.includes('API contract boundary')), true);
   assert.equal(workflowPreviewReport.manifest.tools.includes('operator map'), true);
   assert.deepEqual(await listRelativeFiles(target), beforeWorkflowPreview);
+
+  const beforeWorkflowStart = await listRelativeFiles(target);
+  const workflowStartDryRun = capture(target);
+  assert.equal(await runCli(['workflow', 'run-start', '.', '--recipe', 'deployment-release', '--json'], workflowStartDryRun), 0);
+  const workflowStartDryRunReport = JSON.parse(workflowStartDryRun.out());
+  assert.equal(workflowStartDryRunReport.kind, 'runtime.workflow-run-start');
+  assert.equal(workflowStartDryRunReport.applied, false);
+  assert.equal(workflowStartDryRunReport.mode.writes, false);
+  assert.equal(workflowStartDryRunReport.runPath.startsWith('.ai-playbook/workflows/runs/'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeWorkflowStart);
+
+  const workflowStartApply = capture(target);
+  assert.equal(await runCli(['workflow', 'run-start', '.', '--recipe', 'deployment-release', '--apply', '--json'], workflowStartApply), 0);
+  const workflowStartApplyReport = JSON.parse(workflowStartApply.out());
+  assert.equal(workflowStartApplyReport.applied, true);
+  assert.equal(workflowStartApplyReport.mode.writes, true);
+  assert.equal(workflowStartApplyReport.runPath.startsWith('.ai-playbook/workflows/runs/'), true);
+  assert.equal(existsSync(path.join(target, workflowStartApplyReport.runPath, 'manifest.json')), true);
+  assert.equal(existsSync(path.join(target, workflowStartApplyReport.runPath, 'criteria.md')), true);
+  assert.equal(existsSync(path.join(target, workflowStartApplyReport.runPath, 'evidence.md')), true);
+  assert.equal(existsSync(path.join(target, workflowStartApplyReport.runPath, 'handoff.md')), true);
 
   await mkdir(path.join(target, '.ai-playbook', 'workflows', 'recipes'), { recursive: true });
   await writeFile(path.join(target, '.ai-playbook', 'workflows', 'recipes', 'backend-contract-change.md'), '# Local Backend Contract Change\n\nInputs: local input\n\nOutputs: local output\n\nSkills: local skill\n\nTools: local tool\n\nStop conditions: local blocker\n\nVerification: local verification\n');

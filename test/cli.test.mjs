@@ -47,7 +47,7 @@ test('all bundled workflow recipes preview with required manifest sections', asy
   const list = capture(target);
   assert.equal(await runCli(['workflow', 'list', '--json'], list), 0);
   const listed = JSON.parse(list.out());
-  assert.equal(listed.summary.workflows, 18);
+  assert.equal(listed.summary.workflows, 19);
 
   const before = await listRelativeFiles(target);
   for (const recipe of listed.workflows) {
@@ -120,7 +120,7 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   const catalogReport = JSON.parse(catalog.out());
   assert.equal(catalogReport.taxonomyVersion, '2');
   assert.equal(catalogReport.summary.categories, 12);
-  assert.equal(catalogReport.summary.skills, 79);
+  assert.equal(catalogReport.summary.skills, 80);
 
   const catalogCheck = capture(target);
   assert.equal(await runCli(['catalog', 'check', '--json'], catalogCheck), 0);
@@ -143,9 +143,10 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   const workflow = capture(target);
   assert.equal(await runCli(['workflow', 'list', '--json'], workflow), 0);
   const workflowReport = JSON.parse(workflow.out());
-  assert.equal(workflowReport.summary.workflows, 18);
+  assert.equal(workflowReport.summary.workflows, 19);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'deployment-release'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'package-release-readiness'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'ci-quality-gate'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'architecture-boundary-review'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'frontend-quality-review'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'data-integrity-review'), true);

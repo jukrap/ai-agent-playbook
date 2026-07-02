@@ -77,6 +77,7 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `git-worklog-guardrails`: handles staging, commits, PR text, release notes, and worklogs.
 - `eval-harness-design`: defines agent, harness, workflow, MCP, prompt, capability, regression, grader, and release-gate evals.
 - `test-verification-strategy`: maps change risk to unit, integration, contract, E2E, visual, migration, smoke, manual, or monitor-based checks.
+- `ci-quality-gate`: reviews required checks, optional checks, skipped checks, stale evidence, and merge/release gate decisions.
 - `flaky-test-triage`: diagnoses nondeterministic, timing-dependent, order-dependent, environment-sensitive, or intermittent test failures.
 - `test-fixture-data-design`: designs fixtures, factories, mocks, seeds, snapshots, golden files, sample payloads, and test data boundaries.
 

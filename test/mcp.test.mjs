@@ -187,7 +187,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(catalog.structuredContent.taxonomyVersion, '2');
 
     const resource = await client.readResource({ uri: 'ai-playbook://workflows' });
-    assert.equal(JSON.parse(resource.contents[0].text).summary.workflows, 18);
+    assert.equal(JSON.parse(resource.contents[0].text).summary.workflows, 19);
 
     const workflowRunPreview = await client.callTool({
       name: 'workflow_run_preview',

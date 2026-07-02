@@ -7,6 +7,7 @@ Initial recipe set:
 - repo onboarding
 - feature delivery
 - eval driven change
+- CI quality gate
 - legacy change
 - backend contract change
 - database migration

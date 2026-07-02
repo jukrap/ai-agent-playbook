@@ -152,6 +152,7 @@ These commands expose the v2 capability model and generated local runtime surfac
 | `workflow run-start <target>` | Preview or create a bounded scaffold-tier run record under `.ai-playbook/workflows/runs/`. | No unless `--apply` | `npx ai-agent-playbook workflow run-start <target-project> --recipe deployment-release --json` |
 | `reference inventory <reference-dir>` | Summarize a local reference collection before deciding what to adopt. | No | `npx ai-agent-playbook reference inventory _reference --json` |
 | `reference adoption-queue <reference-dir>` | Score local reference collections into a compact adoption backlog. | No | `npx ai-agent-playbook reference adoption-queue _reference --json` |
+| `reference source-registry-preview <reference-dir>` | Convert adoption queue items into `knowledge/sources.json` candidates without writing them. | No | `npx ai-agent-playbook reference source-registry-preview _reference --json` |
 | `reference ledger-check <target>` | Validate a reference adoption ledger for status values and local-only leaks. | No | `npx ai-agent-playbook reference ledger-check <target-project> --json` |
 | `runtime capability-history <target>` | Summarize local append-only capability history without running benchmarks or telemetry. | No | `npx ai-agent-playbook runtime capability-history <target-project> --json` |
 | `runtime schema-check <target>` | Validate runtime eval, witness, evidence-envelope, repo-graph, artifact, or source-registry JSON without writing files. | No | `npx ai-agent-playbook runtime schema-check <target-project> --path .ai-playbook/runtime/reports/evals/example.json --json` |
@@ -171,6 +172,8 @@ These commands expose the v2 capability model and generated local runtime surfac
 | `write-gate post-check <target>` | Compare a saved advisory snapshot with current files after editing. | No | `npx ai-agent-playbook write-gate post-check <target-project> --advisory .ai-playbook/runtime/reports/write-gate/pre-write-advisory.<id>.json --json` |
 
 `reference adoption-queue` builds on `reference inventory`. It scores each top-level reference collection by local signals such as skills, agents, MCP, workflows, memory, indexes, connectors, security, compliance, docs, tests, and package metadata. It returns recommended capability areas, representative file paths, and next adoption actions without copying raw reference contents.
+
+`reference source-registry-preview` builds on the adoption queue and returns a `knowledge/sources.json` candidate object. Entries keep locators relative to the scanned reference root and include privacy tier, credential boundary, freshness, promotion policy, caveats, capability hints, and representative files. The command validates the generated registry shape but does not write files or promote sources into memory.
 
 `reference ledger-check` validates `.ai-playbook/knowledge/reference-adoption-ledger.md` by default. It checks adoption statuses, local absolute paths, internal URLs, secret-like tokens, and oversized excerpts without writing files. Use `--path <ledger.md>` to check a different ledger inside the target project. JSON output includes `summary.capabilities` so adoption status can be reviewed by capability area. Add `--strict` when oversized fenced excerpts should fail the check instead of only warning.
 
@@ -301,7 +304,7 @@ ai-playbook mcp
 The server exposes read-only tools for:
 
 - playbook context: `playbook_context`, `context_status`, `context_list`
-- catalogs and layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_adoption_queue`, `reference_ledger_check`, `playbook_layout`, `index_status`, `runtime_schema_check`, `evidence_locator_check`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `repo_graph_preview`, `write_gate_preview`, `canon_check`
+- catalogs and layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_adoption_queue`, `reference_source_registry_preview`, `reference_ledger_check`, `playbook_layout`, `index_status`, `runtime_schema_check`, `evidence_locator_check`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `repo_graph_preview`, `write_gate_preview`, `canon_check`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules and project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA and deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`

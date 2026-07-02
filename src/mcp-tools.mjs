@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   buildReferenceAdoptionQueue,
+  buildReferenceSourceRegistryPreview,
   buildDependencyInventoryIndex,
   buildProjectContext,
   buildRouteApiHintsIndex,
@@ -96,6 +97,13 @@ export function registerPlaybookMcpTools(server, options) {
       target: targetSchema.describe('Reference directory to queue for adoption review.'),
       maxResults: maxResultsSchema
     }, (args) => buildReferenceAdoptionQueue({
+      target: args.target,
+      maxResults: args.maxResults ?? 20
+    })),
+    tool('reference_source_registry_preview', 'Preview knowledge/sources.json entries from a local reference adoption queue without writing files.', {
+      target: targetSchema.describe('Reference directory to convert into source registry candidates.'),
+      maxResults: maxResultsSchema
+    }, (args) => buildReferenceSourceRegistryPreview({
       target: args.target,
       maxResults: args.maxResults ?? 20
     })),
@@ -482,7 +490,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- write_gate_preview before suggesting managed writes',
     '',
     'Optional evidence:',
-    '- reference_inventory, reference_adoption_queue, and reference_ledger_check when adopting external reference material',
+    '- reference_inventory, reference_adoption_queue, reference_source_registry_preview, and reference_ledger_check when adopting external reference material',
     '- index_status when runtime indexes, caches, generated evidence, or canon promotion are involved',
     '- playbook_layout when `.ai-playbook` layout changes are involved',
     '',
@@ -1165,7 +1173,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '',
     'Required evidence:',
     '- workflow_run_preview with recipe knowledge-source-onboarding',
-    '- reference_inventory and reference_adoption_queue for available local reference and source material',
+    '- reference_inventory, reference_adoption_queue, and reference_source_registry_preview for available local reference and source material',
     '- reference_ledger_check when external source adoption is in scope',
     '- operator_research for bounded source scans and evidence envelopes',
     '- index_status for generated source indexes and freshness',

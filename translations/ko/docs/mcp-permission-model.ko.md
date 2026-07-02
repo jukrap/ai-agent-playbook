@@ -21,9 +21,9 @@ Harness OS MCP의 기본값은 read-only 분석과 catalog 접근입니다.
 - `playbook_layout`
 - `index_status`
 - `index_search`
+- `symbol_outline`
 - `write_gate_preview`
 
 ## Write Gate
 
 쓰기 가능 tool은 server opt-in과 `apply: true` 같은 명시적 호출 인자를 모두 요구해야 합니다. 적용 전에는 dry-run plan, target path 검증, audit trail을 만들어야 합니다.
-

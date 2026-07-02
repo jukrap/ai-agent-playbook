@@ -47,6 +47,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'playbook_layout',
       'index_status',
       'index_search',
+      'symbol_outline',
       'write_gate_preview',
       'canon_check',
       'playbook_context',
@@ -100,6 +101,26 @@ test('mcp server lists read-only playbook tools and calls operator search withou
 
     const resource = await client.readResource({ uri: 'ai-playbook://workflows' });
     assert.equal(JSON.parse(resource.contents[0].text).summary.workflows, 11);
+
+    const indexStatus = await client.callTool({
+      name: 'index_status',
+      arguments: { target }
+    });
+    assert.equal(indexStatus.structuredContent.ok, true);
+    assert.equal(indexStatus.structuredContent.indexes.some((item) => item.kind === 'file-inventory'), true);
+    assert.equal(indexStatus.structuredContent.indexes.some((item) => item.kind === 'symbol-outline' && item.previewOnly === true), true);
+
+    const symbolOutline = await client.callTool({
+      name: 'symbol_outline',
+      arguments: {
+        target,
+        maxResults: 10
+      }
+    });
+    assert.equal(symbolOutline.isError, undefined);
+    assert.equal(symbolOutline.structuredContent.ok, true);
+    assert.equal(symbolOutline.structuredContent.mode.writes, false);
+    assert.equal(symbolOutline.structuredContent.entries.some((entry) => entry.file === 'src/기능 모듈/search target.ts' && entry.name === 'loginFlow'), true);
 
     const prompt = await client.getPrompt({
       name: 'repo_onboarding_runbook',

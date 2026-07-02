@@ -22,6 +22,7 @@ Default read-only additions:
 - `index_status`
 - `index_search`
 - `symbol_outline`
+- `dependency_inventory`
 - `write_gate_preview`
 
 ## Write Gate

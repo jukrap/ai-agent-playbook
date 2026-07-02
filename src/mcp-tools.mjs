@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  buildDependencyInventoryIndex,
   buildProjectContext,
   buildSymbolOutlineIndex,
   capabilityCatalog,
@@ -98,6 +99,11 @@ export function registerPlaybookMcpTools(server, options) {
     }, (args) => buildSymbolOutlineIndex({
       target: args.target,
       maxEntries: args.maxResults ?? 100
+    })),
+    tool('dependency_inventory', 'Preview local dependency, lockfile, container, and CI inventory without executing package scripts.', {
+      target: targetSchema
+    }, (args) => buildDependencyInventoryIndex({
+      target: args.target
     })),
     tool('write_gate_preview', 'Preview write risk for a target path and intent without modifying files.', {
       target: targetSchema,

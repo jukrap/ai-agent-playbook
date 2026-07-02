@@ -15,7 +15,7 @@
 | `npx ai-agent-playbook ...` | 현재 프로젝트에 dependency를 추가하지 않고 최신 배포 패키지를 실행할 때 기본으로 사용합니다. |
 | `ai-playbook ...` | `npm install -g ai-agent-playbook` 뒤에 짧은 전역 명령을 쓰고 싶을 때 사용합니다. |
 | `node .\bin\ai-playbook.mjs ...` | 이 repository를 checkout한 폴더 안에서 직접 실행할 때 사용합니다. |
-| `npx ai-agent-playbook mcp` | AI 앱이 read-only playbook 도구를 대신 호출하게 하려면 로컬 stdio MCP 서버 명령으로 등록합니다. |
+| `npx ai-agent-playbook mcp` | AI 앱이 read-only playbook 도구를 대신 호출하게 하려면 로컬 stdio MCP 서버 명령으로 등록합니다. 명시적 opt-in scaffold/managed-write tool이 필요할 때만 `--enable-write-tools`를 추가합니다. |
 
 아래 예시의 `npx ai-agent-playbook`은 설치 방식에 따라 `ai-playbook` 또는 `node .\bin\ai-playbook.mjs`로 바꿔 실행할 수 있습니다.
 
@@ -305,7 +305,7 @@ ai-playbook mcp
 
 서버는 `repo_onboarding_runbook`, `harness_extension_plan`, `harness_governance_review`, `reference_adoption_review`, `backend_change_review`, `architecture_boundary_review`, `auth_access_control_review`, `dependency_supply_chain_review`, `package_release_readiness_review`, `deployment_release_review`, `mobile_release_review`, `connector_integration_review`, `frontend_quality_review`, `data_integrity_review`, `data_pipeline_review`, `database_change_review`, `adr_spec_handoff_review`, `documentation_package_review`, `workflow_run_review`, `eval_harness_review`, `capability_witness_review`, `pre_action_fact_gate_review`, `knowledge_source_review`, `canon_promotion_review`, `index_interpretation_review`, `agent_orchestration_review`, `repo_graph_review`, `ci_quality_gate_review`, `release_deployment_gate_review`, `security_compliance_gate_review` prompt도 노출합니다. Prompt는 재사용 가능한 작업 brief이며, 그 자체로 쓰기 권한을 열지는 않습니다.
 
-이 버전의 MCP 계층은 read-only입니다. Bootstrap, install, update, uninstall, prune, snapshot apply, run record, write-gate advisory save, rename, rewrite처럼 파일을 쓰는 명령은 노출하지 않습니다.
+MCP 계층은 기본적으로 read-only입니다. `mcp --enable-write-tools`를 쓰면 `workflow_run_start`와 `write_gate_advisory`도 노출하지만, 둘 다 tool-call `apply` boolean을 요구하고 `apply`가 false이면 dry-run으로 남습니다. 그래도 bootstrap, install, update, uninstall, prune, snapshot apply, run record, canon promotion, rename, rewrite, project source write command는 노출하지 않습니다.
 
 ## Adapter setup
 

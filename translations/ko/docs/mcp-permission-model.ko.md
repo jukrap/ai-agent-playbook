@@ -23,7 +23,14 @@ Gate와 graph review prompt에는 다음이 포함됩니다.
 - `release_deployment_gate_review`
 - `security_compliance_gate_review`
 
-Scaffold-tier run record 생성은 기본으로 노출하지 않습니다. 미래 MCP run-start tool은 server opt-in, 명시적 apply flag, target path validation, dry-run manifest를 요구해야 하며 `.ai-playbook/workflows/runs/` 아래에만 써야 합니다.
+Scaffold-tier와 managed-write tool은 기본으로 노출하지 않습니다. AI app이 opt-in write tool을 봐야 할 때만 local server를 `ai-playbook mcp --enable-write-tools`로 시작합니다.
+
+현재 opt-in write tool:
+
+- `workflow_run_start`: `.ai-playbook/workflows/runs/` 아래 workflow run file을 preview 또는 생성합니다.
+- `write_gate_advisory`: `.ai-playbook/runtime/reports/write-gate/` 아래 runtime advisory를 preview 또는 저장합니다.
+
+두 tool 모두 tool-call `apply` boolean을 요구합니다. `apply: false`는 dry-run preview를 반환하고, `apply: true`는 기존 target path validation을 거쳐서만 씁니다.
 
 기본 read-only 추가 항목:
 

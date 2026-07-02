@@ -139,6 +139,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       assert.equal(names.includes(expected), true, `missing MCP tool ${expected}`);
     }
     assert.equal(names.includes('write_gate_advisory'), false);
+    assert.equal(names.includes('workflow_run_start'), false);
     assert.equal(names.includes('canon_promote'), false);
     assert.equal(listed.tools.every((tool) => tool.annotations?.readOnlyHint === true), true);
 
@@ -781,10 +782,91 @@ test('mcp tool calls return safe errors for missing targets and traversal paths 
   await cleanup(target);
 });
 
-async function connectMcp() {
+test('mcp write tools require server opt-in and apply before writing files', async () => {
+  const target = await tempRepo('mcp write tools-한글-');
+  await mkdir(path.join(target, '.ai-playbook'), { recursive: true });
+  await mkdir(path.join(target, 'src'), { recursive: true });
+  await writeFile(path.join(target, 'src', 'feature.ts'), 'export const feature = true;\n');
+  const before = await listRelativeFiles(target);
+
+  const { client, transport } = await connectMcp(['--enable-write-tools']);
+  try {
+    const listed = await client.listTools();
+    const workflowTool = listed.tools.find((tool) => tool.name === 'workflow_run_start');
+    const advisoryTool = listed.tools.find((tool) => tool.name === 'write_gate_advisory');
+    assert.equal(Boolean(workflowTool), true);
+    assert.equal(Boolean(advisoryTool), true);
+    assert.equal(workflowTool.annotations?.readOnlyHint, false);
+    assert.equal(advisoryTool.annotations?.readOnlyHint, false);
+    assert.equal(listed.tools.some((tool) => tool.name === 'canon_promote'), false);
+
+    const previewRun = await client.callTool({
+      name: 'workflow_run_start',
+      arguments: {
+        target,
+        recipe: 'agent-orchestration-handoff',
+        apply: false
+      }
+    });
+    assert.equal(previewRun.isError, undefined);
+    assert.equal(previewRun.structuredContent.applied, false);
+    assert.equal(previewRun.structuredContent.mode.writes, false);
+    assert.deepEqual(await listRelativeFiles(target), before);
+
+    const applyRun = await client.callTool({
+      name: 'workflow_run_start',
+      arguments: {
+        target,
+        recipe: 'agent-orchestration-handoff',
+        apply: true
+      }
+    });
+    assert.equal(applyRun.isError, undefined);
+    assert.equal(applyRun.structuredContent.applied, true);
+    assert.equal(applyRun.structuredContent.mode.writes, true);
+    assert.equal(existsSync(path.join(target, applyRun.structuredContent.runPath, 'manifest.json')), true);
+
+    const beforeAdvisory = await listRelativeFiles(target);
+    const previewAdvisory = await client.callTool({
+      name: 'write_gate_advisory',
+      arguments: {
+        target,
+        intent: 'edit feature source',
+        path: 'src/feature.ts',
+        apply: false
+      }
+    });
+    assert.equal(previewAdvisory.isError, undefined);
+    assert.equal(previewAdvisory.structuredContent.advisory.written, false);
+    assert.equal(previewAdvisory.structuredContent.mode.writes, false);
+    assert.deepEqual(await listRelativeFiles(target), beforeAdvisory);
+
+    const applyAdvisory = await client.callTool({
+      name: 'write_gate_advisory',
+      arguments: {
+        target,
+        intent: 'edit feature source',
+        path: 'src/feature.ts',
+        apply: true
+      }
+    });
+    assert.equal(applyAdvisory.isError, undefined);
+    assert.equal(applyAdvisory.structuredContent.advisory.written, true);
+    assert.equal(applyAdvisory.structuredContent.mode.writes, true);
+    assert.equal(applyAdvisory.structuredContent.advisory.manifest.advisoryPath.startsWith('.ai-playbook/runtime/reports/write-gate/'), true);
+    assert.equal(existsSync(path.join(target, applyAdvisory.structuredContent.advisory.manifest.advisoryPath)), true);
+  } finally {
+    await client.close();
+    await transport.close();
+  }
+
+  await cleanup(target);
+});
+
+async function connectMcp(extraArgs = []) {
   const transport = new StdioClientTransport({
     command: process.execPath,
-    args: [cliPath, 'mcp'],
+    args: [cliPath, 'mcp', ...extraArgs],
     cwd: repoRoot,
     stderr: 'pipe'
   });

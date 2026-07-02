@@ -23,7 +23,14 @@ Gate and graph review prompts include:
 - `release_deployment_gate_review`
 - `security_compliance_gate_review`
 
-Scaffold-tier run record creation is not exposed by default. A future MCP run-start tool must require server opt-in, an explicit apply flag, target path validation, and a dry-run manifest, and it must write only under `.ai-playbook/workflows/runs/`.
+Scaffold-tier and managed-write tools are not exposed by default. Start the local server with `ai-playbook mcp --enable-write-tools` only when an AI app should see opt-in write tools.
+
+Opt-in write tools currently include:
+
+- `workflow_run_start`: preview or create workflow run files under `.ai-playbook/workflows/runs/`.
+- `write_gate_advisory`: preview or save a runtime advisory under `.ai-playbook/runtime/reports/write-gate/`.
+
+Both tools require a tool-call `apply` boolean. `apply: false` returns a dry-run preview, and `apply: true` writes only through existing target path validation.
 
 Default read-only additions:
 

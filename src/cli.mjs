@@ -77,7 +77,10 @@ export async function runCli(argv, io = {}) {
 
     const [command, subcommand, targetArg] = parsed.positionals;
     if (command === 'mcp') {
-      await runMcpServer({ repoRoot: root });
+      await runMcpServer({
+        repoRoot: root,
+        enableWriteTools: Boolean(parsed.flags['enable-write-tools'])
+      });
       return 0;
     }
 
@@ -1460,7 +1463,7 @@ function helpText() {
 
 Usage:
   ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]
-  ai-playbook mcp
+  ai-playbook mcp [--enable-write-tools]
   ai-playbook doctor <target> [--strict] [--json]
   ai-playbook doctor <target> --reminder [--json]
   ai-playbook config preview <target> [--user-config <path>] [--json]

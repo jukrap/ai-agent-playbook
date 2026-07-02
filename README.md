@@ -115,7 +115,7 @@ skills/
   delivery/          Planning, verification, testing, Git, PR, and worklog skills
   devops/            CI/CD, container, package release, deployment, and operations triage skills
   frontend/          UI, browser, state/data, accessibility, and visual QA skills
-  mobile/            Native, hybrid, WebView, and device QA skills
+  mobile/            Native release, permission, offline sync, hybrid, WebView, and device QA skills
   security/          Auth, dependency supply chain, license/notice, security review, and risk skills
   project/            Bootstrap, onboarding, and project-memory skills
   quality/            UI quality, cleanup, and review skills
@@ -186,6 +186,9 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `frontend-accessibility-review`: review keyboard access, focus management, semantics, forms, dialogs, menus, announcements, contrast, and accessible states.
 - `ui-polish`: primary frontend skill for visible UI, responsive layout, accessibility states, interaction feedback, and production polish.
 - `visual-regression-qa`: check screenshots, responsive breakpoints, layout overflow, clipping, visual diffs, text fit, canvas/media rendering, and browser-rendered UI regressions.
+- `native-release-readiness`: prepare, review, or troubleshoot mobile releases, signing, provisioning, build channels, store distribution, artifacts, and release-build cleanup.
+- `device-permission-qa`: change or verify mobile runtime permissions, device capabilities, manifests, privacy prompts, lifecycle behavior, and device/emulator QA matrices.
+- `offline-sync-review`: change or review mobile offline mode, local cache, durable queues, sync jobs, conflict resolution, retries, idempotency, and network transitions.
 - `webview-bridge`: change WebView bridges, native-to-web messaging, deep links, embedded auth, uploads, downloads, or hybrid navigation.
 - `legacy-change-safety`: primary legacy skill for compatibility-first changes with hidden coupling or deployment risk.
 - `security-review`: review secrets, authentication, authorization, input validation, dependency risk, and sensitive data flow.

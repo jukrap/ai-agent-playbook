@@ -12,7 +12,7 @@ Skill taxonomy v2는 capability category를 1차 축으로 씁니다. 스택별 
 - `database`: schema change, migration, SQL, reporting, data integrity.
 - `devops`: CI/CD, container, package release, deployment, configuration, observability.
 - `security`: secret, threat modeling, authorization, dependency risk, compliance evidence.
-- `mobile`: Expo, React Native, native app, WebView bridge, device QA.
+- `mobile`: Expo, React Native, native app release, permission, offline sync, WebView bridge, device QA.
 - `data`: analytics, pipeline, ETL, dashboard, data quality.
 - `ai-harness`: MCP, skill, agent, context engineering, cache, index design.
 - `legacy`: legacy change safety와 compatibility strategy.
@@ -82,6 +82,17 @@ Frontend quality skill은 user-visible polish를 state/data correctness, accessi
 - `frontend/visual-regression-qa`: screenshot, responsive breakpoint, layout overflow, clipping, visual diff, text fit, canvas/media rendering, browser-rendered regression.
 
 Framework-specific detail은 reference 또는 project-local playbook에 둡니다. Primary skill은 React, Vue, Svelte, Angular, server-rendered page, 가벼운 DOM-first frontend에서도 작동해야 합니다.
+
+## Mobile Hardening Pack
+
+Mobile skill은 release readiness, device permission evidence, offline sync correctness, hybrid bridge boundary를 분리합니다.
+
+- `mobile/native-release-readiness`: mobile release, signing, provisioning, build profile, release channel, store distribution, artifact, rollout, rollback, release-build cleanup.
+- `mobile/device-permission-qa`: runtime permission, manifest, privacy prompt, sensitive capability, lifecycle behavior, device matrix, real-device와 simulator/emulator evidence.
+- `mobile/offline-sync-review`: offline mode, local cache, durable queue, sync API, conflict, retry, idempotency, reconciliation, network transition behavior.
+- `mobile/webview-bridge`: WebView bridge, native-to-web messaging, deep link, embedded auth, upload, download, hybrid navigation.
+
+Platform-specific detail은 reference 또는 project playbook에 둡니다. Primary skill은 stack-first mobile skill을 만들지 않고 Swift/iOS, Kotlin/Android, Expo, React Native, Flutter, hybrid WebView app에서 작동해야 합니다.
 
 ## Data And Documentation Pack
 

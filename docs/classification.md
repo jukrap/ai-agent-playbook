@@ -19,7 +19,7 @@ The content is not agent-specific. Codex is one installation target. The source 
 - `skills/git`: commit, PR, push, and worklog guardrails.
 - `skills/legacy`: maintenance workflows where runtime coupling and compatibility dominate.
 - `skills/meta`: skill-authoring and repository-maintenance skills.
-- `skills/mobile`: native, hybrid, WebView, and device QA workflows.
+- `skills/mobile`: native release, permission, offline sync, hybrid, WebView, and device QA workflows.
 - `skills/project`: project bootstrap, onboarding, and project-memory maintenance.
 - `skills/quality`: UI style policy, visual quality, cleanup, and lightweight review workflows.
 - `skills/security`: authentication, authorization, dependency supply chain, license/notice evidence, security review, and risk workflows.
@@ -101,6 +101,13 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `frontend-accessibility-review`: reviews keyboard access, focus management, semantics, forms, dialogs, menus, announcements, contrast, and accessible interaction states.
 - `ui-polish`: refines visible UI, responsive layout, visual hierarchy, interaction feedback, and production polish.
 - `visual-regression-qa`: checks screenshots, responsive breakpoints, overflow, clipping, visual diffs, text fit, canvas/media rendering, and browser-rendered regressions.
+
+## Mobile map
+
+- `native-release-readiness`: reviews mobile release artifacts, signing, provisioning, build channels, store distribution, and release-build cleanup.
+- `device-permission-qa`: reviews runtime permissions, device capabilities, manifests, privacy prompts, lifecycle behavior, and real-device versus simulator/emulator evidence.
+- `offline-sync-review`: reviews offline mode, local cache, durable queues, sync jobs, conflict handling, retries, idempotency, and network transition behavior.
+- `webview-bridge`: reviews WebView bridges, native-to-web messaging, deep links, embedded auth, uploads, downloads, and hybrid navigation.
 
 ## Data map
 

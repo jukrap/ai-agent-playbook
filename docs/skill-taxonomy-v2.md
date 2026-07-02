@@ -12,7 +12,7 @@ Skill taxonomy v2 uses capability categories as the primary axis. Stack-specific
 - `database`: schema change, migration, SQL, reporting, and data integrity.
 - `devops`: CI/CD, containers, package releases, deployment, configuration, and observability.
 - `security`: secrets, threat modeling, authorization, dependency risk, and compliance evidence.
-- `mobile`: Expo, React Native, native app, WebView bridge, and device QA.
+- `mobile`: Expo, React Native, native app release, permissions, offline sync, WebView bridge, and device QA.
 - `data`: analytics, pipelines, ETL, dashboards, and data quality.
 - `ai-harness`: MCP, skills, agents, context engineering, cache, and index design.
 - `legacy`: legacy change safety and compatibility strategy.
@@ -82,6 +82,17 @@ Frontend quality skills separate user-visible polish from state/data correctness
 - `frontend/visual-regression-qa`: screenshots, responsive breakpoints, layout overflow, clipping, visual diffs, text fit, canvas/media rendering, and browser-rendered regressions.
 
 Framework-specific details belong in references or project-local playbooks. The primary skills should work for React, Vue, Svelte, Angular, server-rendered pages, and lighter DOM-first frontends.
+
+## Mobile Hardening Pack
+
+Mobile skills separate release readiness, device permission evidence, offline sync correctness, and hybrid bridge boundaries:
+
+- `mobile/native-release-readiness`: mobile releases, signing, provisioning, build profiles, release channels, store distribution, artifacts, rollout, rollback, and release-build cleanup.
+- `mobile/device-permission-qa`: runtime permissions, manifests, privacy prompts, sensitive capabilities, lifecycle behavior, device matrices, and real-device versus simulator/emulator evidence.
+- `mobile/offline-sync-review`: offline mode, local cache, durable queues, sync APIs, conflicts, retries, idempotency, reconciliation, and network transition behavior.
+- `mobile/webview-bridge`: WebView bridges, native-to-web messaging, deep links, embedded auth, uploads, downloads, and hybrid navigation.
+
+Platform-specific details belong in references or project playbooks. The primary skills should work for Swift/iOS, Kotlin/Android, Expo, React Native, Flutter, and hybrid WebView apps without creating stack-first mobile skills.
 
 ## Data And Documentation Pack
 

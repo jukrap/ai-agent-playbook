@@ -109,16 +109,16 @@ src/                  CLI 런타임 구현
 skills/
   ai-harness/        MCP, skill, agent, context, cache, index design 스킬
   architecture/      boundary와 architecture review 스킬
-  backend/           API와 server-rendered flow 스킬
+  backend/           API, backend change safety, server-rendered flow 스킬
   data/              data pipeline과 analytics reliability 스킬
   database/          schema, migration, SQL, data integrity 스킬
   delivery/          planning, verification, Git, PR, worklog 스킬
   devops/            CI/CD, deployment, operations triage 스킬
   frontend/          UI, browser, accessibility, visual QA 스킬
   mobile/            native, hybrid, WebView, device QA 스킬
-  security/          security review와 risk 스킬
+  security/          auth, dependency supply chain, security review, risk 스킬
   project/            bootstrap, onboarding, project-memory 스킬
-  quality/            API boundary, UI quality, cleanup, review 스킬
+  quality/            UI quality, cleanup, review 스킬
   git/                commit, PR, push, worklog 스킬
   meta/               skill-authoring 스킬
   legacy/             legacy-system maintenance 스킬
@@ -148,7 +148,6 @@ test/                 Node CLI와 adapter 테스트
 
 ### 품질
 
-- `api-contract-boundary`: 프론트엔드/백엔드 계약, DTO, mock, payload, adapter를 구현·디버깅·검토할 때.
 - `ui-style-policy`: 저장소 UI 스타일 정책을 선택, 문서화, 강제할 때.
 - `style-quality-review`: UI 스타일, 반응형 동작, 레이아웃 넘침, 시각적 회귀를 검토하거나 개선할 때.
 - `frontend-ui-polish`: 제품 의도와 기존 디자인 관례를 보존하면서 보이는 프론트엔드 UI를 구현하거나 다듬을 때.
@@ -164,6 +163,8 @@ test/                 Node CLI와 adapter 테스트
 
 - `mcp-server-design`: MCP tool, resource, prompt, permission tier, write gate, cache/index surface를 설계할 때.
 - `boundary-review`: FSD, layered, DDD, monorepo, package ownership, dependency direction, coupling boundary를 검토할 때.
+- `api-contract-boundary`: 프론트엔드/백엔드 계약, DTO, mock, payload, adapter를 구현·디버깅·검토할 때.
+- `backend-change-safety`: backend service, module, worker, job, integration, queue, config, server-side business logic을 바꿀 때.
 - `server-rendered-change`: backend-rendered controller, template, form, session, redirect, validation, view contract를 바꿀 때.
 - `data-pipeline-review`: analytics pipeline, ETL, batch job, data contract, dashboard, quality check를 검토할 때.
 - `database-change-safety`: database schema, migration, SQL, reporting query, stored procedure, data integrity rule을 바꿀 때.
@@ -174,6 +175,8 @@ test/                 Node CLI와 adapter 테스트
 - `webview-bridge`: WebView bridge, native-to-web messaging, deep link, embedded auth, upload, download, hybrid navigation을 바꿀 때.
 - `legacy-change-safety`: hidden coupling이나 deployment risk가 있는 compatibility-first legacy change를 다룰 때.
 - `security-review`: secret, authentication, authorization, input validation, dependency risk, sensitive data flow를 검토할 때.
+- `auth-access-control`: login, session, OAuth/OIDC, JWT, RBAC, permission, role, tenant, scope, object-level authorization을 바꿀 때.
+- `dependency-supply-chain-review`: dependency, lockfile, SBOM, license, container, package script, provenance, vulnerability remediation을 바꿀 때.
 
 ### 레거시
 

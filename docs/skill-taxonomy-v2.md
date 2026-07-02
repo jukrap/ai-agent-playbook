@@ -23,6 +23,19 @@ Stack-named skills can remain as compatibility wrappers when they still provide 
 
 For example, `legacy-java-spring-mvc` routes to backend server-rendered change work and keeps Spring MVC specifics in its reference file.
 
+## Backend And Security Pack
+
+Backend and security skills use capability-first names:
+
+- `backend/api-contract-boundary`: API and DTO boundary work.
+- `backend/backend-change-safety`: services, modules, jobs, workers, queues, config, and integrations.
+- `backend/server-rendered-change`: controllers, templates, sessions, forms, redirects, and server-rendered view contracts.
+- `security/auth-access-control`: authentication, authorization, RBAC, tenants, scopes, and object-level access.
+- `security/dependency-supply-chain-review`: dependencies, lockfiles, SBOMs, licenses, provenance, containers, and CVEs.
+- `security/security-review`: broad security risk review and threat-model triage.
+
+Stack profiles belong under the relevant primary skill reference tree. For backend change safety, Java, Kotlin, Go, Python, Node, .NET, and PHP details live under `skills/backend/backend-change-safety/references/stacks/` instead of creating stack-first primary skills.
+
 ## Validation
 
 The catalog command reports duplicate skill names, wrapper routing gaps, missing wrapper references, and category drift:
@@ -30,4 +43,3 @@ The catalog command reports duplicate skill names, wrapper routing gaps, missing
 ```bash
 ai-playbook catalog check --json
 ```
-

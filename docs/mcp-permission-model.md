@@ -21,9 +21,9 @@ Default read-only additions:
 - `playbook_layout`
 - `index_status`
 - `index_search`
+- `symbol_outline`
 - `write_gate_preview`
 
 ## Write Gate
 
 Write-capable tools should require both a server opt-in and an explicit call argument such as `apply: true`. They should also produce a dry-run plan, validate target paths, and write an audit trail before applying changes.
-

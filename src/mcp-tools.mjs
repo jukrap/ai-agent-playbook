@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   buildProjectContext,
+  buildSymbolOutlineIndex,
   capabilityCatalog,
   catalogManagedManifest,
   checkCanonFacts,
@@ -90,6 +91,13 @@ export function registerPlaybookMcpTools(server, options) {
       target: args.target,
       query: args.query,
       maxResults: args.maxResults ?? 20
+    })),
+    tool('symbol_outline', 'Preview local source symbols without writing a runtime index artifact.', {
+      target: targetSchema,
+      maxResults: maxResultsSchema
+    }, (args) => buildSymbolOutlineIndex({
+      target: args.target,
+      maxEntries: args.maxResults ?? 100
     })),
     tool('write_gate_preview', 'Preview write risk for a target path and intent without modifying files.', {
       target: targetSchema,

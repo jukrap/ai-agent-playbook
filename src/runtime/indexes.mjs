@@ -10,6 +10,10 @@ import {
 } from '../harness/core.mjs';
 
 const INDEX_FILE = 'runtime/indexes/file-inventory.json';
+const INDEX_DEFINITIONS = [
+  { kind: 'file-inventory', file: INDEX_FILE, previewOnly: false },
+  { kind: 'symbol-outline', file: 'runtime/indexes/symbol-outline.json', previewOnly: true }
+];
 const TEXT_EXTENSIONS = new Set([
   '.c',
   '.conf',
@@ -83,6 +87,7 @@ export async function runtimeIndexStatus({ target }) {
   const resolvedTarget = path.resolve(target);
   const playbook = resolvePlaybookLayout(resolvedTarget);
   const indexPath = path.join(playbook.root, ...INDEX_FILE.split('/'));
+  const indexes = await Promise.all(INDEX_DEFINITIONS.map((definition) => readIndexStatus(playbook, definition)));
   if (!existsSync(indexPath)) {
     return {
       schemaVersion: SCHEMA_VERSION,
@@ -96,6 +101,7 @@ export async function runtimeIndexStatus({ target }) {
         warnings: 0,
         conflicts: 0
       },
+      indexes,
       warnings: [],
       conflicts: []
     };
@@ -114,6 +120,7 @@ export async function runtimeIndexStatus({ target }) {
       conflicts: 0
     },
     inventory: parsed.summary ?? {},
+    indexes,
     warnings: [],
     conflicts: []
   };
@@ -214,4 +221,30 @@ function categorizeFile(file, target, playbookDir) {
   if (['.json', '.yaml', '.yml', '.toml', '.ini'].includes(extension) || path.basename(file).startsWith('.env')) return 'config';
   if (TEXT_EXTENSIONS.has(extension)) return 'source';
   return 'other';
+}
+
+async function readIndexStatus(playbook, definition) {
+  const indexPath = path.join(playbook.root, ...definition.file.split('/'));
+  const relativePath = `${playbook.dir}/${definition.file}`;
+  if (!existsSync(indexPath)) {
+    return {
+      kind: definition.kind,
+      path: relativePath,
+      exists: false,
+      previewOnly: definition.previewOnly,
+      schemaVersion: null,
+      generatedAt: null,
+      entries: 0
+    };
+  }
+  const parsed = JSON.parse(await readFile(indexPath, 'utf8'));
+  return {
+    kind: definition.kind,
+    path: relativePath,
+    exists: true,
+    previewOnly: definition.previewOnly,
+    schemaVersion: parsed.schemaVersion ?? null,
+    generatedAt: parsed.generatedAt ?? null,
+    entries: parsed.summary?.files ?? parsed.summary?.entries ?? parsed.files?.length ?? parsed.entries?.length ?? 0
+  };
 }

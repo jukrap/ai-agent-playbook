@@ -91,6 +91,8 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   assert.equal(await runCli(['index', 'status', '.', '--json'], status), 0);
   const statusReport = JSON.parse(status.out());
   assert.equal(statusReport.exists, true);
+  assert.equal(statusReport.indexes.some((item) => item.kind === 'file-inventory' && item.exists === true), true);
+  assert.equal(statusReport.indexes.some((item) => item.kind === 'symbol-outline' && item.previewOnly === true), true);
 
   const search = capture(target);
   assert.equal(await runCli(['index', 'search', '.', '--query', 'harness-os', '--json'], search), 0);

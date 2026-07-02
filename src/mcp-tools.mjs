@@ -499,6 +499,40 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- Separate local inventory findings from external vulnerability or license claims.'
   ]));
 
+  server.registerPrompt('package_release_readiness_review', {
+    title: 'Package release readiness review',
+    description: 'Review package publishing, artifact contents, metadata, dry-runs, license/notice evidence, and rollback constraints.',
+    argsSchema: {
+      target: z.string().optional(),
+      artifact: z.string().optional(),
+      channel: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS package release readiness review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Artifact: ${args.artifact ?? '<package, CLI, plugin, bundle, or binary>'}`,
+    `Channel: ${args.channel ?? '<registry, marketplace, release channel, or distribution path>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe package-release-readiness',
+    '- dependency_inventory for package manifests, lockfiles, scripts, containers, and CI signals',
+    '- diagnostics_check for local build, test, pack, and verification command candidates',
+    '- write_gate_preview before suggesting metadata, package, or release file edits',
+    '',
+    'Optional evidence:',
+    '- operator_search for package metadata, changelog, release notes, license, notice, provenance, and generated output references',
+    '- index_status for existing runtime reports and capability history',
+    '',
+    'Stop conditions:',
+    '- Version source, artifact owner, registry/channel, license/notice evidence, or rollback/unpublish path is unknown',
+    '- Registry credentials, publishing authority, or live network access is required but unavailable',
+    '- Generated output or package dry-run evidence is stale or missing',
+    '',
+    'Verification expectations:',
+    '- Name pack/dry-run file list, metadata, entrypoint, license/notice, provenance, lockfile, build, and affected runtime checks actually available.',
+    '- Do not publish, log into registries, move tags, or claim legal approval from local evidence alone.'
+  ]));
+
   server.registerPrompt('deployment_release_review', {
     title: 'Deployment release review',
     description: 'Review release, deployment, rollback, container, CI, and post-deploy evidence with explicit gates.',
@@ -531,6 +565,40 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     'Verification expectations:',
     '- Name the CI, artifact/image, migration, smoke, logs, metrics, traces, and rollback checks actually available.',
     '- Separate local evidence from external deployment status claims.'
+  ]));
+
+  server.registerPrompt('connector_integration_review', {
+    title: 'Connector integration review',
+    description: 'Review connector, adapter, webhook, OAuth, registration, credential, retry, and integration contract evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      path: z.string().optional(),
+      integration: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS connector/integration review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Path: ${args.path ?? '<optional connector path>'}`,
+    `Integration: ${args.integration ?? '<connector, API, webhook, OAuth app, MCP adapter, or sync job>'}`,
+    '',
+    'Required evidence:',
+    '- route_api_hints for route, API, SQL, migration, data-object, and connector-adjacent hints',
+    '- operator_search for connector registration, credential, webhook, retry, timeout, pagination, and error handling references',
+    '- operator_preflight for related context, contracts, and nearby playbook guidance',
+    '- write_gate_preview before suggesting connector or credential-related edits',
+    '',
+    'Optional evidence:',
+    '- dependency_inventory for SDK, package, generated schema, or host-runtime package context',
+    '- symbol_outline for connector classes, node definitions, handlers, adapters, and job owners',
+    '',
+    'Stop conditions:',
+    '- Credential contract, API scope, webhook lifecycle, registration metadata, or saved-config compatibility is unknown',
+    '- Permission scope widens without review or sandbox verification is unavailable',
+    '- Connector depends on live external state without a repeatable verification path',
+    '',
+    'Verification expectations:',
+    '- Include happy path, auth failure, permission failure, retry/rate-limit, malformed payload, webhook lifecycle, and registration checks when applicable.',
+    '- Treat route/API hints as navigation evidence, not proof that connector contracts are correct.'
   ]));
 
   server.registerPrompt('frontend_quality_review', {

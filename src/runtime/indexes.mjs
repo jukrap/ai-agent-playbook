@@ -8,13 +8,14 @@ import {
   SCHEMA_VERSION,
   walkFiles
 } from '../harness/core.mjs';
+import { validateRuntimeArtifact } from './schemas.mjs';
 
 const INDEX_FILE = 'runtime/indexes/file-inventory.json';
 const INDEX_DEFINITIONS = [
-  { kind: 'file-inventory', file: INDEX_FILE, previewOnly: false },
-  { kind: 'symbol-outline', file: 'runtime/indexes/symbol-outline.json', previewOnly: true },
-  { kind: 'dependency-inventory', file: 'runtime/indexes/dependency-inventory.json', previewOnly: true },
-  { kind: 'route-api-hints', file: 'runtime/indexes/route-api-hints.json', previewOnly: true }
+  { kind: 'file-inventory', artifactKind: 'runtime.file-inventory', file: INDEX_FILE, previewOnly: false },
+  { kind: 'symbol-outline', artifactKind: 'runtime.symbol-outline', file: 'runtime/indexes/symbol-outline.json', previewOnly: true },
+  { kind: 'dependency-inventory', artifactKind: 'runtime.dependency-inventory', file: 'runtime/indexes/dependency-inventory.json', previewOnly: true },
+  { kind: 'route-api-hints', artifactKind: 'runtime.route-api-hints', file: 'runtime/indexes/route-api-hints.json', previewOnly: true }
 ];
 const TEXT_EXTENSIONS = new Set([
   '.c',
@@ -64,9 +65,11 @@ export async function buildRuntimeIndex({ target, apply = false }) {
   const entries = await collectInventory(resolvedTarget, playbook.dir);
   const report = {
     schemaVersion: SCHEMA_VERSION,
+    kind: 'runtime.file-inventory',
     ok: true,
     target: resolvedTarget,
     applied: Boolean(apply),
+    mode: { localOnly: true, network: false, writes: Boolean(apply) },
     index: `${playbook.dir}/${INDEX_FILE}`,
     generatedAt: new Date().toISOString(),
     summary: summarizeInventory(entries),
@@ -90,10 +93,14 @@ export async function runtimeIndexStatus({ target }) {
   const playbook = resolvePlaybookLayout(resolvedTarget);
   const indexPath = path.join(playbook.root, ...INDEX_FILE.split('/'));
   const indexes = await Promise.all(INDEX_DEFINITIONS.map((definition) => readIndexStatus(playbook, definition)));
+  const fileIndexStatus = indexes.find((item) => item.kind === 'file-inventory');
+  const otherIndexConflicts = indexes
+    .filter((item) => item.kind !== 'file-inventory')
+    .flatMap((item) => item.validation?.conflicts ?? []);
   if (!existsSync(indexPath)) {
     return {
       schemaVersion: SCHEMA_VERSION,
-      ok: true,
+      ok: otherIndexConflicts.length === 0,
       target: resolvedTarget,
       exists: false,
       index: `${playbook.dir}/${INDEX_FILE}`,
@@ -105,26 +112,52 @@ export async function runtimeIndexStatus({ target }) {
       },
       indexes,
       warnings: [],
-      conflicts: []
+      conflicts: otherIndexConflicts
     };
   }
-  const parsed = JSON.parse(await readFile(indexPath, 'utf8'));
+  let parsed;
+  try {
+    parsed = JSON.parse(await readFile(indexPath, 'utf8'));
+  } catch {
+    const validation = fileIndexStatus?.validation ?? { ok: false, warnings: [], conflicts: [] };
+    return {
+      schemaVersion: SCHEMA_VERSION,
+      ok: false,
+      target: resolvedTarget,
+      exists: true,
+      index: `${playbook.dir}/${INDEX_FILE}`,
+      summary: {
+        files: 0,
+        generatedAt: null,
+        warnings: validation.warnings.length,
+        conflicts: validation.conflicts.length + otherIndexConflicts.length
+      },
+      inventory: {},
+      indexes,
+      warnings: validation.warnings,
+      conflicts: [...validation.conflicts, ...otherIndexConflicts]
+    };
+  }
+  const validation = fileIndexStatus?.validation ?? validateRuntimeArtifact(parsed, {
+    path: `${playbook.dir}/${INDEX_FILE}`,
+    expectedKind: 'runtime.file-inventory'
+  });
   return {
     schemaVersion: SCHEMA_VERSION,
-    ok: true,
+    ok: validation.ok && otherIndexConflicts.length === 0,
     target: resolvedTarget,
     exists: true,
     index: `${playbook.dir}/${INDEX_FILE}`,
     summary: {
       files: parsed.summary?.files ?? parsed.files?.length ?? 0,
       generatedAt: parsed.generatedAt ?? null,
-      warnings: 0,
-      conflicts: 0
+      warnings: validation.warnings.length,
+      conflicts: validation.conflicts.length + otherIndexConflicts.length
     },
     inventory: parsed.summary ?? {},
     indexes,
-    warnings: [],
-    conflicts: []
+    warnings: validation.warnings,
+    conflicts: [...validation.conflicts, ...otherIndexConflicts]
   };
 }
 
@@ -239,7 +272,35 @@ async function readIndexStatus(playbook, definition) {
       entries: 0
     };
   }
-  const parsed = JSON.parse(await readFile(indexPath, 'utf8'));
+  let parsed;
+  try {
+    parsed = JSON.parse(await readFile(indexPath, 'utf8'));
+  } catch (error) {
+    return {
+      kind: definition.kind,
+      path: relativePath,
+      exists: true,
+      previewOnly: definition.previewOnly,
+      schemaVersion: null,
+      generatedAt: null,
+      entries: 0,
+      valid: false,
+      validation: {
+        ok: false,
+        warnings: [],
+        conflicts: [{
+          id: 'runtime.artifact.malformed-json',
+          level: 'fail',
+          message: `${relativePath} is not valid JSON: ${error.message}`,
+          paths: [relativePath]
+        }]
+      }
+    };
+  }
+  const validation = validateRuntimeArtifact(parsed, {
+    path: relativePath,
+    expectedKind: definition.artifactKind
+  });
   return {
     kind: definition.kind,
     path: relativePath,
@@ -247,6 +308,8 @@ async function readIndexStatus(playbook, definition) {
     previewOnly: definition.previewOnly,
     schemaVersion: parsed.schemaVersion ?? null,
     generatedAt: parsed.generatedAt ?? null,
-    entries: parsed.summary?.files ?? parsed.summary?.entries ?? parsed.files?.length ?? parsed.entries?.length ?? 0
+    entries: parsed.summary?.files ?? parsed.summary?.entries ?? parsed.files?.length ?? parsed.entries?.length ?? 0,
+    valid: validation.ok,
+    validation
   };
 }

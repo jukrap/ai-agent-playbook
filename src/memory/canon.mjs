@@ -13,6 +13,7 @@ import {
   todayIso,
   walkFiles
 } from '../harness/core.mjs';
+import { validateRuntimeArtifact } from '../runtime/schemas.mjs';
 
 const INDEX_REPORT = 'runtime/indexes/file-inventory.json';
 const RUNTIME_REPORTS = 'runtime/reports';
@@ -147,13 +148,25 @@ export async function promoteCanonFacts({ target, sourcePath, toPath, apply = fa
   if (sourceReadable) {
     sourceReport = await readJsonReport({ target: resolvedTarget, file: source.fullPath, relativePath: source.path });
     if (sourceReport && !sourceReport.ok) {
+      const invalidArtifact = sourceReport.validation && !sourceReport.validation.ok;
       conflicts.push({
-        id: 'canon.promote.source-malformed',
-        message: `Could not parse promotion source ${source.path}: ${sourceReport.message}`,
+        id: invalidArtifact ? 'canon.promote.source-invalid-artifact' : 'canon.promote.source-malformed',
+        message: invalidArtifact
+          ? `Promotion source ${source.path} is not a valid runtime artifact: ${sourceReport.message}`
+          : `Could not parse promotion source ${source.path}: ${sourceReport.message}`,
         paths: [source.path]
       });
     } else if (sourceReport?.ok) {
-      facts = [draftFactFromReport(sourceReport)];
+      const artifactValidation = validateRuntimeArtifact(sourceReport.value, { path: source.path });
+      if (!artifactValidation.ok) {
+        conflicts.push({
+          id: 'canon.promote.source-invalid-artifact',
+          message: `Promotion source ${source.path} is not a valid runtime artifact: ${artifactValidation.conflicts[0].message}`,
+          paths: [source.path]
+        });
+      } else {
+        facts = [draftFactFromReport(sourceReport)];
+      }
     }
   }
 
@@ -237,14 +250,17 @@ async function readJsonReport({ target, file, relativePath }) {
   try {
     const value = JSON.parse(await readFile(file, 'utf8'));
     const info = await stat(file);
+    const validation = validateRuntimeArtifact(value, { path: relativePath });
     return {
-      ok: true,
+      ok: validation.ok,
       path: relativePath,
       file,
       value,
       modifiedTime: info.mtime.toISOString(),
       bytes: info.size,
-      target
+      target,
+      validation,
+      message: validation.ok ? null : validation.conflicts[0].message
     };
   } catch (error) {
     return {

@@ -5,7 +5,7 @@ Skill taxonomy v2 uses capability categories as the primary axis. Stack-specific
 ## Categories
 
 - `foundation`: repo onboarding, bootstrap, and project docs.
-- `delivery`: planning, verification, git, PR, and worklog flows.
+- `delivery`: planning, verification, testing, git, PR, and worklog flows.
 - `architecture`: FSD, layered architecture, DDD, monorepos, and boundary review.
 - `frontend`: UI, state, data, accessibility, performance, and visual QA.
 - `backend`: API contracts, auth, server-rendered flows, workers, and integrations.
@@ -35,6 +35,17 @@ Backend and security skills use capability-first names:
 - `security/security-review`: broad security risk review and threat-model triage.
 
 Stack profiles belong under the relevant primary skill reference tree. For backend change safety, Java, Kotlin, Go, Python, Node, .NET, and PHP details live under `skills/backend/backend-change-safety/references/stacks/` instead of creating stack-first primary skills.
+
+## Delivery And Testing Pack
+
+Delivery testing skills separate release confidence planning, flaky test stabilization, and fixture/test-data design:
+
+- `delivery/git-worklog-guardrails`: staging, commits, PR text, release notes, and worklogs.
+- `delivery/test-verification-strategy`: risk-based verification strategy, test scope, coverage gaps, check selection, and release confidence.
+- `delivery/flaky-test-triage`: flaky, nondeterministic, timing-dependent, order-dependent, environment-sensitive, and intermittent test failures.
+- `delivery/test-fixture-data-design`: fixtures, factories, mocks, seeds, snapshots, golden files, sample payloads, test databases, and fixture maintenance boundaries.
+
+Verification guidance should prefer project-defined commands, avoid invented check results, and record remaining risk when a check cannot be run.
 
 ## DevOps And Release Pack
 

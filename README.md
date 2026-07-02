@@ -112,7 +112,7 @@ skills/
   backend/           API, backend change safety, and server-rendered flow skills
   data/              Data pipeline, analytics, reporting, and migration integrity skills
   database/          Schema, migration, SQL, and data integrity skills
-  delivery/          Planning, verification, Git, PR, and worklog skills
+  delivery/          Planning, verification, testing, Git, PR, and worklog skills
   devops/            CI/CD, container, release, deployment, and operations triage skills
   frontend/          UI, browser, state/data, accessibility, and visual QA skills
   mobile/            Native, hybrid, WebView, and device QA skills
@@ -172,6 +172,9 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `data-migration-integrity`: plan, review, or verify data migrations, backfills, warehouse transformations, reconciliation, idempotency, rollback, and data repair.
 - `database-change-safety`: change database schema, migrations, SQL, reporting queries, stored procedures, or data integrity rules.
 - `git-worklog-guardrails`: primary delivery skill for staging, commits, PR text, release notes, and worklogs.
+- `test-verification-strategy`: plan or review risk-based verification, test scope, check selection, coverage gaps, and release confidence.
+- `flaky-test-triage`: diagnose, reproduce, stabilize, quarantine, or document flaky and nondeterministic tests.
+- `test-fixture-data-design`: design or repair fixtures, factories, mocks, seeds, snapshots, golden files, and test data boundaries.
 - `ci-failure-triage`: diagnose failing CI jobs, build pipelines, deployments, flaky tests, and environment drift.
 - `container-change-safety`: change Dockerfiles, container images, Compose/Kubernetes manifests, runtime config, healthchecks, volumes, or networks.
 - `deployment-release-check`: prepare, review, or troubleshoot releases, deploys, rollbacks, feature flags, artifacts, migration gates, and post-deploy checks.

@@ -112,7 +112,7 @@ skills/
   backend/           API, backend change safety, server-rendered flow 스킬
   data/              data pipeline, analytics, reporting, migration integrity 스킬
   database/          schema, migration, SQL, data integrity 스킬
-  delivery/          planning, verification, Git, PR, worklog 스킬
+  delivery/          planning, verification, testing, Git, PR, worklog 스킬
   devops/            CI/CD, container, release, deployment, operations triage 스킬
   frontend/          UI, browser, state/data, accessibility, visual QA 스킬
   mobile/            native, hybrid, WebView, device QA 스킬
@@ -172,6 +172,9 @@ test/                 Node CLI와 adapter 테스트
 - `data-migration-integrity`: data migration, backfill, warehouse transformation, reconciliation, idempotency, rollback, data repair를 계획·검토·검증할 때.
 - `database-change-safety`: database schema, migration, SQL, reporting query, stored procedure, data integrity rule을 바꿀 때.
 - `git-worklog-guardrails`: staging, commit, PR text, release note, worklog를 위한 primary delivery skill.
+- `test-verification-strategy`: risk-based verification, test scope, check selection, coverage gap, release confidence를 계획하거나 검토할 때.
+- `flaky-test-triage`: flaky/nondeterministic test를 진단, 재현, 안정화, quarantine, 문서화할 때.
+- `test-fixture-data-design`: fixture, factory, mock, seed, snapshot, golden file, test data boundary를 설계하거나 복구할 때.
 - `ci-failure-triage`: 실패한 CI job, build pipeline, deployment, flaky test, environment drift를 진단할 때.
 - `container-change-safety`: Dockerfile, container image, Compose/Kubernetes manifest, runtime config, healthcheck, volume, network를 바꿀 때.
 - `deployment-release-check`: release, deploy, rollback, feature flag, artifact, migration gate, post-deploy check를 준비·검토·진단할 때.

@@ -5,7 +5,7 @@ Skill taxonomy v2는 capability category를 1차 축으로 씁니다. 스택별 
 ## Categories
 
 - `foundation`: repo onboarding, bootstrap, project docs.
-- `delivery`: planning, verification, git, PR, worklog flow.
+- `delivery`: planning, verification, testing, git, PR, worklog flow.
 - `architecture`: FSD, layered architecture, DDD, monorepo, boundary review.
 - `frontend`: UI, state, data, accessibility, performance, visual QA.
 - `backend`: API contract, auth, server-rendered flow, worker, integration.
@@ -35,6 +35,17 @@ Backend와 security skill은 capability-first name을 씁니다.
 - `security/security-review`: broad security risk review와 threat-model triage.
 
 Stack profile은 관련 primary skill reference tree 아래에 둡니다. Backend change safety의 Java, Kotlin, Go, Python, Node, .NET, PHP 세부사항은 stack-first primary skill을 만들지 않고 `skills/backend/backend-change-safety/references/stacks/` 아래에 둡니다.
+
+## Delivery And Testing Pack
+
+Delivery testing skill은 release confidence planning, flaky test stabilization, fixture/test-data design을 분리합니다.
+
+- `delivery/git-worklog-guardrails`: staging, commit, PR text, release note, worklog.
+- `delivery/test-verification-strategy`: risk-based verification strategy, test scope, coverage gap, check selection, release confidence.
+- `delivery/flaky-test-triage`: flaky, nondeterministic, timing-dependent, order-dependent, environment-sensitive, intermittent test failure.
+- `delivery/test-fixture-data-design`: fixture, factory, mock, seed, snapshot, golden file, sample payload, test database, fixture maintenance boundary.
+
+Verification guidance는 project-defined command를 우선하고, check result를 지어내지 않으며, 실행할 수 없는 check에는 remaining risk를 기록해야 합니다.
 
 ## DevOps And Release Pack
 

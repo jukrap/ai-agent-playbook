@@ -108,7 +108,7 @@ bin/                  ai-playbook CLI 진입점
 src/                  CLI 런타임 구현
 skills/
   ai-harness/        MCP, skill, agent, context, cache, index design 스킬
-  architecture/      boundary와 architecture review 스킬
+  architecture/      boundary, feature slice, domain model, monorepo/package architecture 스킬
   backend/           API, backend change safety, connector, server-rendered flow 스킬
   data/              data pipeline, analytics, reporting, migration integrity 스킬
   database/          schema, migration, SQL, data integrity 스킬
@@ -164,6 +164,9 @@ test/                 Node CLI와 adapter 테스트
 
 - `mcp-server-design`: MCP tool, resource, prompt, permission tier, write gate, cache/index surface를 설계할 때.
 - `boundary-review`: FSD, layered, DDD, monorepo, package ownership, dependency direction, coupling boundary를 검토할 때.
+- `feature-slice-boundary`: FSD, feature-sliced, vertical-slice, feature-first, route-level, module-level, component-domain boundary를 바꾸거나 검토할 때.
+- `domain-model-change`: domain entity, aggregate, value object, service, policy, use case, repository, adapter, invariant, transaction boundary를 바꾸거나 검토할 때.
+- `monorepo-package-boundary`: monorepo package, workspace dependency, package export, internal library, build graph, generated type, cross-package release impact를 바꾸거나 검토할 때.
 - `api-contract-boundary`: 프론트엔드/백엔드 계약, DTO, mock, payload, adapter를 구현·디버깅·검토할 때.
 - `backend-change-safety`: backend service, module, worker, job, integration, queue, config, server-side business logic을 바꿀 때.
 - `connector-integration-change`: API connector, workflow node, MCP adapter, webhook, OAuth app, import/export bridge, sync job, connector registration, credential handling을 바꿀 때.

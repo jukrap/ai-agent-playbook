@@ -108,7 +108,7 @@ bin/                  ai-playbook CLI entrypoint
 src/                  CLI runtime implementation
 skills/
   ai-harness/        MCP, skill, agent, context, cache, and index design skills
-  architecture/      Boundary and architecture review skills
+  architecture/      Boundary, feature slice, domain model, and monorepo/package architecture skills
   backend/           API, backend change safety, connector, and server-rendered flow skills
   data/              Data pipeline, analytics, reporting, and migration integrity skills
   database/          Schema, migration, SQL, and data integrity skills
@@ -164,6 +164,9 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 
 - `mcp-server-design`: design MCP tools, resources, prompts, permission tiers, write gates, and cache/index surfaces.
 - `boundary-review`: review FSD, layered, DDD, monorepo, package ownership, dependency direction, and coupling boundaries.
+- `feature-slice-boundary`: change or review FSD, feature-sliced, vertical-slice, feature-first, route-level, module-level, or component-domain boundaries.
+- `domain-model-change`: change or review domain entities, aggregates, value objects, services, policies, use cases, repositories, adapters, invariants, or transaction boundaries.
+- `monorepo-package-boundary`: change or review monorepo packages, workspace dependencies, package exports, internal libraries, build graphs, generated types, and cross-package release impact.
 - `api-contract-boundary`: implement, debug, or review frontend/backend contracts, DTOs, mocks, payloads, and adapters.
 - `backend-change-safety`: change backend services, modules, workers, jobs, integrations, queues, config, or server-side business logic.
 - `connector-integration-change`: change API connectors, workflow nodes, MCP adapters, webhooks, OAuth apps, import/export bridges, sync jobs, connector registration, or credential handling.

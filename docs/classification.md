@@ -9,7 +9,7 @@ The content is not agent-specific. Codex is one installation target. The source 
 ## Skill categories
 
 - `skills/ai-harness`: MCP, skill, agent, context, cache, index, and harness design workflows.
-- `skills/architecture`: boundary, architecture, ownership, dependency direction, and coupling review workflows.
+- `skills/architecture`: boundary, feature slice, domain model, monorepo/package ownership, dependency direction, and coupling review workflows.
 - `skills/backend`: API contract, backend change safety, connector, server-rendered flow, worker, and integration workflows.
 - `skills/data`: analytics pipeline, ETL, reporting, data contract, and quality workflows.
 - `skills/database`: schema, migration, SQL, reporting query, and data integrity workflows.
@@ -70,6 +70,13 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `backend-change-safety`: reviews services, modules, jobs, workers, queues, config, integrations, and server-side business logic.
 - `connector-integration-change`: reviews API connectors, workflow nodes, MCP adapters, webhooks, OAuth apps, import/export bridges, sync jobs, registration metadata, and credential handling.
 - `server-rendered-change`: reviews controllers, templates, sessions, forms, redirects, and server-rendered view contracts.
+
+## Architecture map
+
+- `boundary-review`: reviews broad architecture boundaries, dependency direction, public APIs, ownership, and cross-module coupling.
+- `feature-slice-boundary`: reviews FSD, feature-sliced, vertical-slice, feature-first, route-level, module-level, and component-domain boundaries.
+- `domain-model-change`: reviews domain entities, aggregates, value objects, services, policies, use cases, repositories, adapters, invariants, and transaction boundaries.
+- `monorepo-package-boundary`: reviews monorepo packages, workspace dependencies, package exports, internal libraries, build graphs, generated types, and cross-package release impact.
 
 ## Quality map
 

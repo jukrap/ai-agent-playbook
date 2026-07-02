@@ -75,6 +75,7 @@ Command-specific options appear where they are needed:
 | `--cols N` | Expected terminal width for `qa tui-check`. |
 | `--run-id <id>` | Select one run under `.ai-playbook/runs/`. |
 | `--recipe <id>` | Select a workflow recipe for `workflow run-preview`. |
+| `--user-config <path>` | Add an explicit user-level config file for `config preview`; target-local config still wins. |
 | `--type note|criterion|evidence|blocker|cleanup` | Event type for `run record`. |
 | `--status pass|fail|blocked|info` | Event status for `run record`. |
 | `--evidence <path>` | Portable relative evidence path for `run record`. |
@@ -124,12 +125,15 @@ Project playbook commands manage `.ai-playbook/` in one target repository.
 | `migrate layout <target>` | Preview or apply `.ai-playbook` layout v2 directories and copied v1 compatibility files. | No unless `--apply` | `npx ai-agent-playbook migrate layout <target-project> --to v2 --json` |
 | `layout status <target>` | Report whether the target playbook has the v2 layout files and directories. | No | `npx ai-agent-playbook layout status <target-project> --json` |
 | `doctor <target>` | Check project playbook health, adaptation status, worklog summary freshness, and local-path risk. | No | `npx ai-agent-playbook doctor <target-project> --json` |
+| `config preview <target>` | Resolve Harness OS defaults from built-in values, explicit user config, target config, target-local config, and narrow env overrides. | No | `npx ai-agent-playbook config preview <target-project> --json` |
 | `context <target>` | Build compact project context from core `.ai-playbook/` files for optional hooks or inspection. | No | `npx ai-agent-playbook context <target-project> --json` |
 | `context list <target>` | List `.ai-playbook/context/**/*.md` files and their frontmatter. | No | `npx ai-agent-playbook context list <target-project> --json` |
 | `context status <target>` | Show which path-scoped context files apply to one file and whether `maps/doc-map.md` exists. | No | `npx ai-agent-playbook context status <target-project> --path src/example.ts --json` |
 | `context init <target>` | Create starter `context/root.md`, `_registry.json`, and `maps/doc-map.md`. | Yes, unless `--dry-run` | `npx ai-agent-playbook context init <target-project> --dry-run --json` |
 
 Use `--local-only` with `bootstrap` when the target project's `.ai-playbook/` should be added to that project's `.gitignore`.
+
+`config preview` reads `.ai-playbook/config.json` and `.ai-playbook/config.local.json` when they exist. It does not create either file. Precedence is built-in defaults, optional `--user-config`, target config, target-local config, then explicit environment overrides such as `AI_PLAYBOOK_CONTEXT_MAX_CHARS`, `AI_PLAYBOOK_DEFAULT_RECIPE`, `AI_PLAYBOOK_RUNTIME_CACHE_DIR`, `AI_PLAYBOOK_INDEX_MAX_FILES`, and `AI_PLAYBOOK_ENABLE_WRITE_TOOLS`.
 
 Context files support markdown frontmatter: `id`, `globs`, `alwaysApply`, `freshness`, and `priority`. Use `context status` before loading more project memory for a path. It is read-only and safe to run often.
 

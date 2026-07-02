@@ -9,6 +9,8 @@
   CURRENT.md
   questions.md
   manifest.json
+  config.json
+  config.local.json
   policy/
   memory/
   workflows/
@@ -27,6 +29,8 @@
 - `runtime/`: 생성된 cache, index, graph, report, snapshot, 임시 파일.
 - `integrations/`: MCP, adapter, hook, command 설정.
 - `archive/`: 더 이상 쓰지 않는 로컬 메모.
+
+`config.json`과 `config.local.json`은 선택 사항입니다. `config preview`는 두 파일이 있을 때 읽습니다. `config.local.json`은 특정 장비의 local override용이므로 프로젝트가 의도적으로 다르게 정하지 않는 한 local-only로 둡니다.
 
 ## Canon Facts
 

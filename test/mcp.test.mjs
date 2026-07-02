@@ -98,9 +98,20 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://workflows'), true);
 
     const prompts = await client.listPrompts();
-    assert.equal(prompts.prompts.some((prompt) => prompt.name === 'repo_onboarding_runbook'), true);
-    assert.equal(prompts.prompts.some((prompt) => prompt.name === 'harness_extension_plan'), true);
-    assert.equal(prompts.prompts.some((prompt) => prompt.name === 'reference_adoption_review'), true);
+    const promptNames = prompts.prompts.map((prompt) => prompt.name);
+    for (const expected of [
+      'repo_onboarding_runbook',
+      'harness_extension_plan',
+      'reference_adoption_review',
+      'backend_change_review',
+      'auth_access_control_review',
+      'dependency_supply_chain_review',
+      'workflow_run_review',
+      'canon_promotion_review',
+      'index_interpretation_review'
+    ]) {
+      assert.equal(promptNames.includes(expected), true, `missing MCP prompt ${expected}`);
+    }
 
     const catalog = await client.callTool({
       name: 'capability_catalog',
@@ -183,6 +194,27 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     });
     assert.equal(referencePrompt.messages[0].content.text.includes(path.join(target, '_reference')), true);
     assert.equal(referencePrompt.messages[0].content.text.includes('security'), true);
+
+    for (const { name, toolName, arguments: promptArguments } of [
+      { name: 'backend_change_review', toolName: 'workflow_run_preview', arguments: { target, intent: 'review auth flow' } },
+      { name: 'auth_access_control_review', toolName: 'route_api_hints', arguments: { target, intent: 'review auth flow' } },
+      { name: 'dependency_supply_chain_review', toolName: 'dependency_inventory', arguments: { target, ecosystem: 'npm' } },
+      { name: 'workflow_run_review', toolName: 'workflow_run_preview', arguments: { target, recipe: 'backend-contract-change' } },
+      { name: 'canon_promotion_review', toolName: 'canon_check', arguments: { target, source: '.ai-playbook/runtime/indexes/file-inventory.json' } },
+      { name: 'index_interpretation_review', toolName: 'index_status', arguments: { target, focus: 'routes' } }
+    ]) {
+      const reviewPrompt = await client.getPrompt({
+        name,
+        arguments: promptArguments
+      });
+      const text = reviewPrompt.messages[0].content.text;
+      assert.equal(text.includes(target), true);
+      assert.equal(text.includes('Required evidence:'), true);
+      assert.equal(text.includes('Stop conditions:'), true);
+      assert.equal(text.includes('Verification expectations:'), true);
+      assert.equal(text.includes(toolName), true, `${name} should mention ${toolName}`);
+      assert.equal(text.includes('apply: true'), false);
+    }
 
     const inventory = await client.callTool({
       name: 'reference_inventory',

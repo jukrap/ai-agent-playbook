@@ -399,6 +399,199 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       }
     }]
   }));
+
+  server.registerPrompt('backend_change_review', {
+    title: 'Backend change review',
+    description: 'Review backend/API changes with runtime evidence, contracts, and stop conditions.',
+    argsSchema: {
+      target: z.string().optional(),
+      path: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS backend change review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Path: ${args.path ?? '<optional path>'}`,
+    `Intent: ${args.intent ?? '<change intent>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe backend-contract-change',
+    '- route_api_hints for route/API/data hints',
+    '- contracts_check for path-scoped active or pending contracts',
+    '- write_gate_preview before suggesting edits',
+    '',
+    'Optional evidence:',
+    '- symbol_outline for owners and nearby functions',
+    '- operator_search for callers, DTOs, payload examples, and errors',
+    '',
+    'Stop conditions:',
+    '- Unknown caller behavior',
+    '- Missing schema or contract owner',
+    '- Auth, authorization, migration, or rollout behavior is ambiguous',
+    '',
+    'Verification expectations:',
+    '- Name contract, integration, and caller compatibility checks actually available in the target.',
+    '- Treat generated hints as evidence candidates, not trusted memory.'
+  ]));
+
+  server.registerPrompt('auth_access_control_review', {
+    title: 'Auth access-control review',
+    description: 'Review authentication and authorization changes with explicit evidence and denial-path checks.',
+    argsSchema: {
+      target: z.string().optional(),
+      path: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS auth/access-control review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Path: ${args.path ?? '<optional path>'}`,
+    `Intent: ${args.intent ?? '<auth or authorization concern>'}`,
+    '',
+    'Required evidence:',
+    '- operator_search for auth, role, permission, session, token, and guard terms',
+    '- route_api_hints for protected route and API hints',
+    '- contracts_check for security-sensitive invariants',
+    '- write_gate_preview before suggesting edits',
+    '',
+    'Optional evidence:',
+    '- dependency_inventory for auth/security dependency context',
+    '- symbol_outline for middleware, guard, policy, and controller owners',
+    '',
+    'Stop conditions:',
+    '- Role matrix or denial behavior is unknown',
+    '- Token/session lifecycle is unclear',
+    '- Sensitive data exposure or authorization bypass risk cannot be bounded',
+    '',
+    'Verification expectations:',
+    '- Include positive, denial, expired/invalid credential, and cross-tenant or cross-role checks when applicable.',
+    '- Do not treat route hints as proof that authorization exists.'
+  ]));
+
+  server.registerPrompt('dependency_supply_chain_review', {
+    title: 'Dependency supply-chain review',
+    description: 'Review dependency, lockfile, container, and CI evidence without network vulnerability lookups by default.',
+    argsSchema: {
+      target: z.string().optional(),
+      ecosystem: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS dependency/supply-chain review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Ecosystem focus: ${args.ecosystem ?? '<all detected ecosystems>'}`,
+    '',
+    'Required evidence:',
+    '- dependency_inventory for manifests, lockfiles, containers, and CI actions',
+    '- diagnostics_check for local verification command candidates',
+    '- operator_search for package manager, SBOM, license, Docker, and workflow references',
+    '',
+    'Optional evidence:',
+    '- index_status to see available runtime evidence',
+    '- rules_check for project-specific dependency policy',
+    '',
+    'Stop conditions:',
+    '- Missing lockfile for a production dependency ecosystem',
+    '- Unclear package manager or release artifact owner',
+    '- Network CVE/license lookup is required but not explicitly authorized',
+    '',
+    'Verification expectations:',
+    '- Do not execute package scripts.',
+    '- Separate local inventory findings from external vulnerability or license claims.'
+  ]));
+
+  server.registerPrompt('workflow_run_review', {
+    title: 'Workflow run review',
+    description: 'Preview and review a workflow recipe run contract before starting long-running work.',
+    argsSchema: {
+      target: z.string().optional(),
+      recipe: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS workflow run review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Recipe: ${args.recipe ?? '<recipe id>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview for the selected recipe',
+    '- playbook_layout to confirm the workflow folders exist',
+    '- context_status or playbook_context when a path or project memory is relevant',
+    '',
+    'Optional evidence:',
+    '- index_status for available runtime evidence',
+    '- diagnostics_check for verification command candidates',
+    '',
+    'Stop conditions:',
+    '- Recipe is missing, target-specific, or stale',
+    '- Inputs, stop conditions, or verification expectations are incomplete',
+    '- Work would require write tools that are not explicitly enabled',
+    '',
+    'Verification expectations:',
+    '- Report the run contract without creating run files.',
+    '- Keep worklog or memory promotion separate from generated preview evidence.'
+  ]));
+
+  server.registerPrompt('canon_promotion_review', {
+    title: 'Canon promotion review',
+    description: 'Review generated runtime evidence before promoting durable canon facts.',
+    argsSchema: {
+      target: z.string().optional(),
+      source: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS canon promotion review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Runtime source: ${args.source ?? '<runtime report or index>'}`,
+    '',
+    'Required evidence:',
+    '- index_status to list available runtime artifacts',
+    '- canon_check to compare existing promoted facts',
+    '- write_gate_preview if a future promotion write is being considered',
+    '',
+    'Optional evidence:',
+    '- symbol_outline, dependency_inventory, and route_api_hints depending on the fact type',
+    '- operator_research for local supporting evidence',
+    '',
+    'Stop conditions:',
+    '- Runtime artifact is missing or malformed',
+    '- Source scan range is unknown',
+    '- Fact would mix generated evidence with trusted memory without review',
+    '',
+    'Verification expectations:',
+    '- State which generated facts are candidates and which remain unknown.',
+    '- Promotion requires explicit reviewed/apply behavior outside this prompt.'
+  ]));
+
+  server.registerPrompt('index_interpretation_review', {
+    title: 'Index interpretation review',
+    description: 'Interpret runtime indexes without converting generated hints into trusted project memory.',
+    argsSchema: {
+      target: z.string().optional(),
+      focus: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS index interpretation review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Focus: ${args.focus ?? '<symbols, dependencies, routes, data, or broad review>'}`,
+    '',
+    'Required evidence:',
+    '- index_status for available and preview-only indexes',
+    '- symbol_outline for source owners and exported shapes',
+    '- dependency_inventory for package, lockfile, container, and CI signals',
+    '- route_api_hints for route/API/data hints',
+    '',
+    'Optional evidence:',
+    '- index_search and operator_search for local supporting text',
+    '- canon_check when promoted facts already exist',
+    '',
+    'Stop conditions:',
+    '- Evidence is truncated or low-confidence for the claim being made',
+    '- Runtime hints conflict with trusted memory',
+    '- A conclusion requires executing project commands or using network data',
+    '',
+    'Verification expectations:',
+    '- Clearly label generated hints, low-confidence matches, and unknowns.',
+    '- Recommend canon promotion only after explicit human review.'
+  ]));
 }
 
 function tool(name, description, schema, handler) {
@@ -407,6 +600,18 @@ function tool(name, description, schema, handler) {
 
 function resource(name, uri, description, handler) {
   return { name, uri, description, handler };
+}
+
+function promptMessage(lines) {
+  return {
+    messages: [{
+      role: 'user',
+      content: {
+        type: 'text',
+        text: lines.join('\n')
+      }
+    }]
+  };
 }
 
 function toolResult(name, result) {

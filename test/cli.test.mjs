@@ -46,11 +46,14 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   const target = await tempRepo('harness os-v2-공백-');
   await mkdir(path.join(target, 'src'), { recursive: true });
   await mkdir(path.join(target, 'src', 'runtime'), { recursive: true });
+  await mkdir(path.join(target, 'db', 'migrations'), { recursive: true });
   await mkdir(path.join(target, '.github', 'workflows'), { recursive: true });
   await writeFile(path.join(target, 'src', 'feature.ts'), 'export const featureFlag = "harness-os";\nexport function calculateFeature() {\n  return featureFlag;\n}\nexport const DashboardPanel = () => null;\n');
   await writeFile(path.join(target, 'src', 'runtime', 'index.ts'), 'export const runtimeSource = true;\n');
+  await writeFile(path.join(target, 'src', 'routes.ts'), 'router.get("/api/users", handler);\nfetch("/api/profile");\nconst message = "Update matching managed file";\n');
   await writeFile(path.join(target, 'src', 'service.py'), 'def process_event(value):\n    return value\n');
   await writeFile(path.join(target, 'src', 'App.java'), 'public class App {\n  public void handle() {}\n}\n');
+  await writeFile(path.join(target, 'db', 'migrations', '001_create_users.sql'), 'CREATE TABLE users (id int primary key);\nSELECT id FROM users;\n');
   await writeFile(path.join(target, 'package.json'), `${JSON.stringify({
     name: 'fixture-app',
     packageManager: 'pnpm@10.0.0',
@@ -105,6 +108,7 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   assert.equal(statusReport.indexes.some((item) => item.kind === 'file-inventory' && item.exists === true), true);
   assert.equal(statusReport.indexes.some((item) => item.kind === 'symbol-outline' && item.previewOnly === true), true);
   assert.equal(statusReport.indexes.some((item) => item.kind === 'dependency-inventory' && item.previewOnly === true), true);
+  assert.equal(statusReport.indexes.some((item) => item.kind === 'route-api-hints' && item.previewOnly === true), true);
 
   const search = capture(target);
   assert.equal(await runCli(['index', 'search', '.', '--query', 'harness-os', '--json'], search), 0);
@@ -139,6 +143,17 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   assert.equal(dependencyInventoryReport.containers.some((container) => container.path === 'Dockerfile' && container.baseImages.some((image) => image.image === 'node:22-alpine')), true);
   assert.equal(dependencyInventoryReport.ci.some((ci) => ci.path === '.github/workflows/ci.yml' && ci.uses.includes('actions/checkout@v4')), true);
   assert.equal(existsSync(path.join(target, '.ai-playbook', 'runtime', 'indexes', 'dependency-inventory.json')), false);
+
+  const routeApiHints = capture(target);
+  assert.equal(await runCli(['index', 'route-api-hints', '.', '--json'], routeApiHints), 0);
+  const routeApiHintsReport = JSON.parse(routeApiHints.out());
+  assert.equal(routeApiHintsReport.kind, 'runtime.route-api-hints');
+  assert.equal(routeApiHintsReport.mode.writes, false);
+  assert.equal(routeApiHintsReport.hints.some((hint) => hint.kind === 'route' && hint.framework === 'express' && hint.method === 'GET' && hint.path === '/api/users'), true);
+  assert.equal(routeApiHintsReport.hints.some((hint) => hint.kind === 'client-api' && hint.client === 'fetch' && hint.path === '/api/profile'), true);
+  assert.equal(routeApiHintsReport.hints.some((hint) => hint.kind === 'data' && hint.operation === 'create-table' && hint.name === 'users'), true);
+  assert.equal(routeApiHintsReport.hints.some((hint) => hint.kind === 'data' && hint.operation === 'update' && hint.name === 'matching'), false);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'runtime', 'indexes', 'route-api-hints.json')), false);
 
   const gate = capture(target);
   assert.equal(await runCli(['write-gate', 'preview', '.', '--intent', 'edit runtime report', '--path', '.ai-playbook/runtime/indexes/file-inventory.json', '--json'], gate), 1);

@@ -29,6 +29,7 @@ export { checkReferenceAdoptionLedger, inventoryReferenceDirectory } from './cat
 export { describePlaybookLayout, migratePlaybookLayout } from './layout/playbook-layout-v2.mjs';
 export { buildRuntimeIndex, runtimeIndexStatus, searchRuntimeIndex } from './runtime/indexes.mjs';
 export { buildDependencyInventoryIndex } from './runtime/dependency-inventory.mjs';
+export { buildRouteApiHintsIndex } from './runtime/route-api-hints.mjs';
 export { buildSymbolOutlineIndex } from './runtime/symbol-outline.mjs';
 export { checkCanonFacts, draftCanonFacts, promoteCanonFacts } from './memory/canon.mjs';
 export { createWriteGateAdvisory, postCheckWriteGate, previewWriteGate } from './operator/write-gate.mjs';

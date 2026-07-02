@@ -18,6 +18,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     'export function loginFlow() {',
     '  return "login signal";',
     '}',
+    'router.post("/login", loginFlow);',
     ''
   ].join('\n'));
   await writeFile(path.join(target, 'package.json'), `${JSON.stringify({
@@ -55,6 +56,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'index_search',
       'symbol_outline',
       'dependency_inventory',
+      'route_api_hints',
       'write_gate_preview',
       'canon_check',
       'playbook_context',
@@ -138,6 +140,18 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(dependencyInventory.structuredContent.mode.writes, false);
     assert.equal(dependencyInventory.structuredContent.manifests.some((manifest) => manifest.path === 'package.json' && manifest.scripts.includes('test')), true);
     assert.equal(dependencyInventory.structuredContent.lockfiles.some((lockfile) => lockfile.path === 'package-lock.json'), true);
+
+    const routeApiHints = await client.callTool({
+      name: 'route_api_hints',
+      arguments: {
+        target,
+        maxResults: 10
+      }
+    });
+    assert.equal(routeApiHints.isError, undefined);
+    assert.equal(routeApiHints.structuredContent.ok, true);
+    assert.equal(routeApiHints.structuredContent.mode.writes, false);
+    assert.equal(routeApiHints.structuredContent.hints.some((hint) => hint.kind === 'route' && hint.path === '/login'), true);
 
     const prompt = await client.getPrompt({
       name: 'repo_onboarding_runbook',

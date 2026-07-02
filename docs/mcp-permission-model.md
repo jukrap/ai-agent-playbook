@@ -23,6 +23,7 @@ Default read-only additions:
 - `index_search`
 - `symbol_outline`
 - `dependency_inventory`
+- `route_api_hints`
 - `write_gate_preview`
 
 ## Write Gate

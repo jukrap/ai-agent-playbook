@@ -39,6 +39,8 @@ The symbol outline uses lightweight local patterns for common JS/TS, Python, Jav
 
 `index dependency-inventory` is also read-only. It reports dependency manifests, adjacent lockfiles, package script names, Docker/Compose image hints, and GitHub Actions `uses:` entries without running package scripts, building containers, contacting registries, or fetching vulnerability databases. Missing adjacent lockfiles are warnings, not failures.
 
+`index route-api-hints` previews route declarations, client API calls, SQL query targets, migrations, and data-object hints. It uses lightweight local patterns for common server frameworks and SQL syntax, includes file/line/confidence/source metadata, and does not claim the result is a complete API or data map.
+
 ## MCP tool surface
 
 Start the local server with:

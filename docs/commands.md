@@ -150,6 +150,7 @@ These commands expose the v2 capability model and generated local runtime surfac
 | `index search <target>` | Search local project text without writing the runtime index. | No | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
 | `index symbol-outline <target>` | Preview function, class, component, method, and binding hints with file, line, confidence, and source pattern metadata. | No | `npx ai-agent-playbook index symbol-outline <target-project> --json` |
 | `index dependency-inventory <target>` | Preview dependency manifests, lockfiles, container base images, package scripts, and CI action usage without executing scripts or network scans. | No | `npx ai-agent-playbook index dependency-inventory <target-project> --json` |
+| `index route-api-hints <target>` | Preview route, client API, SQL query, migration, and data-object hints with source pattern metadata. | No | `npx ai-agent-playbook index route-api-hints <target-project> --json` |
 | `canon draft <target>` | Draft promotion-ready fact candidates from runtime index and reports. | No | `npx ai-agent-playbook canon draft <target-project> --json` |
 | `canon check <target>` | Check promoted canon facts in memory against runtime evidence and current files. | No | `npx ai-agent-playbook canon check <target-project> --json` |
 | `canon promote <target>` | Preview or write reviewed canon facts from a runtime report into memory or knowledge references. | No unless `--apply --reviewed` | `npx ai-agent-playbook canon promote <target-project> --source .ai-playbook/runtime/reports/example.json --to .ai-playbook/memory/maps/canon.json --json` |
@@ -274,7 +275,7 @@ ai-playbook mcp
 The server exposes read-only tools for:
 
 - playbook context: `playbook_context`, `context_status`, `context_list`
-- catalogs and layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `reference_inventory`, `reference_ledger_check`, `playbook_layout`, `index_status`, `index_search`, `symbol_outline`, `dependency_inventory`, `write_gate_preview`
+- catalogs and layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `reference_inventory`, `reference_ledger_check`, `playbook_layout`, `index_status`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `write_gate_preview`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules and project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA and deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`

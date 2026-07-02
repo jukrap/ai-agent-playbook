@@ -23,6 +23,7 @@ Harness OS MCP의 기본값은 read-only 분석과 catalog 접근입니다.
 - `index_search`
 - `symbol_outline`
 - `dependency_inventory`
+- `route_api_hints`
 - `write_gate_preview`
 
 ## Write Gate

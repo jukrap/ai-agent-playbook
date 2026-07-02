@@ -39,6 +39,8 @@ Symbol outline은 JS/TS, Python, Java, Kotlin, C#, Go, PHP, Ruby, Rust source fi
 
 `index dependency-inventory`도 read-only입니다. Package script를 실행하거나, container를 build하거나, registry에 접속하거나, vulnerability database를 가져오지 않고 dependency manifest, 인접 lockfile, package script name, Docker/Compose image hint, GitHub Actions `uses:` entry를 보고합니다. 인접 lockfile 부재는 failure가 아니라 warning입니다.
 
+`index route-api-hints`는 route declaration, client API call, SQL query target, migration, data-object hint를 preview합니다. 일반 server framework와 SQL syntax에 대한 lightweight local pattern을 사용하고 file/line/confidence/source metadata를 포함하지만, 완전한 API map이나 data map이라고 주장하지 않습니다.
+
 ## MCP 도구 표면
 
 로컬 서버는 아래 명령으로 시작합니다.

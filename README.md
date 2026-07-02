@@ -116,7 +116,7 @@ skills/
   devops/            CI/CD, container, package release, deployment, and operations triage skills
   frontend/          UI, browser, state/data, accessibility, and visual QA skills
   mobile/            Native release, permission, offline sync, hybrid, WebView, and device QA skills
-  security/          Auth, dependency supply chain, license/notice, security review, and risk skills
+  security/          Auth, dependency supply chain, license/notice, security review, compliance gate, and risk skills
   project/            Bootstrap, onboarding, project planning, documentation, and project-memory skills
   quality/            UI quality, cleanup, and review skills
   git/                Commit, PR, push, and worklog skills
@@ -218,6 +218,7 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `auth-access-control`: change login, sessions, OAuth/OIDC, JWTs, RBAC, permissions, roles, tenants, scopes, or object-level authorization.
 - `dependency-supply-chain-review`: change dependencies, lockfiles, SBOMs, licenses, containers, package scripts, provenance, or vulnerability remediation.
 - `license-notice-review`: review first-party licenses, third-party notices, attribution, vendored code, generated artifacts, copied snippets, dual-license choices, redistribution scope, or compliance evidence.
+- `security-compliance-gate`: decide security or compliance gates before merge, release, publication, or handoff.
 
 ### Legacy
 

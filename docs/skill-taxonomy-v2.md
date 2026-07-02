@@ -49,6 +49,7 @@ Backend and security skills use capability-first names:
 - `security/dependency-supply-chain-review`: dependencies, lockfiles, SBOMs, licenses, provenance, containers, and CVEs.
 - `security/license-notice-review`: first-party licenses, third-party notices, attribution, vendored code, generated artifacts, copied snippets, redistribution scope, and compliance evidence.
 - `security/security-review`: broad security risk review and threat-model triage.
+- `security/security-compliance-gate`: merge, release, publication, and handoff security/compliance gate decisions.
 
 Stack profiles belong under the relevant primary skill reference tree. For backend change safety, Java, Kotlin, Go, Python, Node, .NET, and PHP details live under `skills/backend/backend-change-safety/references/stacks/` instead of creating stack-first primary skills.
 
@@ -104,6 +105,7 @@ Package, license, and connector governance skills keep artifact compliance separ
 
 - `devops/package-publish-readiness`: package, CLI, plugin, library, extension, binary, generated bundle, and marketplace distribution readiness.
 - `security/license-notice-review`: license policy evidence, NOTICE files, attribution, vendored code, generated artifacts, copied snippets, and redistribution scope.
+- `security/security-compliance-gate`: block/warn/document severity, accepted-risk evidence, public-doc hygiene, runtime evidence safety, and release compliance handoff.
 - `backend/connector-integration-change`: connector contracts, credential handling, webhook lifecycle, retry behavior, registration metadata, and host-runtime compatibility.
 
 Review guidance should not log into registries, publish packages, make live external calls, or claim legal approval unless the project explicitly defines those steps and the user asks for them.

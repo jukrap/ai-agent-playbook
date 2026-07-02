@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   buildDependencyInventoryIndex,
   buildProjectContext,
+  buildRouteApiHintsIndex,
   buildSymbolOutlineIndex,
   capabilityCatalog,
   catalogManagedManifest,
@@ -104,6 +105,13 @@ export function registerPlaybookMcpTools(server, options) {
       target: targetSchema
     }, (args) => buildDependencyInventoryIndex({
       target: args.target
+    })),
+    tool('route_api_hints', 'Preview local route, client API, SQL, and data object hints without writing runtime artifacts.', {
+      target: targetSchema,
+      maxResults: maxResultsSchema
+    }, (args) => buildRouteApiHintsIndex({
+      target: args.target,
+      maxHints: args.maxResults ?? 100
     })),
     tool('write_gate_preview', 'Preview write risk for a target path and intent without modifying files.', {
       target: targetSchema,

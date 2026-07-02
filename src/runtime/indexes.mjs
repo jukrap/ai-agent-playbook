@@ -13,7 +13,8 @@ const INDEX_FILE = 'runtime/indexes/file-inventory.json';
 const INDEX_DEFINITIONS = [
   { kind: 'file-inventory', file: INDEX_FILE, previewOnly: false },
   { kind: 'symbol-outline', file: 'runtime/indexes/symbol-outline.json', previewOnly: true },
-  { kind: 'dependency-inventory', file: 'runtime/indexes/dependency-inventory.json', previewOnly: true }
+  { kind: 'dependency-inventory', file: 'runtime/indexes/dependency-inventory.json', previewOnly: true },
+  { kind: 'route-api-hints', file: 'runtime/indexes/route-api-hints.json', previewOnly: true }
 ];
 const TEXT_EXTENSIONS = new Set([
   '.c',

@@ -6,6 +6,7 @@ import { lintSkills, runSkillsLifecycle } from './skills-lifecycle.mjs';
 import { runMcpServer } from './mcp-server.mjs';
 import {
   buildDependencyInventoryIndex,
+  buildRouteApiHintsIndex,
   buildRuntimeIndex,
   buildSymbolOutlineIndex,
   buildProjectContext,
@@ -602,6 +603,19 @@ export async function runCli(argv, io = {}) {
         writeJson(stdout, result);
       } else {
         write(stdout, `Dependency inventory: ${result.summary.manifests} manifest(s), ${result.summary.lockfiles} lockfile(s), preview\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'index' && subcommand === 'route-api-hints') {
+      const result = await buildRouteApiHintsIndex({
+        target: resolveTarget(cwd, targetArg),
+        maxHints: parseMaxResults(parsed.flags['max-results'], 100)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Route/API hints: ${result.summary.hints} hint(s), ${result.summary.filesScanned} file(s), preview\n`);
       }
       return result.ok ? 0 : 1;
     }
@@ -1325,6 +1339,7 @@ Usage:
   ai-playbook index search <target> --query <text> [--max-results N] [--json]
   ai-playbook index symbol-outline <target> [--max-results N] [--json]
   ai-playbook index dependency-inventory <target> [--json]
+  ai-playbook index route-api-hints <target> [--max-results N] [--json]
   ai-playbook canon draft <target> [--max-results N] [--json]
   ai-playbook canon check <target> [--path <canon-json>] [--json]
   ai-playbook canon promote <target> --source <runtime-report> --to <memory-json> [--apply] [--reviewed] [--json]

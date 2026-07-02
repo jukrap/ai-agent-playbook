@@ -23,6 +23,15 @@ test('mcp server lists read-only playbook tools and calls operator search withou
   await mkdir(path.join(target, '_reference', 'reference-pack', 'skills', 'demo'), { recursive: true });
   await writeFile(path.join(target, '_reference', 'reference-pack', 'README.md'), '# Reference Pack\n');
   await writeFile(path.join(target, '_reference', 'reference-pack', 'skills', 'demo', 'SKILL.md'), '---\nname: demo\n---\n# Demo\n');
+  await mkdir(path.join(target, '.ai-playbook', 'knowledge'), { recursive: true });
+  await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'custom-reference-ledger.md'), [
+    '# Custom Reference Adoption Ledger',
+    '',
+    '| Status | Reference ID | Capability | Useful Pattern | Local Adoption | Risk/Noise | Decision Date |',
+    '| --- | --- | --- | --- | --- | --- | --- |',
+    '| reviewed | security-pack | security | summarize source pattern | local validator | none | 2026-07-03 |',
+    ''
+  ].join('\n'));
   const before = await listRelativeFiles(target);
 
   const { client, transport } = await connectMcp();
@@ -123,6 +132,16 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     });
     assert.equal(ledger.structuredContent.ok, false);
     assert.equal(ledger.structuredContent.conflicts.some((conflict) => conflict.id === 'reference-ledger.missing'), true);
+
+    const customLedger = await client.callTool({
+      name: 'reference_ledger_check',
+      arguments: {
+        target,
+        path: '.ai-playbook/knowledge/custom-reference-ledger.md'
+      }
+    });
+    assert.equal(customLedger.structuredContent.ok, true);
+    assert.equal(customLedger.structuredContent.summary.capabilities.security.statuses.reviewed, 1);
 
     const result = await client.callTool({
       name: 'operator_search',

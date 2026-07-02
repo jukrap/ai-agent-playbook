@@ -60,7 +60,7 @@ Command-specific options appear where they are needed:
 
 | Option | Used for |
 | ------ | -------- |
-| `--path <file>` | Limit rule, context, search, research, or operator checks to one file or area. |
+| `--path <file>` | Limit rule, context, search, research, ledger, or operator checks to one file or area. |
 | `--query <text>` | Search or research topic. |
 | `--intent <text>` | Planned work description for `operator preflight`. |
 | `--max-results N` | Limit search or research output. |
@@ -150,7 +150,7 @@ These commands expose the v2 capability model and generated local runtime surfac
 | `index search <target>` | Search local project text without writing the runtime index. | No | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
 | `write-gate preview <target>` | Preview write risk for an intent and optional path before editing. | No | `npx ai-agent-playbook write-gate preview <target-project> --intent "change auth flow" --path src/example.ts --json` |
 
-`reference ledger-check` validates `.ai-playbook/knowledge/reference-adoption-ledger.md` by default. It checks adoption statuses, local absolute paths, internal URLs, secret-like tokens, and oversized excerpts without writing files.
+`reference ledger-check` validates `.ai-playbook/knowledge/reference-adoption-ledger.md` by default. It checks adoption statuses, local absolute paths, internal URLs, secret-like tokens, and oversized excerpts without writing files. Use `--path <ledger.md>` to check a different ledger inside the target project. JSON output includes `summary.capabilities` so adoption status can be reviewed by capability area. Add `--strict` when oversized fenced excerpts should fail the check instead of only warning.
 
 `write-gate preview` returns a `transaction.invocationId` and planned `transaction.advisoryPath` under `.ai-playbook/runtime/reports/write-gate/`. The preview stays read-only; the transaction fields are a stable handoff for later post-write or advisory-file work.
 

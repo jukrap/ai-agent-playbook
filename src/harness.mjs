@@ -28,4 +28,4 @@ export { capabilityCatalog, skillCatalog, workflowCatalog } from './catalog/taxo
 export { checkReferenceAdoptionLedger, inventoryReferenceDirectory } from './catalog/reference-adoption.mjs';
 export { describePlaybookLayout, migratePlaybookLayout } from './layout/playbook-layout-v2.mjs';
 export { buildRuntimeIndex, runtimeIndexStatus, searchRuntimeIndex } from './runtime/indexes.mjs';
-export { createWriteGateAdvisory, previewWriteGate } from './operator/write-gate.mjs';
+export { createWriteGateAdvisory, postCheckWriteGate, previewWriteGate } from './operator/write-gate.mjs';

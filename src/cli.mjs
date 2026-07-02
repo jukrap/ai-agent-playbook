@@ -29,6 +29,7 @@ import {
   migratePlaybookLayout,
   migratePlaybookPath,
   parseMaxChars,
+  postCheckWriteGate,
   previewWriteGate,
   adoptManagedManifest,
   pruneManagedManifest,
@@ -618,6 +619,25 @@ export async function runCli(argv, io = {}) {
       return result.ok ? 0 : 1;
     }
 
+    if (command === 'write-gate' && subcommand === 'post-check') {
+      const result = await postCheckWriteGate({
+        target: resolveTarget(cwd, targetArg),
+        advisoryPath: typeof parsed.flags.advisory === 'string' ? parsed.flags.advisory : ''
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Write-gate post-check: ${result.summary.status} (${result.summary.added} added, ${result.summary.modified} modified, ${result.summary.deleted} deleted)\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
     if (command === 'managed' && subcommand === 'check') {
       const result = await checkManagedManifest({ target: resolveTarget(cwd, targetArg) });
       if (parsed.flags.json) {
@@ -1111,6 +1131,7 @@ function needsValue(key) {
     'cols',
     'query',
     'intent',
+    'advisory',
     'before',
     'contract',
     'threshold',
@@ -1212,6 +1233,7 @@ Usage:
   ai-playbook index search <target> --query <text> [--max-results N] [--json]
   ai-playbook write-gate preview <target> --intent <text> [--path <file>] [--max-results N] [--json]
   ai-playbook write-gate advisory <target> --intent <text> [--path <file>] [--max-results N] [--apply] [--json]
+  ai-playbook write-gate post-check <target> --advisory <advisory-json> [--json]
   ai-playbook managed check <target> [--json]
   ai-playbook managed catalog <target> [--json]
   ai-playbook managed adopt <target> [--apply] [--json]

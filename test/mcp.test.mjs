@@ -119,6 +119,10 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'adr_spec_handoff_review',
       'documentation_package_review',
       'workflow_run_review',
+      'eval_harness_review',
+      'capability_witness_review',
+      'pre_action_fact_gate_review',
+      'knowledge_source_review',
       'canon_promotion_review',
       'index_interpretation_review'
     ]) {
@@ -224,6 +228,10 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       { name: 'adr_spec_handoff_review', toolName: 'canon_check', expectedText: 'write_gate_preview', arguments: { target, source: '.ai-playbook/worklogs/example.md' } },
       { name: 'documentation_package_review', toolName: 'workflow_run_preview', expectedText: 'documentation-package', arguments: { target, artifact: 'release notes', audience: 'support', source: '.ai-playbook/worklogs/example.md' } },
       { name: 'workflow_run_review', toolName: 'workflow_run_preview', arguments: { target, recipe: 'backend-contract-change' } },
+      { name: 'eval_harness_review', toolName: 'workflow_run_preview', expectedText: 'eval-driven-change', arguments: { target, change: 'add grader prompt', evalId: 'prompt-regression' } },
+      { name: 'capability_witness_review', toolName: 'capability_catalog', arguments: { target, capability: 'index search', source: '.ai-playbook/runtime/reports/eval.json' } },
+      { name: 'pre_action_fact_gate_review', toolName: 'operator_preflight', expectedText: 'write_gate_preview', arguments: { target, action: 'delete stale index', evidence: '.ai-playbook/runtime/indexes/file-inventory.json' } },
+      { name: 'knowledge_source_review', toolName: 'reference_inventory', expectedText: 'knowledge-source-onboarding', arguments: { target, source: '_reference', useCase: 'source registry' } },
       { name: 'canon_promotion_review', toolName: 'canon_check', arguments: { target, source: '.ai-playbook/runtime/indexes/file-inventory.json' } },
       { name: 'index_interpretation_review', toolName: 'index_status', arguments: { target, focus: 'routes' } }
     ]) {

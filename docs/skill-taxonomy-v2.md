@@ -130,11 +130,15 @@ Platform-specific details belong in references or project playbooks. The primary
 
 ## Data And Documentation Pack
 
-Data and documentation skills separate pipeline reliability, reporting correctness, migration integrity, and durable project memory:
+Data and documentation skills separate pipeline reliability, reporting correctness, migration integrity, contract/lineage safety, data quality observability, instrumentation, retrieval pipelines, and durable project memory:
 
 - `data/data-pipeline-review`: analytics pipelines, ETL, batch jobs, data contracts, dashboards, quality checks, freshness, ownership, and lineage.
 - `data/analytics-reporting-review`: metric definitions, KPI ownership, dashboard/report consistency, chart/table checks, segmentation, caveats, and reader handoff.
 - `data/data-migration-integrity`: data migrations, backfills, warehouse transformations, reconciliation queries, idempotency, batching, rollback, and repair.
+- `data/data-contract-lineage-review`: dataset contracts, source-of-truth ownership, grain/schema changes, lineage, freshness targets, retention, caveats, and consumer impact.
+- `data/data-quality-observability`: null/duplicate/orphan/range/freshness checks, anomaly detection, alert thresholds, quarantine, repair paths, and data incident handoff.
+- `data/analytics-instrumentation-review`: tracking plans, event schemas, identity grain, funnels, cohorts, experiments, attribution, consent, and downstream metric impact.
+- `data/knowledge-retrieval-pipeline-review`: document ingestion, parsing, chunking, metadata, embeddings/vector stores, retrieval evaluation, citations, access control, and stale indexes.
 - `project/project-doc-system`: `.ai-playbook` maps, runbooks, decisions, plans, worklogs, archives, and project-memory hygiene.
 - `project/adr-spec-handoff`: ADRs, specs, milestone outcomes, implementation handoffs, reviewed evidence, and durable memory promotion.
 

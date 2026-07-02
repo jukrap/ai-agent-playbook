@@ -177,6 +177,10 @@ test/                 Node CLI와 adapter 테스트
 - `data-pipeline-review`: analytics pipeline, ETL, batch job, data contract, dashboard, quality check를 검토할 때.
 - `analytics-reporting-review`: metric, dashboard, report, KPI definition, chart/table consistency, analytics query, freshness, caveat를 검토할 때.
 - `data-migration-integrity`: data migration, backfill, warehouse transformation, reconciliation, idempotency, rollback, data repair를 계획·검토·검증할 때.
+- `data-contract-lineage-review`: dataset contract, lineage, source-of-truth ownership, freshness target, schema/grain change, downstream consumer impact를 검토할 때.
+- `data-quality-observability`: data quality check, freshness alert, anomaly detection, null/duplicate/orphan check, quarantine, repair, data incident handoff를 설계하거나 검토할 때.
+- `analytics-instrumentation-review`: tracking plan, event schema, analytics instrumentation, funnel, cohort, experiment, attribution, consent, downstream metric impact를 검토할 때.
+- `knowledge-retrieval-pipeline-review`: document ingestion, parsing, chunking, metadata, embedding/vector store, retrieval quality, citation, access control, stale RAG/search index를 검토할 때.
 - `database-change-safety`: database schema, migration, SQL, reporting query, stored procedure, data integrity rule을 바꿀 때.
 - `schema-migration-plan`: database schema migration, DDL, index, constraint, default, nullability, seed, view, trigger, stored procedure, expand/contract rollout step을 계획하거나 검토할 때.
 - `query-performance-review`: slow SQL, reporting query, dashboard query, API list/detail query, export, aggregate, join, sort/pagination, full scan, N+1 pattern, index choice를 검토할 때.

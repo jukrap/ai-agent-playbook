@@ -130,11 +130,15 @@ Platform-specific detail은 reference 또는 project playbook에 둡니다. Prim
 
 ## Data And Documentation Pack
 
-Data와 documentation skill은 pipeline reliability, reporting correctness, migration integrity, durable project memory를 분리합니다.
+Data와 documentation skill은 pipeline reliability, reporting correctness, migration integrity, contract/lineage safety, data quality observability, instrumentation, retrieval pipeline, durable project memory를 분리합니다.
 
 - `data/data-pipeline-review`: analytics pipeline, ETL, batch job, data contract, dashboard, quality check, freshness, ownership, lineage.
 - `data/analytics-reporting-review`: metric definition, KPI ownership, dashboard/report consistency, chart/table check, segmentation, caveat, reader handoff.
 - `data/data-migration-integrity`: data migration, backfill, warehouse transformation, reconciliation query, idempotency, batching, rollback, repair.
+- `data/data-contract-lineage-review`: dataset contract, source-of-truth ownership, grain/schema change, lineage, freshness target, retention, caveat, consumer impact.
+- `data/data-quality-observability`: null/duplicate/orphan/range/freshness check, anomaly detection, alert threshold, quarantine, repair path, data incident handoff.
+- `data/analytics-instrumentation-review`: tracking plan, event schema, identity grain, funnel, cohort, experiment, attribution, consent, downstream metric impact.
+- `data/knowledge-retrieval-pipeline-review`: document ingestion, parsing, chunking, metadata, embedding/vector store, retrieval evaluation, citation, access control, stale index.
 - `project/project-doc-system`: `.ai-playbook` map, runbook, decision, plan, worklog, archive, project-memory hygiene.
 - `project/adr-spec-handoff`: ADR, spec, milestone outcome, implementation handoff, reviewed evidence, durable memory promotion.
 

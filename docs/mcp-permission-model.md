@@ -17,6 +17,7 @@ Default prompts route review work through required evidence, optional evidence, 
 
 Gate and graph review prompts include:
 
+- `agent_orchestration_review`
 - `repo_graph_review`
 - `ci_quality_gate_review`
 - `release_deployment_gate_review`

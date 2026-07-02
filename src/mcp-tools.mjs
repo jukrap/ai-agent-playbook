@@ -1188,6 +1188,47 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- Recommend canon promotion only after explicit human review.'
   ]));
 
+  server.registerPrompt('agent_orchestration_review', {
+    title: 'Agent orchestration review',
+    description: 'Review worker contracts, context budgets, evidence ledgers, reconciliation gates, and handoff boundaries.',
+    argsSchema: {
+      target: z.string().optional(),
+      goal: z.string().optional(),
+      workers: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS agent orchestration review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Goal: ${args.goal ?? '<orchestration goal>'}`,
+    `Workers or review passes: ${args.workers ?? '<worker count, roles, or review stages>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe agent-orchestration-handoff',
+    '- skill_catalog to confirm agent-orchestration-handoff, context-engineering-memory-design, pre-action-fact-gate, and evidence-locator-integrity are available',
+    '- operator_preflight for intent terms, candidate files, rules, context, and portable file snapshot',
+    '- index_status for available runtime indexes and freshness',
+    '- evidence_locator_check for worker reports, ledgers, handoffs, and generated evidence envelopes',
+    '- write_gate_preview before assigning or accepting any write-capable worker',
+    '',
+    'Optional evidence:',
+    '- operator_search for prior handoffs, worklogs, contracts, reviewer notes, and ownership boundaries',
+    '- runtime_schema_check for generated witness, evidence-envelope, graph, or eval reports',
+    '- canon_check before promoting reconciled claims into durable memory',
+    '- capability_catalog when the orchestration changes harness capabilities or MCP surfaces',
+    '',
+    'Stop conditions:',
+    '- Worker goal, allowed paths, required reads, write tier, expected output, stop condition, or context budget is missing',
+    '- Two write workers target the same files without a reviewer or merge owner',
+    '- Evidence cannot be reopened or scan ranges are unknown',
+    '- Private paths, credentials, private URLs, raw traces, or noisy reference labels would enter shared output',
+    '- Generated worker summaries would be promoted into memory without reconciliation',
+    '',
+    'Verification expectations:',
+    '- State worker contracts, allowed read/write scope, ledger fields, reviewer role, and reconciliation result.',
+    '- Separate accepted, rejected, superseded, blocked, and advisory-only worker claims.',
+    '- Keep write execution and memory promotion behind explicit write-gate and reviewed promotion behavior.'
+  ]));
+
   server.registerPrompt('repo_graph_review', {
     title: 'Repo graph review',
     description: 'Review repo graph evidence, edge confidence, source locators, and promotion boundaries without writing files.',

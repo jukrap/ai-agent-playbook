@@ -84,6 +84,12 @@ export const WORKFLOW_RECIPES = [
     outputs: ['workflows/plans', 'workflows/runs', 'workflows/worklogs']
   },
   {
+    id: 'agent-orchestration-handoff',
+    title: 'Agent Orchestration Handoff',
+    category: 'ai-harness',
+    outputs: ['workflows/runs', 'runtime/reports', 'workflows/handoffs']
+  },
+  {
     id: 'eval-driven-change',
     title: 'Eval Driven Change',
     category: 'delivery',

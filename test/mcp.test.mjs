@@ -175,6 +175,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'knowledge_source_review',
       'canon_promotion_review',
       'index_interpretation_review',
+      'agent_orchestration_review',
       'repo_graph_review',
       'ci_quality_gate_review',
       'release_deployment_gate_review',
@@ -191,7 +192,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(catalog.structuredContent.taxonomyVersion, '2');
 
     const resource = await client.readResource({ uri: 'ai-playbook://workflows' });
-    assert.equal(JSON.parse(resource.contents[0].text).summary.workflows, 19);
+    assert.equal(JSON.parse(resource.contents[0].text).summary.workflows, 20);
 
     const workflowRunPreview = await client.callTool({
       name: 'workflow_run_preview',
@@ -360,6 +361,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       { name: 'knowledge_source_review', toolName: 'reference_inventory', expectedText: 'knowledge-source-onboarding', arguments: { target, source: '_reference', useCase: 'source registry' } },
       { name: 'canon_promotion_review', toolName: 'canon_check', arguments: { target, source: '.ai-playbook/runtime/indexes/file-inventory.json' } },
       { name: 'index_interpretation_review', toolName: 'index_status', arguments: { target, focus: 'routes' } },
+      { name: 'agent_orchestration_review', toolName: 'workflow_run_preview', expectedText: 'agent-orchestration-handoff', arguments: { target, goal: 'parallel review', workers: 'researcher, reviewer' } },
       { name: 'repo_graph_review', toolName: 'repo_graph_preview', expectedText: 'evidence_locator_check', arguments: { target, focus: 'routes and packages' } },
       { name: 'ci_quality_gate_review', toolName: 'workflow_run_preview', expectedText: 'ci-quality-gate', arguments: { target, branch: 'main', change: 'auth flow' } },
       { name: 'release_deployment_gate_review', toolName: 'workflow_run_preview', expectedText: 'deployment-release', arguments: { target, artifact: 'web image', environment: 'staging' } },

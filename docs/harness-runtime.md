@@ -61,6 +61,14 @@ Runtime artifact JSON must keep a stable evidence envelope: `schemaVersion`, `ki
 
 `runtime capability-history` reads `.ai-playbook/runtime/reports/capability-history.jsonl` as an optional append-only local signal. It summarizes capability status, latest duration, baseline, and drift without running benchmarks, contacting networks, or enabling telemetry. Entries should use portable evidence paths; non-portable paths are omitted from output and reported as warnings.
 
+## Workflow run records
+
+`workflow run-preview` is the current implemented workflow command. It reads a target-local recipe first, falls back to the bundled recipe, parses the run contract, and returns generated evidence without writing files.
+
+Future `workflow run-start` behavior belongs to the scaffold tier, not project-write. It may write only under `.ai-playbook/workflows/runs/`, and only after an explicit command plus apply flag. A valid run-start write must create a bounded run manifest, criteria checklist, evidence notes stub, and handoff stub. It must reject missing recipes, empty manifests, path traversal, project-source destinations, trusted memory destinations, and overwrites of existing run records unless a safe unique path is created.
+
+Run records are operational logs, not durable project truth. Promote only reviewed, stable facts into `memory/`, `contracts/`, maps, decisions, or runbooks through the canon/documentation flow.
+
 ## MCP tool surface
 
 Start the local server with:

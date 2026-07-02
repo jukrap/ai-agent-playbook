@@ -15,6 +15,8 @@ Harness OS MCP의 기본값은 read-only 분석과 catalog 접근입니다.
 
 기본 prompt는 review 작업을 required evidence, optional evidence, stop condition, verification expectation에 맞춰 안내합니다. Prompt 자체는 쓰기 권한을 열지 않으며 generated runtime hint를 memory로 승격하지 않습니다.
 
+Scaffold-tier run record 생성은 기본으로 노출하지 않습니다. 미래 MCP run-start tool은 server opt-in, 명시적 apply flag, target path validation, dry-run manifest를 요구해야 하며 `.ai-playbook/workflows/runs/` 아래에만 써야 합니다.
+
 기본 read-only 추가 항목:
 
 - `capability_catalog`

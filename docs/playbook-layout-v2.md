@@ -38,7 +38,9 @@ Runtime evidence can draft canon fact candidates, but it does not become trusted
 
 ## Workflow Runs
 
-Recipes under `workflows/recipes/` describe repeatable procedures. `workflow run-preview` reads a target-local recipe first and falls back to the bundled template, then returns a read-only run manifest with inputs, outputs, skills, tools, stop conditions, and verification. It does not create files under `workflows/runs/`; future apply-mode run creation belongs to the scaffold tier.
+Recipes under `workflows/recipes/` describe repeatable procedures. `workflow run-preview` reads a target-local recipe first and falls back to the bundled template, then returns a read-only run manifest with inputs, outputs, skills, tools, stop conditions, and verification. It does not create files under `workflows/runs/`.
+
+Future run creation belongs to the scaffold tier. A run-start implementation may write only under `workflows/runs/`, should create new bounded run artifacts rather than editing source or memory, and must keep generated evidence separate from durable facts until explicit promotion.
 
 ## Migration
 

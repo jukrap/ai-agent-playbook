@@ -958,6 +958,146 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- Keep worklog or memory promotion separate from generated preview evidence.'
   ]));
 
+  server.registerPrompt('eval_harness_review', {
+    title: 'Eval harness review',
+    description: 'Review capability, regression, grader, fixture, and release-gate eval evidence before changing harness behavior.',
+    argsSchema: {
+      target: z.string().optional(),
+      change: z.string().optional(),
+      evalId: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS eval harness review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Change: ${args.change ?? '<prompt, skill, workflow, MCP, write tier, or capability change>'}`,
+    `Eval: ${args.evalId ?? '<eval id or baseline>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe eval-driven-change',
+    '- diagnostics_check for available test, lint, build, and eval commands',
+    '- operator_search for existing evals, fixtures, graders, release gates, and regression notes',
+    '- index_status for generated runtime evidence and preview-only indexes',
+    '- write_gate_preview before suggesting harness, workflow, or memory writes',
+    '',
+    'Optional evidence:',
+    '- capability_catalog and skill_catalog to locate related capabilities and trigger surfaces',
+    '- canon_check when eval outcomes may become durable project memory',
+    '',
+    'Stop conditions:',
+    '- Target behavior, baseline, grader, fixture scope, success threshold, or retry policy is missing',
+    '- Generated evidence would hide failed attempts, cost, latency, or nondeterministic behavior',
+    '- The proposed change would alter write behavior without a dry-run and permission-tier review',
+    '',
+    'Verification expectations:',
+    '- State the eval type, fixture scope, grader type, pass/fail threshold, cost and latency caveats, and release-gate decision.',
+    '- Keep failed attempts and generated reports in runtime evidence until reviewed.'
+  ]));
+
+  server.registerPrompt('capability_witness_review', {
+    title: 'Capability witness review',
+    description: 'Review observable capability evidence, baseline history, deltas, and regressions before declaring a harness capability healthy.',
+    argsSchema: {
+      target: z.string().optional(),
+      capability: z.string().optional(),
+      source: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS capability witness review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Capability: ${args.capability ?? '<capability id or behavior>'}`,
+    `Source: ${args.source ?? '<runtime report, eval result, worklog, or manual evidence>'}`,
+    '',
+    'Required evidence:',
+    '- capability_catalog for the current capability surface',
+    '- index_status for available generated runtime evidence',
+    '- operator_search for baselines, regression reports, worklogs, run records, and known failure modes',
+    '- canon_check for existing durable facts and conflicts',
+    '',
+    'Optional evidence:',
+    '- workflow_run_preview with recipe eval-driven-change when new witness evidence needs an eval run contract',
+    '- diagnostics_check for commands that can reproduce the witness evidence',
+    '',
+    'Stop conditions:',
+    '- Capability owner, baseline, scan range, source locator, status, or regression policy is unknown',
+    '- Evidence cannot be reopened or distinguished from generated summaries',
+    '- A degraded capability would be described as healthy without residual risk and follow-up work',
+    '',
+    'Verification expectations:',
+    '- Record current status, baseline, delta, failed evidence, source locator, freshness, and reviewer decision.',
+    '- Treat witness history as append-only evidence; do not overwrite prior failures with a new summary.'
+  ]));
+
+  server.registerPrompt('pre_action_fact_gate_review', {
+    title: 'Pre-action fact gate review',
+    description: 'Check facts, locators, write risk, and destructive-action boundaries before taking irreversible or high-impact actions.',
+    argsSchema: {
+      target: z.string().optional(),
+      action: z.string().optional(),
+      evidence: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS pre-action fact gate review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Action: ${args.action ?? '<command, edit, migration, deletion, publish, deploy, or promotion>'}`,
+    `Evidence: ${args.evidence ?? '<fact, source locator, report, or claim>'}`,
+    '',
+    'Required evidence:',
+    '- operator_preflight for target, tool, dependency, and environment checks',
+    '- write_gate_preview for any file, memory, runtime, scaffold, deploy, publish, or destructive action',
+    '- operator_search for source files, docs, scripts, and local policy related to the action',
+    '- canon_check for durable facts and contradictions',
+    '- index_status for generated evidence scope and freshness',
+    '',
+    'Optional evidence:',
+    '- reference_ledger_check when the action depends on adopted external references',
+    '- diagnostics_check for project-defined verification commands',
+    '',
+    'Stop conditions:',
+    '- Critical fact, source locator, scan range, target path, owner, rollback path, or permission tier is missing',
+    '- The action touches credentials, private paths, deployment targets, production data, or package publishing without explicit project policy',
+    '- A generated hint would be treated as a verified fact without reopening the source',
+    '',
+    'Verification expectations:',
+    '- State known facts, unknowns, exact evidence locators, write surface, dry-run path, rollback path, and verification command.',
+    '- Do not proceed from this prompt alone; it is a review brief and keeps default MCP behavior read-only.'
+  ]));
+
+  server.registerPrompt('knowledge_source_review', {
+    title: 'Knowledge source review',
+    description: 'Review source registry entries, locator contracts, freshness, credentials, privacy tier, and promotion boundaries.',
+    argsSchema: {
+      target: z.string().optional(),
+      source: z.string().optional(),
+      useCase: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS knowledge source review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Source: ${args.source ?? '<source id, connector, dataset, repository, docs folder, or reference set>'}`,
+    `Use case: ${args.useCase ?? '<search, browse, retrieval, reporting, onboarding, or promotion>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe knowledge-source-onboarding',
+    '- reference_inventory for available local reference and source material',
+    '- reference_ledger_check when external source adoption is in scope',
+    '- operator_research for bounded source scans and evidence envelopes',
+    '- index_status for generated source indexes and freshness',
+    '- canon_check before promoting source-derived facts into trusted memory',
+    '',
+    'Optional evidence:',
+    '- operator_search for local docs, source registry entries, adapters, hooks, and commands',
+    '- write_gate_preview before suggesting registry, reference, memory, or integration writes',
+    '',
+    'Stop conditions:',
+    '- Source owner, privacy tier, credential boundary, update cadence, freshness, browse path, or locator format is unknown',
+    '- Source range is unbounded or evidence cannot be reopened from a compact locator',
+    '- Private payloads, credentials, raw external excerpts, or generated summaries would be committed as trusted knowledge',
+    '',
+    'Verification expectations:',
+    '- State registry fields, status, freshness, credential boundary, locator format, sample reopened evidence, caveats, and promotion policy.',
+    '- Keep generated research and indexes under runtime until reviewed source facts are promoted explicitly.'
+  ]));
+
   server.registerPrompt('canon_promotion_review', {
     title: 'Canon promotion review',
     description: 'Review generated runtime evidence before promoting durable canon facts.',

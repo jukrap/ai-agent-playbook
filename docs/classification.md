@@ -55,6 +55,7 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `project-bootstrap`: sets up root policies and an `.ai-playbook/` layout after inspecting the repository.
 - `repo-onboarding`: reads repo state and existing `.ai-playbook/` context before planning or editing.
 - `project-doc-system`: organizes `.ai-playbook/`, maps, runbooks, decisions, plans, worklogs, and archived notes.
+- `adr-spec-handoff`: promotes reviewed decisions, specs, milestone outcomes, worklogs, and handoffs into durable project memory.
 
 ## Quality map
 
@@ -78,6 +79,12 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `frontend-accessibility-review`: reviews keyboard access, focus management, semantics, forms, dialogs, menus, announcements, contrast, and accessible interaction states.
 - `ui-polish`: refines visible UI, responsive layout, visual hierarchy, interaction feedback, and production polish.
 - `visual-regression-qa`: checks screenshots, responsive breakpoints, overflow, clipping, visual diffs, text fit, canvas/media rendering, and browser-rendered regressions.
+
+## Data map
+
+- `data-pipeline-review`: reviews analytics pipelines, ETL, batch jobs, data contracts, dashboard sources, quality checks, freshness, and lineage.
+- `analytics-reporting-review`: reviews metric definitions, KPI ownership, dashboard/report consistency, chart/table checks, segmentation, caveats, and reader handoff.
+- `data-migration-integrity`: reviews data migrations, backfills, transformations, reconciliation queries, idempotency, batching, rollback, and repair.
 
 ## Skill authoring map
 

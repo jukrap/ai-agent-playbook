@@ -110,7 +110,7 @@ skills/
   ai-harness/        MCP, skill, agent, context, cache, index design 스킬
   architecture/      boundary와 architecture review 스킬
   backend/           API, backend change safety, server-rendered flow 스킬
-  data/              data pipeline과 analytics reliability 스킬
+  data/              data pipeline, analytics, reporting, migration integrity 스킬
   database/          schema, migration, SQL, data integrity 스킬
   delivery/          planning, verification, Git, PR, worklog 스킬
   devops/            CI/CD, container, release, deployment, operations triage 스킬
@@ -145,6 +145,7 @@ test/                 Node CLI와 adapter 테스트
 - `project-bootstrap`: 새 프로젝트 시작, 기존 저장소 인수, 프로젝트 메모리와 루트 에이전트 지침 설정.
 - `repo-onboarding`: 낯선 저장소에서 아키텍처, 도구, 수정 방향, 작업 흐름을 답하기 전에 먼저 살필 때.
 - `project-doc-system`: 프로젝트 AI 문서, map, runbook, decision, plan, worklog를 만들거나 재정리할 때.
+- `adr-spec-handoff`: decision, architecture constraint, spec, milestone outcome, worklog, handoff를 durable project memory로 정리할 때.
 
 ### 품질
 
@@ -167,6 +168,8 @@ test/                 Node CLI와 adapter 테스트
 - `backend-change-safety`: backend service, module, worker, job, integration, queue, config, server-side business logic을 바꿀 때.
 - `server-rendered-change`: backend-rendered controller, template, form, session, redirect, validation, view contract를 바꿀 때.
 - `data-pipeline-review`: analytics pipeline, ETL, batch job, data contract, dashboard, quality check를 검토할 때.
+- `analytics-reporting-review`: metric, dashboard, report, KPI definition, chart/table consistency, analytics query, freshness, caveat를 검토할 때.
+- `data-migration-integrity`: data migration, backfill, warehouse transformation, reconciliation, idempotency, rollback, data repair를 계획·검토·검증할 때.
 - `database-change-safety`: database schema, migration, SQL, reporting query, stored procedure, data integrity rule을 바꿀 때.
 - `git-worklog-guardrails`: staging, commit, PR text, release note, worklog를 위한 primary delivery skill.
 - `ci-failure-triage`: 실패한 CI job, build pipeline, deployment, flaky test, environment drift를 진단할 때.

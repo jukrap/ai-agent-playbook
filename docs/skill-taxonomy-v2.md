@@ -59,6 +59,18 @@ Frontend quality skills separate user-visible polish from state/data correctness
 
 Framework-specific details belong in references or project-local playbooks. The primary skills should work for React, Vue, Svelte, Angular, server-rendered pages, and lighter DOM-first frontends.
 
+## Data And Documentation Pack
+
+Data and documentation skills separate pipeline reliability, reporting correctness, migration integrity, and durable project memory:
+
+- `data/data-pipeline-review`: analytics pipelines, ETL, batch jobs, data contracts, dashboards, quality checks, freshness, ownership, and lineage.
+- `data/analytics-reporting-review`: metric definitions, KPI ownership, dashboard/report consistency, chart/table checks, segmentation, caveats, and reader handoff.
+- `data/data-migration-integrity`: data migrations, backfills, warehouse transformations, reconciliation queries, idempotency, batching, rollback, and repair.
+- `project/project-doc-system`: `.ai-playbook` maps, runbooks, decisions, plans, worklogs, archives, and project-memory hygiene.
+- `project/adr-spec-handoff`: ADRs, specs, milestone outcomes, implementation handoffs, reviewed evidence, and durable memory promotion.
+
+Generated runtime reports should not be promoted into `memory/` without review. Reporting, migration, and handoff skills should preserve source evidence while keeping private paths, credentials, branch names, PR numbers, and noisy reference names out of public documentation.
+
 ## Validation
 
 The catalog command reports duplicate skill names, wrapper routing gaps, missing wrapper references, and category drift:

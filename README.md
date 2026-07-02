@@ -110,7 +110,7 @@ skills/
   ai-harness/        MCP, skill, agent, context, cache, and index design skills
   architecture/      Boundary and architecture review skills
   backend/           API, backend change safety, and server-rendered flow skills
-  data/              Data pipeline and analytics reliability skills
+  data/              Data pipeline, analytics, reporting, and migration integrity skills
   database/          Schema, migration, SQL, and data integrity skills
   delivery/          Planning, verification, Git, PR, and worklog skills
   devops/            CI/CD, container, release, deployment, and operations triage skills
@@ -145,6 +145,7 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `project-bootstrap`: start a new project, inherit a repository, or set up project memory and root agent guidance.
 - `repo-onboarding`: inspect an unfamiliar repository before planning architecture, tooling, edits, or workflow answers.
 - `project-doc-system`: create, reorganize, or review project AI docs, maps, runbooks, decisions, plans, and worklogs.
+- `adr-spec-handoff`: turn decisions, architecture constraints, specs, milestone outcomes, worklogs, or handoffs into durable project memory.
 
 ### Quality
 
@@ -167,6 +168,8 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `backend-change-safety`: change backend services, modules, workers, jobs, integrations, queues, config, or server-side business logic.
 - `server-rendered-change`: change backend-rendered controllers, templates, forms, sessions, redirects, validation, and view contracts.
 - `data-pipeline-review`: review analytics pipelines, ETL, batch jobs, data contracts, dashboards, and quality checks.
+- `analytics-reporting-review`: review metrics, dashboards, reports, KPI definitions, chart/table consistency, analytics queries, freshness, and caveats.
+- `data-migration-integrity`: plan, review, or verify data migrations, backfills, warehouse transformations, reconciliation, idempotency, rollback, and data repair.
 - `database-change-safety`: change database schema, migrations, SQL, reporting queries, stored procedures, or data integrity rules.
 - `git-worklog-guardrails`: primary delivery skill for staging, commits, PR text, release notes, and worklogs.
 - `ci-failure-triage`: diagnose failing CI jobs, build pipelines, deployments, flaky tests, and environment drift.

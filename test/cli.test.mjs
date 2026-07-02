@@ -42,6 +42,66 @@ test('bootstrap writes playbook and thin root agent bootstrap without overwritin
   await cleanup(target);
 });
 
+test('harness os v2 commands expose layout, catalog, index, and write-gate flows', async () => {
+  const target = await tempRepo('harness os-v2-공백-');
+  await mkdir(path.join(target, 'src'), { recursive: true });
+  await writeFile(path.join(target, 'src', 'feature.ts'), 'export const featureFlag = "harness-os";\n');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+
+  const catalog = capture(target);
+  assert.equal(await runCli(['catalog', 'list', '--json'], catalog), 0);
+  const catalogReport = JSON.parse(catalog.out());
+  assert.equal(catalogReport.taxonomyVersion, '2');
+  assert.equal(catalogReport.summary.categories, 12);
+  assert.equal(catalogReport.summary.skills, 36);
+
+  const workflow = capture(target);
+  assert.equal(await runCli(['workflow', 'list', '--json'], workflow), 0);
+  const workflowReport = JSON.parse(workflow.out());
+  assert.equal(workflowReport.summary.workflows, 11);
+
+  const layout = capture(target);
+  assert.equal(await runCli(['layout', 'status', '.', '--json'], layout), 0);
+  const layoutReport = JSON.parse(layout.out());
+  assert.equal(layoutReport.layout.version, '2');
+  assert.equal(layoutReport.summary.missingDirectories, 0);
+
+  const migration = capture(target);
+  assert.equal(await runCli(['migrate', 'layout', '.', '--to', 'v2', '--json'], migration), 0);
+  const migrationReport = JSON.parse(migration.out());
+  assert.equal(migrationReport.ok, true);
+
+  const preview = capture(target);
+  assert.equal(await runCli(['index', 'build', '.', '--json'], preview), 0);
+  const previewReport = JSON.parse(preview.out());
+  assert.equal(previewReport.applied, false);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'runtime', 'indexes', 'file-inventory.json')), false);
+
+  const applied = capture(target);
+  assert.equal(await runCli(['index', 'build', '.', '--apply', '--json'], applied), 0);
+  const appliedReport = JSON.parse(applied.out());
+  assert.equal(appliedReport.applied, true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'runtime', 'indexes', 'file-inventory.json')), true);
+
+  const status = capture(target);
+  assert.equal(await runCli(['index', 'status', '.', '--json'], status), 0);
+  const statusReport = JSON.parse(status.out());
+  assert.equal(statusReport.exists, true);
+
+  const search = capture(target);
+  assert.equal(await runCli(['index', 'search', '.', '--query', 'harness-os', '--json'], search), 0);
+  const searchReport = JSON.parse(search.out());
+  assert.equal(searchReport.summary.matches >= 1, true);
+
+  const gate = capture(target);
+  assert.equal(await runCli(['write-gate', 'preview', '.', '--intent', 'edit runtime report', '--path', '.ai-playbook/runtime/indexes/file-inventory.json', '--json'], gate), 1);
+  const gateReport = JSON.parse(gate.out());
+  assert.equal(gateReport.ok, false);
+  assert.equal(gateReport.blockers.some((blocker) => blocker.id === 'write-gate.runtime-target'), true);
+
+  await cleanup(target);
+});
+
 test('bootstrap conflict preflight refuses existing AGENTS without partial writes', async () => {
   const target = await tempRepo('bootstrap conflict-한글-');
   await writeFile(path.join(target, 'AGENTS.md'), '# Existing policy\n');

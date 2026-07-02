@@ -64,6 +64,7 @@ Command-specific options appear where they are needed:
 | `--query <text>` | Search or research topic. |
 | `--intent <text>` | Planned work description for `operator preflight`. |
 | `--max-results N` | Limit search or research output. |
+| `--to v2` | Select the destination layout for `migrate layout`. |
 | `--max-chars N` | Limit generated context size. |
 | `--strict` | Treat doctor warnings as failures. |
 | `--reminder` | Return a small doctor reminder signal instead of the full report. |
@@ -119,6 +120,8 @@ Project playbook commands manage `.ai-playbook/` in one target repository.
 | `bootstrap <target>` | Create the root `AGENTS.md` and `.ai-playbook/` layout in a target project. | Yes, unless `--dry-run` | `npx ai-agent-playbook bootstrap <target-project> --dry-run` |
 | `guides sync <target>` | Copy missing guide templates into an existing `.ai-playbook/guides/`. | Yes, unless `--dry-run` or `--check` | `npx ai-agent-playbook guides sync <target-project> --check --diff --json` |
 | `migrate path <target>` | Preview or apply the legacy `ai-playbook/` to `.ai-playbook/` folder migration. | No unless `--apply` | `npx ai-agent-playbook migrate path <target-project> --json` |
+| `migrate layout <target>` | Preview or apply `.ai-playbook` layout v2 directories and copied v1 compatibility files. | No unless `--apply` | `npx ai-agent-playbook migrate layout <target-project> --to v2 --json` |
+| `layout status <target>` | Report whether the target playbook has the v2 layout files and directories. | No | `npx ai-agent-playbook layout status <target-project> --json` |
 | `doctor <target>` | Check project playbook health, adaptation status, worklog summary freshness, and local-path risk. | No | `npx ai-agent-playbook doctor <target-project> --json` |
 | `context <target>` | Build compact project context from core `.ai-playbook/` files for optional hooks or inspection. | No | `npx ai-agent-playbook context <target-project> --json` |
 | `context list <target>` | List `.ai-playbook/context/**/*.md` files and their frontmatter. | No | `npx ai-agent-playbook context list <target-project> --json` |
@@ -130,6 +133,22 @@ Use `--local-only` with `bootstrap` when the target project's `.ai-playbook/` sh
 Context files support markdown frontmatter: `id`, `globs`, `alwaysApply`, `freshness`, and `priority`. Use `context status` before loading more project memory for a path. It is read-only and safe to run often.
 
 Use `CURRENT.md` for current baseline facts, active risks, decisions, and project-specific working vocabulary. Put larger structural facts, scan ranges, and clone or duplicate-code cues in maps so they stay reviewable without turning `CURRENT.md` into a long report.
+
+## Harness OS catalogs and runtime
+
+These commands expose the v2 capability model and generated local runtime surface. They are safe to run before editing code.
+
+| Command | When to use it | Writes files? | Example |
+| ------- | -------------- | ------------- | ------- |
+| `catalog list` | List capability categories with skill and workflow counts. | No | `npx ai-agent-playbook catalog list --json` |
+| `catalog check` | Validate skill taxonomy, duplicate names, wrapper routes, and wrapper references. | No | `npx ai-agent-playbook catalog check --json` |
+| `workflow list` | List built-in workflow recipes. | No | `npx ai-agent-playbook workflow list --json` |
+| `index build <target>` | Preview or write `.ai-playbook/runtime/indexes/file-inventory.json`. | No unless `--apply` | `npx ai-agent-playbook index build <target-project> --json` |
+| `index status <target>` | Check whether the runtime file inventory exists. | No | `npx ai-agent-playbook index status <target-project> --json` |
+| `index search <target>` | Search local project text without writing the runtime index. | No | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
+| `write-gate preview <target>` | Preview write risk for an intent and optional path before editing. | No | `npx ai-agent-playbook write-gate preview <target-project> --intent "change auth flow" --path src/example.ts --json` |
+
+Runtime output lives under `.ai-playbook/runtime/`. Do not copy generated output into `.ai-playbook/memory/` until it has been reviewed and promoted intentionally.
 
 ## Managed files
 
@@ -234,6 +253,7 @@ ai-playbook mcp
 The server exposes read-only tools for:
 
 - playbook context: `playbook_context`, `context_status`, `context_list`
+- catalogs and layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `playbook_layout`, `index_status`, `index_search`, `write_gate_preview`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules and project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA and deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`

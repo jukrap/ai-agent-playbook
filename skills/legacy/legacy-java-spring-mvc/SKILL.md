@@ -5,6 +5,8 @@ description: Use when maintaining legacy Java Spring MVC, JSP, Servlet, MyBatis,
 
 # Legacy Java Spring MVC
 
+Primary route: `backend/server-rendered-change`.
+
 Trace controller, view, mapper, and deployment contracts together.
 
 ## Workflow
@@ -20,3 +22,7 @@ Trace controller, view, mapper, and deployment contracts together.
 - Do not modernize to a new Spring style inside a small fix.
 - Do not rename model attributes or JSP fragments without all consumers.
 - Do not assume local embedded behavior matches deployed WAR/container behavior.
+
+## Reference
+
+Read `references/java-spring-mvc.md` for stack-specific checks.

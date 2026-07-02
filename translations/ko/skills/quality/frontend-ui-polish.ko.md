@@ -1,5 +1,7 @@
 # Frontend UI Polish
 
+Primary route: `frontend/ui-polish`.
+
 실제 제품 맥락에 맞게 보이는 UI를 다듬습니다.
 
 ## 진행 절차

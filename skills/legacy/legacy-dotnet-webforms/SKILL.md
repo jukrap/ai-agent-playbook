@@ -5,6 +5,8 @@ description: Use when maintaining ASP.NET Web Forms, .NET Framework, code-behind
 
 # Legacy Dotnet WebForms
 
+Primary route: `backend/server-rendered-change`.
+
 Respect the page lifecycle and server control contracts.
 
 ## Workflow
@@ -20,3 +22,7 @@ Respect the page lifecycle and server control contracts.
 - Do not edit generated designer files manually unless that is the project convention.
 - Do not replace Web Forms lifecycle with SPA assumptions.
 - Do not assume modern .NET APIs are available in .NET Framework projects.
+
+## Reference
+
+Read `references/dotnet-webforms.md` for stack-specific checks.

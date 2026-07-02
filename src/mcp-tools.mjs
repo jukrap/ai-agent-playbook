@@ -1,13 +1,20 @@
 import { z } from 'zod';
 import {
   buildProjectContext,
+  capabilityCatalog,
   catalogManagedManifest,
   checkContracts,
   checkManagedManifest,
   contextStatus,
+  describePlaybookLayout,
   listContexts,
   listContracts,
+  previewWriteGate,
   parseMaxChars,
+  runtimeIndexStatus,
+  searchRuntimeIndex,
+  skillCatalog,
+  workflowCatalog,
   SCHEMA_VERSION
 } from './harness.mjs';
 import {
@@ -47,6 +54,36 @@ const maxResultsSchema = z.number().int().min(1).max(100).optional();
 export function registerPlaybookMcpTools(server, options) {
   const { repoRoot } = options;
   const tools = [
+    tool('capability_catalog', 'List Harness OS capability categories, skill counts, and workflow counts.', {}, () => capabilityCatalog({ repoRoot })),
+    tool('skill_catalog', 'List local skills with v2 taxonomy and compatibility wrapper metadata.', {}, () => skillCatalog({ repoRoot })),
+    tool('workflow_list', 'List Harness OS workflow recipes.', {}, () => workflowCatalog()),
+    tool('playbook_layout', 'Describe whether a target playbook has the v2 layout.', {
+      target: targetSchema
+    }, (args) => describePlaybookLayout({ target: args.target })),
+    tool('index_status', 'Report the local runtime index status for a target project.', {
+      target: targetSchema
+    }, (args) => runtimeIndexStatus({ target: args.target })),
+    tool('index_search', 'Search local project files without writing the runtime index.', {
+      target: targetSchema,
+      query: z.string().min(1),
+      maxResults: maxResultsSchema
+    }, (args) => searchRuntimeIndex({
+      target: args.target,
+      query: args.query,
+      maxResults: args.maxResults ?? 20
+    })),
+    tool('write_gate_preview', 'Preview write risk for a target path and intent without modifying files.', {
+      target: targetSchema,
+      intent: z.string().min(1),
+      path: pathSchema,
+      maxResults: maxResultsSchema
+    }, (args) => previewWriteGate({
+      repoRoot,
+      target: args.target,
+      intent: args.intent,
+      filePath: args.path,
+      maxResults: args.maxResults ?? 20
+    })),
     tool('playbook_context', 'Build local playbook context for a target project.', {
       target: targetSchema,
       maxChars: z.number().int().min(500).optional()
@@ -210,8 +247,82 @@ export function registerPlaybookMcpTools(server, options) {
   }
 }
 
+export function registerPlaybookMcpResourcesAndPrompts(server, options) {
+  const { repoRoot } = options;
+  const resources = [
+    resource('capability_catalog', 'ai-playbook://capabilities', 'Harness OS capability catalog.', () => capabilityCatalog({ repoRoot })),
+    resource('skill_catalog', 'ai-playbook://skills', 'Harness OS skill taxonomy catalog.', () => skillCatalog({ repoRoot })),
+    resource('workflow_list', 'ai-playbook://workflows', 'Harness OS workflow recipe catalog.', () => workflowCatalog())
+  ];
+
+  for (const item of resources) {
+    server.registerResource(item.name, item.uri, {
+      title: item.name,
+      description: item.description,
+      mimeType: 'application/json'
+    }, async (uri) => {
+      const result = await item.handler();
+      return {
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(result, null, 2)
+        }]
+      };
+    });
+  }
+
+  server.registerPrompt('repo_onboarding_runbook', {
+    title: 'Repo onboarding runbook',
+    description: 'Start a local-first onboarding pass with catalog, layout, index, and write-gate checks.',
+    argsSchema: {
+      target: z.string().optional()
+    }
+  }, (args) => ({
+    messages: [{
+      role: 'user',
+      content: {
+        type: 'text',
+        text: [
+          'Run a Harness OS repo onboarding pass.',
+          `Target: ${args.target ?? '<target repository>'}`,
+          '',
+          'Use read-only catalog, layout status, runtime index preview/search, and write-gate preview first.',
+          'Only write files when a command or runbook explicitly enables apply mode.'
+        ].join('\n')
+      }
+    }]
+  }));
+
+  server.registerPrompt('harness_extension_plan', {
+    title: 'Harness extension plan',
+    description: 'Plan a new skill, MCP tool, recipe, or playbook layout extension.',
+    argsSchema: {
+      capability: z.string().optional()
+    }
+  }, (args) => ({
+    messages: [{
+      role: 'user',
+      content: {
+        type: 'text',
+        text: [
+          'Plan a Harness OS extension.',
+          `Capability: ${args.capability ?? '<capability>'}`,
+          '',
+          'Check the capability catalog, skill taxonomy, workflow list, and permission tier before writing implementation files.',
+          'Keep skills trigger-focused and move reusable detail into references.'
+        ].join('\n')
+      }
+    }]
+  }));
+}
+
 function tool(name, description, schema, handler) {
   return { name, description, schema, handler };
+}
+
+function resource(name, uri, description, handler) {
+  return { name, uri, description, handler };
 }
 
 function toolResult(name, result) {

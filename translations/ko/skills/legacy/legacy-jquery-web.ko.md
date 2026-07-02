@@ -1,5 +1,7 @@
 # Legacy jQuery Web
 
+Primary route: `frontend/browser-dom-change`.
+
 jQuery, plugin, 직접 DOM 조작, global scripts, AJAX callbacks, script-order 의존 behavior로 만든 browser pages를 유지보수할 때 사용합니다.
 
 ## 진행 절차
@@ -18,3 +20,7 @@ jQuery, plugin, 직접 DOM 조작, global scripts, AJAX callbacks, script-order 
 - table/modal/date picker lifecycle
 - old browser syntax constraints
 - JavaScript 안에 embedded된 server-rendered values
+
+## Reference
+
+Stack-specific check는 `references/jquery-browser.md`를 읽습니다.

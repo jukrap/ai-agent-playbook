@@ -1,5 +1,7 @@
 # Legacy Java Spring MVC
 
+Primary route: `backend/server-rendered-change`.
+
 Legacy Java Spring MVC, JSP, Servlet, MyBatis, WAR deployment, XML config, server-rendered Java web app을 유지보수할 때 사용합니다.
 
 ## 진행 절차
@@ -15,3 +17,7 @@ Legacy Java Spring MVC, JSP, Servlet, MyBatis, WAR deployment, XML config, serve
 - 작은 fix 안에서 새로운 Spring style로 현대화하지 않습니다.
 - 모든 consumer 확인 없이 model attribute 또는 JSP fragment를 rename하지 않습니다.
 - local embedded behavior가 deployed WAR/container behavior와 같다고 가정하지 않습니다.
+
+## Reference
+
+Stack-specific check는 `references/java-spring-mvc.md`를 읽습니다.

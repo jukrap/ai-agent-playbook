@@ -5,9 +5,11 @@ import { analyzeOperator, auditOperator, checkDiagnostics, checkImageDiff, check
 import { lintSkills, runSkillsLifecycle } from './skills-lifecycle.mjs';
 import { runMcpServer } from './mcp-server.mjs';
 import {
+  buildRuntimeIndex,
   buildProjectContext,
   buildDoctorReminderSignal,
   bootstrapProject,
+  capabilityCatalog,
   checkContracts,
   checkGuides,
   checkManagedManifest,
@@ -20,16 +22,23 @@ import {
   initContracts,
   listContexts,
   listContracts,
+  describePlaybookLayout,
+  migratePlaybookLayout,
   migratePlaybookPath,
   parseMaxChars,
+  previewWriteGate,
   adoptManagedManifest,
   pruneManagedManifest,
   recordRun,
   runStatus,
+  runtimeIndexStatus,
+  searchRuntimeIndex,
+  skillCatalog,
   snapshotContracts,
   startRun,
   syncGuides,
   uninstallManagedManifest,
+  workflowCatalog,
   summarizeRun,
   summarizeWorklogs
 } from './harness.mjs';
@@ -359,6 +368,31 @@ export async function runCli(argv, io = {}) {
       return result.ok ? 0 : 1;
     }
 
+    if (command === 'migrate' && subcommand === 'layout') {
+      const result = await migratePlaybookLayout({
+        target: resolveTarget(cwd, targetArg),
+        to: parsed.flags.to,
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        for (const operation of result.operations) {
+          write(stdout, `[PLAN] ${operation.message}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+        if (!parsed.flags.apply && result.operations.length > 0) {
+          write(stdout, 'Re-run with --apply to create the v2 playbook layout.\n');
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
     if (command === 'skills' && subcommand === 'lint') {
       const result = await lintSkills({ repoRoot: root });
       if (parsed.flags.json) {
@@ -400,6 +434,122 @@ export async function runCli(argv, io = {}) {
         }
         for (const conflict of result.conflicts) {
           write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'catalog' && subcommand === 'list') {
+      const result = await capabilityCatalog({ repoRoot: root });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Capability categories: ${result.summary.categories}, skills: ${result.summary.skills}, workflows: ${result.summary.workflows}\n`);
+        for (const category of result.categories) {
+          write(stdout, `[${category.id}] ${category.skills} skill(s), ${category.workflows} workflow(s) - ${category.description}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'catalog' && subcommand === 'check') {
+      const result = await skillCatalog({ repoRoot: root });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Skill taxonomy: ${result.summary.skills} skill(s), ${result.summary.wrappers} wrapper(s)\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'workflow' && subcommand === 'list') {
+      const result = workflowCatalog();
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Workflow recipes: ${result.summary.workflows}\n`);
+        for (const workflow of result.workflows) {
+          write(stdout, `[${workflow.category}] ${workflow.id}: ${workflow.title}\n`);
+        }
+      }
+      return 0;
+    }
+
+    if (command === 'layout' && subcommand === 'status') {
+      const result = await describePlaybookLayout({ target: resolveTarget(cwd, targetArg) });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Playbook layout: ${result.layout.version} (${result.layout.activeRoot})\n`);
+        write(stdout, `Missing: ${result.summary.missingDirectories} directory item(s), ${result.summary.missingFiles} file(s)\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'index' && subcommand === 'build') {
+      const result = await buildRuntimeIndex({
+        target: resolveTarget(cwd, targetArg),
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Runtime index: ${result.summary.files} file(s), ${result.applied ? 'written' : 'preview'}\n`);
+        if (!parsed.flags.apply) {
+          write(stdout, 'Re-run with --apply to write the runtime index.\n');
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'index' && subcommand === 'status') {
+      const result = await runtimeIndexStatus({ target: resolveTarget(cwd, targetArg) });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Runtime index: ${result.exists ? 'present' : 'missing'} (${result.summary.files} file(s))\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'index' && subcommand === 'search') {
+      const result = await searchRuntimeIndex({
+        target: resolveTarget(cwd, targetArg),
+        query: parsed.flags.query,
+        maxResults: parseMaxResults(parsed.flags['max-results'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Runtime search: ${result.summary.matches} match(es)\n`);
+        for (const item of result.results) {
+          const first = item.snippets[0];
+          write(stdout, `[${item.category}] ${item.path}${first ? `:${first.line} ${first.text}` : ''}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'write-gate' && subcommand === 'preview') {
+      const result = await previewWriteGate({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        intent: parsed.flags.intent,
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        maxResults: parseMaxResults(parsed.flags['max-results'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Write gate: ${result.ok ? 'ok' : 'blocked'} (${result.summary.candidates} candidate(s), ${result.summary.blockers} blocker(s))\n`);
+        for (const blocker of result.blockers) {
+          write(stdout, `[BLOCKER] ${blocker.message}\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -893,6 +1043,7 @@ function needsValue(key) {
     'max-chars',
     'adapter',
     'settings',
+    'to',
     'path',
     'cols',
     'query',
@@ -986,6 +1137,15 @@ Usage:
   ai-playbook skills update [--dry-run] [--json] [--force-managed] [--force-unmanaged] [--codex-root <path>] [--agents-root <path>]
   ai-playbook skills uninstall [--dry-run] [--json] [--force-managed] [--codex-root <path>] [--agents-root <path>]
   ai-playbook migrate path <target> [--apply] [--json]
+  ai-playbook migrate layout <target> [--to v2] [--apply] [--json]
+  ai-playbook catalog list [--json]
+  ai-playbook catalog check [--json]
+  ai-playbook workflow list [--json]
+  ai-playbook layout status <target> [--json]
+  ai-playbook index build <target> [--apply] [--json]
+  ai-playbook index status <target> [--json]
+  ai-playbook index search <target> --query <text> [--max-results N] [--json]
+  ai-playbook write-gate preview <target> --intent <text> [--path <file>] [--max-results N] [--json]
   ai-playbook managed check <target> [--json]
   ai-playbook managed catalog <target> [--json]
   ai-playbook managed adopt <target> [--apply] [--json]

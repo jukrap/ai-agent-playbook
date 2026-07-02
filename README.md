@@ -38,7 +38,7 @@ It is not a slash-command pack, a Codex plugin, or an auto-running agent. The de
 | Reusable skills   | Trigger-focused operating guides for onboarding, docs, quality, Git, meta work, and legacy systems. | `skills/`          |
 | Project templates | Copyable root agent rules, stack profiles, and project-memory files for current facts, vocabulary, maps, decisions, and evidence. | `templates/`       |
 | Runtime harness   | A small CLI for bootstrapping `.ai-playbook/`, health checks, context, runs, contracts, plans, and worklogs. | `bin/`, `src/`     |
-| MCP tools         | Local read-only tools for AI apps: context, operator checks, search, research, contracts, managed state, image diff, AST search, exact function-body clone cues, and TypeScript/JavaScript analysis. | `src/`             |
+| MCP tools         | Local read-only tools, resources, and prompts for AI apps: catalogs, layout status, index search, write-gate preview, context, operator checks, research, contracts, image diff, AST search, clone cues, and TypeScript/JavaScript analysis. | `src/`             |
 | Human docs        | Installation, classification, maintenance, publishing, and translation notes.                       | `docs/`            |
 | Translations      | Korean reading copies that mirror English source files.                                             | `translations/ko/` |
 | Agent adapters    | Setup notes for specific agent environments.                                                        | `adapters/`        |
@@ -107,6 +107,16 @@ See [Command guide](docs/commands.md) for search, managed cleanup, adapter setup
 bin/                  ai-playbook CLI entrypoint
 src/                  CLI runtime implementation
 skills/
+  ai-harness/        MCP, skill, agent, context, cache, and index design skills
+  architecture/      Boundary and architecture review skills
+  backend/           API and server-rendered flow skills
+  data/              Data pipeline and analytics reliability skills
+  database/          Schema, migration, SQL, and data integrity skills
+  delivery/          Planning, verification, Git, PR, and worklog skills
+  devops/            CI/CD, deployment, and operations triage skills
+  frontend/          UI, browser, accessibility, and visual QA skills
+  mobile/            Native, hybrid, WebView, and device QA skills
+  security/          Security review and risk skills
   project/            Bootstrap, onboarding, and project-memory skills
   quality/            API boundary, UI quality, cleanup, and review skills
   git/                Commit, PR, push, and worklog skills
@@ -150,6 +160,21 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `commit-worklog-guardrails`: stage, commit, push, open PRs, prepare release notes, or record worklogs.
 - `agent-skill-authoring`: create, review, or reorganize reusable agent skills and references.
 
+### Harness OS v2 Capabilities
+
+- `mcp-server-design`: design MCP tools, resources, prompts, permission tiers, write gates, and cache/index surfaces.
+- `boundary-review`: review FSD, layered, DDD, monorepo, package ownership, dependency direction, and coupling boundaries.
+- `server-rendered-change`: change backend-rendered controllers, templates, forms, sessions, redirects, validation, and view contracts.
+- `data-pipeline-review`: review analytics pipelines, ETL, batch jobs, data contracts, dashboards, and quality checks.
+- `change-safety`: change database schema, migrations, SQL, reporting queries, stored procedures, or data integrity rules.
+- `git-worklog-guardrails`: primary delivery skill for staging, commits, PR text, release notes, and worklogs.
+- `ci-failure-triage`: diagnose failing CI jobs, build pipelines, deployments, flaky tests, and environment drift.
+- `browser-dom-change`: change browser DOM behavior, jQuery flows, event handlers, selectors, forms, plugins, or script-loaded UI.
+- `ui-polish`: primary frontend skill for visible UI, responsive layout, accessibility states, interaction feedback, and production polish.
+- `webview-bridge`: change WebView bridges, native-to-web messaging, deep links, embedded auth, uploads, downloads, or hybrid navigation.
+- `legacy-change-safety`: primary legacy skill for compatibility-first changes with hidden coupling or deployment risk.
+- `security-review`: review secrets, authentication, authorization, input validation, dependency risk, and sensitive data flow.
+
 ### Legacy
 
 General legacy work:
@@ -182,6 +207,11 @@ Enterprise stacks and data-heavy flows:
 - [Command guide](docs/commands.md): what each CLI command does, when to use it, and whether it writes files.
 - [Install, update, and uninstall](docs/installation.md): npm/npx usage, global CLI setup, skill lifecycle, project bootstrap, cleanup, and legacy PowerShell paths.
 - [Runtime harness](docs/harness-runtime.md): runtime principles, JSON contract notes, overwrite policy, and target-project flow.
+- [Harness OS](docs/harness-os.md): v1 redesign principles for catalogs, layout, runtime, MCP, and skills.
+- [Playbook layout v2](docs/playbook-layout-v2.md): `.ai-playbook` v2 directory roles and migration commands.
+- [Skill taxonomy v2](docs/skill-taxonomy-v2.md): capability-first categories and compatibility wrapper policy.
+- [MCP permission model](docs/mcp-permission-model.md): read, scaffold, managed-write, and project-write tiers.
+- [Reference adoption](docs/reference-adoption.md): how to distill external references into local capabilities without prompt noise.
 - [Runtime roadmap](docs/runtime-roadmap.md): staged hardening plan and optional hook-layer boundaries.
 - [Codex adapter](adapters/codex/README.md): Codex-specific local sync behavior and Codex App on Windows workflow.
 - [Claude Code adapter](adapters/claude-code/README.md): Claude Code setup notes and optional read-only context hook example.

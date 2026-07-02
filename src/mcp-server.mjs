@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { registerPlaybookMcpTools } from './mcp-tools.mjs';
+import { registerPlaybookMcpResourcesAndPrompts, registerPlaybookMcpTools } from './mcp-tools.mjs';
 
 export async function runMcpServer(options) {
   const { repoRoot } = options;
@@ -11,6 +11,7 @@ export async function runMcpServer(options) {
     name: 'ai-agent-playbook',
     version
   });
+  registerPlaybookMcpResourcesAndPrompts(server, { repoRoot });
   registerPlaybookMcpTools(server, { repoRoot });
   const transport = new StdioServerTransport();
   await server.connect(transport);

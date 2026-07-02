@@ -5,6 +5,8 @@ description: Use when implementing or refining visible frontend UI surfaces, res
 
 # Frontend UI Polish
 
+Primary route: `frontend/ui-polish`.
+
 Refine visible UI so it works well in the actual product context.
 
 ## Workflow

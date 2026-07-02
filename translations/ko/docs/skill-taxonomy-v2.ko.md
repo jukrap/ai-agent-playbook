@@ -49,6 +49,17 @@ Architecture skill은 broad boundary review를 feature slicing, domain modeling,
 
 Architecture guidance는 FSD, DDD, clean architecture, layered architecture, monorepo restructuring을 권하기 전에 repository의 실제 pattern을 검증해야 합니다.
 
+## Database Depth Pack
+
+Database skill은 broad database change safety를 schema rollout planning, query performance review, data integrity enforcement와 분리합니다.
+
+- `database/database-change-safety`: broad schema, migration, SQL, reporting query, stored procedure, data integrity change.
+- `database/schema-migration-plan`: schema migration, DDL, index, constraint, default, nullability, seed, view, trigger, stored procedure, rollout order, compatibility window, rollback evidence.
+- `database/query-performance-review`: slow SQL, reporting/dashboard/API/export query, join, aggregate, sort/pagination, full scan, N+1 pattern, explain plan, index choice.
+- `database/data-integrity-constraints`: uniqueness, foreign key, check, not-null rule, trigger, stored procedure, generated column, repair script, reconciliation query, invariant boundary.
+
+Database guidance는 read-before-write evidence를 우선해야 합니다. Schema inspection, migration dry-run, explain/estimate, before/after query, rendered consumer check, destructive operation explicit confirmation을 사용합니다.
+
 ## Delivery And Testing Pack
 
 Delivery testing skill은 release confidence planning, flaky test stabilization, fixture/test-data design을 분리합니다.

@@ -49,6 +49,17 @@ Architecture skills separate broad boundary review from feature slicing, domain 
 
 Architecture guidance should verify the repository's actual pattern before recommending FSD, DDD, clean architecture, layered architecture, or monorepo restructuring.
 
+## Database Depth Pack
+
+Database skills separate broad database change safety from schema rollout planning, query performance review, and data integrity enforcement:
+
+- `database/database-change-safety`: broad schema, migration, SQL, reporting query, stored procedure, and data integrity changes.
+- `database/schema-migration-plan`: schema migrations, DDL, indexes, constraints, defaults, nullability, seeds, views, triggers, stored procedures, rollout order, compatibility windows, and rollback evidence.
+- `database/query-performance-review`: slow SQL, reporting/dashboard/API/export queries, joins, aggregates, sort/pagination, full scans, N+1 patterns, explain plans, and index choices.
+- `database/data-integrity-constraints`: uniqueness, foreign keys, checks, not-null rules, triggers, stored procedures, generated columns, repair scripts, reconciliation queries, and invariant boundaries.
+
+Database guidance should prefer read-before-write evidence: schema inspection, migration dry-run, explain/estimate, before/after queries, rendered consumer checks, and explicit confirmation for destructive operations.
+
 ## Delivery And Testing Pack
 
 Delivery testing skills separate release confidence planning, flaky test stabilization, and fixture/test-data design:

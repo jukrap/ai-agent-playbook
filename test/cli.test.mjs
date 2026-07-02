@@ -74,6 +74,16 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   await writeFile(path.join(target, '.github', 'workflows', 'ci.yml'), 'name: ci\njobs:\n  test:\n    steps:\n      - uses: actions/checkout@v4\n');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
 
+  const beforeMissingHistory = await listRelativeFiles(target);
+  const missingHistory = capture(target);
+  assert.equal(await runCli(['runtime', 'capability-history', '.', '--json'], missingHistory), 0);
+  const missingHistoryReport = JSON.parse(missingHistory.out());
+  assert.equal(missingHistoryReport.kind, 'runtime.capability-history');
+  assert.equal(missingHistoryReport.exists, false);
+  assert.equal(missingHistoryReport.mode.writes, false);
+  assert.equal(missingHistoryReport.summary.entries, 0);
+  assert.deepEqual(await listRelativeFiles(target), beforeMissingHistory);
+
   const catalog = capture(target);
   assert.equal(await runCli(['catalog', 'list', '--json'], catalog), 0);
   const catalogReport = JSON.parse(catalog.out());
@@ -454,6 +464,86 @@ test('index status reports malformed runtime artifact JSON without throwing', as
   assert.equal(report.ok, false);
   assert.equal(report.conflicts.some((conflict) => conflict.id === 'runtime.artifact.malformed-json'), true);
   assert.equal(report.indexes.some((index) => index.kind === 'file-inventory' && index.valid === false), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('runtime capability-history summarizes append-only JSONL without writing files', async () => {
+  const target = await tempRepo('capability history-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await mkdir(path.join(target, '.ai-playbook', 'runtime', 'reports'), { recursive: true });
+  const absoluteEvidence = path.join(target, 'secret-evidence.log');
+  const entries = [
+    {
+      capability: 'runtime-index-canon',
+      status: 'pass',
+      generatedAt: '2026-07-03T00:00:00.000Z',
+      durationMs: 800,
+      baselineMs: 1000,
+      evidence: ['.ai-playbook/runtime/indexes/file-inventory.json']
+    },
+    {
+      capability: 'runtime-index-canon',
+      status: 'fail',
+      generatedAt: '2026-07-03T01:00:00.000Z',
+      durationMs: 1200,
+      baselineMs: 1000,
+      evidence: [absoluteEvidence, 'docs/safe.md']
+    },
+    {
+      capability: 'security-review',
+      status: 'warn',
+      generatedAt: 'not-a-date',
+      durationMs: 50,
+      baselineMs: 100
+    }
+  ];
+  await writeFile(
+    path.join(target, '.ai-playbook', 'runtime', 'reports', 'capability-history.jsonl'),
+    `${entries.map((entry) => JSON.stringify(entry)).join('\n')}\n`
+  );
+  const before = await listRelativeFiles(target);
+  const history = capture(target);
+
+  assert.equal(await runCli(['runtime', 'capability-history', '.', '--json'], history), 0);
+  assert.equal(history.out().includes('secret-evidence.log'), false);
+  const report = JSON.parse(history.out());
+  assert.equal(report.ok, true);
+  assert.equal(report.exists, true);
+  assert.equal(report.mode.writes, false);
+  assert.equal(report.summary.entries, 3);
+  assert.equal(report.summary.capabilities, 2);
+  assert.equal(report.summary.latestStatuses.fail, 1);
+  assert.equal(report.summary.latestStatuses.warn, 1);
+  assert.equal(report.warnings.some((warning) => warning.id === 'capability-history.non-portable-evidence'), true);
+  assert.equal(report.warnings.some((warning) => warning.id === 'capability-history.invalid-timestamp'), true);
+  const runtimeCapability = report.capabilities.find((item) => item.capability === 'runtime-index-canon');
+  assert.equal(runtimeCapability.latestStatus, 'fail');
+  assert.equal(runtimeCapability.latestDurationMs, 1200);
+  assert.equal(runtimeCapability.baselineMs, 1000);
+  assert.equal(runtimeCapability.driftMs, 200);
+  assert.equal(runtimeCapability.driftPercent, 20);
+  assert.deepEqual(runtimeCapability.evidence, ['docs/safe.md']);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('runtime capability-history reports malformed JSONL lines', async () => {
+  const target = await tempRepo('capability history malformed-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await mkdir(path.join(target, '.ai-playbook', 'runtime', 'reports'), { recursive: true });
+  await writeFile(
+    path.join(target, '.ai-playbook', 'runtime', 'reports', 'capability-history.jsonl'),
+    '{"capability":"runtime-index-canon","status":"pass"}\n{bad-json\n'
+  );
+  const before = await listRelativeFiles(target);
+  const history = capture(target);
+
+  assert.equal(await runCli(['runtime', 'capability-history', '.', '--json'], history), 1);
+  const report = JSON.parse(history.out());
+  assert.equal(report.ok, false);
+  assert.equal(report.summary.entries, 1);
+  assert.equal(report.conflicts.some((conflict) => conflict.id === 'capability-history.malformed-line'), true);
   assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
 });

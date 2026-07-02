@@ -36,6 +36,7 @@ test('npm pack dry-run includes runtime files and excludes local/test payloads',
   assert.equal(files.includes('src/layout/playbook-layout-v2.mjs'), true);
   assert.equal(files.includes('src/runtime/indexes.mjs'), true);
   assert.equal(files.includes('src/runtime/schemas.mjs'), true);
+  assert.equal(files.includes('src/runtime/capability-history.mjs'), true);
   assert.equal(files.includes('src/skills-lifecycle.mjs'), true);
   assert.equal(files.includes('skills/backend/server-rendered-change/SKILL.md'), true);
   assert.equal(files.includes('skills/project/project-bootstrap/SKILL.md'), true);

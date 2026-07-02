@@ -59,6 +59,8 @@ The symbol outline uses lightweight local patterns for common JS/TS, Python, Jav
 
 Runtime artifact JSON must keep a stable evidence envelope: `schemaVersion`, `kind`, `target`, `mode`, `generatedAt`, `summary`, `warnings`, and `conflicts`. Canon promotion refuses runtime sources that do not satisfy this envelope, so generated evidence cannot silently become trusted memory when its shape is stale or malformed.
 
+`runtime capability-history` reads `.ai-playbook/runtime/reports/capability-history.jsonl` as an optional append-only local signal. It summarizes capability status, latest duration, baseline, and drift without running benchmarks, contacting networks, or enabling telemetry. Entries should use portable evidence paths; non-portable paths are omitted from output and reported as warnings.
+
 ## MCP tool surface
 
 Start the local server with:

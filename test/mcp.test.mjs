@@ -104,6 +104,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'harness_extension_plan',
       'reference_adoption_review',
       'backend_change_review',
+      'architecture_boundary_review',
       'auth_access_control_review',
       'dependency_supply_chain_review',
       'package_release_readiness_review',
@@ -204,6 +205,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
 
     for (const { name, toolName, expectedText, arguments: promptArguments } of [
       { name: 'backend_change_review', toolName: 'workflow_run_preview', expectedText: 'backend-contract-change', arguments: { target, intent: 'review auth flow' } },
+      { name: 'architecture_boundary_review', toolName: 'workflow_run_preview', expectedText: 'architecture-boundary-review', arguments: { target, path: 'src/features/login' } },
       { name: 'auth_access_control_review', toolName: 'route_api_hints', arguments: { target, intent: 'review auth flow' } },
       { name: 'dependency_supply_chain_review', toolName: 'dependency_inventory', arguments: { target, ecosystem: 'npm' } },
       { name: 'package_release_readiness_review', toolName: 'workflow_run_preview', expectedText: 'package-release-readiness', arguments: { target, artifact: 'cli package' } },

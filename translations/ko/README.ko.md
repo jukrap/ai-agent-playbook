@@ -113,7 +113,7 @@ skills/
   data/              data pipeline과 analytics reliability 스킬
   database/          schema, migration, SQL, data integrity 스킬
   delivery/          planning, verification, Git, PR, worklog 스킬
-  devops/            CI/CD, deployment, operations triage 스킬
+  devops/            CI/CD, container, release, deployment, operations triage 스킬
   frontend/          UI, browser, accessibility, visual QA 스킬
   mobile/            native, hybrid, WebView, device QA 스킬
   security/          auth, dependency supply chain, security review, risk 스킬
@@ -170,6 +170,9 @@ test/                 Node CLI와 adapter 테스트
 - `database-change-safety`: database schema, migration, SQL, reporting query, stored procedure, data integrity rule을 바꿀 때.
 - `git-worklog-guardrails`: staging, commit, PR text, release note, worklog를 위한 primary delivery skill.
 - `ci-failure-triage`: 실패한 CI job, build pipeline, deployment, flaky test, environment drift를 진단할 때.
+- `container-change-safety`: Dockerfile, container image, Compose/Kubernetes manifest, runtime config, healthcheck, volume, network를 바꿀 때.
+- `deployment-release-check`: release, deploy, rollback, feature flag, artifact, migration gate, post-deploy check를 준비·검토·진단할 때.
+- `observability-incident-triage`: incident, production error, alert, latency, error rate, queue backlog, job failure, log, metric, trace를 triage할 때.
 - `browser-dom-change`: browser DOM behavior, jQuery flow, event handler, selector, form, plugin, script-loaded UI를 바꿀 때.
 - `ui-polish`: visible UI, responsive layout, accessibility state, interaction feedback, production polish를 위한 primary frontend skill.
 - `webview-bridge`: WebView bridge, native-to-web messaging, deep link, embedded auth, upload, download, hybrid navigation을 바꿀 때.

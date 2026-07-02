@@ -113,7 +113,7 @@ skills/
   data/              Data pipeline and analytics reliability skills
   database/          Schema, migration, SQL, and data integrity skills
   delivery/          Planning, verification, Git, PR, and worklog skills
-  devops/            CI/CD, deployment, and operations triage skills
+  devops/            CI/CD, container, release, deployment, and operations triage skills
   frontend/          UI, browser, accessibility, and visual QA skills
   mobile/            Native, hybrid, WebView, and device QA skills
   security/          Auth, dependency supply chain, security review, and risk skills
@@ -170,6 +170,9 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `database-change-safety`: change database schema, migrations, SQL, reporting queries, stored procedures, or data integrity rules.
 - `git-worklog-guardrails`: primary delivery skill for staging, commits, PR text, release notes, and worklogs.
 - `ci-failure-triage`: diagnose failing CI jobs, build pipelines, deployments, flaky tests, and environment drift.
+- `container-change-safety`: change Dockerfiles, container images, Compose/Kubernetes manifests, runtime config, healthchecks, volumes, or networks.
+- `deployment-release-check`: prepare, review, or troubleshoot releases, deploys, rollbacks, feature flags, artifacts, migration gates, and post-deploy checks.
+- `observability-incident-triage`: triage incidents, production errors, alerts, latency, error rates, queue backlogs, job failures, logs, metrics, and traces.
 - `browser-dom-change`: change browser DOM behavior, jQuery flows, event handlers, selectors, forms, plugins, or script-loaded UI.
 - `ui-polish`: primary frontend skill for visible UI, responsive layout, accessibility states, interaction feedback, and production polish.
 - `webview-bridge`: change WebView bridges, native-to-web messaging, deep links, embedded auth, uploads, downloads, or hybrid navigation.

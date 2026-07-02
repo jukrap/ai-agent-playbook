@@ -8,13 +8,21 @@ The content is not agent-specific. Codex is one installation target. The source 
 
 ## Skill categories
 
-- `skills/project`: project bootstrap, onboarding, and project-memory maintenance.
+- `skills/ai-harness`: MCP, skill, agent, context, cache, index, and harness design workflows.
+- `skills/architecture`: boundary, architecture, ownership, dependency direction, and coupling review workflows.
 - `skills/backend`: API contract, backend change safety, server-rendered flow, worker, and integration workflows.
-- `skills/security`: authentication, authorization, dependency supply chain, security review, and risk workflows.
-- `skills/quality`: UI style policy, visual quality, cleanup, and lightweight review workflows.
+- `skills/data`: analytics pipeline, ETL, reporting, data contract, and quality workflows.
+- `skills/database`: schema, migration, SQL, reporting query, and data integrity workflows.
+- `skills/delivery`: planning, verification, Git, PR, release note, and worklog workflows.
+- `skills/devops`: CI/CD, container, release, deployment, rollback, and operations triage workflows.
+- `skills/frontend`: UI, browser behavior, state/data, accessibility, and visual QA workflows.
 - `skills/git`: commit, PR, push, and worklog guardrails.
-- `skills/meta`: skill-authoring and repository-maintenance skills.
 - `skills/legacy`: maintenance workflows where runtime coupling and compatibility dominate.
+- `skills/meta`: skill-authoring and repository-maintenance skills.
+- `skills/mobile`: native, hybrid, WebView, and device QA workflows.
+- `skills/project`: project bootstrap, onboarding, and project-memory maintenance.
+- `skills/quality`: UI style policy, visual quality, cleanup, and lightweight review workflows.
+- `skills/security`: authentication, authorization, dependency supply chain, security review, and risk workflows.
 
 Add a new category only when the first real skill in that category exists. When a new category or skill changes this map, update `README.md`, this file, Korean translations, and installed skill copies through `docs/maintenance.md`.
 
@@ -55,6 +63,13 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `frontend-ui-polish`: implements or refines visible UI surfaces while preserving product intent and existing design conventions.
 - `cleanup-ai-slop`: removes low-trust code noise in a behavior-preserving, bounded cleanup.
 - `review-work-light`: reviews recent implementation work without turning review into an automatic blocking gate.
+
+## DevOps map
+
+- `ci-failure-triage`: diagnoses failing CI jobs, build pipelines, deployment checks, flaky tests, environment drift, and release automation failures.
+- `container-change-safety`: reviews Dockerfile, image, Compose/Kubernetes, runtime config, healthcheck, volume, network, and containerized deployment changes.
+- `deployment-release-check`: reviews release readiness, deploy gates, rollback paths, feature flags, artifacts, migrations, and post-deploy checks.
+- `observability-incident-triage`: triages active incidents, production alerts, logs, metrics, traces, latency, error rates, queues, jobs, and post-incident handoff.
 
 ## Skill authoring map
 

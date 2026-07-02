@@ -5,14 +5,14 @@ import path from 'node:path';
 import { registerPlaybookMcpResourcesAndPrompts, registerPlaybookMcpTools } from './mcp-tools.mjs';
 
 export async function runMcpServer(options) {
-  const { repoRoot } = options;
+  const { repoRoot, enableWriteTools = false } = options;
   const version = await readPackageVersion(repoRoot);
   const server = new McpServer({
     name: 'ai-agent-playbook',
     version
   });
   registerPlaybookMcpResourcesAndPrompts(server, { repoRoot });
-  registerPlaybookMcpTools(server, { repoRoot });
+  registerPlaybookMcpTools(server, { repoRoot, enableWriteTools });
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }

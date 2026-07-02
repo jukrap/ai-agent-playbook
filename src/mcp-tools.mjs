@@ -24,6 +24,8 @@ import {
   runtimeIndexStatus,
   searchRuntimeIndex,
   skillCatalog,
+  startWorkflowRun,
+  createWriteGateAdvisory,
   workflowCatalog,
   SCHEMA_VERSION
 } from './harness.mjs';
@@ -57,12 +59,19 @@ const READ_ONLY = {
   openWorldHint: false
 };
 
+const WRITE_CAPABLE = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  idempotentHint: false,
+  openWorldHint: false
+};
+
 const targetSchema = z.string().min(1).describe('Target project directory.');
 const pathSchema = z.string().min(1).optional().describe('Path inside the target project.');
 const maxResultsSchema = z.number().int().min(1).max(100).optional();
 
 export function registerPlaybookMcpTools(server, options) {
-  const { repoRoot } = options;
+  const { repoRoot, enableWriteTools = false } = options;
   const tools = [
     tool('capability_catalog', 'List Harness OS capability categories, skill counts, and workflow counts.', {}, () => capabilityCatalog({ repoRoot })),
     tool('skill_catalog', 'List local skills with v2 taxonomy and compatibility wrapper metadata.', {}, () => skillCatalog({ repoRoot })),
@@ -320,6 +329,49 @@ export function registerPlaybookMcpTools(server, options) {
       description: item.description,
       inputSchema: item.schema,
       annotations: READ_ONLY
+    }, async (args) => {
+      try {
+        const result = await item.handler(args);
+        return toolResult(item.name, result);
+      } catch (error) {
+        return errorToolResult(item.name, error);
+      }
+    });
+  }
+
+  const writeTools = enableWriteTools ? [
+    tool('workflow_run_start', 'Preview or create a bounded workflow run under .ai-playbook/workflows/runs/. Requires apply=true to write.', {
+      target: targetSchema,
+      recipe: z.string().min(1).describe('Lowercase hyphenated workflow recipe id.'),
+      apply: z.boolean().describe('Must be true to write run files; false returns a dry-run preview.')
+    }, (args) => startWorkflowRun({
+      repoRoot,
+      target: args.target,
+      recipeId: args.recipe,
+      apply: Boolean(args.apply)
+    })),
+    tool('write_gate_advisory', 'Preview or save a pre-write advisory report under .ai-playbook/runtime/reports/write-gate/. Requires apply=true to write.', {
+      target: targetSchema,
+      intent: z.string().min(1),
+      path: pathSchema,
+      maxResults: maxResultsSchema,
+      apply: z.boolean().describe('Must be true to write the advisory report; false returns a dry-run preview.')
+    }, (args) => createWriteGateAdvisory({
+      repoRoot,
+      target: args.target,
+      intent: args.intent,
+      filePath: args.path,
+      maxResults: args.maxResults ?? 20,
+      apply: Boolean(args.apply)
+    }))
+  ] : [];
+
+  for (const item of writeTools) {
+    server.registerTool(item.name, {
+      title: item.name,
+      description: item.description,
+      inputSchema: item.schema,
+      annotations: WRITE_CAPABLE
     }, async (args) => {
       try {
         const result = await item.handler(args);

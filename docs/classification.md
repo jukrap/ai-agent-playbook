@@ -10,11 +10,11 @@ The content is not agent-specific. Codex is one installation target. The source 
 
 - `skills/ai-harness`: MCP, skill, agent, context, cache, index, and harness design workflows.
 - `skills/architecture`: boundary, architecture, ownership, dependency direction, and coupling review workflows.
-- `skills/backend`: API contract, backend change safety, server-rendered flow, worker, and integration workflows.
+- `skills/backend`: API contract, backend change safety, connector, server-rendered flow, worker, and integration workflows.
 - `skills/data`: analytics pipeline, ETL, reporting, data contract, and quality workflows.
 - `skills/database`: schema, migration, SQL, reporting query, and data integrity workflows.
 - `skills/delivery`: planning, verification, testing, Git, PR, release note, and worklog workflows.
-- `skills/devops`: CI/CD, container, release, deployment, rollback, and operations triage workflows.
+- `skills/devops`: CI/CD, container, package release, deployment, rollback, and operations triage workflows.
 - `skills/frontend`: UI, browser behavior, state/data, accessibility, and visual QA workflows.
 - `skills/git`: commit, PR, push, and worklog guardrails.
 - `skills/legacy`: maintenance workflows where runtime coupling and compatibility dominate.
@@ -22,7 +22,7 @@ The content is not agent-specific. Codex is one installation target. The source 
 - `skills/mobile`: native, hybrid, WebView, and device QA workflows.
 - `skills/project`: project bootstrap, onboarding, and project-memory maintenance.
 - `skills/quality`: UI style policy, visual quality, cleanup, and lightweight review workflows.
-- `skills/security`: authentication, authorization, dependency supply chain, security review, and risk workflows.
+- `skills/security`: authentication, authorization, dependency supply chain, license/notice evidence, security review, and risk workflows.
 
 Add a new category only when the first real skill in that category exists. When a new category or skill changes this map, update `README.md`, this file, Korean translations, and installed skill copies through `docs/maintenance.md`.
 
@@ -64,6 +64,13 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `flaky-test-triage`: diagnoses nondeterministic, timing-dependent, order-dependent, environment-sensitive, or intermittent test failures.
 - `test-fixture-data-design`: designs fixtures, factories, mocks, seeds, snapshots, golden files, sample payloads, and test data boundaries.
 
+## Backend and integration map
+
+- `api-contract-boundary`: reviews frontend/backend contracts, DTOs, payloads, mocks, and adapters.
+- `backend-change-safety`: reviews services, modules, jobs, workers, queues, config, integrations, and server-side business logic.
+- `connector-integration-change`: reviews API connectors, workflow nodes, MCP adapters, webhooks, OAuth apps, import/export bridges, sync jobs, registration metadata, and credential handling.
+- `server-rendered-change`: reviews controllers, templates, sessions, forms, redirects, and server-rendered view contracts.
+
 ## Quality map
 
 - `ui-style-policy`: selects or documents the repository styling method across design system, CSS/classes, utility classes, or inline styles.
@@ -77,7 +84,15 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `ci-failure-triage`: diagnoses failing CI jobs, build pipelines, deployment checks, flaky tests, environment drift, and release automation failures.
 - `container-change-safety`: reviews Dockerfile, image, Compose/Kubernetes, runtime config, healthcheck, volume, network, and containerized deployment changes.
 - `deployment-release-check`: reviews release readiness, deploy gates, rollback paths, feature flags, artifacts, migrations, and post-deploy checks.
+- `package-publish-readiness`: reviews package metadata, included files, entrypoints, binaries, generated bundles, registry dry-runs, provenance, and artifact rollback constraints.
 - `observability-incident-triage`: triages active incidents, production alerts, logs, metrics, traces, latency, error rates, queues, jobs, and post-incident handoff.
+
+## Security and compliance map
+
+- `security-review`: reviews broad security risk, threat-model changes, sensitive data flow, input validation, and security regressions.
+- `auth-access-control`: reviews authentication, sessions, OAuth/OIDC, JWTs, RBAC, tenants, scopes, roles, and object-level access.
+- `dependency-supply-chain-review`: reviews dependencies, lockfiles, SBOMs, containers, provenance, vulnerable packages, package scripts, and CVE remediation.
+- `license-notice-review`: reviews first-party licenses, third-party notices, attribution, vendored code, generated artifacts, copied snippets, dual-license choices, redistribution scope, and compliance evidence.
 
 ## Frontend map
 

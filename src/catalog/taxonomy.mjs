@@ -56,6 +56,7 @@ export const CANONICAL_SKILL_CATEGORIES = {
   'cleanup-ai-slop': 'delivery',
   'commit-worklog-guardrails': 'delivery',
   'frontend-ui-polish': 'frontend',
+  'adr-spec-handoff': 'foundation',
   'project-bootstrap': 'foundation',
   'project-doc-system': 'foundation',
   'repo-onboarding': 'foundation',

@@ -109,14 +109,14 @@ src/                  CLI runtime implementation
 skills/
   ai-harness/        MCP, skill, agent, context, cache, and index design skills
   architecture/      Boundary and architecture review skills
-  backend/           API, backend change safety, and server-rendered flow skills
+  backend/           API, backend change safety, connector, and server-rendered flow skills
   data/              Data pipeline, analytics, reporting, and migration integrity skills
   database/          Schema, migration, SQL, and data integrity skills
   delivery/          Planning, verification, testing, Git, PR, and worklog skills
-  devops/            CI/CD, container, release, deployment, and operations triage skills
+  devops/            CI/CD, container, package release, deployment, and operations triage skills
   frontend/          UI, browser, state/data, accessibility, and visual QA skills
   mobile/            Native, hybrid, WebView, and device QA skills
-  security/          Auth, dependency supply chain, security review, and risk skills
+  security/          Auth, dependency supply chain, license/notice, security review, and risk skills
   project/            Bootstrap, onboarding, and project-memory skills
   quality/            UI quality, cleanup, and review skills
   git/                Commit, PR, push, and worklog skills
@@ -166,6 +166,7 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `boundary-review`: review FSD, layered, DDD, monorepo, package ownership, dependency direction, and coupling boundaries.
 - `api-contract-boundary`: implement, debug, or review frontend/backend contracts, DTOs, mocks, payloads, and adapters.
 - `backend-change-safety`: change backend services, modules, workers, jobs, integrations, queues, config, or server-side business logic.
+- `connector-integration-change`: change API connectors, workflow nodes, MCP adapters, webhooks, OAuth apps, import/export bridges, sync jobs, connector registration, or credential handling.
 - `server-rendered-change`: change backend-rendered controllers, templates, forms, sessions, redirects, validation, and view contracts.
 - `data-pipeline-review`: review analytics pipelines, ETL, batch jobs, data contracts, dashboards, and quality checks.
 - `analytics-reporting-review`: review metrics, dashboards, reports, KPI definitions, chart/table consistency, analytics queries, freshness, and caveats.
@@ -178,6 +179,7 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `ci-failure-triage`: diagnose failing CI jobs, build pipelines, deployments, flaky tests, and environment drift.
 - `container-change-safety`: change Dockerfiles, container images, Compose/Kubernetes manifests, runtime config, healthchecks, volumes, or networks.
 - `deployment-release-check`: prepare, review, or troubleshoot releases, deploys, rollbacks, feature flags, artifacts, migration gates, and post-deploy checks.
+- `package-publish-readiness`: prepare, review, or troubleshoot package publishing, release artifacts, package metadata, registry dry-runs, generated bundles, binaries, or marketplace distribution.
 - `observability-incident-triage`: triage incidents, production errors, alerts, latency, error rates, queue backlogs, job failures, logs, metrics, and traces.
 - `browser-dom-change`: change browser DOM behavior, jQuery flows, event handlers, selectors, forms, plugins, or script-loaded UI.
 - `frontend-state-data-flow`: change frontend state ownership, server/client cache behavior, data fetching, optimistic updates, URL state, or stale UI bugs.
@@ -189,6 +191,7 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `security-review`: review secrets, authentication, authorization, input validation, dependency risk, and sensitive data flow.
 - `auth-access-control`: change login, sessions, OAuth/OIDC, JWTs, RBAC, permissions, roles, tenants, scopes, or object-level authorization.
 - `dependency-supply-chain-review`: change dependencies, lockfiles, SBOMs, licenses, containers, package scripts, provenance, or vulnerability remediation.
+- `license-notice-review`: review first-party licenses, third-party notices, attribution, vendored code, generated artifacts, copied snippets, dual-license choices, redistribution scope, or compliance evidence.
 
 ### Legacy
 

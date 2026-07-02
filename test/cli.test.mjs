@@ -120,7 +120,7 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   const catalogReport = JSON.parse(catalog.out());
   assert.equal(catalogReport.taxonomyVersion, '2');
   assert.equal(catalogReport.summary.categories, 12);
-  assert.equal(catalogReport.summary.skills, 51);
+  assert.equal(catalogReport.summary.skills, 54);
 
   const workflow = capture(target);
   assert.equal(await runCli(['workflow', 'list', '--json'], workflow), 0);

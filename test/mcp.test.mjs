@@ -49,6 +49,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'capability_catalog',
       'skill_catalog',
       'workflow_list',
+      'workflow_run_preview',
       'reference_inventory',
       'reference_ledger_check',
       'playbook_layout',
@@ -110,6 +111,19 @@ test('mcp server lists read-only playbook tools and calls operator search withou
 
     const resource = await client.readResource({ uri: 'ai-playbook://workflows' });
     assert.equal(JSON.parse(resource.contents[0].text).summary.workflows, 11);
+
+    const workflowRunPreview = await client.callTool({
+      name: 'workflow_run_preview',
+      arguments: {
+        target,
+        recipe: 'backend-contract-change'
+      }
+    });
+    assert.equal(workflowRunPreview.isError, undefined);
+    assert.equal(workflowRunPreview.structuredContent.ok, true);
+    assert.equal(workflowRunPreview.structuredContent.mode.writes, false);
+    assert.equal(workflowRunPreview.structuredContent.recipe.source, 'bundled');
+    assert.equal(workflowRunPreview.structuredContent.manifest.verification.some((item) => item.includes('contract tests')), true);
 
     const indexStatus = await client.callTool({
       name: 'index_status',

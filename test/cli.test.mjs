@@ -43,6 +43,14 @@ test('bootstrap writes playbook and thin root agent bootstrap without overwritin
 });
 
 test('harness os v2 commands expose layout, catalog, index, and write-gate flows', async () => {
+  const bareWorkflowTarget = await tempRepo('workflow preview bare-공백-');
+  const bareWorkflowPreview = capture(bareWorkflowTarget);
+  assert.equal(await runCli(['workflow', 'run-preview', '.', '--recipe', 'backend-contract-change', '--json'], bareWorkflowPreview), 0);
+  const bareWorkflowPreviewReport = JSON.parse(bareWorkflowPreview.out());
+  assert.equal(bareWorkflowPreviewReport.recipe.source, 'bundled');
+  assert.equal(bareWorkflowPreviewReport.mode.writes, false);
+  await cleanup(bareWorkflowTarget);
+
   const target = await tempRepo('harness os-v2-공백-');
   await mkdir(path.join(target, 'src'), { recursive: true });
   await mkdir(path.join(target, 'src', 'runtime'), { recursive: true });
@@ -77,6 +85,28 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   assert.equal(await runCli(['workflow', 'list', '--json'], workflow), 0);
   const workflowReport = JSON.parse(workflow.out());
   assert.equal(workflowReport.summary.workflows, 11);
+
+  const beforeWorkflowPreview = await listRelativeFiles(target);
+  const workflowPreview = capture(target);
+  assert.equal(await runCli(['workflow', 'run-preview', '.', '--recipe', 'backend-contract-change', '--json'], workflowPreview), 0);
+  const workflowPreviewReport = JSON.parse(workflowPreview.out());
+  assert.equal(workflowPreviewReport.kind, 'runtime.workflow-run-preview');
+  assert.equal(workflowPreviewReport.mode.writes, false);
+  assert.equal(workflowPreviewReport.recipe.id, 'backend-contract-change');
+  assert.equal(workflowPreviewReport.recipe.source, 'target');
+  assert.equal(workflowPreviewReport.manifest.skills.some((skill) => skill.includes('API contract boundary')), true);
+  assert.equal(workflowPreviewReport.manifest.tools.includes('operator map'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeWorkflowPreview);
+
+  await mkdir(path.join(target, '.ai-playbook', 'workflows', 'recipes'), { recursive: true });
+  await writeFile(path.join(target, '.ai-playbook', 'workflows', 'recipes', 'backend-contract-change.md'), '# Local Backend Contract Change\n\nInputs: local input\n\nOutputs: local output\n\nSkills: local skill\n\nTools: local tool\n\nStop conditions: local blocker\n\nVerification: local verification\n');
+  const beforeLocalWorkflowPreview = await listRelativeFiles(target);
+  const localWorkflowPreview = capture(target);
+  assert.equal(await runCli(['workflow', 'run-preview', '.', '--recipe', 'backend-contract-change', '--json'], localWorkflowPreview), 0);
+  const localWorkflowPreviewReport = JSON.parse(localWorkflowPreview.out());
+  assert.equal(localWorkflowPreviewReport.recipe.source, 'target');
+  assert.equal(localWorkflowPreviewReport.manifest.inputs.includes('local input'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeLocalWorkflowPreview);
 
   const layout = capture(target);
   assert.equal(await runCli(['layout', 'status', '.', '--json'], layout), 0);

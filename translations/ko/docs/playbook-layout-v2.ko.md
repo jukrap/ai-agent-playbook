@@ -32,6 +32,10 @@
 
 Runtime evidence는 canon fact 후보를 만들 수 있지만 그 자체로 신뢰된 memory가 되지는 않습니다. 검토한 fact JSON만 명시적 promotion 단계 뒤 `memory/` 아래에 두고, `canon check`로 source report와 현재 file 기준 drift를 확인합니다. Check는 파일을 쓰지 않고 `verified`, `missing`, `stale`, `changed`, `unverified` 상태를 보고합니다.
 
+## Workflow Runs
+
+`workflows/recipes/` 아래 recipe는 반복 가능한 절차를 설명합니다. `workflow run-preview`는 target-local recipe를 먼저 읽고 없으면 bundled template으로 fallback한 뒤, inputs, outputs, skills, tools, stop conditions, verification을 포함한 read-only run manifest를 반환합니다. 이 명령은 `workflows/runs/` 아래 파일을 만들지 않습니다. 미래 apply-mode run 생성은 scaffold tier에 속합니다.
+
 ## Migration
 
 먼저 preview mode로 layout migration을 확인합니다.

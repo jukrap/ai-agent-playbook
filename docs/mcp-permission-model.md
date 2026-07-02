@@ -18,6 +18,7 @@ Default read-only additions:
 - `capability_catalog`
 - `skill_catalog`
 - `workflow_list`
+- `workflow_run_preview`
 - `playbook_layout`
 - `index_status`
 - `index_search`

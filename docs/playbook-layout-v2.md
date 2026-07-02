@@ -32,6 +32,10 @@
 
 Runtime evidence can draft canon fact candidates, but it does not become trusted memory by itself. Store reviewed fact JSON under `memory/` only after a deliberate promotion step, then use `canon check` to compare those facts with their source report and current files. Checks report `verified`, `missing`, `stale`, `changed`, and `unverified` states without writing files.
 
+## Workflow Runs
+
+Recipes under `workflows/recipes/` describe repeatable procedures. `workflow run-preview` reads a target-local recipe first and falls back to the bundled template, then returns a read-only run manifest with inputs, outputs, skills, tools, stop conditions, and verification. It does not create files under `workflows/runs/`; future apply-mode run creation belongs to the scaffold tier.
+
 ## Migration
 
 Use layout migration in preview mode first:

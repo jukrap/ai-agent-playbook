@@ -31,5 +31,6 @@ export { buildRuntimeIndex, runtimeIndexStatus, searchRuntimeIndex } from './run
 export { buildDependencyInventoryIndex } from './runtime/dependency-inventory.mjs';
 export { buildRouteApiHintsIndex } from './runtime/route-api-hints.mjs';
 export { buildSymbolOutlineIndex } from './runtime/symbol-outline.mjs';
+export { previewWorkflowRun } from './runtime/workflow-runs.mjs';
 export { checkCanonFacts, draftCanonFacts, promoteCanonFacts } from './memory/canon.mjs';
 export { createWriteGateAdvisory, postCheckWriteGate, previewWriteGate } from './operator/write-gate.mjs';

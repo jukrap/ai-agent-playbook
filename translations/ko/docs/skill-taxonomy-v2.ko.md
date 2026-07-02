@@ -4,7 +4,7 @@ Skill taxonomy v2는 capability category를 1차 축으로 씁니다. 스택별 
 
 ## Categories
 
-- `foundation`: repo onboarding, bootstrap, project docs.
+- `foundation`: repo onboarding, bootstrap, project docs, requirements, planning, release notes, documentation package.
 - `delivery`: planning, verification, testing, git, PR, worklog flow.
 - `architecture`: FSD, layered architecture, DDD, monorepo, boundary review.
 - `frontend`: UI, state, data, accessibility, performance, visual QA.
@@ -141,6 +141,10 @@ Data와 documentation skill은 pipeline reliability, reporting correctness, migr
 - `data/knowledge-retrieval-pipeline-review`: document ingestion, parsing, chunking, metadata, embedding/vector store, retrieval evaluation, citation, access control, stale index.
 - `project/project-doc-system`: `.ai-playbook` map, runbook, decision, plan, worklog, archive, project-memory hygiene.
 - `project/adr-spec-handoff`: ADR, spec, milestone outcome, implementation handoff, reviewed evidence, durable memory promotion.
+- `project/requirements-prd-scope-review`: PRD, lightweight spec, scope brief, non-goal, acceptance criteria, assumption, open-question list.
+- `project/issue-planning-triage`: issue/task breakdown, triage, priority, dependency, blocked status, ownership, verification planning.
+- `project/release-notes-changelog`: user-facing release note, internal changelog, migration/upgrade note, rollback note, known issue, verified change summary.
+- `project/documentation-artifact-package`: stakeholder package, developer handoff, runbook/report bundle, knowledge-base artifact, source evidence, maintenance rule.
 
 Generated runtime report는 검토 없이 `memory/`로 승격하지 않습니다. Reporting, migration, handoff skill은 source evidence를 보존하되 private path, credential, branch name, PR number, noisy reference name이 public documentation에 들어가지 않게 해야 합니다.
 

@@ -20,7 +20,7 @@
 - `skills/legacy`: 런타임 결합과 호환성이 중요한 유지보수 작업 흐름.
 - `skills/meta`: 스킬 작성과 저장소 유지보수 스킬.
 - `skills/mobile`: native release, permission, offline sync, hybrid, WebView, device QA 작업 흐름.
-- `skills/project`: 프로젝트 bootstrap, onboarding, 프로젝트 메모리 유지보수.
+- `skills/project`: 프로젝트 bootstrap, onboarding, requirements, issue planning, release notes, documentation package, 프로젝트 메모리 유지보수.
 - `skills/quality`: UI 스타일 정책, 시각 품질, cleanup, lightweight review 작업 흐름.
 - `skills/security`: authentication, authorization, dependency supply chain, license/notice evidence, security review, risk 작업 흐름.
 
@@ -50,12 +50,16 @@ CLI는 설치형 스킬이 아닙니다. 이 저장소 checkout에서 실행해 
 
 Runtime hook layer를 local experiment로 둘지, adapter로 만들지, 문서화된 CLI behavior로 승격할지 판단할 때는 `runtime-roadmap.ko.md`를 사용합니다.
 
-## 프로젝트 메모리 지도
+## 프로젝트와 문서화 지도
 
 - `project-bootstrap`: 저장소를 확인한 뒤 루트 정책과 `.ai-playbook/` 구조를 설정합니다.
 - `repo-onboarding`: 계획이나 편집 전에 저장소 상태와 기존 `.ai-playbook/` 맥락을 읽습니다.
 - `project-doc-system`: `.ai-playbook/`, map, runbook, decision, plan, worklog, archive를 정리합니다.
 - `adr-spec-handoff`: 검토된 decision, spec, milestone outcome, worklog, handoff를 durable project memory로 승격합니다.
+- `requirements-prd-scope-review`: 불명확한 요청, stakeholder note, feature idea, acceptance criteria, open question을 검토 가능한 PRD 또는 scope brief로 정리합니다.
+- `issue-planning-triage`: spec, bug, review finding, worklog, follow-up을 scoped issue, priority, dependency, task batch로 바꿉니다.
+- `release-notes-changelog`: reader-facing release note, changelog, migration note, rollback note, known issue, verified change summary를 준비합니다.
+- `documentation-artifact-package`: docs, runbook, diagram, screenshot, report, source reference, evidence를 stakeholder package, handoff, knowledge artifact로 묶습니다.
 
 ## AI harness 지도
 

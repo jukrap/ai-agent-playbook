@@ -117,7 +117,7 @@ skills/
   frontend/          UI, browser, state/data, accessibility, and visual QA skills
   mobile/            Native release, permission, offline sync, hybrid, WebView, and device QA skills
   security/          Auth, dependency supply chain, license/notice, security review, and risk skills
-  project/            Bootstrap, onboarding, and project-memory skills
+  project/            Bootstrap, onboarding, project planning, documentation, and project-memory skills
   quality/            UI quality, cleanup, and review skills
   git/                Commit, PR, push, and worklog skills
   meta/               Skill-authoring skills
@@ -146,6 +146,10 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `repo-onboarding`: inspect an unfamiliar repository before planning architecture, tooling, edits, or workflow answers.
 - `project-doc-system`: create, reorganize, or review project AI docs, maps, runbooks, decisions, plans, and worklogs.
 - `adr-spec-handoff`: turn decisions, architecture constraints, specs, milestone outcomes, worklogs, or handoffs into durable project memory.
+- `requirements-prd-scope-review`: turn broad requests, stakeholder notes, or feature ideas into PRDs, specs, scope boundaries, acceptance criteria, and open questions.
+- `issue-planning-triage`: convert specs, bugs, review findings, worklogs, and follow-ups into scoped issues, priorities, dependencies, and task batches.
+- `release-notes-changelog`: prepare user-facing release notes, internal changelogs, migration notes, rollback notes, known issues, and verified change summaries.
+- `documentation-artifact-package`: bundle docs, runbooks, diagrams, screenshots, reports, source references, and evidence into stakeholder packages, handoffs, or knowledge artifacts.
 
 ### Quality
 

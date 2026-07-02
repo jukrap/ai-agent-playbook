@@ -117,7 +117,7 @@ skills/
   frontend/          UI, browser, state/data, accessibility, visual QA 스킬
   mobile/            native release, permission, offline sync, hybrid, WebView, device QA 스킬
   security/          auth, dependency supply chain, license/notice, security review, risk 스킬
-  project/            bootstrap, onboarding, project-memory 스킬
+  project/            bootstrap, onboarding, project planning, documentation, project-memory 스킬
   quality/            UI quality, cleanup, review 스킬
   git/                commit, PR, push, worklog 스킬
   meta/               skill-authoring 스킬
@@ -146,6 +146,10 @@ test/                 Node CLI와 adapter 테스트
 - `repo-onboarding`: 낯선 저장소에서 아키텍처, 도구, 수정 방향, 작업 흐름을 답하기 전에 먼저 살필 때.
 - `project-doc-system`: 프로젝트 AI 문서, map, runbook, decision, plan, worklog를 만들거나 재정리할 때.
 - `adr-spec-handoff`: decision, architecture constraint, spec, milestone outcome, worklog, handoff를 durable project memory로 정리할 때.
+- `requirements-prd-scope-review`: 넓은 요청, stakeholder note, feature idea를 PRD, spec, scope boundary, acceptance criteria, open question으로 정리할 때.
+- `issue-planning-triage`: spec, bug, review finding, worklog, follow-up을 scoped issue, priority, dependency, task batch로 바꿀 때.
+- `release-notes-changelog`: user-facing release note, internal changelog, migration note, rollback note, known issue, verified change summary를 준비할 때.
+- `documentation-artifact-package`: docs, runbook, diagram, screenshot, report, source reference, evidence를 stakeholder package, handoff, knowledge artifact로 묶을 때.
 
 ### 품질
 

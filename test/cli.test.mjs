@@ -223,6 +223,7 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   const advisoryFile = path.join(target, ...advisoryApplyReport.advisory.path.split('/'));
   assert.equal(existsSync(advisoryFile), true);
   const advisoryJson = JSON.parse(await readFile(advisoryFile, 'utf8'));
+  assert.equal(advisoryJson.kind, 'write-gate.pre-write-advisory');
   assert.equal(advisoryJson.manifest.kind, 'write-gate.pre-write-advisory');
   assert.equal(advisoryJson.transaction.invocationId, advisoryApplyReport.transaction.invocationId);
   assert.equal(advisoryJson.intent, 'edit runtime source module');
@@ -268,6 +269,8 @@ test('canon draft and check keep runtime evidence read-only until promotion', as
   const index = capture(target);
   assert.equal(await runCli(['index', 'build', '.', '--apply', '--json'], index), 0);
   const indexReport = JSON.parse(index.out());
+  assert.equal(indexReport.kind, 'runtime.file-inventory');
+  assert.equal(indexReport.mode.writes, true);
 
   const advisory = capture(target);
   assert.equal(await runCli([
@@ -314,6 +317,20 @@ test('canon draft and check keep runtime evidence read-only until promotion', as
   assert.equal(await runCli(['canon', 'promote', '.', '--source', '.ai-playbook/runtime/tmp/loose.json', '--to', promotedMemoryPath, '--json'], blockedSource), 1);
   const blockedSourceReport = JSON.parse(blockedSource.out());
   assert.equal(blockedSourceReport.conflicts.some((conflict) => conflict.id === 'canon.promote.source-not-runtime'), true);
+
+  const invalidArtifactPath = '.ai-playbook/runtime/reports/invalid-artifact.json';
+  await mkdir(path.join(target, '.ai-playbook', 'runtime', 'reports'), { recursive: true });
+  await writeFile(path.join(target, ...invalidArtifactPath.split('/')), `${JSON.stringify({
+    schemaVersion: '1',
+    target: path.resolve(target),
+    summary: {},
+    warnings: [],
+    conflicts: []
+  }, null, 2)}\n`);
+  const invalidArtifact = capture(target);
+  assert.equal(await runCli(['canon', 'promote', '.', '--source', invalidArtifactPath, '--to', promotedMemoryPath, '--json'], invalidArtifact), 1);
+  const invalidArtifactReport = JSON.parse(invalidArtifact.out());
+  assert.equal(invalidArtifactReport.conflicts.some((conflict) => conflict.id === 'canon.promote.source-invalid-artifact'), true);
 
   const blockedDestinationType = capture(target);
   assert.equal(await runCli(['canon', 'promote', '.', '--source', advisoryPath, '--to', '.ai-playbook/memory/maps/promoted-canon.md', '--json'], blockedDestinationType), 1);
@@ -397,6 +414,47 @@ test('canon draft and check keep runtime evidence read-only until promotion', as
   assert.equal(checkReport.facts.find((fact) => fact.id === 'fact.missing').status, 'missing');
   assert.equal(checkReport.facts.find((fact) => fact.id === 'fact.unverified').status, 'unverified');
   assert.deepEqual(await listRelativeFiles(target), beforeCheck);
+  await cleanup(target);
+});
+
+test('index status reports invalid runtime artifacts without writing files', async () => {
+  const target = await tempRepo('runtime schema invalid-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await mkdir(path.join(target, '.ai-playbook', 'runtime', 'indexes'), { recursive: true });
+  await writeFile(path.join(target, '.ai-playbook', 'runtime', 'indexes', 'file-inventory.json'), `${JSON.stringify({
+    schemaVersion: '1',
+    target: path.resolve(target),
+    generatedAt: '2026-07-03T00:00:00.000Z',
+    summary: {},
+    warnings: [],
+    conflicts: []
+  }, null, 2)}\n`);
+  const before = await listRelativeFiles(target);
+  const status = capture(target);
+
+  assert.equal(await runCli(['index', 'status', '.', '--json'], status), 1);
+  const report = JSON.parse(status.out());
+  assert.equal(report.ok, false);
+  assert.equal(report.conflicts.some((conflict) => conflict.id === 'runtime.artifact.missing-field'), true);
+  assert.equal(report.indexes.some((index) => index.kind === 'file-inventory' && index.valid === false), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('index status reports malformed runtime artifact JSON without throwing', async () => {
+  const target = await tempRepo('runtime schema malformed-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await mkdir(path.join(target, '.ai-playbook', 'runtime', 'indexes'), { recursive: true });
+  await writeFile(path.join(target, '.ai-playbook', 'runtime', 'indexes', 'file-inventory.json'), '{not-json');
+  const before = await listRelativeFiles(target);
+  const status = capture(target);
+
+  assert.equal(await runCli(['index', 'status', '.', '--json'], status), 1);
+  const report = JSON.parse(status.out());
+  assert.equal(report.ok, false);
+  assert.equal(report.conflicts.some((conflict) => conflict.id === 'runtime.artifact.malformed-json'), true);
+  assert.equal(report.indexes.some((index) => index.kind === 'file-inventory' && index.valid === false), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
 });
 

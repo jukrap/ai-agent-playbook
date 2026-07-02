@@ -176,6 +176,8 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 
 `canon promote`는 `--source <runtime-index-or-report-json>`와 `--to <memory-or-reference-json>`를 받습니다. source는 `.ai-playbook/runtime/indexes/` 또는 `.ai-playbook/runtime/reports/` 아래 JSON file이어야 합니다. `--apply`와 `--reviewed`가 모두 있을 때만 쓰며, 목적지는 `.ai-playbook/memory/` 또는 `.ai-playbook/knowledge/references/` 내부 JSON file로 제한합니다.
 
+Promotion source는 `schemaVersion`, `kind`, `target`, `mode`, `generatedAt`, `summary`, `warnings`, `conflicts`를 가진 유효한 runtime artifact여야 합니다. Runtime report가 malformed 상태이거나 오래된 shape를 쓰면 `canon promote`는 fact를 만들지 않고 conflict를 보고합니다.
+
 Runtime output은 `.ai-playbook/runtime/` 아래에 둡니다. 검토와 명시적 승격 없이 generated output을 `.ai-playbook/memory/`로 복사하지 않습니다.
 
 ## Managed files

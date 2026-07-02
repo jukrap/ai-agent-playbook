@@ -57,6 +57,8 @@ The symbol outline uses lightweight local patterns for common JS/TS, Python, Jav
 
 `index route-api-hints` previews route declarations, client API calls, SQL query targets, migrations, and data-object hints. It uses lightweight local patterns for common server frameworks and SQL syntax, includes file/line/confidence/source metadata, and does not claim the result is a complete API or data map.
 
+Runtime artifact JSON must keep a stable evidence envelope: `schemaVersion`, `kind`, `target`, `mode`, `generatedAt`, `summary`, `warnings`, and `conflicts`. Canon promotion refuses runtime sources that do not satisfy this envelope, so generated evidence cannot silently become trusted memory when its shape is stale or malformed.
+
 ## MCP tool surface
 
 Start the local server with:

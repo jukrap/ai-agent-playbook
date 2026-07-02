@@ -176,6 +176,8 @@ These commands expose the v2 capability model and generated local runtime surfac
 
 `canon promote` accepts `--source <runtime-index-or-report-json>` and `--to <memory-or-reference-json>`. The source must be a JSON file under `.ai-playbook/runtime/indexes/` or `.ai-playbook/runtime/reports/`. It writes only when both `--apply` and `--reviewed` are present, and only to JSON files under `.ai-playbook/memory/` or `.ai-playbook/knowledge/references/`.
 
+Promotion sources must be valid runtime artifacts with `schemaVersion`, `kind`, `target`, `mode`, `generatedAt`, `summary`, `warnings`, and `conflicts`. If a runtime report is malformed or uses an old shape, `canon promote` reports a conflict instead of drafting facts from it.
+
 Runtime output lives under `.ai-playbook/runtime/`. Do not copy generated output into `.ai-playbook/memory/` until it has been reviewed and promoted intentionally.
 
 ## Managed files

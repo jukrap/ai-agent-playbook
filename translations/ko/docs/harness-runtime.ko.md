@@ -57,6 +57,8 @@ Symbol outline은 JS/TS, Python, Java, Kotlin, C#, Go, PHP, Ruby, Rust source fi
 
 `index route-api-hints`는 route declaration, client API call, SQL query target, migration, data-object hint를 preview합니다. 일반 server framework와 SQL syntax에 대한 lightweight local pattern을 사용하고 file/line/confidence/source metadata를 포함하지만, 완전한 API map이나 data map이라고 주장하지 않습니다.
 
+Runtime artifact JSON은 안정적인 evidence envelope를 유지해야 합니다. 필수 field는 `schemaVersion`, `kind`, `target`, `mode`, `generatedAt`, `summary`, `warnings`, `conflicts`입니다. Canon promotion은 이 envelope를 만족하지 않는 runtime source를 거부하므로, 오래되었거나 malformed된 generated evidence가 조용히 trusted memory로 승격되지 않습니다.
+
 ## MCP 도구 표면
 
 로컬 서버는 아래 명령으로 시작합니다.

@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { preflightOperator } from '../operator-diagnostics.mjs';
 import { assertDirectory, normalizePortablePath, normalizeTargetRelativePath, resolvePlaybookLayout, SCHEMA_VERSION } from '../harness/core.mjs';
+import { validateRuntimeArtifact } from '../runtime/schemas.mjs';
 import {
   buildPreflightSnapshot,
   deltaFileSummary,
@@ -257,6 +258,23 @@ export async function createWriteGateAdvisory({ repoRoot, target, intent, filePa
   }
 
   const generatedAt = new Date().toISOString();
+  const validationProbe = {
+    ...preview,
+    kind: 'write-gate.pre-write-advisory',
+    generatedAt,
+    summary: {
+      ...preview.summary,
+      warnings: preview.warnings?.length ?? 0,
+      conflicts: conflicts.length,
+      operations: 1
+    },
+    conflicts
+  };
+  const artifactValidation = validateRuntimeArtifact(validationProbe, {
+    path: advisoryPath,
+    expectedKind: 'write-gate.pre-write-advisory'
+  });
+  conflicts.push(...artifactValidation.conflicts);
   const shouldWrite = Boolean(apply && preview.ok && advisoryTarget.ok && conflicts.length === 0);
   const transaction = {
     ...preview.transaction,
@@ -274,19 +292,6 @@ export async function createWriteGateAdvisory({ repoRoot, target, intent, filePa
     advisoryPath,
     invocationId: transaction.invocationId
   };
-  const advisoryDocument = {
-    ...preview,
-    transaction,
-    manifest,
-    generatedAt,
-    conflicts
-  };
-
-  if (shouldWrite) {
-    await mkdir(path.dirname(advisoryTarget.fullPath), { recursive: true });
-    await writeFile(advisoryTarget.fullPath, `${JSON.stringify(advisoryDocument, null, 2)}\n`);
-  }
-
   const warnings = [
     ...(preview.warnings ?? []),
     ...(apply ? [] : [{
@@ -295,6 +300,26 @@ export async function createWriteGateAdvisory({ repoRoot, target, intent, filePa
       paths: [advisoryPath]
     }])
   ];
+  const advisoryDocument = {
+    ...preview,
+    kind: 'write-gate.pre-write-advisory',
+    transaction,
+    manifest,
+    generatedAt,
+    summary: {
+      ...preview.summary,
+      warnings: warnings.length,
+      conflicts: conflicts.length,
+      operations: 1
+    },
+    warnings,
+    conflicts
+  };
+
+  if (shouldWrite) {
+    await mkdir(path.dirname(advisoryTarget.fullPath), { recursive: true });
+    await writeFile(advisoryTarget.fullPath, `${JSON.stringify(advisoryDocument, null, 2)}\n`);
+  }
 
   return {
     schemaVersion: SCHEMA_VERSION,

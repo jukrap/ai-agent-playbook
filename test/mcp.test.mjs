@@ -106,6 +106,10 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'backend_change_review',
       'auth_access_control_review',
       'dependency_supply_chain_review',
+      'deployment_release_review',
+      'frontend_quality_review',
+      'data_integrity_review',
+      'adr_spec_handoff_review',
       'workflow_run_review',
       'canon_promotion_review',
       'index_interpretation_review'
@@ -195,10 +199,14 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(referencePrompt.messages[0].content.text.includes(path.join(target, '_reference')), true);
     assert.equal(referencePrompt.messages[0].content.text.includes('security'), true);
 
-    for (const { name, toolName, arguments: promptArguments } of [
-      { name: 'backend_change_review', toolName: 'workflow_run_preview', arguments: { target, intent: 'review auth flow' } },
+    for (const { name, toolName, expectedText, arguments: promptArguments } of [
+      { name: 'backend_change_review', toolName: 'workflow_run_preview', expectedText: 'backend-contract-change', arguments: { target, intent: 'review auth flow' } },
       { name: 'auth_access_control_review', toolName: 'route_api_hints', arguments: { target, intent: 'review auth flow' } },
       { name: 'dependency_supply_chain_review', toolName: 'dependency_inventory', arguments: { target, ecosystem: 'npm' } },
+      { name: 'deployment_release_review', toolName: 'workflow_run_preview', expectedText: 'deployment-release', arguments: { target, environment: 'staging' } },
+      { name: 'frontend_quality_review', toolName: 'workflow_run_preview', expectedText: 'frontend-quality-review', arguments: { target, screen: 'login' } },
+      { name: 'data_integrity_review', toolName: 'workflow_run_preview', expectedText: 'data-integrity-review', arguments: { target, dataset: 'orders' } },
+      { name: 'adr_spec_handoff_review', toolName: 'canon_check', expectedText: 'write_gate_preview', arguments: { target, source: '.ai-playbook/worklogs/example.md' } },
       { name: 'workflow_run_review', toolName: 'workflow_run_preview', arguments: { target, recipe: 'backend-contract-change' } },
       { name: 'canon_promotion_review', toolName: 'canon_check', arguments: { target, source: '.ai-playbook/runtime/indexes/file-inventory.json' } },
       { name: 'index_interpretation_review', toolName: 'index_status', arguments: { target, focus: 'routes' } }
@@ -213,6 +221,9 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       assert.equal(text.includes('Stop conditions:'), true);
       assert.equal(text.includes('Verification expectations:'), true);
       assert.equal(text.includes(toolName), true, `${name} should mention ${toolName}`);
+      if (expectedText) {
+        assert.equal(text.includes(expectedText), true, `${name} should mention ${expectedText}`);
+      }
       assert.equal(text.includes('apply: true'), false);
     }
 

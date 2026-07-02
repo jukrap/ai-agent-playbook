@@ -52,7 +52,7 @@ Backend와 security skill은 capability-first name을 씁니다.
 - `security/security-review`: broad security risk review와 threat-model triage.
 - `security/security-compliance-gate`: merge, release, publication, handoff security/compliance gate decision.
 
-Stack profile은 관련 primary skill reference tree 아래에 둡니다. Backend change safety의 Java, Kotlin, Go, Python, Node, .NET, PHP 세부사항은 stack-first primary skill을 만들지 않고 `skills/backend/backend-change-safety/references/stacks/` 아래에 둡니다.
+Stack profile은 관련 primary skill reference tree 아래에 둡니다. Backend change safety의 Java, Kotlin, Go, Python, Node, .NET, PHP 세부사항은 stack-first primary skill을 만들지 않고 `skills/backend/backend-change-safety/references/stacks/` 아래에 둡니다. 어떤 profile이 적용되는지와 server-rendered, database, connector, API contract, security skill을 언제 함께 쓸지는 `skills/backend/backend-change-safety/references/stack-profile-selection.md`로 결정합니다.
 
 ## Architecture Boundary Pack
 

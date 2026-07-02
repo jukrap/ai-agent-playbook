@@ -7,6 +7,8 @@ description: Use when maintaining legacy Java Spring MVC, JSP, Servlet, MyBatis,
 
 Primary route: `backend/server-rendered-change`.
 
+For service, configuration, persistence, worker, or integration changes, pair this wrapper with `backend/backend-change-safety` and the Java stack profile.
+
 Trace controller, view, mapper, and deployment contracts together.
 
 ## Workflow
@@ -26,3 +28,5 @@ Trace controller, view, mapper, and deployment contracts together.
 ## Reference
 
 Read `references/java-spring-mvc.md` for stack-specific checks.
+
+Use the `backend-change-safety` stack profile selection reference when deciding whether this legacy wrapper is enough or a backend stack profile is also needed.

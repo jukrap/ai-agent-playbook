@@ -52,7 +52,7 @@ Backend and security skills use capability-first names:
 - `security/security-review`: broad security risk review and threat-model triage.
 - `security/security-compliance-gate`: merge, release, publication, and handoff security/compliance gate decisions.
 
-Stack profiles belong under the relevant primary skill reference tree. For backend change safety, Java, Kotlin, Go, Python, Node, .NET, and PHP details live under `skills/backend/backend-change-safety/references/stacks/` instead of creating stack-first primary skills.
+Stack profiles belong under the relevant primary skill reference tree. For backend change safety, Java, Kotlin, Go, Python, Node, .NET, and PHP details live under `skills/backend/backend-change-safety/references/stacks/` instead of creating stack-first primary skills. Use `skills/backend/backend-change-safety/references/stack-profile-selection.md` to decide which profile applies and when to pair it with server-rendered, database, connector, API contract, or security skills.
 
 ## Architecture Boundary Pack
 

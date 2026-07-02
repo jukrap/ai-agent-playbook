@@ -85,7 +85,7 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 ## Backend and integration map
 
 - `api-contract-boundary`: reviews frontend/backend contracts, DTOs, payloads, mocks, and adapters.
-- `backend-change-safety`: reviews services, modules, jobs, workers, queues, config, integrations, and server-side business logic.
+- `backend-change-safety`: reviews services, modules, jobs, workers, queues, config, integrations, server-side business logic, and evidence-based stack profile selection.
 - `connector-integration-change`: reviews API connectors, workflow nodes, MCP adapters, webhooks, OAuth apps, import/export bridges, sync jobs, registration metadata, and credential handling.
 - `server-rendered-change`: reviews controllers, templates, sessions, forms, redirects, and server-rendered view contracts.
 

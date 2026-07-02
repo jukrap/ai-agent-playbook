@@ -291,7 +291,7 @@ ai-playbook mcp
 - rules와 project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA와 deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`
 
-서버는 `repo_onboarding_runbook`, `harness_extension_plan`, `reference_adoption_review`, `backend_change_review`, `auth_access_control_review`, `dependency_supply_chain_review`, `workflow_run_review`, `canon_promotion_review`, `index_interpretation_review` prompt도 노출합니다. Prompt는 재사용 가능한 작업 brief이며, 그 자체로 쓰기 권한을 열지는 않습니다.
+서버는 `repo_onboarding_runbook`, `harness_extension_plan`, `reference_adoption_review`, `backend_change_review`, `auth_access_control_review`, `dependency_supply_chain_review`, `deployment_release_review`, `frontend_quality_review`, `data_integrity_review`, `adr_spec_handoff_review`, `workflow_run_review`, `canon_promotion_review`, `index_interpretation_review` prompt도 노출합니다. Prompt는 재사용 가능한 작업 brief이며, 그 자체로 쓰기 권한을 열지는 않습니다.
 
 이 버전의 MCP 계층은 read-only입니다. Bootstrap, install, update, uninstall, prune, snapshot apply, run record, write-gate advisory save, rename, rewrite처럼 파일을 쓰는 명령은 노출하지 않습니다.
 

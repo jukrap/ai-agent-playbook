@@ -499,6 +499,142 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- Separate local inventory findings from external vulnerability or license claims.'
   ]));
 
+  server.registerPrompt('deployment_release_review', {
+    title: 'Deployment release review',
+    description: 'Review release, deployment, rollback, container, CI, and post-deploy evidence with explicit gates.',
+    argsSchema: {
+      target: z.string().optional(),
+      environment: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS deployment/release review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Environment: ${args.environment ?? '<target environment>'}`,
+    `Intent: ${args.intent ?? '<release or deployment intent>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe deployment-release',
+    '- dependency_inventory for package, lockfile, container, and CI signals',
+    '- diagnostics_check for local verification command candidates',
+    '- write_gate_preview before suggesting edits',
+    '',
+    'Optional evidence:',
+    '- operator_search for deployment scripts, release notes, migration gates, feature flags, and rollback references',
+    '- index_status for existing runtime reports and capability history',
+    '',
+    'Stop conditions:',
+    '- Rollback path, artifact identity, migration gate, or production owner is unknown',
+    '- Deploy credentials or environment access is required but unavailable',
+    '- Post-deploy smoke checks or monitoring signals cannot be bounded',
+    '',
+    'Verification expectations:',
+    '- Name the CI, artifact/image, migration, smoke, logs, metrics, traces, and rollback checks actually available.',
+    '- Separate local evidence from external deployment status claims.'
+  ]));
+
+  server.registerPrompt('frontend_quality_review', {
+    title: 'Frontend quality review',
+    description: 'Review frontend state/data, accessibility, responsive behavior, and visual regression evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      path: z.string().optional(),
+      screen: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS frontend quality review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Path: ${args.path ?? '<optional path>'}`,
+    `Screen or flow: ${args.screen ?? '<screen or user flow>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe frontend-quality-review',
+    '- operator_preflight for related context, contracts, and nearby playbook guidance',
+    '- operator_search or index_search for affected screens, components, state, and data flow',
+    '- write_gate_preview before suggesting edits',
+    '',
+    'Optional evidence:',
+    '- symbol_outline for component, hook, and handler owners',
+    '- qa_image_diff or browser evidence when screenshots are available',
+    '',
+    'Stop conditions:',
+    '- Runnable screen, fixture, credential, design baseline, or supported breakpoint is missing',
+    '- State ownership, cache invalidation, or accessibility target is unclear',
+    '- Visual evidence is too stale or low-confidence for the claim being made',
+    '',
+    'Verification expectations:',
+    '- Include desktop/mobile, keyboard/focus, loading/empty/error, stale data, overflow, and visual diff checks when applicable.',
+    '- Treat screenshots and generated hints as evidence, not as durable project memory.'
+  ]));
+
+  server.registerPrompt('data_integrity_review', {
+    title: 'Data integrity review',
+    description: 'Review analytics, reporting, migration, backfill, reconciliation, and data contract evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      dataset: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS data integrity review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Dataset or report: ${args.dataset ?? '<dataset, report, dashboard, or metric>'}`,
+    `Intent: ${args.intent ?? '<review intent>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe data-integrity-review',
+    '- route_api_hints for route, API, SQL, migration, and data-object hints',
+    '- operator_search for metric, query, migration, ETL, dashboard, and reconciliation references',
+    '- contracts_check when data contracts or durable invariants exist',
+    '',
+    'Optional evidence:',
+    '- dependency_inventory for warehouse, ETL, scheduler, or reporting package context',
+    '- canon_check before promoting data facts into trusted memory',
+    '',
+    'Stop conditions:',
+    '- Metric owner, grain, denominator, source freshness, or rollback/repair path is unknown',
+    '- Source data access is required but unavailable',
+    '- Destructive repair, migration, or backfill behavior cannot be bounded',
+    '',
+    'Verification expectations:',
+    '- Name source counts, sampled rows, reconciliation queries, report/dashboard checks, freshness, and caveats actually available.',
+    '- Separate source data issues from transformation, query, and presentation issues.'
+  ]));
+
+  server.registerPrompt('adr_spec_handoff_review', {
+    title: 'ADR/spec handoff review',
+    description: 'Review decisions, specs, worklogs, and runtime evidence before durable project-memory promotion.',
+    argsSchema: {
+      target: z.string().optional(),
+      source: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS ADR/spec handoff review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Source: ${args.source ?? '<plan, worklog, decision, or runtime artifact>'}`,
+    `Intent: ${args.intent ?? '<handoff or promotion intent>'}`,
+    '',
+    'Required evidence:',
+    '- canon_check for existing durable facts and conflicts',
+    '- index_status for available generated runtime evidence',
+    '- write_gate_preview if a future memory promotion write is being considered',
+    '- operator_search for existing ADR, spec, worklog, map, and runbook references',
+    '',
+    'Optional evidence:',
+    '- workflow_run_preview with recipe documentation-package when a documentation package is being prepared',
+    '- reference_ledger_check when external reference adoption is part of the handoff',
+    '',
+    'Stop conditions:',
+    '- Source evidence is noisy, private, unreviewed, or conflicts with current project memory',
+    '- Decision owner, status, consequence, or replacement path is unclear',
+    '- The handoff would store credentials, private paths, branch names, PR numbers, or raw chat transcripts',
+    '',
+    'Verification expectations:',
+    '- Separate current rules, decisions, open questions, historical worklogs, and generated evidence.',
+    '- Promote only reviewed stable facts; leave uncertain evidence in worklogs, plans, or runtime reports.'
+  ]));
+
   server.registerPrompt('workflow_run_review', {
     title: 'Workflow run review',
     description: 'Preview and review a workflow recipe run contract before starting long-running work.',

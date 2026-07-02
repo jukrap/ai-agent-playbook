@@ -71,6 +71,14 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `deployment-release-check`: reviews release readiness, deploy gates, rollback paths, feature flags, artifacts, migrations, and post-deploy checks.
 - `observability-incident-triage`: triages active incidents, production alerts, logs, metrics, traces, latency, error rates, queues, jobs, and post-incident handoff.
 
+## Frontend map
+
+- `browser-dom-change`: changes DOM-first behavior, jQuery flows, event handlers, selectors, forms, plugins, and script-loaded UI.
+- `frontend-state-data-flow`: reviews state ownership, data fetching, server/client cache boundaries, optimistic updates, URL state, and stale UI behavior.
+- `frontend-accessibility-review`: reviews keyboard access, focus management, semantics, forms, dialogs, menus, announcements, contrast, and accessible interaction states.
+- `ui-polish`: refines visible UI, responsive layout, visual hierarchy, interaction feedback, and production polish.
+- `visual-regression-qa`: checks screenshots, responsive breakpoints, overflow, clipping, visual diffs, text fit, canvas/media rendering, and browser-rendered regressions.
+
 ## Skill authoring map
 
 - `agent-skill-authoring`: reusable skill structure, trigger descriptions, references, and skill/template boundaries.

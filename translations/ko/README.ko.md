@@ -114,7 +114,7 @@ skills/
   database/          schema, migration, SQL, data integrity 스킬
   delivery/          planning, verification, Git, PR, worklog 스킬
   devops/            CI/CD, container, release, deployment, operations triage 스킬
-  frontend/          UI, browser, accessibility, visual QA 스킬
+  frontend/          UI, browser, state/data, accessibility, visual QA 스킬
   mobile/            native, hybrid, WebView, device QA 스킬
   security/          auth, dependency supply chain, security review, risk 스킬
   project/            bootstrap, onboarding, project-memory 스킬
@@ -174,7 +174,10 @@ test/                 Node CLI와 adapter 테스트
 - `deployment-release-check`: release, deploy, rollback, feature flag, artifact, migration gate, post-deploy check를 준비·검토·진단할 때.
 - `observability-incident-triage`: incident, production error, alert, latency, error rate, queue backlog, job failure, log, metric, trace를 triage할 때.
 - `browser-dom-change`: browser DOM behavior, jQuery flow, event handler, selector, form, plugin, script-loaded UI를 바꿀 때.
+- `frontend-state-data-flow`: frontend state ownership, server/client cache behavior, data fetching, optimistic update, URL state, stale UI bug를 바꿀 때.
+- `frontend-accessibility-review`: keyboard access, focus management, semantic, form, dialog, menu, announcement, contrast, accessible state를 검토할 때.
 - `ui-polish`: visible UI, responsive layout, accessibility state, interaction feedback, production polish를 위한 primary frontend skill.
+- `visual-regression-qa`: screenshot, responsive breakpoint, layout overflow, clipping, visual diff, text fit, canvas/media rendering, browser-rendered UI regression을 확인할 때.
 - `webview-bridge`: WebView bridge, native-to-web messaging, deep link, embedded auth, upload, download, hybrid navigation을 바꿀 때.
 - `legacy-change-safety`: hidden coupling이나 deployment risk가 있는 compatibility-first legacy change를 다룰 때.
 - `security-review`: secret, authentication, authorization, input validation, dependency risk, sensitive data flow를 검토할 때.

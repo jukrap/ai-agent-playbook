@@ -71,6 +71,14 @@ Runtime hook layer를 local experiment로 둘지, adapter로 만들지, 문서�
 - `deployment-release-check`: release readiness, deploy gate, rollback path, feature flag, artifact, migration, post-deploy check를 검토합니다.
 - `observability-incident-triage`: active incident, production alert, log, metric, trace, latency, error rate, queue, job, post-incident handoff를 triage합니다.
 
+## Frontend 지도
+
+- `browser-dom-change`: DOM-first behavior, jQuery flow, event handler, selector, form, plugin, script-loaded UI를 바꿉니다.
+- `frontend-state-data-flow`: state ownership, data fetching, server/client cache boundary, optimistic update, URL state, stale UI behavior를 검토합니다.
+- `frontend-accessibility-review`: keyboard access, focus management, semantic, form, dialog, menu, announcement, contrast, accessible interaction state를 검토합니다.
+- `ui-polish`: visible UI, responsive layout, visual hierarchy, interaction feedback, production polish를 다듬습니다.
+- `visual-regression-qa`: screenshot, responsive breakpoint, overflow, clipping, visual diff, text fit, canvas/media rendering, browser-rendered regression을 확인합니다.
+
 ## 스킬 작성 지도
 
 - `agent-skill-authoring`: 재사용 가능한 스킬 구조, trigger description, reference, 스킬/템플릿 경계.

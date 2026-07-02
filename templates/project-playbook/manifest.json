@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1",
+  "source": "ai-agent-playbook",
+  "layoutVersion": "2",
+  "runtimePolicy": {
+    "defaultLocalOnly": true,
+    "runtimeIsGenerated": true,
+    "memoryRequiresExplicitPromotion": true
+  },
+  "permissions": {
+    "mcpDefaultTier": "read",
+    "writeToolsRequireOptIn": true
+  }
+}

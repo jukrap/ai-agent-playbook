@@ -5,6 +5,8 @@ description: Use when staging files, writing commits, pushing branches, opening 
 
 # Commit Worklog Guardrails
 
+Primary route: `delivery/git-worklog-guardrails`.
+
 Protect unrelated changes, local-only files, and verification integrity.
 
 ## Workflow

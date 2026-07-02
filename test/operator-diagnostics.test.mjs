@@ -398,7 +398,7 @@ test('operator research --json correlates local evidence across source tests pla
     '--path',
     'src/features/인증/auth-flow.mjs',
     '--max-results',
-    '20',
+    '50',
     '--json'
   ], io), 0);
   const report = JSON.parse(io.out());

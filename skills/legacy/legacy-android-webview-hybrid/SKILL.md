@@ -5,6 +5,8 @@ description: Use when maintaining Android apps that load local or remote web ass
 
 # Legacy Android WebView Hybrid
 
+Primary route: `mobile/webview-bridge`.
+
 Trace both native lifecycle and web runtime before changing either side.
 
 ## Workflow
@@ -21,3 +23,7 @@ Trace both native lifecycle and web runtime before changing either side.
 - Do not assume local asset changes are picked up without packaging/version checks.
 - Do not treat WebView console success as native integration success.
 - Record Gradle/build, permission, and deployment implications.
+
+## Reference
+
+Read `references/android-webview-hybrid.md` for stack-specific checks.

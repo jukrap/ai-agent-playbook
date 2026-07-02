@@ -64,6 +64,7 @@ npx ai-agent-playbook bootstrap ".\example app" --dry-run
 | `--query <text>` | 검색 또는 조사할 주제입니다. |
 | `--intent <text>` | `operator preflight`에서 점검할 예정 작업 설명입니다. |
 | `--max-results N` | search 또는 research 출력 개수를 제한합니다. |
+| `--to v2` | `migrate layout`의 대상 layout을 선택합니다. |
 | `--max-chars N` | 생성되는 context 크기를 제한합니다. |
 | `--strict` | doctor warning도 실패로 처리합니다. |
 | `--reminder` | 전체 doctor report 대신 작은 reminder signal을 반환합니다. |
@@ -119,6 +120,8 @@ Project playbook 명령은 대상 repository 하나의 `.ai-playbook/`을 관리
 | `bootstrap <target>` | 대상 프로젝트에 root `AGENTS.md`와 `.ai-playbook/` 구조를 만듭니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook bootstrap <target-project> --dry-run` |
 | `guides sync <target>` | 기존 `.ai-playbook/guides/`에 누락된 guide template을 복사합니다. | `--dry-run` 또는 `--check`가 없으면 예 | `npx ai-agent-playbook guides sync <target-project> --check --diff --json` |
 | `migrate path <target>` | legacy `ai-playbook/`에서 `.ai-playbook/`로 이동하는 작업을 preview하거나 적용합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook migrate path <target-project> --json` |
+| `migrate layout <target>` | `.ai-playbook` layout v2 디렉터리와 v1 compatibility file 복사를 preview하거나 적용합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook migrate layout <target-project> --to v2 --json` |
+| `layout status <target>` | 대상 playbook에 v2 layout file과 directory가 있는지 보고합니다. | 아니오 | `npx ai-agent-playbook layout status <target-project> --json` |
 | `doctor <target>` | project playbook 상태, adaptation 상태, worklog summary freshness, local path risk를 점검합니다. | 아니오 | `npx ai-agent-playbook doctor <target-project> --json` |
 | `context <target>` | 선택적 hook 또는 점검용으로 core `.ai-playbook/` 파일에서 compact context를 만듭니다. | 아니오 | `npx ai-agent-playbook context <target-project> --json` |
 | `context list <target>` | `.ai-playbook/context/**/*.md` 파일과 frontmatter를 나열합니다. | 아니오 | `npx ai-agent-playbook context list <target-project> --json` |
@@ -130,6 +133,22 @@ Project playbook 명령은 대상 repository 하나의 `.ai-playbook/`을 관리
 Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatter를 지원합니다. 특정 path 작업 전에 어떤 project memory를 읽어야 할지 보려면 `context status`를 사용합니다. 이 명령은 read-only라 자주 실행해도 안전합니다.
 
 `CURRENT.md`에는 현재 기준선 사실, 활성 리스크, 결정, 프로젝트별 working vocabulary를 둡니다. 더 큰 구조 사실, scan range, clone 또는 duplicate-code cue는 map에 두어 `CURRENT.md`를 긴 보고서로 만들지 않고도 검토 가능하게 유지합니다.
+
+## Harness OS catalog와 runtime
+
+아래 명령은 v2 capability model과 생성된 local runtime surface를 노출합니다. 코드 수정 전에 안전하게 실행할 수 있습니다.
+
+| 명령 | 언제 쓰나 | 파일을 쓰나 | 예시 |
+| ---- | --------- | ----------- | ---- |
+| `catalog list` | capability category와 skill/workflow 개수를 나열합니다. | 아니오 | `npx ai-agent-playbook catalog list --json` |
+| `catalog check` | skill taxonomy, duplicate name, wrapper route, wrapper reference를 검증합니다. | 아니오 | `npx ai-agent-playbook catalog check --json` |
+| `workflow list` | built-in workflow recipe를 나열합니다. | 아니오 | `npx ai-agent-playbook workflow list --json` |
+| `index build <target>` | `.ai-playbook/runtime/indexes/file-inventory.json` 생성을 preview하거나 씁니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook index build <target-project> --json` |
+| `index status <target>` | runtime file inventory 존재 여부를 확인합니다. | 아니오 | `npx ai-agent-playbook index status <target-project> --json` |
+| `index search <target>` | runtime index를 쓰지 않고 local project text를 검색합니다. | 아니오 | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
+| `write-gate preview <target>` | 수정 전에 intent와 optional path 기준 write risk를 preview합니다. | 아니오 | `npx ai-agent-playbook write-gate preview <target-project> --intent "change auth flow" --path src/example.ts --json` |
+
+Runtime output은 `.ai-playbook/runtime/` 아래에 둡니다. 검토와 명시적 승격 없이 generated output을 `.ai-playbook/memory/`로 복사하지 않습니다.
 
 ## Managed files
 
@@ -234,6 +253,7 @@ ai-playbook mcp
 서버는 아래 read-only 도구를 노출합니다.
 
 - playbook context: `playbook_context`, `context_status`, `context_list`
+- catalog와 layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `playbook_layout`, `index_status`, `index_search`, `write_gate_preview`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules와 project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA와 deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`

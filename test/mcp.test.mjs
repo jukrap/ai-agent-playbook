@@ -27,6 +27,13 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     const listed = await client.listTools();
     const names = listed.tools.map((tool) => tool.name).sort();
     for (const expected of [
+      'capability_catalog',
+      'skill_catalog',
+      'workflow_list',
+      'playbook_layout',
+      'index_status',
+      'index_search',
+      'write_gate_preview',
       'playbook_context',
       'operator_check',
       'operator_search',
@@ -56,6 +63,31 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       assert.equal(names.includes(expected), true, `missing MCP tool ${expected}`);
     }
     assert.equal(listed.tools.every((tool) => tool.annotations?.readOnlyHint === true), true);
+
+    const resources = await client.listResources();
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://capabilities'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://skills'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://workflows'), true);
+
+    const prompts = await client.listPrompts();
+    assert.equal(prompts.prompts.some((prompt) => prompt.name === 'repo_onboarding_runbook'), true);
+    assert.equal(prompts.prompts.some((prompt) => prompt.name === 'harness_extension_plan'), true);
+
+    const catalog = await client.callTool({
+      name: 'capability_catalog',
+      arguments: {}
+    });
+    assert.equal(catalog.structuredContent.ok, true);
+    assert.equal(catalog.structuredContent.taxonomyVersion, '2');
+
+    const resource = await client.readResource({ uri: 'ai-playbook://workflows' });
+    assert.equal(JSON.parse(resource.contents[0].text).summary.workflows, 11);
+
+    const prompt = await client.getPrompt({
+      name: 'repo_onboarding_runbook',
+      arguments: { target }
+    });
+    assert.equal(prompt.messages[0].content.text.includes(target), true);
 
     const result = await client.callTool({
       name: 'operator_search',

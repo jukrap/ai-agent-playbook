@@ -5,6 +5,8 @@ description: Use when maintaining legacy PHP/LAMP applications with include file
 
 # Legacy PHP LAMP
 
+Primary route: `backend/server-rendered-change`.
+
 Follow include order, request globals, and deployment constraints before changing behavior.
 
 ## Workflow
@@ -20,3 +22,7 @@ Follow include order, request globals, and deployment constraints before changin
 - Do not assume Composer, autoloading, or framework conventions exist.
 - Do not mix new template architecture into one small legacy page.
 - Do not change SQL or encoding without checking stored data and all callers.
+
+## Reference
+
+Read `references/php-lamp.md` for stack-specific checks.

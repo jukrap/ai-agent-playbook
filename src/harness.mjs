@@ -24,3 +24,7 @@ export { createPlan, createWorklog, summarizeWorklogs } from './harness/plans-wo
 export { contextStatus, initContext, listContexts } from './harness/context-memory.mjs';
 export { recordRun, runStatus, startRun, summarizeRun } from './harness/runs-ledger.mjs';
 export { checkContracts, initContracts, listContracts, snapshotContracts } from './harness/contracts.mjs';
+export { capabilityCatalog, skillCatalog, workflowCatalog } from './catalog/taxonomy.mjs';
+export { describePlaybookLayout, migratePlaybookLayout } from './layout/playbook-layout-v2.mjs';
+export { buildRuntimeIndex, runtimeIndexStatus, searchRuntimeIndex } from './runtime/indexes.mjs';
+export { previewWriteGate } from './operator/write-gate.mjs';

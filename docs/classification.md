@@ -57,6 +57,14 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `project-doc-system`: organizes `.ai-playbook/`, maps, runbooks, decisions, plans, worklogs, and archived notes.
 - `adr-spec-handoff`: promotes reviewed decisions, specs, milestone outcomes, worklogs, and handoffs into durable project memory.
 
+## AI harness map
+
+- `mcp-server-design`: designs MCP tools, resources, prompts, permission tiers, write gates, and cache/index surfaces.
+- `context-engineering-memory-design`: reviews agent instructions, context surfaces, prompt/cache budget, project memory, compaction, durable memory promotion, and stale fact handling.
+- `skill-pack-governance`: governs skill taxonomy growth, wrappers, reference routing, translations, install/sync behavior, and reusable skill-pack adoption.
+- `runtime-index-cache-design`: reviews runtime reports, indexes, graphs, caches, artifact schemas, invalidation, canon promotion, and generated evidence boundaries.
+- `agent-skill-authoring`: reusable skill structure, trigger descriptions, references, and skill/template boundaries.
+
 ## Delivery and verification map
 
 - `git-worklog-guardrails`: handles staging, commits, PR text, release notes, and worklogs.
@@ -128,10 +136,6 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `data-pipeline-review`: reviews analytics pipelines, ETL, batch jobs, data contracts, dashboard sources, quality checks, freshness, and lineage.
 - `analytics-reporting-review`: reviews metric definitions, KPI ownership, dashboard/report consistency, chart/table checks, segmentation, caveats, and reader handoff.
 - `data-migration-integrity`: reviews data migrations, backfills, transformations, reconciliation queries, idempotency, batching, rollback, and repair.
-
-## Skill authoring map
-
-- `agent-skill-authoring`: reusable skill structure, trigger descriptions, references, and skill/template boundaries.
 
 ## Legacy expansion map
 

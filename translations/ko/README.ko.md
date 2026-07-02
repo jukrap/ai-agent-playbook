@@ -163,6 +163,9 @@ test/                 Node CLI와 adapter 테스트
 ### Harness OS v2 Capabilities
 
 - `mcp-server-design`: MCP tool, resource, prompt, permission tier, write gate, cache/index surface를 설계할 때.
+- `context-engineering-memory-design`: agent instruction, context surface, prompt/cache budget, project memory, compaction behavior, durable memory promotion, stale fact handling을 설계하거나 검토할 때.
+- `skill-pack-governance`: skill pack, taxonomy category, compatibility wrapper, reference routing, translation, install/sync behavior, reusable skill governance를 추가·재정리·검토·채택할 때.
+- `runtime-index-cache-design`: runtime report, index, graph, cache, artifact schema, invalidation, canon promotion, generated evidence, local-only runtime storage를 설계하거나 검토할 때.
 - `boundary-review`: FSD, layered, DDD, monorepo, package ownership, dependency direction, coupling boundary를 검토할 때.
 - `feature-slice-boundary`: FSD, feature-sliced, vertical-slice, feature-first, route-level, module-level, component-domain boundary를 바꾸거나 검토할 때.
 - `domain-model-change`: domain entity, aggregate, value object, service, policy, use case, repository, adapter, invariant, transaction boundary를 바꾸거나 검토할 때.

@@ -8,7 +8,7 @@
 
 ## Baseline
 
-- Skill catalog currently has 66 skills.
+- At plan start, the skill catalog had 66 skills.
 - The `data` category has 3 skills: `data-pipeline-review`, `analytics-reporting-review`, and `data-migration-integrity`.
 - The `database` category now covers schema, query performance, and constraint integrity; data skills should not duplicate those database responsibilities.
 - Existing workflow support has `data-integrity-review`, but it does not yet distinguish contracts, lineage, observability, instrumentation, experiments, or retrieval pipelines.

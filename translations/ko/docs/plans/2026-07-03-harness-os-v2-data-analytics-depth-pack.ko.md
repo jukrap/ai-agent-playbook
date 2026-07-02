@@ -8,7 +8,7 @@
 
 ## 기준 상태
 
-- Skill catalog는 현재 66개 스킬을 포함합니다.
+- 계획 시작 시점의 skill catalog는 66개 스킬을 포함했습니다.
 - `data` category에는 `data-pipeline-review`, `analytics-reporting-review`, `data-migration-integrity` 3개 스킬이 있습니다.
 - `database` category는 이제 schema, query performance, constraint integrity를 다룹니다. Data skill은 이 database 책임을 중복하지 않아야 합니다.
 - 기존 workflow에는 `data-integrity-review`가 있지만 contract, lineage, observability, instrumentation, experiment, retrieval pipeline을 아직 구분하지 않습니다.

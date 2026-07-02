@@ -136,6 +136,10 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `data-pipeline-review`: reviews analytics pipelines, ETL, batch jobs, data contracts, dashboard sources, quality checks, freshness, and lineage.
 - `analytics-reporting-review`: reviews metric definitions, KPI ownership, dashboard/report consistency, chart/table checks, segmentation, caveats, and reader handoff.
 - `data-migration-integrity`: reviews data migrations, backfills, transformations, reconciliation queries, idempotency, batching, rollback, and repair.
+- `data-contract-lineage-review`: reviews dataset contracts, source-of-truth ownership, grain/schema changes, lineage, freshness targets, and consumer impact.
+- `data-quality-observability`: reviews data quality checks, freshness alerts, anomaly detection, null/duplicate/orphan checks, quarantine, repair, and data incident handoff.
+- `analytics-instrumentation-review`: reviews tracking plans, event schemas, analytics instrumentation, funnels, cohorts, experiments, attribution, consent, and downstream metric impact.
+- `knowledge-retrieval-pipeline-review`: reviews document ingestion, chunking, metadata, embeddings/vector stores, retrieval quality, citations, access control, and stale RAG/search indexes.
 
 ## Legacy expansion map
 

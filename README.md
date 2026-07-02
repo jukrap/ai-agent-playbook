@@ -177,6 +177,10 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `data-pipeline-review`: review analytics pipelines, ETL, batch jobs, data contracts, dashboards, and quality checks.
 - `analytics-reporting-review`: review metrics, dashboards, reports, KPI definitions, chart/table consistency, analytics queries, freshness, and caveats.
 - `data-migration-integrity`: plan, review, or verify data migrations, backfills, warehouse transformations, reconciliation, idempotency, rollback, and data repair.
+- `data-contract-lineage-review`: review dataset contracts, lineage, source-of-truth ownership, freshness targets, schema/grain changes, and downstream consumer impact.
+- `data-quality-observability`: design or review data quality checks, freshness alerts, anomaly detection, null/duplicate/orphan checks, quarantine, repair, and data incident handoff.
+- `analytics-instrumentation-review`: review tracking plans, event schemas, analytics instrumentation, funnels, cohorts, experiments, attribution, consent, and downstream metric impact.
+- `knowledge-retrieval-pipeline-review`: review document ingestion, parsing, chunking, metadata, embeddings/vector stores, retrieval quality, citations, access control, and stale RAG/search indexes.
 - `database-change-safety`: change database schema, migrations, SQL, reporting queries, stored procedures, or data integrity rules.
 - `schema-migration-plan`: plan or review database schema migrations, DDL, indexes, constraints, defaults, nullability, seeds, views, triggers, stored procedures, or expand/contract rollout steps.
 - `query-performance-review`: review slow SQL, reporting queries, dashboard queries, API list/detail queries, exports, aggregates, joins, sort/pagination, full scans, N+1 patterns, or index choices.

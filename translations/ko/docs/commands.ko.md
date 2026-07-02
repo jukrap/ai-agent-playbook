@@ -150,6 +150,7 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 | `index search <target>` | runtime index를 쓰지 않고 local project text를 검색합니다. | 아니오 | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
 | `canon draft <target>` | runtime index와 report에서 promotion-ready fact 후보를 작성합니다. | 아니오 | `npx ai-agent-playbook canon draft <target-project> --json` |
 | `canon check <target>` | memory에 승격된 canon fact를 runtime evidence와 현재 file 기준으로 확인합니다. | 아니오 | `npx ai-agent-playbook canon check <target-project> --json` |
+| `canon promote <target>` | runtime report의 reviewed canon fact를 memory 또는 knowledge references로 preview하거나 씁니다. | `--apply --reviewed`가 있을 때만 예 | `npx ai-agent-playbook canon promote <target-project> --source .ai-playbook/runtime/reports/example.json --to .ai-playbook/memory/maps/canon.json --json` |
 | `write-gate preview <target>` | 수정 전에 intent와 optional path 기준 write risk를 preview합니다. | 아니오 | `npx ai-agent-playbook write-gate preview <target-project> --intent "change auth flow" --path src/example.ts --json` |
 | `write-gate advisory <target>` | playbook runtime 아래 pre-write advisory report를 preview하거나 저장합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook write-gate advisory <target-project> --intent "change auth flow" --path src/example.ts --apply --json` |
 | `write-gate post-check <target>` | 수정 뒤 saved advisory snapshot과 현재 file을 비교합니다. | 아니오 | `npx ai-agent-playbook write-gate post-check <target-project> --advisory .ai-playbook/runtime/reports/write-gate/pre-write-advisory.<id>.json --json` |
@@ -163,6 +164,8 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 `write-gate post-check`는 saved advisory를 읽고 그 snapshot을 현재 file과 비교합니다. Advisory가 없거나, 유효하지 않거나, snapshot이 없으면 변경이 clean하다고 꾸미지 않고 `summary.status: "unknown"`을 보고합니다.
 
 `canon draft`는 `.ai-playbook/runtime/indexes/file-inventory.json`과 `.ai-playbook/runtime/reports/` 아래 JSON report에서 fact 후보를 제안합니다. `canon check`는 `.ai-playbook/memory/` 아래 승격된 JSON fact 또는 특정 `--path <canon-json>`을 읽고 파일을 쓰지 않은 채 `verified`, `missing`, `stale`, `changed`, `unverified` 상태를 보고합니다.
+
+`canon promote`는 `--source <runtime-index-or-report-json>`와 `--to <memory-or-reference-json>`를 받습니다. source는 `.ai-playbook/runtime/indexes/` 또는 `.ai-playbook/runtime/reports/` 아래 JSON file이어야 합니다. `--apply`와 `--reviewed`가 모두 있을 때만 쓰며, 목적지는 `.ai-playbook/memory/` 또는 `.ai-playbook/knowledge/references/` 내부 JSON file로 제한합니다.
 
 Runtime output은 `.ai-playbook/runtime/` 아래에 둡니다. 검토와 명시적 승격 없이 generated output을 `.ai-playbook/memory/`로 복사하지 않습니다.
 

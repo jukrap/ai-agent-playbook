@@ -32,6 +32,7 @@ import {
   migratePlaybookPath,
   parseMaxChars,
   postCheckWriteGate,
+  promoteCanonFacts,
   previewWriteGate,
   adoptManagedManifest,
   pruneManagedManifest,
@@ -616,6 +617,29 @@ export async function runCli(argv, io = {}) {
       return result.ok ? 0 : 1;
     }
 
+    if (command === 'canon' && subcommand === 'promote') {
+      const result = await promoteCanonFacts({
+        target: resolveTarget(cwd, targetArg),
+        sourcePath: typeof parsed.flags.source === 'string' ? parsed.flags.source : '',
+        toPath: typeof parsed.flags.to === 'string' ? parsed.flags.to : '',
+        apply: Boolean(parsed.flags.apply),
+        reviewed: Boolean(parsed.flags.reviewed)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Canon promote: ${result.summary.facts} fact(s), ${result.applied ? 'written' : 'preview'}\n`);
+        write(stdout, `Destination: ${result.destination}\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
     if (command === 'write-gate' && subcommand === 'preview') {
       const result = await previewWriteGate({
         repoRoot: root,
@@ -1167,6 +1191,7 @@ function needsValue(key) {
     'adapter',
     'settings',
     'to',
+    'source',
     'path',
     'cols',
     'query',
@@ -1273,6 +1298,7 @@ Usage:
   ai-playbook index search <target> --query <text> [--max-results N] [--json]
   ai-playbook canon draft <target> [--max-results N] [--json]
   ai-playbook canon check <target> [--path <canon-json>] [--json]
+  ai-playbook canon promote <target> --source <runtime-report> --to <memory-json> [--apply] [--reviewed] [--json]
   ai-playbook write-gate preview <target> --intent <text> [--path <file>] [--max-results N] [--json]
   ai-playbook write-gate advisory <target> --intent <text> [--path <file>] [--max-results N] [--apply] [--json]
   ai-playbook write-gate post-check <target> --advisory <advisory-json> [--json]

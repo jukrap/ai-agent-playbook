@@ -47,7 +47,7 @@ test('all bundled workflow recipes preview with required manifest sections', asy
   const list = capture(target);
   assert.equal(await runCli(['workflow', 'list', '--json'], list), 0);
   const listed = JSON.parse(list.out());
-  assert.equal(listed.summary.workflows, 16);
+  assert.equal(listed.summary.workflows, 18);
 
   const before = await listRelativeFiles(target);
   for (const recipe of listed.workflows) {
@@ -143,12 +143,14 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   const workflow = capture(target);
   assert.equal(await runCli(['workflow', 'list', '--json'], workflow), 0);
   const workflowReport = JSON.parse(workflow.out());
-  assert.equal(workflowReport.summary.workflows, 16);
+  assert.equal(workflowReport.summary.workflows, 18);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'deployment-release'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'package-release-readiness'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'architecture-boundary-review'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'frontend-quality-review'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'data-integrity-review'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'eval-driven-change'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'knowledge-source-onboarding'), true);
 
   const databaseWorkflowPreview = capture(target);
   assert.equal(await runCli(['workflow', 'run-preview', '.', '--recipe', 'database-migration', '--json'], databaseWorkflowPreview), 0);

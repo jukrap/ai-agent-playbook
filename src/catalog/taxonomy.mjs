@@ -84,6 +84,12 @@ export const WORKFLOW_RECIPES = [
     outputs: ['workflows/plans', 'workflows/runs', 'workflows/worklogs']
   },
   {
+    id: 'eval-driven-change',
+    title: 'Eval Driven Change',
+    category: 'delivery',
+    outputs: ['runtime/reports', 'workflows/runs', 'workflows/worklogs']
+  },
+  {
     id: 'legacy-change',
     title: 'Legacy Change',
     category: 'legacy',
@@ -112,6 +118,12 @@ export const WORKFLOW_RECIPES = [
     title: 'Data Integrity Review',
     category: 'data',
     outputs: ['runtime/reports', 'memory/contracts', 'workflows/worklogs']
+  },
+  {
+    id: 'knowledge-source-onboarding',
+    title: 'Knowledge Source Onboarding',
+    category: 'data',
+    outputs: ['knowledge/sources.json', 'knowledge/references', 'runtime/reports']
   },
   {
     id: 'ci-failure-triage',

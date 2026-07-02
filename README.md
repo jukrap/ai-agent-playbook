@@ -179,7 +179,7 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `domain-model-change`: change or review domain entities, aggregates, value objects, services, policies, use cases, repositories, adapters, invariants, or transaction boundaries.
 - `monorepo-package-boundary`: change or review monorepo packages, workspace dependencies, package exports, internal libraries, build graphs, generated types, and cross-package release impact.
 - `api-contract-boundary`: implement, debug, or review frontend/backend contracts, DTOs, mocks, payloads, and adapters.
-- `backend-change-safety`: change backend services, modules, workers, jobs, integrations, queues, config, or server-side business logic.
+- `backend-change-safety`: change backend services, modules, workers, jobs, integrations, queues, config, or server-side business logic, with stack profiles selected only after repository evidence.
 - `connector-integration-change`: change API connectors, workflow nodes, MCP adapters, webhooks, OAuth apps, import/export bridges, sync jobs, connector registration, or credential handling.
 - `server-rendered-change`: change backend-rendered controllers, templates, forms, sessions, redirects, validation, and view contracts.
 - `data-pipeline-review`: review analytics pipelines, ETL, batch jobs, data contracts, dashboards, and quality checks.

@@ -177,7 +177,7 @@ test/                 Node CLI와 adapter 테스트
 - `domain-model-change`: domain entity, aggregate, value object, service, policy, use case, repository, adapter, invariant, transaction boundary를 바꾸거나 검토할 때.
 - `monorepo-package-boundary`: monorepo package, workspace dependency, package export, internal library, build graph, generated type, cross-package release impact를 바꾸거나 검토할 때.
 - `api-contract-boundary`: 프론트엔드/백엔드 계약, DTO, mock, payload, adapter를 구현·디버깅·검토할 때.
-- `backend-change-safety`: backend service, module, worker, job, integration, queue, config, server-side business logic을 바꿀 때.
+- `backend-change-safety`: backend service, module, worker, job, integration, queue, config, server-side business logic을 바꾸며 repository evidence 이후 stack profile을 선택할 때.
 - `connector-integration-change`: API connector, workflow node, MCP adapter, webhook, OAuth app, import/export bridge, sync job, connector registration, credential handling을 바꿀 때.
 - `server-rendered-change`: backend-rendered controller, template, form, session, redirect, validation, view contract를 바꿀 때.
 - `data-pipeline-review`: analytics pipeline, ETL, batch job, data contract, dashboard, quality check를 검토할 때.

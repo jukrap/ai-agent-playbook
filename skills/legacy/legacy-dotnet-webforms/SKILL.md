@@ -7,6 +7,8 @@ description: Use when maintaining ASP.NET Web Forms, .NET Framework, code-behind
 
 Primary route: `backend/server-rendered-change`.
 
+For service, configuration, persistence, worker, or integration changes, pair this wrapper with `backend/backend-change-safety` and the .NET stack profile.
+
 Respect the page lifecycle and server control contracts.
 
 ## Workflow
@@ -26,3 +28,5 @@ Respect the page lifecycle and server control contracts.
 ## Reference
 
 Read `references/dotnet-webforms.md` for stack-specific checks.
+
+Read the backend stack profile selection reference from the source repository when deciding whether this legacy wrapper is enough or a backend stack profile is also needed.

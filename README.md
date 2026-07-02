@@ -175,6 +175,9 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `analytics-reporting-review`: review metrics, dashboards, reports, KPI definitions, chart/table consistency, analytics queries, freshness, and caveats.
 - `data-migration-integrity`: plan, review, or verify data migrations, backfills, warehouse transformations, reconciliation, idempotency, rollback, and data repair.
 - `database-change-safety`: change database schema, migrations, SQL, reporting queries, stored procedures, or data integrity rules.
+- `schema-migration-plan`: plan or review database schema migrations, DDL, indexes, constraints, defaults, nullability, seeds, views, triggers, stored procedures, or expand/contract rollout steps.
+- `query-performance-review`: review slow SQL, reporting queries, dashboard queries, API list/detail queries, exports, aggregates, joins, sort/pagination, full scans, N+1 patterns, or index choices.
+- `data-integrity-constraints`: change database constraints, uniqueness, foreign keys, checks, not-null rules, triggers, stored procedures, generated columns, repair scripts, reconciliation queries, or invariant boundaries.
 - `git-worklog-guardrails`: primary delivery skill for staging, commits, PR text, release notes, and worklogs.
 - `test-verification-strategy`: plan or review risk-based verification, test scope, check selection, coverage gaps, and release confidence.
 - `flaky-test-triage`: diagnose, reproduce, stabilize, quarantine, or document flaky and nondeterministic tests.

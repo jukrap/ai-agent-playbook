@@ -71,6 +71,13 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `connector-integration-change`: reviews API connectors, workflow nodes, MCP adapters, webhooks, OAuth apps, import/export bridges, sync jobs, registration metadata, and credential handling.
 - `server-rendered-change`: reviews controllers, templates, sessions, forms, redirects, and server-rendered view contracts.
 
+## Database map
+
+- `database-change-safety`: reviews broad schema, migration, SQL, reporting query, stored procedure, and data integrity changes.
+- `schema-migration-plan`: plans schema migrations, DDL, indexes, constraints, defaults, nullability, seeds, views, triggers, stored procedures, rollout order, and rollback evidence.
+- `query-performance-review`: reviews slow SQL, reporting/dashboard/API/export queries, joins, aggregates, sort/pagination, full scans, N+1 patterns, and index choices.
+- `data-integrity-constraints`: reviews uniqueness, foreign keys, checks, not-null rules, triggers, stored procedures, generated columns, repair scripts, reconciliation queries, and invariant boundaries.
+
 ## Architecture map
 
 - `boundary-review`: reviews broad architecture boundaries, dependency direction, public APIs, ownership, and cross-module coupling.

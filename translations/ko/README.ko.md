@@ -175,6 +175,9 @@ test/                 Node CLI와 adapter 테스트
 - `analytics-reporting-review`: metric, dashboard, report, KPI definition, chart/table consistency, analytics query, freshness, caveat를 검토할 때.
 - `data-migration-integrity`: data migration, backfill, warehouse transformation, reconciliation, idempotency, rollback, data repair를 계획·검토·검증할 때.
 - `database-change-safety`: database schema, migration, SQL, reporting query, stored procedure, data integrity rule을 바꿀 때.
+- `schema-migration-plan`: database schema migration, DDL, index, constraint, default, nullability, seed, view, trigger, stored procedure, expand/contract rollout step을 계획하거나 검토할 때.
+- `query-performance-review`: slow SQL, reporting query, dashboard query, API list/detail query, export, aggregate, join, sort/pagination, full scan, N+1 pattern, index choice를 검토할 때.
+- `data-integrity-constraints`: database constraint, uniqueness, foreign key, check, not-null rule, trigger, stored procedure, generated column, repair script, reconciliation query, invariant boundary를 바꿀 때.
 - `git-worklog-guardrails`: staging, commit, PR text, release note, worklog를 위한 primary delivery skill.
 - `test-verification-strategy`: risk-based verification, test scope, check selection, coverage gap, release confidence를 계획하거나 검토할 때.
 - `flaky-test-triage`: flaky/nondeterministic test를 진단, 재현, 안정화, quarantine, 문서화할 때.

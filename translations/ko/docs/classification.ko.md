@@ -71,6 +71,13 @@ Runtime hook layer를 local experiment로 둘지, adapter로 만들지, 문서�
 - `connector-integration-change`: API connector, workflow node, MCP adapter, webhook, OAuth app, import/export bridge, sync job, registration metadata, credential handling을 검토합니다.
 - `server-rendered-change`: controller, template, session, form, redirect, server-rendered view contract를 검토합니다.
 
+## Database 지도
+
+- `database-change-safety`: broad schema, migration, SQL, reporting query, stored procedure, data integrity change를 검토합니다.
+- `schema-migration-plan`: schema migration, DDL, index, constraint, default, nullability, seed, view, trigger, stored procedure, rollout order, rollback evidence를 계획합니다.
+- `query-performance-review`: slow SQL, reporting/dashboard/API/export query, join, aggregate, sort/pagination, full scan, N+1 pattern, index choice를 검토합니다.
+- `data-integrity-constraints`: uniqueness, foreign key, check, not-null rule, trigger, stored procedure, generated column, repair script, reconciliation query, invariant boundary를 검토합니다.
+
 ## Architecture 지도
 
 - `boundary-review`: broad architecture boundary, dependency direction, public API, ownership, cross-module coupling을 검토합니다.

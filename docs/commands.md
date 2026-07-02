@@ -143,6 +143,7 @@ These commands expose the v2 capability model and generated local runtime surfac
 | `catalog list` | List capability categories with skill and workflow counts. | No | `npx ai-agent-playbook catalog list --json` |
 | `catalog check` | Validate skill taxonomy, duplicate names, wrapper routes, and wrapper references. | No | `npx ai-agent-playbook catalog check --json` |
 | `workflow list` | List built-in workflow recipes. | No | `npx ai-agent-playbook workflow list --json` |
+| `reference inventory <reference-dir>` | Summarize a local reference collection before deciding what to adopt. | No | `npx ai-agent-playbook reference inventory _reference --json` |
 | `index build <target>` | Preview or write `.ai-playbook/runtime/indexes/file-inventory.json`. | No unless `--apply` | `npx ai-agent-playbook index build <target-project> --json` |
 | `index status <target>` | Check whether the runtime file inventory exists. | No | `npx ai-agent-playbook index status <target-project> --json` |
 | `index search <target>` | Search local project text without writing the runtime index. | No | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |

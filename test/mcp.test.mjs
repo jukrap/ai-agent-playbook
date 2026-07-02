@@ -20,6 +20,9 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     '}',
     ''
   ].join('\n'));
+  await mkdir(path.join(target, '_reference', 'reference-pack', 'skills', 'demo'), { recursive: true });
+  await writeFile(path.join(target, '_reference', 'reference-pack', 'README.md'), '# Reference Pack\n');
+  await writeFile(path.join(target, '_reference', 'reference-pack', 'skills', 'demo', 'SKILL.md'), '---\nname: demo\n---\n# Demo\n');
   const before = await listRelativeFiles(target);
 
   const { client, transport } = await connectMcp();
@@ -30,6 +33,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'capability_catalog',
       'skill_catalog',
       'workflow_list',
+      'reference_inventory',
       'playbook_layout',
       'index_status',
       'index_search',
@@ -88,6 +92,17 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       arguments: { target }
     });
     assert.equal(prompt.messages[0].content.text.includes(target), true);
+
+    const inventory = await client.callTool({
+      name: 'reference_inventory',
+      arguments: {
+        target: path.join(target, '_reference'),
+        maxResults: 5
+      }
+    });
+    assert.equal(inventory.structuredContent.ok, true);
+    assert.equal(inventory.structuredContent.summary.projects, 1);
+    assert.equal(inventory.structuredContent.projects[0].candidateCapabilities.includes('skill-pack'), true);
 
     const result = await client.callTool({
       name: 'operator_search',

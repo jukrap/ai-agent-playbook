@@ -166,7 +166,7 @@ test/                 Node CLI와 adapter 테스트
 - `boundary-review`: FSD, layered, DDD, monorepo, package ownership, dependency direction, coupling boundary를 검토할 때.
 - `server-rendered-change`: backend-rendered controller, template, form, session, redirect, validation, view contract를 바꿀 때.
 - `data-pipeline-review`: analytics pipeline, ETL, batch job, data contract, dashboard, quality check를 검토할 때.
-- `change-safety`: database schema, migration, SQL, reporting query, stored procedure, data integrity rule을 바꿀 때.
+- `database-change-safety`: database schema, migration, SQL, reporting query, stored procedure, data integrity rule을 바꿀 때.
 - `git-worklog-guardrails`: staging, commit, PR text, release note, worklog를 위한 primary delivery skill.
 - `ci-failure-triage`: 실패한 CI job, build pipeline, deployment, flaky test, environment drift를 진단할 때.
 - `browser-dom-change`: browser DOM behavior, jQuery flow, event handler, selector, form, plugin, script-loaded UI를 바꿀 때.

@@ -45,7 +45,9 @@ test('bootstrap writes playbook and thin root agent bootstrap without overwritin
 test('harness os v2 commands expose layout, catalog, index, and write-gate flows', async () => {
   const target = await tempRepo('harness os-v2-공백-');
   await mkdir(path.join(target, 'src'), { recursive: true });
+  await mkdir(path.join(target, 'src', 'runtime'), { recursive: true });
   await writeFile(path.join(target, 'src', 'feature.ts'), 'export const featureFlag = "harness-os";\n');
+  await writeFile(path.join(target, 'src', 'runtime', 'index.ts'), 'export const runtimeSource = true;\n');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
 
   const catalog = capture(target);
@@ -99,6 +101,49 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   assert.equal(gateReport.ok, false);
   assert.equal(gateReport.blockers.some((blocker) => blocker.id === 'write-gate.runtime-target'), true);
 
+  const sourceGate = capture(target);
+  assert.equal(await runCli(['write-gate', 'preview', '.', '--intent', 'edit runtime source module', '--path', 'src/runtime/index.ts', '--json'], sourceGate), 0);
+  const sourceGateReport = JSON.parse(sourceGate.out());
+  assert.equal(sourceGateReport.ok, true);
+  assert.equal(sourceGateReport.blockers.some((blocker) => blocker.id === 'write-gate.runtime-target'), false);
+
+  await cleanup(target);
+});
+
+test('reference inventory summarizes local reference collections without writing files', async () => {
+  const target = await tempRepo('reference inventory-한글-');
+  const referenceRoot = path.join(target, '_reference');
+  await mkdir(path.join(referenceRoot, 'repo-lens-like', 'skills', 'write-gate'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'repo-lens-like', 'src', 'mcp-server'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'connector-pack', 'reference', 'connectors'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'repo-lens-like', 'README.md'), '# Repo Lens\n');
+  await writeFile(path.join(referenceRoot, 'repo-lens-like', 'skills', 'write-gate', 'SKILL.md'), '---\nname: write-gate\n---\n# Write Gate\n');
+  await writeFile(path.join(referenceRoot, 'repo-lens-like', 'src', 'mcp-server', 'index.ts'), 'export const mcpServer = true;\n');
+  await writeFile(path.join(referenceRoot, 'connector-pack', 'package.json'), '{"name":"connector-pack"}\n');
+  await writeFile(path.join(referenceRoot, 'connector-pack', 'SECURITY.md'), '# Security\n');
+  await writeFile(path.join(referenceRoot, 'connector-pack', 'reference', 'connectors', 'postgres.md'), '# Postgres\n');
+  const before = await listRelativeFiles(target);
+
+  const inventory = capture(target);
+  assert.equal(await runCli(['reference', 'inventory', referenceRoot, '--json'], inventory), 0);
+  const report = JSON.parse(inventory.out());
+  assert.equal(report.ok, true);
+  assert.equal(report.mode.writes, false);
+  assert.equal(report.summary.projects, 2);
+  assert.equal(report.summary.files, 6);
+  assert.equal(report.summary.projectsWithSignals.skills, 1);
+  assert.equal(report.summary.projectsWithSignals.connectors, 1);
+
+  const repoLens = report.projects.find((project) => project.id === 'repo-lens-like');
+  assert.equal(repoLens.signals.skills, 1);
+  assert.equal(repoLens.signals.mcp, 1);
+  assert.equal(repoLens.candidateCapabilities.includes('skill-pack'), true);
+  assert.equal(repoLens.candidateCapabilities.includes('mcp-integration'), true);
+
+  const connectorPack = report.projects.find((project) => project.id === 'connector-pack');
+  assert.equal(connectorPack.candidateCapabilities.includes('connector-reference'), true);
+  assert.equal(connectorPack.candidateCapabilities.includes('security-validation'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
 });
 

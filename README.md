@@ -166,7 +166,7 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `boundary-review`: review FSD, layered, DDD, monorepo, package ownership, dependency direction, and coupling boundaries.
 - `server-rendered-change`: change backend-rendered controllers, templates, forms, sessions, redirects, validation, and view contracts.
 - `data-pipeline-review`: review analytics pipelines, ETL, batch jobs, data contracts, dashboards, and quality checks.
-- `change-safety`: change database schema, migrations, SQL, reporting queries, stored procedures, or data integrity rules.
+- `database-change-safety`: change database schema, migrations, SQL, reporting queries, stored procedures, or data integrity rules.
 - `git-worklog-guardrails`: primary delivery skill for staging, commits, PR text, release notes, and worklogs.
 - `ci-failure-triage`: diagnose failing CI jobs, build pipelines, deployments, flaky tests, and environment drift.
 - `browser-dom-change`: change browser DOM behavior, jQuery flows, event handlers, selectors, forms, plugins, or script-loaded UI.

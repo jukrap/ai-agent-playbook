@@ -10,6 +10,7 @@ import {
   listContexts,
   listContracts,
   previewWriteGate,
+  inventoryReferenceDirectory,
   parseMaxChars,
   runtimeIndexStatus,
   searchRuntimeIndex,
@@ -57,6 +58,13 @@ export function registerPlaybookMcpTools(server, options) {
     tool('capability_catalog', 'List Harness OS capability categories, skill counts, and workflow counts.', {}, () => capabilityCatalog({ repoRoot })),
     tool('skill_catalog', 'List local skills with v2 taxonomy and compatibility wrapper metadata.', {}, () => skillCatalog({ repoRoot })),
     tool('workflow_list', 'List Harness OS workflow recipes.', {}, () => workflowCatalog()),
+    tool('reference_inventory', 'Summarize a local reference collection without reading large source contents.', {
+      target: targetSchema.describe('Reference directory to inventory.'),
+      maxResults: maxResultsSchema
+    }, (args) => inventoryReferenceDirectory({
+      target: args.target,
+      maxProjects: args.maxResults ?? 100
+    })),
     tool('playbook_layout', 'Describe whether a target playbook has the v2 layout.', {
       target: targetSchema
     }, (args) => describePlaybookLayout({ target: args.target })),

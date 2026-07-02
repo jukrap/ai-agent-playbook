@@ -16,7 +16,7 @@ export async function previewWriteGate({ repoRoot, target, intent, filePath, max
   const contextMatches = preflight.context?.contexts?.filter((item) => item.applies) ?? [];
   const contractMatches = preflight.contracts?.contracts?.filter((item) => item.matches) ?? [];
 
-  if (normalizedPath && normalizedPath.split('/').includes('runtime')) {
+  if (normalizedPath && isPlaybookRuntimePath(normalizedPath)) {
     blockers.push({
       id: 'write-gate.runtime-target',
       message: 'Runtime output is generated. Promote reviewed information into memory instead of editing runtime files directly.',
@@ -64,4 +64,14 @@ export async function previewWriteGate({ repoRoot, target, intent, filePath, max
     ],
     conflicts: preflight.conflicts ?? []
   };
+}
+
+function isPlaybookRuntimePath(filePath) {
+  const portablePath = normalizePortablePath(filePath);
+  return (
+    portablePath === '.ai-playbook/runtime' ||
+    portablePath.startsWith('.ai-playbook/runtime/') ||
+    portablePath === 'ai-playbook/runtime' ||
+    portablePath.startsWith('ai-playbook/runtime/')
+  );
 }

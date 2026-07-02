@@ -31,6 +31,7 @@ test('harness facade keeps the public runtime exports', () => {
     'contextStatus',
     'createPlan',
     'createWorklog',
+    'createWriteGateAdvisory',
     'describePlaybookLayout',
     'doctorProject',
     'initContext',

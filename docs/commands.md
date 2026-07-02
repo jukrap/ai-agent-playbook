@@ -149,10 +149,13 @@ These commands expose the v2 capability model and generated local runtime surfac
 | `index status <target>` | Check whether the runtime file inventory exists. | No | `npx ai-agent-playbook index status <target-project> --json` |
 | `index search <target>` | Search local project text without writing the runtime index. | No | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
 | `write-gate preview <target>` | Preview write risk for an intent and optional path before editing. | No | `npx ai-agent-playbook write-gate preview <target-project> --intent "change auth flow" --path src/example.ts --json` |
+| `write-gate advisory <target>` | Preview or save a pre-write advisory report under playbook runtime. | No unless `--apply` | `npx ai-agent-playbook write-gate advisory <target-project> --intent "change auth flow" --path src/example.ts --apply --json` |
 
 `reference ledger-check` validates `.ai-playbook/knowledge/reference-adoption-ledger.md` by default. It checks adoption statuses, local absolute paths, internal URLs, secret-like tokens, and oversized excerpts without writing files. Use `--path <ledger.md>` to check a different ledger inside the target project. JSON output includes `summary.capabilities` so adoption status can be reviewed by capability area. Add `--strict` when oversized fenced excerpts should fail the check instead of only warning.
 
 `write-gate preview` returns a `transaction.invocationId` and planned `transaction.advisoryPath` under `.ai-playbook/runtime/reports/write-gate/`. The preview stays read-only; the transaction fields are a stable handoff for later post-write or advisory-file work.
+
+`write-gate advisory` uses the same preview engine but can save a pre-write advisory JSON file when `--apply` is present. The file is written only inside `.ai-playbook/runtime/reports/write-gate/`; without `--apply`, the command returns the planned advisory without writing it.
 
 Runtime output lives under `.ai-playbook/runtime/`. Do not copy generated output into `.ai-playbook/memory/` until it has been reviewed and promoted intentionally.
 
@@ -266,7 +269,7 @@ The server exposes read-only tools for:
 
 The server also exposes prompts for `repo_onboarding_runbook`, `harness_extension_plan`, and `reference_adoption_review`. Prompts are reusable task briefs; they do not grant write access by themselves.
 
-The MCP layer is read-only in this version. It does not expose bootstrap, install, update, uninstall, prune, snapshot apply, run record, rename, rewrite, or any command that writes files.
+The MCP layer is read-only in this version. It does not expose bootstrap, install, update, uninstall, prune, snapshot apply, run record, write-gate advisory save, rename, rewrite, or any command that writes files.
 
 ## Adapter setup
 

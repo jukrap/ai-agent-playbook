@@ -117,6 +117,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'data_pipeline_review',
       'database_change_review',
       'adr_spec_handoff_review',
+      'documentation_package_review',
       'workflow_run_review',
       'canon_promotion_review',
       'index_interpretation_review'
@@ -221,6 +222,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       { name: 'data_pipeline_review', toolName: 'operator_map', expectedText: 'data-integrity-review', arguments: { target, scope: 'orders events', intent: 'lineage and quality review' } },
       { name: 'database_change_review', toolName: 'workflow_run_preview', expectedText: 'database-migration', arguments: { target, schema: 'orders table' } },
       { name: 'adr_spec_handoff_review', toolName: 'canon_check', expectedText: 'write_gate_preview', arguments: { target, source: '.ai-playbook/worklogs/example.md' } },
+      { name: 'documentation_package_review', toolName: 'workflow_run_preview', expectedText: 'documentation-package', arguments: { target, artifact: 'release notes', audience: 'support', source: '.ai-playbook/worklogs/example.md' } },
       { name: 'workflow_run_review', toolName: 'workflow_run_preview', arguments: { target, recipe: 'backend-contract-change' } },
       { name: 'canon_promotion_review', toolName: 'canon_check', arguments: { target, source: '.ai-playbook/runtime/indexes/file-inventory.json' } },
       { name: 'index_interpretation_review', toolName: 'index_status', arguments: { target, focus: 'routes' } }

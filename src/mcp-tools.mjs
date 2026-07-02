@@ -885,6 +885,48 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- Promote only reviewed stable facts; leave uncertain evidence in worklogs, plans, or runtime reports.'
   ]));
 
+  server.registerPrompt('documentation_package_review', {
+    title: 'Documentation package review',
+    description: 'Review PRDs, issue plans, release notes, handoffs, knowledge packages, and documentation evidence before creating durable docs.',
+    argsSchema: {
+      target: z.string().optional(),
+      artifact: z.string().optional(),
+      audience: z.string().optional(),
+      source: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS documentation package review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Artifact: ${args.artifact ?? '<PRD, issue plan, release note, changelog, handoff, knowledge package, or documentation bundle>'}`,
+    `Audience: ${args.audience ?? '<reader or owner>'}`,
+    `Source: ${args.source ?? '<request, spec, worklog, runtime evidence, or docs source>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe documentation-package',
+    '- playbook_context for current project memory and local documentation policy',
+    '- operator_search for existing PRDs, issues, release notes, changelogs, runbooks, handoffs, maps, and docs',
+    '- canon_check for existing durable facts and promoted evidence',
+    '- write_gate_preview before suggesting documentation or memory writes',
+    '',
+    'Optional evidence:',
+    '- reference_ledger_check when external reference adoption is part of the package',
+    '- index_status when generated runtime reports, indexes, screenshots, or evidence are included',
+    '- diagnostics_check for available docs, link, translation, or example validation commands',
+    '',
+    'Stop conditions:',
+    '- Output type or audience is unclear',
+    '- Source evidence conflicts with code, current docs, or durable memory',
+    '- Raw transcripts, unreviewed generated summaries, or runtime reports would become trusted documentation',
+    '- Owner, freshness, translation need, maintenance path, or archive path is unknown',
+    '- Artifact would expose private paths, credentials, internal URLs, branch names, PR numbers, or raw reference excerpts',
+    '',
+    'Verification expectations:',
+    '- State the output type: PRD/spec, issue plan, release note/changelog, handoff, knowledge package, docs update, or no durable doc.',
+    '- List reviewed source evidence, open questions, caveats, owner, freshness, maintenance path, and archive path.',
+    '- Keep generated evidence separate from durable memory until reviewed and promoted.',
+    '- Validate public-doc hygiene, translations, links/paths, placeholders, setup commands, examples, and reader-specific handoff expectations when applicable.'
+  ]));
+
   server.registerPrompt('workflow_run_review', {
     title: 'Workflow run review',
     description: 'Preview and review a workflow recipe run contract before starting long-running work.',

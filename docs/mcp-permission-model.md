@@ -15,6 +15,13 @@ The default MCP server exposes read-only tools, resources, and prompts. Tools ar
 
 Default prompts route review work through required evidence, optional evidence, stop conditions, and verification expectations. They do not grant write access or promote generated runtime hints into memory.
 
+Gate and graph review prompts include:
+
+- `repo_graph_review`
+- `ci_quality_gate_review`
+- `release_deployment_gate_review`
+- `security_compliance_gate_review`
+
 Scaffold-tier run record creation is not exposed by default. A future MCP run-start tool must require server opt-in, an explicit apply flag, target path validation, and a dry-run manifest, and it must write only under `.ai-playbook/workflows/runs/`.
 
 Default read-only additions:

@@ -174,7 +174,11 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'pre_action_fact_gate_review',
       'knowledge_source_review',
       'canon_promotion_review',
-      'index_interpretation_review'
+      'index_interpretation_review',
+      'repo_graph_review',
+      'ci_quality_gate_review',
+      'release_deployment_gate_review',
+      'security_compliance_gate_review'
     ]) {
       assert.equal(promptNames.includes(expected), true, `missing MCP prompt ${expected}`);
     }
@@ -355,7 +359,11 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       { name: 'pre_action_fact_gate_review', toolName: 'operator_preflight', expectedText: 'write_gate_preview', arguments: { target, action: 'delete stale index', evidence: '.ai-playbook/runtime/indexes/file-inventory.json' } },
       { name: 'knowledge_source_review', toolName: 'reference_inventory', expectedText: 'knowledge-source-onboarding', arguments: { target, source: '_reference', useCase: 'source registry' } },
       { name: 'canon_promotion_review', toolName: 'canon_check', arguments: { target, source: '.ai-playbook/runtime/indexes/file-inventory.json' } },
-      { name: 'index_interpretation_review', toolName: 'index_status', arguments: { target, focus: 'routes' } }
+      { name: 'index_interpretation_review', toolName: 'index_status', arguments: { target, focus: 'routes' } },
+      { name: 'repo_graph_review', toolName: 'repo_graph_preview', expectedText: 'evidence_locator_check', arguments: { target, focus: 'routes and packages' } },
+      { name: 'ci_quality_gate_review', toolName: 'workflow_run_preview', expectedText: 'ci-quality-gate', arguments: { target, branch: 'main', change: 'auth flow' } },
+      { name: 'release_deployment_gate_review', toolName: 'workflow_run_preview', expectedText: 'deployment-release', arguments: { target, artifact: 'web image', environment: 'staging' } },
+      { name: 'security_compliance_gate_review', toolName: 'evidence_locator_check', expectedText: 'security-compliance-gate', arguments: { target, artifact: 'cli package', gate: 'publish' } }
     ]) {
       const reviewPrompt = await client.getPrompt({
         name,

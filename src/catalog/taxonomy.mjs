@@ -14,7 +14,7 @@ export const CAPABILITY_CATEGORIES = [
   { id: 'database', title: 'Database', description: 'Schema change, migration, SQL, reporting, and data integrity.' },
   { id: 'devops', title: 'DevOps', description: 'CI/CD, containers, deployment, runtime configuration, and observability.' },
   { id: 'security', title: 'Security', description: 'Secrets, threat modeling, authorization, and dependency risk review.' },
-  { id: 'mobile', title: 'Mobile', description: 'Expo, React Native, native app, WebView bridge, and device QA.' },
+  { id: 'mobile', title: 'Mobile', description: 'Expo, React Native, native app release, permissions, offline sync, WebView bridge, and device QA.' },
   { id: 'data', title: 'Data', description: 'Analytics, pipelines, ETL, dashboards, and data quality.' },
   { id: 'ai-harness', title: 'AI Harness', description: 'MCP, skills, agents, context engineering, cache, and index design.' },
   { id: 'legacy', title: 'Legacy', description: 'Legacy change safety and compatibility strategy.' }

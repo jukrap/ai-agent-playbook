@@ -102,6 +102,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     for (const expected of [
       'repo_onboarding_runbook',
       'harness_extension_plan',
+      'harness_governance_review',
       'reference_adoption_review',
       'backend_change_review',
       'architecture_boundary_review',
@@ -206,6 +207,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
 
     for (const { name, toolName, expectedText, arguments: promptArguments } of [
       { name: 'backend_change_review', toolName: 'workflow_run_preview', expectedText: 'backend-contract-change', arguments: { target, intent: 'review auth flow' } },
+      { name: 'harness_governance_review', toolName: 'capability_catalog', expectedText: 'harness-extension', arguments: { target, capability: 'runtime cache', proposal: 'add cache governance skill' } },
       { name: 'architecture_boundary_review', toolName: 'workflow_run_preview', expectedText: 'architecture-boundary-review', arguments: { target, path: 'src/features/login' } },
       { name: 'auth_access_control_review', toolName: 'route_api_hints', arguments: { target, intent: 'review auth flow' } },
       { name: 'dependency_supply_chain_review', toolName: 'dependency_inventory', arguments: { target, ecosystem: 'npm' } },

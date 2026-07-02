@@ -373,6 +373,45 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     }]
   }));
 
+  server.registerPrompt('harness_governance_review', {
+    title: 'Harness governance review',
+    description: 'Review a proposed skill, recipe, MCP, context, memory, cache, or reference-adoption change before expanding the harness surface.',
+    argsSchema: {
+      target: z.string().optional(),
+      capability: z.string().optional(),
+      proposal: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS governance review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Capability: ${args.capability ?? '<capability or category>'}`,
+    `Proposal: ${args.proposal ?? '<skill, reference, recipe, runtime command, MCP surface, adapter, plugin, or docs change>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe harness-extension',
+    '- capability_catalog to confirm category fit and counts',
+    '- skill_catalog to check trigger names, wrappers, references, and duplicate names',
+    '- workflow_list to check whether a recipe already exists',
+    '- write_gate_preview before suggesting managed writes',
+    '',
+    'Optional evidence:',
+    '- reference_inventory and reference_ledger_check when adopting external reference material',
+    '- index_status when runtime indexes, caches, generated evidence, or canon promotion are involved',
+    '- playbook_layout when `.ai-playbook` layout changes are involved',
+    '',
+    'Stop conditions:',
+    '- Change belongs in a selected reference, recipe, or docs page rather than always-on context',
+    '- Proposed surface duplicates an existing skill, workflow, prompt, tool, or resource',
+    '- Write behavior lacks permission tier, dry-run contract, target validation, or audit trail',
+    '- Runtime evidence would be promoted into memory without review',
+    '- External reference material would leak raw source text, private paths, internal URLs, secrets, branch names, or PR numbers',
+    '',
+    'Verification expectations:',
+    '- State the chosen surface: skill, reference, recipe, runtime CLI, MCP resource, MCP prompt, MCP tool, adapter, plugin, docs, or no change.',
+    '- Verify catalog, tests, translations, public-doc hygiene, and install/sync dry-runs for implemented changes.',
+    '- Keep default context and default MCP tool surface narrow unless the broad benefit is explicit.'
+  ]));
+
   server.registerPrompt('reference_adoption_review', {
     title: 'Reference adoption review',
     description: 'Review a local reference collection and update adoption decisions without copying noisy source text.',

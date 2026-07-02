@@ -5,7 +5,7 @@ Skill taxonomy v2 uses capability categories as the primary axis. Stack-specific
 ## Categories
 
 - `foundation`: repo onboarding, bootstrap, project docs, requirements, planning, release notes, and documentation packages.
-- `delivery`: planning, verification, testing, git, PR, and worklog flows.
+- `delivery`: planning, evals, verification, testing, git, PR, and worklog flows.
 - `architecture`: FSD, layered architecture, DDD, monorepos, and boundary review.
 - `frontend`: UI, state, data, accessibility, performance, and visual QA.
 - `backend`: API contracts, connectors, auth, server-rendered flows, workers, and integrations.
@@ -14,7 +14,7 @@ Skill taxonomy v2 uses capability categories as the primary axis. Stack-specific
 - `security`: secrets, threat modeling, authorization, dependency risk, and compliance evidence.
 - `mobile`: Expo, React Native, native app release, permissions, offline sync, WebView bridge, and device QA.
 - `data`: analytics, pipelines, ETL, dashboards, and data quality.
-- `ai-harness`: MCP, skills, agents, context engineering, cache, and index design.
+- `ai-harness`: MCP, skills, agents, context engineering, witness history, cache, and index design.
 - `legacy`: legacy change safety and compatibility strategy.
 
 ## Wrapper Policy
@@ -31,6 +31,7 @@ AI harness skills separate MCP surface design from context engineering, skill-pa
 - `ai-harness/context-engineering-memory-design`: agent instructions, context surfaces, prompt/cache budget, project memory, compaction behavior, durable memory promotion, and stale fact handling.
 - `ai-harness/skill-pack-governance`: skill taxonomy growth, compatibility wrappers, reference routing, translations, install/sync behavior, and reusable skill-pack adoption.
 - `ai-harness/runtime-index-cache-design`: runtime reports, indexes, graphs, caches, artifact schemas, invalidation, canon promotion, generated evidence, and local-only runtime storage.
+- `ai-harness/capability-witness-history`: append-only capability witnesses, baseline comparison, skipped/degraded status, and runtime reliability history.
 - `meta/agent-skill-authoring`: reusable skill structure, trigger descriptions, references, and skill/template boundaries.
 
 AI harness guidance should keep always-on prompt and core tool surfaces narrow. Prefer selected skills, references, recipes, CLI commands, MCP resources, or opt-in tools before growing default context.
@@ -77,11 +78,12 @@ Database guidance should prefer read-before-write evidence: schema inspection, m
 Delivery testing skills separate release confidence planning, flaky test stabilization, and fixture/test-data design:
 
 - `delivery/git-worklog-guardrails`: staging, commits, PR text, release notes, and worklogs.
+- `delivery/eval-harness-design`: agent, harness, workflow, MCP, prompt, capability, regression, grader, and release-gate evals.
 - `delivery/test-verification-strategy`: risk-based verification strategy, test scope, coverage gaps, check selection, and release confidence.
 - `delivery/flaky-test-triage`: flaky, nondeterministic, timing-dependent, order-dependent, environment-sensitive, and intermittent test failures.
 - `delivery/test-fixture-data-design`: fixtures, factories, mocks, seeds, snapshots, golden files, sample payloads, test databases, and fixture maintenance boundaries.
 
-Verification guidance should prefer project-defined commands, avoid invented check results, and record remaining risk when a check cannot be run.
+Verification guidance should prefer project-defined commands, deterministic graders, generated evidence kept in `runtime/`, and explicit remaining risk when a check cannot be run.
 
 ## DevOps And Release Pack
 

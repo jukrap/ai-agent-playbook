@@ -8,12 +8,12 @@ The content is not agent-specific. Codex is one installation target. The source 
 
 ## Skill categories
 
-- `skills/ai-harness`: MCP, skill, agent, context, cache, index, and harness design workflows.
+- `skills/ai-harness`: MCP, skill, agent, context, witness, cache, index, and harness design workflows.
 - `skills/architecture`: boundary, feature slice, domain model, monorepo/package ownership, dependency direction, and coupling review workflows.
 - `skills/backend`: API contract, backend change safety, connector, server-rendered flow, worker, and integration workflows.
 - `skills/data`: analytics pipeline, ETL, reporting, data contract, and quality workflows.
 - `skills/database`: schema, migration, SQL, reporting query, and data integrity workflows.
-- `skills/delivery`: planning, verification, testing, Git, PR, release note, and worklog workflows.
+- `skills/delivery`: planning, eval, verification, testing, Git, PR, release note, and worklog workflows.
 - `skills/devops`: CI/CD, container, package release, deployment, rollback, and operations triage workflows.
 - `skills/frontend`: UI, browser behavior, state/data, accessibility, and visual QA workflows.
 - `skills/git`: commit, PR, push, and worklog guardrails.
@@ -67,11 +67,13 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `context-engineering-memory-design`: reviews agent instructions, context surfaces, prompt/cache budget, project memory, compaction, durable memory promotion, and stale fact handling.
 - `skill-pack-governance`: governs skill taxonomy growth, wrappers, reference routing, translations, install/sync behavior, and reusable skill-pack adoption.
 - `runtime-index-cache-design`: reviews runtime reports, indexes, graphs, caches, artifact schemas, invalidation, canon promotion, and generated evidence boundaries.
+- `capability-witness-history`: reviews append-only capability witnesses, baseline comparison, skipped/degraded status, and runtime reliability history.
 - `agent-skill-authoring`: reusable skill structure, trigger descriptions, references, and skill/template boundaries.
 
 ## Delivery and verification map
 
 - `git-worklog-guardrails`: handles staging, commits, PR text, release notes, and worklogs.
+- `eval-harness-design`: defines agent, harness, workflow, MCP, prompt, capability, regression, grader, and release-gate evals.
 - `test-verification-strategy`: maps change risk to unit, integration, contract, E2E, visual, migration, smoke, manual, or monitor-based checks.
 - `flaky-test-triage`: diagnoses nondeterministic, timing-dependent, order-dependent, environment-sensitive, or intermittent test failures.
 - `test-fixture-data-design`: designs fixtures, factories, mocks, seeds, snapshots, golden files, sample payloads, and test data boundaries.

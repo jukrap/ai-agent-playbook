@@ -737,6 +737,42 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- Separate source data issues from transformation, query, and presentation issues.'
   ]));
 
+  server.registerPrompt('database_change_review', {
+    title: 'Database change review',
+    description: 'Review schema migration, query performance, data integrity, rollback, and database consumer evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      schema: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS database change review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Schema or object: ${args.schema ?? '<table, migration, query, report, procedure, or constraint>'}`,
+    `Intent: ${args.intent ?? '<database change intent>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe database-migration',
+    '- operator_search for schema, migration, query, index, constraint, trigger, procedure, report, export, and rollback references',
+    '- operator_map for stack, data, migration, reporting, and concern signals',
+    '- route_api_hints for route, API, SQL, migration, and data-object hints',
+    '- write_gate_preview before suggesting schema, query, migration, or data repair edits',
+    '',
+    'Optional evidence:',
+    '- contracts_check when database invariants or API/data contracts exist',
+    '- dependency_inventory for ORM, migration tool, scheduler, reporting, and database package context',
+    '- index_status for existing generated runtime evidence',
+    '',
+    'Stop conditions:',
+    '- Production data shape, lock impact, rollback path, backfill bound, or consumer impact is unknown',
+    '- Destructive cleanup, drop, delete, truncate, reindex, or irreversible migration lacks explicit confirmation and rollback evidence',
+    '- Credentials, secrets, private paths, or generated database output would be copied into reusable docs or trusted memory',
+    '',
+    'Verification expectations:',
+    '- Name migration dry run, explain/estimate, before/after query, duplicate/orphan/null reconciliation, application compatibility, rendered report/export/dashboard, and post-deploy checks actually available.',
+    '- Separate schema safety, query performance, data integrity, application contract, and reporting consumer evidence.'
+  ]));
+
   server.registerPrompt('adr_spec_handoff_review', {
     title: 'ADR/spec handoff review',
     description: 'Review decisions, specs, worklogs, and runtime evidence before durable project-memory promotion.',

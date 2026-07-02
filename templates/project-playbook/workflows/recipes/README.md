@@ -9,10 +9,12 @@ Initial recipe set:
 - legacy change
 - backend contract change
 - database migration
+- data integrity review
 - CI failure triage
+- deployment release
 - security audit
 - frontend polish
+- frontend quality review
 - mobile release
 - documentation package
 - harness extension
-

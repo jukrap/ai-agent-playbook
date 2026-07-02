@@ -9,10 +9,12 @@ Recipe는 input, output, 읽을 skill, 유용한 MCP/CLI tool, stop condition, v
 - legacy change
 - backend contract change
 - database migration
+- data integrity review
 - CI failure triage
+- deployment release
 - security audit
 - frontend polish
+- frontend quality review
 - mobile release
 - documentation package
 - harness extension
-

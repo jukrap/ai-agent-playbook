@@ -30,6 +30,7 @@ Default read-only additions:
 - `symbol_outline`
 - `dependency_inventory`
 - `route_api_hints`
+- `repo_graph_preview`
 - `write_gate_preview`
 
 ## Write Gate

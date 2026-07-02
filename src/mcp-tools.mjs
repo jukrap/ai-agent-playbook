@@ -18,6 +18,7 @@ import {
   previewWriteGate,
   inventoryReferenceDirectory,
   parseMaxChars,
+  previewRepoGraph,
   previewWorkflowRun,
   runtimeIndexStatus,
   searchRuntimeIndex,
@@ -95,7 +96,7 @@ export function registerPlaybookMcpTools(server, options) {
     tool('index_status', 'Report the local runtime index status for a target project.', {
       target: targetSchema
     }, (args) => runtimeIndexStatus({ target: args.target })),
-    tool('runtime_schema_check', 'Validate a target-relative runtime, eval, witness, evidence, or source-registry JSON without writing files.', {
+    tool('runtime_schema_check', 'Validate a target-relative runtime, eval, witness, evidence, repo-graph, or source-registry JSON without writing files.', {
       target: targetSchema,
       path: z.string().min(1).describe('JSON path inside the target project.'),
       kind: z.string().min(1).optional().describe('Optional runtime schema kind override.')
@@ -131,6 +132,14 @@ export function registerPlaybookMcpTools(server, options) {
     }, (args) => buildRouteApiHintsIndex({
       target: args.target,
       maxHints: args.maxResults ?? 100
+    })),
+    tool('repo_graph_preview', 'Preview a compact graph over local runtime file, symbol, route/API, and dependency signals without writing files.', {
+      target: targetSchema,
+      maxResults: maxResultsSchema
+    }, (args) => previewRepoGraph({
+      target: args.target,
+      maxNodes: args.maxResults ?? 100,
+      maxEdges: (args.maxResults ?? 100) * 2
     })),
     tool('write_gate_preview', 'Preview write risk for a target path and intent without modifying files.', {
       target: targetSchema,

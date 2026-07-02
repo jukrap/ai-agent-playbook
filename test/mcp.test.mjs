@@ -92,6 +92,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'symbol_outline',
       'dependency_inventory',
       'route_api_hints',
+      'repo_graph_preview',
       'write_gate_preview',
       'canon_check',
       'playbook_context',
@@ -261,6 +262,21 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(routeApiHints.structuredContent.ok, true);
     assert.equal(routeApiHints.structuredContent.mode.writes, false);
     assert.equal(routeApiHints.structuredContent.hints.some((hint) => hint.kind === 'route' && hint.path === '/login'), true);
+
+    const repoGraph = await client.callTool({
+      name: 'repo_graph_preview',
+      arguments: {
+        target,
+        maxResults: 20
+      }
+    });
+    assert.equal(repoGraph.isError, undefined);
+    assert.equal(repoGraph.structuredContent.ok, true);
+    assert.equal(repoGraph.structuredContent.kind, 'runtime.repo-graph');
+    assert.equal(repoGraph.structuredContent.mode.writes, false);
+    assert.equal(repoGraph.structuredContent.summary.nodes > 0, true);
+    assert.equal(repoGraph.structuredContent.nodes.some((node) => node.kind === 'route' && node.label === '/login'), true);
+    assert.equal(repoGraph.structuredContent.edges.some((edge) => edge.kind === 'defines-route'), true);
 
     const prompt = await client.getPrompt({
       name: 'repo_onboarding_runbook',

@@ -42,6 +42,33 @@ test('bootstrap writes playbook and thin root agent bootstrap without overwritin
   await cleanup(target);
 });
 
+test('all bundled workflow recipes preview with required manifest sections', async () => {
+  const target = await tempRepo('workflow all recipes-공백-');
+  const list = capture(target);
+  assert.equal(await runCli(['workflow', 'list', '--json'], list), 0);
+  const listed = JSON.parse(list.out());
+  assert.equal(listed.summary.workflows, 14);
+
+  const before = await listRelativeFiles(target);
+  for (const recipe of listed.workflows) {
+    const preview = capture(target);
+    assert.equal(await runCli(['workflow', 'run-preview', '.', '--recipe', recipe.id, '--json'], preview), 0);
+    const report = JSON.parse(preview.out());
+    assert.equal(report.ok, true, `${recipe.id} should preview successfully`);
+    assert.equal(report.mode.writes, false);
+    assert.equal(report.recipe.source, 'bundled');
+    assert.equal(report.conflicts.length, 0);
+    assert.ok(report.manifest.inputs.length > 0, `${recipe.id} should define inputs`);
+    assert.ok(report.manifest.outputs.length > 0, `${recipe.id} should define outputs`);
+    assert.ok(report.manifest.skills.length > 0, `${recipe.id} should define skills`);
+    assert.ok(report.manifest.tools.length > 0, `${recipe.id} should define tools`);
+    assert.ok(report.manifest.stopConditions.length > 0, `${recipe.id} should define stop conditions`);
+    assert.ok(report.manifest.verification.length > 0, `${recipe.id} should define verification`);
+  }
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
 test('harness os v2 commands expose layout, catalog, index, and write-gate flows', async () => {
   const bareWorkflowTarget = await tempRepo('workflow preview bare-공백-');
   const bareWorkflowPreview = capture(bareWorkflowTarget);

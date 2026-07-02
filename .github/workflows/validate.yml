@@ -36,6 +36,10 @@ jobs:
         shell: pwsh
         run: ./scripts/validate-translations.ps1
 
+      - name: Validate public docs
+        shell: pwsh
+        run: ./scripts/validate-public-docs.ps1
+
       - name: Validate installer
         shell: pwsh
         run: ./install.ps1 -SkipValidation -WhatIf

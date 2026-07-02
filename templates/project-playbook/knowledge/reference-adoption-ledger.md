@@ -1,6 +1,6 @@
 # Reference Adoption Ledger
 
-Use this ledger for local reference collections such as `_reference/`. Record the local decision, not raw upstream text.
+Use this ledger for local reference collections. Record the local decision, not raw upstream text.
 
 | Status | Reference ID | Capability | Useful Pattern | Local Adoption | Risk/Noise | Decision Date |
 | --- | --- | --- | --- | --- | --- | --- |

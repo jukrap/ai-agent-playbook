@@ -1,6 +1,6 @@
 # Reference Adoption Ledger
 
-`_reference/` 같은 local reference collection을 검토할 때 이 ledger를 사용합니다. 원문을 그대로 붙이지 말고 local decision을 기록합니다.
+local reference collection을 검토할 때 이 ledger를 사용합니다. 원문을 그대로 붙이지 말고 local decision을 기록합니다.
 
 | Status | Reference ID | Capability | Useful Pattern | Local Adoption | Risk/Noise | Decision Date |
 | --- | --- | --- | --- | --- | --- | --- |

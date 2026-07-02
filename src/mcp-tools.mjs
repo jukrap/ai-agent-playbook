@@ -17,6 +17,7 @@ import {
   previewWriteGate,
   inventoryReferenceDirectory,
   parseMaxChars,
+  previewWorkflowRun,
   runtimeIndexStatus,
   searchRuntimeIndex,
   skillCatalog,
@@ -63,6 +64,14 @@ export function registerPlaybookMcpTools(server, options) {
     tool('capability_catalog', 'List Harness OS capability categories, skill counts, and workflow counts.', {}, () => capabilityCatalog({ repoRoot })),
     tool('skill_catalog', 'List local skills with v2 taxonomy and compatibility wrapper metadata.', {}, () => skillCatalog({ repoRoot })),
     tool('workflow_list', 'List Harness OS workflow recipes.', {}, () => workflowCatalog()),
+    tool('workflow_run_preview', 'Preview a workflow run manifest from a target or bundled recipe without writing files.', {
+      target: targetSchema,
+      recipe: z.string().min(1).describe('Lowercase hyphenated workflow recipe id.')
+    }, (args) => previewWorkflowRun({
+      repoRoot,
+      target: args.target,
+      recipeId: args.recipe
+    })),
     tool('reference_inventory', 'Summarize a local reference collection without reading large source contents.', {
       target: targetSchema.describe('Reference directory to inventory.'),
       maxResults: maxResultsSchema

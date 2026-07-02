@@ -74,6 +74,7 @@ npx ai-agent-playbook bootstrap ".\example app" --dry-run
 | `--month YYYY-MM` | worklog summary 대상 월입니다. |
 | `--cols N` | `qa tui-check`에서 기대하는 terminal width입니다. |
 | `--run-id <id>` | `.ai-playbook/runs/` 아래 특정 run을 선택합니다. |
+| `--recipe <id>` | `workflow run-preview`에서 workflow recipe를 선택합니다. |
 | `--type note|criterion|evidence|blocker|cleanup` | `run record`에 기록할 event type입니다. |
 | `--status pass|fail|blocked|info` | `run record`에 기록할 event status입니다. |
 | `--evidence <path>` | `run record`에 남길 portable relative evidence path입니다. |
@@ -143,6 +144,7 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 | `catalog list` | capability category와 skill/workflow 개수를 나열합니다. | 아니오 | `npx ai-agent-playbook catalog list --json` |
 | `catalog check` | skill taxonomy, duplicate name, wrapper route, wrapper reference를 검증합니다. | 아니오 | `npx ai-agent-playbook catalog check --json` |
 | `workflow list` | built-in workflow recipe를 나열합니다. | 아니오 | `npx ai-agent-playbook workflow list --json` |
+| `workflow run-preview <target>` | target 또는 bundled recipe에서 workflow run manifest를 run file 생성 없이 preview합니다. | 아니오 | `npx ai-agent-playbook workflow run-preview <target-project> --recipe backend-contract-change --json` |
 | `reference inventory <reference-dir>` | 채택할 항목을 판단하기 전에 local reference collection을 요약합니다. | 아니오 | `npx ai-agent-playbook reference inventory _reference --json` |
 | `reference ledger-check <target>` | reference adoption ledger의 status 값과 local-only leak를 검증합니다. | 아니오 | `npx ai-agent-playbook reference ledger-check <target-project> --json` |
 | `index build <target>` | `.ai-playbook/runtime/indexes/file-inventory.json` 생성을 preview하거나 씁니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook index build <target-project> --json` |
@@ -275,7 +277,7 @@ ai-playbook mcp
 서버는 아래 read-only 도구를 노출합니다.
 
 - playbook context: `playbook_context`, `context_status`, `context_list`
-- catalog와 layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `reference_inventory`, `reference_ledger_check`, `playbook_layout`, `index_status`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `write_gate_preview`
+- catalog와 layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_ledger_check`, `playbook_layout`, `index_status`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `write_gate_preview`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules와 project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA와 deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`

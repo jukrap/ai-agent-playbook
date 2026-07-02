@@ -18,6 +18,7 @@ Harness OS MCP의 기본값은 read-only 분석과 catalog 접근입니다.
 - `capability_catalog`
 - `skill_catalog`
 - `workflow_list`
+- `workflow_run_preview`
 - `playbook_layout`
 - `index_status`
 - `index_search`

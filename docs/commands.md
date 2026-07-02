@@ -74,6 +74,7 @@ Command-specific options appear where they are needed:
 | `--month YYYY-MM` | Month for a worklog summary. |
 | `--cols N` | Expected terminal width for `qa tui-check`. |
 | `--run-id <id>` | Select one run under `.ai-playbook/runs/`. |
+| `--recipe <id>` | Select a workflow recipe for `workflow run-preview`. |
 | `--type note|criterion|evidence|blocker|cleanup` | Event type for `run record`. |
 | `--status pass|fail|blocked|info` | Event status for `run record`. |
 | `--evidence <path>` | Portable relative evidence path for `run record`. |
@@ -143,6 +144,7 @@ These commands expose the v2 capability model and generated local runtime surfac
 | `catalog list` | List capability categories with skill and workflow counts. | No | `npx ai-agent-playbook catalog list --json` |
 | `catalog check` | Validate skill taxonomy, duplicate names, wrapper routes, and wrapper references. | No | `npx ai-agent-playbook catalog check --json` |
 | `workflow list` | List built-in workflow recipes. | No | `npx ai-agent-playbook workflow list --json` |
+| `workflow run-preview <target>` | Preview a workflow run manifest from a target or bundled recipe without creating run files. | No | `npx ai-agent-playbook workflow run-preview <target-project> --recipe backend-contract-change --json` |
 | `reference inventory <reference-dir>` | Summarize a local reference collection before deciding what to adopt. | No | `npx ai-agent-playbook reference inventory _reference --json` |
 | `reference ledger-check <target>` | Validate a reference adoption ledger for status values and local-only leaks. | No | `npx ai-agent-playbook reference ledger-check <target-project> --json` |
 | `index build <target>` | Preview or write `.ai-playbook/runtime/indexes/file-inventory.json`. | No unless `--apply` | `npx ai-agent-playbook index build <target-project> --json` |
@@ -275,7 +277,7 @@ ai-playbook mcp
 The server exposes read-only tools for:
 
 - playbook context: `playbook_context`, `context_status`, `context_list`
-- catalogs and layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `reference_inventory`, `reference_ledger_check`, `playbook_layout`, `index_status`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `write_gate_preview`
+- catalogs and layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_ledger_check`, `playbook_layout`, `index_status`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `write_gate_preview`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules and project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA and deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`

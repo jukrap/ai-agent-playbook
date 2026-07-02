@@ -35,6 +35,7 @@ import {
   migratePlaybookPath,
   parseMaxChars,
   postCheckWriteGate,
+  previewWorkflowRun,
   promoteCanonFacts,
   previewWriteGate,
   adoptManagedManifest,
@@ -489,6 +490,22 @@ export async function runCli(argv, io = {}) {
         }
       }
       return 0;
+    }
+
+    if (command === 'workflow' && subcommand === 'run-preview') {
+      const result = await previewWorkflowRun({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        recipeId: parsed.flags.recipe
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else if (result.ok) {
+        write(stdout, `Workflow run preview: ${result.recipe.id} (${result.recipe.source}), ${result.summary.verification} verification item(s)\n`);
+      } else {
+        write(stdout, `Workflow run preview: ${result.recipe.id} has ${result.summary.conflicts} conflict(s)\n`);
+      }
+      return result.ok ? 0 : 1;
     }
 
     if (command === 'reference' && subcommand === 'inventory') {
@@ -1244,6 +1261,7 @@ function needsValue(key) {
     'max-results',
     'codex-root',
     'agents-root',
+    'recipe',
     'run-id',
     'type',
     'message',
@@ -1331,6 +1349,7 @@ Usage:
   ai-playbook catalog list [--json]
   ai-playbook catalog check [--json]
   ai-playbook workflow list [--json]
+  ai-playbook workflow run-preview <target> --recipe <recipe-id> [--json]
   ai-playbook reference inventory <reference-dir> [--max-results N] [--json]
   ai-playbook reference ledger-check <target> [--path <ledger.md>] [--strict] [--json]
   ai-playbook layout status <target> [--json]

@@ -50,6 +50,7 @@ test('harness facade keeps the public runtime exports', () => {
     'postCheckWriteGate',
     'promoteCanonFacts',
     'previewWriteGate',
+    'previewWorkflowRun',
     'pruneManagedManifest',
     'recordRun',
     'resolvePlaybookLayout',

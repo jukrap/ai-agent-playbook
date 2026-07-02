@@ -30,6 +30,7 @@ test('harness facade keeps the public runtime exports', () => {
     'catalogManagedManifest',
     'checkCanonFacts',
     'checkContracts',
+    'checkEvidenceLocators',
     'checkGuides',
     'checkManagedManifest',
     'checkReferenceAdoptionLedger',

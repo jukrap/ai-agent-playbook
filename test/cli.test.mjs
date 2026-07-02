@@ -634,6 +634,76 @@ test('runtime schema-check validates known runtime and source schemas without wr
   await cleanup(target);
 });
 
+test('evidence locator-check validates JSON and Markdown locators without writing files', async () => {
+  const target = await tempRepo('evidence locator check-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await mkdir(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evidence'), { recursive: true });
+  await mkdir(path.join(target, 'docs'), { recursive: true });
+  await writeFile(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evidence', 'ok.json'), `${JSON.stringify({
+    schemaVersion: '1',
+    kind: 'runtime.evidence-envelope',
+    sourceId: 'local-reference',
+    sourceBoundary: 'local-file',
+    locator: { type: 'path-range', path: 'src/app.ts#L1-L5' },
+    query: 'locator-check',
+    scanRange: 'src/**/*.ts',
+    freshness: '2026-07-03',
+    evidenceType: 'summary',
+    summary: 'The route is defined in src/app.ts.',
+    caveats: [],
+    promotionStatus: 'runtime-only'
+  }, null, 2)}\n`);
+  await writeFile(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evidence', 'bad.json'), `${JSON.stringify({
+    locator: { type: 'path-range', path: 'C:\\Users\\home\\secret.txt' },
+    sourceBoundary: 'unknown-boundary',
+    summary: 'sk-proj-this-is-not-a-valid-example-but-is-secret-shaped-1234567890'
+  }, null, 2)}\n`);
+  await writeFile(path.join(target, 'docs', 'notes.md'), '# Notes\n\nGeneral implementation notes without locator blocks.\n');
+  await writeFile(path.join(target, 'docs', 'locators.md'), [
+    '| locatorType | locator | scanRange | sourceBoundary | freshness |',
+    '| --- | --- | --- | --- | --- |',
+    '| path-range | src/app.ts#L1-L5 | src/**/*.ts | local-file | 2026-07-03 |',
+    ''
+  ].join('\n'));
+  const before = await listRelativeFiles(target);
+
+  const okCheck = capture(target);
+  assert.equal(await runCli(['evidence', 'locator-check', '.', '--path', '.ai-playbook/runtime/reports/evidence/ok.json', '--json'], okCheck), 0);
+  const okReport = JSON.parse(okCheck.out());
+  assert.equal(okReport.kind, 'runtime.evidence-locator-check');
+  assert.equal(okReport.mode.writes, false);
+  assert.equal(okReport.summary.locators, 1);
+  assert.equal(okReport.summary.conflicts, 0);
+
+  const badCheck = capture(target);
+  assert.equal(await runCli(['evidence', 'locator-check', '.', '--path', '.ai-playbook/runtime/reports/evidence/bad.json', '--json'], badCheck), 1);
+  const badReport = JSON.parse(badCheck.out());
+  assert.equal(badReport.conflicts.some((conflict) => conflict.id === 'evidence-locator.scan-range-missing'), true);
+  assert.equal(badReport.conflicts.some((conflict) => conflict.id === 'evidence-locator.source-boundary-unknown'), true);
+  assert.equal(badReport.conflicts.some((conflict) => conflict.id === 'evidence-locator.portable-path'), true);
+  assert.equal(badReport.conflicts.some((conflict) => conflict.id === 'evidence-locator.credential-value'), true);
+
+  const missingCheck = capture(target);
+  assert.equal(await runCli(['evidence', 'locator-check', '.', '--path', '.ai-playbook/runtime/reports/evidence/missing.json', '--json'], missingCheck), 1);
+  const missingReport = JSON.parse(missingCheck.out());
+  assert.equal(missingReport.conflicts.some((conflict) => conflict.id === 'evidence-locator.file-unreadable'), true);
+  assert.equal(JSON.stringify(missingReport.conflicts).includes(target), false);
+
+  const notesCheck = capture(target);
+  assert.equal(await runCli(['evidence', 'locator-check', '.', '--path', 'docs/notes.md', '--json'], notesCheck), 0);
+  const notesReport = JSON.parse(notesCheck.out());
+  assert.equal(notesReport.warnings.some((warning) => warning.id === 'evidence-locator.markdown-none'), true);
+
+  const tableCheck = capture(target);
+  assert.equal(await runCli(['evidence', 'locator-check', '.', '--path', 'docs/locators.md', '--json'], tableCheck), 0);
+  const tableReport = JSON.parse(tableCheck.out());
+  assert.equal(tableReport.summary.locators, 1);
+  assert.equal(tableReport.summary.conflicts, 0);
+
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
 test('runtime capability-history summarizes append-only JSONL without writing files', async () => {
   const target = await tempRepo('capability history-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);

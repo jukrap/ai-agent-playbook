@@ -14,6 +14,7 @@ import {
   bootstrapProject,
   capabilityCatalog,
   checkContracts,
+  checkEvidenceLocators,
   checkGuides,
   checkManagedManifest,
   checkCanonFacts,
@@ -634,6 +635,25 @@ export async function runCli(argv, io = {}) {
         writeJson(stdout, result);
       } else {
         write(stdout, `Runtime schema: ${result.ok ? 'ok' : 'needs attention'} (${result.summary.conflicts} conflict(s))\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'evidence' && subcommand === 'locator-check') {
+      const result = await checkEvidenceLocators({
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : ''
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Evidence locators: ${result.summary.locators} locator(s), ${result.summary.conflicts} conflict(s)\n`);
         for (const warning of result.warnings) {
           write(stdout, `[WARN] ${warning.message}\n`);
         }
@@ -1463,6 +1483,7 @@ Usage:
   ai-playbook layout status <target> [--json]
   ai-playbook runtime capability-history <target> [--json]
   ai-playbook runtime schema-check <target> --path <json> [--kind <kind>] [--json]
+  ai-playbook evidence locator-check <target> --path <json-or-md> [--json]
   ai-playbook index build <target> [--apply] [--json]
   ai-playbook index status <target> [--json]
   ai-playbook index search <target> --query <text> [--max-results N] [--json]

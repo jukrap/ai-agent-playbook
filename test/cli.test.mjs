@@ -132,6 +132,14 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   assert.equal(workflowReport.workflows.some((item) => item.id === 'frontend-quality-review'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'data-integrity-review'), true);
 
+  const databaseWorkflowPreview = capture(target);
+  assert.equal(await runCli(['workflow', 'run-preview', '.', '--recipe', 'database-migration', '--json'], databaseWorkflowPreview), 0);
+  const databaseWorkflowPreviewReport = JSON.parse(databaseWorkflowPreview.out());
+  assert.equal(databaseWorkflowPreviewReport.manifest.skills.some((skill) => skill.includes('schema migration plan')), true);
+  assert.equal(databaseWorkflowPreviewReport.manifest.skills.some((skill) => skill.includes('query performance review')), true);
+  assert.equal(databaseWorkflowPreviewReport.manifest.skills.some((skill) => skill.includes('data integrity constraints')), true);
+  assert.equal(databaseWorkflowPreviewReport.manifest.verification.some((item) => item.includes('rendered report/export/dashboard')), true);
+
   const beforeWorkflowPreview = await listRelativeFiles(target);
   const workflowPreview = capture(target);
   assert.equal(await runCli(['workflow', 'run-preview', '.', '--recipe', 'backend-contract-change', '--json'], workflowPreview), 0);

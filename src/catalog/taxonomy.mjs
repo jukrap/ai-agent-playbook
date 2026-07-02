@@ -15,8 +15,8 @@ export const CAPABILITY_CATEGORIES = [
   { id: 'devops', title: 'DevOps', description: 'CI/CD, containers, deployment, runtime configuration, and observability.' },
   { id: 'security', title: 'Security', description: 'Secrets, threat modeling, authorization, and dependency risk review.' },
   { id: 'mobile', title: 'Mobile', description: 'Expo, React Native, native app release, permissions, offline sync, WebView bridge, and device QA.' },
-  { id: 'data', title: 'Data', description: 'Analytics, pipelines, ETL, dashboards, and data quality.' },
-  { id: 'ai-harness', title: 'AI Harness', description: 'MCP, skills, agents, context engineering, witness history, cache, and index design.' },
+  { id: 'data', title: 'Data', description: 'Analytics, pipelines, ETL, dashboards, source registries, and data quality.' },
+  { id: 'ai-harness', title: 'AI Harness', description: 'MCP, skills, agents, context engineering, fact gates, witness history, cache, and index design.' },
   { id: 'legacy', title: 'Legacy', description: 'Legacy change safety and compatibility strategy.' }
 ];
 

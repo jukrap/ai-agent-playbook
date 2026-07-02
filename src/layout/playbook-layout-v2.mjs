@@ -75,6 +75,7 @@ export const PLAYBOOK_V2_FILES = {
     ''
   ].join('\n'),
   'knowledge/sources.json': `${JSON.stringify({
+    schemaVersion: '1',
     sources: []
   }, null, 2)}\n`,
   'runtime/README.md': [

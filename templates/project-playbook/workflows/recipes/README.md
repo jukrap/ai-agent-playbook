@@ -6,6 +6,7 @@ Initial recipe set:
 
 - repo onboarding
 - feature delivery
+- agent orchestration handoff
 - eval driven change
 - CI quality gate
 - legacy change

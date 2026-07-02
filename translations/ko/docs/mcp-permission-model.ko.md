@@ -17,6 +17,7 @@ Harness OS MCP의 기본값은 read-only 분석과 catalog 접근입니다.
 
 Gate와 graph review prompt에는 다음이 포함됩니다.
 
+- `agent_orchestration_review`
 - `repo_graph_review`
 - `ci_quality_gate_review`
 - `release_deployment_gate_review`

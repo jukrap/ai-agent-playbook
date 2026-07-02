@@ -65,6 +65,7 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 
 - `mcp-server-design`: designs MCP tools, resources, prompts, permission tiers, write gates, and cache/index surfaces.
 - `context-engineering-memory-design`: reviews agent instructions, context surfaces, prompt/cache budget, project memory, compaction, durable memory promotion, and stale fact handling.
+- `agent-orchestration-handoff`: reviews multi-agent worker contracts, context budgets, evidence ledgers, reconciliation gates, and handoffs.
 - `skill-pack-governance`: governs skill taxonomy growth, wrappers, reference routing, translations, install/sync behavior, and reusable skill-pack adoption.
 - `runtime-index-cache-design`: reviews runtime reports, indexes, graphs, caches, artifact schemas, invalidation, canon promotion, and generated evidence boundaries.
 - `capability-witness-history`: reviews append-only capability witnesses, baseline comparison, skipped/degraded status, and runtime reliability history.

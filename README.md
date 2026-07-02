@@ -168,6 +168,7 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 
 - `mcp-server-design`: design MCP tools, resources, prompts, permission tiers, write gates, and cache/index surfaces.
 - `context-engineering-memory-design`: design or review agent instructions, context surfaces, prompt/cache budget, project memory, compaction behavior, durable memory promotion, or stale fact handling.
+- `agent-orchestration-handoff`: split work across agents, subagents, workers, review passes, or long-running handoffs with bounded contracts and evidence ledgers.
 - `skill-pack-governance`: add, reorganize, review, or adopt skill packs, taxonomy categories, compatibility wrappers, reference routing, translations, install/sync behavior, or reusable skill governance.
 - `runtime-index-cache-design`: design or review runtime reports, indexes, graphs, caches, artifact schemas, invalidation, canon promotion, generated evidence, or local-only runtime storage.
 - `capability-witness-history`: design or review append-only capability witnesses, baseline comparison, skipped/degraded status, and runtime reliability history.

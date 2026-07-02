@@ -5,6 +5,7 @@ import {
   validateEvalDefinition,
   validateEvalRunReport,
   validateEvidenceEnvelope,
+  validateRepoGraph,
   validateRuntimeArtifact,
   validateSourceRegistry
 } from '../src/runtime/schemas.mjs';
@@ -151,4 +152,62 @@ test('runtime schemas reject credential values, absolute paths, and invalid enum
   assert.equal(validation.conflicts.some((conflict) => conflict.id === 'runtime.schema.absolute-path'), true);
   assert.equal(validation.conflicts.some((conflict) => conflict.id === 'runtime.schema.credential-value'), true);
   assert.equal(validation.conflicts.some((conflict) => conflict.id === 'runtime.schema.enum-field'), true);
+});
+
+test('runtime repo graph schema accepts source-backed nodes and edges', () => {
+  const validation = validateRepoGraph({
+    schemaVersion: '1',
+    kind: 'runtime.repo-graph',
+    ok: true,
+    target: 'C:\\workspace\\project',
+    applied: false,
+    mode: { localOnly: true, network: false, writes: false },
+    graph: '.ai-playbook/runtime/graphs/repo-graph.json',
+    generatedAt: '2026-07-03T00:00:00.000Z',
+    scanRange: { sourceReports: ['runtime.file-inventory'], maxNodes: 100, maxEdges: 200 },
+    sources: [{ kind: 'runtime.file-inventory', index: '.ai-playbook/runtime/indexes/file-inventory.json', entries: 2 }],
+    nodes: [
+      { id: 'file:src/app.ts', kind: 'file', label: 'src/app.ts', path: 'src/app.ts', source: 'runtime.file-inventory' },
+      { id: 'symbol:src/app.ts:1:handler', kind: 'symbol', label: 'handler', path: 'src/app.ts', line: 1, source: 'pattern.javascript.function' }
+    ],
+    edges: [
+      { id: 'contains:file:src/app.ts:symbol:src/app.ts:1:handler', kind: 'contains', from: 'file:src/app.ts', to: 'symbol:src/app.ts:1:handler', sourcePath: 'src/app.ts', line: 1, source: 'pattern.javascript.function' }
+    ],
+    summary: { nodes: 2, edges: 1, warnings: 0, conflicts: 0 },
+    warnings: [],
+    conflicts: []
+  }, { path: 'runtime/graphs/repo-graph.json' });
+
+  assert.equal(validation.ok, true);
+});
+
+test('runtime repo graph schema rejects unsafe paths, invalid edge kinds, and dangling edges', () => {
+  const validation = validateRepoGraph({
+    schemaVersion: '1',
+    kind: 'runtime.repo-graph',
+    ok: true,
+    target: 'C:\\workspace\\project',
+    applied: false,
+    mode: { localOnly: true, network: false, writes: false },
+    graph: 'C:\\workspace\\project\\.ai-playbook\\runtime\\graphs\\repo-graph.json',
+    generatedAt: '2026-07-03T00:00:00.000Z',
+    scanRange: { sourceReports: ['runtime.file-inventory'], maxNodes: 100, maxEdges: 200 },
+    sources: [{ kind: 'runtime.file-inventory', index: 'C:\\workspace\\project\\.ai-playbook\\runtime\\indexes\\file-inventory.json', entries: 2 }],
+    nodes: [
+      { id: 'file:src/app.ts', kind: 'file', label: 'src/app.ts', path: 'src/app.ts', source: 'runtime.file-inventory' },
+      { id: 'route:bad', kind: 'route', label: 'sk-proj-this-is-secret-shaped-1234567890', path: 'C:\\workspace\\project\\src\\bad.ts', source: 'runtime.route-api-hints' }
+    ],
+    edges: [
+      { id: 'bad-edge', kind: 'guesses', from: 'file:src/app.ts', to: 'missing:node', sourcePath: 'src/app.ts', source: 'manual' }
+    ],
+    summary: { nodes: 2, edges: 1, warnings: 0, conflicts: 0 },
+    warnings: [],
+    conflicts: []
+  }, { path: 'runtime/graphs/repo-graph.json' });
+
+  assert.equal(validation.ok, false);
+  assert.equal(validation.conflicts.some((conflict) => conflict.id === 'runtime.schema.portable-path'), true);
+  assert.equal(validation.conflicts.some((conflict) => conflict.id === 'runtime.schema.enum-field'), true);
+  assert.equal(validation.conflicts.some((conflict) => conflict.id === 'runtime.schema.repo-graph-edge-ref'), true);
+  assert.equal(validation.conflicts.some((conflict) => conflict.id === 'runtime.schema.credential-value'), true);
 });

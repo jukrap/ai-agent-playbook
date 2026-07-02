@@ -94,7 +94,10 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   const workflow = capture(target);
   assert.equal(await runCli(['workflow', 'list', '--json'], workflow), 0);
   const workflowReport = JSON.parse(workflow.out());
-  assert.equal(workflowReport.summary.workflows, 11);
+  assert.equal(workflowReport.summary.workflows, 14);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'deployment-release'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'frontend-quality-review'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'data-integrity-review'), true);
 
   const beforeWorkflowPreview = await listRelativeFiles(target);
   const workflowPreview = capture(target);

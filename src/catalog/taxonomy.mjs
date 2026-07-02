@@ -97,10 +97,22 @@ export const WORKFLOW_RECIPES = [
     outputs: ['memory/contracts', 'workflows/runbooks', 'workflows/worklogs']
   },
   {
+    id: 'data-integrity-review',
+    title: 'Data Integrity Review',
+    category: 'data',
+    outputs: ['runtime/reports', 'memory/contracts', 'workflows/worklogs']
+  },
+  {
     id: 'ci-failure-triage',
     title: 'CI Failure Triage',
     category: 'devops',
     outputs: ['runtime/reports', 'workflows/worklogs']
+  },
+  {
+    id: 'deployment-release',
+    title: 'Deployment Release',
+    category: 'devops',
+    outputs: ['workflows/runbooks', 'runtime/reports', 'workflows/worklogs']
   },
   {
     id: 'security-audit',
@@ -113,6 +125,12 @@ export const WORKFLOW_RECIPES = [
     title: 'Frontend Polish',
     category: 'frontend',
     outputs: ['runtime/reports', 'workflows/runs']
+  },
+  {
+    id: 'frontend-quality-review',
+    title: 'Frontend Quality Review',
+    category: 'frontend',
+    outputs: ['runtime/reports', 'workflows/worklogs']
   },
   {
     id: 'mobile-release',

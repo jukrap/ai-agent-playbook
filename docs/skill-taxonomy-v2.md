@@ -13,8 +13,8 @@ Skill taxonomy v2 uses capability categories as the primary axis. Stack-specific
 - `devops`: CI/CD, containers, package releases, deployment, configuration, and observability.
 - `security`: secrets, threat modeling, authorization, dependency risk, and compliance evidence.
 - `mobile`: Expo, React Native, native app release, permissions, offline sync, WebView bridge, and device QA.
-- `data`: analytics, pipelines, ETL, dashboards, and data quality.
-- `ai-harness`: MCP, skills, agents, context engineering, witness history, cache, and index design.
+- `data`: analytics, pipelines, ETL, dashboards, source registries, and data quality.
+- `ai-harness`: MCP, skills, agents, context engineering, fact gates, witness history, cache, and index design.
 - `legacy`: legacy change safety and compatibility strategy.
 
 ## Wrapper Policy
@@ -32,6 +32,7 @@ AI harness skills separate MCP surface design from context engineering, skill-pa
 - `ai-harness/skill-pack-governance`: skill taxonomy growth, compatibility wrappers, reference routing, translations, install/sync behavior, and reusable skill-pack adoption.
 - `ai-harness/runtime-index-cache-design`: runtime reports, indexes, graphs, caches, artifact schemas, invalidation, canon promotion, generated evidence, and local-only runtime storage.
 - `ai-harness/capability-witness-history`: append-only capability witnesses, baseline comparison, skipped/degraded status, and runtime reliability history.
+- `ai-harness/pre-action-fact-gate`: concrete facts, scan ranges, owners, importers, schemas, rollback paths, and write-tier escalation before risky action.
 - `meta/agent-skill-authoring`: reusable skill structure, trigger descriptions, references, and skill/template boundaries.
 
 AI harness guidance should keep always-on prompt and core tool surfaces narrow. Prefer selected skills, references, recipes, CLI commands, MCP resources, or opt-in tools before growing default context.
@@ -141,6 +142,7 @@ Data and documentation skills separate pipeline reliability, reporting correctne
 - `data/data-quality-observability`: null/duplicate/orphan/range/freshness checks, anomaly detection, alert thresholds, quarantine, repair paths, and data incident handoff.
 - `data/analytics-instrumentation-review`: tracking plans, event schemas, identity grain, funnels, cohorts, experiments, attribution, consent, and downstream metric impact.
 - `data/knowledge-retrieval-pipeline-review`: document ingestion, parsing, chunking, metadata, embeddings/vector stores, retrieval evaluation, citations, access control, and stale indexes.
+- `data/knowledge-source-registry`: source owner, status, freshness, credential boundary, locator shape, search/browse mode, evidence envelope, and promotion policy.
 - `project/project-doc-system`: `.ai-playbook` maps, runbooks, decisions, plans, worklogs, archives, and project-memory hygiene.
 - `project/adr-spec-handoff`: ADRs, specs, milestone outcomes, implementation handoffs, reviewed evidence, and durable memory promotion.
 - `project/requirements-prd-scope-review`: PRDs, lightweight specs, scope briefs, non-goals, acceptance criteria, assumptions, and open-question lists.

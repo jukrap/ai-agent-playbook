@@ -13,8 +13,8 @@ Skill taxonomy v2는 capability category를 1차 축으로 씁니다. 스택별 
 - `devops`: CI/CD, container, package release, deployment, configuration, observability.
 - `security`: secret, threat modeling, authorization, dependency risk, compliance evidence.
 - `mobile`: Expo, React Native, native app release, permission, offline sync, WebView bridge, device QA.
-- `data`: analytics, pipeline, ETL, dashboard, data quality.
-- `ai-harness`: MCP, skill, agent, context engineering, witness history, cache, index design.
+- `data`: analytics, pipeline, ETL, dashboard, source registry, data quality.
+- `ai-harness`: MCP, skill, agent, context engineering, fact gate, witness history, cache, index design.
 - `legacy`: legacy change safety와 compatibility strategy.
 
 ## Wrapper Policy
@@ -32,6 +32,7 @@ AI harness skill은 MCP surface design을 context engineering, skill-pack govern
 - `ai-harness/skill-pack-governance`: skill taxonomy growth, compatibility wrapper, reference routing, translation, install/sync behavior, reusable skill-pack adoption.
 - `ai-harness/runtime-index-cache-design`: runtime report, index, graph, cache, artifact schema, invalidation, canon promotion, generated evidence, local-only runtime storage.
 - `ai-harness/capability-witness-history`: append-only capability witness, baseline comparison, skipped/degraded status, runtime reliability history.
+- `ai-harness/pre-action-fact-gate`: risky action 전 concrete fact, scan range, owner, importer, schema, rollback path, write-tier escalation.
 - `meta/agent-skill-authoring`: reusable skill structure, trigger description, reference, skill/template boundary.
 
 AI harness guidance는 always-on prompt와 core tool surface를 좁게 유지해야 합니다. Default context를 키우기 전에 selected skill, reference, recipe, CLI command, MCP resource, opt-in tool을 우선합니다.
@@ -141,6 +142,7 @@ Data와 documentation skill은 pipeline reliability, reporting correctness, migr
 - `data/data-quality-observability`: null/duplicate/orphan/range/freshness check, anomaly detection, alert threshold, quarantine, repair path, data incident handoff.
 - `data/analytics-instrumentation-review`: tracking plan, event schema, identity grain, funnel, cohort, experiment, attribution, consent, downstream metric impact.
 - `data/knowledge-retrieval-pipeline-review`: document ingestion, parsing, chunking, metadata, embedding/vector store, retrieval evaluation, citation, access control, stale index.
+- `data/knowledge-source-registry`: source owner, status, freshness, credential boundary, locator shape, search/browse mode, evidence envelope, promotion policy.
 - `project/project-doc-system`: `.ai-playbook` map, runbook, decision, plan, worklog, archive, project-memory hygiene.
 - `project/adr-spec-handoff`: ADR, spec, milestone outcome, implementation handoff, reviewed evidence, durable memory promotion.
 - `project/requirements-prd-scope-review`: PRD, lightweight spec, scope brief, non-goal, acceptance criteria, assumption, open-question list.

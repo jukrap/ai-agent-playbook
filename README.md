@@ -107,10 +107,10 @@ See [Command guide](docs/commands.md) for search, managed cleanup, adapter setup
 bin/                  ai-playbook CLI entrypoint
 src/                  CLI runtime implementation
 skills/
-  ai-harness/        MCP, skill, agent, context, witness, cache, and index design skills
+  ai-harness/        MCP, skill, agent, context, fact gate, witness, cache, and index design skills
   architecture/      Boundary, feature slice, domain model, and monorepo/package architecture skills
   backend/           API, backend change safety, connector, and server-rendered flow skills
-  data/              Data pipeline, analytics, reporting, and migration integrity skills
+  data/              Data pipeline, analytics, source registry, reporting, and migration integrity skills
   database/          Schema, migration, SQL, and data integrity skills
   delivery/          Planning, eval, verification, testing, Git, PR, and worklog skills
   devops/            CI/CD, container, package release, deployment, and operations triage skills
@@ -171,6 +171,7 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `skill-pack-governance`: add, reorganize, review, or adopt skill packs, taxonomy categories, compatibility wrappers, reference routing, translations, install/sync behavior, or reusable skill governance.
 - `runtime-index-cache-design`: design or review runtime reports, indexes, graphs, caches, artifact schemas, invalidation, canon promotion, generated evidence, or local-only runtime storage.
 - `capability-witness-history`: design or review append-only capability witnesses, baseline comparison, skipped/degraded status, and runtime reliability history.
+- `pre-action-fact-gate`: gather concrete facts before broad, destructive, owner-creating, or high-blast-radius actions.
 - `boundary-review`: review FSD, layered, DDD, monorepo, package ownership, dependency direction, and coupling boundaries.
 - `feature-slice-boundary`: change or review FSD, feature-sliced, vertical-slice, feature-first, route-level, module-level, or component-domain boundaries.
 - `domain-model-change`: change or review domain entities, aggregates, value objects, services, policies, use cases, repositories, adapters, invariants, or transaction boundaries.
@@ -186,6 +187,7 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `data-quality-observability`: design or review data quality checks, freshness alerts, anomaly detection, null/duplicate/orphan checks, quarantine, repair, and data incident handoff.
 - `analytics-instrumentation-review`: review tracking plans, event schemas, analytics instrumentation, funnels, cohorts, experiments, attribution, consent, and downstream metric impact.
 - `knowledge-retrieval-pipeline-review`: review document ingestion, parsing, chunking, metadata, embeddings/vector stores, retrieval quality, citations, access control, and stale RAG/search indexes.
+- `knowledge-source-registry`: register project knowledge sources with owner, status, freshness, locator, credential boundary, and promotion rules.
 - `database-change-safety`: change database schema, migrations, SQL, reporting queries, stored procedures, or data integrity rules.
 - `schema-migration-plan`: plan or review database schema migrations, DDL, indexes, constraints, defaults, nullability, seeds, views, triggers, stored procedures, or expand/contract rollout steps.
 - `query-performance-review`: review slow SQL, reporting queries, dashboard queries, API list/detail queries, exports, aggregates, joins, sort/pagination, full scans, N+1 patterns, or index choices.

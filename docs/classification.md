@@ -8,10 +8,10 @@ The content is not agent-specific. Codex is one installation target. The source 
 
 ## Skill categories
 
-- `skills/ai-harness`: MCP, skill, agent, context, witness, cache, index, and harness design workflows.
+- `skills/ai-harness`: MCP, skill, agent, context, fact gate, witness, cache, index, and harness design workflows.
 - `skills/architecture`: boundary, feature slice, domain model, monorepo/package ownership, dependency direction, and coupling review workflows.
 - `skills/backend`: API contract, backend change safety, connector, server-rendered flow, worker, and integration workflows.
-- `skills/data`: analytics pipeline, ETL, reporting, data contract, and quality workflows.
+- `skills/data`: analytics pipeline, ETL, source registry, reporting, data contract, and quality workflows.
 - `skills/database`: schema, migration, SQL, reporting query, and data integrity workflows.
 - `skills/delivery`: planning, eval, verification, testing, Git, PR, release note, and worklog workflows.
 - `skills/devops`: CI/CD, container, package release, deployment, rollback, and operations triage workflows.
@@ -68,6 +68,7 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `skill-pack-governance`: governs skill taxonomy growth, wrappers, reference routing, translations, install/sync behavior, and reusable skill-pack adoption.
 - `runtime-index-cache-design`: reviews runtime reports, indexes, graphs, caches, artifact schemas, invalidation, canon promotion, and generated evidence boundaries.
 - `capability-witness-history`: reviews append-only capability witnesses, baseline comparison, skipped/degraded status, and runtime reliability history.
+- `pre-action-fact-gate`: gathers concrete facts before broad, destructive, owner-creating, or high-blast-radius actions.
 - `agent-skill-authoring`: reusable skill structure, trigger descriptions, references, and skill/template boundaries.
 
 ## Delivery and verification map
@@ -146,6 +147,7 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `data-quality-observability`: reviews data quality checks, freshness alerts, anomaly detection, null/duplicate/orphan checks, quarantine, repair, and data incident handoff.
 - `analytics-instrumentation-review`: reviews tracking plans, event schemas, analytics instrumentation, funnels, cohorts, experiments, attribution, consent, and downstream metric impact.
 - `knowledge-retrieval-pipeline-review`: reviews document ingestion, chunking, metadata, embeddings/vector stores, retrieval quality, citations, access control, and stale RAG/search indexes.
+- `knowledge-source-registry`: registers project knowledge sources with owner, status, freshness, locator, credential boundary, and promotion rules.
 
 ## Legacy expansion map
 

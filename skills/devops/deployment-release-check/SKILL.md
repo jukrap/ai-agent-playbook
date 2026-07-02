@@ -19,3 +19,5 @@ Use this as the primary DevOps skill for release readiness and deploy/rollback r
 Read `references/release-gates.md` before approving a release or deployment.
 
 Read `references/rollback-readiness.md` when a deploy changes artifacts, data, config, feature flags, or runtime topology.
+
+Read `references/gate-decision-contract.md` when recording pass, block, advisory-only, or accepted-risk release decisions.

@@ -6,7 +6,7 @@
 
 **Architecture:** Keep trusted memory, generated runtime evidence, and integration settings separate. Runtime index outputs remain local generated artifacts under `.ai-playbook/runtime/`; promoted facts require explicit canon promotion. MCP remains read-only by default, with scaffold/write behavior opt-in and auditable.
 
-**Reference Inputs:** Use the local `_reference/` collection as pattern input only. Adopt contracts, schemas, validation ideas, workflow boundaries, and skill-authoring style. Do not copy large upstream excerpts, upstream branding, personal absolute paths, internal URLs, or noisy reference-specific names into public docs.
+**Reference Inputs:** Use local reference collections as pattern input only. Adopt contracts, schemas, validation ideas, workflow boundaries, and skill-authoring style. Do not copy large upstream excerpts, upstream branding, personal absolute paths, internal URLs, or noisy reference-specific names into public docs.
 
 ---
 

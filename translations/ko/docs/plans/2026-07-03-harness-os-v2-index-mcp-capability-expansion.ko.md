@@ -6,7 +6,7 @@
 
 **Architecture:** trusted memory, generated runtime evidence, integration setting을 계속 분리합니다. Runtime index output은 `.ai-playbook/runtime/` 아래 local generated artifact로 두고, promoted fact는 명시적인 canon promotion을 거쳐야 합니다. MCP는 기본 read-only이며 scaffold/write 동작은 opt-in 및 audit 가능한 방식으로만 둡니다.
 
-**Reference Inputs:** local `_reference/` collection은 pattern input으로만 사용합니다. contract, schema, validation idea, workflow boundary, skill-authoring style을 채택합니다. 큰 upstream excerpt, upstream branding, 개인 절대 경로, internal URL, reference-specific noisy name은 public docs에 복사하지 않습니다.
+**Reference Inputs:** local reference collection은 pattern input으로만 사용합니다. contract, schema, validation idea, workflow boundary, skill-authoring style을 채택합니다. 큰 upstream excerpt, upstream branding, 개인 절대 경로, internal URL, reference-specific noisy name은 public docs에 복사하지 않습니다.
 
 ---
 

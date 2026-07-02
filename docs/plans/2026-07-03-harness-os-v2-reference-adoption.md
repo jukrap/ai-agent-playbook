@@ -11,7 +11,7 @@ The first review found two issues that should be fixed before expanding the surf
 
 ## Reference Sweep
 
-The `_reference/` directory is large enough that adoption must be indexed and staged rather than copied directly. The first sweep covered top-level project shape, package/config files, README/AGENTS/SKILL surfaces, and selected reference-heavy skill examples.
+The local reference collection is large enough that adoption must be indexed and staged rather than copied directly. The first sweep covered top-level project shape, package/config files, README/AGENTS/SKILL surfaces, and selected reference-heavy skill examples.
 
 Observed reusable patterns:
 
@@ -40,7 +40,7 @@ Harness OS v2 should move from "layout plus catalogs" to "evidence-backed operat
 
 ### 1. Reference Adoption Ledger
 
-Create a compact local ledger for `_reference/` analysis:
+Create a compact local ledger for local reference analysis:
 
 - project id, domain, useful surfaces, adoption candidate, rejected noise, risk notes
 - no personal absolute paths
@@ -147,7 +147,7 @@ Acceptance:
 
 1. Keep the v1 review fixes in place and cover them with tests.
 2. Add a reference-adoption ledger template and validator.
-3. Add a `reference inventory` CLI preview command for `_reference/`-style directories.
+3. Add a `reference inventory` CLI preview command for local reference collection directories.
 4. Add transaction ids to write-gate preview artifacts without enabling project writes.
 5. Add canon draft/check docs and a small runtime-to-memory promotion recipe.
 6. Add the next primary skill pack for language/backend/database/security review, using wrappers only where compatibility requires them.

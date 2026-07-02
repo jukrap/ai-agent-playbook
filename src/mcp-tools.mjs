@@ -10,6 +10,7 @@ import {
   checkContracts,
   checkManagedManifest,
   checkReferenceAdoptionLedger,
+  checkRuntimeSchema,
   contextStatus,
   describePlaybookLayout,
   listContexts,
@@ -94,6 +95,15 @@ export function registerPlaybookMcpTools(server, options) {
     tool('index_status', 'Report the local runtime index status for a target project.', {
       target: targetSchema
     }, (args) => runtimeIndexStatus({ target: args.target })),
+    tool('runtime_schema_check', 'Validate a target-relative runtime, eval, witness, evidence, or source-registry JSON without writing files.', {
+      target: targetSchema,
+      path: z.string().min(1).describe('JSON path inside the target project.'),
+      kind: z.string().min(1).optional().describe('Optional runtime schema kind override.')
+    }, (args) => checkRuntimeSchema({
+      target: args.target,
+      filePath: args.path,
+      kind: args.kind
+    })),
     tool('index_search', 'Search local project files without writing the runtime index.', {
       target: targetSchema,
       query: z.string().min(1),

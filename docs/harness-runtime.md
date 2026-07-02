@@ -79,7 +79,7 @@ Start the local server with:
 npx ai-agent-playbook mcp
 ```
 
-An MCP-capable AI app can register that command and then call tools such as `operator_search`, `operator_research`, `operator_analyze_deep`, `source_function_clones`, `ast_grep_search`, `lsp_symbols`, `contracts_check`, `managed_check`, and `qa_image_diff`.
+An MCP-capable AI app can register that command and then call tools such as `runtime_schema_check`, `operator_search`, `operator_research`, `operator_analyze_deep`, `source_function_clones`, `ast_grep_search`, `lsp_symbols`, `contracts_check`, `managed_check`, and `qa_image_diff`.
 
 The MCP server exposes only read-only tools. It does not expose bootstrap, skill install/update/uninstall, managed apply operations, contract snapshot apply, run record, AST rewrite/apply, LSP rename, automatic doctor execution, or blocking/continuation behavior.
 

@@ -79,7 +79,7 @@ Run record는 운영 로그이지 durable project truth가 아닙니다. Reviewe
 npx ai-agent-playbook mcp
 ```
 
-MCP를 지원하는 AI 앱은 이 명령을 등록한 뒤 `operator_search`, `operator_research`, `operator_analyze_deep`, `source_function_clones`, `ast_grep_search`, `lsp_symbols`, `contracts_check`, `managed_check`, `qa_image_diff` 같은 도구를 호출할 수 있습니다.
+MCP를 지원하는 AI 앱은 이 명령을 등록한 뒤 `runtime_schema_check`, `operator_search`, `operator_research`, `operator_analyze_deep`, `source_function_clones`, `ast_grep_search`, `lsp_symbols`, `contracts_check`, `managed_check`, `qa_image_diff` 같은 도구를 호출할 수 있습니다.
 
 MCP 서버는 read-only 도구만 노출합니다. Bootstrap, skill install/update/uninstall, managed apply 작업, contract snapshot apply, run record, AST rewrite/apply, LSP rename, automatic doctor execution, blocking/continuation 동작은 노출하지 않습니다.
 

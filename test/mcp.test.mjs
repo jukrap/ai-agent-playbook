@@ -31,6 +31,39 @@ test('mcp server lists read-only playbook tools and calls operator search withou
   await writeFile(path.join(target, '_reference', 'reference-pack', 'README.md'), '# Reference Pack\n');
   await writeFile(path.join(target, '_reference', 'reference-pack', 'skills', 'demo', 'SKILL.md'), '---\nname: demo\n---\n# Demo\n');
   await mkdir(path.join(target, '.ai-playbook', 'knowledge'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evals'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evidence'), { recursive: true });
+  await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'sources.json'), `${JSON.stringify({
+    schemaVersion: '1',
+    sources: []
+  }, null, 2)}\n`);
+  await writeFile(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evals', 'prompt-regression.json'), `${JSON.stringify({
+    schemaVersion: '1',
+    kind: 'runtime.eval-definition',
+    id: 'prompt-regression',
+    target: 'mcp prompt behavior',
+    behavior: 'Prompt names required evidence before suggestions.',
+    riskClass: 'medium',
+    baseline: 'accepted prompt contract',
+    fixtures: ['fixtures/prompt-regression.json'],
+    graders: [{ type: 'rule', command: 'node test/prompt-contracts.test.mjs' }],
+    successCriteria: { requiredSections: ['Required evidence'] },
+    budgets: { maxRuntimeMs: 30000, maxExternalCalls: 0 },
+    storage: { runtimePath: '.ai-playbook/runtime/reports/evals/prompt-regression.json' }
+  }, null, 2)}\n`);
+  await writeFile(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evidence', 'bad.json'), `${JSON.stringify({
+    schemaVersion: '1',
+    kind: 'runtime.evidence-envelope',
+    sourceId: 'local-reference',
+    locator: { type: 'path-range', path: 'C:\\Users\\home\\secret.txt' },
+    query: 'schema-check',
+    scanRange: 'all docs',
+    freshness: '2026-07-03',
+    evidenceType: 'direct quote',
+    summary: 'sk-proj-this-is-not-a-valid-example-but-is-secret-shaped-1234567890',
+    caveats: [],
+    promotionStatus: 'trusted'
+  }, null, 2)}\n`);
   await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'custom-reference-ledger.md'), [
     '# Custom Reference Adoption Ledger',
     '',
@@ -54,6 +87,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'reference_ledger_check',
       'playbook_layout',
       'index_status',
+      'runtime_schema_check',
       'index_search',
       'symbol_outline',
       'dependency_inventory',
@@ -159,6 +193,40 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(indexStatus.structuredContent.ok, true);
     assert.equal(indexStatus.structuredContent.indexes.some((item) => item.kind === 'file-inventory'), true);
     assert.equal(indexStatus.structuredContent.indexes.some((item) => item.kind === 'symbol-outline' && item.previewOnly === true), true);
+
+    const runtimeSchema = await client.callTool({
+      name: 'runtime_schema_check',
+      arguments: {
+        target,
+        path: '.ai-playbook/runtime/reports/evals/prompt-regression.json'
+      }
+    });
+    assert.equal(runtimeSchema.isError, undefined);
+    assert.equal(runtimeSchema.structuredContent.ok, true);
+    assert.equal(runtimeSchema.structuredContent.mode.writes, false);
+    assert.equal(runtimeSchema.structuredContent.expectedKind, 'runtime.eval-definition');
+
+    const sourceSchema = await client.callTool({
+      name: 'runtime_schema_check',
+      arguments: {
+        target,
+        path: '.ai-playbook/knowledge/sources.json'
+      }
+    });
+    assert.equal(sourceSchema.structuredContent.ok, true);
+    assert.equal(sourceSchema.structuredContent.expectedKind, 'runtime.source-registry');
+
+    const badRuntimeSchema = await client.callTool({
+      name: 'runtime_schema_check',
+      arguments: {
+        target,
+        path: '.ai-playbook/runtime/reports/evidence/bad.json',
+        kind: 'runtime.evidence-envelope'
+      }
+    });
+    assert.equal(badRuntimeSchema.structuredContent.ok, false);
+    assert.equal(badRuntimeSchema.structuredContent.conflicts.some((conflict) => conflict.id === 'runtime.schema.credential-value'), true);
+    assert.equal(badRuntimeSchema.structuredContent.conflicts.some((conflict) => conflict.id === 'runtime.schema.locator-path'), true);
 
     const symbolOutline = await client.callTool({
       name: 'symbol_outline',

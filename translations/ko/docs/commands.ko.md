@@ -151,6 +151,7 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 | `workflow run-preview <target>` | target 또는 bundled recipe에서 workflow run manifest를 run file 생성 없이 preview합니다. | 아니오 | `npx ai-agent-playbook workflow run-preview <target-project> --recipe backend-contract-change --json` |
 | `workflow run-start <target>` | `.ai-playbook/workflows/runs/` 아래 제한된 scaffold-tier run record를 preview하거나 생성합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook workflow run-start <target-project> --recipe deployment-release --json` |
 | `reference inventory <reference-dir>` | 채택할 항목을 판단하기 전에 local reference collection을 요약합니다. | 아니오 | `npx ai-agent-playbook reference inventory _reference --json` |
+| `reference adoption-queue <reference-dir>` | local reference collection을 compact adoption backlog로 점수화합니다. | 아니오 | `npx ai-agent-playbook reference adoption-queue _reference --json` |
 | `reference ledger-check <target>` | reference adoption ledger의 status 값과 local-only leak를 검증합니다. | 아니오 | `npx ai-agent-playbook reference ledger-check <target-project> --json` |
 | `runtime capability-history <target>` | benchmark나 telemetry를 실행하지 않고 local append-only capability history를 요약합니다. | 아니오 | `npx ai-agent-playbook runtime capability-history <target-project> --json` |
 | `runtime schema-check <target>` | runtime eval, witness, evidence-envelope, repo-graph, artifact, source-registry JSON을 파일 쓰기 없이 검증합니다. | 아니오 | `npx ai-agent-playbook runtime schema-check <target-project> --path .ai-playbook/runtime/reports/evals/example.json --json` |
@@ -168,6 +169,8 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 | `write-gate preview <target>` | 수정 전에 intent와 optional path 기준 write risk를 preview합니다. | 아니오 | `npx ai-agent-playbook write-gate preview <target-project> --intent "change auth flow" --path src/example.ts --json` |
 | `write-gate advisory <target>` | playbook runtime 아래 pre-write advisory report를 preview하거나 저장합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook write-gate advisory <target-project> --intent "change auth flow" --path src/example.ts --apply --json` |
 | `write-gate post-check <target>` | 수정 뒤 saved advisory snapshot과 현재 file을 비교합니다. | 아니오 | `npx ai-agent-playbook write-gate post-check <target-project> --advisory .ai-playbook/runtime/reports/write-gate/pre-write-advisory.<id>.json --json` |
+
+`reference adoption-queue`는 `reference inventory` 위에서 동작합니다. Skills, agents, MCP, workflows, memory, indexes, connectors, security, compliance, docs, tests, package metadata 같은 local signal로 top-level reference collection을 점수화합니다. Raw reference contents를 복사하지 않고 recommended capability area, representative file path, next adoption action만 반환합니다.
 
 `reference ledger-check`는 기본적으로 `.ai-playbook/knowledge/reference-adoption-ledger.md`를 검증합니다. 파일을 쓰지 않고 adoption status, local absolute path, internal URL, secret-like token, oversized excerpt를 확인합니다. 대상 프로젝트 내부의 다른 ledger를 확인하려면 `--path <ledger.md>`를 사용합니다. JSON output에는 capability 영역별 adoption status를 볼 수 있도록 `summary.capabilities`가 포함됩니다. Oversized fenced excerpt를 warning이 아니라 실패로 다루려면 `--strict`를 추가합니다.
 
@@ -298,7 +301,7 @@ ai-playbook mcp
 서버는 아래 read-only 도구를 노출합니다.
 
 - playbook context: `playbook_context`, `context_status`, `context_list`
-- catalog와 layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_ledger_check`, `playbook_layout`, `index_status`, `runtime_schema_check`, `evidence_locator_check`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `repo_graph_preview`, `write_gate_preview`, `canon_check`
+- catalog와 layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_adoption_queue`, `reference_ledger_check`, `playbook_layout`, `index_status`, `runtime_schema_check`, `evidence_locator_check`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `repo_graph_preview`, `write_gate_preview`, `canon_check`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules와 project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA와 deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`

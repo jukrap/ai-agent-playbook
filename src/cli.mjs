@@ -9,6 +9,7 @@ import {
   buildRouteApiHintsIndex,
   buildRuntimeIndex,
   buildSymbolOutlineIndex,
+  buildReferenceAdoptionQueue,
   buildProjectContext,
   buildDoctorReminderSignal,
   bootstrapProject,
@@ -576,6 +577,22 @@ export async function runCli(argv, io = {}) {
         write(stdout, `Reference inventory: ${result.summary.projects}/${result.summary.totalProjects} project(s), ${result.summary.files} file(s)\n`);
         for (const project of result.projects) {
           write(stdout, `[${project.id}] ${project.candidateCapabilities.join(', ') || 'unclassified'} (${project.files} file(s))\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'adoption-queue') {
+      const result = await buildReferenceAdoptionQueue({
+        target: resolveTarget(cwd, targetArg),
+        maxResults: parseMaxResults(parsed.flags['max-results'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Reference adoption queue: ${result.summary.queueItems} item(s)\n`);
+        for (const item of result.queue) {
+          write(stdout, `[${item.priority.toUpperCase()}] ${item.project} -> ${item.recommendedCapabilities.join(', ') || 'manual-review'} (${item.score})\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -1482,6 +1499,7 @@ Usage:
   ai-playbook workflow run-preview <target> --recipe <recipe-id> [--json]
   ai-playbook workflow run-start <target> --recipe <recipe-id> [--apply] [--json]
   ai-playbook reference inventory <reference-dir> [--max-results N] [--json]
+  ai-playbook reference adoption-queue <reference-dir> [--max-results N] [--json]
   ai-playbook reference ledger-check <target> [--path <ledger.md>] [--strict] [--json]
   ai-playbook layout status <target> [--json]
   ai-playbook runtime capability-history <target> [--json]

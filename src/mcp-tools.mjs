@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  buildReferenceAdoptionQueue,
   buildDependencyInventoryIndex,
   buildProjectContext,
   buildRouteApiHintsIndex,
@@ -90,6 +91,13 @@ export function registerPlaybookMcpTools(server, options) {
     }, (args) => inventoryReferenceDirectory({
       target: args.target,
       maxProjects: args.maxResults ?? 100
+    })),
+    tool('reference_adoption_queue', 'Score local reference collections into a read-only adoption queue.', {
+      target: targetSchema.describe('Reference directory to queue for adoption review.'),
+      maxResults: maxResultsSchema
+    }, (args) => buildReferenceAdoptionQueue({
+      target: args.target,
+      maxResults: args.maxResults ?? 20
     })),
     tool('reference_ledger_check', 'Validate a project reference adoption ledger for statuses and local-only leaks.', {
       target: targetSchema,
@@ -474,7 +482,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- write_gate_preview before suggesting managed writes',
     '',
     'Optional evidence:',
-    '- reference_inventory and reference_ledger_check when adopting external reference material',
+    '- reference_inventory, reference_adoption_queue, and reference_ledger_check when adopting external reference material',
     '- index_status when runtime indexes, caches, generated evidence, or canon promotion are involved',
     '- playbook_layout when `.ai-playbook` layout changes are involved',
     '',
@@ -1157,7 +1165,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '',
     'Required evidence:',
     '- workflow_run_preview with recipe knowledge-source-onboarding',
-    '- reference_inventory for available local reference and source material',
+    '- reference_inventory and reference_adoption_queue for available local reference and source material',
     '- reference_ledger_check when external source adoption is in scope',
     '- operator_research for bounded source scans and evidence envelopes',
     '- index_status for generated source indexes and freshness',

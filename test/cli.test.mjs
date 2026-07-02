@@ -821,6 +821,17 @@ test('reference inventory summarizes local reference collections without writing
   const connectorPack = report.projects.find((project) => project.id === 'connector-pack');
   assert.equal(connectorPack.candidateCapabilities.includes('connector-reference'), true);
   assert.equal(connectorPack.candidateCapabilities.includes('security-validation'), true);
+
+  const queue = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-queue', referenceRoot, '--max-results', '1', '--json'], queue), 0);
+  const queueReport = JSON.parse(queue.out());
+  assert.equal(queueReport.ok, true);
+  assert.equal(queueReport.mode.writes, false);
+  assert.equal(queueReport.summary.queueItems, 1);
+  assert.equal(queueReport.queue[0].project, 'repo-lens-like');
+  assert.equal(queueReport.queue[0].recommendedCapabilities.includes('ai-harness'), true);
+  assert.equal(queueReport.queue[0].signalHighlights.some((item) => item.signal === 'mcp'), true);
+  assert.equal(queueReport.queue[0].nextActions.some((item) => item.includes('MCP surfaces')), true);
   assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
 });

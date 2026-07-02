@@ -10,6 +10,7 @@ import {
 
 const DEFAULT_MAX_PROJECTS = 100;
 const DEFAULT_MAX_DEPTH = 6;
+const DEFAULT_QUEUE_RESULTS = 20;
 const REPRESENTATIVE_LIMIT = 16;
 const LEDGER_PATH = 'knowledge/reference-adoption-ledger.md';
 const LEDGER_STATUSES = new Set(['new', 'reviewed', 'adopted', 'deferred', 'rejected']);
@@ -70,6 +71,50 @@ export async function inventoryReferenceDirectory({ target, maxProjects = DEFAUL
     },
     projects,
     warnings,
+    conflicts: []
+  };
+}
+
+export async function buildReferenceAdoptionQueue({
+  target,
+  maxProjects = DEFAULT_MAX_PROJECTS,
+  maxDepth = DEFAULT_MAX_DEPTH,
+  maxResults = DEFAULT_QUEUE_RESULTS
+}) {
+  const inventory = await inventoryReferenceDirectory({ target, maxProjects, maxDepth });
+  const queue = inventory.projects
+    .map((project) => referenceQueueItem(project))
+    .filter((item) => item.score > 0)
+    .sort((left, right) => {
+      if (right.score !== left.score) return right.score - left.score;
+      return left.project.localeCompare(right.project);
+    })
+    .slice(0, maxResults);
+  const recommendedCapabilities = {};
+  const priorities = { high: 0, medium: 0, low: 0 };
+  for (const item of queue) {
+    priorities[item.priority] += 1;
+    for (const capability of item.recommendedCapabilities) {
+      recommendedCapabilities[capability] = (recommendedCapabilities[capability] ?? 0) + 1;
+    }
+  }
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: true,
+    target: inventory.target,
+    mode: { localOnly: true, network: false, writes: false },
+    summary: {
+      inventoryProjects: inventory.summary.projects,
+      totalProjects: inventory.summary.totalProjects,
+      queueItems: queue.length,
+      priorities,
+      recommendedCapabilities,
+      warnings: inventory.warnings.length,
+      conflicts: 0
+    },
+    queue,
+    warnings: inventory.warnings,
     conflicts: []
   };
 }
@@ -183,6 +228,85 @@ export async function checkReferenceAdoptionLedger({ target, filePath, strict = 
   }
 
   return ledgerResult({ target: resolvedTarget, path: resolvedLedger.relativePath, statusCounts, capabilityCounts, warnings, conflicts });
+}
+
+function referenceQueueItem(project) {
+  const weightedSignals = scoreSignals(project.signals);
+  const score = weightedSignals.reduce((sum, item) => sum + item.score, 0);
+  const recommendedCapabilities = recommendedReferenceCapabilities(project.signals);
+  const actions = referenceAdoptionActions(project.signals);
+  return {
+    project: project.id,
+    path: project.path,
+    score,
+    priority: priorityForScore(score),
+    recommendedCapabilities,
+    signalHighlights: weightedSignals
+      .filter((item) => item.count > 0)
+      .slice(0, 8),
+    candidateCapabilities: project.candidateCapabilities,
+    representativeFiles: project.representativeFiles,
+    nextActions: actions
+  };
+}
+
+function scoreSignals(signals) {
+  const weights = {
+    skills: 4,
+    agents: 3,
+    mcp: 4,
+    commands: 2,
+    hooks: 2,
+    workflows: 3,
+    memory: 3,
+    indexes: 3,
+    connectors: 3,
+    security: 4,
+    compliance: 4,
+    docs: 1,
+    tests: 3,
+    packages: 1
+  };
+  return Object.entries(signals)
+    .map(([signal, count]) => ({
+      signal,
+      count,
+      score: Math.min(count, 10) * (weights[signal] ?? 1)
+    }))
+    .sort((left, right) => {
+      if (right.score !== left.score) return right.score - left.score;
+      return left.signal.localeCompare(right.signal);
+    });
+}
+
+function priorityForScore(score) {
+  if (score >= 60) return 'high';
+  if (score >= 20) return 'medium';
+  return 'low';
+}
+
+function recommendedReferenceCapabilities(signals) {
+  const capabilities = [];
+  if (signals.security > 0 || signals.compliance > 0) capabilities.push('security');
+  if (signals.skills > 0 || signals.mcp > 0 || signals.agents > 0 || signals.hooks > 0 || signals.memory > 0 || signals.indexes > 0) capabilities.push('ai-harness');
+  if (signals.workflows > 0 || signals.commands > 0 || signals.tests > 0) capabilities.push('delivery');
+  if (signals.connectors > 0) capabilities.push('backend');
+  if (signals.docs > 0) capabilities.push('foundation');
+  if (capabilities.length === 0 && signals.packages > 0) capabilities.push('devops');
+  return capabilities;
+}
+
+function referenceAdoptionActions(signals) {
+  const actions = [];
+  if (signals.skills > 0) actions.push('Review skill trigger shape and extract reusable references instead of copying long skill bodies.');
+  if (signals.mcp > 0) actions.push('Classify MCP surfaces as resource, prompt, read tool, scaffold, managed-write, or project-write before adoption.');
+  if (signals.agents > 0 || signals.workflows > 0 || signals.hooks > 0) actions.push('Extract worker contracts, stop conditions, and verification handoff patterns.');
+  if (signals.memory > 0 || signals.indexes > 0) actions.push('Separate generated runtime evidence from durable memory promotion rules.');
+  if (signals.security > 0 || signals.compliance > 0) actions.push('Convert security and compliance ideas into local validators or checklist references, not raw policy dumps.');
+  if (signals.connectors > 0) actions.push('Capture connector credential, retry, idempotency, and manifest conventions as backend/data references.');
+  if (signals.tests > 0) actions.push('Harvest test fixtures, invariant checks, and regression gates as validation patterns.');
+  if (actions.length === 0) actions.push('Review manually before adoption; this reference has weak automatic capability signals.');
+  return actions;
 }
 
 async function analyzeReferenceProject({ root, id, maxDepth }) {

@@ -434,6 +434,40 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- Treat generated hints as evidence candidates, not trusted memory.'
   ]));
 
+  server.registerPrompt('architecture_boundary_review', {
+    title: 'Architecture boundary review',
+    description: 'Review feature slice, domain model, monorepo/package, dependency direction, and public API boundary evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      path: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS architecture boundary review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Path: ${args.path ?? '<optional module, package, or boundary path>'}`,
+    `Intent: ${args.intent ?? '<architecture review intent>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe architecture-boundary-review',
+    '- operator_map for stack, architecture, entrypoint, module boundary, and concern signals',
+    '- operator_search for architecture docs, imports, package exports, domain terms, and boundary rules',
+    '- write_gate_preview before suggesting module, package, or public API edits',
+    '',
+    'Optional evidence:',
+    '- symbol_outline for owners, exports, components, services, functions, and classes',
+    '- dependency_inventory for workspace/package/build graph and generated output context',
+    '',
+    'Stop conditions:',
+    '- Architecture style is assumed from folder names instead of observed code and docs',
+    '- Public API callers, domain invariant owner, dependency cycle impact, or package release impact is unknown',
+    '- Broad restructure is proposed without compatibility, migration, or verification plan',
+    '',
+    'Verification expectations:',
+    '- Name dependency direction, caller/import inventory, package build/typecheck/test, contract, and architecture decision/worklog checks actually available.',
+    '- Do not force FSD, DDD, clean architecture, or monorepo reshuffling unless project evidence and user intent support it.'
+  ]));
+
   server.registerPrompt('auth_access_control_review', {
     title: 'Auth access-control review',
     description: 'Review authentication and authorization changes with explicit evidence and denial-path checks.',

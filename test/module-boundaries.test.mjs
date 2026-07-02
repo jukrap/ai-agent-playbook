@@ -19,6 +19,7 @@ test('harness facade keeps the public runtime exports', () => {
     'SCHEMA_VERSION',
     'adoptManagedManifest',
     'buildRuntimeIndex',
+    'buildSymbolOutlineIndex',
     'bootstrapProject',
     'buildDoctorReminderSignal',
     'buildProjectContext',

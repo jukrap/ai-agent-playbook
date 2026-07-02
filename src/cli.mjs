@@ -22,6 +22,7 @@ import {
   checkCanonFacts,
   checkRuntimeSchema,
   checkReferenceAdoptionLedger,
+  checkReferenceSourceRegistry,
   catalogManagedManifest,
   contextStatus,
   createWriteGateAdvisory,
@@ -610,6 +611,26 @@ export async function runCli(argv, io = {}) {
         write(stdout, `Reference source registry preview: ${result.summary.sources} source candidate(s)\n`);
         for (const source of result.registry.sources) {
           write(stdout, `[${source.priority.toUpperCase()}] ${source.id} -> ${source.recommendedCapabilities.join(', ') || 'manual-review'}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'source-registry-check') {
+      const result = await checkReferenceSourceRegistry({
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        referenceDir: typeof parsed.flags['reference-dir'] === 'string' ? parsed.flags['reference-dir'] : undefined
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Reference source registry: ${result.ok ? 'ok' : 'needs attention'} (${result.summary.entries} source(s))\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -1429,7 +1450,8 @@ function needsValue(key) {
     'message',
     'status',
     'evidence',
-    'kind'
+    'kind',
+    'reference-dir'
   ].includes(key);
 }
 
@@ -1518,6 +1540,7 @@ Usage:
   ai-playbook reference inventory <reference-dir> [--max-results N] [--json]
   ai-playbook reference adoption-queue <reference-dir> [--max-results N] [--json]
   ai-playbook reference source-registry-preview <reference-dir> [--max-results N] [--json]
+  ai-playbook reference source-registry-check <target> [--path <sources.json>] [--reference-dir <dir>] [--json]
   ai-playbook reference ledger-check <target> [--path <ledger.md>] [--strict] [--json]
   ai-playbook layout status <target> [--json]
   ai-playbook runtime capability-history <target> [--json]

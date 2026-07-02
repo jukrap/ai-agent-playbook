@@ -51,6 +51,7 @@ Default read-only additions:
 - `reference_inventory`
 - `reference_adoption_queue`
 - `reference_source_registry_preview`
+- `reference_source_registry_check`
 - `reference_ledger_check`
 
 ## Write Gate

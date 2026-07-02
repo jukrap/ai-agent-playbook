@@ -13,6 +13,7 @@ import {
   checkEvidenceLocators,
   checkManagedManifest,
   checkReferenceAdoptionLedger,
+  checkReferenceSourceRegistry,
   checkRuntimeSchema,
   contextStatus,
   describePlaybookLayout,
@@ -106,6 +107,15 @@ export function registerPlaybookMcpTools(server, options) {
     }, (args) => buildReferenceSourceRegistryPreview({
       target: args.target,
       maxResults: args.maxResults ?? 20
+    })),
+    tool('reference_source_registry_check', 'Validate a target knowledge/sources.json registry and optional local reference path drift without writing files.', {
+      target: targetSchema,
+      path: pathSchema.describe('Optional source registry path inside the target project.'),
+      referenceDir: z.string().min(1).optional().describe('Optional local reference directory used to check registered relative reference paths.')
+    }, (args) => checkReferenceSourceRegistry({
+      target: args.target,
+      filePath: args.path,
+      referenceDir: args.referenceDir
     })),
     tool('reference_ledger_check', 'Validate a project reference adoption ledger for statuses and local-only leaks.', {
       target: targetSchema,
@@ -490,7 +500,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- write_gate_preview before suggesting managed writes',
     '',
     'Optional evidence:',
-    '- reference_inventory, reference_adoption_queue, reference_source_registry_preview, and reference_ledger_check when adopting external reference material',
+    '- reference_inventory, reference_adoption_queue, reference_source_registry_preview, reference_source_registry_check, and reference_ledger_check when adopting external reference material',
     '- index_status when runtime indexes, caches, generated evidence, or canon promotion are involved',
     '- playbook_layout when `.ai-playbook` layout changes are involved',
     '',
@@ -1173,7 +1183,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '',
     'Required evidence:',
     '- workflow_run_preview with recipe knowledge-source-onboarding',
-    '- reference_inventory, reference_adoption_queue, and reference_source_registry_preview for available local reference and source material',
+    '- reference_inventory, reference_adoption_queue, reference_source_registry_preview, and reference_source_registry_check for available local reference and source material',
     '- reference_ledger_check when external source adoption is in scope',
     '- operator_research for bounded source scans and evidence envelopes',
     '- index_status for generated source indexes and freshness',

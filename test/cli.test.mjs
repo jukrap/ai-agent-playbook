@@ -846,6 +846,36 @@ test('reference inventory summarizes local reference collections without writing
   assert.equal(sourceReport.registry.sources.some((source) => source.recommendedCapabilities.includes('ai-harness')), true);
   assert.equal(validateSourceRegistry(sourceReport.registry, { path: 'knowledge/sources.json' }).ok, true);
   assert.deepEqual(await listRelativeFiles(target), before);
+
+  await mkdir(path.join(target, '.ai-playbook', 'knowledge'), { recursive: true });
+  await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'sources.json'), `${JSON.stringify(sourceReport.registry, null, 2)}\n`);
+  const beforeSourceCheck = await listRelativeFiles(target);
+  const sourceCheck = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-check', '.', '--reference-dir', referenceRoot, '--json'], sourceCheck), 0);
+  const sourceCheckReport = JSON.parse(sourceCheck.out());
+  assert.equal(sourceCheckReport.ok, true);
+  assert.equal(sourceCheckReport.mode.writes, false);
+  assert.equal(sourceCheckReport.summary.entries, 2);
+  assert.equal(sourceCheckReport.summary.schemaValid, true);
+  assert.equal(sourceCheckReport.summary.missingReferencePaths, 0);
+  assert.equal(sourceCheckReport.summary.missingRepresentativeFiles, 0);
+  assert.deepEqual(await listRelativeFiles(target), beforeSourceCheck);
+
+  const driftRegistry = {
+    ...sourceReport.registry,
+    sources: [{
+      ...sourceReport.registry.sources[0],
+      referencePath: 'missing-reference-pack'
+    }]
+  };
+  await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'sources.json'), `${JSON.stringify(driftRegistry, null, 2)}\n`);
+  const beforeDriftCheck = await listRelativeFiles(target);
+  const driftCheck = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-check', '.', '--reference-dir', referenceRoot, '--json'], driftCheck), 1);
+  const driftReport = JSON.parse(driftCheck.out());
+  assert.equal(driftReport.ok, false);
+  assert.equal(driftReport.conflicts.some((conflict) => conflict.id === 'reference-source-registry.reference-path-missing'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeDriftCheck);
   await cleanup(target);
 });
 

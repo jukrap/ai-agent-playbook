@@ -100,6 +100,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'reference_inventory',
       'reference_adoption_queue',
       'reference_source_registry_preview',
+      'reference_source_registry_check',
       'reference_ledger_check',
       'playbook_layout',
       'index_status',
@@ -421,6 +422,18 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(sourcePreview.structuredContent.candidatePath, '.ai-playbook/knowledge/sources.json');
     assert.equal(sourcePreview.structuredContent.summary.schemaValid, true);
     assert.equal(sourcePreview.structuredContent.registry.sources[0].id.startsWith('reference-'), true);
+
+    const sourceCheck = await client.callTool({
+      name: 'reference_source_registry_check',
+      arguments: {
+        target,
+        referenceDir: path.join(target, '_reference')
+      }
+    });
+    assert.equal(sourceCheck.structuredContent.ok, true);
+    assert.equal(sourceCheck.structuredContent.mode.writes, false);
+    assert.equal(sourceCheck.structuredContent.summary.entries, 0);
+    assert.equal(sourceCheck.structuredContent.summary.schemaValid, true);
 
     const ledger = await client.callTool({
       name: 'reference_ledger_check',

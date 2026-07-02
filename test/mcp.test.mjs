@@ -98,6 +98,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'workflow_list',
       'workflow_run_preview',
       'reference_inventory',
+      'reference_adoption_queue',
       'reference_ledger_check',
       'playbook_layout',
       'index_status',
@@ -394,6 +395,18 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(inventory.structuredContent.ok, true);
     assert.equal(inventory.structuredContent.summary.projects, 1);
     assert.equal(inventory.structuredContent.projects[0].candidateCapabilities.includes('skill-pack'), true);
+
+    const adoptionQueue = await client.callTool({
+      name: 'reference_adoption_queue',
+      arguments: {
+        target: path.join(target, '_reference'),
+        maxResults: 5
+      }
+    });
+    assert.equal(adoptionQueue.structuredContent.ok, true);
+    assert.equal(adoptionQueue.structuredContent.mode.writes, false);
+    assert.equal(adoptionQueue.structuredContent.summary.queueItems, 1);
+    assert.equal(adoptionQueue.structuredContent.queue[0].recommendedCapabilities.includes('ai-harness'), true);
 
     const ledger = await client.callTool({
       name: 'reference_ledger_check',

@@ -8,10 +8,10 @@ Skill taxonomy v2는 capability category를 1차 축으로 씁니다. 스택별 
 - `delivery`: planning, verification, testing, git, PR, worklog flow.
 - `architecture`: FSD, layered architecture, DDD, monorepo, boundary review.
 - `frontend`: UI, state, data, accessibility, performance, visual QA.
-- `backend`: API contract, auth, server-rendered flow, worker, integration.
+- `backend`: API contract, connector, auth, server-rendered flow, worker, integration.
 - `database`: schema change, migration, SQL, reporting, data integrity.
-- `devops`: CI/CD, container, deployment, configuration, observability.
-- `security`: secret, threat modeling, authorization, dependency risk.
+- `devops`: CI/CD, container, package release, deployment, configuration, observability.
+- `security`: secret, threat modeling, authorization, dependency risk, compliance evidence.
 - `mobile`: Expo, React Native, native app, WebView bridge, device QA.
 - `data`: analytics, pipeline, ETL, dashboard, data quality.
 - `ai-harness`: MCP, skill, agent, context engineering, cache, index design.
@@ -29,9 +29,11 @@ Backend와 security skill은 capability-first name을 씁니다.
 
 - `backend/api-contract-boundary`: API와 DTO boundary 작업.
 - `backend/backend-change-safety`: service, module, job, worker, queue, config, integration.
+- `backend/connector-integration-change`: API connector, workflow node, MCP adapter, webhook, OAuth app, import/export bridge, sync job, registration metadata, credential handling.
 - `backend/server-rendered-change`: controller, template, session, form, redirect, server-rendered view contract.
 - `security/auth-access-control`: authentication, authorization, RBAC, tenant, scope, object-level access.
 - `security/dependency-supply-chain-review`: dependency, lockfile, SBOM, license, provenance, container, CVE.
+- `security/license-notice-review`: first-party license, third-party notice, attribution, vendored code, generated artifact, copied snippet, redistribution scope, compliance evidence.
 - `security/security-review`: broad security risk review와 threat-model triage.
 
 Stack profile은 관련 primary skill reference tree 아래에 둡니다. Backend change safety의 Java, Kotlin, Go, Python, Node, .NET, PHP 세부사항은 stack-first primary skill을 만들지 않고 `skills/backend/backend-change-safety/references/stacks/` 아래에 둡니다.
@@ -54,9 +56,20 @@ DevOps skill은 cloud provider나 orchestrator 이름이 아니라 operational c
 - `devops/ci-failure-triage`: CI job, build pipeline, deployment check, flaky test, environment drift, release automation failure.
 - `devops/container-change-safety`: Dockerfile, container image, Compose/Kubernetes manifest, service runtime config, healthcheck, volume, network, containerized deployment behavior.
 - `devops/deployment-release-check`: release readiness, deploy, rollback, feature flag, changelog, artifact, migration gate, post-deploy check.
+- `devops/package-publish-readiness`: package metadata, included file, entrypoint, binary, generated bundle, registry dry-run, provenance, artifact rollback constraint.
 - `devops/observability-incident-triage`: active incident, production error, alert, latency, error rate, queue backlog, job failure, log, metric, trace, post-incident runbook.
 
 Provider-specific detail은 reference 또는 project playbook에 둡니다. Primary skill은 container, virtual machine, managed platform, serverless, 단순 script-based deployment에서도 작동해야 합니다.
+
+## Package And Connector Governance Pack
+
+Package, license, connector governance skill은 artifact compliance를 generic dependency review와 분리합니다.
+
+- `devops/package-publish-readiness`: package, CLI, plugin, library, extension, binary, generated bundle, marketplace distribution readiness.
+- `security/license-notice-review`: license policy evidence, NOTICE file, attribution, vendored code, generated artifact, copied snippet, redistribution scope.
+- `backend/connector-integration-change`: connector contract, credential handling, webhook lifecycle, retry behavior, registration metadata, host-runtime compatibility.
+
+Review guidance는 project가 명시적으로 정의하고 사용자가 요청하지 않는 한 registry login, package publish, live external call, legal approval claim을 하지 않습니다.
 
 ## Frontend Quality Pack
 

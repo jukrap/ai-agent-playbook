@@ -8,10 +8,10 @@ Skill taxonomy v2 uses capability categories as the primary axis. Stack-specific
 - `delivery`: planning, verification, testing, git, PR, and worklog flows.
 - `architecture`: FSD, layered architecture, DDD, monorepos, and boundary review.
 - `frontend`: UI, state, data, accessibility, performance, and visual QA.
-- `backend`: API contracts, auth, server-rendered flows, workers, and integrations.
+- `backend`: API contracts, connectors, auth, server-rendered flows, workers, and integrations.
 - `database`: schema change, migration, SQL, reporting, and data integrity.
-- `devops`: CI/CD, containers, deployment, configuration, and observability.
-- `security`: secrets, threat modeling, authorization, and dependency risk.
+- `devops`: CI/CD, containers, package releases, deployment, configuration, and observability.
+- `security`: secrets, threat modeling, authorization, dependency risk, and compliance evidence.
 - `mobile`: Expo, React Native, native app, WebView bridge, and device QA.
 - `data`: analytics, pipelines, ETL, dashboards, and data quality.
 - `ai-harness`: MCP, skills, agents, context engineering, cache, and index design.
@@ -29,9 +29,11 @@ Backend and security skills use capability-first names:
 
 - `backend/api-contract-boundary`: API and DTO boundary work.
 - `backend/backend-change-safety`: services, modules, jobs, workers, queues, config, and integrations.
+- `backend/connector-integration-change`: API connectors, workflow nodes, MCP adapters, webhooks, OAuth apps, import/export bridges, sync jobs, registration metadata, and credential handling.
 - `backend/server-rendered-change`: controllers, templates, sessions, forms, redirects, and server-rendered view contracts.
 - `security/auth-access-control`: authentication, authorization, RBAC, tenants, scopes, and object-level access.
 - `security/dependency-supply-chain-review`: dependencies, lockfiles, SBOMs, licenses, provenance, containers, and CVEs.
+- `security/license-notice-review`: first-party licenses, third-party notices, attribution, vendored code, generated artifacts, copied snippets, redistribution scope, and compliance evidence.
 - `security/security-review`: broad security risk review and threat-model triage.
 
 Stack profiles belong under the relevant primary skill reference tree. For backend change safety, Java, Kotlin, Go, Python, Node, .NET, and PHP details live under `skills/backend/backend-change-safety/references/stacks/` instead of creating stack-first primary skills.
@@ -54,9 +56,20 @@ DevOps skills use operational capability names rather than cloud-provider or orc
 - `devops/ci-failure-triage`: CI jobs, build pipelines, deployment checks, flaky tests, environment drift, and release automation failures.
 - `devops/container-change-safety`: Dockerfiles, container images, Compose/Kubernetes manifests, service runtime config, healthchecks, volumes, networks, and containerized deployment behavior.
 - `devops/deployment-release-check`: release readiness, deploys, rollbacks, feature flags, changelogs, artifacts, migration gates, and post-deploy checks.
+- `devops/package-publish-readiness`: package metadata, included files, entrypoints, binaries, generated bundles, registry dry-runs, provenance, and artifact rollback constraints.
 - `devops/observability-incident-triage`: active incidents, production errors, alerts, latency, error rates, queue backlogs, job failures, logs, metrics, traces, and post-incident runbooks.
 
 Provider-specific details belong in references or project playbooks. The primary skills should still work for containers, virtual machines, managed platforms, serverless, and simple script-based deployments.
+
+## Package And Connector Governance Pack
+
+Package, license, and connector governance skills keep artifact compliance separate from generic dependency review:
+
+- `devops/package-publish-readiness`: package, CLI, plugin, library, extension, binary, generated bundle, and marketplace distribution readiness.
+- `security/license-notice-review`: license policy evidence, NOTICE files, attribution, vendored code, generated artifacts, copied snippets, and redistribution scope.
+- `backend/connector-integration-change`: connector contracts, credential handling, webhook lifecycle, retry behavior, registration metadata, and host-runtime compatibility.
+
+Review guidance should not log into registries, publish packages, make live external calls, or claim legal approval unless the project explicitly defines those steps and the user asks for them.
 
 ## Frontend Quality Pack
 

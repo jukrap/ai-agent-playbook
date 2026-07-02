@@ -109,14 +109,14 @@ src/                  CLI 런타임 구현
 skills/
   ai-harness/        MCP, skill, agent, context, cache, index design 스킬
   architecture/      boundary와 architecture review 스킬
-  backend/           API, backend change safety, server-rendered flow 스킬
+  backend/           API, backend change safety, connector, server-rendered flow 스킬
   data/              data pipeline, analytics, reporting, migration integrity 스킬
   database/          schema, migration, SQL, data integrity 스킬
   delivery/          planning, verification, testing, Git, PR, worklog 스킬
-  devops/            CI/CD, container, release, deployment, operations triage 스킬
+  devops/            CI/CD, container, package release, deployment, operations triage 스킬
   frontend/          UI, browser, state/data, accessibility, visual QA 스킬
   mobile/            native, hybrid, WebView, device QA 스킬
-  security/          auth, dependency supply chain, security review, risk 스킬
+  security/          auth, dependency supply chain, license/notice, security review, risk 스킬
   project/            bootstrap, onboarding, project-memory 스킬
   quality/            UI quality, cleanup, review 스킬
   git/                commit, PR, push, worklog 스킬
@@ -166,6 +166,7 @@ test/                 Node CLI와 adapter 테스트
 - `boundary-review`: FSD, layered, DDD, monorepo, package ownership, dependency direction, coupling boundary를 검토할 때.
 - `api-contract-boundary`: 프론트엔드/백엔드 계약, DTO, mock, payload, adapter를 구현·디버깅·검토할 때.
 - `backend-change-safety`: backend service, module, worker, job, integration, queue, config, server-side business logic을 바꿀 때.
+- `connector-integration-change`: API connector, workflow node, MCP adapter, webhook, OAuth app, import/export bridge, sync job, connector registration, credential handling을 바꿀 때.
 - `server-rendered-change`: backend-rendered controller, template, form, session, redirect, validation, view contract를 바꿀 때.
 - `data-pipeline-review`: analytics pipeline, ETL, batch job, data contract, dashboard, quality check를 검토할 때.
 - `analytics-reporting-review`: metric, dashboard, report, KPI definition, chart/table consistency, analytics query, freshness, caveat를 검토할 때.
@@ -178,6 +179,7 @@ test/                 Node CLI와 adapter 테스트
 - `ci-failure-triage`: 실패한 CI job, build pipeline, deployment, flaky test, environment drift를 진단할 때.
 - `container-change-safety`: Dockerfile, container image, Compose/Kubernetes manifest, runtime config, healthcheck, volume, network를 바꿀 때.
 - `deployment-release-check`: release, deploy, rollback, feature flag, artifact, migration gate, post-deploy check를 준비·검토·진단할 때.
+- `package-publish-readiness`: package publishing, release artifact, package metadata, registry dry-run, generated bundle, binary, marketplace distribution을 준비·검토·진단할 때.
 - `observability-incident-triage`: incident, production error, alert, latency, error rate, queue backlog, job failure, log, metric, trace를 triage할 때.
 - `browser-dom-change`: browser DOM behavior, jQuery flow, event handler, selector, form, plugin, script-loaded UI를 바꿀 때.
 - `frontend-state-data-flow`: frontend state ownership, server/client cache behavior, data fetching, optimistic update, URL state, stale UI bug를 바꿀 때.
@@ -189,6 +191,7 @@ test/                 Node CLI와 adapter 테스트
 - `security-review`: secret, authentication, authorization, input validation, dependency risk, sensitive data flow를 검토할 때.
 - `auth-access-control`: login, session, OAuth/OIDC, JWT, RBAC, permission, role, tenant, scope, object-level authorization을 바꿀 때.
 - `dependency-supply-chain-review`: dependency, lockfile, SBOM, license, container, package script, provenance, vulnerability remediation을 바꿀 때.
+- `license-notice-review`: first-party license, third-party notice, attribution, vendored code, generated artifact, copied snippet, dual-license choice, redistribution scope, compliance evidence를 검토할 때.
 
 ### 레거시
 

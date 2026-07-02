@@ -59,6 +59,18 @@ Frontend quality skill은 user-visible polish를 state/data correctness, accessi
 
 Framework-specific detail은 reference 또는 project-local playbook에 둡니다. Primary skill은 React, Vue, Svelte, Angular, server-rendered page, 가벼운 DOM-first frontend에서도 작동해야 합니다.
 
+## Data And Documentation Pack
+
+Data와 documentation skill은 pipeline reliability, reporting correctness, migration integrity, durable project memory를 분리합니다.
+
+- `data/data-pipeline-review`: analytics pipeline, ETL, batch job, data contract, dashboard, quality check, freshness, ownership, lineage.
+- `data/analytics-reporting-review`: metric definition, KPI ownership, dashboard/report consistency, chart/table check, segmentation, caveat, reader handoff.
+- `data/data-migration-integrity`: data migration, backfill, warehouse transformation, reconciliation query, idempotency, batching, rollback, repair.
+- `project/project-doc-system`: `.ai-playbook` map, runbook, decision, plan, worklog, archive, project-memory hygiene.
+- `project/adr-spec-handoff`: ADR, spec, milestone outcome, implementation handoff, reviewed evidence, durable memory promotion.
+
+Generated runtime report는 검토 없이 `memory/`로 승격하지 않습니다. Reporting, migration, handoff skill은 source evidence를 보존하되 private path, credential, branch name, PR number, noisy reference name이 public documentation에 들어가지 않게 해야 합니다.
+
 ## Validation
 
 Catalog 명령은 duplicate skill name, wrapper routing 누락, wrapper reference 누락, category drift를 보고합니다.

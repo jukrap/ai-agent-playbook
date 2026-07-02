@@ -28,7 +28,7 @@ test('skills install dry-run reports operations without writing roots', async ()
   assert.equal(report.schemaVersion, '1');
   assert.equal(report.ok, true);
   assert.equal(report.applied, false);
-  assert.equal(report.summary.skills, 45);
+  assert.equal(report.summary.skills, 48);
   assert.equal(report.operations.some((operation) => operation.action === 'install'), true);
   assert.deepEqual(await listRelativeFiles(root), before);
   await cleanup(root);

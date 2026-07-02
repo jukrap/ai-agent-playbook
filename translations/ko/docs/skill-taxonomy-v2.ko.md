@@ -23,6 +23,18 @@ Skill taxonomy v2는 capability category를 1차 축으로 씁니다. 스택별 
 
 예를 들어 `legacy-java-spring-mvc`는 backend server-rendered change 작업으로 라우팅하고 Spring MVC 세부사항은 reference 파일에 둡니다.
 
+## AI Harness Governance Pack
+
+AI harness skill은 MCP surface design을 context engineering, skill-pack governance, runtime index/cache contract와 분리합니다.
+
+- `ai-harness/mcp-server-design`: MCP tool, resource, prompt, permission tier, write gate, cache/index surface.
+- `ai-harness/context-engineering-memory-design`: agent instruction, context surface, prompt/cache budget, project memory, compaction behavior, durable memory promotion, stale fact handling.
+- `ai-harness/skill-pack-governance`: skill taxonomy growth, compatibility wrapper, reference routing, translation, install/sync behavior, reusable skill-pack adoption.
+- `ai-harness/runtime-index-cache-design`: runtime report, index, graph, cache, artifact schema, invalidation, canon promotion, generated evidence, local-only runtime storage.
+- `meta/agent-skill-authoring`: reusable skill structure, trigger description, reference, skill/template boundary.
+
+AI harness guidance는 always-on prompt와 core tool surface를 좁게 유지해야 합니다. Default context를 키우기 전에 selected skill, reference, recipe, CLI command, MCP resource, opt-in tool을 우선합니다.
+
 ## Backend And Security Pack
 
 Backend와 security skill은 capability-first name을 씁니다.

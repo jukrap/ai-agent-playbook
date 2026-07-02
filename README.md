@@ -163,6 +163,9 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 ### Harness OS v2 Capabilities
 
 - `mcp-server-design`: design MCP tools, resources, prompts, permission tiers, write gates, and cache/index surfaces.
+- `context-engineering-memory-design`: design or review agent instructions, context surfaces, prompt/cache budget, project memory, compaction behavior, durable memory promotion, or stale fact handling.
+- `skill-pack-governance`: add, reorganize, review, or adopt skill packs, taxonomy categories, compatibility wrappers, reference routing, translations, install/sync behavior, or reusable skill governance.
+- `runtime-index-cache-design`: design or review runtime reports, indexes, graphs, caches, artifact schemas, invalidation, canon promotion, generated evidence, or local-only runtime storage.
 - `boundary-review`: review FSD, layered, DDD, monorepo, package ownership, dependency direction, and coupling boundaries.
 - `feature-slice-boundary`: change or review FSD, feature-sliced, vertical-slice, feature-first, route-level, module-level, or component-domain boundaries.
 - `domain-model-change`: change or review domain entities, aggregates, value objects, services, policies, use cases, repositories, adapters, invariants, or transaction boundaries.

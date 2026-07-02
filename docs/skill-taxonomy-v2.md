@@ -23,6 +23,18 @@ Stack-named skills can remain as compatibility wrappers when they still provide 
 
 For example, `legacy-java-spring-mvc` routes to backend server-rendered change work and keeps Spring MVC specifics in its reference file.
 
+## AI Harness Governance Pack
+
+AI harness skills separate MCP surface design from context engineering, skill-pack governance, and runtime index/cache contracts:
+
+- `ai-harness/mcp-server-design`: MCP tools, resources, prompts, permission tiers, write gates, and cache/index surfaces.
+- `ai-harness/context-engineering-memory-design`: agent instructions, context surfaces, prompt/cache budget, project memory, compaction behavior, durable memory promotion, and stale fact handling.
+- `ai-harness/skill-pack-governance`: skill taxonomy growth, compatibility wrappers, reference routing, translations, install/sync behavior, and reusable skill-pack adoption.
+- `ai-harness/runtime-index-cache-design`: runtime reports, indexes, graphs, caches, artifact schemas, invalidation, canon promotion, generated evidence, and local-only runtime storage.
+- `meta/agent-skill-authoring`: reusable skill structure, trigger descriptions, references, and skill/template boundaries.
+
+AI harness guidance should keep always-on prompt and core tool surfaces narrow. Prefer selected skills, references, recipes, CLI commands, MCP resources, or opt-in tools before growing default context.
+
 ## Backend And Security Pack
 
 Backend and security skills use capability-first names:

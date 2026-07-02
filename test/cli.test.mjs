@@ -553,6 +553,69 @@ test('index status reports malformed runtime artifact JSON without throwing', as
   await cleanup(target);
 });
 
+test('runtime schema-check validates known runtime and source schemas without writing files', async () => {
+  const target = await tempRepo('runtime schema check-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await mkdir(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evals'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evidence'), { recursive: true });
+  await writeFile(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evals', 'prompt-regression.json'), `${JSON.stringify({
+    schemaVersion: '1',
+    kind: 'runtime.eval-definition',
+    id: 'prompt-regression',
+    target: 'mcp prompt behavior',
+    behavior: 'Prompt names required evidence before suggestions.',
+    riskClass: 'medium',
+    baseline: 'accepted prompt contract',
+    fixtures: ['fixtures/prompt-regression.json'],
+    graders: [{ type: 'rule', command: 'node test/prompt-contracts.test.mjs' }],
+    successCriteria: { requiredSections: ['Required evidence', 'Stop conditions'] },
+    budgets: { maxRuntimeMs: 30000, maxExternalCalls: 0 },
+    storage: { runtimePath: '.ai-playbook/runtime/reports/evals/prompt-regression.json' }
+  }, null, 2)}\n`);
+  await writeFile(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evidence', 'bad.json'), `${JSON.stringify({
+    schemaVersion: '1',
+    kind: 'runtime.evidence-envelope',
+    sourceId: 'local-reference',
+    locator: { type: 'path-range', path: 'C:\\Users\\home\\secret.txt' },
+    query: 'schema-check',
+    scanRange: 'all docs',
+    freshness: '2026-07-03',
+    evidenceType: 'direct quote',
+    summary: 'sk-proj-this-is-not-a-valid-example-but-is-secret-shaped-1234567890',
+    caveats: [],
+    promotionStatus: 'trusted'
+  }, null, 2)}\n`);
+  const before = await listRelativeFiles(target);
+
+  const evalCheck = capture(target);
+  assert.equal(await runCli(['runtime', 'schema-check', '.', '--path', '.ai-playbook/runtime/reports/evals/prompt-regression.json', '--json'], evalCheck), 0);
+  const evalReport = JSON.parse(evalCheck.out());
+  assert.equal(evalReport.kind, 'runtime.schema-check');
+  assert.equal(evalReport.mode.writes, false);
+  assert.equal(evalReport.expectedKind, 'runtime.eval-definition');
+  assert.equal(evalReport.summary.conflicts, 0);
+
+  const sourceCheck = capture(target);
+  assert.equal(await runCli(['runtime', 'schema-check', '.', '--path', '.ai-playbook/knowledge/sources.json', '--json'], sourceCheck), 0);
+  const sourceReport = JSON.parse(sourceCheck.out());
+  assert.equal(sourceReport.expectedKind, 'runtime.source-registry');
+  assert.equal(sourceReport.summary.conflicts, 0);
+
+  const missingCheck = capture(target);
+  assert.equal(await runCli(['runtime', 'schema-check', '.', '--path', '.ai-playbook/runtime/reports/evidence/missing.json', '--json'], missingCheck), 1);
+  const missingReport = JSON.parse(missingCheck.out());
+  assert.equal(missingReport.conflicts.some((conflict) => conflict.id === 'runtime.schema.file-unreadable'), true);
+  assert.equal(JSON.stringify(missingReport.conflicts).includes(target), false);
+
+  const badCheck = capture(target);
+  assert.equal(await runCli(['runtime', 'schema-check', '.', '--path', '.ai-playbook/runtime/reports/evidence/bad.json', '--kind', 'runtime.evidence-envelope', '--json'], badCheck), 1);
+  const badReport = JSON.parse(badCheck.out());
+  assert.equal(badReport.conflicts.some((conflict) => conflict.id === 'runtime.schema.credential-value'), true);
+  assert.equal(badReport.conflicts.some((conflict) => conflict.id === 'runtime.schema.locator-path'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
 test('runtime capability-history summarizes append-only JSONL without writing files', async () => {
   const target = await tempRepo('capability history-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);

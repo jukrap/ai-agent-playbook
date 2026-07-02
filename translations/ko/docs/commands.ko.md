@@ -153,6 +153,7 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 | `reference inventory <reference-dir>` | 채택할 항목을 판단하기 전에 local reference collection을 요약합니다. | 아니오 | `npx ai-agent-playbook reference inventory _reference --json` |
 | `reference ledger-check <target>` | reference adoption ledger의 status 값과 local-only leak를 검증합니다. | 아니오 | `npx ai-agent-playbook reference ledger-check <target-project> --json` |
 | `runtime capability-history <target>` | benchmark나 telemetry를 실행하지 않고 local append-only capability history를 요약합니다. | 아니오 | `npx ai-agent-playbook runtime capability-history <target-project> --json` |
+| `runtime schema-check <target>` | runtime eval, witness, evidence-envelope, artifact, source-registry JSON을 파일 쓰기 없이 검증합니다. | 아니오 | `npx ai-agent-playbook runtime schema-check <target-project> --path .ai-playbook/runtime/reports/evals/example.json --json` |
 | `index build <target>` | `.ai-playbook/runtime/indexes/file-inventory.json` 생성을 preview하거나 씁니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook index build <target-project> --json` |
 | `index status <target>` | runtime file inventory 존재 여부를 확인합니다. | 아니오 | `npx ai-agent-playbook index status <target-project> --json` |
 | `index search <target>` | runtime index를 쓰지 않고 local project text를 검색합니다. | 아니오 | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
@@ -169,6 +170,8 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 `reference ledger-check`는 기본적으로 `.ai-playbook/knowledge/reference-adoption-ledger.md`를 검증합니다. 파일을 쓰지 않고 adoption status, local absolute path, internal URL, secret-like token, oversized excerpt를 확인합니다. 대상 프로젝트 내부의 다른 ledger를 확인하려면 `--path <ledger.md>`를 사용합니다. JSON output에는 capability 영역별 adoption status를 볼 수 있도록 `summary.capabilities`가 포함됩니다. Oversized fenced excerpt를 warning이 아니라 실패로 다루려면 `--strict`를 추가합니다.
 
 `runtime capability-history`는 존재할 때 `.ai-playbook/runtime/reports/capability-history.jsonl`을 읽습니다. Entry를 capability별로 묶고 latest status, latest duration, baseline, drift를 보고하며, machine-local path를 그대로 출력하지 않도록 non-portable evidence path는 output에서 생략합니다. History가 없으면 정상적인 empty state입니다.
+
+`runtime schema-check`는 target-relative JSON file을 읽고 `runtime.eval-definition`, `runtime.eval-run-report`, `runtime.capability-witness`, `runtime.evidence-envelope`, `runtime.source-registry` 또는 generic runtime artifact envelope 같은 compact local schema를 검증합니다. 알려진 `kind` 값은 자동 감지하며, 모호한 evidence envelope를 확인할 때는 `--kind <kind>`를 사용할 수 있습니다. 이 명령은 read-only입니다. Compact schema check는 local absolute path, credential처럼 보이는 값, oversized inline evidence를 conflict로 보고합니다.
 
 `write-gate preview`는 `.ai-playbook/runtime/reports/write-gate/` 아래 planned `transaction.advisoryPath`와 `transaction.invocationId`를 반환합니다. Preview는 read-only를 유지하며, transaction field는 이후 post-write 또는 advisory file 작업의 안정적인 handoff로 씁니다.
 

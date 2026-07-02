@@ -107,12 +107,12 @@ See [Command guide](docs/commands.md) for search, managed cleanup, adapter setup
 bin/                  ai-playbook CLI entrypoint
 src/                  CLI runtime implementation
 skills/
-  ai-harness/        MCP, skill, agent, context, cache, and index design skills
+  ai-harness/        MCP, skill, agent, context, witness, cache, and index design skills
   architecture/      Boundary, feature slice, domain model, and monorepo/package architecture skills
   backend/           API, backend change safety, connector, and server-rendered flow skills
   data/              Data pipeline, analytics, reporting, and migration integrity skills
   database/          Schema, migration, SQL, and data integrity skills
-  delivery/          Planning, verification, testing, Git, PR, and worklog skills
+  delivery/          Planning, eval, verification, testing, Git, PR, and worklog skills
   devops/            CI/CD, container, package release, deployment, and operations triage skills
   frontend/          UI, browser, state/data, accessibility, and visual QA skills
   mobile/            Native release, permission, offline sync, hybrid, WebView, and device QA skills
@@ -170,6 +170,7 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `context-engineering-memory-design`: design or review agent instructions, context surfaces, prompt/cache budget, project memory, compaction behavior, durable memory promotion, or stale fact handling.
 - `skill-pack-governance`: add, reorganize, review, or adopt skill packs, taxonomy categories, compatibility wrappers, reference routing, translations, install/sync behavior, or reusable skill governance.
 - `runtime-index-cache-design`: design or review runtime reports, indexes, graphs, caches, artifact schemas, invalidation, canon promotion, generated evidence, or local-only runtime storage.
+- `capability-witness-history`: design or review append-only capability witnesses, baseline comparison, skipped/degraded status, and runtime reliability history.
 - `boundary-review`: review FSD, layered, DDD, monorepo, package ownership, dependency direction, and coupling boundaries.
 - `feature-slice-boundary`: change or review FSD, feature-sliced, vertical-slice, feature-first, route-level, module-level, or component-domain boundaries.
 - `domain-model-change`: change or review domain entities, aggregates, value objects, services, policies, use cases, repositories, adapters, invariants, or transaction boundaries.
@@ -190,6 +191,7 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `query-performance-review`: review slow SQL, reporting queries, dashboard queries, API list/detail queries, exports, aggregates, joins, sort/pagination, full scans, N+1 patterns, or index choices.
 - `data-integrity-constraints`: change database constraints, uniqueness, foreign keys, checks, not-null rules, triggers, stored procedures, generated columns, repair scripts, reconciliation queries, or invariant boundaries.
 - `git-worklog-guardrails`: primary delivery skill for staging, commits, PR text, release notes, and worklogs.
+- `eval-harness-design`: define or review agent, harness, workflow, MCP, prompt, capability, regression, grader, and release-gate evals.
 - `test-verification-strategy`: plan or review risk-based verification, test scope, check selection, coverage gaps, and release confidence.
 - `flaky-test-triage`: diagnose, reproduce, stabilize, quarantine, or document flaky and nondeterministic tests.
 - `test-fixture-data-design`: design or repair fixtures, factories, mocks, seeds, snapshots, golden files, and test data boundaries.

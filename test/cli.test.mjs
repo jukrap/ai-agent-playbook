@@ -120,7 +120,7 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   const catalogReport = JSON.parse(catalog.out());
   assert.equal(catalogReport.taxonomyVersion, '2');
   assert.equal(catalogReport.summary.categories, 12);
-  assert.equal(catalogReport.summary.skills, 74);
+  assert.equal(catalogReport.summary.skills, 76);
 
   const catalogCheck = capture(target);
   assert.equal(await runCli(['catalog', 'check', '--json'], catalogCheck), 0);
@@ -131,7 +131,9 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
     'requirements-prd-scope-review',
     'issue-planning-triage',
     'release-notes-changelog',
-    'documentation-artifact-package'
+    'documentation-artifact-package',
+    'eval-harness-design',
+    'capability-witness-history'
   ]) {
     assert.equal(catalogCheckReport.skills.some((skill) => skill.name === expectedSkill), true);
   }

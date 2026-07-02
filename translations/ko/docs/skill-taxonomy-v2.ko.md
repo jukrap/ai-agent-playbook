@@ -5,7 +5,7 @@ Skill taxonomy v2는 capability category를 1차 축으로 씁니다. 스택별 
 ## Categories
 
 - `foundation`: repo onboarding, bootstrap, project docs, requirements, planning, release notes, documentation package.
-- `delivery`: planning, verification, testing, git, PR, worklog flow.
+- `delivery`: planning, eval, verification, testing, git, PR, worklog flow.
 - `architecture`: FSD, layered architecture, DDD, monorepo, boundary review.
 - `frontend`: UI, state, data, accessibility, performance, visual QA.
 - `backend`: API contract, connector, auth, server-rendered flow, worker, integration.
@@ -14,7 +14,7 @@ Skill taxonomy v2는 capability category를 1차 축으로 씁니다. 스택별 
 - `security`: secret, threat modeling, authorization, dependency risk, compliance evidence.
 - `mobile`: Expo, React Native, native app release, permission, offline sync, WebView bridge, device QA.
 - `data`: analytics, pipeline, ETL, dashboard, data quality.
-- `ai-harness`: MCP, skill, agent, context engineering, cache, index design.
+- `ai-harness`: MCP, skill, agent, context engineering, witness history, cache, index design.
 - `legacy`: legacy change safety와 compatibility strategy.
 
 ## Wrapper Policy
@@ -31,6 +31,7 @@ AI harness skill은 MCP surface design을 context engineering, skill-pack govern
 - `ai-harness/context-engineering-memory-design`: agent instruction, context surface, prompt/cache budget, project memory, compaction behavior, durable memory promotion, stale fact handling.
 - `ai-harness/skill-pack-governance`: skill taxonomy growth, compatibility wrapper, reference routing, translation, install/sync behavior, reusable skill-pack adoption.
 - `ai-harness/runtime-index-cache-design`: runtime report, index, graph, cache, artifact schema, invalidation, canon promotion, generated evidence, local-only runtime storage.
+- `ai-harness/capability-witness-history`: append-only capability witness, baseline comparison, skipped/degraded status, runtime reliability history.
 - `meta/agent-skill-authoring`: reusable skill structure, trigger description, reference, skill/template boundary.
 
 AI harness guidance는 always-on prompt와 core tool surface를 좁게 유지해야 합니다. Default context를 키우기 전에 selected skill, reference, recipe, CLI command, MCP resource, opt-in tool을 우선합니다.
@@ -77,11 +78,12 @@ Database guidance는 read-before-write evidence를 우선해야 합니다. Schem
 Delivery testing skill은 release confidence planning, flaky test stabilization, fixture/test-data design을 분리합니다.
 
 - `delivery/git-worklog-guardrails`: staging, commit, PR text, release note, worklog.
+- `delivery/eval-harness-design`: agent, harness, workflow, MCP, prompt, capability, regression, grader, release-gate eval.
 - `delivery/test-verification-strategy`: risk-based verification strategy, test scope, coverage gap, check selection, release confidence.
 - `delivery/flaky-test-triage`: flaky, nondeterministic, timing-dependent, order-dependent, environment-sensitive, intermittent test failure.
 - `delivery/test-fixture-data-design`: fixture, factory, mock, seed, snapshot, golden file, sample payload, test database, fixture maintenance boundary.
 
-Verification guidance는 project-defined command를 우선하고, check result를 지어내지 않으며, 실행할 수 없는 check에는 remaining risk를 기록해야 합니다.
+Verification guidance는 project-defined command, deterministic grader, `runtime/`에 남긴 generated evidence를 우선하고, 실행할 수 없는 check에는 remaining risk를 명시해야 합니다.
 
 ## DevOps And Release Pack
 

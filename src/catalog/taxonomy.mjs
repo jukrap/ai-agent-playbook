@@ -7,7 +7,7 @@ export const TAXONOMY_VERSION = '2';
 
 export const CAPABILITY_CATEGORIES = [
   { id: 'foundation', title: 'Foundation', description: 'Repository onboarding, bootstrap, and project memory setup.' },
-  { id: 'delivery', title: 'Delivery', description: 'Planning, verification, git, PR, release, and worklog flows.' },
+  { id: 'delivery', title: 'Delivery', description: 'Planning, evals, verification, git, PR, release, and worklog flows.' },
   { id: 'architecture', title: 'Architecture', description: 'FSD, layered architecture, DDD, monorepos, and boundary review.' },
   { id: 'frontend', title: 'Frontend', description: 'UI, state, data fetching, accessibility, performance, and visual QA.' },
   { id: 'backend', title: 'Backend', description: 'API contracts, auth, server-rendered flows, workers, and integrations.' },
@@ -16,7 +16,7 @@ export const CAPABILITY_CATEGORIES = [
   { id: 'security', title: 'Security', description: 'Secrets, threat modeling, authorization, and dependency risk review.' },
   { id: 'mobile', title: 'Mobile', description: 'Expo, React Native, native app release, permissions, offline sync, WebView bridge, and device QA.' },
   { id: 'data', title: 'Data', description: 'Analytics, pipelines, ETL, dashboards, and data quality.' },
-  { id: 'ai-harness', title: 'AI Harness', description: 'MCP, skills, agents, context engineering, cache, and index design.' },
+  { id: 'ai-harness', title: 'AI Harness', description: 'MCP, skills, agents, context engineering, witness history, cache, and index design.' },
   { id: 'legacy', title: 'Legacy', description: 'Legacy change safety and compatibility strategy.' }
 ];
 

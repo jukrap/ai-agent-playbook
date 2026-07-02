@@ -1187,6 +1187,157 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- Clearly label generated hints, low-confidence matches, and unknowns.',
     '- Recommend canon promotion only after explicit human review.'
   ]));
+
+  server.registerPrompt('repo_graph_review', {
+    title: 'Repo graph review',
+    description: 'Review repo graph evidence, edge confidence, source locators, and promotion boundaries without writing files.',
+    argsSchema: {
+      target: z.string().optional(),
+      focus: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS repo graph review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Focus: ${args.focus ?? '<files, symbols, routes, packages, contracts, docs, workflows, or evidence>'}`,
+    '',
+    'Required evidence:',
+    '- repo_graph_preview for compact file, symbol, route/API, package, contract, doc, workflow, and evidence relationships',
+    '- runtime_schema_check when a persisted graph artifact is being reviewed',
+    '- evidence_locator_check for cited reports, evidence envelopes, or graph-linked markdown notes',
+    '- index_status for available source indexes, preview-only indexes, and freshness',
+    '- canon_check before treating generated graph facts as durable memory',
+    '',
+    'Optional evidence:',
+    '- symbol_outline, dependency_inventory, and route_api_hints to reopen the source signals behind graph nodes and edges',
+    '- operator_search for docs, contracts, rules, tests, and worklogs that explain graph relationships',
+    '',
+    'Stop conditions:',
+    '- Edge confidence, source path, scan range, or source pattern is missing for the claim being made',
+    '- Graph output is truncated or stale for the review scope',
+    '- Generated graph facts would be promoted into memory without review',
+    '- A private path, credential-shaped value, private URL, or noisy reference label appears in shared output',
+    '',
+    'Verification expectations:',
+    '- Label graph findings as generated evidence, not truth.',
+    '- Name reopened source locators and unresolved low-confidence edges.',
+    '- Keep memory promotion behind explicit canon review and write-gate behavior.'
+  ]));
+
+  server.registerPrompt('ci_quality_gate_review', {
+    title: 'CI quality gate review',
+    description: 'Review required, optional, skipped, stale, and flaky checks before merge, release, or handoff.',
+    argsSchema: {
+      target: z.string().optional(),
+      branch: z.string().optional(),
+      change: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS CI quality gate review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Branch or revision: ${args.branch ?? '<branch, revision, or release candidate>'}`,
+    `Change: ${args.change ?? '<change scope>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe ci-quality-gate',
+    '- diagnostics_check for repository-defined lint, typecheck, test, build, package, docs, translation, and schema commands',
+    '- dependency_inventory for package managers, lockfiles, CI workflows, containers, and scripts',
+    '- evidence_locator_check for CI summaries, markdown gate notes, and runtime evidence references',
+    '- write_gate_preview before suggesting CI, workflow, package, or verification file edits',
+    '',
+    'Optional evidence:',
+    '- capability_witness or runtime capability-history evidence when available through index_status and operator_search',
+    '- runtime_schema_check for generated eval, witness, or evidence-envelope artifacts',
+    '- operator_search for flaky-test notes, skip policies, required check definitions, and owner metadata',
+    '',
+    'Stop conditions:',
+    '- Required checks, owners, retry policy, stale evidence, skip reason, or release blocker status is unknown',
+    '- A failed or skipped required check is treated as optional without owner acceptance',
+    '- CI-only behavior cannot be reproduced or bounded by local evidence',
+    '',
+    'Verification expectations:',
+    '- State pass, blocked, advisory-only, or accepted-risk gate status.',
+    '- Separate required checks, optional checks, skipped checks, flaky checks, and unavailable checks.',
+    '- Include the freshest command output or CI locator without copying private URLs, credentials, or long logs.'
+  ]));
+
+  server.registerPrompt('release_deployment_gate_review', {
+    title: 'Release deployment gate review',
+    description: 'Review artifact identity, deployment target, config diff, migration gate, rollback, and post-deploy evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      artifact: z.string().optional(),
+      environment: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS release/deployment gate review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Artifact: ${args.artifact ?? '<image, package, build, bundle, release candidate, or revision>'}`,
+    `Environment: ${args.environment ?? '<environment, channel, tenant, region, or rollout mode>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe deployment-release',
+    '- dependency_inventory for package, image, lockfile, container, CI, and release automation signals',
+    '- route_api_hints for route/API/data/migration impact hints',
+    '- diagnostics_check for build, test, smoke, package, docs, and deploy verification candidates',
+    '- runtime_schema_check for generated release, witness, or evidence reports',
+    '- evidence_locator_check for release gate notes and artifact evidence',
+    '- canon_check before trusting promoted release facts',
+    '- write_gate_preview before suggesting release, config, migration, or documentation edits',
+    '',
+    'Optional evidence:',
+    '- operator_preflight for intent, context, and write-risk snapshot',
+    '- operator_search for feature flags, config/env changes, migrations, workers, queues, cron jobs, release notes, rollback, monitors, and runbooks',
+    '',
+    'Stop conditions:',
+    '- Artifact identity, deployment target, rollout owner, config diff, migration rollback, or post-deploy observation window is unknown',
+    '- Deployment credentials or private endpoints are required but unavailable',
+    '- Release notes or support handoff are required for a user-facing change but missing',
+    '- A generated artifact or runtime report contains private paths, credentials, private URLs, or unrelated local files',
+    '',
+    'Verification expectations:',
+    '- State pass, blocked, advisory-only, or accepted-risk release status.',
+    '- Name artifact identity, CI quality gate, config diff, migration gate, smoke, monitoring, release notes, and rollback evidence.',
+    '- Separate local source evidence from external deployment status claims.'
+  ]));
+
+  server.registerPrompt('security_compliance_gate_review', {
+    title: 'Security compliance gate review',
+    description: 'Review security and compliance gate evidence before merge, release, publication, or handoff.',
+    argsSchema: {
+      target: z.string().optional(),
+      artifact: z.string().optional(),
+      gate: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS security/compliance gate review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Artifact: ${args.artifact ?? '<source change, package, image, document package, generated bundle, or release candidate>'}`,
+    `Gate: ${args.gate ?? '<merge, release, publish, customer handoff, internal handoff, or documentation publication>'}`,
+    '',
+    'Required evidence:',
+    '- skill_catalog to confirm security-compliance-gate and adjacent security skills are available',
+    '- dependency_inventory for manifests, lockfiles, package scripts, containers, SBOM/provenance, and CI signals',
+    '- route_api_hints for authz-sensitive route, API, SQL, migration, and data exposure hints',
+    '- diagnostics_check for repository-defined security, public-doc, translation, schema, lint, test, and build checks',
+    '- runtime_schema_check for generated runtime, eval, witness, source registry, graph, or evidence artifacts',
+    '- evidence_locator_check for security findings, scanner summaries, release notes, handoffs, and evidence envelopes',
+    '- write_gate_preview before suggesting security, dependency, license, documentation, or artifact edits',
+    '',
+    'Optional evidence:',
+    '- operator_search for secrets, auth/access control, dependency, license, notice, generated artifact, scanner, and policy references',
+    '- canon_check before relying on promoted security or compliance facts',
+    '- reference_ledger_check when adopted reference material influenced the security/compliance rule',
+    '',
+    'Stop conditions:',
+    '- Secret-like value, credential boundary, private URL, personal path, license/notice evidence, dependency provenance, or auth/access-control behavior is unresolved',
+    '- Required scanner, public-doc hygiene, translation coverage, runtime schema, or locator check failed',
+    '- Accepted risk lacks owner, expiry, compensating evidence, and follow-up path',
+    '',
+    'Verification expectations:',
+    '- Classify findings as block, warn, document, or accepted-risk.',
+    '- Route implementation details to security-review, auth-access-control, dependency-supply-chain-review, or license-notice-review.',
+    '- Keep private scanner output bounded and cite reopenable locators instead of copying private URLs, credentials, long logs, or personal paths.'
+  ]));
 }
 
 function tool(name, description, schema, handler) {

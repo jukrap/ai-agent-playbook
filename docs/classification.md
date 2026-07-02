@@ -9,7 +9,9 @@ The content is not agent-specific. Codex is one installation target. The source 
 ## Skill categories
 
 - `skills/project`: project bootstrap, onboarding, and project-memory maintenance.
-- `skills/quality`: API boundary, UI style policy, visual quality, cleanup, and lightweight review workflows.
+- `skills/backend`: API contract, backend change safety, server-rendered flow, worker, and integration workflows.
+- `skills/security`: authentication, authorization, dependency supply chain, security review, and risk workflows.
+- `skills/quality`: UI style policy, visual quality, cleanup, and lightweight review workflows.
 - `skills/git`: commit, PR, push, and worklog guardrails.
 - `skills/meta`: skill-authoring and repository-maintenance skills.
 - `skills/legacy`: maintenance workflows where runtime coupling and compatibility dominate.

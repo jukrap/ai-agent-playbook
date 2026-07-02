@@ -9,7 +9,9 @@
 ## 스킬 분류
 
 - `skills/project`: 프로젝트 bootstrap, onboarding, 프로젝트 메모리 유지보수.
-- `skills/quality`: API boundary, UI 스타일 정책, 시각 품질, cleanup, lightweight review 작업 흐름.
+- `skills/backend`: API contract, backend change safety, server-rendered flow, worker, integration 작업 흐름.
+- `skills/security`: authentication, authorization, dependency supply chain, security review, risk 작업 흐름.
+- `skills/quality`: UI 스타일 정책, 시각 품질, cleanup, lightweight review 작업 흐름.
 - `skills/git`: commit, PR, push, worklog 보호 규칙.
 - `skills/meta`: 스킬 작성과 저장소 유지보수 스킬.
 - `skills/legacy`: 런타임 결합과 호환성이 중요한 유지보수 작업 흐름.

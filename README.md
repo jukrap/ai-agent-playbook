@@ -109,16 +109,16 @@ src/                  CLI runtime implementation
 skills/
   ai-harness/        MCP, skill, agent, context, cache, and index design skills
   architecture/      Boundary and architecture review skills
-  backend/           API and server-rendered flow skills
+  backend/           API, backend change safety, and server-rendered flow skills
   data/              Data pipeline and analytics reliability skills
   database/          Schema, migration, SQL, and data integrity skills
   delivery/          Planning, verification, Git, PR, and worklog skills
   devops/            CI/CD, deployment, and operations triage skills
   frontend/          UI, browser, accessibility, and visual QA skills
   mobile/            Native, hybrid, WebView, and device QA skills
-  security/          Security review and risk skills
+  security/          Auth, dependency supply chain, security review, and risk skills
   project/            Bootstrap, onboarding, and project-memory skills
-  quality/            API boundary, UI quality, cleanup, and review skills
+  quality/            UI quality, cleanup, and review skills
   git/                Commit, PR, push, and worklog skills
   meta/               Skill-authoring skills
   legacy/             Legacy-system maintenance skills
@@ -148,7 +148,6 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 
 ### Quality
 
-- `api-contract-boundary`: implement, debug, or review frontend/backend contracts, DTOs, mocks, payloads, and adapters.
 - `ui-style-policy`: select, document, or enforce a repository UI styling policy.
 - `style-quality-review`: review or improve UI styling, responsive behavior, layout overflow, and visual regressions.
 - `frontend-ui-polish`: implement or refine visible frontend UI surfaces while preserving product intent and existing design conventions.
@@ -164,6 +163,8 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 
 - `mcp-server-design`: design MCP tools, resources, prompts, permission tiers, write gates, and cache/index surfaces.
 - `boundary-review`: review FSD, layered, DDD, monorepo, package ownership, dependency direction, and coupling boundaries.
+- `api-contract-boundary`: implement, debug, or review frontend/backend contracts, DTOs, mocks, payloads, and adapters.
+- `backend-change-safety`: change backend services, modules, workers, jobs, integrations, queues, config, or server-side business logic.
 - `server-rendered-change`: change backend-rendered controllers, templates, forms, sessions, redirects, validation, and view contracts.
 - `data-pipeline-review`: review analytics pipelines, ETL, batch jobs, data contracts, dashboards, and quality checks.
 - `database-change-safety`: change database schema, migrations, SQL, reporting queries, stored procedures, or data integrity rules.
@@ -174,6 +175,8 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `webview-bridge`: change WebView bridges, native-to-web messaging, deep links, embedded auth, uploads, downloads, or hybrid navigation.
 - `legacy-change-safety`: primary legacy skill for compatibility-first changes with hidden coupling or deployment risk.
 - `security-review`: review secrets, authentication, authorization, input validation, dependency risk, and sensitive data flow.
+- `auth-access-control`: change login, sessions, OAuth/OIDC, JWTs, RBAC, permissions, roles, tenants, scopes, or object-level authorization.
+- `dependency-supply-chain-review`: change dependencies, lockfiles, SBOMs, licenses, containers, package scripts, provenance, or vulnerability remediation.
 
 ### Legacy
 

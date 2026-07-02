@@ -23,6 +23,19 @@ Skill taxonomy v2는 capability category를 1차 축으로 씁니다. 스택별 
 
 예를 들어 `legacy-java-spring-mvc`는 backend server-rendered change 작업으로 라우팅하고 Spring MVC 세부사항은 reference 파일에 둡니다.
 
+## Backend And Security Pack
+
+Backend와 security skill은 capability-first name을 씁니다.
+
+- `backend/api-contract-boundary`: API와 DTO boundary 작업.
+- `backend/backend-change-safety`: service, module, job, worker, queue, config, integration.
+- `backend/server-rendered-change`: controller, template, session, form, redirect, server-rendered view contract.
+- `security/auth-access-control`: authentication, authorization, RBAC, tenant, scope, object-level access.
+- `security/dependency-supply-chain-review`: dependency, lockfile, SBOM, license, provenance, container, CVE.
+- `security/security-review`: broad security risk review와 threat-model triage.
+
+Stack profile은 관련 primary skill reference tree 아래에 둡니다. Backend change safety의 Java, Kotlin, Go, Python, Node, .NET, PHP 세부사항은 stack-first primary skill을 만들지 않고 `skills/backend/backend-change-safety/references/stacks/` 아래에 둡니다.
+
 ## Validation
 
 Catalog 명령은 duplicate skill name, wrapper routing 누락, wrapper reference 누락, category drift를 보고합니다.
@@ -30,4 +43,3 @@ Catalog 명령은 duplicate skill name, wrapper routing 누락, wrapper referenc
 ```bash
 ai-playbook catalog check --json
 ```
-

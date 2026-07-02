@@ -75,6 +75,7 @@ npx ai-agent-playbook bootstrap ".\example app" --dry-run
 | `--cols N` | `qa tui-check`에서 기대하는 terminal width입니다. |
 | `--run-id <id>` | `.ai-playbook/runs/` 아래 특정 run을 선택합니다. |
 | `--recipe <id>` | `workflow run-preview`에서 workflow recipe를 선택합니다. |
+| `--user-config <path>` | `config preview`에 명시적인 user-level config file을 추가합니다. 그래도 target-local config가 우선합니다. |
 | `--type note|criterion|evidence|blocker|cleanup` | `run record`에 기록할 event type입니다. |
 | `--status pass|fail|blocked|info` | `run record`에 기록할 event status입니다. |
 | `--evidence <path>` | `run record`에 남길 portable relative evidence path입니다. |
@@ -124,12 +125,15 @@ Project playbook 명령은 대상 repository 하나의 `.ai-playbook/`을 관리
 | `migrate layout <target>` | `.ai-playbook` layout v2 디렉터리와 v1 compatibility file 복사를 preview하거나 적용합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook migrate layout <target-project> --to v2 --json` |
 | `layout status <target>` | 대상 playbook에 v2 layout file과 directory가 있는지 보고합니다. | 아니오 | `npx ai-agent-playbook layout status <target-project> --json` |
 | `doctor <target>` | project playbook 상태, adaptation 상태, worklog summary freshness, local path risk를 점검합니다. | 아니오 | `npx ai-agent-playbook doctor <target-project> --json` |
+| `config preview <target>` | built-in 값, 명시적 user config, target config, target-local config, 좁은 env override 순서로 Harness OS 기본값을 해석합니다. | 아니오 | `npx ai-agent-playbook config preview <target-project> --json` |
 | `context <target>` | 선택적 hook 또는 점검용으로 core `.ai-playbook/` 파일에서 compact context를 만듭니다. | 아니오 | `npx ai-agent-playbook context <target-project> --json` |
 | `context list <target>` | `.ai-playbook/context/**/*.md` 파일과 frontmatter를 나열합니다. | 아니오 | `npx ai-agent-playbook context list <target-project> --json` |
 | `context status <target>` | 한 file에 적용되는 path-scoped context와 `maps/doc-map.md` 존재 여부를 보여줍니다. | 아니오 | `npx ai-agent-playbook context status <target-project> --path src/example.ts --json` |
 | `context init <target>` | starter `context/root.md`, `_registry.json`, `maps/doc-map.md`를 만듭니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook context init <target-project> --dry-run --json` |
 
 대상 프로젝트의 `.ai-playbook/`을 `.gitignore`에 추가해야 하면 `bootstrap`에 `--local-only`를 사용합니다.
+
+`config preview`는 존재하는 경우 `.ai-playbook/config.json`과 `.ai-playbook/config.local.json`을 읽습니다. 두 파일을 생성하지는 않습니다. 우선순위는 built-in default, optional `--user-config`, target config, target-local config, 그리고 `AI_PLAYBOOK_CONTEXT_MAX_CHARS`, `AI_PLAYBOOK_DEFAULT_RECIPE`, `AI_PLAYBOOK_RUNTIME_CACHE_DIR`, `AI_PLAYBOOK_INDEX_MAX_FILES`, `AI_PLAYBOOK_ENABLE_WRITE_TOOLS` 같은 명시적 environment override입니다.
 
 Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatter를 지원합니다. 특정 path 작업 전에 어떤 project memory를 읽어야 할지 보려면 `context status`를 사용합니다. 이 명령은 read-only라 자주 실행해도 안전합니다.
 

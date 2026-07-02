@@ -35,6 +35,7 @@ import {
   migratePlaybookPath,
   parseMaxChars,
   postCheckWriteGate,
+  previewHarnessConfig,
   previewWorkflowRun,
   promoteCanonFacts,
   previewWriteGate,
@@ -114,6 +115,28 @@ export async function runCli(argv, io = {}) {
       } else {
         for (const check of result.checks) {
           write(stdout, `[${check.level.toUpperCase()}] ${check.name}: ${check.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'config' && subcommand === 'preview') {
+      const result = await previewHarnessConfig({
+        target: resolveTarget(cwd, targetArg),
+        userConfigPath: resolveOptionalPath(cwd, parsed.flags['user-config'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Harness config: ${result.ok ? 'ok' : 'needs attention'}\n`);
+        for (const [key, source] of Object.entries(result.sourceMap)) {
+          write(stdout, `- ${key}: ${source}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -1262,6 +1285,7 @@ function needsValue(key) {
     'codex-root',
     'agents-root',
     'recipe',
+    'user-config',
     'run-id',
     'type',
     'message',
@@ -1337,6 +1361,7 @@ Usage:
   ai-playbook mcp
   ai-playbook doctor <target> [--strict] [--json]
   ai-playbook doctor <target> --reminder [--json]
+  ai-playbook config preview <target> [--user-config <path>] [--json]
   ai-playbook guides sync <target> [--dry-run] [--force]
   ai-playbook guides sync <target> --check [--diff] [--json]
   ai-playbook skills check [--json] [--codex-root <path>] [--agents-root <path>]

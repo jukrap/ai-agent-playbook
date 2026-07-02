@@ -29,6 +29,22 @@ The short role split is:
 - `.ai-playbook/`: target-project memory, runs, contracts, guides, plans, and worklogs.
 - Adapters: optional environment-specific hook/config rendering; never the default install path.
 
+## Repo-local config preview
+
+`config preview` is a read-only resolver for Harness OS defaults. It reports the final values, source map, source file status, warnings, and conflicts without changing runtime behavior or writing files.
+
+Precedence is:
+
+1. Built-in defaults.
+2. An explicit `--user-config <path>` file.
+3. `.ai-playbook/config.json`.
+4. `.ai-playbook/config.local.json`.
+5. Narrow environment overrides.
+
+The command does not read personal home config automatically. Target-local config wins over an explicit user config. Environment overrides are limited to `AI_PLAYBOOK_CONTEXT_MAX_CHARS`, `AI_PLAYBOOK_DEFAULT_RECIPE`, `AI_PLAYBOOK_RUNTIME_CACHE_DIR`, `AI_PLAYBOOK_INDEX_MAX_FILES`, and `AI_PLAYBOOK_ENABLE_WRITE_TOOLS`.
+
+Trusted target config files must be regular JSON files under the target playbook root. Malformed JSON, symlinked config files, and runtime paths outside `.ai-playbook/runtime/` are reported as conflicts.
+
 ## Runtime indexes
 
 Runtime indexes are generated evidence, not trusted memory. They belong under `.ai-playbook/runtime/indexes/` when written, and they should be promoted into memory only through an explicit canon review.

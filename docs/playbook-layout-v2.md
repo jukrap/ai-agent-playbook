@@ -9,6 +9,8 @@
   CURRENT.md
   questions.md
   manifest.json
+  config.json
+  config.local.json
   policy/
   memory/
   workflows/
@@ -27,6 +29,8 @@
 - `runtime/`: generated cache, indexes, graphs, reports, snapshots, and temporary files.
 - `integrations/`: MCP, adapters, hooks, and command configuration.
 - `archive/`: superseded local notes.
+
+`config.json` and `config.local.json` are optional. `config preview` reads them when present; `config.local.json` is for machine-local overrides and should stay local-only unless the project deliberately chooses otherwise.
 
 ## Canon Facts
 

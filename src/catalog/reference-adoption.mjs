@@ -7,6 +7,7 @@ import {
   resolvePlaybookLayout,
   SCHEMA_VERSION
 } from '../harness/core.mjs';
+import { validateSourceRegistry } from '../runtime/schemas.mjs';
 
 const DEFAULT_MAX_PROJECTS = 100;
 const DEFAULT_MAX_DEPTH = 6;
@@ -116,6 +117,43 @@ export async function buildReferenceAdoptionQueue({
     queue,
     warnings: inventory.warnings,
     conflicts: []
+  };
+}
+
+export async function buildReferenceSourceRegistryPreview({
+  target,
+  maxProjects = DEFAULT_MAX_PROJECTS,
+  maxDepth = DEFAULT_MAX_DEPTH,
+  maxResults = DEFAULT_QUEUE_RESULTS
+}) {
+  const queue = await buildReferenceAdoptionQueue({ target, maxProjects, maxDepth, maxResults });
+  const freshness = new Date().toISOString().slice(0, 10);
+  const sources = queue.queue.map((item) => sourceRegistryEntry(item, freshness));
+  const registry = {
+    schemaVersion: SCHEMA_VERSION,
+    sources
+  };
+  const validation = validateSourceRegistry(registry, { path: 'knowledge/sources.json' });
+  const conflicts = [...queue.conflicts, ...validation.conflicts];
+  const warnings = [...queue.warnings, ...validation.warnings];
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: conflicts.length === 0,
+    target: queue.target,
+    mode: { localOnly: true, network: false, writes: false },
+    candidatePath: '.ai-playbook/knowledge/sources.json',
+    summary: {
+      sources: sources.length,
+      priorities: queue.summary.priorities,
+      recommendedCapabilities: queue.summary.recommendedCapabilities,
+      schemaValid: validation.ok,
+      warnings: warnings.length,
+      conflicts: conflicts.length
+    },
+    registry,
+    warnings,
+    conflicts
   };
 }
 
@@ -247,6 +285,37 @@ function referenceQueueItem(project) {
     candidateCapabilities: project.candidateCapabilities,
     representativeFiles: project.representativeFiles,
     nextActions: actions
+  };
+}
+
+function sourceRegistryEntry(item, freshness) {
+  return {
+    id: `reference-${normalizeLedgerKey(item.project, 'source')}`,
+    type: item.signalHighlights.some((highlight) => highlight.signal === 'docs') ? 'docs' : 'other',
+    title: `Reference source: ${item.project}`,
+    owner: 'local-reference-collection',
+    status: 'available',
+    privacyTier: 'internal',
+    credentialBoundary: 'local filesystem only; do not inline secrets or private URLs',
+    updateCadence: 'manual',
+    freshness,
+    locatorTypes: ['path-range', 'file'],
+    searchModes: ['keyword', 'inventory-signal'],
+    browse: 'Open paths relative to the scanned reference root and cite project-relative file and line locators.',
+    promotionPolicy: 'Summarize reusable patterns into the reference adoption ledger before promoting facts into memory or references.',
+    caveats: [
+      'Queue score is a triage signal, not a trust decision.',
+      'Representative files are candidates and must be reviewed before adoption.',
+      'Do not copy upstream prose, local absolute paths, credentials, or internal URLs into public docs.'
+    ],
+    referencePath: item.path,
+    priority: item.priority,
+    score: item.score,
+    recommendedCapabilities: item.recommendedCapabilities,
+    candidateCapabilities: item.candidateCapabilities,
+    representativeFiles: item.representativeFiles,
+    signalHighlights: item.signalHighlights,
+    nextActions: item.nextActions
   };
 }
 

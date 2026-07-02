@@ -6,6 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runCli } from '../src/cli.mjs';
+import { validateSourceRegistry } from '../src/runtime/schemas.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 
@@ -832,6 +833,38 @@ test('reference inventory summarizes local reference collections without writing
   assert.equal(queueReport.queue[0].recommendedCapabilities.includes('ai-harness'), true);
   assert.equal(queueReport.queue[0].signalHighlights.some((item) => item.signal === 'mcp'), true);
   assert.equal(queueReport.queue[0].nextActions.some((item) => item.includes('MCP surfaces')), true);
+
+  const sourcePreview = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-preview', referenceRoot, '--max-results', '2', '--json'], sourcePreview), 0);
+  const sourceReport = JSON.parse(sourcePreview.out());
+  assert.equal(sourceReport.ok, true);
+  assert.equal(sourceReport.mode.writes, false);
+  assert.equal(sourceReport.candidatePath, '.ai-playbook/knowledge/sources.json');
+  assert.equal(sourceReport.summary.schemaValid, true);
+  assert.equal(sourceReport.registry.sources.length, 2);
+  assert.equal(sourceReport.registry.sources.every((source) => source.id.startsWith('reference-')), true);
+  assert.equal(sourceReport.registry.sources.some((source) => source.recommendedCapabilities.includes('ai-harness')), true);
+  assert.equal(validateSourceRegistry(sourceReport.registry, { path: 'knowledge/sources.json' }).ok, true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('reference inventory default scans more than twenty top-level projects', async () => {
+  const target = await tempRepo('reference inventory many-한글-');
+  const referenceRoot = path.join(target, '_reference');
+  for (let index = 1; index <= 24; index += 1) {
+    const id = `reference-${String(index).padStart(2, '0')}`;
+    await mkdir(path.join(referenceRoot, id), { recursive: true });
+    await writeFile(path.join(referenceRoot, id, 'README.md'), `# ${id}\n`);
+  }
+  const before = await listRelativeFiles(target);
+
+  const inventory = capture(target);
+  assert.equal(await runCli(['reference', 'inventory', referenceRoot, '--json'], inventory), 0);
+  const report = JSON.parse(inventory.out());
+  assert.equal(report.summary.projects, 24);
+  assert.equal(report.summary.totalProjects, 24);
+  assert.equal(report.summary.warnings, 0);
   assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
 });

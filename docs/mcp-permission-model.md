@@ -48,7 +48,10 @@ Default read-only additions:
 - `route_api_hints`
 - `repo_graph_preview`
 - `write_gate_preview`
+- `reference_inventory`
 - `reference_adoption_queue`
+- `reference_source_registry_preview`
+- `reference_ledger_check`
 
 ## Write Gate
 

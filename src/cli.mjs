@@ -10,6 +10,7 @@ import {
   buildRuntimeIndex,
   buildSymbolOutlineIndex,
   buildReferenceAdoptionQueue,
+  buildReferenceSourceRegistryPreview,
   buildProjectContext,
   buildDoctorReminderSignal,
   bootstrapProject,
@@ -569,7 +570,7 @@ export async function runCli(argv, io = {}) {
     if (command === 'reference' && subcommand === 'inventory') {
       const result = await inventoryReferenceDirectory({
         target: resolveTarget(cwd, targetArg),
-        maxProjects: parseMaxResults(parsed.flags['max-results'])
+        maxProjects: parseMaxResults(parsed.flags['max-results'], 100)
       });
       if (parsed.flags.json) {
         writeJson(stdout, result);
@@ -593,6 +594,22 @@ export async function runCli(argv, io = {}) {
         write(stdout, `Reference adoption queue: ${result.summary.queueItems} item(s)\n`);
         for (const item of result.queue) {
           write(stdout, `[${item.priority.toUpperCase()}] ${item.project} -> ${item.recommendedCapabilities.join(', ') || 'manual-review'} (${item.score})\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'source-registry-preview') {
+      const result = await buildReferenceSourceRegistryPreview({
+        target: resolveTarget(cwd, targetArg),
+        maxResults: parseMaxResults(parsed.flags['max-results'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Reference source registry preview: ${result.summary.sources} source candidate(s)\n`);
+        for (const source of result.registry.sources) {
+          write(stdout, `[${source.priority.toUpperCase()}] ${source.id} -> ${source.recommendedCapabilities.join(', ') || 'manual-review'}\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -1500,6 +1517,7 @@ Usage:
   ai-playbook workflow run-start <target> --recipe <recipe-id> [--apply] [--json]
   ai-playbook reference inventory <reference-dir> [--max-results N] [--json]
   ai-playbook reference adoption-queue <reference-dir> [--max-results N] [--json]
+  ai-playbook reference source-registry-preview <reference-dir> [--max-results N] [--json]
   ai-playbook reference ledger-check <target> [--path <ledger.md>] [--strict] [--json]
   ai-playbook layout status <target> [--json]
   ai-playbook runtime capability-history <target> [--json]

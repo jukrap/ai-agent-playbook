@@ -99,6 +99,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'workflow_run_preview',
       'reference_inventory',
       'reference_adoption_queue',
+      'reference_source_registry_preview',
       'reference_ledger_check',
       'playbook_layout',
       'index_status',
@@ -360,7 +361,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       { name: 'eval_harness_review', toolName: 'workflow_run_preview', expectedText: 'eval-driven-change', arguments: { target, change: 'add grader prompt', evalId: 'prompt-regression' } },
       { name: 'capability_witness_review', toolName: 'capability_catalog', arguments: { target, capability: 'index search', source: '.ai-playbook/runtime/reports/eval.json' } },
       { name: 'pre_action_fact_gate_review', toolName: 'operator_preflight', expectedText: 'write_gate_preview', arguments: { target, action: 'delete stale index', evidence: '.ai-playbook/runtime/indexes/file-inventory.json' } },
-      { name: 'knowledge_source_review', toolName: 'reference_inventory', expectedText: 'knowledge-source-onboarding', arguments: { target, source: '_reference', useCase: 'source registry' } },
+      { name: 'knowledge_source_review', toolName: 'reference_source_registry_preview', expectedText: 'knowledge-source-onboarding', arguments: { target, source: '_reference', useCase: 'source registry' } },
       { name: 'canon_promotion_review', toolName: 'canon_check', arguments: { target, source: '.ai-playbook/runtime/indexes/file-inventory.json' } },
       { name: 'index_interpretation_review', toolName: 'index_status', arguments: { target, focus: 'routes' } },
       { name: 'agent_orchestration_review', toolName: 'workflow_run_preview', expectedText: 'agent-orchestration-handoff', arguments: { target, goal: 'parallel review', workers: 'researcher, reviewer' } },
@@ -407,6 +408,19 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(adoptionQueue.structuredContent.mode.writes, false);
     assert.equal(adoptionQueue.structuredContent.summary.queueItems, 1);
     assert.equal(adoptionQueue.structuredContent.queue[0].recommendedCapabilities.includes('ai-harness'), true);
+
+    const sourcePreview = await client.callTool({
+      name: 'reference_source_registry_preview',
+      arguments: {
+        target: path.join(target, '_reference'),
+        maxResults: 5
+      }
+    });
+    assert.equal(sourcePreview.structuredContent.ok, true);
+    assert.equal(sourcePreview.structuredContent.mode.writes, false);
+    assert.equal(sourcePreview.structuredContent.candidatePath, '.ai-playbook/knowledge/sources.json');
+    assert.equal(sourcePreview.structuredContent.summary.schemaValid, true);
+    assert.equal(sourcePreview.structuredContent.registry.sources[0].id.startsWith('reference-'), true);
 
     const ledger = await client.callTool({
       name: 'reference_ledger_check',

@@ -4,7 +4,7 @@ Skill taxonomy v2 uses capability categories as the primary axis. Stack-specific
 
 ## Categories
 
-- `foundation`: repo onboarding, bootstrap, and project docs.
+- `foundation`: repo onboarding, bootstrap, project docs, requirements, planning, release notes, and documentation packages.
 - `delivery`: planning, verification, testing, git, PR, and worklog flows.
 - `architecture`: FSD, layered architecture, DDD, monorepos, and boundary review.
 - `frontend`: UI, state, data, accessibility, performance, and visual QA.
@@ -141,6 +141,10 @@ Data and documentation skills separate pipeline reliability, reporting correctne
 - `data/knowledge-retrieval-pipeline-review`: document ingestion, parsing, chunking, metadata, embeddings/vector stores, retrieval evaluation, citations, access control, and stale indexes.
 - `project/project-doc-system`: `.ai-playbook` maps, runbooks, decisions, plans, worklogs, archives, and project-memory hygiene.
 - `project/adr-spec-handoff`: ADRs, specs, milestone outcomes, implementation handoffs, reviewed evidence, and durable memory promotion.
+- `project/requirements-prd-scope-review`: PRDs, lightweight specs, scope briefs, non-goals, acceptance criteria, assumptions, and open-question lists.
+- `project/issue-planning-triage`: issue/task breakdown, triage, priority, dependencies, blocked status, ownership, and verification planning.
+- `project/release-notes-changelog`: user-facing release notes, internal changelogs, migration/upgrade notes, rollback notes, known issues, and verified change summaries.
+- `project/documentation-artifact-package`: stakeholder packages, developer handoffs, runbook/report bundles, knowledge-base artifacts, source evidence, and maintenance rules.
 
 Generated runtime reports should not be promoted into `memory/` without review. Reporting, migration, and handoff skills should preserve source evidence while keeping private paths, credentials, branch names, PR numbers, and noisy reference names out of public documentation.
 

@@ -20,7 +20,7 @@ The content is not agent-specific. Codex is one installation target. The source 
 - `skills/legacy`: maintenance workflows where runtime coupling and compatibility dominate.
 - `skills/meta`: skill-authoring and repository-maintenance skills.
 - `skills/mobile`: native release, permission, offline sync, hybrid, WebView, and device QA workflows.
-- `skills/project`: project bootstrap, onboarding, and project-memory maintenance.
+- `skills/project`: project bootstrap, onboarding, requirements, issue planning, release notes, documentation packages, and project-memory maintenance.
 - `skills/quality`: UI style policy, visual quality, cleanup, and lightweight review workflows.
 - `skills/security`: authentication, authorization, dependency supply chain, license/notice evidence, security review, and risk workflows.
 
@@ -50,12 +50,16 @@ This repository does not replace external process skill packs. Use `docs/superpo
 
 Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should remain a local experiment, become an adapter, or be promoted into documented CLI behavior.
 
-## Project-memory map
+## Project and documentation map
 
 - `project-bootstrap`: sets up root policies and an `.ai-playbook/` layout after inspecting the repository.
 - `repo-onboarding`: reads repo state and existing `.ai-playbook/` context before planning or editing.
 - `project-doc-system`: organizes `.ai-playbook/`, maps, runbooks, decisions, plans, worklogs, and archived notes.
 - `adr-spec-handoff`: promotes reviewed decisions, specs, milestone outcomes, worklogs, and handoffs into durable project memory.
+- `requirements-prd-scope-review`: shapes vague requests, stakeholder notes, feature ideas, acceptance criteria, and open questions into reviewable PRDs or scope briefs.
+- `issue-planning-triage`: converts specs, bugs, review findings, worklogs, and follow-ups into scoped issues, priorities, dependencies, and task batches.
+- `release-notes-changelog`: prepares reader-facing release notes, changelogs, migration notes, rollback notes, known issues, and verified change summaries.
+- `documentation-artifact-package`: packages docs, runbooks, diagrams, screenshots, reports, source references, and evidence into stakeholder packages, handoffs, or knowledge artifacts.
 
 ## AI harness map
 

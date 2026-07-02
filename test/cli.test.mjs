@@ -136,6 +136,33 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   assert.equal(advisoryJson.manifest.kind, 'write-gate.pre-write-advisory');
   assert.equal(advisoryJson.transaction.invocationId, advisoryApplyReport.transaction.invocationId);
   assert.equal(advisoryJson.intent, 'edit runtime source module');
+  assert.equal(advisoryJson.snapshot.files.length > 0, true);
+
+  const cleanPostCheck = capture(target);
+  assert.equal(await runCli(['write-gate', 'post-check', '.', '--advisory', advisoryApplyReport.advisory.path, '--json'], cleanPostCheck), 0);
+  const cleanPostCheckReport = JSON.parse(cleanPostCheck.out());
+  assert.equal(cleanPostCheckReport.summary.added, 0);
+  assert.equal(cleanPostCheckReport.summary.modified, 0);
+  assert.equal(cleanPostCheckReport.summary.deleted, 0);
+  assert.equal(cleanPostCheckReport.warnings.some((warning) => warning.id === 'write-gate.post-check.playbook-change'), false);
+
+  await mkdir(path.join(target, 'src', 'runtime'), { recursive: true });
+  await writeFile(path.join(target, 'src', 'runtime', 'index.ts'), 'export const runtimeSource = "changed";\n');
+  await writeFile(path.join(target, 'src', 'outside.ts'), 'export const outside = true;\n');
+  const postCheck = capture(target);
+  assert.equal(await runCli(['write-gate', 'post-check', '.', '--advisory', advisoryApplyReport.advisory.path, '--json'], postCheck), 0);
+  const postCheckReport = JSON.parse(postCheck.out());
+  assert.equal(postCheckReport.ok, true);
+  assert.equal(postCheckReport.mode.writes, false);
+  assert.equal(postCheckReport.summary.status, 'checked');
+  assert.equal(postCheckReport.changes.modified.some((item) => item.path === 'src/runtime/index.ts'), true);
+  assert.equal(postCheckReport.changes.added.some((item) => item.path === 'src/outside.ts'), true);
+  assert.equal(postCheckReport.warnings.some((warning) => warning.id === 'write-gate.post-check.intent-outside-change'), true);
+
+  const missingPostCheck = capture(target);
+  assert.equal(await runCli(['write-gate', 'post-check', '.', '--advisory', '.ai-playbook/runtime/reports/write-gate/missing.json', '--json'], missingPostCheck), 1);
+  const missingPostCheckReport = JSON.parse(missingPostCheck.out());
+  assert.equal(missingPostCheckReport.summary.status, 'unknown');
 
   await cleanup(target);
 });

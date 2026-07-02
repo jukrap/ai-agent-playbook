@@ -150,12 +150,15 @@ These commands expose the v2 capability model and generated local runtime surfac
 | `index search <target>` | Search local project text without writing the runtime index. | No | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
 | `write-gate preview <target>` | Preview write risk for an intent and optional path before editing. | No | `npx ai-agent-playbook write-gate preview <target-project> --intent "change auth flow" --path src/example.ts --json` |
 | `write-gate advisory <target>` | Preview or save a pre-write advisory report under playbook runtime. | No unless `--apply` | `npx ai-agent-playbook write-gate advisory <target-project> --intent "change auth flow" --path src/example.ts --apply --json` |
+| `write-gate post-check <target>` | Compare a saved advisory snapshot with current files after editing. | No | `npx ai-agent-playbook write-gate post-check <target-project> --advisory .ai-playbook/runtime/reports/write-gate/pre-write-advisory.<id>.json --json` |
 
 `reference ledger-check` validates `.ai-playbook/knowledge/reference-adoption-ledger.md` by default. It checks adoption statuses, local absolute paths, internal URLs, secret-like tokens, and oversized excerpts without writing files. Use `--path <ledger.md>` to check a different ledger inside the target project. JSON output includes `summary.capabilities` so adoption status can be reviewed by capability area. Add `--strict` when oversized fenced excerpts should fail the check instead of only warning.
 
 `write-gate preview` returns a `transaction.invocationId` and planned `transaction.advisoryPath` under `.ai-playbook/runtime/reports/write-gate/`. The preview stays read-only; the transaction fields are a stable handoff for later post-write or advisory-file work.
 
 `write-gate advisory` uses the same preview engine but can save a pre-write advisory JSON file when `--apply` is present. The file is written only inside `.ai-playbook/runtime/reports/write-gate/`; without `--apply`, the command returns the planned advisory without writing it.
+
+`write-gate post-check` reads a saved advisory and compares its snapshot with current files. If the advisory is missing, invalid, or lacks a snapshot, the command reports `summary.status: "unknown"` instead of claiming the change is clean.
 
 Runtime output lives under `.ai-playbook/runtime/`. Do not copy generated output into `.ai-playbook/memory/` until it has been reviewed and promoted intentionally.
 

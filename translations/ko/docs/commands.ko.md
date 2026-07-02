@@ -150,12 +150,15 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 | `index search <target>` | runtime index를 쓰지 않고 local project text를 검색합니다. | 아니오 | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
 | `write-gate preview <target>` | 수정 전에 intent와 optional path 기준 write risk를 preview합니다. | 아니오 | `npx ai-agent-playbook write-gate preview <target-project> --intent "change auth flow" --path src/example.ts --json` |
 | `write-gate advisory <target>` | playbook runtime 아래 pre-write advisory report를 preview하거나 저장합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook write-gate advisory <target-project> --intent "change auth flow" --path src/example.ts --apply --json` |
+| `write-gate post-check <target>` | 수정 뒤 saved advisory snapshot과 현재 file을 비교합니다. | 아니오 | `npx ai-agent-playbook write-gate post-check <target-project> --advisory .ai-playbook/runtime/reports/write-gate/pre-write-advisory.<id>.json --json` |
 
 `reference ledger-check`는 기본적으로 `.ai-playbook/knowledge/reference-adoption-ledger.md`를 검증합니다. 파일을 쓰지 않고 adoption status, local absolute path, internal URL, secret-like token, oversized excerpt를 확인합니다. 대상 프로젝트 내부의 다른 ledger를 확인하려면 `--path <ledger.md>`를 사용합니다. JSON output에는 capability 영역별 adoption status를 볼 수 있도록 `summary.capabilities`가 포함됩니다. Oversized fenced excerpt를 warning이 아니라 실패로 다루려면 `--strict`를 추가합니다.
 
 `write-gate preview`는 `.ai-playbook/runtime/reports/write-gate/` 아래 planned `transaction.advisoryPath`와 `transaction.invocationId`를 반환합니다. Preview는 read-only를 유지하며, transaction field는 이후 post-write 또는 advisory file 작업의 안정적인 handoff로 씁니다.
 
 `write-gate advisory`는 같은 preview engine을 사용하지만 `--apply`가 있을 때 pre-write advisory JSON file을 저장할 수 있습니다. 파일은 `.ai-playbook/runtime/reports/write-gate/` 내부에만 쓰며, `--apply`가 없으면 planned advisory만 반환하고 파일을 쓰지 않습니다.
+
+`write-gate post-check`는 saved advisory를 읽고 그 snapshot을 현재 file과 비교합니다. Advisory가 없거나, 유효하지 않거나, snapshot이 없으면 변경이 clean하다고 꾸미지 않고 `summary.status: "unknown"`을 보고합니다.
 
 Runtime output은 `.ai-playbook/runtime/` 아래에 둡니다. 검토와 명시적 승격 없이 generated output을 `.ai-playbook/memory/`로 복사하지 않습니다.
 

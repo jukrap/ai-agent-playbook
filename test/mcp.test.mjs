@@ -51,6 +51,20 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     budgets: { maxRuntimeMs: 30000, maxExternalCalls: 0 },
     storage: { runtimePath: '.ai-playbook/runtime/reports/evals/prompt-regression.json' }
   }, null, 2)}\n`);
+  await writeFile(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evidence', 'ok.json'), `${JSON.stringify({
+    schemaVersion: '1',
+    kind: 'runtime.evidence-envelope',
+    sourceId: 'local-reference',
+    sourceBoundary: 'local-file',
+    locator: { type: 'path-range', path: 'src/기능 모듈/search target.ts#L1-L5' },
+    query: 'mcp locator check',
+    scanRange: 'src/**/*.ts',
+    freshness: '2026-07-03',
+    evidenceType: 'summary',
+    summary: 'The login route appears in the fixture.',
+    caveats: [],
+    promotionStatus: 'runtime-only'
+  }, null, 2)}\n`);
   await writeFile(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evidence', 'bad.json'), `${JSON.stringify({
     schemaVersion: '1',
     kind: 'runtime.evidence-envelope',
@@ -88,6 +102,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'playbook_layout',
       'index_status',
       'runtime_schema_check',
+      'evidence_locator_check',
       'index_search',
       'symbol_outline',
       'dependency_inventory',
@@ -228,6 +243,29 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(badRuntimeSchema.structuredContent.ok, false);
     assert.equal(badRuntimeSchema.structuredContent.conflicts.some((conflict) => conflict.id === 'runtime.schema.credential-value'), true);
     assert.equal(badRuntimeSchema.structuredContent.conflicts.some((conflict) => conflict.id === 'runtime.schema.locator-path'), true);
+
+    const evidenceLocator = await client.callTool({
+      name: 'evidence_locator_check',
+      arguments: {
+        target,
+        path: '.ai-playbook/runtime/reports/evidence/ok.json'
+      }
+    });
+    assert.equal(evidenceLocator.isError, undefined);
+    assert.equal(evidenceLocator.structuredContent.ok, true);
+    assert.equal(evidenceLocator.structuredContent.mode.writes, false);
+    assert.equal(evidenceLocator.structuredContent.summary.locators, 1);
+
+    const badEvidenceLocator = await client.callTool({
+      name: 'evidence_locator_check',
+      arguments: {
+        target,
+        path: '.ai-playbook/runtime/reports/evidence/bad.json'
+      }
+    });
+    assert.equal(badEvidenceLocator.structuredContent.ok, false);
+    assert.equal(badEvidenceLocator.structuredContent.conflicts.some((conflict) => conflict.id === 'evidence-locator.credential-value'), true);
+    assert.equal(badEvidenceLocator.structuredContent.conflicts.some((conflict) => conflict.id === 'evidence-locator.portable-path'), true);
 
     const symbolOutline = await client.callTool({
       name: 'symbol_outline',

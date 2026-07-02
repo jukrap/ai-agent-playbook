@@ -26,6 +26,7 @@ Default read-only additions:
 - `playbook_layout`
 - `index_status`
 - `runtime_schema_check`
+- `evidence_locator_check`
 - `index_search`
 - `symbol_outline`
 - `dependency_inventory`

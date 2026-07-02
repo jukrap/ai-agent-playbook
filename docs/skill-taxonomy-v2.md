@@ -47,6 +47,18 @@ DevOps skills use operational capability names rather than cloud-provider or orc
 
 Provider-specific details belong in references or project playbooks. The primary skills should still work for containers, virtual machines, managed platforms, serverless, and simple script-based deployments.
 
+## Frontend Quality Pack
+
+Frontend quality skills separate user-visible polish from state/data correctness, accessibility behavior, and rendered regression QA:
+
+- `frontend/browser-dom-change`: DOM-first behavior, jQuery flows, selectors, event handlers, forms, plugins, and script-loaded UI.
+- `frontend/frontend-state-data-flow`: state ownership, server/client cache behavior, data fetching, optimistic updates, URL state, loading/error/empty states, and stale UI bugs.
+- `frontend/frontend-accessibility-review`: keyboard access, focus management, semantics, forms, dialogs, menus, announcements, contrast, reduced motion, and accessible interaction states.
+- `frontend/ui-polish`: visible UI quality, responsive layout, accessibility states, visual hierarchy, interaction feedback, and production polish.
+- `frontend/visual-regression-qa`: screenshots, responsive breakpoints, layout overflow, clipping, visual diffs, text fit, canvas/media rendering, and browser-rendered regressions.
+
+Framework-specific details belong in references or project-local playbooks. The primary skills should work for React, Vue, Svelte, Angular, server-rendered pages, and lighter DOM-first frontends.
+
 ## Validation
 
 The catalog command reports duplicate skill names, wrapper routing gaps, missing wrapper references, and category drift:

@@ -114,7 +114,7 @@ skills/
   database/          Schema, migration, SQL, and data integrity skills
   delivery/          Planning, verification, Git, PR, and worklog skills
   devops/            CI/CD, container, release, deployment, and operations triage skills
-  frontend/          UI, browser, accessibility, and visual QA skills
+  frontend/          UI, browser, state/data, accessibility, and visual QA skills
   mobile/            Native, hybrid, WebView, and device QA skills
   security/          Auth, dependency supply chain, security review, and risk skills
   project/            Bootstrap, onboarding, and project-memory skills
@@ -174,7 +174,10 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `deployment-release-check`: prepare, review, or troubleshoot releases, deploys, rollbacks, feature flags, artifacts, migration gates, and post-deploy checks.
 - `observability-incident-triage`: triage incidents, production errors, alerts, latency, error rates, queue backlogs, job failures, logs, metrics, and traces.
 - `browser-dom-change`: change browser DOM behavior, jQuery flows, event handlers, selectors, forms, plugins, or script-loaded UI.
+- `frontend-state-data-flow`: change frontend state ownership, server/client cache behavior, data fetching, optimistic updates, URL state, or stale UI bugs.
+- `frontend-accessibility-review`: review keyboard access, focus management, semantics, forms, dialogs, menus, announcements, contrast, and accessible states.
 - `ui-polish`: primary frontend skill for visible UI, responsive layout, accessibility states, interaction feedback, and production polish.
+- `visual-regression-qa`: check screenshots, responsive breakpoints, layout overflow, clipping, visual diffs, text fit, canvas/media rendering, and browser-rendered UI regressions.
 - `webview-bridge`: change WebView bridges, native-to-web messaging, deep links, embedded auth, uploads, downloads, or hybrid navigation.
 - `legacy-change-safety`: primary legacy skill for compatibility-first changes with hidden coupling or deployment risk.
 - `security-review`: review secrets, authentication, authorization, input validation, dependency risk, and sensitive data flow.

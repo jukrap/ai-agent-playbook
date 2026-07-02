@@ -47,6 +47,18 @@ DevOps skill은 cloud provider나 orchestrator 이름이 아니라 operational c
 
 Provider-specific detail은 reference 또는 project playbook에 둡니다. Primary skill은 container, virtual machine, managed platform, serverless, 단순 script-based deployment에서도 작동해야 합니다.
 
+## Frontend Quality Pack
+
+Frontend quality skill은 user-visible polish를 state/data correctness, accessibility behavior, rendered regression QA와 분리합니다.
+
+- `frontend/browser-dom-change`: DOM-first behavior, jQuery flow, selector, event handler, form, plugin, script-loaded UI.
+- `frontend/frontend-state-data-flow`: state ownership, server/client cache behavior, data fetching, optimistic update, URL state, loading/error/empty state, stale UI bug.
+- `frontend/frontend-accessibility-review`: keyboard access, focus management, semantic, form, dialog, menu, announcement, contrast, reduced motion, accessible interaction state.
+- `frontend/ui-polish`: visible UI quality, responsive layout, accessibility state, visual hierarchy, interaction feedback, production polish.
+- `frontend/visual-regression-qa`: screenshot, responsive breakpoint, layout overflow, clipping, visual diff, text fit, canvas/media rendering, browser-rendered regression.
+
+Framework-specific detail은 reference 또는 project-local playbook에 둡니다. Primary skill은 React, Vue, Svelte, Angular, server-rendered page, 가벼운 DOM-first frontend에서도 작동해야 합니다.
+
 ## Validation
 
 Catalog 명령은 duplicate skill name, wrapper routing 누락, wrapper reference 누락, category drift를 보고합니다.

@@ -192,6 +192,7 @@ test/                 Node CLI와 adapter 테스트
 - `data-integrity-constraints`: database constraint, uniqueness, foreign key, check, not-null rule, trigger, stored procedure, generated column, repair script, reconciliation query, invariant boundary를 바꿀 때.
 - `git-worklog-guardrails`: staging, commit, PR text, release note, worklog를 위한 primary delivery skill.
 - `test-verification-strategy`: risk-based verification, test scope, check selection, coverage gap, release confidence를 계획하거나 검토할 때.
+- `ci-quality-gate`: required check, optional check, skipped check, stale evidence, merge/release gate decision을 검토할 때.
 - `flaky-test-triage`: flaky/nondeterministic test를 진단, 재현, 안정화, quarantine, 문서화할 때.
 - `test-fixture-data-design`: fixture, factory, mock, seed, snapshot, golden file, test data boundary를 설계하거나 복구할 때.
 - `ci-failure-triage`: 실패한 CI job, build pipeline, deployment, flaky test, environment drift를 진단할 때.

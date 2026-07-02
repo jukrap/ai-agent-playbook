@@ -7,6 +7,7 @@ Recipe는 input, output, 읽을 skill, 유용한 MCP/CLI tool, stop condition, v
 - repo onboarding
 - feature delivery
 - eval driven change
+- CI quality gate
 - legacy change
 - backend contract change
 - database migration

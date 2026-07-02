@@ -90,6 +90,12 @@ export const WORKFLOW_RECIPES = [
     outputs: ['runtime/reports', 'workflows/runs', 'workflows/worklogs']
   },
   {
+    id: 'ci-quality-gate',
+    title: 'CI Quality Gate',
+    category: 'delivery',
+    outputs: ['runtime/reports', 'workflows/worklogs']
+  },
+  {
     id: 'legacy-change',
     title: 'Legacy Change',
     category: 'legacy',

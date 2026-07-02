@@ -196,6 +196,7 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `git-worklog-guardrails`: primary delivery skill for staging, commits, PR text, release notes, and worklogs.
 - `eval-harness-design`: define or review agent, harness, workflow, MCP, prompt, capability, regression, grader, and release-gate evals.
 - `test-verification-strategy`: plan or review risk-based verification, test scope, check selection, coverage gaps, and release confidence.
+- `ci-quality-gate`: define or review required checks, optional checks, skipped checks, stale evidence, and merge/release gate decisions.
 - `flaky-test-triage`: diagnose, reproduce, stabilize, quarantine, or document flaky and nondeterministic tests.
 - `test-fixture-data-design`: design or repair fixtures, factories, mocks, seeds, snapshots, golden files, and test data boundaries.
 - `ci-failure-triage`: diagnose failing CI jobs, build pipelines, deployments, flaky tests, and environment drift.

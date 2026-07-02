@@ -99,6 +99,10 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   assert.equal(await runCli(['write-gate', 'preview', '.', '--intent', 'edit runtime report', '--path', '.ai-playbook/runtime/indexes/file-inventory.json', '--json'], gate), 1);
   const gateReport = JSON.parse(gate.out());
   assert.equal(gateReport.ok, false);
+  assert.match(gateReport.transaction.invocationId, /^[0-9a-f-]{36}$/);
+  assert.equal(gateReport.transaction.lifecycle, 'pre-write-preview');
+  assert.match(gateReport.transaction.advisoryPath, /^\.ai-playbook\/runtime\/reports\/write-gate\/pre-write-advisory\.[0-9a-f-]{36}\.json$/);
+  assert.equal(gateReport.transaction.applied, false);
   assert.equal(gateReport.blockers.some((blocker) => blocker.id === 'write-gate.runtime-target'), true);
 
   const sourceGate = capture(target);
@@ -143,6 +147,40 @@ test('reference inventory summarizes local reference collections without writing
   const connectorPack = report.projects.find((project) => project.id === 'connector-pack');
   assert.equal(connectorPack.candidateCapabilities.includes('connector-reference'), true);
   assert.equal(connectorPack.candidateCapabilities.includes('security-validation'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('reference ledger check validates statuses and local-only leaks without writing files', async () => {
+  const target = await tempRepo('reference ledger-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  const before = await listRelativeFiles(target);
+
+  const clean = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-check', '.', '--json'], clean), 0);
+  const cleanReport = JSON.parse(clean.out());
+  assert.equal(cleanReport.ok, true);
+  assert.equal(cleanReport.summary.statuses.new, 1);
+
+  const ledgerPath = path.join(target, '.ai-playbook', 'knowledge', 'reference-adoption-ledger.md');
+  await writeFile(ledgerPath, [
+    '# Reference Adoption Ledger',
+    '',
+    '| Status | Reference ID | Capability | Useful Pattern | Local Adoption | Risk/Noise | Decision Date |',
+    '| :--- | ---: | :---: | --- | --- | --- | --- |',
+    '| adopted | safe-pack | runtime-index-canon | reviewed pattern | local command | none | 2026-07-03 |',
+    '| maybe | unsafe-pack | security | copied from C:\\secret\\repo | none | token sk-test-123456789012 | 2026-07-03 |',
+    ''
+  ].join('\n'));
+
+  const dirty = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-check', '.', '--json'], dirty), 1);
+  const dirtyReport = JSON.parse(dirty.out());
+  assert.equal(dirtyReport.ok, false);
+  assert.equal(dirtyReport.conflicts.some((conflict) => conflict.id === 'reference-ledger.invalid-status'), true);
+  assert.equal(dirtyReport.conflicts.some((conflict) => conflict.id === 'reference-ledger.local-absolute-path'), true);
+  assert.equal(dirtyReport.conflicts.some((conflict) => conflict.id === 'reference-ledger.secret-like-token'), true);
+  assert.equal(existsSync(ledgerPath), true);
   assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
 });

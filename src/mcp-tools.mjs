@@ -5,6 +5,7 @@ import {
   catalogManagedManifest,
   checkContracts,
   checkManagedManifest,
+  checkReferenceAdoptionLedger,
   contextStatus,
   describePlaybookLayout,
   listContexts,
@@ -64,6 +65,13 @@ export function registerPlaybookMcpTools(server, options) {
     }, (args) => inventoryReferenceDirectory({
       target: args.target,
       maxProjects: args.maxResults ?? 100
+    })),
+    tool('reference_ledger_check', 'Validate a project reference adoption ledger for statuses and local-only leaks.', {
+      target: targetSchema,
+      path: pathSchema.describe('Optional ledger path inside the target project.')
+    }, (args) => checkReferenceAdoptionLedger({
+      target: args.target,
+      filePath: args.path
     })),
     tool('playbook_layout', 'Describe whether a target playbook has the v2 layout.', {
       target: targetSchema
@@ -319,6 +327,33 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
           '',
           'Check the capability catalog, skill taxonomy, workflow list, and permission tier before writing implementation files.',
           'Keep skills trigger-focused and move reusable detail into references.'
+        ].join('\n')
+      }
+    }]
+  }));
+
+  server.registerPrompt('reference_adoption_review', {
+    title: 'Reference adoption review',
+    description: 'Review a local reference collection and update adoption decisions without copying noisy source text.',
+    argsSchema: {
+      target: z.string().optional(),
+      referenceDir: z.string().optional(),
+      capability: z.string().optional()
+    }
+  }, (args) => ({
+    messages: [{
+      role: 'user',
+      content: {
+        type: 'text',
+        text: [
+          'Run a Harness OS reference adoption review.',
+          `Target project: ${args.target ?? '<target repository>'}`,
+          `Reference directory: ${args.referenceDir ?? '<reference directory>'}`,
+          `Capability focus: ${args.capability ?? '<capability or broad sweep>'}`,
+          '',
+          'Start with read-only reference inventory and reference ledger validation.',
+          'Adopt patterns, contracts, and capability gaps only after recording status in the ledger.',
+          'Do not copy large upstream excerpts, local absolute paths, internal URLs, secrets, or noisy upstream branding into public docs.'
         ].join('\n')
       }
     }]

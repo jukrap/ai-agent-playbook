@@ -34,6 +34,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'skill_catalog',
       'workflow_list',
       'reference_inventory',
+      'reference_ledger_check',
       'playbook_layout',
       'index_status',
       'index_search',
@@ -76,6 +77,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     const prompts = await client.listPrompts();
     assert.equal(prompts.prompts.some((prompt) => prompt.name === 'repo_onboarding_runbook'), true);
     assert.equal(prompts.prompts.some((prompt) => prompt.name === 'harness_extension_plan'), true);
+    assert.equal(prompts.prompts.some((prompt) => prompt.name === 'reference_adoption_review'), true);
 
     const catalog = await client.callTool({
       name: 'capability_catalog',
@@ -93,6 +95,17 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     });
     assert.equal(prompt.messages[0].content.text.includes(target), true);
 
+    const referencePrompt = await client.getPrompt({
+      name: 'reference_adoption_review',
+      arguments: {
+        target,
+        referenceDir: path.join(target, '_reference'),
+        capability: 'security'
+      }
+    });
+    assert.equal(referencePrompt.messages[0].content.text.includes(path.join(target, '_reference')), true);
+    assert.equal(referencePrompt.messages[0].content.text.includes('security'), true);
+
     const inventory = await client.callTool({
       name: 'reference_inventory',
       arguments: {
@@ -103,6 +116,13 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(inventory.structuredContent.ok, true);
     assert.equal(inventory.structuredContent.summary.projects, 1);
     assert.equal(inventory.structuredContent.projects[0].candidateCapabilities.includes('skill-pack'), true);
+
+    const ledger = await client.callTool({
+      name: 'reference_ledger_check',
+      arguments: { target }
+    });
+    assert.equal(ledger.structuredContent.ok, false);
+    assert.equal(ledger.structuredContent.conflicts.some((conflict) => conflict.id === 'reference-ledger.missing'), true);
 
     const result = await client.callTool({
       name: 'operator_search',

@@ -1,10 +1,21 @@
-import { readdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { assertDirectory, normalizePortablePath, SCHEMA_VERSION } from '../harness/core.mjs';
+import {
+  assertDirectory,
+  normalizePortablePath,
+  resolvePlaybookLayout,
+  SCHEMA_VERSION
+} from '../harness/core.mjs';
 
 const DEFAULT_MAX_PROJECTS = 100;
 const DEFAULT_MAX_DEPTH = 6;
 const REPRESENTATIVE_LIMIT = 16;
+const LEDGER_PATH = 'knowledge/reference-adoption-ledger.md';
+const LEDGER_STATUSES = new Set(['new', 'reviewed', 'adopted', 'deferred', 'rejected']);
+const LOCAL_ABSOLUTE_PATH_PATTERN = /(?:[A-Za-z]:[\\/][^\s|)`]+|\\\\[^\\/\s|)`]+[\\/][^\s|)`]+)/;
+const INTERNAL_URL_PATTERN = /https?:\/\/(?:localhost|127\.0\.0\.1|10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[0-1])\.|[^/\s|)`]+(?:\.internal|\.corp|\.local|\.lan))(?:[^\s|)`]*)?/i;
+const SECRET_PATTERN = /(?:sk-[A-Za-z0-9_-]{12,}|xox[baprs]-[A-Za-z0-9-]{12,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)/;
 const SKIP_DIRS = new Set([
   '.git',
   'node_modules',
@@ -61,6 +72,112 @@ export async function inventoryReferenceDirectory({ target, maxProjects = DEFAUL
     warnings,
     conflicts: []
   };
+}
+
+export async function checkReferenceAdoptionLedger({ target, filePath }) {
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const resolvedLedger = resolveLedgerPath({ target: resolvedTarget, filePath });
+  const conflicts = [];
+  const warnings = [];
+  const statusCounts = {};
+
+  if (!resolvedLedger.ok) {
+    conflicts.push({
+      id: 'reference-ledger.path-invalid',
+      message: 'Ledger path must stay inside the target repository.',
+      paths: [resolvedLedger.relativePath]
+    });
+    return ledgerResult({ target: resolvedTarget, path: resolvedLedger.relativePath, statusCounts, warnings, conflicts });
+  }
+
+  if (!existsSync(resolvedLedger.path)) {
+    conflicts.push({
+      id: 'reference-ledger.missing',
+      message: 'Reference adoption ledger is missing.',
+      paths: [resolvedLedger.relativePath]
+    });
+    return ledgerResult({ target: resolvedTarget, path: resolvedLedger.relativePath, statusCounts, warnings, conflicts });
+  }
+
+  const text = await readFile(resolvedLedger.path, 'utf8');
+  const lines = text.split(/\r?\n/);
+  let fenced = false;
+  let fencedLines = 0;
+  let fencedChars = 0;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const lineNumber = index + 1;
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('```')) {
+      fenced = !fenced;
+      if (!fenced) {
+        if (fencedLines > 20 || fencedChars > 2000) {
+          warnings.push({
+            id: 'reference-ledger.large-excerpt',
+            message: 'Ledger contains a large fenced excerpt; summarize the pattern instead of carrying raw source text.',
+            paths: [`${resolvedLedger.relativePath}:${lineNumber}`]
+          });
+        }
+        fencedLines = 0;
+        fencedChars = 0;
+      }
+      continue;
+    }
+
+    if (fenced) {
+      fencedLines += 1;
+      fencedChars += line.length;
+    }
+
+    if (LOCAL_ABSOLUTE_PATH_PATTERN.test(line)) {
+      conflicts.push({
+        id: 'reference-ledger.local-absolute-path',
+        message: 'Ledger contains a local absolute path.',
+        paths: [`${resolvedLedger.relativePath}:${lineNumber}`]
+      });
+    }
+
+    if (INTERNAL_URL_PATTERN.test(line)) {
+      conflicts.push({
+        id: 'reference-ledger.internal-url',
+        message: 'Ledger contains an internal or local URL.',
+        paths: [`${resolvedLedger.relativePath}:${lineNumber}`]
+      });
+    }
+
+    if (SECRET_PATTERN.test(line)) {
+      conflicts.push({
+        id: 'reference-ledger.secret-like-token',
+        message: 'Ledger contains a token-like secret pattern.',
+        paths: [`${resolvedLedger.relativePath}:${lineNumber}`]
+      });
+    }
+
+    if (line.length > 1200) {
+      warnings.push({
+        id: 'reference-ledger.long-line',
+        message: 'Ledger contains a very long line; summarize instead of pasting a raw excerpt.',
+        paths: [`${resolvedLedger.relativePath}:${lineNumber}`]
+      });
+    }
+
+    const status = parseLedgerStatus(line);
+    if (!status) continue;
+    if (!LEDGER_STATUSES.has(status)) {
+      conflicts.push({
+        id: 'reference-ledger.invalid-status',
+        message: `Invalid reference ledger status: ${status}.`,
+        paths: [`${resolvedLedger.relativePath}:${lineNumber}`]
+      });
+      continue;
+    }
+    statusCounts[status] = (statusCounts[status] ?? 0) + 1;
+  }
+
+  return ledgerResult({ target: resolvedTarget, path: resolvedLedger.relativePath, statusCounts, warnings, conflicts });
 }
 
 async function analyzeReferenceProject({ root, id, maxDepth }) {
@@ -195,4 +312,43 @@ function candidateCapabilities(signals) {
   if (signals.tests > 0) capabilities.push('verification');
   if (signals.docs > 0) capabilities.push('documentation');
   return capabilities;
+}
+
+function resolveLedgerPath({ target, filePath }) {
+  const ledgerPath = filePath
+    ? path.resolve(target, filePath)
+    : path.join(resolvePlaybookLayout(target).root, ...LEDGER_PATH.split('/'));
+  const relative = path.relative(target, ledgerPath);
+  const relativePath = normalizePortablePath(relative || LEDGER_PATH);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    return { ok: false, path: ledgerPath, relativePath: normalizePortablePath(String(filePath ?? ledgerPath)) };
+  }
+  return { ok: true, path: ledgerPath, relativePath };
+}
+
+function parseLedgerStatus(line) {
+  const trimmed = line.trim();
+  const separatorRow = /^\|\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?$/.test(trimmed);
+  if (!trimmed.startsWith('|') || separatorRow || /^\|\s*status\s*\|/i.test(trimmed)) return null;
+  const cells = trimmed.split('|').slice(1, -1).map((cell) => cell.trim());
+  if (cells.length < 2) return null;
+  return cells[0] || null;
+}
+
+function ledgerResult({ target, path: ledgerPath, statusCounts, warnings, conflicts }) {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok: conflicts.length === 0,
+    target,
+    mode: { localOnly: true, network: false, writes: false },
+    path: ledgerPath,
+    summary: {
+      entries: Object.values(statusCounts).reduce((sum, value) => sum + value, 0),
+      statuses: statusCounts,
+      warnings: warnings.length,
+      conflicts: conflicts.length
+    },
+    warnings,
+    conflicts
+  };
 }

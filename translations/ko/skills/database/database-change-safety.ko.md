@@ -1,5 +1,5 @@
 ---
-name: change-safety
+name: database-change-safety
 description: Use when changing database schema, migrations, SQL, reporting queries, stored procedures, seed data, or data integrity rules.
 ---
 
@@ -13,4 +13,3 @@ description: Use when changing database schema, migrations, SQL, reporting queri
 2. additive, compatible, destructive, backfill change를 분리합니다.
 3. index, lock, nullability, default, constraint, reporting consumer, deployment order를 확인합니다.
 4. 가능하면 migration dry run, before/after query, application compatibility check로 검증합니다.
-

@@ -1,5 +1,5 @@
 ---
-name: change-safety
+name: database-change-safety
 description: Use when changing database schema, migrations, SQL, reporting queries, stored procedures, seed data, or data integrity rules.
 ---
 
@@ -13,4 +13,3 @@ Use this as the primary database skill for safe data changes.
 2. Separate additive, compatible, destructive, and backfill changes.
 3. Check indexes, locks, nullability, defaults, constraints, reporting consumers, and deployment order.
 4. Verify with migration dry runs, before/after queries, and application compatibility checks when possible.
-

@@ -143,6 +143,7 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 | `catalog list` | capability category와 skill/workflow 개수를 나열합니다. | 아니오 | `npx ai-agent-playbook catalog list --json` |
 | `catalog check` | skill taxonomy, duplicate name, wrapper route, wrapper reference를 검증합니다. | 아니오 | `npx ai-agent-playbook catalog check --json` |
 | `workflow list` | built-in workflow recipe를 나열합니다. | 아니오 | `npx ai-agent-playbook workflow list --json` |
+| `reference inventory <reference-dir>` | 채택할 항목을 판단하기 전에 local reference collection을 요약합니다. | 아니오 | `npx ai-agent-playbook reference inventory _reference --json` |
 | `index build <target>` | `.ai-playbook/runtime/indexes/file-inventory.json` 생성을 preview하거나 씁니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook index build <target-project> --json` |
 | `index status <target>` | runtime file inventory 존재 여부를 확인합니다. | 아니오 | `npx ai-agent-playbook index status <target-project> --json` |
 | `index search <target>` | runtime index를 쓰지 않고 local project text를 검색합니다. | 아니오 | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |

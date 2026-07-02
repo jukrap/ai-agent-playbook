@@ -20,6 +20,7 @@ import {
   doctorProject,
   initContext,
   initContracts,
+  inventoryReferenceDirectory,
   listContexts,
   listContracts,
   describePlaybookLayout,
@@ -479,6 +480,22 @@ export async function runCli(argv, io = {}) {
         }
       }
       return 0;
+    }
+
+    if (command === 'reference' && subcommand === 'inventory') {
+      const result = await inventoryReferenceDirectory({
+        target: resolveTarget(cwd, targetArg),
+        maxProjects: parseMaxResults(parsed.flags['max-results'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Reference inventory: ${result.summary.projects}/${result.summary.totalProjects} project(s), ${result.summary.files} file(s)\n`);
+        for (const project of result.projects) {
+          write(stdout, `[${project.id}] ${project.candidateCapabilities.join(', ') || 'unclassified'} (${project.files} file(s))\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
     }
 
     if (command === 'layout' && subcommand === 'status') {
@@ -1141,6 +1158,7 @@ Usage:
   ai-playbook catalog list [--json]
   ai-playbook catalog check [--json]
   ai-playbook workflow list [--json]
+  ai-playbook reference inventory <reference-dir> [--max-results N] [--json]
   ai-playbook layout status <target> [--json]
   ai-playbook index build <target> [--apply] [--json]
   ai-playbook index status <target> [--json]

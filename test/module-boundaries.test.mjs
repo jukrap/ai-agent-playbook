@@ -34,6 +34,7 @@ test('harness facade keeps the public runtime exports', () => {
     'doctorProject',
     'initContext',
     'initContracts',
+    'inventoryReferenceDirectory',
     'listContexts',
     'listContracts',
     'migratePlaybookLayout',

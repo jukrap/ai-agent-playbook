@@ -25,7 +25,8 @@ const KNOWN_RUNTIME_SCHEMA_KINDS = new Set([
   'runtime.eval-run-report',
   'runtime.capability-witness',
   'runtime.source-registry',
-  'runtime.evidence-envelope'
+  'runtime.evidence-envelope',
+  'runtime.repo-graph'
 ]);
 
 const RISK_CLASSES = new Set(['low', 'medium', 'high', 'release-gate']);
@@ -33,6 +34,8 @@ const CAPABILITY_STATUSES = new Set(['pass', 'fail', 'degraded', 'skipped', 'unk
 const SOURCE_STATUSES = new Set(['available', 'building', 'partial', 'unavailable', 'failed', 'stale', 'unknown']);
 const PRIVACY_TIERS = new Set(['public', 'internal', 'confidential', 'restricted', 'unknown']);
 const PROMOTION_STATUSES = new Set(['runtime-only', 'candidate', 'promoted', 'rejected', 'expired']);
+const REPO_GRAPH_NODE_KINDS = new Set(['file', 'doc', 'symbol', 'route', 'data', 'package', 'contract', 'rule', 'runtime-report', 'workflow']);
+const REPO_GRAPH_EDGE_KINDS = new Set(['contains', 'exports', 'mentions', 'defines-route', 'uses-package', 'covered-by-contract', 'related-doc', 'evidence-for']);
 
 export async function checkRuntimeSchema({ target, filePath, kind } = {}) {
   await assertDirectory(target, 'Target repository does not exist');
@@ -107,6 +110,7 @@ export function validateRuntimeSchema(value, options = {}) {
   if (expectedKind === 'runtime.capability-witness') return validateCapabilityWitness(value, { path });
   if (expectedKind === 'runtime.source-registry') return validateSourceRegistry(value, { path });
   if (expectedKind === 'runtime.evidence-envelope') return validateEvidenceEnvelope(value, { path });
+  if (expectedKind === 'runtime.repo-graph') return validateRepoGraph(value, { path });
   return validateRuntimeArtifact(value, { path, expectedKind });
 }
 
@@ -252,6 +256,45 @@ export function validateEvidenceEnvelope(value, options = {}) {
   return finishValidation(validation, value, path);
 }
 
+export function validateRepoGraph(value, options = {}) {
+  const path = options.path ?? 'runtime repo graph';
+  const validation = validateVersionedObject(value, { path, expectedKind: 'runtime.repo-graph' });
+  if (!validation.valueOk) return finishValidation(validation, value, path, { allowAbsoluteTrails: new Set(['target']) });
+
+  requireString(value, 'target', validation.conflicts, path);
+  requireRecord(value, 'mode', validation.conflicts, path);
+  if (isRecord(value.mode) && value.mode.writes !== false) {
+    validation.conflicts.push(artifactConflict('runtime.schema.mode-writes', `${path}.mode.writes must be false for repo graph schema checks.`, [path]));
+  }
+  requireIsoTimestamp(value, 'generatedAt', validation.conflicts, path);
+  requireString(value, 'graph', validation.conflicts, path);
+  validateOptionalPortablePath(value.graph, 'graph', validation.conflicts, path);
+  requireRecord(value, 'scanRange', validation.conflicts, path);
+  requireArray(value, 'sources', validation.conflicts, path);
+  requireArray(value, 'nodes', validation.conflicts, path);
+  requireArray(value, 'edges', validation.conflicts, path);
+  requireRecord(value, 'summary', validation.conflicts, path);
+  requireArray(value, 'warnings', validation.conflicts, path);
+  requireArray(value, 'conflicts', validation.conflicts, path);
+
+  validateBoundedArray(value.sources, 'sources', 100, validation.conflicts, path);
+  validateBoundedArray(value.nodes, 'nodes', 2000, validation.conflicts, path);
+  validateBoundedArray(value.edges, 'edges', 4000, validation.conflicts, path);
+
+  const nodeIds = new Set();
+  if (Array.isArray(value.sources)) {
+    value.sources.forEach((source, index) => validateRepoGraphSource(source, index, validation.conflicts, path));
+  }
+  if (Array.isArray(value.nodes)) {
+    value.nodes.forEach((node, index) => validateRepoGraphNode(node, index, nodeIds, validation.conflicts, path));
+  }
+  if (Array.isArray(value.edges)) {
+    value.edges.forEach((edge, index) => validateRepoGraphEdge(edge, index, nodeIds, validation.conflicts, path));
+  }
+
+  return finishValidation(validation, value, path, { allowAbsoluteTrails: new Set(['target']) });
+}
+
 export function assertRuntimeArtifact(value, options = {}) {
   const validation = validateRuntimeArtifact(value, options);
   if (!validation.ok) {
@@ -316,8 +359,8 @@ function validateVersionedObject(value, { path, expectedKind }) {
   return { ok: conflicts.length === 0, valueOk: true, warnings, conflicts };
 }
 
-function finishValidation(validation, value, path) {
-  if (isRecord(value)) validateUnsafeStrings(value, validation.conflicts, path);
+function finishValidation(validation, value, path, options = {}) {
+  if (isRecord(value)) validateUnsafeStrings(value, validation.conflicts, path, [], options);
   return {
     ok: validation.conflicts.length === 0,
     warnings: validation.warnings,
@@ -452,10 +495,70 @@ function validateLocatorPath(locator, conflicts, path) {
   }
 }
 
-function validateUnsafeStrings(value, conflicts, path, trail = []) {
+function validateRepoGraphSource(source, index, conflicts, path) {
+  const sourcePath = `${path}.sources[${index}]`;
+  if (!isRecord(source)) {
+    conflicts.push(artifactConflict('runtime.schema.repo-graph-source', `${sourcePath} must be an object.`, [path]));
+    return;
+  }
+  requireString(source, 'kind', conflicts, sourcePath);
+  requireNonNegativeNumber(source, 'entries', conflicts, sourcePath, { optional: true });
+  validateOptionalPortablePath(source.index, 'index', conflicts, sourcePath);
+}
+
+function validateRepoGraphNode(node, index, nodeIds, conflicts, path) {
+  const nodePath = `${path}.nodes[${index}]`;
+  if (!isRecord(node)) {
+    conflicts.push(artifactConflict('runtime.schema.repo-graph-node', `${nodePath} must be an object.`, [path]));
+    return;
+  }
+  requireString(node, 'id', conflicts, nodePath);
+  requireAllowed(node, 'kind', REPO_GRAPH_NODE_KINDS, conflicts, nodePath);
+  requireString(node, 'label', conflicts, nodePath);
+  validateOptionalPortablePath(node.path, 'path', conflicts, nodePath);
+  requireNonNegativeNumber(node, 'line', conflicts, nodePath, { optional: true });
+  if (typeof node.id === 'string') nodeIds.add(node.id);
+}
+
+function validateRepoGraphEdge(edge, index, nodeIds, conflicts, path) {
+  const edgePath = `${path}.edges[${index}]`;
+  if (!isRecord(edge)) {
+    conflicts.push(artifactConflict('runtime.schema.repo-graph-edge', `${edgePath} must be an object.`, [path]));
+    return;
+  }
+  requireString(edge, 'id', conflicts, edgePath);
+  requireAllowed(edge, 'kind', REPO_GRAPH_EDGE_KINDS, conflicts, edgePath);
+  requireString(edge, 'from', conflicts, edgePath);
+  requireString(edge, 'to', conflicts, edgePath);
+  validateOptionalPortablePath(edge.sourcePath, 'sourcePath', conflicts, edgePath);
+  requireNonNegativeNumber(edge, 'line', conflicts, edgePath, { optional: true });
+  if (typeof edge.from === 'string' && !nodeIds.has(edge.from)) {
+    conflicts.push(artifactConflict('runtime.schema.repo-graph-edge-ref', `${edgePath}.from must reference a declared node id.`, [path]));
+  }
+  if (typeof edge.to === 'string' && !nodeIds.has(edge.to)) {
+    conflicts.push(artifactConflict('runtime.schema.repo-graph-edge-ref', `${edgePath}.to must reference a declared node id.`, [path]));
+  }
+}
+
+function validateOptionalPortablePath(value, field, conflicts, path) {
+  if (value === undefined || value === null || value === '') return;
+  if (typeof value !== 'string' || !isSafePortablePath(normalizePortablePath(value))) {
+    conflicts.push(artifactConflict('runtime.schema.portable-path', `${path}.${field} must be a portable relative path.`, [path]));
+  }
+}
+
+function validateBoundedArray(value, field, maxItems, conflicts, path) {
+  if (!Array.isArray(value)) return;
+  if (value.length > maxItems) {
+    conflicts.push(artifactConflict('runtime.schema.array-too-large', `${path}.${field} must contain at most ${maxItems} items.`, [path]));
+  }
+}
+
+function validateUnsafeStrings(value, conflicts, path, trail = [], options = {}) {
   if (typeof value === 'string') {
     const textPath = trail.length ? `${path}.${trail.join('.')}` : path;
-    if (looksLikeAbsolutePath(value)) {
+    const trailKey = trail.join('.');
+    if (!options.allowAbsoluteTrails?.has(trailKey) && looksLikeAbsolutePath(value)) {
       conflicts.push(artifactConflict('runtime.schema.absolute-path', `${textPath} must not contain a personal or absolute path.`, [path]));
     }
     if (looksLikeSecret(value)) {
@@ -467,12 +570,12 @@ function validateUnsafeStrings(value, conflicts, path, trail = []) {
     return;
   }
   if (Array.isArray(value)) {
-    value.forEach((item, index) => validateUnsafeStrings(item, conflicts, path, [...trail, String(index)]));
+    value.forEach((item, index) => validateUnsafeStrings(item, conflicts, path, [...trail, String(index)], options));
     return;
   }
   if (isRecord(value)) {
     for (const [key, item] of Object.entries(value)) {
-      validateUnsafeStrings(item, conflicts, path, [...trail, key]);
+      validateUnsafeStrings(item, conflicts, path, [...trail, key], options);
     }
   }
 }

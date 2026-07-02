@@ -116,7 +116,7 @@ skills/
   devops/            CI/CD, container, package release, deployment, operations triage 스킬
   frontend/          UI, browser, state/data, accessibility, visual QA 스킬
   mobile/            native release, permission, offline sync, hybrid, WebView, device QA 스킬
-  security/          auth, dependency supply chain, license/notice, security review, risk 스킬
+  security/          auth, dependency supply chain, license/notice, security review, compliance gate, risk 스킬
   project/            bootstrap, onboarding, project planning, documentation, project-memory 스킬
   quality/            UI quality, cleanup, review 스킬
   git/                commit, PR, push, worklog 스킬
@@ -214,6 +214,7 @@ test/                 Node CLI와 adapter 테스트
 - `auth-access-control`: login, session, OAuth/OIDC, JWT, RBAC, permission, role, tenant, scope, object-level authorization을 바꿀 때.
 - `dependency-supply-chain-review`: dependency, lockfile, SBOM, license, container, package script, provenance, vulnerability remediation을 바꿀 때.
 - `license-notice-review`: first-party license, third-party notice, attribution, vendored code, generated artifact, copied snippet, dual-license choice, redistribution scope, compliance evidence를 검토할 때.
+- `security-compliance-gate`: merge, release, publication, handoff 전 security 또는 compliance gate를 결정할 때.
 
 ### 레거시
 

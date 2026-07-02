@@ -22,7 +22,7 @@ The content is not agent-specific. Codex is one installation target. The source 
 - `skills/mobile`: native release, permission, offline sync, hybrid, WebView, and device QA workflows.
 - `skills/project`: project bootstrap, onboarding, requirements, issue planning, release notes, documentation packages, and project-memory maintenance.
 - `skills/quality`: UI style policy, visual quality, cleanup, and lightweight review workflows.
-- `skills/security`: authentication, authorization, dependency supply chain, license/notice evidence, security review, and risk workflows.
+- `skills/security`: authentication, authorization, dependency supply chain, license/notice evidence, security review, compliance gate, and risk workflows.
 
 Add a new category only when the first real skill in that category exists. When a new category or skill changes this map, update `README.md`, this file, Korean translations, and installed skill copies through `docs/maintenance.md`.
 
@@ -124,6 +124,7 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `auth-access-control`: reviews authentication, sessions, OAuth/OIDC, JWTs, RBAC, tenants, scopes, roles, and object-level access.
 - `dependency-supply-chain-review`: reviews dependencies, lockfiles, SBOMs, containers, provenance, vulnerable packages, package scripts, and CVE remediation.
 - `license-notice-review`: reviews first-party licenses, third-party notices, attribution, vendored code, generated artifacts, copied snippets, dual-license choices, redistribution scope, and compliance evidence.
+- `security-compliance-gate`: decides block, warn, document, or accepted-risk outcomes before merge, release, publication, or handoff.
 
 ## Frontend map
 

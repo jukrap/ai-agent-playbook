@@ -49,6 +49,7 @@ Backend와 security skill은 capability-first name을 씁니다.
 - `security/dependency-supply-chain-review`: dependency, lockfile, SBOM, license, provenance, container, CVE.
 - `security/license-notice-review`: first-party license, third-party notice, attribution, vendored code, generated artifact, copied snippet, redistribution scope, compliance evidence.
 - `security/security-review`: broad security risk review와 threat-model triage.
+- `security/security-compliance-gate`: merge, release, publication, handoff security/compliance gate decision.
 
 Stack profile은 관련 primary skill reference tree 아래에 둡니다. Backend change safety의 Java, Kotlin, Go, Python, Node, .NET, PHP 세부사항은 stack-first primary skill을 만들지 않고 `skills/backend/backend-change-safety/references/stacks/` 아래에 둡니다.
 
@@ -104,6 +105,7 @@ Package, license, connector governance skill은 artifact compliance를 generic d
 
 - `devops/package-publish-readiness`: package, CLI, plugin, library, extension, binary, generated bundle, marketplace distribution readiness.
 - `security/license-notice-review`: license policy evidence, NOTICE file, attribution, vendored code, generated artifact, copied snippet, redistribution scope.
+- `security/security-compliance-gate`: block/warn/document severity, accepted-risk evidence, public-doc hygiene, runtime evidence safety, release compliance handoff.
 - `backend/connector-integration-change`: connector contract, credential handling, webhook lifecycle, retry behavior, registration metadata, host-runtime compatibility.
 
 Review guidance는 project가 명시적으로 정의하고 사용자가 요청하지 않는 한 registry login, package publish, live external call, legal approval claim을 하지 않습니다.

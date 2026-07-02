@@ -148,6 +148,8 @@ These commands expose the v2 capability model and generated local runtime surfac
 | `index build <target>` | Preview or write `.ai-playbook/runtime/indexes/file-inventory.json`. | No unless `--apply` | `npx ai-agent-playbook index build <target-project> --json` |
 | `index status <target>` | Check whether the runtime file inventory exists. | No | `npx ai-agent-playbook index status <target-project> --json` |
 | `index search <target>` | Search local project text without writing the runtime index. | No | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
+| `canon draft <target>` | Draft promotion-ready fact candidates from runtime index and reports. | No | `npx ai-agent-playbook canon draft <target-project> --json` |
+| `canon check <target>` | Check promoted canon facts in memory against runtime evidence and current files. | No | `npx ai-agent-playbook canon check <target-project> --json` |
 | `write-gate preview <target>` | Preview write risk for an intent and optional path before editing. | No | `npx ai-agent-playbook write-gate preview <target-project> --intent "change auth flow" --path src/example.ts --json` |
 | `write-gate advisory <target>` | Preview or save a pre-write advisory report under playbook runtime. | No unless `--apply` | `npx ai-agent-playbook write-gate advisory <target-project> --intent "change auth flow" --path src/example.ts --apply --json` |
 | `write-gate post-check <target>` | Compare a saved advisory snapshot with current files after editing. | No | `npx ai-agent-playbook write-gate post-check <target-project> --advisory .ai-playbook/runtime/reports/write-gate/pre-write-advisory.<id>.json --json` |
@@ -159,6 +161,8 @@ These commands expose the v2 capability model and generated local runtime surfac
 `write-gate advisory` uses the same preview engine but can save a pre-write advisory JSON file when `--apply` is present. The file is written only inside `.ai-playbook/runtime/reports/write-gate/`; without `--apply`, the command returns the planned advisory without writing it.
 
 `write-gate post-check` reads a saved advisory and compares its snapshot with current files. If the advisory is missing, invalid, or lacks a snapshot, the command reports `summary.status: "unknown"` instead of claiming the change is clean.
+
+`canon draft` proposes facts from `.ai-playbook/runtime/indexes/file-inventory.json` and JSON reports under `.ai-playbook/runtime/reports/`. `canon check` reads promoted JSON facts under `.ai-playbook/memory/` or a specific `--path <canon-json>` and reports `verified`, `missing`, `stale`, `changed`, and `unverified` states without writing files.
 
 Runtime output lives under `.ai-playbook/runtime/`. Do not copy generated output into `.ai-playbook/memory/` until it has been reviewed and promoted intentionally.
 

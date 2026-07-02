@@ -28,6 +28,10 @@
 - `integrations/`: MCP, adapters, hooks, and command configuration.
 - `archive/`: superseded local notes.
 
+## Canon Facts
+
+Runtime evidence can draft canon fact candidates, but it does not become trusted memory by itself. Store reviewed fact JSON under `memory/` only after a deliberate promotion step, then use `canon check` to compare those facts with their source report and current files. Checks report `verified`, `missing`, `stale`, `changed`, and `unverified` states without writing files.
+
 ## Migration
 
 Use layout migration in preview mode first:
@@ -43,4 +47,3 @@ ai-playbook migrate layout <target> --to v2 --apply
 ```
 
 The migration creates v2 directories and copies known v1 files into their v2 locations. It does not delete or move v1 files.
-

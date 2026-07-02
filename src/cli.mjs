@@ -13,6 +13,7 @@ import {
   checkContracts,
   checkGuides,
   checkManagedManifest,
+  checkCanonFacts,
   checkReferenceAdoptionLedger,
   catalogManagedManifest,
   contextStatus,
@@ -20,6 +21,7 @@ import {
   createPlan,
   createWorklog,
   doctorProject,
+  draftCanonFacts,
   initContext,
   initContracts,
   inventoryReferenceDirectory,
@@ -571,6 +573,44 @@ export async function runCli(argv, io = {}) {
         for (const item of result.results) {
           const first = item.snippets[0];
           write(stdout, `[${item.category}] ${item.path}${first ? `:${first.line} ${first.text}` : ''}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'canon' && subcommand === 'draft') {
+      const result = await draftCanonFacts({
+        target: resolveTarget(cwd, targetArg),
+        maxFacts: parseMaxResults(parsed.flags['max-results'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Canon draft: ${result.summary.facts} fact candidate(s)\n`);
+        for (const fact of result.facts) {
+          write(stdout, `[${fact.kind}] ${fact.id} <- ${fact.sourceReport}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'canon' && subcommand === 'check') {
+      const result = await checkCanonFacts({
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Canon check: ${result.summary.verified} verified, ${result.summary.changed} changed, ${result.summary.missing} missing, ${result.summary.stale} stale, ${result.summary.unverified} unverified\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -1231,6 +1271,8 @@ Usage:
   ai-playbook index build <target> [--apply] [--json]
   ai-playbook index status <target> [--json]
   ai-playbook index search <target> --query <text> [--max-results N] [--json]
+  ai-playbook canon draft <target> [--max-results N] [--json]
+  ai-playbook canon check <target> [--path <canon-json>] [--json]
   ai-playbook write-gate preview <target> --intent <text> [--path <file>] [--max-results N] [--json]
   ai-playbook write-gate advisory <target> --intent <text> [--path <file>] [--max-results N] [--apply] [--json]
   ai-playbook write-gate post-check <target> --advisory <advisory-json> [--json]

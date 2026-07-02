@@ -3,6 +3,7 @@ import {
   buildProjectContext,
   capabilityCatalog,
   catalogManagedManifest,
+  checkCanonFacts,
   checkContracts,
   checkManagedManifest,
   checkReferenceAdoptionLedger,
@@ -101,6 +102,13 @@ export function registerPlaybookMcpTools(server, options) {
       intent: args.intent,
       filePath: args.path,
       maxResults: args.maxResults ?? 20
+    })),
+    tool('canon_check', 'Check promoted canon facts against runtime evidence and current files without writing.', {
+      target: targetSchema,
+      path: pathSchema.describe('Optional canon facts JSON path inside the target project.')
+    }, (args) => checkCanonFacts({
+      target: args.target,
+      filePath: args.path
     })),
     tool('playbook_context', 'Build local playbook context for a target project.', {
       target: targetSchema,

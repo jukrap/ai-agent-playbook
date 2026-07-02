@@ -167,6 +167,101 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   await cleanup(target);
 });
 
+test('canon draft and check keep runtime evidence read-only until promotion', async () => {
+  const target = await tempRepo('canon lifecycle-한글-');
+  await mkdir(path.join(target, 'src'), { recursive: true });
+  await writeFile(path.join(target, 'src', 'changed.ts'), 'export const changed = "before";\n');
+  await writeFile(path.join(target, 'src', 'stale.ts'), 'export const stale = true;\n');
+  await writeFile(path.join(target, 'src', 'ok.ts'), 'export const ok = true;\n');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+
+  const index = capture(target);
+  assert.equal(await runCli(['index', 'build', '.', '--apply', '--json'], index), 0);
+  const indexReport = JSON.parse(index.out());
+
+  const advisory = capture(target);
+  assert.equal(await runCli([
+    'write-gate',
+    'advisory',
+    '.',
+    '--intent',
+    'edit changed source',
+    '--path',
+    'src/changed.ts',
+    '--apply',
+    '--json'
+  ], advisory), 0);
+  const advisoryReport = JSON.parse(advisory.out());
+  const advisoryPath = advisoryReport.advisory.path;
+  const advisoryJson = JSON.parse(await readFile(path.join(target, ...advisoryPath.split('/')), 'utf8'));
+  const beforeDraft = await listRelativeFiles(target);
+
+  const draft = capture(target);
+  assert.equal(await runCli(['canon', 'draft', '.', '--json'], draft), 0);
+  const draftReport = JSON.parse(draft.out());
+  assert.equal(draftReport.ok, true);
+  assert.equal(draftReport.mode.writes, false);
+  assert.equal(draftReport.facts.some((fact) => fact.kind === 'file-inventory'), true);
+  assert.equal(draftReport.facts.some((fact) => fact.kind === 'write-gate-advisory'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeDraft);
+
+  await writeFile(path.join(target, 'src', 'changed.ts'), 'export const changed = "after";\n');
+  await mkdir(path.join(target, '.ai-playbook', 'memory', 'maps'), { recursive: true });
+  await writeFile(path.join(target, '.ai-playbook', 'memory', 'maps', 'canon.json'), `${JSON.stringify({
+    schemaVersion: '1',
+    facts: [
+      {
+        id: 'fact.changed',
+        kind: 'write-gate-advisory',
+        sourceReport: advisoryPath,
+        scanRange: ['src/changed.ts'],
+        confidence: 'medium',
+        observedAt: advisoryJson.generatedAt.slice(0, 10)
+      },
+      {
+        id: 'fact.stale',
+        kind: 'file-inventory',
+        sourceReport: indexReport.index,
+        scanRange: ['src/stale.ts'],
+        confidence: 'medium',
+        observedAt: '2000-01-01'
+      },
+      {
+        id: 'fact.missing',
+        kind: 'route-api-hint',
+        sourceReport: '.ai-playbook/runtime/reports/missing.json',
+        scanRange: ['src/missing.ts'],
+        confidence: 'medium',
+        observedAt: '2026-07-03'
+      },
+      {
+        id: 'fact.unverified',
+        kind: 'manual-note',
+        scanRange: ['src/ok.ts'],
+        confidence: 'low',
+        observedAt: '2026-07-03'
+      }
+    ]
+  }, null, 2)}\n`);
+  const beforeCheck = await listRelativeFiles(target);
+
+  const checked = capture(target);
+  assert.equal(await runCli(['canon', 'check', '.', '--json'], checked), 1);
+  const checkReport = JSON.parse(checked.out());
+  assert.equal(checkReport.mode.writes, false);
+  assert.equal(checkReport.summary.facts, 4);
+  assert.equal(checkReport.summary.changed, 1);
+  assert.equal(checkReport.summary.stale, 1);
+  assert.equal(checkReport.summary.missing, 1);
+  assert.equal(checkReport.summary.unverified, 1);
+  assert.equal(checkReport.facts.find((fact) => fact.id === 'fact.changed').status, 'changed');
+  assert.equal(checkReport.facts.find((fact) => fact.id === 'fact.stale').status, 'stale');
+  assert.equal(checkReport.facts.find((fact) => fact.id === 'fact.missing').status, 'missing');
+  assert.equal(checkReport.facts.find((fact) => fact.id === 'fact.unverified').status, 'unverified');
+  assert.deepEqual(await listRelativeFiles(target), beforeCheck);
+  await cleanup(target);
+});
+
 test('reference inventory summarizes local reference collections without writing files', async () => {
   const target = await tempRepo('reference inventory-한글-');
   const referenceRoot = path.join(target, '_reference');

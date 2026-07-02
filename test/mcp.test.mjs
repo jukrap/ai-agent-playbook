@@ -48,6 +48,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'index_status',
       'index_search',
       'write_gate_preview',
+      'canon_check',
       'playbook_context',
       'operator_check',
       'operator_search',
@@ -77,6 +78,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       assert.equal(names.includes(expected), true, `missing MCP tool ${expected}`);
     }
     assert.equal(names.includes('write_gate_advisory'), false);
+    assert.equal(names.includes('canon_promote'), false);
     assert.equal(listed.tools.every((tool) => tool.annotations?.readOnlyHint === true), true);
 
     const resources = await client.listResources();
@@ -143,6 +145,14 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     });
     assert.equal(customLedger.structuredContent.ok, true);
     assert.equal(customLedger.structuredContent.summary.capabilities.security.statuses.reviewed, 1);
+
+    const canon = await client.callTool({
+      name: 'canon_check',
+      arguments: { target }
+    });
+    assert.equal(canon.structuredContent.ok, true);
+    assert.equal(canon.structuredContent.mode.writes, false);
+    assert.equal(canon.structuredContent.summary.facts, 0);
 
     const result = await client.callTool({
       name: 'operator_search',

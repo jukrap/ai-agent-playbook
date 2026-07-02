@@ -116,6 +116,12 @@ export const WORKFLOW_RECIPES = [
     outputs: ['workflows/runbooks', 'runtime/reports', 'workflows/worklogs']
   },
   {
+    id: 'package-release-readiness',
+    title: 'Package Release Readiness',
+    category: 'devops',
+    outputs: ['runtime/reports', 'workflows/worklogs']
+  },
+  {
     id: 'security-audit',
     title: 'Security Audit',
     category: 'security',

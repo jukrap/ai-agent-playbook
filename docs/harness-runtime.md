@@ -37,6 +37,8 @@ Runtime indexes are generated evidence, not trusted memory. They belong under `.
 
 The symbol outline uses lightweight local patterns for common JS/TS, Python, Java, Kotlin, C#, Go, PHP, Ruby, and Rust source files. It skips dependency/generated folders, large files, and `.ai-playbook/runtime/`. Treat low-confidence entries as navigation hints, not canonical architecture.
 
+`index dependency-inventory` is also read-only. It reports dependency manifests, adjacent lockfiles, package script names, Docker/Compose image hints, and GitHub Actions `uses:` entries without running package scripts, building containers, contacting registries, or fetching vulnerability databases. Missing adjacent lockfiles are warnings, not failures.
+
 ## MCP tool surface
 
 Start the local server with:

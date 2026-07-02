@@ -149,6 +149,7 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 | `index status <target>` | runtime file inventory 존재 여부를 확인합니다. | 아니오 | `npx ai-agent-playbook index status <target-project> --json` |
 | `index search <target>` | runtime index를 쓰지 않고 local project text를 검색합니다. | 아니오 | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
 | `index symbol-outline <target>` | function, class, component, method, binding hint를 file, line, confidence, source pattern metadata와 함께 preview합니다. | 아니오 | `npx ai-agent-playbook index symbol-outline <target-project> --json` |
+| `index dependency-inventory <target>` | dependency manifest, lockfile, container base image, package script, CI action usage를 script 실행이나 network scan 없이 preview합니다. | 아니오 | `npx ai-agent-playbook index dependency-inventory <target-project> --json` |
 | `canon draft <target>` | runtime index와 report에서 promotion-ready fact 후보를 작성합니다. | 아니오 | `npx ai-agent-playbook canon draft <target-project> --json` |
 | `canon check <target>` | memory에 승격된 canon fact를 runtime evidence와 현재 file 기준으로 확인합니다. | 아니오 | `npx ai-agent-playbook canon check <target-project> --json` |
 | `canon promote <target>` | runtime report의 reviewed canon fact를 memory 또는 knowledge references로 preview하거나 씁니다. | `--apply --reviewed`가 있을 때만 예 | `npx ai-agent-playbook canon promote <target-project> --source .ai-playbook/runtime/reports/example.json --to .ai-playbook/memory/maps/canon.json --json` |
@@ -273,7 +274,7 @@ ai-playbook mcp
 서버는 아래 read-only 도구를 노출합니다.
 
 - playbook context: `playbook_context`, `context_status`, `context_list`
-- catalog와 layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `reference_inventory`, `reference_ledger_check`, `playbook_layout`, `index_status`, `index_search`, `symbol_outline`, `write_gate_preview`
+- catalog와 layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `reference_inventory`, `reference_ledger_check`, `playbook_layout`, `index_status`, `index_search`, `symbol_outline`, `dependency_inventory`, `write_gate_preview`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules와 project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA와 deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`

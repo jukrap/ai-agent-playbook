@@ -20,6 +20,12 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     '}',
     ''
   ].join('\n'));
+  await writeFile(path.join(target, 'package.json'), `${JSON.stringify({
+    name: 'mcp-fixture',
+    scripts: { test: 'node --test' },
+    dependencies: { '@modelcontextprotocol/sdk': '^1.29.0' }
+  }, null, 2)}\n`);
+  await writeFile(path.join(target, 'package-lock.json'), '{"lockfileVersion": 3}\n');
   await mkdir(path.join(target, '_reference', 'reference-pack', 'skills', 'demo'), { recursive: true });
   await writeFile(path.join(target, '_reference', 'reference-pack', 'README.md'), '# Reference Pack\n');
   await writeFile(path.join(target, '_reference', 'reference-pack', 'skills', 'demo', 'SKILL.md'), '---\nname: demo\n---\n# Demo\n');
@@ -48,6 +54,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'index_status',
       'index_search',
       'symbol_outline',
+      'dependency_inventory',
       'write_gate_preview',
       'canon_check',
       'playbook_context',
@@ -121,6 +128,16 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(symbolOutline.structuredContent.ok, true);
     assert.equal(symbolOutline.structuredContent.mode.writes, false);
     assert.equal(symbolOutline.structuredContent.entries.some((entry) => entry.file === 'src/기능 모듈/search target.ts' && entry.name === 'loginFlow'), true);
+
+    const dependencyInventory = await client.callTool({
+      name: 'dependency_inventory',
+      arguments: { target }
+    });
+    assert.equal(dependencyInventory.isError, undefined);
+    assert.equal(dependencyInventory.structuredContent.ok, true);
+    assert.equal(dependencyInventory.structuredContent.mode.writes, false);
+    assert.equal(dependencyInventory.structuredContent.manifests.some((manifest) => manifest.path === 'package.json' && manifest.scripts.includes('test')), true);
+    assert.equal(dependencyInventory.structuredContent.lockfiles.some((lockfile) => lockfile.path === 'package-lock.json'), true);
 
     const prompt = await client.getPrompt({
       name: 'repo_onboarding_runbook',

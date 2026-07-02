@@ -37,6 +37,8 @@ Runtime index는 generated evidence이지 trusted memory가 아닙니다. 파일
 
 Symbol outline은 JS/TS, Python, Java, Kotlin, C#, Go, PHP, Ruby, Rust source file에 대해 lightweight local pattern을 사용합니다. Dependency/generated folder, large file, `.ai-playbook/runtime/`은 건너뜁니다. Low-confidence entry는 canonical architecture가 아니라 탐색 단서로 취급합니다.
 
+`index dependency-inventory`도 read-only입니다. Package script를 실행하거나, container를 build하거나, registry에 접속하거나, vulnerability database를 가져오지 않고 dependency manifest, 인접 lockfile, package script name, Docker/Compose image hint, GitHub Actions `uses:` entry를 보고합니다. 인접 lockfile 부재는 failure가 아니라 warning입니다.
+
 ## MCP 도구 표면
 
 로컬 서버는 아래 명령으로 시작합니다.

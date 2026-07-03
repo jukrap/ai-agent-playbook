@@ -79,11 +79,13 @@ export async function buildReferenceAdoptionQueue({
   target,
   maxProjects = DEFAULT_MAX_PROJECTS,
   maxDepth = DEFAULT_MAX_DEPTH,
-  maxResults = DEFAULT_QUEUE_RESULTS
+  maxResults = DEFAULT_QUEUE_RESULTS,
+  ledgerPath
 }) {
   const inventory = await inventoryReferenceDirectory({ target, maxProjects, maxDepth });
+  const ledger = ledgerPath ? await loadReferenceLedgerIndex(ledgerPath) : null;
   const queue = inventory.projects
-    .map((project) => referenceQueueItem(project))
+    .map((project) => referenceQueueItem(project, ledger))
     .filter((item) => item.score > 0)
     .sort((left, right) => {
       if (right.score !== left.score) return right.score - left.score;
@@ -98,24 +100,34 @@ export async function buildReferenceAdoptionQueue({
       recommendedCapabilities[capability] = (recommendedCapabilities[capability] ?? 0) + 1;
     }
   }
+  const ledgerStatuses = {};
+  if (ledger) {
+    for (const item of queue) {
+      ledgerStatuses[item.ledgerStatus] = (ledgerStatuses[item.ledgerStatus] ?? 0) + 1;
+    }
+  }
+  const warnings = [...inventory.warnings, ...(ledger?.warnings ?? [])];
+  const conflicts = ledger?.conflicts ?? [];
+  const summary = {
+    inventoryProjects: inventory.summary.projects,
+    totalProjects: inventory.summary.totalProjects,
+    queueItems: queue.length,
+    priorities,
+    recommendedCapabilities,
+    warnings: warnings.length,
+    conflicts: conflicts.length
+  };
+  if (ledger) summary.ledgerStatuses = ledgerStatuses;
 
   return {
     schemaVersion: SCHEMA_VERSION,
-    ok: true,
+    ok: conflicts.length === 0,
     target: inventory.target,
     mode: { localOnly: true, network: false, writes: false },
-    summary: {
-      inventoryProjects: inventory.summary.projects,
-      totalProjects: inventory.summary.totalProjects,
-      queueItems: queue.length,
-      priorities,
-      recommendedCapabilities,
-      warnings: inventory.warnings.length,
-      conflicts: 0
-    },
+    summary,
     queue,
-    warnings: inventory.warnings,
-    conflicts: []
+    warnings,
+    conflicts
   };
 }
 
@@ -230,12 +242,12 @@ export async function checkReferenceAdoptionLedger({ target, filePath, strict = 
   return ledgerResult({ target: resolvedTarget, path: resolvedLedger.relativePath, statusCounts, capabilityCounts, warnings, conflicts });
 }
 
-function referenceQueueItem(project) {
+function referenceQueueItem(project, ledger) {
   const weightedSignals = scoreSignals(project.signals);
   const score = weightedSignals.reduce((sum, item) => sum + item.score, 0);
   const recommendedCapabilities = recommendedReferenceCapabilities(project.signals);
   const actions = referenceAdoptionActions(project.signals);
-  return {
+  const item = {
     project: project.id,
     path: project.path,
     score,
@@ -248,6 +260,14 @@ function referenceQueueItem(project) {
     representativeFiles: project.representativeFiles,
     nextActions: actions
   };
+  if (ledger) {
+    const ledgerEntry = findLedgerEntryForProject(project.id, ledger);
+    item.ledgerStatus = ledgerEntry?.status ?? 'new';
+    item.ledgerReferenceId = ledgerEntry?.referenceId ?? null;
+    item.ledgerCapability = ledgerEntry?.capability ?? null;
+    item.ledgerDecisionDate = ledgerEntry?.decisionDate ?? null;
+  }
+  return item;
 }
 
 function scoreSignals(signals) {
@@ -455,6 +475,58 @@ function resolveLedgerPath({ target, filePath }) {
   return { ok: true, path: ledgerPath, relativePath };
 }
 
+async function loadReferenceLedgerIndex(filePath) {
+  const resolvedPath = path.resolve(filePath);
+  const displayPath = normalizePortablePath(filePath);
+  const warnings = [];
+  const conflicts = [];
+  const entries = new Map();
+
+  if (!existsSync(resolvedPath)) {
+    conflicts.push({
+      id: 'reference-queue.ledger-missing',
+      message: 'Reference adoption ledger does not exist.',
+      paths: [displayPath]
+    });
+    return { entries, warnings, conflicts };
+  }
+
+  const text = await readFile(resolvedPath, 'utf8');
+  const lines = text.split(/\r?\n/);
+  for (let index = 0; index < lines.length; index += 1) {
+    const row = parseLedgerRow(lines[index]);
+    if (!row) continue;
+    if (!LEDGER_STATUSES.has(row.status)) {
+      warnings.push({
+        id: 'reference-queue.ledger-invalid-status',
+        message: `Ignoring ledger row with invalid status: ${row.status}.`,
+        paths: [`${displayPath}:${index + 1}`]
+      });
+      continue;
+    }
+    const keys = ledgerEntryKeys(row.referenceId);
+    for (const key of keys) {
+      if (!entries.has(key)) entries.set(key, row);
+    }
+  }
+
+  return { entries, warnings, conflicts };
+}
+
+function findLedgerEntryForProject(projectId, ledger) {
+  for (const key of ledgerEntryKeys(projectId)) {
+    const entry = ledger.entries.get(key);
+    if (entry) return entry;
+  }
+  return null;
+}
+
+function ledgerEntryKeys(referenceId) {
+  const direct = normalizeLedgerKey(referenceId, '');
+  const stripped = direct.startsWith('reference-') ? direct.slice('reference-'.length) : direct;
+  return [...new Set([direct, stripped, direct ? `reference-${stripped || direct}` : ''].filter(Boolean))];
+}
+
 function parseLedgerRow(line) {
   const trimmed = line.trim();
   const separatorRow = /^\|\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?$/.test(trimmed);
@@ -465,7 +537,9 @@ function parseLedgerRow(line) {
   if (!status) return null;
   return {
     status,
-    capability: normalizeLedgerKey(cells[2], 'uncategorized')
+    referenceId: normalizeLedgerKey(cells[1], 'unknown-reference'),
+    capability: normalizeLedgerKey(cells[2], 'uncategorized'),
+    decisionDate: cells[6] || null
   };
 }
 

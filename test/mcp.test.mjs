@@ -83,7 +83,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     '',
     '| Status | Reference ID | Capability | Useful Pattern | Local Adoption | Risk/Noise | Decision Date |',
     '| --- | --- | --- | --- | --- | --- | --- |',
-    '| reviewed | security-pack | security | summarize source pattern | local validator | none | 2026-07-03 |',
+    '| reviewed | reference-pack | security | summarize source pattern | local validator | none | 2026-07-03 |',
     ''
   ].join('\n'));
   const before = await listRelativeFiles(target);
@@ -402,13 +402,16 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       name: 'reference_adoption_queue',
       arguments: {
         target: path.join(target, '_reference'),
-        maxResults: 5
+        maxResults: 5,
+        ledgerPath: path.join(target, '.ai-playbook', 'knowledge', 'custom-reference-ledger.md')
       }
     });
     assert.equal(adoptionQueue.structuredContent.ok, true);
     assert.equal(adoptionQueue.structuredContent.mode.writes, false);
     assert.equal(adoptionQueue.structuredContent.summary.queueItems, 1);
+    assert.equal(adoptionQueue.structuredContent.summary.ledgerStatuses.reviewed, 1);
     assert.equal(adoptionQueue.structuredContent.queue[0].recommendedCapabilities.includes('ai-harness'), true);
+    assert.equal(adoptionQueue.structuredContent.queue[0].ledgerStatus, 'reviewed');
 
     const sourcePreview = await client.callTool({
       name: 'reference_source_registry_preview',

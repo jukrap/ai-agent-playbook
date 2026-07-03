@@ -29,6 +29,7 @@ import {
   skillCatalog,
   startWorkflowRun,
   createWriteGateAdvisory,
+  updateReferenceAdoptionLedger,
   workflowCatalog,
   SCHEMA_VERSION
 } from './harness.mjs';
@@ -127,6 +128,18 @@ export function registerPlaybookMcpTools(server, options) {
       target: args.target,
       filePath: args.path,
       strict: Boolean(args.strict)
+    })),
+    tool('reference_ledger_update_preview', 'Preview missing reference adoption ledger rows without writing files.', {
+      target: targetSchema,
+      referenceDir: z.string().min(1).describe('Local reference directory to queue for adoption review.'),
+      path: pathSchema.describe('Optional ledger path inside the target project.'),
+      maxResults: maxResultsSchema
+    }, (args) => updateReferenceAdoptionLedger({
+      target: args.target,
+      referenceDir: args.referenceDir,
+      filePath: args.path,
+      maxResults: args.maxResults ?? 20,
+      apply: false
     })),
     tool('playbook_layout', 'Describe whether a target playbook has the v2 layout.', {
       target: targetSchema
@@ -388,6 +401,19 @@ export function registerPlaybookMcpTools(server, options) {
       repoRoot,
       target: args.target,
       intent: args.intent,
+      filePath: args.path,
+      maxResults: args.maxResults ?? 20,
+      apply: Boolean(args.apply)
+    })),
+    tool('reference_ledger_update', 'Preview or append missing reference adoption ledger rows. Requires apply=true to write.', {
+      target: targetSchema,
+      referenceDir: z.string().min(1).describe('Local reference directory to queue for adoption review.'),
+      path: pathSchema.describe('Optional ledger path inside the target project.'),
+      maxResults: maxResultsSchema,
+      apply: z.boolean().describe('Must be true to append rows; false returns a dry-run preview.')
+    }, (args) => updateReferenceAdoptionLedger({
+      target: args.target,
+      referenceDir: args.referenceDir,
       filePath: args.path,
       maxResults: args.maxResults ?? 20,
       apply: Boolean(args.apply)

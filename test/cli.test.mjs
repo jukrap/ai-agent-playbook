@@ -983,6 +983,73 @@ test('reference ledger init previews and writes queue ledger safely', async () =
   await cleanup(target);
 });
 
+test('reference ledger update appends missing queue rows without overwriting decisions', async () => {
+  const target = await tempRepo('reference ledger update-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  const referenceRoot = path.join(target, '_reference');
+  await mkdir(path.join(referenceRoot, 'repo-lens-like', 'skills', 'write-gate'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'connector-pack', 'reference', 'connectors'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'repo-lens-like', 'README.md'), '# Repo Lens\n');
+  await writeFile(path.join(referenceRoot, 'repo-lens-like', 'skills', 'write-gate', 'SKILL.md'), '---\nname: write-gate\n---\n# Write Gate\n');
+  await writeFile(path.join(referenceRoot, 'connector-pack', 'package.json'), '{"name":"connector-pack"}\n');
+  await writeFile(path.join(referenceRoot, 'connector-pack', 'reference', 'connectors', 'postgres.md'), '# Postgres\n');
+  const ledgerPath = path.join(target, '.ai-playbook', 'knowledge', 'reference-adoption-ledger.md');
+  const before = await listRelativeFiles(target);
+  const originalLedger = await readFile(ledgerPath, 'utf8');
+  assert.equal(originalLedger.includes('| new |  |  |  |  |  |  |'), true);
+
+  const preview = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-update', '.', '--reference-dir', referenceRoot, '--max-results', '2', '--json'], preview), 0);
+  const previewReport = JSON.parse(preview.out());
+  assert.equal(previewReport.ok, true);
+  assert.equal(previewReport.applied, false);
+  assert.equal(previewReport.mode.writes, false);
+  assert.equal(previewReport.summary.added, 2);
+  assert.equal(previewReport.summary.removedPlaceholder, true);
+  assert.equal(previewReport.summary.operations, 1);
+  assert.equal(previewReport.ledger.content.includes('reference-repo-lens-like'), true);
+  assert.equal(previewReport.ledger.content.includes('| new |  |  |  |  |  |  |'), false);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  assert.equal(await readFile(ledgerPath, 'utf8'), originalLedger);
+
+  const applied = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-update', '.', '--reference-dir', referenceRoot, '--max-results', '2', '--apply', '--json'], applied), 0);
+  const appliedReport = JSON.parse(applied.out());
+  assert.equal(appliedReport.ok, true);
+  assert.equal(appliedReport.applied, true);
+  assert.equal(appliedReport.mode.writes, true);
+  const ledgerText = await readFile(ledgerPath, 'utf8');
+  assert.equal(ledgerText.includes('reference-connector-pack'), true);
+  assert.equal(ledgerText.includes('| new |  |  |  |  |  |  |'), false);
+
+  const check = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-check', '.', '--json'], check), 0);
+  const checkReport = JSON.parse(check.out());
+  assert.equal(checkReport.ok, true);
+  assert.equal(checkReport.summary.statuses.new, 2);
+
+  const secondRun = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-update', '.', '--reference-dir', referenceRoot, '--max-results', '2', '--apply', '--json'], secondRun), 0);
+  const secondRunReport = JSON.parse(secondRun.out());
+  assert.equal(secondRunReport.summary.added, 0);
+  assert.equal(secondRunReport.summary.operations, 0);
+  assert.equal(secondRunReport.applied, false);
+  assert.equal(await readFile(ledgerPath, 'utf8'), ledgerText);
+
+  const unsafePath = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-update', '.', '--reference-dir', referenceRoot, '--path', '../outside.md', '--json'], unsafePath), 1);
+  const unsafePathReport = JSON.parse(unsafePath.out());
+  assert.equal(unsafePathReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-update.path-invalid'), true);
+
+  const fileReferenceDirPath = path.join(target, 'not-a-reference-dir.txt');
+  await writeFile(fileReferenceDirPath, 'not a directory\n');
+  const fileReferenceDir = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-update', '.', '--reference-dir', fileReferenceDirPath, '--json'], fileReferenceDir), 1);
+  const fileReferenceDirReport = JSON.parse(fileReferenceDir.out());
+  assert.equal(fileReferenceDirReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-update.reference-dir-missing'), true);
+  await cleanup(target);
+});
+
 test('reference ledger check validates statuses and local-only leaks without writing files', async () => {
   const target = await tempRepo('reference ledger-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);

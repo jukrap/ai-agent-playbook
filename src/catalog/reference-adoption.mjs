@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
   assertDirectory,
@@ -637,18 +637,237 @@ function renderReferenceAdoptionLedger({ items, generatedAt }) {
     '| --- | --- | --- | --- | --- | --- | --- |'
   ];
   for (const item of items) {
-    lines.push(`| ${[
-      'new',
-      `reference-${normalizeLedgerKey(item.project, 'source')}`,
-      primaryLedgerCapability(item),
-      ledgerCell(ledgerPatternSummary(item)),
-      ledgerCell(ledgerAdoptionSummary(item)),
-      ledgerCell('Summarize reusable patterns; do not copy raw reference content.'),
-      ''
-    ].join(' | ')} |`);
+    lines.push(renderReferenceAdoptionLedgerRow(item));
   }
   lines.push('');
   return lines.join('\n');
+}
+
+export async function updateReferenceAdoptionLedger({
+  target,
+  referenceDir,
+  filePath,
+  maxResults = DEFAULT_QUEUE_RESULTS,
+  apply = false
+}) {
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const resolvedLedger = resolveLedgerPath({ target: resolvedTarget, filePath });
+  const generatedAt = new Date().toISOString();
+  const warnings = [];
+  const conflicts = [];
+
+  if (!resolvedLedger.ok) {
+    conflicts.push({
+      id: 'reference-ledger-update.path-invalid',
+      message: 'Ledger path must stay inside the target repository.',
+      paths: [resolvedLedger.relativePath]
+    });
+  }
+
+  if (!existsSync(playbook.root)) {
+    conflicts.push({
+      id: 'reference-ledger-update.playbook-missing',
+      message: `Missing ${playbook.dir}/. Bootstrap or migrate the playbook before updating a reference ledger.`,
+      paths: [`${playbook.dir}/`]
+    });
+  }
+
+  if (!referenceDir) {
+    conflicts.push({
+      id: 'reference-ledger-update.reference-dir-required',
+      message: 'Reference directory is required.',
+      paths: []
+    });
+  } else if (!await isDirectoryPath(referenceDir)) {
+    conflicts.push({
+      id: 'reference-ledger-update.reference-dir-missing',
+      message: 'Reference directory does not exist.',
+      paths: [normalizePortablePath(path.resolve(referenceDir))]
+    });
+  }
+
+  if (resolvedLedger.ok && !existsSync(resolvedLedger.path)) {
+    conflicts.push({
+      id: 'reference-ledger-update.ledger-missing',
+      message: 'Reference adoption ledger is missing; run ledger-init or bootstrap the playbook first.',
+      paths: [resolvedLedger.relativePath]
+    });
+  }
+
+  let currentContent = '';
+  if (conflicts.length === 0) {
+    currentContent = await readFile(resolvedLedger.path, 'utf8');
+  }
+
+  const queue = conflicts.length === 0
+    ? await buildReferenceAdoptionQueue({
+      target: referenceDir,
+      maxResults,
+      ledgerPath: resolvedLedger.path
+    })
+    : null;
+  if (queue) {
+    warnings.push(...queue.warnings);
+    conflicts.push(...queue.conflicts);
+  }
+
+  const newItems = (queue?.queue ?? []).filter((item) => item.ledgerStatus === 'new' && !item.ledgerReferenceId);
+  let updatedContent = currentContent;
+  let removedPlaceholder = false;
+  if (conflicts.length === 0 && newItems.length > 0) {
+    const appended = appendReferenceAdoptionLedgerRows({
+      content: currentContent,
+      rows: newItems.map((item) => renderReferenceAdoptionLedgerRow(item))
+    });
+    updatedContent = appended.content;
+    removedPlaceholder = appended.removedPlaceholder;
+    conflicts.push(...appended.conflicts);
+  }
+
+  const operations = resolvedLedger.ok && conflicts.length === 0 && newItems.length > 0
+    ? [{
+      id: 'reference-ledger-update.append-rows',
+      action: apply ? 'write' : 'preview',
+      message: `${apply ? 'Append' : 'Preview'} ${newItems.length} new reference adoption ledger row(s).`,
+      paths: [resolvedLedger.relativePath]
+    }]
+    : [];
+
+  const result = {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'reference.adoption-ledger-update',
+    ok: conflicts.length === 0,
+    target: resolvedTarget,
+    mode: { localOnly: true, network: false, writes: Boolean(apply) },
+    generatedAt,
+    applied: false,
+    path: resolvedLedger.relativePath,
+    summary: {
+      queueEntries: queue?.summary?.queueItems ?? 0,
+      added: newItems.length,
+      removedPlaceholder,
+      operations: operations.length,
+      warnings: warnings.length,
+      conflicts: conflicts.length
+    },
+    ledger: {
+      path: resolvedLedger.relativePath,
+      content: updatedContent
+    },
+    operations,
+    warnings,
+    conflicts
+  };
+
+  if (!result.ok || !apply || operations.length === 0) return result;
+
+  await writeFile(resolvedLedger.path, updatedContent);
+
+  return {
+    ...result,
+    applied: true
+  };
+}
+
+function renderReferenceAdoptionLedgerRow(item) {
+  return `| ${[
+    'new',
+    `reference-${normalizeLedgerKey(item.project, 'source')}`,
+    primaryLedgerCapability(item),
+    ledgerCell(ledgerPatternSummary(item)),
+    ledgerCell(ledgerAdoptionSummary(item)),
+    ledgerCell('Summarize reusable patterns; do not copy raw reference content.'),
+    ''
+  ].join(' | ')} |`;
+}
+
+function appendReferenceAdoptionLedgerRows({ content, rows }) {
+  const lines = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  if (lines.at(-1) === '') lines.pop();
+  const headerIndex = lines.findIndex((line) => isReferenceLedgerHeader(line));
+  if (headerIndex < 0) {
+    return {
+      content,
+      removedPlaceholder: false,
+      conflicts: [{
+        id: 'reference-ledger-update.table-missing',
+        message: 'Reference adoption ledger table header is missing.',
+        paths: []
+      }]
+    };
+  }
+
+  const separatorIndex = lines.findIndex((line, index) => index > headerIndex && isLedgerSeparatorRow(line));
+  if (separatorIndex < 0) {
+    return {
+      content,
+      removedPlaceholder: false,
+      conflicts: [{
+        id: 'reference-ledger-update.table-separator-missing',
+        message: 'Reference adoption ledger table separator is missing.',
+        paths: []
+      }]
+    };
+  }
+
+  let insertIndex = separatorIndex + 1;
+  while (insertIndex < lines.length && lines[insertIndex].trim().startsWith('|')) {
+    insertIndex += 1;
+  }
+  const existingRows = lines.slice(separatorIndex + 1, insertIndex);
+  const filteredRows = existingRows.filter((line) => !isBlankLedgerPlaceholderRow(line));
+  const removedPlaceholder = filteredRows.length !== existingRows.length;
+  const nextLines = [
+    ...lines.slice(0, separatorIndex + 1),
+    ...filteredRows,
+    ...rows,
+    ...lines.slice(insertIndex)
+  ];
+
+  return {
+    content: `${nextLines.join('\n')}\n`,
+    removedPlaceholder,
+    conflicts: []
+  };
+}
+
+function isReferenceLedgerHeader(line) {
+  const cells = ledgerRowCells(line).map((cell) => cell.toLowerCase());
+  return cells.length >= 7
+    && cells[0] === 'status'
+    && cells[1] === 'reference id'
+    && cells[2] === 'capability'
+    && cells[3] === 'useful pattern'
+    && cells[4] === 'local adoption'
+    && cells[5] === 'risk/noise'
+    && cells[6] === 'decision date';
+}
+
+function isLedgerSeparatorRow(line) {
+  return /^\|\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?$/.test(line.trim());
+}
+
+function isBlankLedgerPlaceholderRow(line) {
+  const cells = ledgerRowCells(line);
+  return cells.length >= 7
+    && cells[0].toLowerCase() === 'new'
+    && cells.slice(1).every((cell) => cell === '');
+}
+
+function ledgerRowCells(line) {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith('|')) return [];
+  return trimmed.split('|').slice(1, -1).map((cell) => cell.trim());
+}
+
+async function isDirectoryPath(candidate) {
+  try {
+    return (await stat(candidate)).isDirectory();
+  } catch {
+    return false;
+  }
 }
 
 function primaryLedgerCapability(item) {

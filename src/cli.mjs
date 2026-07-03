@@ -59,6 +59,7 @@ import {
   startWorkflowRun,
   syncGuides,
   uninstallManagedManifest,
+  updateReferenceAdoptionLedger,
   workflowCatalog,
   summarizeRun,
   summarizeWorklogs
@@ -659,6 +660,34 @@ export async function runCli(argv, io = {}) {
         }
         if (result.ok && !parsed.flags.apply) {
           write(stdout, 'Re-run with --apply to write the reference adoption ledger.\n');
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'ledger-update') {
+      const result = await updateReferenceAdoptionLedger({
+        target: resolveTarget(cwd, targetArg),
+        referenceDir: resolveOptionalPath(cwd, parsed.flags['reference-dir']),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        maxResults: parseMaxResults(parsed.flags['max-results']),
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        const state = result.ok
+          ? (result.applied ? 'written' : (result.summary.added > 0 ? 'preview' : 'up to date'))
+          : 'blocked';
+        write(stdout, `Reference ledger update: ${state} (${result.summary.added} new row${result.summary.added === 1 ? '' : 's'})\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+        if (result.ok && result.summary.added > 0 && !parsed.flags.apply) {
+          write(stdout, 'Re-run with --apply to append missing reference adoption ledger rows.\n');
         }
       }
       return result.ok ? 0 : 1;
@@ -1571,6 +1600,7 @@ Usage:
   ai-playbook reference source-registry-preview <reference-dir> [--max-results N] [--json]
   ai-playbook reference source-registry-check <target> [--path <sources.json>] [--reference-dir <dir>] [--json]
   ai-playbook reference ledger-init <target> --reference-dir <dir> [--path <ledger.md>] [--max-results N] [--apply] [--json]
+  ai-playbook reference ledger-update <target> --reference-dir <dir> [--path <ledger.md>] [--max-results N] [--apply] [--json]
   ai-playbook reference ledger-check <target> [--path <ledger.md>] [--strict] [--json]
   ai-playbook layout status <target> [--json]
   ai-playbook runtime capability-history <target> [--json]

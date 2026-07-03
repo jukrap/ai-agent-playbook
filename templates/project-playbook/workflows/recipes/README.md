@@ -16,9 +16,11 @@ Initial recipe set:
 - knowledge source onboarding
 - CI failure triage
 - deployment release
+- package release readiness
 - security audit
 - frontend polish
 - frontend quality review
+- interactive experience delivery
 - mobile release
 - documentation package
 - harness extension

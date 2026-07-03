@@ -174,6 +174,12 @@ export const WORKFLOW_RECIPES = [
     outputs: ['runtime/reports', 'workflows/worklogs']
   },
   {
+    id: 'interactive-experience-delivery',
+    title: 'Interactive Experience Delivery',
+    category: 'frontend',
+    outputs: ['runtime/reports', 'workflows/runs', 'workflows/worklogs']
+  },
+  {
     id: 'mobile-release',
     title: 'Mobile Release',
     category: 'mobile',

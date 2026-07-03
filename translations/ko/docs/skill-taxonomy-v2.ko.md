@@ -7,7 +7,7 @@ Skill taxonomy v2는 capability category를 1차 축으로 씁니다. 스택별 
 - `foundation`: repo onboarding, bootstrap, project docs, requirements, planning, release notes, documentation package.
 - `delivery`: planning, eval, verification, testing, git, PR, worklog flow.
 - `architecture`: FSD, layered architecture, DDD, monorepo, boundary review.
-- `frontend`: UI, state, data, accessibility, performance, visual QA.
+- `frontend`: UI, state, data, accessibility, performance, visual QA, design-system handoff, interactive media.
 - `backend`: API contract, connector, auth, server-rendered flow, worker, integration.
 - `database`: schema change, migration, SQL, reporting, data integrity.
 - `devops`: CI/CD, container, package release, deployment, configuration, observability.
@@ -120,8 +120,10 @@ Frontend quality skill은 user-visible polish를 state/data correctness, accessi
 - `frontend/frontend-accessibility-review`: keyboard access, focus management, semantic, form, dialog, menu, announcement, contrast, reduced motion, accessible interaction state.
 - `frontend/ui-polish`: visible UI quality, responsive layout, accessibility state, visual hierarchy, interaction feedback, production polish.
 - `frontend/visual-regression-qa`: screenshot, responsive breakpoint, layout overflow, clipping, visual diff, text fit, canvas/media rendering, browser-rendered regression.
+- `frontend/interactive-media-3d-review`: Three.js, WebGL, canvas, SVG, chart, map, animation, video, media-heavy interaction, asset loading, nonblank rendering, responsive scene verification.
+- `frontend/design-system-handoff`: Figma, brand, design-token, component-library, theme, variant, visual-spec을 repository-native UI primitive로 넘기는 handoff.
 
-Framework-specific detail은 reference 또는 project-local playbook에 둡니다. Primary skill은 React, Vue, Svelte, Angular, server-rendered page, 가벼운 DOM-first frontend에서도 작동해야 합니다.
+Framework-specific detail은 reference 또는 project-local playbook에 둡니다. Primary skill은 React, Vue, Svelte, Angular, server-rendered page, 가벼운 DOM-first frontend, canvas/media tool, 3D 또는 chart-heavy interface에서도 작동해야 합니다.
 
 ## Mobile Hardening Pack
 

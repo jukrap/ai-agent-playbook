@@ -15,7 +15,7 @@
 - `skills/database`: schema, migration, SQL, reporting query, data integrity 작업 흐름.
 - `skills/delivery`: planning, eval, verification, testing, Git, PR, release note, worklog 작업 흐름.
 - `skills/devops`: CI/CD, container, package release, deployment, rollback, operations triage 작업 흐름.
-- `skills/frontend`: UI, browser behavior, state/data, accessibility, visual QA 작업 흐름.
+- `skills/frontend`: UI, browser behavior, state/data, accessibility, visual QA, design-system handoff, interactive media 작업 흐름.
 - `skills/git`: commit, PR, push, worklog 보호 규칙.
 - `skills/legacy`: 런타임 결합과 호환성이 중요한 유지보수 작업 흐름.
 - `skills/meta`: 스킬 작성과 저장소 유지보수 스킬.
@@ -134,6 +134,8 @@ Runtime hook layer를 local experiment로 둘지, adapter로 만들지, 문서�
 - `frontend-accessibility-review`: keyboard access, focus management, semantic, form, dialog, menu, announcement, contrast, accessible interaction state를 검토합니다.
 - `ui-polish`: visible UI, responsive layout, visual hierarchy, interaction feedback, production polish를 다듬습니다.
 - `visual-regression-qa`: screenshot, responsive breakpoint, overflow, clipping, visual diff, text fit, canvas/media rendering, browser-rendered regression을 확인합니다.
+- `interactive-media-3d-review`: Three.js, WebGL, canvas, SVG, chart, map, animation, video, media-heavy interactive UI surface를 검토합니다.
+- `design-system-handoff`: Figma, brand, token, component-library, theme, variant, visual-spec guidance를 repository-native UI implementation으로 옮깁니다.
 
 ## Mobile 지도
 

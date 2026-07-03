@@ -45,10 +45,12 @@
 
 ## 백엔드와 연동
 
-- `api-contract-boundary`: 프론트엔드/백엔드 계약, DTO, mock, payload, adapter를 구현·디버깅·검토할 때.
-- `backend-change-safety`: backend service, module, worker, job, integration, queue, config, server-side business logic을 바꿀 때.
-- `connector-integration-change`: API connector, workflow node, MCP adapter, webhook, OAuth app, sync job, credential handling을 바꿀 때.
-- `server-rendered-change`: controller, template, form, session, redirect, validation, server-rendered view contract를 바꿀 때.
+- `api-contract-boundary`: 프론트엔드/백엔드 계약, DTO, 목, 페이로드, 어댑터를 구현·디버깅·검토할 때.
+- `backend-change-safety`: 백엔드 서비스, 모듈, 워커, 잡, 연동, 큐, 설정, 서버 측 업무 로직을 바꿀 때.
+- `request-validation-error-contract`: 요청 파싱, 검증, 오류 응답, 예외 매핑, 클라이언트에 보이는 실패 계약을 바꿀 때.
+- `job-worker-reliability`: 잡, 워커, 큐, 스케줄러, 재시도, 데드레터 처리, 재실행, 오래 실행되는 작업을 바꿀 때.
+- `connector-integration-change`: API 연결, 작업 흐름 노드, MCP 어댑터, 웹훅, OAuth 앱, 동기화 잡, 자격 증명 처리를 바꿀 때.
+- `server-rendered-change`: 컨트롤러, 템플릿, 폼, 세션, 리다이렉트, 검증, 서버 렌더링 화면 계약을 바꿀 때.
 
 ## 데이터와 데이터베이스
 
@@ -80,6 +82,7 @@
 - `image-to-code-handoff`: image, screenshot, mockup, reference board, Figma frame을 UI contract로 변환할 때.
 - `frontend-ui-polish`: 제품 의도와 기존 디자인 관례를 보존하면서 보이는 UI를 구현하거나 다듬을 때.
 - `ui-polish`: visible UI, responsive layout, accessibility state, interaction feedback, production polish를 다룰 때.
+- `style-policy-selection`: 눈에 보이는 UI 편집 전에 저장소 스타일링 방식을 선택하거나 조정할 때.
 - `frontend-state-data-flow`: state ownership, server/client cache, data fetching, optimistic update, URL state, stale UI bug를 바꿀 때.
 - `frontend-accessibility-review`: keyboard access, focus management, semantic, form, dialog, menu, announcement, contrast를 검토할 때.
 - `browser-dom-change`: DOM behavior, jQuery flow, event handler, selector, form, plugin, script-loaded UI를 바꿀 때.
@@ -104,8 +107,8 @@
 
 ## 품질과 정리
 
-- `ui-style-policy`: 저장소 UI 스타일 정책을 선택, 문서화, 강제할 때.
-- `style-quality-review`: UI style, responsive behavior, layout overflow, visual regression을 검토하거나 개선할 때.
+- `ui-style-policy`: 오래된 UI 스타일 정책 요청을 위한 호환 진입점입니다. 기본 라우트는 `style-policy-selection`입니다.
+- `style-quality-review`: UI 스타일, 반응형 동작, 레이아웃 넘침, 시각 회귀 위험을 검토하거나 개선할 때.
 - `cleanup-ai-slop`: 신뢰가 낮거나 과하게 복잡하거나 중복된 코드를 동작 변경 없이 정리할 때.
 - `review-work-light`: 차단형 리뷰 절차 없이 최근 구현 작업을 인수인계 전에 검토할 때.
 

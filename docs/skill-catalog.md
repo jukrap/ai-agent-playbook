@@ -47,6 +47,8 @@ Each `SKILL.md` stays short and trigger-focused. Longer procedures, examples, st
 
 - `api-contract-boundary`: use when implementing, debugging, or reviewing frontend/backend contracts, DTOs, mocks, payloads, and adapters.
 - `backend-change-safety`: use when changing backend services, modules, workers, jobs, integrations, queues, config, or server-side business logic.
+- `request-validation-error-contract`: use when changing request parsing, validation, error responses, exception mapping, or client-visible failure contracts.
+- `job-worker-reliability`: use when changing jobs, workers, queues, schedulers, retries, dead-letter handling, replay, or long-running tasks.
 - `connector-integration-change`: use when changing API connectors, workflow nodes, MCP adapters, webhooks, OAuth apps, sync jobs, or credential handling.
 - `server-rendered-change`: use when changing controllers, templates, forms, sessions, redirects, validation, and server-rendered view contracts.
 
@@ -80,6 +82,7 @@ Each `SKILL.md` stays short and trigger-focused. Longer procedures, examples, st
 - `image-to-code-handoff`: use when turning images, screenshots, mockups, reference boards, or Figma frames into UI contracts.
 - `frontend-ui-polish`: use when implementing or refining visible frontend surfaces while preserving product intent and local design conventions.
 - `ui-polish`: use when working on visible UI, responsive layout, accessibility states, interaction feedback, and production polish.
+- `style-policy-selection`: use when selecting or reconciling repository UI styling method before visible UI edits.
 - `frontend-state-data-flow`: use when changing state ownership, server/client cache behavior, data fetching, optimistic updates, URL state, or stale UI bugs.
 - `frontend-accessibility-review`: use when reviewing keyboard access, focus management, semantics, forms, dialogs, menus, announcements, and contrast.
 - `browser-dom-change`: use when changing DOM behavior, jQuery flows, event handlers, selectors, forms, plugins, or script-loaded UI.
@@ -104,7 +107,7 @@ Each `SKILL.md` stays short and trigger-focused. Longer procedures, examples, st
 
 ## Quality And Cleanup
 
-- `ui-style-policy`: use when selecting, documenting, or enforcing repository UI styling policy.
+- `ui-style-policy`: use as a compatibility trigger for older UI style policy prompts; primary route is `style-policy-selection`.
 - `style-quality-review`: use when reviewing or improving UI styling, responsive behavior, layout overflow, and visual regression risk.
 - `cleanup-ai-slop`: use when cleaning low-trust, overcomplicated, duplicated, or mechanically generated code without changing behavior.
 - `review-work-light`: use when reviewing recent implementation work before handoff without starting a blocking review process.

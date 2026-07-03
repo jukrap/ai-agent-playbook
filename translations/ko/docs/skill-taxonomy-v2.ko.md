@@ -7,8 +7,8 @@ Skill taxonomy v2는 capability category를 1차 축으로 씁니다. 스택별 
 - `foundation`: repo onboarding, bootstrap, project docs, requirements, planning, release notes, documentation package.
 - `delivery`: planning, eval, verification, testing, git, PR, worklog flow.
 - `architecture`: FSD, layered architecture, DDD, monorepo, boundary review.
-- `frontend`: UI, state, data, accessibility, performance, visual QA, design-system handoff, interactive media.
-- `backend`: API contract, connector, auth, server-rendered flow, worker, integration.
+- `frontend`: UI, 스타일 정책, 상태, 데이터, 접근성, 성능, 시각 회귀, 디자인 시스템 인수인계, 인터랙티브 미디어.
+- `backend`: API 계약, 요청/오류 계약, 잡/워커 신뢰성, 연동, 인증, 서버 렌더링 흐름, 워커, 통합.
 - `database`: schema change, migration, SQL, reporting, data integrity.
 - `devops`: CI/CD, container, package release, deployment, configuration, observability.
 - `design`: design direction, brand identity, reference analysis, visual evidence, image/Figma handoff.
@@ -45,6 +45,8 @@ Backend와 security skill은 capability-first name을 씁니다.
 
 - `backend/api-contract-boundary`: API와 DTO boundary 작업.
 - `backend/backend-change-safety`: service, module, job, worker, queue, config, integration.
+- `backend/request-validation-error-contract`: 요청 파싱, 검증, 오류 봉투, 예외 매핑, 클라이언트에 보이는 실패 계약.
+- `backend/job-worker-reliability`: 잡, 워커, 큐, 스케줄러, 재시도, 데드레터 처리, 재실행, 오래 실행되는 작업.
 - `backend/connector-integration-change`: API connector, workflow node, MCP adapter, webhook, OAuth app, import/export bridge, sync job, registration metadata, credential handling.
 - `backend/server-rendered-change`: controller, template, session, form, redirect, server-rendered view contract.
 - `security/auth-access-control`: authentication, authorization, RBAC, tenant, scope, object-level access.
@@ -128,6 +130,7 @@ Design guidance는 upstream visual, brand mark, private Figma URL, local path, g
 Frontend quality skill은 user-visible polish를 state/data correctness, accessibility behavior, rendered regression QA와 분리합니다.
 
 - `frontend/browser-dom-change`: DOM-first behavior, jQuery flow, selector, event handler, form, plugin, script-loaded UI.
+- `frontend/style-policy-selection`: 디자인 시스템, CSS/클래스, 유틸리티 클래스, 인라인 스타일 사이에서 저장소 스타일링 방식을 선택합니다.
 - `frontend/frontend-state-data-flow`: state ownership, server/client cache behavior, data fetching, optimistic update, URL state, loading/error/empty state, stale UI bug.
 - `frontend/frontend-accessibility-review`: keyboard access, focus management, semantic, form, dialog, menu, announcement, contrast, reduced motion, accessible interaction state.
 - `frontend/ui-polish`: visible UI quality, responsive layout, accessibility state, visual hierarchy, interaction feedback, production polish.
@@ -136,6 +139,8 @@ Frontend quality skill은 user-visible polish를 state/data correctness, accessi
 - `frontend/design-system-handoff`: Figma, brand, design-token, component-library, theme, variant, visual-spec을 repository-native UI primitive로 넘기는 handoff.
 
 Framework-specific detail은 reference 또는 project-local playbook에 둡니다. Primary skill은 React, Vue, Svelte, Angular, server-rendered page, 가벼운 DOM-first frontend, canvas/media tool, 3D 또는 chart-heavy interface에서도 작동해야 합니다.
+
+`quality/ui-style-policy`는 오래된 프롬프트와 프로젝트 문서를 위한 호환 라우트로만 남깁니다. 새 프로젝트 지침은 `frontend/style-policy-selection`을 가리켜야 합니다.
 
 ## Mobile Hardening Pack
 

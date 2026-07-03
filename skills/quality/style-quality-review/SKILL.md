@@ -12,9 +12,9 @@ Improve style quality while preserving the intended design.
 1. Inspect existing UI conventions, shared primitives, tokens, CSS, inline style patterns, and relevant docs.
 2. Classify issues as visual breakage, responsive failure, style structure risk, state coverage gap, or design-change risk.
 3. Keep changes minimal and aligned with the project style policy.
-4. Apply `ui-style-policy` when the repository styling convention is unclear, conflicting, or worth documenting.
+4. Apply `style-policy-selection` when the repository styling convention is unclear, conflicting, or worth documenting.
 5. Verify in browser or rendered UI when the task changes visible behavior.
 
 ## Reference
 
-Read `references/style-review-checklist.md` for detailed review criteria and style policy selection rules.
+Read `references/style-review-checklist.md` for detailed review criteria. Use `style-policy-selection` for policy choice, not this review skill.

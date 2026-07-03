@@ -1,15 +1,15 @@
-# Style Quality Review
+# 스타일 품질 검토
 
-의도한 design을 보존하면서 style quality를 개선합니다.
+의도한 디자인을 보존하면서 스타일 품질을 개선합니다.
 
-## 진행 절차
+## 작업 흐름
 
-1. 기존 UI conventions, shared primitives, tokens, CSS, inline style patterns, relevant docs를 확인합니다.
-2. 이슈를 visual breakage, responsive failure, style structure risk, state coverage gap, design-change risk로 분류합니다.
-3. 변경은 최소화하고 project style policy에 맞춥니다.
-4. repository styling convention이 불분명하거나 충돌하거나 문서화할 가치가 있으면 `ui-style-policy`를 적용합니다.
-5. visible behavior가 바뀌는 작업은 browser 또는 rendered UI로 검증합니다.
+1. 기존 UI 관례, 공유 기본 요소, 토큰, CSS, 인라인 스타일 패턴, 관련 문서를 확인합니다.
+2. 문제를 시각적 깨짐, 반응형 실패, 스타일 구조 위험, 상태 누락, 디자인 변경 위험으로 분류합니다.
+3. 변경은 작게 유지하고 프로젝트 스타일 정책에 맞춥니다.
+4. 저장소 스타일 관례가 불명확하거나 충돌하거나 문서화할 가치가 있으면 `style-policy-selection`을 먼저 사용합니다.
+5. 눈에 보이는 동작이 바뀌는 작업은 브라우저나 렌더링된 UI로 검증합니다.
 
 ## 참고 자료
 
-상세 review criteria와 style policy selection rules는 `references/style-review-checklist.md`를 읽습니다.
+상세 검토 기준은 `references/style-review-checklist.md`를 읽습니다. 정책 선택은 이 검토 스킬이 아니라 `style-policy-selection`을 사용합니다.

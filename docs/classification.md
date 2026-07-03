@@ -10,19 +10,19 @@ The content is not agent-specific. Codex is one installation target. The source 
 
 - `skills/ai-harness`: MCP, skill, agent, context, fact gate, witness, cache, index, and harness design workflows.
 - `skills/architecture`: boundary, feature slice, domain model, monorepo/package ownership, dependency direction, and coupling review workflows.
-- `skills/backend`: API contract, backend change safety, connector, server-rendered flow, worker, and integration workflows.
+- `skills/backend`: API contract, backend change safety, request/error contract, job/worker, connector, server-rendered flow, and integration workflows.
 - `skills/data`: analytics pipeline, ETL, source registry, reporting, data contract, and quality workflows.
 - `skills/database`: schema, migration, SQL, reporting query, and data integrity workflows.
 - `skills/delivery`: planning, eval, verification, testing, Git, PR, release note, and worklog workflows.
 - `skills/devops`: CI/CD, container, package release, deployment, rollback, and operations triage workflows.
 - `skills/design`: design direction, brand identity, visual reference analysis, image/Figma handoff, and visual evidence workflows.
-- `skills/frontend`: UI, browser behavior, state/data, accessibility, visual QA, design-system handoff, and interactive media workflows.
+- `skills/frontend`: UI, style policy, browser behavior, state/data, accessibility, visual QA, design-system handoff, and interactive media workflows.
 - `skills/git`: commit, PR, push, and worklog guardrails.
 - `skills/legacy`: maintenance workflows where runtime coupling and compatibility dominate.
 - `skills/meta`: skill-authoring and repository-maintenance skills.
 - `skills/mobile`: native release, permission, offline sync, hybrid, WebView, and device QA workflows.
 - `skills/project`: project bootstrap, onboarding, requirements, issue planning, release notes, documentation packages, and project-memory maintenance.
-- `skills/quality`: UI style policy, visual quality, cleanup, and lightweight review workflows.
+- `skills/quality`: visual quality, cleanup, compatibility routes, and lightweight review workflows.
 - `skills/security`: authentication, authorization, dependency supply chain, license/notice evidence, security review, compliance gate, and risk workflows.
 
 Add a new category only when the first real skill in that category exists. When a new category or skill changes this map, update `README.md`, this file, Korean translations, and installed skill copies through `docs/maintenance.md`.
@@ -87,6 +87,8 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 
 - `api-contract-boundary`: reviews frontend/backend contracts, DTOs, payloads, mocks, and adapters.
 - `backend-change-safety`: reviews services, modules, jobs, workers, queues, config, integrations, server-side business logic, and evidence-based stack profile selection.
+- `request-validation-error-contract`: reviews request parsing, validation, error envelopes, exception mapping, and client-visible failure contracts.
+- `job-worker-reliability`: reviews jobs, workers, queues, schedulers, retries, dead-letter paths, replay, and long-running tasks.
 - `connector-integration-change`: reviews API connectors, workflow nodes, MCP adapters, webhooks, OAuth apps, import/export bridges, sync jobs, registration metadata, and credential handling.
 - `server-rendered-change`: reviews controllers, templates, sessions, forms, redirects, and server-rendered view contracts.
 
@@ -106,7 +108,7 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 
 ## Quality map
 
-- `ui-style-policy`: selects or documents the repository styling method across design system, CSS/classes, utility classes, or inline styles.
+- `ui-style-policy`: compatibility route for older UI style policy prompts; primary route is `frontend/style-policy-selection`.
 - `style-quality-review`: reviews visible UI quality while preserving product intent.
 - `frontend-ui-polish`: implements or refines visible UI surfaces while preserving product intent and existing design conventions.
 - `cleanup-ai-slop`: removes low-trust code noise in a behavior-preserving, bounded cleanup.
@@ -138,6 +140,7 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 ## Frontend map
 
 - `browser-dom-change`: changes DOM-first behavior, jQuery flows, event handlers, selectors, forms, plugins, and script-loaded UI.
+- `style-policy-selection`: selects or reconciles the repository styling method before visible UI edits or durable style policy docs.
 - `frontend-state-data-flow`: reviews state ownership, data fetching, server/client cache boundaries, optimistic updates, URL state, and stale UI behavior.
 - `frontend-accessibility-review`: reviews keyboard access, focus management, semantics, forms, dialogs, menus, announcements, contrast, and accessible interaction states.
 - `ui-polish`: refines visible UI, responsive layout, visual hierarchy, interaction feedback, and production polish.

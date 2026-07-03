@@ -13,7 +13,9 @@ Use this as the primary backend skill for non-trivial server-side changes that a
 2. Classify the change as additive, compatible, behavior-changing, destructive, operational, or integration-facing.
 3. Keep controllers, services, repositories, workers, config, and module entrypoints in their existing responsibility boundaries.
 4. Verify request paths, async paths, retries/idempotency, permissions, configuration, logs/metrics, and rollback shape.
-5. Load the relevant stack profile from `references/stacks/` only after the repository stack is known.
+5. Use `request-validation-error-contract` for request parsing, validation, and client-visible error changes.
+6. Use `job-worker-reliability` for jobs, workers, queues, schedulers, retries, and dead-letter paths.
+7. Load the relevant stack profile from `references/stacks/` only after the repository stack is known.
 
 ## Reference
 

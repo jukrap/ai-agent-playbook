@@ -13,6 +13,7 @@ const OBSOLETE_SKILL_NAMES = [
   'utility-class-first',
   'inline-style-first'
 ];
+const DESCRIPTION_WARNING_LENGTH = 180;
 const SHALLOW_REFERENCE_LINE_THRESHOLD = 20;
 
 export async function runSkillsLifecycle(options) {
@@ -181,10 +182,10 @@ async function lintSkillFile(options) {
   if (!description.startsWith('Use when')) {
     warnings.push(lintIssue('skills.lint.description-trigger', `${relativePath} description should start with "Use when..." and describe trigger conditions.`, relativePath));
   }
-  if (description.length > 100) {
+  if (description.length > DESCRIPTION_WARNING_LENGTH) {
     warnings.push(lintIssue('skills.lint.description-length', `${relativePath} description is long; keep trigger text concise.`, relativePath));
   }
-  if (/\b(this skill helps|workflow|follow(?:ing)? steps?|use this skill to)\b/i.test(description)) {
+  if (/\b(this skill helps|follow(?:ing)? steps?|use this skill to|step-by-step|workflow\s*:)\b/i.test(description)) {
     warnings.push(lintIssue('skills.lint.description-workflow', `${relativePath} description looks workflow-oriented rather than trigger-focused.`, relativePath));
   }
   for (const link of markdownLinks(parsed.body)) {

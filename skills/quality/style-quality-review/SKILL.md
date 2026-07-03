@@ -1,6 +1,6 @@
 ---
 name: style-quality-review
-description: Use when reviewing or improving UI styling, responsive behavior, CSS structure, inline styles, design polish, layout overflow, or visual regressions without changing product intent.
+description: Use when reviewing or improving UI styling, responsive behavior, CSS structure, design polish, layout overflow, or visual regressions without product changes.
 ---
 
 # Style Quality Review

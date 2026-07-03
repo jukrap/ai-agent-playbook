@@ -1,6 +1,6 @@
 ---
 name: api-contract-boundary
-description: Use when implementing, debugging, or reviewing frontend/backend API integration, DTO mapping, mock-vs-remote behavior, request payloads, response adapters, or uncertain backend contracts.
+description: Use when implementing, debugging, or reviewing frontend/backend API integration, DTO mapping, mock-vs-remote behavior, payloads, adapters, or uncertain contracts.
 ---
 
 # API Contract Boundary

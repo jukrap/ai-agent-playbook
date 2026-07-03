@@ -1,6 +1,6 @@
 ---
 name: data-integrity-constraints
-description: Use when changing database constraints, uniqueness, foreign keys, checks, not-null rules, triggers, stored procedures, generated columns, repair scripts, reconciliation queries, or application/database invariant boundaries.
+description: Use when changing database constraints, keys, triggers, stored procedures, repair scripts, reconciliation queries, or application/database invariants.
 ---
 
 # Data Integrity Constraints

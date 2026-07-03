@@ -1,6 +1,6 @@
 ---
 name: flaky-test-triage
-description: Use when diagnosing, reproducing, stabilizing, quarantining, or documenting flaky, nondeterministic, timing-dependent, order-dependent, environment-sensitive, or intermittently failing tests.
+description: Use when diagnosing, reproducing, stabilizing, quarantining, or documenting flaky, nondeterministic, timing-dependent, or intermittent tests.
 ---
 
 # Flaky Test Triage
@@ -19,4 +19,3 @@ Use this as the primary delivery skill for nondeterministic test failures.
 Read `references/nondeterminism-sources.md` for common flaky failure causes and evidence to collect.
 
 Read `references/stabilization-and-quarantine.md` for safe fixes, retry policy, and quarantine handoff.
-

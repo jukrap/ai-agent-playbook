@@ -1,6 +1,6 @@
 ---
 name: commit-worklog-guardrails
-description: Use when staging files, writing commits, pushing branches, opening PRs, preparing release notes, or recording worklogs in repositories with local-only docs or careful branch policies.
+description: Use when staging files, writing commits, pushing branches, opening PRs, preparing release notes, or recording worklogs with local-only doc constraints.
 ---
 
 # Commit Worklog Guardrails

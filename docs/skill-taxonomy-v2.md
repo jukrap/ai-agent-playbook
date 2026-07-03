@@ -7,7 +7,7 @@ Skill taxonomy v2 uses capability categories as the primary axis. Stack-specific
 - `foundation`: repo onboarding, bootstrap, project docs, requirements, planning, release notes, and documentation packages.
 - `delivery`: planning, evals, verification, testing, git, PR, and worklog flows.
 - `architecture`: FSD, layered architecture, DDD, monorepos, and boundary review.
-- `frontend`: UI, state, data, accessibility, performance, and visual QA.
+- `frontend`: UI, state, data, accessibility, performance, visual QA, design-system handoff, and interactive media.
 - `backend`: API contracts, connectors, auth, server-rendered flows, workers, and integrations.
 - `database`: schema change, migration, SQL, reporting, and data integrity.
 - `devops`: CI/CD, containers, package releases, deployment, configuration, and observability.
@@ -120,8 +120,10 @@ Frontend quality skills separate user-visible polish from state/data correctness
 - `frontend/frontend-accessibility-review`: keyboard access, focus management, semantics, forms, dialogs, menus, announcements, contrast, reduced motion, and accessible interaction states.
 - `frontend/ui-polish`: visible UI quality, responsive layout, accessibility states, visual hierarchy, interaction feedback, and production polish.
 - `frontend/visual-regression-qa`: screenshots, responsive breakpoints, layout overflow, clipping, visual diffs, text fit, canvas/media rendering, and browser-rendered regressions.
+- `frontend/interactive-media-3d-review`: Three.js, WebGL, canvas, SVG, chart, map, animation, video, media-heavy interaction, asset loading, nonblank rendering, and responsive scene verification.
+- `frontend/design-system-handoff`: Figma, brand, design-token, component-library, theme, variant, and visual-spec handoff into repository-native UI primitives.
 
-Framework-specific details belong in references or project-local playbooks. The primary skills should work for React, Vue, Svelte, Angular, server-rendered pages, and lighter DOM-first frontends.
+Framework-specific details belong in references or project-local playbooks. The primary skills should work for React, Vue, Svelte, Angular, server-rendered pages, lighter DOM-first frontends, canvas/media tools, and 3D or chart-heavy interfaces.
 
 ## Mobile Hardening Pack
 

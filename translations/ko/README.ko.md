@@ -114,7 +114,7 @@ skills/
   database/          schema, migration, SQL, data integrity 스킬
   delivery/          planning, verification, testing, Git, PR, worklog 스킬
   devops/            CI/CD, container, package release, deployment, operations triage 스킬
-  frontend/          UI, browser, state/data, accessibility, visual QA 스킬
+  frontend/          UI, browser, state/data, accessibility, visual QA, design-system, interactive media 스킬
   mobile/            native release, permission, offline sync, hybrid, WebView, device QA 스킬
   security/          auth, dependency supply chain, license/notice, security review, compliance gate, risk 스킬
   project/            bootstrap, onboarding, project planning, documentation, project-memory 스킬
@@ -206,6 +206,8 @@ test/                 Node CLI와 adapter 테스트
 - `frontend-accessibility-review`: keyboard access, focus management, semantic, form, dialog, menu, announcement, contrast, accessible state를 검토할 때.
 - `ui-polish`: visible UI, responsive layout, accessibility state, interaction feedback, production polish를 위한 primary frontend skill.
 - `visual-regression-qa`: screenshot, responsive breakpoint, layout overflow, clipping, visual diff, text fit, canvas/media rendering, browser-rendered UI regression을 확인할 때.
+- `interactive-media-3d-review`: Three.js, WebGL, canvas, SVG, chart, map, animation, video, media-heavy interactive UI surface를 구현하거나 검토할 때.
+- `design-system-handoff`: Figma, brand, token, component-library, theme, variant, visual-spec guidance를 maintainable frontend implementation으로 옮길 때.
 - `native-release-readiness`: mobile release, signing, provisioning, build channel, store distribution, artifact, release-build cleanup을 준비·검토·진단할 때.
 - `device-permission-qa`: mobile runtime permission, device capability, manifest, privacy prompt, lifecycle behavior, device/emulator QA matrix를 바꾸거나 검증할 때.
 - `offline-sync-review`: mobile offline mode, local cache, durable queue, sync job, conflict resolution, retry, idempotency, network transition을 바꾸거나 검토할 때.

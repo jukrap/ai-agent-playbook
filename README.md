@@ -114,7 +114,7 @@ skills/
   database/          Schema, migration, SQL, and data integrity skills
   delivery/          Planning, eval, verification, testing, Git, PR, and worklog skills
   devops/            CI/CD, container, package release, deployment, and operations triage skills
-  frontend/          UI, browser, state/data, accessibility, and visual QA skills
+  frontend/          UI, browser, state/data, accessibility, visual QA, design-system, and interactive media skills
   mobile/            Native release, permission, offline sync, hybrid, WebView, and device QA skills
   security/          Auth, dependency supply chain, license/notice, security review, compliance gate, and risk skills
   project/            Bootstrap, onboarding, project planning, documentation, and project-memory skills
@@ -210,6 +210,8 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `frontend-accessibility-review`: review keyboard access, focus management, semantics, forms, dialogs, menus, announcements, contrast, and accessible states.
 - `ui-polish`: primary frontend skill for visible UI, responsive layout, accessibility states, interaction feedback, and production polish.
 - `visual-regression-qa`: check screenshots, responsive breakpoints, layout overflow, clipping, visual diffs, text fit, canvas/media rendering, and browser-rendered UI regressions.
+- `interactive-media-3d-review`: implement or review Three.js, WebGL, canvas, SVG, chart, map, animation, video, and media-heavy interactive UI surfaces.
+- `design-system-handoff`: turn Figma, brand, token, component-library, theme, variant, or visual-spec guidance into maintainable frontend implementation.
 - `native-release-readiness`: prepare, review, or troubleshoot mobile releases, signing, provisioning, build channels, store distribution, artifacts, and release-build cleanup.
 - `device-permission-qa`: change or verify mobile runtime permissions, device capabilities, manifests, privacy prompts, lifecycle behavior, and device/emulator QA matrices.
 - `offline-sync-review`: change or review mobile offline mode, local cache, durable queues, sync jobs, conflict resolution, retries, idempotency, and network transitions.

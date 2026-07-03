@@ -15,7 +15,7 @@ The content is not agent-specific. Codex is one installation target. The source 
 - `skills/database`: schema, migration, SQL, reporting query, and data integrity workflows.
 - `skills/delivery`: planning, eval, verification, testing, Git, PR, release note, and worklog workflows.
 - `skills/devops`: CI/CD, container, package release, deployment, rollback, and operations triage workflows.
-- `skills/frontend`: UI, browser behavior, state/data, accessibility, and visual QA workflows.
+- `skills/frontend`: UI, browser behavior, state/data, accessibility, visual QA, design-system handoff, and interactive media workflows.
 - `skills/git`: commit, PR, push, and worklog guardrails.
 - `skills/legacy`: maintenance workflows where runtime coupling and compatibility dominate.
 - `skills/meta`: skill-authoring and repository-maintenance skills.
@@ -134,6 +134,8 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `frontend-accessibility-review`: reviews keyboard access, focus management, semantics, forms, dialogs, menus, announcements, contrast, and accessible interaction states.
 - `ui-polish`: refines visible UI, responsive layout, visual hierarchy, interaction feedback, and production polish.
 - `visual-regression-qa`: checks screenshots, responsive breakpoints, overflow, clipping, visual diffs, text fit, canvas/media rendering, and browser-rendered regressions.
+- `interactive-media-3d-review`: reviews Three.js, WebGL, canvas, SVG, chart, map, animation, video, and media-heavy interactive UI surfaces.
+- `design-system-handoff`: converts Figma, brand, token, component-library, theme, variant, and visual-spec guidance into repository-native UI implementation.
 
 ## Mobile map
 

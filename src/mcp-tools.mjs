@@ -997,6 +997,41 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- Treat screenshots and generated hints as evidence, not as durable project memory.'
   ]));
 
+  server.registerPrompt('interactive_experience_review', {
+    title: 'Interactive experience review',
+    description: 'Review 3D, WebGL, canvas, SVG, chart, map, animation, video, and design-system handoff evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      path: z.string().optional(),
+      surface: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS interactive experience review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Path: ${args.path ?? '<optional rendered surface path>'}`,
+    `Surface: ${args.surface ?? '<3D scene, canvas tool, chart, map, video, animation, or design-system surface>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe interactive-experience-delivery',
+    '- operator_preflight for related context, contracts, and nearby playbook guidance',
+    '- operator_search or index_search for renderer, asset, component, token, and interaction owners',
+    '- write_gate_preview before suggesting renderer, asset, token, or component edits',
+    '',
+    'Optional evidence:',
+    '- dependency_inventory for renderer, chart, map, media, design-system, or asset packages',
+    '- qa_image_diff or browser evidence when screenshots are available',
+    '- symbol_outline for scene, component, hook, loader, and event-handler owners',
+    '',
+    'Stop conditions:',
+    '- Rendered output is blank, unmeasurable, or missing a stable acceptance target',
+    '- Asset source/license, fallback behavior, accessibility target, camera/framing, or performance budget is unclear',
+    '- Interaction is pointer-only when keyboard, touch, reduced-motion, or accessible fallback behavior is required',
+    '',
+    'Verification expectations:',
+    '- Include nonblank screenshot or pixel evidence, desktop/mobile framing, primary interaction smoke test, console/network asset check, resize/device-pixel-ratio behavior, and cleanup/performance notes when applicable.',
+    '- Treat generated screenshots, graph hints, and reference visuals as review evidence, not as durable design-system truth.'
+  ]));
+
   server.registerPrompt('data_integrity_review', {
     title: 'Data integrity review',
     description: 'Review analytics, reporting, migration, backfill, reconciliation, and data contract evidence.',

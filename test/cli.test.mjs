@@ -1225,6 +1225,76 @@ test('reference inventory summarizes local reference collections without writing
   await cleanup(target);
 });
 
+test('reference capability matrix surfaces broad engineering capability signals', async () => {
+  const target = await tempRepo('reference capability breadth-한글-');
+  const referenceRoot = path.join(target, '_reference');
+
+  await mkdir(path.join(referenceRoot, 'devops-pack', '.github', 'workflows'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'devops-pack', 'k8s'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'devops-pack', '.github', 'workflows', 'ci.yml'), 'name: ci\n');
+  await writeFile(path.join(referenceRoot, 'devops-pack', 'Dockerfile'), 'FROM node:22\n');
+  await writeFile(path.join(referenceRoot, 'devops-pack', 'k8s', 'deployment.yaml'), 'apiVersion: apps/v1\n');
+
+  await mkdir(path.join(referenceRoot, 'frontend-pack', 'src', 'components'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'frontend-pack', 'src', 'tokens'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'frontend-pack', 'src', 'components', 'Button.tsx'), 'export function Button() { return null; }\n');
+  await writeFile(path.join(referenceRoot, 'frontend-pack', 'vite.config.ts'), 'export default {};\n');
+  await writeFile(path.join(referenceRoot, 'frontend-pack', 'src', 'tokens', 'theme.css'), ':root { --space-1: 4px; }\n');
+
+  await mkdir(path.join(referenceRoot, 'database-pack', 'migrations'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'database-pack', 'prisma'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'database-pack', 'migrations', '001_create_users.sql'), 'create table users(id int);\n');
+  await writeFile(path.join(referenceRoot, 'database-pack', 'prisma', 'schema.prisma'), 'model User { id Int @id }\n');
+
+  await mkdir(path.join(referenceRoot, 'data-pack', 'pipelines'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'data-pack', 'dashboards'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'data-pack', 'pipelines', 'orders-etl.py'), 'print("etl")\n');
+  await writeFile(path.join(referenceRoot, 'data-pack', 'dashboards', 'revenue.metric.yml'), 'metric: revenue\n');
+
+  await mkdir(path.join(referenceRoot, 'mobile-pack', 'ios', 'App.xcodeproj'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'mobile-pack', 'android', 'app'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'mobile-pack', 'ios', 'App.xcodeproj', 'project.pbxproj'), '// xcode project\n');
+  await writeFile(path.join(referenceRoot, 'mobile-pack', 'android', 'app', 'build.gradle'), 'plugins {}\n');
+  await writeFile(path.join(referenceRoot, 'mobile-pack', 'app.json'), '{"expo":{"name":"demo"}}\n');
+
+  const before = await listRelativeFiles(target);
+
+  const inventory = capture(target);
+  assert.equal(await runCli(['reference', 'inventory', referenceRoot, '--json'], inventory), 0);
+  const inventoryReport = JSON.parse(inventory.out());
+  assert.equal(inventoryReport.summary.projectsWithSignals.devops >= 1, true);
+  assert.equal(inventoryReport.summary.projectsWithSignals.frontend >= 1, true);
+  assert.equal(inventoryReport.summary.projectsWithSignals.database >= 1, true);
+  assert.equal(inventoryReport.summary.projectsWithSignals.data >= 1, true);
+  assert.equal(inventoryReport.summary.projectsWithSignals.mobile >= 1, true);
+
+  const matrix = capture(target);
+  assert.equal(await runCli(['reference', 'capability-matrix', referenceRoot, '--max-results', '10', '--json'], matrix), 0);
+  const matrixReport = JSON.parse(matrix.out());
+  assert.equal(matrixReport.capabilities.devops.projects >= 1, true);
+  assert.equal(matrixReport.capabilities.frontend.projects >= 1, true);
+  assert.equal(matrixReport.capabilities.database.projects >= 1, true);
+  assert.equal(matrixReport.capabilities.data.projects >= 1, true);
+  assert.equal(matrixReport.capabilities.mobile.projects >= 1, true);
+  assert.equal(matrixReport.capabilities.devops.topReferences.some((item) => item.project === 'devops-pack'), true);
+
+  const filteredDevops = capture(target);
+  assert.equal(await runCli(['reference', 'capability-matrix', referenceRoot, '--capability', 'devops', '--max-results', '10', '--json'], filteredDevops), 0);
+  const filteredDevopsReport = JSON.parse(filteredDevops.out());
+  assert.deepEqual(Object.keys(filteredDevopsReport.capabilities), ['devops']);
+  assert.equal(filteredDevopsReport.capabilities.devops.projects >= 1, true);
+
+  const devopsPlan = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-plan', referenceRoot, '--capability', 'devops', '--max-results', '2', '--json'], devopsPlan), 0);
+  const devopsPlanReport = JSON.parse(devopsPlan.out());
+  assert.equal(devopsPlanReport.summary.selectedReferences >= 1, true);
+  assert.equal(devopsPlanReport.plan.objective.includes('CI/CD'), true);
+  assert.equal(devopsPlanReport.plan.references.some((item) => item.suggestedSurfaces.some((surface) => surface.surface === 'devops-runbook')), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  await cleanup(target);
+});
+
 test('reference inventory default scans more than twenty top-level projects', async () => {
   const target = await tempRepo('reference inventory many-한글-');
   const referenceRoot = path.join(target, '_reference');

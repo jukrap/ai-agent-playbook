@@ -21,7 +21,9 @@ Harness OS MCP의 기본값은 읽기 전용 분석과 catalog 접근입니다.
 - `ai-playbook://skills`: skill taxonomy와 compatibility wrapper metadata.
 - `ai-playbook://workflows`: bundled workflow recipe.
 - `ai-playbook://adapters`: Codex, Codex App, Claude Code, MCP 설정 요약.
+- `ai-playbook://adapter-readiness`: adapter check/config 명령, readiness check, no-write boundary.
 - `ai-playbook://playbook-layout-v2`: `.ai-playbook` v2 layout 역할과 권장 읽기 순서.
+- `ai-playbook://reference-adoption`: reference registry, ledger, status, promotion boundary 요약.
 - `ai-playbook://mcp-permission-model`: 이 권한 모델의 structured JSON.
 
 Gate와 graph review prompt에는 다음이 포함됩니다.

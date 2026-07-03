@@ -43,6 +43,69 @@ test('bootstrap writes playbook and thin root agent bootstrap without overwritin
   await cleanup(target);
 });
 
+test('bootstrap playbook template stays coherent for agent entry and read-only checks', async () => {
+  const target = await tempRepo('playbook smoke-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+
+  for (const file of [
+    '.ai-playbook/README.md',
+    '.ai-playbook/START_HERE.md',
+    '.ai-playbook/CURRENT.md',
+    '.ai-playbook/questions.md',
+    '.ai-playbook/SKILLS.md',
+    '.ai-playbook/manifest.json',
+    '.ai-playbook/knowledge/sources.json',
+    '.ai-playbook/knowledge/reference-adoption-ledger.md',
+    '.ai-playbook/runtime/README.md',
+    '.ai-playbook/workflows/recipes/README.md',
+    '.ai-playbook/workflows/recipes/feature-delivery.md'
+  ]) {
+    assert.equal(existsSync(path.join(target, ...file.split('/'))), true, `${file} should exist`);
+  }
+
+  const startHere = await readFile(path.join(target, '.ai-playbook', 'START_HERE.md'), 'utf8');
+  assert.match(startHere, /Agent entry checklist/);
+  assert.match(startHere, /CURRENT\.md/);
+  assert.match(startHere, /questions\.md/);
+  assert.match(startHere, /runtime\/.*generated evidence/);
+
+  const skillsPolicy = await readFile(path.join(target, '.ai-playbook', 'SKILLS.md'), 'utf8');
+  assert.match(skillsPolicy, /Capability routing/);
+  assert.match(skillsPolicy, /ai-playbook:\/\/capabilities/);
+  assert.match(skillsPolicy, /mcp --enable-write-tools/);
+  assert.match(skillsPolicy, /runtime reports, indexes, screenshots, or graph hints/);
+
+  const layout = capture(target);
+  assert.equal(await runCli(['layout', 'status', '.', '--json'], layout), 0);
+  const layoutReport = JSON.parse(layout.out());
+  assert.equal(layoutReport.ok, true);
+  assert.equal(layoutReport.layout.version, '2');
+  assert.equal(layoutReport.layout.activeDir, '.ai-playbook');
+
+  const workflowList = capture(target);
+  assert.equal(await runCli(['workflow', 'list', '--json'], workflowList), 0);
+  const workflowReport = JSON.parse(workflowList.out());
+  assert.equal(workflowReport.summary.workflows, 22);
+  assert.equal(workflowReport.workflows.some((workflow) => workflow.id === 'feature-delivery'), true);
+
+  const managedCheck = capture(target);
+  assert.equal(await runCli(['managed', 'check', '.', '--json'], managedCheck), 0);
+  const managedReport = JSON.parse(managedCheck.out());
+  assert.equal(managedReport.ok, true);
+  assert.equal(managedReport.files.some((file) => file.path === '.ai-playbook/START_HERE.md'), true);
+  assert.equal(managedReport.files.some((file) => file.path === '.ai-playbook/SKILLS.md'), true);
+
+  const operatorCheck = capture(target);
+  assert.equal(await runCli(['operator', 'check', '.', '--json'], operatorCheck), 0);
+  const operatorReport = JSON.parse(operatorCheck.out());
+  assert.equal(operatorReport.schemaVersion, '1');
+  assert.equal(operatorReport.ok, true);
+  assert.equal(operatorReport.sections.doctor.checks.some((check) => check.id === 'playbook.directory' && check.level === 'pass'), true);
+  assert.equal(operatorReport.sections.guides.summary.missing, 0);
+
+  await cleanup(target);
+});
+
 test('all bundled workflow recipes preview with required manifest sections', async () => {
   const target = await tempRepo('workflow all recipes-공백-');
   const list = capture(target);

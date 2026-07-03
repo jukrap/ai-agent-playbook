@@ -187,7 +187,9 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://skills'), true);
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://workflows'), true);
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://adapters'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://adapter-readiness'), true);
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://playbook-layout-v2'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://reference-adoption'), true);
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://mcp-permission-model'), true);
 
     const prompts = await client.listPrompts();
@@ -244,16 +246,35 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(adapterPayload.summary.primary, 'codex-app');
     assert.equal(adapterPayload.adapters.some((adapter) => adapter.id === 'codex' && adapter.supports.includes('Codex App on Windows')), true);
 
+    const adapterReadinessResource = await client.readResource({ uri: 'ai-playbook://adapter-readiness' });
+    const adapterReadinessPayload = JSON.parse(adapterReadinessResource.contents[0].text);
+    assert.equal(adapterReadinessPayload.summary.writes, false);
+    assert.equal(adapterReadinessPayload.supportedAdapters.includes('codex'), true);
+    assert.equal(adapterReadinessPayload.commands.some((command) => command.command.includes('adapter check <target-project> --adapter codex')), true);
+    assert.equal(adapterReadinessPayload.checks.includes('context.non-empty'), true);
+
     const layoutResource = await client.readResource({ uri: 'ai-playbook://playbook-layout-v2' });
     const layoutPayload = JSON.parse(layoutResource.contents[0].text);
     assert.equal(layoutPayload.summary.layoutVersion, '2');
     assert.equal(layoutPayload.readOrder.includes('.ai-playbook/START_HERE.md'), true);
     assert.equal(layoutPayload.usageRules.some((rule) => rule.includes('runtime artifacts as evidence candidates')), true);
 
+    const referenceResource = await client.readResource({ uri: 'ai-playbook://reference-adoption' });
+    const referencePayload = JSON.parse(referenceResource.contents[0].text);
+    assert.equal(referencePayload.summary.statusTool, 'reference_adoption_status');
+    assert.equal(referencePayload.summary.sourceRegistry, '.ai-playbook/knowledge/sources.json');
+    assert.equal(referencePayload.readOnlyTools.includes('reference_adoption_status'), true);
+    assert.equal(referencePayload.readOnlyTools.includes('reference_source_registry_update_preview'), true);
+    assert.equal(referencePayload.readOnlyTools.includes('reference_ledger_update_preview'), true);
+    assert.equal(referencePayload.optInWriteTools.includes('reference_source_registry_update'), true);
+    assert.equal(referencePayload.promotionRules.some((rule) => rule.includes('Do not copy raw upstream excerpts')), true);
+
     const permissionResource = await client.readResource({ uri: 'ai-playbook://mcp-permission-model' });
     const permissionPayload = JSON.parse(permissionResource.contents[0].text);
     assert.equal(permissionPayload.summary.defaultMode, 'read-only');
     assert.equal(permissionPayload.defaultResources.includes('adapter_support'), true);
+    assert.equal(permissionPayload.defaultResources.includes('adapter_readiness'), true);
+    assert.equal(permissionPayload.defaultResources.includes('reference_adoption'), true);
     assert.equal(permissionPayload.optInWriteTools.includes('reference_source_registry_update'), true);
     assert.equal(permissionPayload.optInWriteTools.includes('reference_ledger_decision'), true);
 

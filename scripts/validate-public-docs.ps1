@@ -6,6 +6,8 @@ $ErrorActionPreference = 'Stop'
 $resolvedRoot = (Resolve-Path -LiteralPath $Root).Path
 $errors = @()
 
+& (Join-Path $PSScriptRoot 'validate-mcp-docs.ps1') -Root $resolvedRoot
+
 $excludedDirs = @(
   '.git',
   '.next',

@@ -52,6 +52,7 @@ import {
   researchOperator,
   searchOperator
 } from './operator-diagnostics.mjs';
+import { supportedAdapterNames } from './adapter-readiness.mjs';
 import {
   lspDefinition,
   lspDiagnostics,
@@ -566,7 +567,9 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     resource('skill_catalog', 'ai-playbook://skills', 'Harness OS skill taxonomy catalog.', () => skillCatalog({ repoRoot })),
     resource('workflow_list', 'ai-playbook://workflows', 'Harness OS workflow recipe catalog.', () => workflowCatalog()),
     resource('adapter_support', 'ai-playbook://adapters', 'Agent adapter support and MCP setup summary.', () => adapterSupportResource()),
+    resource('adapter_readiness', 'ai-playbook://adapter-readiness', 'Adapter readiness commands, checks, and no-write boundaries.', () => adapterReadinessResource()),
     resource('playbook_layout_v2', 'ai-playbook://playbook-layout-v2', 'Project playbook v2 usage, layout roles, and read order.', () => playbookLayoutV2Resource()),
+    resource('reference_adoption', 'ai-playbook://reference-adoption', 'Reference adoption status, registry, ledger, and promotion boundary summary.', () => referenceAdoptionResource()),
     resource('mcp_permission_model', 'ai-playbook://mcp-permission-model', 'MCP resource, prompt, tool, and permission-tier summary.', () => mcpPermissionModelResource())
   ];
 
@@ -653,7 +656,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- write_gate_preview before suggesting managed writes',
     '',
     'Optional evidence:',
-    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_capability_matrix, reference_adoption_plan, reference_adoption_status, reference_source_registry_preview, reference_source_registry_check, and reference_ledger_check when adopting external reference material',
+    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_capability_matrix, reference_adoption_plan, reference_adoption_status, reference_source_registry_preview, reference_source_registry_check, reference_source_registry_update_preview, reference_ledger_check, reference_ledger_update_preview, and reference_ledger_decision_preview when adopting external reference material',
     '- index_status when runtime indexes, caches, generated evidence, or canon promotion are involved',
     '- playbook_layout when `.ai-playbook` layout changes are involved',
     '',
@@ -1406,8 +1409,8 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '',
     'Required evidence:',
     '- workflow_run_preview with recipe knowledge-source-onboarding',
-    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_capability_matrix, reference_adoption_plan, reference_adoption_status, reference_source_registry_preview, and reference_source_registry_check for available local reference and source material',
-    '- reference_ledger_check when external source adoption is in scope',
+    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_capability_matrix, reference_adoption_plan, reference_adoption_status, reference_source_registry_preview, reference_source_registry_check, and reference_source_registry_update_preview for available local reference and source material',
+    '- reference_ledger_check, reference_ledger_update_preview, and reference_ledger_decision_preview when external source adoption is in scope',
     '- operator_research for bounded source scans and evidence envelopes',
     '- index_status for generated source indexes and freshness',
     '- canon_check before promoting source-derived facts into trusted memory',
@@ -1741,6 +1744,58 @@ function adapterSupportResource() {
   };
 }
 
+function adapterReadinessResource() {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'mcp.resource.adapter-readiness',
+    ok: true,
+    summary: {
+      adapters: supportedAdapterNames().length,
+      writes: false,
+      primaryCheck: 'adapter check',
+      primaryConfig: 'adapter config'
+    },
+    supportedAdapters: supportedAdapterNames(),
+    commands: [
+      {
+        id: 'adapter.config.codex',
+        command: 'npx ai-agent-playbook adapter config <target-project> --adapter codex --json',
+        purpose: 'Render copy-paste-safe Codex hook and MCP setup without writing files.'
+      },
+      {
+        id: 'adapter.check.codex',
+        command: 'npx ai-agent-playbook adapter check <target-project> --adapter codex --json',
+        purpose: 'Check Codex adapter readiness, context build, hook quiet paths, and example files.'
+      },
+      {
+        id: 'adapter.config.claude-code',
+        command: 'npx ai-agent-playbook adapter config <target-project> --adapter claude-code --json',
+        purpose: 'Render copy-paste-safe Claude Code hook and MCP setup without writing files.'
+      },
+      {
+        id: 'adapter.check.claude-code',
+        command: 'npx ai-agent-playbook adapter check <target-project> --adapter claude-code --json',
+        purpose: 'Check Claude Code adapter readiness, context build, hook quiet paths, and example files.'
+      }
+    ],
+    checks: [
+      'target.directory',
+      'playbook.directory',
+      'context.non-empty',
+      'adapter.hook-file',
+      'adapter.example-config',
+      'hook SessionStart and PostCompact JSON output',
+      'unsupported-event, Stop, and missing-playbook quiet paths',
+      'optional settings JSON validation when --settings is provided'
+    ],
+    boundaries: [
+      'Adapter readiness is read-only and does not create local settings files.',
+      'Rendered config must be reviewed and copied manually by the operator.',
+      'Hooks are optional reminders; durable rules still live in AGENTS.md and .ai-playbook/.'
+    ]
+  };
+}
+
 function playbookLayoutV2Resource() {
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -1781,13 +1836,71 @@ function playbookLayoutV2Resource() {
   };
 }
 
+function referenceAdoptionResource() {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'mcp.resource.reference-adoption',
+    ok: true,
+    summary: {
+      writes: false,
+      statusTool: 'reference_adoption_status',
+      sourceRegistry: '.ai-playbook/knowledge/sources.json',
+      ledger: '.ai-playbook/knowledge/reference-adoption-ledger.md'
+    },
+    readOnlyTools: [
+      'reference_inventory',
+      'reference_inspect',
+      'reference_adoption_queue',
+      'reference_capability_matrix',
+      'reference_adoption_plan',
+      'reference_adoption_status',
+      'reference_source_registry_preview',
+      'reference_source_registry_check',
+      'reference_source_registry_update_preview',
+      'reference_ledger_check',
+      'reference_ledger_update_preview',
+      'reference_ledger_decision_preview'
+    ],
+    optInWriteTools: [
+      'reference_ledger_update',
+      'reference_ledger_decision',
+      'reference_source_registry_update'
+    ],
+    commands: [
+      {
+        id: 'reference.status',
+        command: 'npx ai-agent-playbook reference adoption-status <target-project> --reference-dir <reference-dir> --json',
+        purpose: 'Join adoption queue, source registry, and ledger state without writing files.'
+      },
+      {
+        id: 'reference.matrix',
+        command: 'npx ai-agent-playbook reference capability-matrix <reference-dir> --capability <capability> --json',
+        purpose: 'Group local reference candidates by capability before adoption decisions.'
+      },
+      {
+        id: 'reference.plan',
+        command: 'npx ai-agent-playbook reference adoption-plan <reference-dir> --capability <capability> --json',
+        purpose: 'Create a bounded adoption planning packet without copying raw source text.'
+      }
+    ],
+    promotionRules: [
+      'Treat local references as evidence sources, not durable project memory.',
+      'Record adoption decisions in the ledger before moving reusable patterns into skills, workflows, docs, or MCP surfaces.',
+      'Keep generated reports under runtime until reviewed facts are promoted explicitly.',
+      'Do not copy raw upstream excerpts, private paths, internal URLs, credentials, branch names, or PR numbers into public docs.'
+    ]
+  };
+}
+
 function mcpPermissionModelResource() {
   const readOnlyResources = [
     'capability_catalog',
     'skill_catalog',
     'workflow_list',
     'adapter_support',
+    'adapter_readiness',
     'playbook_layout_v2',
+    'reference_adoption',
     'mcp_permission_model'
   ];
   const optInWriteTools = [

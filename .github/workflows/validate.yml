@@ -40,6 +40,10 @@ jobs:
         shell: pwsh
         run: ./scripts/validate-public-docs.ps1
 
+      - name: Validate skill sync dry-run
+        shell: pwsh
+        run: ./scripts/sync-skills.ps1 -WhatIf
+
       - name: Validate installer
         shell: pwsh
         run: ./install.ps1 -SkipValidation -WhatIf

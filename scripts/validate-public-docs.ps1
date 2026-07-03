@@ -10,6 +10,7 @@ $errors = @()
 
 $excludedDirs = @(
   '.git',
+  '.ai-playbook',
   '.next',
   '.turbo',
   '_reference',

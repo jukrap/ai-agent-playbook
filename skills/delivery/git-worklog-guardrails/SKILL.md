@@ -19,3 +19,6 @@ Use this as the primary delivery skill for git, PR, and worklog safety.
 
 `commit-worklog-guardrails` is a compatibility trigger for this skill.
 
+## Reference
+
+Read `references/git-delivery-checklist.md` before staging, committing, pushing, writing PR text, or recording a worklog.

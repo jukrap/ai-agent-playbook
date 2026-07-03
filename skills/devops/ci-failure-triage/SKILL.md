@@ -14,3 +14,6 @@ Use this as the primary DevOps skill for pipeline failures.
 3. Reproduce locally when feasible, then make the narrowest fix.
 4. Verify with the failing command or nearest reliable equivalent.
 
+## Reference
+
+Read `references/failure-signal-triage.md` for log ordering, root-cause classification, cache/dependency handling, and rerun rules.

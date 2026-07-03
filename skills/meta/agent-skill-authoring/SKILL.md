@@ -14,10 +14,9 @@ Create small reusable skills that are easy for agents to discover and hard to mi
 3. Keep `SKILL.md` concise: trigger, core workflow, and when to read references.
 4. Move long rules, examples, API details, and checklists into one-level `references/*.md` files.
 5. Add scripts only for deterministic repeated work such as validation, formatting, or artifact generation.
-6. Test the trigger with two or three realistic requests and near misses; tighten wording if the skill would load too often.
+6. Test the trigger with realistic requests and near misses; tighten wording if the skill would load too often.
 7. Check whether an existing skill, template, or project guide can be strengthened before adding another skill.
-8. Check for conflict with existing skills and project instructions before adding another skill.
-9. Update indexes, translations, validation metadata, and installed copies through the repository maintenance workflow.
+8. Update indexes, translations, validation metadata, and installed copies through the repository maintenance workflow.
 
 ## Boundaries
 
@@ -27,23 +26,8 @@ Create small reusable skills that are easy for agents to discover and hard to mi
 - Do not vendor an external skill pack wholesale when a short local rule or renamed focused skill would be clearer.
 - Do not rely on one agent runtime's hooks, slash commands, or environment variables in agent-agnostic skill source.
 
-## Quick Structure
+## Reference
 
-```text
-skills/<category>/<skill-name>/
-  SKILL.md
-  references/<detail>.md   # only when detail is too long or rarely needed
-  scripts/<tool>           # only for deterministic reusable operations
-  agents/openai.yaml       # only when UI metadata is useful
-```
+Read `references/skill-shape-and-routing.md` before creating or reorganizing a skill.
 
-## Quality Checklist
-
-- Skill name is lowercase hyphenated.
-- Frontmatter contains only `name` and `description`.
-- Description starts with `Use when...`.
-- The skill body is short enough to scan.
-- The trigger is narrow enough to avoid colliding with broader process skills.
-- References are one level deep.
-- English source and Korean translation are updated together.
-- Validation commands pass before syncing installed copies.
+Read `references/reference-authoring-checks.md` before adding long references, examples, stack details, or adopted external patterns.

@@ -20,3 +20,7 @@ Protect idempotency, file contracts, and operational recovery.
 - Do not make batch jobs non-idempotent.
 - Do not delete or overwrite files without an archive/recovery story.
 - Do not hide partial failures behind success logs.
+
+## Reference
+
+Read `references/file-transfer-boundary.md` for batch contracts, file lifecycle, retry behavior, reconciliation, and operational recovery checks.

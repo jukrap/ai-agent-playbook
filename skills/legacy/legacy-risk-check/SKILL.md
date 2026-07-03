@@ -7,14 +7,12 @@ description: Use when changing legacy code that may affect global state, shared 
 
 Look for hidden blast radius before editing and before declaring the work done.
 
-## Checklist
+## Workflow
 
-- Search every selector, global variable, function name, route, template fragment, config key, and API field you plan to change.
-- Confirm which files are actually loaded at runtime.
-- Check shared CSS/JS, includes, layout templates, plugin initialization, and event delegation.
-- Check form field names, hidden inputs, CSRF/session handling, and redirect flow.
-- Check generated/build output versus source files.
-- Check deployment or packaging rules before moving files.
+1. Search every shared selector, global variable, function name, route, template fragment, config key, and API field you plan to change.
+2. Confirm which files are actually loaded at runtime.
+3. Check browser, server, database, generated-output, deployment, and manual-operation blast radius.
+4. Stop and report the smallest safe next step when runtime ownership or verification is unclear.
 
 ## Stop Signals
 
@@ -24,3 +22,7 @@ Look for hidden blast radius before editing and before declaring the work done.
 - Verification requires an environment you do not have.
 
 If a stop signal blocks confidence, report the blocker and propose the smallest safe next step.
+
+## Reference
+
+Read `references/legacy-risk-inventory.md` before changing shared legacy assets, contracts, build output, or deployment behavior.

@@ -21,7 +21,15 @@ const REPRESENTATIVE_CATEGORY_ORDER = [
   'skill',
   'mcp',
   'workflow',
+  'architecture',
+  'frontend',
   'connector',
+  'database',
+  'devops',
+  'mobile',
+  'data',
+  'design',
+  'observability',
   'runtime',
   'memory',
   'security',
@@ -716,6 +724,27 @@ function suggestedAdoptionSurfaces({ item, inspected }) {
   if (ids.has('agent-workflow') || ids.has('delivery') || signals.workflows > 0 || signals.commands > 0) {
     add('workflow-recipe', 'Capture worker contract, recipe, runbook, command, and handoff patterns with explicit stop conditions.');
   }
+  if (ids.has('architecture') || ids.has('architecture-boundary') || signals.architecture > 0) {
+    add('architecture-reference', 'Capture boundary, ownership, package, domain, and decision-record patterns without forcing a new architecture.');
+  }
+  if (ids.has('frontend') || ids.has('frontend-quality') || ids.has('design-system') || signals.frontend > 0 || signals.design > 0) {
+    add('frontend-quality-reference', 'Extract rendered UI, accessibility, design-token, state/data, and visual regression checks as frontend guidance.');
+  }
+  if (ids.has('backend') || ids.has('backend-change') || signals.backend > 0) {
+    add('backend-contract-reference', 'Document API, service, worker, route, middleware, and integration contract boundaries before adoption.');
+  }
+  if (ids.has('database') || ids.has('database-change') || signals.database > 0) {
+    add('database-change-reference', 'Capture migration order, rollback, query performance, and data-integrity checks as database guidance.');
+  }
+  if (ids.has('devops') || ids.has('devops-release') || ids.has('observability-triage') || signals.devops > 0 || signals.observability > 0) {
+    add('devops-runbook', 'Turn CI/CD, container, deployment, package release, and observability patterns into explicit runbooks and gates.');
+  }
+  if (ids.has('mobile') || ids.has('mobile-release') || signals.mobile > 0) {
+    add('mobile-qa-reference', 'Extract release, permission, offline sync, signing, and device QA checks without stack-first routing.');
+  }
+  if (ids.has('data') || ids.has('data-pipeline') || signals.data > 0) {
+    add('data-quality-reference', 'Capture pipeline, lineage, metric, dashboard, migration, and data-quality checks as data guidance.');
+  }
   if (ids.has('runtime-index-canon') || signals.indexes > 0 || signals.memory > 0) {
     add('runtime-memory-boundary', 'Separate generated runtime evidence from reviewed memory or canon promotion rules.');
   }
@@ -776,6 +805,13 @@ function adoptionPlanObjective(capability) {
   if (capability === 'agent-workflow') return 'Extract agent orchestration, worker contracts, runbooks, handoffs, and stop conditions into reusable local workflows.';
   if (capability === 'verification') return 'Collect repeatable test, fixture, eval, validator, and CI gate ideas without importing noisy reference implementations.';
   if (capability === 'security') return 'Turn security and compliance reference signals into local review gates, validators, and safe documentation.';
+  if (capability === 'architecture') return 'Identify boundary, ownership, domain modeling, monorepo, and decision-record patterns without forcing architecture changes.';
+  if (capability === 'frontend') return 'Extract UI quality, accessibility, state/data flow, design-system, and visual regression practices from reference projects.';
+  if (capability === 'backend') return 'Review API, service, worker, route, connector, and integration contracts before adopting backend patterns.';
+  if (capability === 'database') return 'Capture migration, schema, query performance, rollback, and integrity checks as database change guidance.';
+  if (capability === 'devops') return 'Review CI/CD, container, package, deployment, release, configuration, and observability patterns for reusable runbooks and gates.';
+  if (capability === 'mobile') return 'Extract mobile release, permission, signing, offline sync, WebView, and device QA guidance without stack-first routing.';
+  if (capability === 'data') return 'Capture pipeline, ETL, lineage, metric, dashboard, retrieval, and data-quality patterns as data guidance.';
   return `Review top local reference candidates for the ${capability ?? 'selected'} capability and decide which patterns deserve local adoption.`;
 }
 
@@ -787,11 +823,20 @@ function adoptionPlanStopConditions(capability) {
     'Write behavior would lack dry-run output, target path validation, permission tier, or audit trail.',
     'Generated runtime evidence would be promoted into memory or public docs without review.'
   ];
-  if (capability === 'security' || capability === 'mcp-integration') {
+  if (capability === 'security' || capability === 'mcp-integration' || capability === 'backend') {
     stops.push('Credential boundary, private URL handling, or permission scope is unclear.');
   }
   if (capability === 'runtime-index-canon') {
     stops.push('Runtime artifact freshness, scan range, or source locator cannot be reopened.');
+  }
+  if (capability === 'database' || capability === 'data') {
+    stops.push('Rollback, reconciliation, freshness, or consumer-impact evidence is missing.');
+  }
+  if (capability === 'devops' || capability === 'mobile') {
+    stops.push('Release, rollback, environment, signing, or deployment target evidence is unclear.');
+  }
+  if (capability === 'frontend') {
+    stops.push('Rendered states, accessibility, responsive layout, or visual evidence cannot be verified.');
   }
   return stops;
 }
@@ -810,6 +855,18 @@ function adoptionPlanVerification(capability) {
   if (capability === 'security') {
     verification.push('Run public documentation hygiene checks before publishing any security/compliance reference.');
   }
+  if (capability === 'database' || capability === 'data') {
+    verification.push('Run representative migration, query, reconciliation, or data-quality checks before adopting data guidance.');
+  }
+  if (capability === 'devops') {
+    verification.push('Run the relevant CI/package/container/deployment dry-run or static validation command when the project defines one.');
+  }
+  if (capability === 'frontend') {
+    verification.push('Verify rendered UI states, accessibility, responsive layout, and visual diff evidence when adopting frontend guidance.');
+  }
+  if (capability === 'mobile') {
+    verification.push('Verify release-build, permission, signing/profile, and device or simulator evidence when adopting mobile guidance.');
+  }
   return verification;
 }
 
@@ -825,6 +882,12 @@ function adoptionPlanFollowUps(capability) {
   if (capability === 'agent-workflow') {
     followUps.push('Convert reusable orchestration patterns into workflow recipes or handoff references, not default always-on context.');
   }
+  if (capability === 'devops' || capability === 'mobile') {
+    followUps.push('Keep live deploy, publish, signing, and store submission actions opt-in and outside default read-only workflows.');
+  }
+  if (capability === 'database' || capability === 'data') {
+    followUps.push('Promote only reviewed schema, lineage, metric, or reconciliation facts into durable memory.');
+  }
   return followUps;
 }
 
@@ -836,6 +899,15 @@ function scoreSignals(signals) {
     commands: 2,
     hooks: 2,
     workflows: 3,
+    architecture: 3,
+    frontend: 3,
+    backend: 3,
+    database: 4,
+    devops: 4,
+    mobile: 4,
+    data: 4,
+    design: 3,
+    observability: 3,
     memory: 3,
     indexes: 3,
     connectors: 3,
@@ -866,9 +938,15 @@ function priorityForScore(score) {
 function recommendedReferenceCapabilities(signals) {
   const capabilities = [];
   if (signals.security > 0 || signals.compliance > 0) capabilities.push('security');
+  if (signals.architecture > 0) capabilities.push('architecture');
+  if (signals.frontend > 0 || signals.design > 0) capabilities.push('frontend');
+  if (signals.backend > 0 || signals.connectors > 0) capabilities.push('backend');
+  if (signals.database > 0) capabilities.push('database');
+  if (signals.devops > 0 || signals.observability > 0 || (signals.packages > 0 && (signals.workflows > 0 || signals.tests > 0))) capabilities.push('devops');
+  if (signals.mobile > 0) capabilities.push('mobile');
+  if (signals.data > 0) capabilities.push('data');
   if (signals.skills > 0 || signals.mcp > 0 || signals.agents > 0 || signals.hooks > 0 || signals.memory > 0 || signals.indexes > 0) capabilities.push('ai-harness');
   if (signals.workflows > 0 || signals.commands > 0 || signals.tests > 0) capabilities.push('delivery');
-  if (signals.connectors > 0) capabilities.push('backend');
   if (signals.docs > 0) capabilities.push('foundation');
   if (capabilities.length === 0 && signals.packages > 0) capabilities.push('devops');
   return capabilities;
@@ -879,6 +957,13 @@ function referenceAdoptionActions(signals) {
   if (signals.skills > 0) actions.push('Review skill trigger shape and extract reusable references instead of copying long skill bodies.');
   if (signals.mcp > 0) actions.push('Classify MCP surfaces as resource, prompt, read tool, scaffold, managed-write, or project-write before adoption.');
   if (signals.agents > 0 || signals.workflows > 0 || signals.hooks > 0) actions.push('Extract worker contracts, stop conditions, and verification handoff patterns.');
+  if (signals.architecture > 0) actions.push('Extract architecture boundary, package ownership, and decision-record patterns before recommending restructuring.');
+  if (signals.frontend > 0 || signals.design > 0) actions.push('Capture rendered UI, accessibility, design-system, and visual regression patterns as frontend references.');
+  if (signals.backend > 0) actions.push('Review API, worker, service, route, and middleware contracts before adopting backend patterns.');
+  if (signals.database > 0) actions.push('Capture migration, schema, query, and data-integrity checks as database change references.');
+  if (signals.devops > 0 || signals.observability > 0) actions.push('Harvest CI/CD, container, release, deployment, and observability gates as DevOps runbook patterns.');
+  if (signals.mobile > 0) actions.push('Extract mobile release, permission, offline sync, and device QA patterns without creating stack-first skills.');
+  if (signals.data > 0) actions.push('Capture pipeline, lineage, dashboard, metric, and data-quality checks as data references.');
   if (signals.memory > 0 || signals.indexes > 0) actions.push('Separate generated runtime evidence from durable memory promotion rules.');
   if (signals.security > 0 || signals.compliance > 0) actions.push('Convert security and compliance ideas into local validators or checklist references, not raw policy dumps.');
   if (signals.connectors > 0) actions.push('Capture connector credential, retry, idempotency, and manifest conventions as backend/data references.');
@@ -961,6 +1046,15 @@ function emptySignals() {
     commands: 0,
     hooks: 0,
     workflows: 0,
+    architecture: 0,
+    frontend: 0,
+    backend: 0,
+    database: 0,
+    devops: 0,
+    mobile: 0,
+    data: 0,
+    design: 0,
+    observability: 0,
     memory: 0,
     indexes: 0,
     connectors: 0,
@@ -981,6 +1075,15 @@ function addSignals(signals, relativePath) {
   if (lower.includes('/commands/') || lower.includes('/command') || lower.endsWith('.toml')) signals.commands += 1;
   if (lower.includes('/hooks/') || lower.includes('/hook')) signals.hooks += 1;
   if (lower.includes('workflow') || lower.includes('/runbook') || lower.includes('/recipe')) signals.workflows += 1;
+  if (isArchitecturePath(lower)) signals.architecture += 1;
+  if (isFrontendPath(lower)) signals.frontend += 1;
+  if (isBackendPath(lower)) signals.backend += 1;
+  if (isDatabasePath(lower)) signals.database += 1;
+  if (isDevopsPath(lower, basename)) signals.devops += 1;
+  if (isMobilePath(lower)) signals.mobile += 1;
+  if (isDataPath(lower)) signals.data += 1;
+  if (isDesignPath(lower)) signals.design += 1;
+  if (isObservabilityPath(lower)) signals.observability += 1;
   if (lower.includes('memory') || lower.includes('knowledge') || lower.includes('canon')) signals.memory += 1;
   if (lower.includes('index') || lower.includes('graph') || lower.includes('cache') || lower.includes('lens')) signals.indexes += 1;
   if (lower.includes('connector') || lower.includes('adapter') || lower.includes('integration')) signals.connectors += 1;
@@ -989,6 +1092,158 @@ function addSignals(signals, relativePath) {
   if (lower.endsWith('.md') || basename.startsWith('readme')) signals.docs += 1;
   if (lower.includes('/test') || lower.includes('/tests/') || lower.includes('__tests__') || lower.endsWith('.test.ts') || lower.endsWith('.test.mjs')) signals.tests += 1;
   if (['package.json', 'pyproject.toml', 'cargo.toml', 'pnpm-workspace.yaml', 'turbo.json'].includes(basename)) signals.packages += 1;
+}
+
+function isArchitecturePath(lower) {
+  return includesAny(lower, [
+    'architecture',
+    '/adr',
+    '/domain/',
+    '/bounded-context',
+    '/monorepo',
+    '/workspace',
+    '/boundary',
+    'turborepo',
+    'nx.json'
+  ]);
+}
+
+function isFrontendPath(lower) {
+  return includesAny(lower, [
+    '/components/',
+    '/pages/',
+    '/views/',
+    '/frontend/',
+    '/client/',
+    'vite.config',
+    'storybook',
+    'tailwind'
+  ]) || lower.endsWith('.tsx') || lower.endsWith('.jsx') || lower.endsWith('.vue');
+}
+
+function isBackendPath(lower) {
+  return includesAny(lower, [
+    '/api/',
+    '/server/',
+    '/controller',
+    '/service',
+    '/worker',
+    '/queue',
+    '/routes/',
+    '/middleware/'
+  ]);
+}
+
+function isDatabasePath(lower) {
+  return includesAny(lower, [
+    '/db/',
+    '/database',
+    '/migration',
+    '/migrations/',
+    '/schema',
+    '/sql/',
+    'prisma',
+    'drizzle',
+    'typeorm',
+    'sequelize',
+    'flyway',
+    'liquibase'
+  ]) || lower.endsWith('.sql');
+}
+
+function isDevopsPath(lower, basename) {
+  return ['jenkinsfile', 'dockerfile'].includes(basename) || includesAny(lower, [
+    '.github/workflows/',
+    '.gitlab-ci',
+    'docker-compose',
+    '/k8s/',
+    '/kubernetes/',
+    '/helm/',
+    '/terraform/',
+    '/deploy',
+    '/release',
+    '/ci/',
+    'actionlint',
+    '.devcontainer/'
+  ]);
+}
+
+function isMobilePath(lower) {
+  return includesAny(lower, [
+    '/android/',
+    '/ios/',
+    'react-native',
+    '/expo',
+    'xcodeproj',
+    'fastlane',
+    'podfile',
+    '/mobile/'
+  ]);
+}
+
+function isDataPath(lower) {
+  return includesAny(lower, [
+    'etl',
+    'pipeline',
+    'pipelines/',
+    'warehouse',
+    'analytics',
+    'metrics',
+    'dashboard',
+    'dashboards/',
+    '/dbt/',
+    'bigquery',
+    'snowflake',
+    'airflow',
+    'spark',
+    'notebook',
+    'jupyter'
+  ]) || lower.endsWith('.parquet');
+}
+
+function isDesignPath(lower) {
+  return includesAny(lower, [
+    '/design',
+    'figma',
+    '/tokens/',
+    '/themes/',
+    'typography',
+    '/visual',
+    '/screenshots/',
+    'wireframe'
+  ]);
+}
+
+function isObservabilityPath(lower) {
+  return includesAny(lower, [
+    'observability',
+    'monitoring',
+    'metrics',
+    'tracing',
+    'logging',
+    'opentelemetry',
+    '/otel',
+    'sentry',
+    'prometheus',
+    'grafana',
+    '/alerts/'
+  ]);
+}
+
+function isBroadCapabilityPath(lower, basename) {
+  return isArchitecturePath(lower)
+    || isFrontendPath(lower)
+    || isBackendPath(lower)
+    || isDatabasePath(lower)
+    || isDevopsPath(lower, basename)
+    || isMobilePath(lower)
+    || isDataPath(lower)
+    || isDesignPath(lower)
+    || isObservabilityPath(lower);
+}
+
+function includesAny(value, needles) {
+  return needles.some((needle) => value.includes(needle));
 }
 
 function isRepresentativeFile(relativePath) {
@@ -1003,7 +1258,8 @@ function isRepresentativeFile(relativePath) {
     lower.includes('index') ||
     lower.includes('connector') ||
     lower.includes('workflow') ||
-    lower.includes('runbook')
+    lower.includes('runbook') ||
+    isBroadCapabilityPath(lower, basename)
   );
 }
 
@@ -1040,6 +1296,15 @@ function candidateCapabilities(signals) {
   if (signals.skills > 0) capabilities.push('skill-pack');
   if (signals.agents > 0 || signals.workflows > 0 || signals.commands > 0 || signals.hooks > 0) capabilities.push('agent-workflow');
   if (signals.mcp > 0) capabilities.push('mcp-integration');
+  if (signals.architecture > 0) capabilities.push('architecture-boundary');
+  if (signals.frontend > 0) capabilities.push('frontend-quality');
+  if (signals.design > 0) capabilities.push('design-system');
+  if (signals.backend > 0) capabilities.push('backend-change');
+  if (signals.database > 0) capabilities.push('database-change');
+  if (signals.devops > 0) capabilities.push('devops-release');
+  if (signals.observability > 0) capabilities.push('observability-triage');
+  if (signals.mobile > 0) capabilities.push('mobile-release');
+  if (signals.data > 0) capabilities.push('data-pipeline');
   if (signals.indexes > 0 || signals.memory > 0) capabilities.push('runtime-index-canon');
   if (signals.connectors > 0) capabilities.push('connector-reference');
   if (signals.security > 0) capabilities.push('security-validation');
@@ -1072,6 +1337,21 @@ function referenceInspectQuestions(item) {
   if (item.recommendedCapabilities.includes('backend') || item.candidateCapabilities.includes('connector-reference')) {
     questions.push('What credential, retry, idempotency, or adapter contract needs to be documented before adoption?');
   }
+  if (item.recommendedCapabilities.includes('frontend')) {
+    questions.push('Which rendered states, accessibility checks, responsive breakpoints, or visual regression gates are reusable locally?');
+  }
+  if (item.recommendedCapabilities.includes('database')) {
+    questions.push('Which migration order, rollback evidence, query check, or data-integrity invariant should become local guidance?');
+  }
+  if (item.recommendedCapabilities.includes('devops')) {
+    questions.push('Which CI/CD, container, package, release, or observability gate should become a reusable runbook or validation check?');
+  }
+  if (item.recommendedCapabilities.includes('mobile')) {
+    questions.push('Which release, permission, signing, offline sync, or device QA evidence should be required before adoption?');
+  }
+  if (item.recommendedCapabilities.includes('data')) {
+    questions.push('Which lineage, freshness, metric, dashboard, ingestion, or data-quality contract should be preserved?');
+  }
   if (item.recommendedCapabilities.includes('delivery')) {
     questions.push('Which test, CI gate, handoff, or workflow stop condition should become reusable verification guidance?');
   }
@@ -1087,7 +1367,15 @@ function representativeFileReason(filePath) {
   if (category === 'security') return 'Security, secret, or compliance review signal.';
   if (category === 'mcp') return 'MCP resource, prompt, tool, or permission model signal.';
   if (category === 'workflow') return 'Workflow, runbook, stop condition, or handoff pattern.';
+  if (category === 'architecture') return 'Architecture boundary, ownership, package, or decision-record signal.';
+  if (category === 'frontend') return 'Frontend UI, state, accessibility, or visual QA signal.';
   if (category === 'connector') return 'Connector, adapter, credential, or integration contract signal.';
+  if (category === 'database') return 'Database schema, migration, SQL, query, or data-integrity signal.';
+  if (category === 'devops') return 'CI/CD, container, package, deployment, or release signal.';
+  if (category === 'mobile') return 'Mobile release, permission, signing, offline sync, or device QA signal.';
+  if (category === 'data') return 'Data pipeline, lineage, metric, dashboard, retrieval, or quality signal.';
+  if (category === 'design') return 'Design-system, asset, token, screenshot, or visual reference signal.';
+  if (category === 'observability') return 'Monitoring, logging, metrics, trace, alert, or incident signal.';
   if (category === 'runtime') return 'Runtime index, cache, graph, or generated evidence signal.';
   if (category === 'memory') return 'Memory, canon, source registry, or promotion boundary signal.';
   return 'Representative file selected by local reference signal scan.';
@@ -1101,7 +1389,15 @@ function representativeFileCategory(filePath) {
   if (basename === 'skill.md' || lower.includes('/skills/')) return 'skill';
   if (lower.includes('mcp') || lower.includes('modelcontextprotocol')) return 'mcp';
   if (lower.includes('workflow') || lower.includes('/runbook') || lower.includes('/recipe') || lower.includes('/.github/workflows/')) return 'workflow';
+  if (isArchitecturePath(lower)) return 'architecture';
+  if (isFrontendPath(lower)) return 'frontend';
   if (lower.includes('connector') || lower.includes('adapter') || lower.includes('integration')) return 'connector';
+  if (isDatabasePath(lower)) return 'database';
+  if (isDevopsPath(lower, basename)) return 'devops';
+  if (isMobilePath(lower)) return 'mobile';
+  if (isDataPath(lower)) return 'data';
+  if (isDesignPath(lower)) return 'design';
+  if (isObservabilityPath(lower)) return 'observability';
   if (lower.includes('graph') || lower.includes('index') || lower.includes('cache') || lower.includes('lens')) return 'runtime';
   if (lower.includes('canon') || lower.includes('memory') || lower.includes('knowledge')) return 'memory';
   if (basename === 'security.md' || lower.includes('security')) return 'security';
@@ -1434,7 +1730,7 @@ async function isDirectoryPath(candidate) {
 }
 
 function primaryLedgerCapability(item) {
-  const preferred = ['ai-harness', 'delivery', 'backend', 'foundation', 'security', 'data', 'devops'];
+  const preferred = ['security', 'architecture', 'frontend', 'backend', 'database', 'devops', 'mobile', 'data', 'ai-harness', 'delivery', 'foundation'];
   return item.recommendedCapabilities.find((capability) => preferred.includes(capability))
     ?? item.recommendedCapabilities[0]
     ?? item.candidateCapabilities[0]

@@ -13,6 +13,8 @@
 
 로컬 관례 유지, FSD/DDD/레이어드 규칙 적용, 패키지 분리, 더 큰 구조 개편을 판단해야 할 때 `references/boundary-redesign-protocol.md`를 읽습니다.
 
-Feature-sliced, layered, domain-driven, modular monolith, legacy seam 중 어느 접근이 맞는지 판단할 때 `references/fsd-ddd-fit-matrix.md`를 읽습니다.
+기능 단위, 계층형, 도메인 주도, 모듈형 모놀리스, 레거시 접점 방식 중 어느 접근이 맞는지 판단할 때 `references/fsd-ddd-fit-matrix.md`를 읽습니다.
 
-Boundary repair에 staged move, adapter, compatibility shim, import/dependency check가 필요하면 `references/modular-boundary-migration.md`를 읽습니다.
+경계 복구에 단계적 이동, 어댑터, 호환성 보조 계층, import/의존성 점검이 필요하면 `references/modular-boundary-migration.md`를 읽습니다.
+
+모듈이 더 깊은 책임을 가져야 하는지, 대안 인터페이스를 비교해야 하는지, 얕은 추출이 복잡도만 옮길 위험이 있는지 평가할 때는 `references/deep-module-design-review.md`를 읽습니다.

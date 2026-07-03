@@ -20,3 +20,5 @@ Use this as the primary design skill before visual implementation when the produ
 Read `references/design-direction-brief.md` for the brief structure, decision points, and output contract.
 
 Read `references/style-dials-and-anti-patterns.md` for style dial selection, taste guardrails, and visual anti-pattern checks.
+
+Read `references/product-type-decision-matrix.md` when the product category should drive layout pattern, density, trust signals, typography posture, motion, and pre-delivery design checks.

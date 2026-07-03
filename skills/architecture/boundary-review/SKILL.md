@@ -21,3 +21,5 @@ Read `references/boundary-redesign-protocol.md` when deciding whether to keep lo
 Read `references/fsd-ddd-fit-matrix.md` when deciding between feature-sliced, layered, domain-driven, modular monolith, or legacy seam approaches.
 
 Read `references/modular-boundary-migration.md` when a boundary repair needs staged moves, adapters, compatibility shims, or import/dependency checks.
+
+Read `references/deep-module-design-review.md` when evaluating whether a module should become deeper, when comparing alternative interfaces, or when a shallow extraction may only move complexity around.

@@ -1,16 +1,18 @@
 # Connector Integration Change
 
-Connector, adapter, webhook, integration contract change를 위한 primary backend skill입니다.
+커넥터, 어댑터, 웹훅, 외부 연동 계약 변경을 위한 기본 백엔드 스킬입니다.
 
-## Workflow
+## 작업 절차
 
-1. Connector type, host runtime, external contract, credential model, scope, registration metadata, supported operation을 확인합니다.
-2. Request/response mapping, pagination, rate limit, retry, idempotency, timeout behavior, partial failure, error wrapping을 검토합니다.
-3. Credential reference, secret handling, webhook lifecycle, generated schema, discoverability metadata를 확인합니다.
-4. Project에 맞는 contract example, mocked 또는 sandbox call, integration test, release note로 검증합니다.
+1. 커넥터 유형, 실행 위치, 외부 계약, 자격 증명 모델, 권한 범위, 등록 메타데이터, 지원 작업을 확인합니다.
+2. 요청/응답 매핑, 페이지네이션, 호출 제한, 재시도, 멱등성, 시간 초과 동작, 부분 실패, 오류 감싸기를 검토합니다.
+3. 자격 증명 참조, 비밀값 처리, 웹훅 생명주기, 생성 스키마, 발견 가능한 메타데이터를 확인합니다.
+4. 프로젝트에 맞는 계약 예시, 모의 호출 또는 샌드박스 호출, 통합 테스트, 릴리스 노트로 검증합니다.
 
-## Reference
+## 참고 자료
 
-Connector contract, metadata, operation, compatibility review에는 `references/connector-contract-checks.md`를 읽습니다.
+커넥터 계약, 메타데이터, 작업, 호환성 검토에는 `references/connector-contract-checks.md`를 읽습니다.
 
-Credential, webhook lifecycle, retry, error handling check에는 `references/credential-webhook-error-handling.md`를 읽습니다.
+자격 증명, 웹훅 생명주기, 재시도, 오류 처리 점검에는 `references/credential-webhook-error-handling.md`를 읽습니다.
+
+연동 구조가 로컬 클라이언트, 서버 소유 상태, 큐, 캐시, 색인, 커넥터 작업, 자격 증명 해석을 나눠 가질 때는 `references/stateful-server-thin-client.md`를 읽습니다.

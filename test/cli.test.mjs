@@ -856,6 +856,28 @@ test('reference inventory summarizes local reference collections without writing
   assert.equal(filteredMatrixReport.summary.capabilities, 1);
   assert.deepEqual(await listRelativeFiles(target), before);
 
+  const missingPlanCapability = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-plan', referenceRoot, '--json'], missingPlanCapability), 1);
+  const missingPlanCapabilityReport = JSON.parse(missingPlanCapability.out());
+  assert.equal(missingPlanCapabilityReport.conflicts.some((conflict) => conflict.id === 'reference-adoption-plan.capability-required'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const adoptionPlan = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-plan', referenceRoot, '--capability', 'ai-harness', '--max-results', '2', '--json'], adoptionPlan), 0);
+  const adoptionPlanReport = JSON.parse(adoptionPlan.out());
+  assert.equal(adoptionPlanReport.ok, true);
+  assert.equal(adoptionPlanReport.kind, 'reference.adoption-plan');
+  assert.equal(adoptionPlanReport.mode.writes, false);
+  assert.equal(adoptionPlanReport.summary.selectedReferences, 1);
+  assert.equal(adoptionPlanReport.plan.capability, 'ai-harness');
+  assert.equal(adoptionPlanReport.plan.references[0].project, 'repo-lens-like');
+  assert.equal(adoptionPlanReport.plan.references[0].readOrder.some((entry) => entry.path === 'README.md'), true);
+  assert.equal(adoptionPlanReport.plan.references[0].suggestedSurfaces.some((surface) => surface.surface === 'skill-reference'), true);
+  assert.equal(adoptionPlanReport.plan.references[0].suggestedSurfaces.some((surface) => surface.surface === 'mcp-permission-tier'), true);
+  assert.equal(adoptionPlanReport.plan.stopConditions.length > 0, true);
+  assert.equal(adoptionPlanReport.plan.verification.some((item) => item.includes('npm run check')), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
   const inspect = capture(target);
   assert.equal(await runCli(['reference', 'inspect', referenceRoot, '--project', 'repo-lens-like', '--json'], inspect), 0);
   const inspectReport = JSON.parse(inspect.out());
@@ -976,6 +998,15 @@ test('reference inventory summarizes local reference collections without writing
   const filteredLedgerMatrixReport = JSON.parse(filteredLedgerMatrix.out());
   assert.deepEqual(Object.keys(filteredLedgerMatrixReport.capabilities), ['ai-harness']);
   assert.equal(filteredLedgerMatrixReport.capabilities['ai-harness'].ledgerStatuses.adopted, 1);
+
+  const ledgerPlan = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-plan', referenceRoot, '--capability', 'ai-harness', '--ledger', ledgerPath, '--json'], ledgerPlan), 0);
+  const ledgerPlanReport = JSON.parse(ledgerPlan.out());
+  assert.equal(ledgerPlanReport.ok, true);
+  assert.equal(ledgerPlanReport.plan.references[0].project, 'repo-lens-like');
+  assert.equal(ledgerPlanReport.plan.references[0].ledger.status, 'adopted');
+  assert.equal(ledgerPlanReport.plan.references[0].ledger.capability, 'ai-harness');
+  assert.equal(ledgerPlanReport.matrix.ledgerStatuses.adopted, 1);
   assert.deepEqual(await listRelativeFiles(target), beforeLedgerQueue);
 
   await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'sources.json'), `${JSON.stringify(sourceReport.registry, null, 2)}\n`);

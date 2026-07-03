@@ -52,6 +52,7 @@ Scaffold-tier와 managed-write tool은 기본으로 노출하지 않습니다. A
 - `reference_inspect`
 - `reference_adoption_queue`
 - `reference_capability_matrix`
+- `reference_adoption_plan`
 - `reference_source_registry_preview`
 - `reference_source_registry_check`
 - `reference_ledger_check`

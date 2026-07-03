@@ -5,12 +5,17 @@ description: Use when reviewing secrets, authentication, authorization, input va
 
 # Security Review
 
-개발 중 risk review를 위한 primary security skill입니다.
+개발 중 보안 위험을 검토할 때 쓰는 기본 보안 스킬입니다.
 
-## Workflow
+## 작업 흐름
 
-1. scope, asset, actor, trust boundary, sensitive data를 정의합니다.
-2. authn, authz, input validation, output encoding, secret, logging, transport, dependency exposure를 확인합니다.
-3. 일반 경고보다 구체적인 exploit path와 regression test를 우선합니다.
-4. risk level, mitigation, residual risk, verification evidence를 기록합니다.
+1. 범위, 보호 자산, 행위자, 신뢰 경계, 민감 데이터를 정의합니다.
+2. 인증, 인가, 입력 검증, 출력 인코딩, 비밀값, 로그, 전송 경로, 의존성 노출을 확인합니다.
+3. 일반적인 경고보다 구체적인 공격 경로와 회귀 테스트를 우선합니다.
+4. 위험 수준, 완화책, 남은 위험, 검증 증거를 기록합니다.
 
+## 참고 자료
+
+위험 분류, 데이터 흐름 검토, 증거, 완화 기록이 필요하면 `references/security-review-protocol.md`를 읽습니다.
+
+AI 에이전트, MCP/도구, 프롬프트 주입, 신뢰할 수 없는 콘텐츠, 메모리, 로컬 설정, 외부 통신이 얽힌 시스템은 `references/agent-tool-threats.md`를 읽습니다.

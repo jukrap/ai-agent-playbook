@@ -2,6 +2,8 @@
 *.bak
 *.tmp
 tmp/
+!templates/project-playbook/runtime/tmp/
+!templates/project-playbook/runtime/tmp/.gitkeep
 .env
 .env.*
 *.local

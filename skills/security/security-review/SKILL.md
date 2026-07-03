@@ -14,3 +14,8 @@ Use this as the primary security skill for development-time risk review.
 3. Prefer concrete exploit paths and regression tests over generic warnings.
 4. Record risk level, mitigation, residual risk, and verification evidence.
 
+## Reference
+
+Read `references/security-review-protocol.md` for risk classification, data-flow review, evidence, and mitigation notes.
+
+Read `references/agent-tool-threats.md` when the system involves AI agents, MCP/tools, prompt injection, untrusted content, memory, local config, or external communication.

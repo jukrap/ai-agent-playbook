@@ -25,7 +25,8 @@ export { contextStatus, initContext, listContexts } from './harness/context-memo
 export { recordRun, runStatus, startRun, summarizeRun } from './harness/runs-ledger.mjs';
 export { checkContracts, initContracts, listContracts, snapshotContracts } from './harness/contracts.mjs';
 export { capabilityCatalog, skillCatalog, workflowCatalog } from './catalog/taxonomy.mjs';
-export { buildReferenceAdoptionQueue, buildReferenceSourceRegistryPreview, checkReferenceAdoptionLedger, checkReferenceSourceRegistry, inventoryReferenceDirectory } from './catalog/reference-adoption.mjs';
+export { buildReferenceAdoptionQueue, checkReferenceAdoptionLedger, inventoryReferenceDirectory } from './catalog/reference-adoption.mjs';
+export { buildReferenceSourceRegistryPreview, checkReferenceSourceRegistry } from './catalog/reference-source-registry.mjs';
 export { HARNESS_CONFIG_FILES, previewHarnessConfig } from './core/config.mjs';
 export { describePlaybookLayout, migratePlaybookLayout } from './layout/playbook-layout-v2.mjs';
 export { buildRuntimeIndex, runtimeIndexStatus, searchRuntimeIndex } from './runtime/indexes.mjs';

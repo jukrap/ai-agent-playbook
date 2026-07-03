@@ -13,6 +13,7 @@ const DEFAULT_MAX_PROJECTS = 100;
 const DEFAULT_MAX_DEPTH = 6;
 const DEFAULT_QUEUE_RESULTS = 20;
 const REPRESENTATIVE_LIMIT = 16;
+const MATRIX_TOP_REFERENCE_LIMIT = 8;
 const REPRESENTATIVE_CATEGORY_ORDER = [
   'overview',
   'agent',
@@ -142,6 +143,60 @@ export async function buildReferenceAdoptionQueue({
     queue,
     warnings,
     conflicts
+  };
+}
+
+export async function buildReferenceCapabilityMatrix({
+  target,
+  maxProjects = DEFAULT_MAX_PROJECTS,
+  maxDepth = DEFAULT_MAX_DEPTH,
+  maxResults = DEFAULT_MAX_PROJECTS,
+  ledgerPath,
+  capability
+}) {
+  const queue = await buildReferenceAdoptionQueue({
+    target,
+    maxProjects,
+    maxDepth,
+    maxResults,
+    ledgerPath
+  });
+  const capabilityFilter = normalizeMatrixCapability(capability);
+  const groups = new Map();
+
+  for (const item of queue.queue) {
+    const capabilityIds = matrixCapabilityIds(item);
+    if (capabilityFilter && !capabilityIds.includes(capabilityFilter)) continue;
+    for (const capabilityId of capabilityIds) {
+      if (capabilityFilter && capabilityId !== capabilityFilter) continue;
+      recordMatrixGroup(groups, capabilityId, item);
+    }
+  }
+
+  const capabilities = Object.fromEntries([...groups.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([capabilityId, group]) => [capabilityId, finalizeMatrixGroup(capabilityId, group)]));
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'reference.capability-matrix',
+    ok: queue.ok,
+    target: queue.target,
+    mode: { localOnly: true, network: false, writes: false },
+    filter: {
+      capability: capabilityFilter
+    },
+    summary: {
+      inventoryProjects: queue.summary.inventoryProjects,
+      totalProjects: queue.summary.totalProjects,
+      queueItems: queue.summary.queueItems,
+      capabilities: Object.keys(capabilities).length,
+      warnings: queue.warnings.length,
+      conflicts: queue.conflicts.length
+    },
+    capabilities,
+    warnings: queue.warnings,
+    conflicts: queue.conflicts
   };
 }
 
@@ -445,6 +500,78 @@ function referenceQueueItem(project, ledger) {
     item.ledgerDecisionDate = ledgerEntry?.decisionDate ?? null;
   }
   return item;
+}
+
+function normalizeMatrixCapability(value) {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  return normalized || null;
+}
+
+function matrixCapabilityIds(item) {
+  return [...new Set([
+    ...item.recommendedCapabilities,
+    ...item.candidateCapabilities
+  ].map(normalizeMatrixCapability).filter(Boolean))];
+}
+
+function recordMatrixGroup(groups, capabilityId, item) {
+  if (!groups.has(capabilityId)) {
+    groups.set(capabilityId, {
+      projects: 0,
+      priorities: { high: 0, medium: 0, low: 0 },
+      ledgerStatuses: {},
+      recommendedMatches: 0,
+      candidateMatches: 0,
+      topReferences: []
+    });
+  }
+  const group = groups.get(capabilityId);
+  group.projects += 1;
+  group.priorities[item.priority] = (group.priorities[item.priority] ?? 0) + 1;
+  if (item.ledgerStatus) {
+    group.ledgerStatuses[item.ledgerStatus] = (group.ledgerStatuses[item.ledgerStatus] ?? 0) + 1;
+  }
+  if (item.recommendedCapabilities.includes(capabilityId)) group.recommendedMatches += 1;
+  if (item.candidateCapabilities.includes(capabilityId)) group.candidateMatches += 1;
+  group.topReferences.push(matrixReferenceSummary(item));
+}
+
+function matrixReferenceSummary(item) {
+  const summary = {
+    project: item.project,
+    path: item.path,
+    score: item.score,
+    priority: item.priority,
+    recommendedCapabilities: item.recommendedCapabilities,
+    candidateCapabilities: item.candidateCapabilities,
+    signalHighlights: item.signalHighlights.slice(0, 5),
+    representativeFiles: item.representativeFiles.slice(0, 5),
+    nextActions: item.nextActions.slice(0, 3)
+  };
+  if (item.ledgerStatus) {
+    summary.ledgerStatus = item.ledgerStatus;
+    summary.ledgerReferenceId = item.ledgerReferenceId;
+    summary.ledgerCapability = item.ledgerCapability;
+    summary.ledgerDecisionDate = item.ledgerDecisionDate;
+  }
+  return summary;
+}
+
+function finalizeMatrixGroup(capabilityId, group) {
+  return {
+    capability: capabilityId,
+    projects: group.projects,
+    priorities: group.priorities,
+    ledgerStatuses: group.ledgerStatuses,
+    recommendedMatches: group.recommendedMatches,
+    candidateMatches: group.candidateMatches,
+    topReferences: group.topReferences
+      .sort((left, right) => {
+        if (right.score !== left.score) return right.score - left.score;
+        return left.project.localeCompare(right.project);
+      })
+      .slice(0, MATRIX_TOP_REFERENCE_LIMIT)
+  };
 }
 
 function scoreSignals(signals) {

@@ -103,6 +103,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'reference_inventory',
       'reference_inspect',
       'reference_adoption_queue',
+      'reference_capability_matrix',
       'reference_source_registry_preview',
       'reference_source_registry_check',
       'reference_source_registry_update_preview',
@@ -349,6 +350,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     });
     assert.equal(referencePrompt.messages[0].content.text.includes(path.join(target, '_reference')), true);
     assert.equal(referencePrompt.messages[0].content.text.includes('security'), true);
+    assert.equal(referencePrompt.messages[0].content.text.includes('reference capability matrix'), true);
 
     for (const { name, toolName, expectedText, arguments: promptArguments } of [
       { name: 'backend_change_review', toolName: 'workflow_run_preview', expectedText: 'backend-contract-change', arguments: { target, intent: 'review auth flow' } },
@@ -434,6 +436,35 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(adoptionQueue.structuredContent.summary.ledgerStatuses.new, 1);
     assert.equal(adoptionQueue.structuredContent.queue[0].recommendedCapabilities.includes('ai-harness'), true);
     assert.equal(adoptionQueue.structuredContent.queue.some((item) => item.ledgerStatus === 'reviewed'), true);
+
+    const capabilityMatrix = await client.callTool({
+      name: 'reference_capability_matrix',
+      arguments: {
+        target: path.join(target, '_reference'),
+        maxResults: 5,
+        ledgerPath: path.join(target, '.ai-playbook', 'knowledge', 'custom-reference-ledger.md')
+      }
+    });
+    assert.equal(capabilityMatrix.structuredContent.ok, true);
+    assert.equal(capabilityMatrix.structuredContent.mode.writes, false);
+    assert.equal(capabilityMatrix.structuredContent.capabilities['ai-harness'].projects, 2);
+    assert.equal(capabilityMatrix.structuredContent.capabilities['ai-harness'].ledgerStatuses.reviewed, 1);
+    assert.equal(capabilityMatrix.structuredContent.capabilities['ai-harness'].ledgerStatuses.new, 1);
+    assert.equal(capabilityMatrix.structuredContent.capabilities['ai-harness'].topReferences.some((item) => item.project === 'reference-pack'), true);
+    assert.deepEqual(await listRelativeFiles(target), before);
+
+    const filteredCapabilityMatrix = await client.callTool({
+      name: 'reference_capability_matrix',
+      arguments: {
+        target: path.join(target, '_reference'),
+        capability: 'ai-harness',
+        maxResults: 5,
+        ledgerPath: path.join(target, '.ai-playbook', 'knowledge', 'custom-reference-ledger.md')
+      }
+    });
+    assert.equal(filteredCapabilityMatrix.structuredContent.ok, true);
+    assert.deepEqual(Object.keys(filteredCapabilityMatrix.structuredContent.capabilities), ['ai-harness']);
+    assert.equal(filteredCapabilityMatrix.structuredContent.summary.capabilities, 1);
 
     const sourcePreview = await client.callTool({
       name: 'reference_source_registry_preview',

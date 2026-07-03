@@ -10,6 +10,7 @@ import {
   buildRuntimeIndex,
   buildSymbolOutlineIndex,
   buildReferenceAdoptionQueue,
+  buildReferenceCapabilityMatrix,
   buildReferenceSourceRegistryPreview,
   buildProjectContext,
   buildDoctorReminderSignal,
@@ -626,6 +627,29 @@ export async function runCli(argv, io = {}) {
         for (const item of result.queue) {
           const ledgerStatus = item.ledgerStatus ? ` ledger=${item.ledgerStatus}` : '';
           write(stdout, `[${item.priority.toUpperCase()}] ${item.project} -> ${item.recommendedCapabilities.join(', ') || 'manual-review'} (${item.score})${ledgerStatus}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'capability-matrix') {
+      const result = await buildReferenceCapabilityMatrix({
+        target: resolveTarget(cwd, targetArg),
+        maxResults: parseMaxResults(parsed.flags['max-results'], 100),
+        ledgerPath: resolveOptionalPath(cwd, parsed.flags.ledger),
+        capability: typeof parsed.flags.capability === 'string' ? parsed.flags.capability : undefined
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Reference capability matrix: ${result.summary.capabilities} capability group(s), ${result.summary.queueItems} queued reference(s)\n`);
+        for (const group of Object.values(result.capabilities)) {
+          const priorities = `high=${group.priorities.high ?? 0} medium=${group.priorities.medium ?? 0} low=${group.priorities.low ?? 0}`;
+          const ledgerStatuses = Object.entries(group.ledgerStatuses)
+            .map(([status, count]) => `${status}=${count}`)
+            .join(' ');
+          const ledgerSuffix = ledgerStatuses ? ` ledger=${ledgerStatuses}` : '';
+          write(stdout, `[${group.capability}] ${group.projects} project(s), ${priorities}${ledgerSuffix}\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -1555,6 +1579,7 @@ function needsValue(key) {
     'max-results',
     'max-depth',
     'project',
+    'capability',
     'ledger',
     'codex-root',
     'agents-root',
@@ -1664,6 +1689,7 @@ Usage:
   ai-playbook reference inventory <reference-dir> [--max-results N] [--json]
   ai-playbook reference inspect <reference-dir> --project <name> [--max-depth N] [--json]
   ai-playbook reference adoption-queue <reference-dir> [--max-results N] [--ledger <ledger.md>] [--json]
+  ai-playbook reference capability-matrix <reference-dir> [--capability <id>] [--max-results N] [--ledger <ledger.md>] [--json]
   ai-playbook reference source-registry-preview <reference-dir> [--max-results N] [--json]
   ai-playbook reference source-registry-check <target> [--path <sources.json>] [--reference-dir <dir>] [--json]
   ai-playbook reference source-registry-update <target> --reference-dir <dir> [--path <sources.json>] [--max-results N] [--apply] [--json]

@@ -835,6 +835,27 @@ test('reference inventory summarizes local reference collections without writing
   assert.equal(queueReport.queue[0].signalHighlights.some((item) => item.signal === 'mcp'), true);
   assert.equal(queueReport.queue[0].nextActions.some((item) => item.includes('MCP surfaces')), true);
 
+  const matrix = capture(target);
+  assert.equal(await runCli(['reference', 'capability-matrix', referenceRoot, '--max-results', '2', '--json'], matrix), 0);
+  const matrixReport = JSON.parse(matrix.out());
+  assert.equal(matrixReport.ok, true);
+  assert.equal(matrixReport.kind, 'reference.capability-matrix');
+  assert.equal(matrixReport.mode.writes, false);
+  assert.equal(matrixReport.summary.queueItems, 2);
+  assert.equal(matrixReport.capabilities['ai-harness'].projects, 1);
+  assert.equal(matrixReport.capabilities.security.projects, 1);
+  assert.equal(matrixReport.capabilities['ai-harness'].topReferences[0].project, 'repo-lens-like');
+  assert.equal(matrixReport.capabilities.security.topReferences[0].project, 'connector-pack');
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const filteredMatrix = capture(target);
+  assert.equal(await runCli(['reference', 'capability-matrix', referenceRoot, '--capability', 'security', '--max-results', '2', '--json'], filteredMatrix), 0);
+  const filteredMatrixReport = JSON.parse(filteredMatrix.out());
+  assert.deepEqual(Object.keys(filteredMatrixReport.capabilities), ['security']);
+  assert.equal(filteredMatrixReport.capabilities.security.projects, 1);
+  assert.equal(filteredMatrixReport.summary.capabilities, 1);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
   const inspect = capture(target);
   assert.equal(await runCli(['reference', 'inspect', referenceRoot, '--project', 'repo-lens-like', '--json'], inspect), 0);
   const inspectReport = JSON.parse(inspect.out());
@@ -937,6 +958,24 @@ test('reference inventory summarizes local reference collections without writing
   assert.equal(adoptedQueueItem.ledgerStatus, 'adopted');
   assert.equal(adoptedQueueItem.ledgerCapability, 'ai-harness');
   assert.equal(adoptedQueueItem.ledgerDecisionDate, '2026-07-03');
+
+  const ledgerMatrix = capture(target);
+  assert.equal(await runCli(['reference', 'capability-matrix', referenceRoot, '--max-results', '2', '--ledger', ledgerPath, '--json'], ledgerMatrix), 0);
+  const ledgerMatrixReport = JSON.parse(ledgerMatrix.out());
+  assert.equal(ledgerMatrixReport.ok, true);
+  assert.equal(ledgerMatrixReport.mode.writes, false);
+  assert.equal(ledgerMatrixReport.capabilities['ai-harness'].ledgerStatuses.adopted, 1);
+  assert.equal(ledgerMatrixReport.capabilities.security.ledgerStatuses.new, 1);
+  const adoptedMatrixItem = ledgerMatrixReport.capabilities['ai-harness'].topReferences.find((item) => item.project === 'repo-lens-like');
+  assert.equal(adoptedMatrixItem.ledgerStatus, 'adopted');
+  assert.equal(adoptedMatrixItem.ledgerCapability, 'ai-harness');
+  assert.equal(adoptedMatrixItem.ledgerDecisionDate, '2026-07-03');
+
+  const filteredLedgerMatrix = capture(target);
+  assert.equal(await runCli(['reference', 'capability-matrix', referenceRoot, '--capability', 'ai-harness', '--max-results', '2', '--ledger', ledgerPath, '--json'], filteredLedgerMatrix), 0);
+  const filteredLedgerMatrixReport = JSON.parse(filteredLedgerMatrix.out());
+  assert.deepEqual(Object.keys(filteredLedgerMatrixReport.capabilities), ['ai-harness']);
+  assert.equal(filteredLedgerMatrixReport.capabilities['ai-harness'].ledgerStatuses.adopted, 1);
   assert.deepEqual(await listRelativeFiles(target), beforeLedgerQueue);
 
   await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'sources.json'), `${JSON.stringify(sourceReport.registry, null, 2)}\n`);

@@ -11,6 +11,7 @@ import {
   buildSymbolOutlineIndex,
   buildReferenceAdoptionPlan,
   buildReferenceAdoptionQueue,
+  buildReferenceAdoptionStatus,
   buildReferenceCapabilityMatrix,
   buildReferenceSourceRegistryPreview,
   buildProjectContext,
@@ -676,6 +677,33 @@ export async function runCli(argv, io = {}) {
         }
       } else {
         write(stdout, `Reference adoption plan: blocked (${result.summary.conflicts} conflict(s))\n`);
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'adoption-status') {
+      const result = await buildReferenceAdoptionStatus({
+        target: resolveTarget(cwd, targetArg),
+        referenceDir: resolveOptionalPath(cwd, parsed.flags['reference-dir']),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        ledgerPath: typeof parsed.flags.ledger === 'string' ? parsed.flags.ledger : undefined,
+        capability: typeof parsed.flags.capability === 'string' ? parsed.flags.capability : undefined,
+        maxResults: parseMaxResults(parsed.flags['max-results'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Reference adoption status: ${result.summary.queueItems} item(s), sources ${result.summary.sourceRegistered}/${result.summary.queueItems}\n`);
+        for (const item of result.items) {
+          const sourceState = item.sourceRegistered ? `source=${item.sourceId}` : 'source=missing';
+          write(stdout, `[${item.ledgerStatus}] ${item.project} ${sourceState} priority=${item.priority}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
         for (const conflict of result.conflicts) {
           write(stdout, `[CONFLICT] ${conflict.message}\n`);
         }
@@ -1719,6 +1747,7 @@ Usage:
   ai-playbook reference adoption-queue <reference-dir> [--max-results N] [--ledger <ledger.md>] [--json]
   ai-playbook reference capability-matrix <reference-dir> [--capability <id>] [--max-results N] [--ledger <ledger.md>] [--json]
   ai-playbook reference adoption-plan <reference-dir> --capability <id> [--max-results N] [--ledger <ledger.md>] [--json]
+  ai-playbook reference adoption-status <target> --reference-dir <dir> [--path <sources.json>] [--ledger <ledger.md>] [--capability <id>] [--max-results N] [--json]
   ai-playbook reference source-registry-preview <reference-dir> [--max-results N] [--json]
   ai-playbook reference source-registry-check <target> [--path <sources.json>] [--reference-dir <dir>] [--json]
   ai-playbook reference source-registry-update <target> --reference-dir <dir> [--path <sources.json>] [--max-results N] [--apply] [--json]

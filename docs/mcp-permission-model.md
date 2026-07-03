@@ -53,6 +53,7 @@ Default read-only additions:
 - `reference_adoption_queue`
 - `reference_capability_matrix`
 - `reference_adoption_plan`
+- `reference_adoption_status`
 - `reference_source_registry_preview`
 - `reference_source_registry_check`
 - `reference_ledger_check`

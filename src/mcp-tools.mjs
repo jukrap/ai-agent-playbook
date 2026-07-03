@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   buildReferenceAdoptionPlan,
   buildReferenceAdoptionQueue,
+  buildReferenceAdoptionStatus,
   buildReferenceCapabilityMatrix,
   buildReferenceSourceRegistryPreview,
   buildDependencyInventoryIndex,
@@ -138,6 +139,21 @@ export function registerPlaybookMcpTools(server, options) {
       capability: args.capability,
       maxResults: args.maxResults ?? 5,
       ledgerPath: args.ledgerPath
+    })),
+    tool('reference_adoption_status', 'Join reference queue, source registry, and adoption ledger state into a read-only status board.', {
+      target: targetSchema,
+      referenceDir: z.string().min(1).describe('Local reference directory to reconcile with the target project.'),
+      path: pathSchema.describe('Optional source registry path inside the target project.'),
+      ledgerPath: z.string().min(1).optional().describe('Optional reference adoption ledger path inside the target project.'),
+      capability: z.string().min(1).optional().describe('Optional capability id filter.'),
+      maxResults: maxResultsSchema
+    }, (args) => buildReferenceAdoptionStatus({
+      target: args.target,
+      referenceDir: args.referenceDir,
+      filePath: args.path,
+      ledgerPath: args.ledgerPath,
+      capability: args.capability,
+      maxResults: args.maxResults ?? 20
     })),
     tool('reference_source_registry_preview', 'Preview knowledge/sources.json entries from a local reference adoption queue without writing files.', {
       target: targetSchema.describe('Reference directory to convert into source registry candidates.'),
@@ -588,7 +604,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- write_gate_preview before suggesting managed writes',
     '',
     'Optional evidence:',
-    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_capability_matrix, reference_adoption_plan, reference_source_registry_preview, reference_source_registry_check, and reference_ledger_check when adopting external reference material',
+    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_capability_matrix, reference_adoption_plan, reference_adoption_status, reference_source_registry_preview, reference_source_registry_check, and reference_ledger_check when adopting external reference material',
     '- index_status when runtime indexes, caches, generated evidence, or canon promotion are involved',
     '- playbook_layout when `.ai-playbook` layout changes are involved',
     '',
@@ -1271,7 +1287,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '',
     'Required evidence:',
     '- workflow_run_preview with recipe knowledge-source-onboarding',
-    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_capability_matrix, reference_adoption_plan, reference_source_registry_preview, and reference_source_registry_check for available local reference and source material',
+    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_capability_matrix, reference_adoption_plan, reference_adoption_status, reference_source_registry_preview, and reference_source_registry_check for available local reference and source material',
     '- reference_ledger_check when external source adoption is in scope',
     '- operator_research for bounded source scans and evidence envelopes',
     '- index_status for generated source indexes and freshness',

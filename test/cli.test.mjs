@@ -878,6 +878,19 @@ test('reference inventory summarizes local reference collections without writing
   assert.equal(adoptionPlanReport.plan.verification.some((item) => item.includes('npm run check')), true);
   assert.deepEqual(await listRelativeFiles(target), before);
 
+  const missingStatusRegistry = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-status', '.', '--reference-dir', referenceRoot, '--max-results', '2', '--json'], missingStatusRegistry), 0);
+  const missingStatusRegistryReport = JSON.parse(missingStatusRegistry.out());
+  assert.equal(missingStatusRegistryReport.ok, true);
+  assert.equal(missingStatusRegistryReport.kind, 'reference.adoption-status');
+  assert.equal(missingStatusRegistryReport.mode.writes, false);
+  assert.equal(missingStatusRegistryReport.summary.queueItems, 2);
+  assert.equal(missingStatusRegistryReport.summary.sourceRegistered, 0);
+  assert.equal(missingStatusRegistryReport.summary.sourceMissing, 2);
+  assert.equal(missingStatusRegistryReport.summary.ledgerStatuses.untracked, 2);
+  assert.equal(missingStatusRegistryReport.warnings.some((warning) => warning.id === 'reference-adoption-status.source-registry-missing'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
   const inspect = capture(target);
   assert.equal(await runCli(['reference', 'inspect', referenceRoot, '--project', 'repo-lens-like', '--json'], inspect), 0);
   const inspectReport = JSON.parse(inspect.out());
@@ -1007,6 +1020,32 @@ test('reference inventory summarizes local reference collections without writing
   assert.equal(ledgerPlanReport.plan.references[0].ledger.status, 'adopted');
   assert.equal(ledgerPlanReport.plan.references[0].ledger.capability, 'ai-harness');
   assert.equal(ledgerPlanReport.matrix.ledgerStatuses.adopted, 1);
+
+  const adoptionStatus = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-status', '.', '--reference-dir', referenceRoot, '--ledger', ledgerPath, '--max-results', '2', '--json'], adoptionStatus), 0);
+  const adoptionStatusReport = JSON.parse(adoptionStatus.out());
+  assert.equal(adoptionStatusReport.ok, true);
+  assert.equal(adoptionStatusReport.mode.writes, false);
+  assert.equal(adoptionStatusReport.summary.queueItems, 2);
+  assert.equal(adoptionStatusReport.summary.sourceRegistered, 2);
+  assert.equal(adoptionStatusReport.summary.sourceMissing, 0);
+  assert.equal(adoptionStatusReport.summary.ledgerStatuses.adopted, 1);
+  assert.equal(adoptionStatusReport.summary.ledgerStatuses.new, 1);
+  const adoptedStatusItem = adoptionStatusReport.items.find((item) => item.project === 'repo-lens-like');
+  assert.equal(adoptedStatusItem.ledgerStatus, 'adopted');
+  assert.equal(adoptedStatusItem.sourceRegistered, true);
+  assert.equal(adoptedStatusItem.sourceId, 'reference-repo-lens-like');
+  const securityStatusCapability = adoptionStatusReport.capabilities.find((item) => item.capability === 'security');
+  assert.equal(securityStatusCapability.sourceRegistered, 1);
+
+  const filteredAdoptionStatus = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-status', '.', '--reference-dir', referenceRoot, '--ledger', ledgerPath, '--capability', 'ai-harness', '--max-results', '2', '--json'], filteredAdoptionStatus), 0);
+  const filteredAdoptionStatusReport = JSON.parse(filteredAdoptionStatus.out());
+  assert.equal(filteredAdoptionStatusReport.summary.queueItems, 1);
+  assert.equal(filteredAdoptionStatusReport.items[0].project, 'repo-lens-like');
+  assert.equal(filteredAdoptionStatusReport.capabilities.some((item) => item.capability === 'ai-harness'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeLedgerQueue);
+
   assert.deepEqual(await listRelativeFiles(target), beforeLedgerQueue);
 
   await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'sources.json'), `${JSON.stringify(sourceReport.registry, null, 2)}\n`);

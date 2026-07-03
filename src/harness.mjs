@@ -27,6 +27,7 @@ export { checkContracts, initContracts, listContracts, snapshotContracts } from 
 export { capabilityCatalog, skillCatalog, workflowCatalog } from './catalog/taxonomy.mjs';
 export { buildReferenceAdoptionPlan, buildReferenceAdoptionQueue, buildReferenceCapabilityMatrix, checkReferenceAdoptionLedger, initReferenceAdoptionLedger, inspectReferenceProject, inventoryReferenceDirectory, updateReferenceAdoptionLedger } from './catalog/reference-adoption.mjs';
 export { buildReferenceSourceRegistryPreview, checkReferenceSourceRegistry, updateReferenceSourceRegistry } from './catalog/reference-source-registry.mjs';
+export { buildReferenceAdoptionStatus } from './catalog/reference-status.mjs';
 export { HARNESS_CONFIG_FILES, previewHarnessConfig } from './core/config.mjs';
 export { describePlaybookLayout, migratePlaybookLayout } from './layout/playbook-layout-v2.mjs';
 export { buildRuntimeIndex, runtimeIndexStatus, searchRuntimeIndex } from './runtime/indexes.mjs';

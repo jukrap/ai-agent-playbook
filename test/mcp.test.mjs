@@ -40,6 +40,29 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     schemaVersion: '1',
     sources: []
   }, null, 2)}\n`);
+  await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'status-sources.json'), `${JSON.stringify({
+    schemaVersion: '1',
+    sources: [{
+      id: 'reference-reference-pack',
+      type: 'docs',
+      title: 'Reference source: reference-pack',
+      owner: 'local-reference-collection',
+      status: 'available',
+      privacyTier: 'internal',
+      credentialBoundary: 'local filesystem only; do not inline secrets or private URLs',
+      updateCadence: 'manual',
+      freshness: '2026-07-03',
+      locatorTypes: ['path-range', 'file'],
+      searchModes: ['keyword', 'inventory-signal'],
+      browse: 'Open paths relative to the scanned reference root and cite project-relative file and line locators.',
+      promotionPolicy: 'Summarize reusable patterns before promoting facts into memory or references.',
+      caveats: [],
+      referencePath: 'reference-pack',
+      recommendedCapabilities: ['ai-harness'],
+      candidateCapabilities: ['skill-pack'],
+      representativeFiles: ['README.md']
+    }]
+  }, null, 2)}\n`);
   await writeFile(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evals', 'prompt-regression.json'), `${JSON.stringify({
     schemaVersion: '1',
     kind: 'runtime.eval-definition',
@@ -105,6 +128,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'reference_adoption_queue',
       'reference_capability_matrix',
       'reference_adoption_plan',
+      'reference_adoption_status',
       'reference_source_registry_preview',
       'reference_source_registry_check',
       'reference_source_registry_update_preview',
@@ -486,6 +510,27 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(plannedReference.readOrder.some((entry) => entry.path === 'README.md'), true);
     assert.equal(plannedReference.suggestedSurfaces.some((surface) => surface.surface === 'skill-reference'), true);
     assert.equal(adoptionPlan.structuredContent.plan.verification.some((item) => item.includes('npm run check')), true);
+    assert.deepEqual(await listRelativeFiles(target), before);
+
+    const adoptionStatus = await client.callTool({
+      name: 'reference_adoption_status',
+      arguments: {
+        target,
+        referenceDir: path.join(target, '_reference'),
+        path: '.ai-playbook/knowledge/status-sources.json',
+        ledgerPath: '.ai-playbook/knowledge/custom-reference-ledger.md',
+        maxResults: 5
+      }
+    });
+    assert.equal(adoptionStatus.structuredContent.ok, true);
+    assert.equal(adoptionStatus.structuredContent.mode.writes, false);
+    assert.equal(adoptionStatus.structuredContent.summary.queueItems, 2);
+    assert.equal(adoptionStatus.structuredContent.summary.sourceRegistered, 1);
+    assert.equal(adoptionStatus.structuredContent.summary.sourceMissing, 1);
+    assert.equal(adoptionStatus.structuredContent.summary.ledgerStatuses.reviewed, 1);
+    const registeredStatusItem = adoptionStatus.structuredContent.items.find((item) => item.project === 'reference-pack');
+    assert.equal(registeredStatusItem.sourceRegistered, true);
+    assert.equal(registeredStatusItem.sourceId, 'reference-reference-pack');
     assert.deepEqual(await listRelativeFiles(target), before);
 
     const sourcePreview = await client.callTool({

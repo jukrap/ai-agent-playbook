@@ -34,8 +34,12 @@ const LANGUAGE_BY_EXTENSION = new Map([
   ['.py', 'python'],
   ['.rb', 'ruby'],
   ['.rs', 'rust'],
-  ['.ts', 'javascript'],
-  ['.tsx', 'javascript']
+  ['.ts', 'typescript'],
+  ['.tsx', 'typescript']
+]);
+
+const PATTERN_LANGUAGE_BY_LANGUAGE = new Map([
+  ['typescript', 'javascript']
 ]);
 
 const PATTERNS = {
@@ -155,9 +159,10 @@ async function collectSymbols({ target, playbookDir, maxEntries }) {
 function extractLineSymbols(line, language) {
   const trimmed = line.trim();
   if (!trimmed || trimmed.startsWith('//') || trimmed.startsWith('#') || trimmed.startsWith('*')) return [];
+  const patternLanguage = PATTERN_LANGUAGE_BY_LANGUAGE.get(language) ?? language;
   const entries = [];
   const seenNames = new Set();
-  for (const item of PATTERNS[language] ?? []) {
+  for (const item of PATTERNS[patternLanguage] ?? []) {
     const match = line.match(item.regex);
     const name = match?.[1];
     if (!name || seenNames.has(name) || RESERVED_NAMES.has(name)) continue;
@@ -186,7 +191,9 @@ function languageForFile(file) {
 }
 
 function classifyKind(kind, name, language) {
-  if (language === 'javascript' && kind === 'function' && /^[A-Z]/.test(name)) return 'component';
+  if ((language === 'javascript' || language === 'typescript') && kind === 'function' && /^[A-Z]/.test(name)) {
+    return 'component';
+  }
   return kind;
 }
 

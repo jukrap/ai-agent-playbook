@@ -151,6 +151,8 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   await mkdir(path.join(target, 'src', 'runtime'), { recursive: true });
   await mkdir(path.join(target, 'db', 'migrations'), { recursive: true });
   await mkdir(path.join(target, '.github', 'workflows'), { recursive: true });
+  await mkdir(path.join(target, 'packages', 'cli'), { recursive: true });
+  await mkdir(path.join(target, 'packages', 'viewer', '.vite', 'deps'), { recursive: true });
   await writeFile(path.join(target, 'src', 'feature.ts'), 'export const featureFlag = "harness-os";\nexport function calculateFeature() {\n  return featureFlag;\n}\nexport const DashboardPanel = () => null;\n');
   await writeFile(path.join(target, 'src', 'runtime', 'index.ts'), 'export const runtimeSource = true;\n');
   await writeFile(path.join(target, 'src', 'routes.ts'), 'router.get("/api/users", handler);\nfetch("/api/profile");\nconst message = "Update matching managed file";\n');
@@ -164,7 +166,16 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
     dependencies: { express: '^5.0.0' },
     devDependencies: { vite: '^7.0.0' }
   }, null, 2)}\n`);
+  await writeFile(path.join(target, 'pnpm-workspace.yaml'), 'packages:\n  - "packages/*"\n');
   await writeFile(path.join(target, 'pnpm-lock.yaml'), 'lockfileVersion: 9.0\n');
+  await writeFile(path.join(target, 'packages', 'cli', 'package.json'), `${JSON.stringify({
+    name: '@fixture/cli',
+    scripts: { test: 'vitest run' },
+    dependencies: { commander: '^14.0.0' }
+  }, null, 2)}\n`);
+  await writeFile(path.join(target, 'packages', 'viewer', '.vite', 'deps', 'package.json'), `${JSON.stringify({
+    type: 'module'
+  }, null, 2)}\n`);
   await writeFile(path.join(target, 'Dockerfile'), 'FROM node:22-alpine AS runtime\n');
   await writeFile(path.join(target, '.github', 'workflows', 'ci.yml'), 'name: ci\njobs:\n  test:\n    steps:\n      - uses: actions/checkout@v4\n');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
@@ -337,8 +348,9 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   assert.equal(symbolOutlineReport.kind, 'runtime.symbol-outline');
   assert.equal(symbolOutlineReport.mode.writes, false);
   assert.equal(symbolOutlineReport.summary.entries >= 6, true);
+  assert.equal(symbolOutlineReport.summary.byLanguage.typescript >= 4, true);
   assert.equal(existsSync(path.join(target, '.ai-playbook', 'runtime', 'indexes', 'symbol-outline.json')), false);
-  assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/feature.ts' && entry.kind === 'constant' && entry.name === 'featureFlag'), true);
+  assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/feature.ts' && entry.language === 'typescript' && entry.kind === 'constant' && entry.name === 'featureFlag'), true);
   assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/feature.ts' && entry.kind === 'function' && entry.name === 'calculateFeature'), true);
   assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/feature.ts' && entry.kind === 'component' && entry.name === 'DashboardPanel'), true);
   assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/runtime/index.ts' && entry.name === 'runtimeSource'), true);
@@ -353,6 +365,9 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   assert.equal(dependencyInventoryReport.mode.writes, false);
   assert.equal(dependencyInventoryReport.summary.manifests >= 1, true);
   assert.equal(dependencyInventoryReport.manifests.some((manifest) => manifest.path === 'package.json' && manifest.scripts.includes('build')), true);
+  assert.equal(dependencyInventoryReport.manifests.some((manifest) => manifest.path === 'packages/cli/package.json' && manifest.lockfiles.includes('pnpm-lock.yaml')), true);
+  assert.equal(dependencyInventoryReport.manifests.some((manifest) => manifest.path === 'packages/viewer/.vite/deps/package.json'), false);
+  assert.equal(dependencyInventoryReport.warnings.some((warning) => warning.paths?.includes('packages/cli/package.json')), false);
   assert.equal(dependencyInventoryReport.lockfiles.some((lockfile) => lockfile.path === 'pnpm-lock.yaml'), true);
   assert.equal(dependencyInventoryReport.containers.some((container) => container.path === 'Dockerfile' && container.baseImages.some((image) => image.image === 'node:22-alpine')), true);
   assert.equal(dependencyInventoryReport.ci.some((ci) => ci.path === '.github/workflows/ci.yml' && ci.uses.includes('actions/checkout@v4')), true);

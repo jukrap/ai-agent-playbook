@@ -230,7 +230,15 @@ export function validateSourceRegistry(value, options = {}) {
   requireArray(value, 'sources', validation.conflicts, path);
 
   if (Array.isArray(value.sources)) {
-    value.sources.forEach((source, index) => validateSourceEntry(source, index, validation.conflicts, path));
+    const sourceIds = new Set();
+    value.sources.forEach((source, index) => {
+      validateSourceEntry(source, index, validation.conflicts, path);
+      if (!isRecord(source) || typeof source.id !== 'string') return;
+      if (sourceIds.has(source.id)) {
+        validation.conflicts.push(artifactConflict('runtime.schema.duplicate-source-id', `Duplicate source id: ${source.id}.`, [`${path}.sources[${index}]`]));
+      }
+      sourceIds.add(source.id);
+    });
   }
   return finishValidation(validation, value, path);
 }

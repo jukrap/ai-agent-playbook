@@ -78,6 +78,7 @@ test('harness facade keeps the public runtime exports', () => {
     'todayIso',
     'uninstallManagedManifest',
     'updateReferenceAdoptionLedger',
+    'updateReferenceSourceRegistry',
     'validateManagedManifest',
     'validateRuntimeSchema',
     'workflowCatalog'

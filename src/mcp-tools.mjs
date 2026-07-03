@@ -30,6 +30,7 @@ import {
   startWorkflowRun,
   createWriteGateAdvisory,
   updateReferenceAdoptionLedger,
+  updateReferenceSourceRegistry,
   workflowCatalog,
   SCHEMA_VERSION
 } from './harness.mjs';
@@ -119,6 +120,18 @@ export function registerPlaybookMcpTools(server, options) {
       target: args.target,
       filePath: args.path,
       referenceDir: args.referenceDir
+    })),
+    tool('reference_source_registry_update_preview', 'Preview missing knowledge/sources.json reference entries without writing files.', {
+      target: targetSchema,
+      referenceDir: z.string().min(1).describe('Local reference directory to convert into source registry entries.'),
+      path: pathSchema.describe('Optional source registry path inside the target project.'),
+      maxResults: maxResultsSchema
+    }, (args) => updateReferenceSourceRegistry({
+      target: args.target,
+      referenceDir: args.referenceDir,
+      filePath: args.path,
+      maxResults: args.maxResults ?? 20,
+      apply: false
     })),
     tool('reference_ledger_check', 'Validate a project reference adoption ledger for statuses and local-only leaks.', {
       target: targetSchema,
@@ -412,6 +425,19 @@ export function registerPlaybookMcpTools(server, options) {
       maxResults: maxResultsSchema,
       apply: z.boolean().describe('Must be true to append rows; false returns a dry-run preview.')
     }, (args) => updateReferenceAdoptionLedger({
+      target: args.target,
+      referenceDir: args.referenceDir,
+      filePath: args.path,
+      maxResults: args.maxResults ?? 20,
+      apply: Boolean(args.apply)
+    })),
+    tool('reference_source_registry_update', 'Preview or append missing knowledge/sources.json reference entries. Requires apply=true to write.', {
+      target: targetSchema,
+      referenceDir: z.string().min(1).describe('Local reference directory to convert into source registry entries.'),
+      path: pathSchema.describe('Optional source registry path inside the target project.'),
+      maxResults: maxResultsSchema,
+      apply: z.boolean().describe('Must be true to append source entries; false returns a dry-run preview.')
+    }, (args) => updateReferenceSourceRegistry({
       target: args.target,
       referenceDir: args.referenceDir,
       filePath: args.path,

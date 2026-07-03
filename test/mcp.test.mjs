@@ -104,6 +104,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'reference_adoption_queue',
       'reference_source_registry_preview',
       'reference_source_registry_check',
+      'reference_source_registry_update_preview',
       'reference_ledger_check',
       'reference_ledger_update_preview',
       'playbook_layout',
@@ -150,6 +151,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(names.includes('canon_promote'), false);
     assert.equal(listed.tools.every((tool) => tool.annotations?.readOnlyHint === true), true);
     assert.equal(names.includes('reference_ledger_update'), false);
+    assert.equal(names.includes('reference_source_registry_update'), false);
 
     const resources = await client.listResources();
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://capabilities'), true);
@@ -443,6 +445,20 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(sourceCheck.structuredContent.mode.writes, false);
     assert.equal(sourceCheck.structuredContent.summary.entries, 0);
     assert.equal(sourceCheck.structuredContent.summary.schemaValid, true);
+
+    const sourceUpdatePreview = await client.callTool({
+      name: 'reference_source_registry_update_preview',
+      arguments: {
+        target,
+        referenceDir: path.join(target, '_reference'),
+        maxResults: 5
+      }
+    });
+    assert.equal(sourceUpdatePreview.structuredContent.ok, true);
+    assert.equal(sourceUpdatePreview.structuredContent.mode.writes, false);
+    assert.equal(sourceUpdatePreview.structuredContent.summary.added, 2);
+    assert.equal(sourceUpdatePreview.structuredContent.registry.sources.some((source) => source.id === 'reference-new-reference-pack'), true);
+    assert.deepEqual(await listRelativeFiles(target), before);
 
     const ledger = await client.callTool({
       name: 'reference_ledger_check',
@@ -854,6 +870,7 @@ test('mcp write tools require server opt-in and apply before writing files', asy
   await writeFile(path.join(target, 'src', 'feature.ts'), 'export const feature = true;\n');
   await writeFile(path.join(target, '_reference', 'reference-pack', 'README.md'), '# Reference Pack\n');
   await writeFile(path.join(target, '_reference', 'reference-pack', 'skills', 'demo', 'SKILL.md'), '---\nname: demo\n---\n# Demo\n');
+  await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'sources.json'), `${JSON.stringify({ schemaVersion: '1', sources: [] }, null, 2)}\n`);
   await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'reference-adoption-ledger.md'), [
     '# Reference Adoption Ledger',
     '',
@@ -870,12 +887,15 @@ test('mcp write tools require server opt-in and apply before writing files', asy
     const workflowTool = listed.tools.find((tool) => tool.name === 'workflow_run_start');
     const advisoryTool = listed.tools.find((tool) => tool.name === 'write_gate_advisory');
     const ledgerTool = listed.tools.find((tool) => tool.name === 'reference_ledger_update');
+    const sourceTool = listed.tools.find((tool) => tool.name === 'reference_source_registry_update');
     assert.equal(Boolean(workflowTool), true);
     assert.equal(Boolean(advisoryTool), true);
     assert.equal(Boolean(ledgerTool), true);
+    assert.equal(Boolean(sourceTool), true);
     assert.equal(workflowTool.annotations?.readOnlyHint, false);
     assert.equal(advisoryTool.annotations?.readOnlyHint, false);
     assert.equal(ledgerTool.annotations?.readOnlyHint, false);
+    assert.equal(sourceTool.annotations?.readOnlyHint, false);
     assert.equal(listed.tools.some((tool) => tool.name === 'canon_promote'), false);
 
     const previewLedger = await client.callTool({
@@ -890,6 +910,20 @@ test('mcp write tools require server opt-in and apply before writing files', asy
     assert.equal(previewLedger.structuredContent.applied, false);
     assert.equal(previewLedger.structuredContent.mode.writes, false);
     assert.equal(previewLedger.structuredContent.summary.added, 1);
+    assert.deepEqual(await listRelativeFiles(target), before);
+
+    const previewSourceUpdate = await client.callTool({
+      name: 'reference_source_registry_update',
+      arguments: {
+        target,
+        referenceDir: path.join(target, '_reference'),
+        apply: false
+      }
+    });
+    assert.equal(previewSourceUpdate.isError, undefined);
+    assert.equal(previewSourceUpdate.structuredContent.applied, false);
+    assert.equal(previewSourceUpdate.structuredContent.mode.writes, false);
+    assert.equal(previewSourceUpdate.structuredContent.summary.added, 1);
     assert.deepEqual(await listRelativeFiles(target), before);
 
     const previewRun = await client.callTool({
@@ -919,6 +953,20 @@ test('mcp write tools require server opt-in and apply before writing files', asy
     const ledgerText = await readFile(path.join(target, '.ai-playbook', 'knowledge', 'reference-adoption-ledger.md'), 'utf8');
     assert.equal(ledgerText.includes('reference-reference-pack'), true);
     assert.equal(ledgerText.includes('| new |  |  |  |  |  |  |'), false);
+
+    const applySourceUpdate = await client.callTool({
+      name: 'reference_source_registry_update',
+      arguments: {
+        target,
+        referenceDir: path.join(target, '_reference'),
+        apply: true
+      }
+    });
+    assert.equal(applySourceUpdate.isError, undefined);
+    assert.equal(applySourceUpdate.structuredContent.applied, true);
+    assert.equal(applySourceUpdate.structuredContent.mode.writes, true);
+    const sourcesText = await readFile(path.join(target, '.ai-playbook', 'knowledge', 'sources.json'), 'utf8');
+    assert.equal(JSON.parse(sourcesText).sources.some((source) => source.id === 'reference-reference-pack'), true);
 
     const applyRun = await client.callTool({
       name: 'workflow_run_start',

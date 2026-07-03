@@ -26,7 +26,7 @@ export { recordRun, runStatus, startRun, summarizeRun } from './harness/runs-led
 export { checkContracts, initContracts, listContracts, snapshotContracts } from './harness/contracts.mjs';
 export { capabilityCatalog, skillCatalog, workflowCatalog } from './catalog/taxonomy.mjs';
 export { buildReferenceAdoptionQueue, checkReferenceAdoptionLedger, initReferenceAdoptionLedger, inventoryReferenceDirectory, updateReferenceAdoptionLedger } from './catalog/reference-adoption.mjs';
-export { buildReferenceSourceRegistryPreview, checkReferenceSourceRegistry } from './catalog/reference-source-registry.mjs';
+export { buildReferenceSourceRegistryPreview, checkReferenceSourceRegistry, updateReferenceSourceRegistry } from './catalog/reference-source-registry.mjs';
 export { HARNESS_CONFIG_FILES, previewHarnessConfig } from './core/config.mjs';
 export { describePlaybookLayout, migratePlaybookLayout } from './layout/playbook-layout-v2.mjs';
 export { buildRuntimeIndex, runtimeIndexStatus, searchRuntimeIndex } from './runtime/indexes.mjs';

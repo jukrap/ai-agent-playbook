@@ -9,6 +9,7 @@ import {
   buildRouteApiHintsIndex,
   buildRuntimeIndex,
   buildSymbolOutlineIndex,
+  buildReferenceAdoptionPlan,
   buildReferenceAdoptionQueue,
   buildReferenceCapabilityMatrix,
   buildReferenceSourceRegistryPreview,
@@ -650,6 +651,33 @@ export async function runCli(argv, io = {}) {
             .join(' ');
           const ledgerSuffix = ledgerStatuses ? ` ledger=${ledgerStatuses}` : '';
           write(stdout, `[${group.capability}] ${group.projects} project(s), ${priorities}${ledgerSuffix}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'adoption-plan') {
+      const result = await buildReferenceAdoptionPlan({
+        target: resolveTarget(cwd, targetArg),
+        capability: typeof parsed.flags.capability === 'string' ? parsed.flags.capability : undefined,
+        maxResults: parseMaxResults(parsed.flags['max-results'], 5),
+        ledgerPath: resolveOptionalPath(cwd, parsed.flags.ledger)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else if (result.ok) {
+        write(stdout, `Reference adoption plan: ${result.plan.capability} (${result.summary.selectedReferences} selected reference(s))\n`);
+        for (const item of result.plan.references) {
+          const ledgerStatus = item.ledger?.status ? ` ledger=${item.ledger.status}` : '';
+          const surfaces = item.suggestedSurfaces.map((surface) => surface.surface).join(', ');
+          write(stdout, `[${item.priority.toUpperCase()}] ${item.project} (${item.score})${ledgerStatus}\n`);
+          write(stdout, `  surfaces: ${surfaces || 'manual-review'}\n`);
+          if (item.readOrder[0]) write(stdout, `  first-read: ${item.readOrder[0].path} - ${item.readOrder[0].reason}\n`);
+        }
+      } else {
+        write(stdout, `Reference adoption plan: blocked (${result.summary.conflicts} conflict(s))\n`);
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -1690,6 +1718,7 @@ Usage:
   ai-playbook reference inspect <reference-dir> --project <name> [--max-depth N] [--json]
   ai-playbook reference adoption-queue <reference-dir> [--max-results N] [--ledger <ledger.md>] [--json]
   ai-playbook reference capability-matrix <reference-dir> [--capability <id>] [--max-results N] [--ledger <ledger.md>] [--json]
+  ai-playbook reference adoption-plan <reference-dir> --capability <id> [--max-results N] [--ledger <ledger.md>] [--json]
   ai-playbook reference source-registry-preview <reference-dir> [--max-results N] [--json]
   ai-playbook reference source-registry-check <target> [--path <sources.json>] [--reference-dir <dir>] [--json]
   ai-playbook reference source-registry-update <target> --reference-dir <dir> [--path <sources.json>] [--max-results N] [--apply] [--json]

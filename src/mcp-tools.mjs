@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  buildReferenceAdoptionPlan,
   buildReferenceAdoptionQueue,
   buildReferenceCapabilityMatrix,
   buildReferenceSourceRegistryPreview,
@@ -125,6 +126,17 @@ export function registerPlaybookMcpTools(server, options) {
       target: args.target,
       maxResults: args.maxResults ?? 100,
       capability: args.capability,
+      ledgerPath: args.ledgerPath
+    })),
+    tool('reference_adoption_plan', 'Create a bounded capability-focused reference adoption planning packet without writing files.', {
+      target: targetSchema.describe('Reference directory to plan from.'),
+      capability: z.string().min(1).describe('Capability id to plan for.'),
+      maxResults: maxResultsSchema,
+      ledgerPath: z.string().min(1).optional().describe('Optional reference adoption ledger path used to annotate selected references.')
+    }, (args) => buildReferenceAdoptionPlan({
+      target: args.target,
+      capability: args.capability,
+      maxResults: args.maxResults ?? 5,
       ledgerPath: args.ledgerPath
     })),
     tool('reference_source_registry_preview', 'Preview knowledge/sources.json entries from a local reference adoption queue without writing files.', {
@@ -576,7 +588,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- write_gate_preview before suggesting managed writes',
     '',
     'Optional evidence:',
-    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_capability_matrix, reference_source_registry_preview, reference_source_registry_check, and reference_ledger_check when adopting external reference material',
+    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_capability_matrix, reference_adoption_plan, reference_source_registry_preview, reference_source_registry_check, and reference_ledger_check when adopting external reference material',
     '- index_status when runtime indexes, caches, generated evidence, or canon promotion are involved',
     '- playbook_layout when `.ai-playbook` layout changes are involved',
     '',
@@ -612,7 +624,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
           `Reference directory: ${args.referenceDir ?? '<reference directory>'}`,
           `Capability focus: ${args.capability ?? '<capability or broad sweep>'}`,
           '',
-          'Start with read-only reference inventory, reference capability matrix, and reference ledger validation.',
+          'Start with read-only reference inventory, reference capability matrix, reference adoption plan, and reference ledger validation.',
           'Adopt patterns, contracts, and capability gaps only after recording status in the ledger.',
           'Do not copy large upstream excerpts, local absolute paths, internal URLs, secrets, or noisy upstream branding into public docs.'
         ].join('\n')
@@ -1259,7 +1271,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '',
     'Required evidence:',
     '- workflow_run_preview with recipe knowledge-source-onboarding',
-    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_capability_matrix, reference_source_registry_preview, and reference_source_registry_check for available local reference and source material',
+    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_capability_matrix, reference_adoption_plan, reference_source_registry_preview, and reference_source_registry_check for available local reference and source material',
     '- reference_ledger_check when external source adoption is in scope',
     '- operator_research for bounded source scans and evidence envelopes',
     '- index_status for generated source indexes and freshness',

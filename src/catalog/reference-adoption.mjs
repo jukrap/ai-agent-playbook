@@ -14,6 +14,7 @@ const DEFAULT_MAX_DEPTH = 6;
 const DEFAULT_QUEUE_RESULTS = 20;
 const REPRESENTATIVE_LIMIT = 16;
 const MATRIX_TOP_REFERENCE_LIMIT = 8;
+const DEFAULT_PLAN_RESULTS = 5;
 const REPRESENTATIVE_CATEGORY_ORDER = [
   'overview',
   'agent',
@@ -197,6 +198,96 @@ export async function buildReferenceCapabilityMatrix({
     capabilities,
     warnings: queue.warnings,
     conflicts: queue.conflicts
+  };
+}
+
+export async function buildReferenceAdoptionPlan({
+  target,
+  capability,
+  maxProjects = DEFAULT_MAX_PROJECTS,
+  maxDepth = DEFAULT_MAX_DEPTH,
+  maxResults = DEFAULT_PLAN_RESULTS,
+  ledgerPath
+}) {
+  const normalizedCapability = normalizeMatrixCapability(capability);
+  const selectionLimit = planSelectionLimit(maxResults);
+  const matrix = await buildReferenceCapabilityMatrix({
+    target,
+    maxProjects,
+    maxDepth,
+    maxResults: maxProjects,
+    ledgerPath,
+    capability: normalizedCapability
+  });
+  const warnings = [...matrix.warnings];
+  const conflicts = [...matrix.conflicts];
+
+  if (!normalizedCapability) {
+    conflicts.push({
+      id: 'reference-adoption-plan.capability-required',
+      message: 'Reference adoption plan requires --capability <id>.',
+      paths: []
+    });
+  }
+
+  const group = normalizedCapability ? matrix.capabilities[normalizedCapability] : null;
+  if (normalizedCapability && !group) {
+    warnings.push({
+      id: 'reference-adoption-plan.no-capability-matches',
+      message: `No reference candidates matched capability: ${normalizedCapability}.`,
+      paths: []
+    });
+  }
+
+  const selected = (group?.topReferences ?? []).slice(0, selectionLimit);
+  const references = [];
+  for (const item of selected) {
+    const inspected = await inspectReferenceProject({
+      target: matrix.target,
+      project: item.project,
+      maxDepth
+    });
+    warnings.push(...inspected.warnings);
+    conflicts.push(...inspected.conflicts);
+    if (inspected.ok) {
+      references.push(referenceAdoptionPlanReference({ item, inspected }));
+    }
+  }
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'reference.adoption-plan',
+    ok: conflicts.length === 0,
+    target: matrix.target,
+    mode: { localOnly: true, network: false, writes: false },
+    filter: {
+      capability: normalizedCapability
+    },
+    summary: {
+      capability: normalizedCapability,
+      matrixCapabilities: matrix.summary.capabilities,
+      selectedReferences: references.length,
+      warnings: warnings.length,
+      conflicts: conflicts.length
+    },
+    matrix: {
+      capability: group?.capability ?? normalizedCapability,
+      projects: group?.projects ?? 0,
+      priorities: group?.priorities ?? { high: 0, medium: 0, low: 0 },
+      ledgerStatuses: group?.ledgerStatuses ?? {},
+      recommendedMatches: group?.recommendedMatches ?? 0,
+      candidateMatches: group?.candidateMatches ?? 0
+    },
+    plan: {
+      capability: normalizedCapability,
+      objective: adoptionPlanObjective(normalizedCapability),
+      references,
+      stopConditions: adoptionPlanStopConditions(normalizedCapability),
+      verification: adoptionPlanVerification(normalizedCapability),
+      followUps: adoptionPlanFollowUps(normalizedCapability)
+    },
+    warnings,
+    conflicts
   };
 }
 
@@ -572,6 +663,169 @@ function finalizeMatrixGroup(capabilityId, group) {
       })
       .slice(0, MATRIX_TOP_REFERENCE_LIMIT)
   };
+}
+
+function planSelectionLimit(value) {
+  if (!Number.isInteger(value) || value <= 0) return DEFAULT_PLAN_RESULTS;
+  return Math.min(value, MATRIX_TOP_REFERENCE_LIMIT);
+}
+
+function referenceAdoptionPlanReference({ item, inspected }) {
+  const ledger = item.ledgerStatus
+    ? {
+        status: item.ledgerStatus,
+        referenceId: item.ledgerReferenceId,
+        capability: item.ledgerCapability,
+        decisionDate: item.ledgerDecisionDate
+      }
+    : null;
+
+  return {
+    project: item.project,
+    path: item.path,
+    score: item.score,
+    priority: item.priority,
+    ledger,
+    recommendedCapabilities: item.recommendedCapabilities,
+    candidateCapabilities: item.candidateCapabilities,
+    usefulSignals: item.signalHighlights,
+    readOrder: inspected.review.readOrder.slice(0, 10),
+    adoptionQuestions: inspected.review.adoptionQuestions,
+    suggestedSurfaces: suggestedAdoptionSurfaces({ item, inspected }),
+    riskFlags: adoptionPlanRiskFlags({ item, inspected }),
+    nextActions: item.nextActions
+  };
+}
+
+function suggestedAdoptionSurfaces({ item, inspected }) {
+  const ids = new Set([...item.recommendedCapabilities, ...item.candidateCapabilities]);
+  const signals = inspected.signals;
+  const surfaces = [];
+  const add = (surface, reason) => {
+    if (!surfaces.some((item) => item.surface === surface)) {
+      surfaces.push({ surface, reason });
+    }
+  };
+
+  if (ids.has('ai-harness') || ids.has('skill-pack')) {
+    add('skill-reference', 'Extract reusable triggers, stop conditions, or reference notes instead of copying long skill bodies.');
+  }
+  if (ids.has('mcp-integration') || signals.mcp > 0) {
+    add('mcp-permission-tier', 'Classify resource, prompt, read tool, scaffold, managed-write, and project-write boundaries before adoption.');
+  }
+  if (ids.has('agent-workflow') || ids.has('delivery') || signals.workflows > 0 || signals.commands > 0) {
+    add('workflow-recipe', 'Capture worker contract, recipe, runbook, command, and handoff patterns with explicit stop conditions.');
+  }
+  if (ids.has('runtime-index-canon') || signals.indexes > 0 || signals.memory > 0) {
+    add('runtime-memory-boundary', 'Separate generated runtime evidence from reviewed memory or canon promotion rules.');
+  }
+  if (ids.has('security') || ids.has('security-validation') || signals.security > 0) {
+    add('security-validator', 'Convert reusable security ideas into local checks, review prompts, or bounded checklist references.');
+  }
+  if (ids.has('compliance-review') || signals.compliance > 0) {
+    add('compliance-reference', 'Preserve license, SBOM, notice, or policy evidence as summarized validation guidance.');
+  }
+  if (ids.has('connector-reference') || ids.has('backend') || signals.connectors > 0) {
+    add('connector-contract', 'Document credential boundary, registration, retry, idempotency, and adapter contracts before implementation.');
+  }
+  if (ids.has('verification') || signals.tests > 0) {
+    add('verification-gate', 'Harvest fixtures, regression checks, and required command gates as local verification patterns.');
+  }
+  if (ids.has('foundation') || ids.has('documentation') || signals.docs > 0) {
+    add('docs-or-template', 'Turn stable conventions into concise docs, templates, or project playbook references.');
+  }
+  if (surfaces.length === 0) {
+    add('manual-review', 'Automatic signals are weak; inspect the representative files before choosing a local surface.');
+  }
+  return surfaces;
+}
+
+function adoptionPlanRiskFlags({ item, inspected }) {
+  const flags = [];
+  if (['rejected', 'deferred'].includes(item.ledgerStatus)) {
+    flags.push({
+      id: 'ledger-decision',
+      message: `Ledger status is ${item.ledgerStatus}; do not re-adopt without a new decision.`
+    });
+  }
+  if (inspected.signals.security > 0 || inspected.signals.compliance > 0) {
+    flags.push({
+      id: 'security-compliance-surface',
+      message: 'Security or compliance signals are present; summarize rules and validate local-only hygiene before adoption.'
+    });
+  }
+  if (inspected.summary.files > 1000) {
+    flags.push({
+      id: 'large-reference',
+      message: 'Reference project is large; keep the scan bounded and cite representative files only.'
+    });
+  }
+  if (item.signalHighlights.some((signal) => signal.count >= 100)) {
+    flags.push({
+      id: 'high-signal-volume',
+      message: 'One or more signal families are very broad; avoid treating count volume as quality.'
+    });
+  }
+  return flags;
+}
+
+function adoptionPlanObjective(capability) {
+  if (capability === 'ai-harness') return 'Identify reusable harness mechanics, skill packaging patterns, MCP surfaces, memory boundaries, and operator workflows.';
+  if (capability === 'runtime-index-canon') return 'Extract runtime index, evidence, cache, graph, and canon promotion patterns while keeping generated output separate from trusted memory.';
+  if (capability === 'mcp-integration') return 'Compare MCP resources, prompts, tools, schemas, and permission tiers before adding or changing local MCP surfaces.';
+  if (capability === 'agent-workflow') return 'Extract agent orchestration, worker contracts, runbooks, handoffs, and stop conditions into reusable local workflows.';
+  if (capability === 'verification') return 'Collect repeatable test, fixture, eval, validator, and CI gate ideas without importing noisy reference implementations.';
+  if (capability === 'security') return 'Turn security and compliance reference signals into local review gates, validators, and safe documentation.';
+  return `Review top local reference candidates for the ${capability ?? 'selected'} capability and decide which patterns deserve local adoption.`;
+}
+
+function adoptionPlanStopConditions(capability) {
+  const stops = [
+    'Reference usefulness cannot be explained without copying raw source content or large excerpts.',
+    'A selected reference is already rejected or deferred in the ledger and no new decision exists.',
+    'The proposed local surface lacks an owner category: skill, reference, recipe, runtime CLI, MCP resource, MCP prompt, MCP tool, adapter, plugin, docs, or no change.',
+    'Write behavior would lack dry-run output, target path validation, permission tier, or audit trail.',
+    'Generated runtime evidence would be promoted into memory or public docs without review.'
+  ];
+  if (capability === 'security' || capability === 'mcp-integration') {
+    stops.push('Credential boundary, private URL handling, or permission scope is unclear.');
+  }
+  if (capability === 'runtime-index-canon') {
+    stops.push('Runtime artifact freshness, scan range, or source locator cannot be reopened.');
+  }
+  return stops;
+}
+
+function adoptionPlanVerification(capability) {
+  const verification = [
+    'Run reference ledger-check for existing adoption decisions before writing follow-up changes.',
+    'Run reference source-registry-check when source registry entries are part of the follow-up.',
+    'Run catalog check when skills, wrappers, workflows, prompts, or MCP surfaces change.',
+    'Run public-doc hygiene and translation validation when docs or templates change.',
+    'Run npm run check and npm test for CLI/MCP/runtime behavior changes.'
+  ];
+  if (capability === 'runtime-index-canon') {
+    verification.push('Run runtime schema-check for any new runtime artifact shape.');
+  }
+  if (capability === 'security') {
+    verification.push('Run public documentation hygiene checks before publishing any security/compliance reference.');
+  }
+  return verification;
+}
+
+function adoptionPlanFollowUps(capability) {
+  const followUps = [
+    'Record accepted, deferred, rejected, or adopted decisions in the reference adoption ledger.',
+    'Register durable source metadata in knowledge/sources.json only after review.',
+    'Keep generated analysis under runtime until a separate canon or docs promotion is reviewed.'
+  ];
+  if (capability === 'mcp-integration') {
+    followUps.push('Review the MCP permission model before exposing any new write-capable tool.');
+  }
+  if (capability === 'agent-workflow') {
+    followUps.push('Convert reusable orchestration patterns into workflow recipes or handoff references, not default always-on context.');
+  }
+  return followUps;
 }
 
 function scoreSignals(signals) {

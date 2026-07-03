@@ -104,6 +104,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'reference_inspect',
       'reference_adoption_queue',
       'reference_capability_matrix',
+      'reference_adoption_plan',
       'reference_source_registry_preview',
       'reference_source_registry_check',
       'reference_source_registry_update_preview',
@@ -351,6 +352,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(referencePrompt.messages[0].content.text.includes(path.join(target, '_reference')), true);
     assert.equal(referencePrompt.messages[0].content.text.includes('security'), true);
     assert.equal(referencePrompt.messages[0].content.text.includes('reference capability matrix'), true);
+    assert.equal(referencePrompt.messages[0].content.text.includes('reference adoption plan'), true);
 
     for (const { name, toolName, expectedText, arguments: promptArguments } of [
       { name: 'backend_change_review', toolName: 'workflow_run_preview', expectedText: 'backend-contract-change', arguments: { target, intent: 'review auth flow' } },
@@ -465,6 +467,26 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(filteredCapabilityMatrix.structuredContent.ok, true);
     assert.deepEqual(Object.keys(filteredCapabilityMatrix.structuredContent.capabilities), ['ai-harness']);
     assert.equal(filteredCapabilityMatrix.structuredContent.summary.capabilities, 1);
+
+    const adoptionPlan = await client.callTool({
+      name: 'reference_adoption_plan',
+      arguments: {
+        target: path.join(target, '_reference'),
+        capability: 'ai-harness',
+        maxResults: 5,
+        ledgerPath: path.join(target, '.ai-playbook', 'knowledge', 'custom-reference-ledger.md')
+      }
+    });
+    assert.equal(adoptionPlan.structuredContent.ok, true);
+    assert.equal(adoptionPlan.structuredContent.mode.writes, false);
+    assert.equal(adoptionPlan.structuredContent.summary.selectedReferences, 2);
+    assert.equal(adoptionPlan.structuredContent.plan.references.some((item) => item.project === 'reference-pack'), true);
+    const plannedReference = adoptionPlan.structuredContent.plan.references.find((item) => item.project === 'reference-pack');
+    assert.equal(plannedReference.ledger.status, 'reviewed');
+    assert.equal(plannedReference.readOrder.some((entry) => entry.path === 'README.md'), true);
+    assert.equal(plannedReference.suggestedSurfaces.some((surface) => surface.surface === 'skill-reference'), true);
+    assert.equal(adoptionPlan.structuredContent.plan.verification.some((item) => item.includes('npm run check')), true);
+    assert.deepEqual(await listRelativeFiles(target), before);
 
     const sourcePreview = await client.callTool({
       name: 'reference_source_registry_preview',

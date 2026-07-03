@@ -134,6 +134,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'reference_source_registry_update_preview',
       'reference_ledger_check',
       'reference_ledger_update_preview',
+      'reference_ledger_decision_preview',
       'playbook_layout',
       'index_status',
       'runtime_schema_check',
@@ -178,6 +179,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(names.includes('canon_promote'), false);
     assert.equal(listed.tools.every((tool) => tool.annotations?.readOnlyHint === true), true);
     assert.equal(names.includes('reference_ledger_update'), false);
+    assert.equal(names.includes('reference_ledger_decision'), false);
     assert.equal(names.includes('reference_source_registry_update'), false);
 
     const resources = await client.listResources();
@@ -589,6 +591,23 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(customLedger.structuredContent.ok, true);
     assert.equal(customLedger.structuredContent.summary.capabilities.security.statuses.reviewed, 1);
 
+    const ledgerDecisionPreview = await client.callTool({
+      name: 'reference_ledger_decision_preview',
+      arguments: {
+        target,
+        path: '.ai-playbook/knowledge/custom-reference-ledger.md',
+        reference: 'reference-pack',
+        status: 'adopted',
+        decisionDate: '2026-07-03'
+      }
+    });
+    assert.equal(ledgerDecisionPreview.structuredContent.ok, true);
+    assert.equal(ledgerDecisionPreview.structuredContent.applied, false);
+    assert.equal(ledgerDecisionPreview.structuredContent.mode.writes, false);
+    assert.equal(ledgerDecisionPreview.structuredContent.summary.changed, true);
+    assert.equal(ledgerDecisionPreview.structuredContent.decision.after.status, 'adopted');
+    assert.deepEqual(await listRelativeFiles(target), before);
+
     const ledgerUpdatePreview = await client.callTool({
       name: 'reference_ledger_update_preview',
       arguments: {
@@ -999,14 +1018,17 @@ test('mcp write tools require server opt-in and apply before writing files', asy
     const workflowTool = listed.tools.find((tool) => tool.name === 'workflow_run_start');
     const advisoryTool = listed.tools.find((tool) => tool.name === 'write_gate_advisory');
     const ledgerTool = listed.tools.find((tool) => tool.name === 'reference_ledger_update');
+    const ledgerDecisionTool = listed.tools.find((tool) => tool.name === 'reference_ledger_decision');
     const sourceTool = listed.tools.find((tool) => tool.name === 'reference_source_registry_update');
     assert.equal(Boolean(workflowTool), true);
     assert.equal(Boolean(advisoryTool), true);
     assert.equal(Boolean(ledgerTool), true);
+    assert.equal(Boolean(ledgerDecisionTool), true);
     assert.equal(Boolean(sourceTool), true);
     assert.equal(workflowTool.annotations?.readOnlyHint, false);
     assert.equal(advisoryTool.annotations?.readOnlyHint, false);
     assert.equal(ledgerTool.annotations?.readOnlyHint, false);
+    assert.equal(ledgerDecisionTool.annotations?.readOnlyHint, false);
     assert.equal(sourceTool.annotations?.readOnlyHint, false);
     assert.equal(listed.tools.some((tool) => tool.name === 'canon_promote'), false);
 
@@ -1065,6 +1087,37 @@ test('mcp write tools require server opt-in and apply before writing files', asy
     const ledgerText = await readFile(path.join(target, '.ai-playbook', 'knowledge', 'reference-adoption-ledger.md'), 'utf8');
     assert.equal(ledgerText.includes('reference-reference-pack'), true);
     assert.equal(ledgerText.includes('| new |  |  |  |  |  |  |'), false);
+
+    const previewLedgerDecision = await client.callTool({
+      name: 'reference_ledger_decision',
+      arguments: {
+        target,
+        reference: 'reference-pack',
+        status: 'reviewed',
+        decisionDate: '2026-07-03',
+        apply: false
+      }
+    });
+    assert.equal(previewLedgerDecision.isError, undefined);
+    assert.equal(previewLedgerDecision.structuredContent.applied, false);
+    assert.equal(previewLedgerDecision.structuredContent.mode.writes, false);
+    assert.equal(previewLedgerDecision.structuredContent.summary.changed, true);
+
+    const applyLedgerDecision = await client.callTool({
+      name: 'reference_ledger_decision',
+      arguments: {
+        target,
+        reference: 'reference-pack',
+        status: 'reviewed',
+        decisionDate: '2026-07-03',
+        apply: true
+      }
+    });
+    assert.equal(applyLedgerDecision.isError, undefined);
+    assert.equal(applyLedgerDecision.structuredContent.applied, true);
+    assert.equal(applyLedgerDecision.structuredContent.mode.writes, true);
+    const decidedLedgerText = await readFile(path.join(target, '.ai-playbook', 'knowledge', 'reference-adoption-ledger.md'), 'utf8');
+    assert.equal(decidedLedgerText.includes('| reviewed | reference-reference-pack |'), true);
 
     const applySourceUpdate = await client.callTool({
       name: 'reference_source_registry_update',

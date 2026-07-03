@@ -161,6 +161,7 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 | `reference source-registry-update <target>` | Local reference queue에서 누락된 `knowledge/sources.json` reference entry를 preview하거나 append합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook reference source-registry-update <target-project> --reference-dir _reference --json` |
 | `reference ledger-init <target>` | Local reference queue에서 missing reference adoption ledger를 preview하거나 생성합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook reference ledger-init <target-project> --reference-dir _reference --json` |
 | `reference ledger-update <target>` | Local reference queue에서 누락된 reference adoption ledger row를 preview하거나 append합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook reference ledger-update <target-project> --reference-dir _reference --json` |
+| `reference ledger-decision <target>` | 기존 reference adoption ledger row 하나의 decision을 preview하거나 update합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook reference ledger-decision <target-project> --reference reference-pack --status reviewed --json` |
 | `reference ledger-check <target>` | reference adoption ledger의 status 값과 local-only leak를 검증합니다. | 아니오 | `npx ai-agent-playbook reference ledger-check <target-project> --json` |
 | `runtime capability-history <target>` | benchmark나 telemetry를 실행하지 않고 local append-only capability history를 요약합니다. | 아니오 | `npx ai-agent-playbook runtime capability-history <target-project> --json` |
 | `runtime schema-check <target>` | runtime eval, witness, evidence-envelope, repo-graph, artifact, source-registry JSON을 파일 쓰기 없이 검증합니다. | 아니오 | `npx ai-agent-playbook runtime schema-check <target-project> --path .ai-playbook/runtime/reports/evals/example.json --json` |
@@ -198,6 +199,8 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 `reference ledger-init`은 local reference adoption queue에서 `.ai-playbook/knowledge/reference-adoption-ledger.md`를 seed합니다. `--apply`가 있을 때만 쓰고, 기존 ledger overwrite는 거부하며, 생성 row는 status, reference id, capability, useful pattern summary, local adoption note, risk/noise note, decision date placeholder로 compact하게 유지합니다.
 
 `reference ledger-update`는 기존 reference adoption ledger에 누락된 `new` row만 append합니다. 현재 ledger를 사용해 이미 reviewed, adopted, deferred, rejected로 기록된 reference를 중복 추가하지 않고, 실제 row를 append할 때 starter blank template row를 제거하며, 쓰기는 `--apply`가 있을 때만 수행합니다.
+
+`reference ledger-decision`은 기존 reference adoption ledger row 하나를 `reviewed`, `adopted`, `deferred`, `rejected` 중 하나로 update합니다. 기본값은 정확한 row replacement preview이고, 쓰기는 `--apply`가 있을 때만 수행합니다. Optional `--capability`, `--pattern`, `--adoption`, `--risk`, `--decision-date YYYY-MM-DD` flag로 선택한 row cell을 갱신할 수 있습니다. Local absolute path, internal URL, token-like secret, table separator, newline, oversized raw excerpt 같은 unsafe cell value는 어떤 write 전에도 거부됩니다.
 
 `reference ledger-check`는 기본적으로 `.ai-playbook/knowledge/reference-adoption-ledger.md`를 검증합니다. 파일을 쓰지 않고 adoption status, local absolute path, internal URL, secret-like token, oversized excerpt를 확인합니다. 대상 프로젝트 내부의 다른 ledger를 확인하려면 `--path <ledger.md>`를 사용합니다. JSON output에는 capability 영역별 adoption status를 볼 수 있도록 `summary.capabilities`가 포함됩니다. Oversized fenced excerpt를 warning이 아니라 실패로 다루려면 `--strict`를 추가합니다.
 
@@ -328,7 +331,7 @@ ai-playbook mcp
 서버는 아래 read-only 도구를 노출합니다.
 
 - playbook context: `playbook_context`, `context_status`, `context_list`
-- catalog와 layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_inspect`, `reference_adoption_queue`, `reference_capability_matrix`, `reference_adoption_plan`, `reference_adoption_status`, `reference_source_registry_preview`, `reference_source_registry_check`, `reference_ledger_check`, `playbook_layout`, `index_status`, `runtime_schema_check`, `evidence_locator_check`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `repo_graph_preview`, `write_gate_preview`, `canon_check`
+- catalog와 layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_inspect`, `reference_adoption_queue`, `reference_capability_matrix`, `reference_adoption_plan`, `reference_adoption_status`, `reference_source_registry_preview`, `reference_source_registry_check`, `reference_ledger_check`, `reference_ledger_decision_preview`, `playbook_layout`, `index_status`, `runtime_schema_check`, `evidence_locator_check`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `repo_graph_preview`, `write_gate_preview`, `canon_check`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules와 project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA와 deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`

@@ -34,6 +34,7 @@ import {
   startWorkflowRun,
   createWriteGateAdvisory,
   updateReferenceAdoptionLedger,
+  updateReferenceLedgerDecision,
   updateReferenceSourceRegistry,
   workflowCatalog,
   SCHEMA_VERSION
@@ -202,6 +203,28 @@ export function registerPlaybookMcpTools(server, options) {
       referenceDir: args.referenceDir,
       filePath: args.path,
       maxResults: args.maxResults ?? 20,
+      apply: false
+    })),
+    tool('reference_ledger_decision_preview', 'Preview a single reference adoption ledger decision row update without writing files.', {
+      target: targetSchema,
+      reference: z.string().min(1).describe('Reference id or project id to update.'),
+      status: z.enum(['reviewed', 'adopted', 'deferred', 'rejected']).describe('Decision status to record.'),
+      path: pathSchema.describe('Optional ledger path inside the target project.'),
+      capability: z.string().min(1).optional(),
+      pattern: z.string().min(1).optional(),
+      adoption: z.string().min(1).optional(),
+      risk: z.string().min(1).optional(),
+      decisionDate: z.string().min(1).optional().describe('Optional YYYY-MM-DD decision date.')
+    }, (args) => updateReferenceLedgerDecision({
+      target: args.target,
+      filePath: args.path,
+      referenceId: args.reference,
+      status: args.status,
+      capability: args.capability,
+      pattern: args.pattern,
+      adoption: args.adoption,
+      risk: args.risk,
+      decisionDate: args.decisionDate,
       apply: false
     })),
     tool('playbook_layout', 'Describe whether a target playbook has the v2 layout.', {
@@ -479,6 +502,29 @@ export function registerPlaybookMcpTools(server, options) {
       referenceDir: args.referenceDir,
       filePath: args.path,
       maxResults: args.maxResults ?? 20,
+      apply: Boolean(args.apply)
+    })),
+    tool('reference_ledger_decision', 'Preview or update one reference adoption ledger decision row. Requires apply=true to write.', {
+      target: targetSchema,
+      reference: z.string().min(1).describe('Reference id or project id to update.'),
+      status: z.enum(['reviewed', 'adopted', 'deferred', 'rejected']).describe('Decision status to record.'),
+      path: pathSchema.describe('Optional ledger path inside the target project.'),
+      capability: z.string().min(1).optional(),
+      pattern: z.string().min(1).optional(),
+      adoption: z.string().min(1).optional(),
+      risk: z.string().min(1).optional(),
+      decisionDate: z.string().min(1).optional().describe('Optional YYYY-MM-DD decision date.'),
+      apply: z.boolean().describe('Must be true to update a ledger row; false returns a dry-run preview.')
+    }, (args) => updateReferenceLedgerDecision({
+      target: args.target,
+      filePath: args.path,
+      referenceId: args.reference,
+      status: args.status,
+      capability: args.capability,
+      pattern: args.pattern,
+      adoption: args.adoption,
+      risk: args.risk,
+      decisionDate: args.decisionDate,
       apply: Boolean(args.apply)
     })),
     tool('reference_source_registry_update', 'Preview or append missing knowledge/sources.json reference entries. Requires apply=true to write.', {

@@ -38,7 +38,7 @@ It is not a slash-command pack, a Codex plugin, or an auto-running agent. The de
 | Reusable skills   | Trigger-focused operating guides for onboarding, docs, quality, Git, meta work, and legacy systems. | `skills/`          |
 | Project templates | Copyable root agent rules, stack profiles, and project-memory files for current facts, vocabulary, maps, decisions, and evidence. | `templates/`       |
 | Runtime harness   | A small CLI for bootstrapping `.ai-playbook/`, health checks, context, runs, contracts, plans, and worklogs. | `bin/`, `src/`     |
-| MCP tools         | Local read-only tools, resources, and prompts for AI apps: catalogs, layout status, index search, write-gate preview, context, operator checks, research, contracts, image diff, AST search, clone cues, and TypeScript/JavaScript analysis. | `src/`             |
+| MCP tools         | Local read-only tools, resources, and prompts for AI apps: catalogs, adapter support, playbook layout, permission model, index search, write-gate preview, context, operator checks, research, contracts, image diff, AST search, clone cues, and TypeScript/JavaScript analysis. | `src/`             |
 | Human docs        | Installation, classification, maintenance, publishing, and translation notes.                       | `docs/`            |
 | Translations      | Korean reading copies that mirror English source files.                                             | `translations/ko/` |
 | Agent adapters    | Setup notes for specific agent environments.                                                        | `adapters/`        |
@@ -60,7 +60,7 @@ New to this playbook? Start with [First 10 minutes](docs/quick-start.md). It exp
 
 In examples, names inside angle brackets are placeholders. Replace `<target-project>` with the project folder you want to inspect, or use `.` when your terminal is already inside that project. Quote paths that contain spaces, and keep private local paths out of shared issues, docs, and PRs.
 
-If your AI app supports MCP, register a local server command such as `npx ai-agent-playbook mcp`. Then you can ask the AI to inspect playbook context, run operator search, or do deep local analysis without remembering every CLI command. MCP tools are read-only in this version.
+If your AI app supports MCP, register a local server command such as `npx ai-agent-playbook mcp`. Then you can ask the AI to inspect playbook context, read the capability/skill/workflow/adapter resources, run operator search, or do deep local analysis without remembering every CLI command. MCP tools are read-only by default.
 
 If you want the shorter `ai-playbook` command from any directory, install the package globally:
 
@@ -100,6 +100,8 @@ npx ai-agent-playbook operator research <target-project> --query "project risks"
 ```
 
 See [Command guide](docs/commands.md) for search, managed cleanup, adapter setup, plan, and worklog commands.
+
+After bootstrapping `.ai-playbook/`, agents should start from `START_HERE.md`, then read `CURRENT.md`, `questions.md`, relevant memory/maps/contracts, and the matching workflow recipe. Generated files under `runtime/` are evidence candidates, not trusted memory, until reviewed and promoted.
 
 ## Repository Map
 

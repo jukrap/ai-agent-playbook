@@ -15,6 +15,15 @@ The default MCP server exposes read-only tools, resources, and prompts. Tools ar
 
 Default prompts route review work through required evidence, optional evidence, stop conditions, and verification expectations. They do not grant write access or promote generated runtime hints into memory.
 
+Default resources expose compact structured context that AI apps can read before choosing tools:
+
+- `ai-playbook://capabilities`: capability catalog and coverage summary.
+- `ai-playbook://skills`: skill taxonomy and compatibility wrapper metadata.
+- `ai-playbook://workflows`: bundled workflow recipes.
+- `ai-playbook://adapters`: Codex, Codex App, Claude Code, and MCP setup summary.
+- `ai-playbook://playbook-layout-v2`: `.ai-playbook` v2 layout roles and recommended read order.
+- `ai-playbook://mcp-permission-model`: this permission model as structured JSON.
+
 Gate and graph review prompts include:
 
 - `agent_orchestration_review`
@@ -29,8 +38,11 @@ Opt-in write tools currently include:
 
 - `workflow_run_start`: preview or create workflow run files under `.ai-playbook/workflows/runs/`.
 - `write_gate_advisory`: preview or save a runtime advisory under `.ai-playbook/runtime/reports/write-gate/`.
+- `reference_ledger_update`: preview or append missing rows in `.ai-playbook/knowledge/reference-adoption-ledger.md`.
+- `reference_ledger_decision`: preview or update one existing reference adoption ledger decision row.
+- `reference_source_registry_update`: preview or append missing entries in `.ai-playbook/knowledge/sources.json`.
 
-Both tools require a tool-call `apply` boolean. `apply: false` returns a dry-run preview, and `apply: true` writes only through existing target path validation.
+All write-capable tools require a tool-call `apply` boolean. `apply: false` returns a dry-run preview, and `apply: true` writes only through existing target path validation.
 
 Default read-only additions:
 
@@ -56,9 +68,13 @@ Default read-only additions:
 - `reference_adoption_status`
 - `reference_source_registry_preview`
 - `reference_source_registry_check`
+- `reference_source_registry_update_preview`
 - `reference_ledger_check`
+- `reference_ledger_update_preview`
 - `reference_ledger_decision_preview`
 
 ## Write Gate
 
 Write-capable tools should require both a server opt-in and an explicit call argument such as `apply: true`. They should also produce a dry-run plan, validate target paths, and write an audit trail before applying changes.
+
+The MCP layer still does not expose bootstrap, install, update, uninstall, prune, snapshot apply, canon promotion, rename, rewrite, or project source write commands.

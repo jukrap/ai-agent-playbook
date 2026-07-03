@@ -16,29 +16,29 @@
   <img alt="Agent agnostic" src="https://img.shields.io/badge/agents-Codex%20%7C%20Claude%20Code%20%7C%20more-e03131?style=flat-square">
 </p>
 
-## 언어 / Languages
+## 언어
 
-- English (canonical): [README.md](../../README.md)
-- Korean (한국어): 이 문서
+- 영어 원문: [README.md](../../README.md)
+- 한국어: 이 문서
 
 ## 이 저장소는 무엇인가
 
-AI Agent Playbook은 재사용 가능한 에이전트 스킬, 프로젝트 템플릿, 프로젝트 메모리 가이드, 의존성이 적은 런타임 CLI, read-only 분석용 로컬 MCP 도구 서버를 함께 제공하는 저장소입니다.
+AI Agent Playbook은 재사용 가능한 에이전트 스킬, 프로젝트 템플릿, 프로젝트 메모리 가이드, 의존성이 적은 런타임 CLI, 읽기 전용 분석용 로컬 MCP 서버를 함께 제공하는 저장소입니다.
 
 코딩 에이전트가 추측을 줄이도록 돕습니다. 저장소를 먼저 살피고, 로컬 규칙을 존중하고, API 경계를 흐리지 않고, 쓸모 있는 작업 기록을 남기고, 완료를 말하기 전에 검증하도록 유도합니다.
 
 이 저장소는 특정 에이전트에 종속되지 않습니다. Codex, Claude Code, 그 외 코딩 에이전트는 같은 원본을 사용할 수 있고, 에이전트별 설치 방식은 `adapters/`에서 분리해 다룹니다.
 
-이 저장소는 slash command 묶음, Codex plugin, 자동 실행 에이전트가 아닙니다. 기본 방식은 operator-in-the-loop입니다. 사람 또는 에이전트가 CLI를 명시적으로 실행하고, dry-run 결과를 검토한 뒤 파일을 쓸지 선택합니다. MCP는 선택적 로컬 도구 표면입니다. AI 앱이 자연어 요청 중 read-only 진단을 도구 이름으로 호출할 수 있게 합니다.
+이 저장소는 slash command 묶음, Codex plugin, 자동 실행 에이전트가 아닙니다. 기본 방식은 operator-in-the-loop입니다. 사람 또는 에이전트가 CLI를 명시적으로 실행하고, dry-run 결과를 검토한 뒤 파일을 쓸지 선택합니다. MCP는 선택적 로컬 도구 표면이며, AI 앱이 자연어 요청 중 읽기 전용 진단을 도구 이름으로 호출할 수 있게 합니다.
 
 ## 제공하는 것
 
 | 구성             | 역할                                                                                            | 위치               |
 | ---------------- | ----------------------------------------------------------------------------------------------- | ------------------ |
 | 재사용 스킬      | 온보딩, 문서화, 품질, Git, 메타 작업, 레거시 시스템을 위한 상황 중심 작업 가이드입니다.         | `skills/`          |
-| 프로젝트 템플릿  | current facts, vocabulary, maps, decisions, evidence를 위한 복사용 루트 에이전트 규칙, 스택 프로필, 프로젝트 메모리 파일입니다. | `templates/`       |
+| 프로젝트 템플릿  | 현재 사실, 용어, 구조 지도, 결정, 근거를 기록하기 위한 복사용 루트 에이전트 규칙, 스택 프로필, 프로젝트 메모리 파일입니다. | `templates/`       |
 | 런타임 하네스    | `.ai-playbook/` 생성, 상태 점검, context, run, contract, plan, worklog 관리를 위한 작은 CLI입니다. | `bin/`, `src/`     |
-| MCP 도구         | AI 앱이 호출할 수 있는 로컬 read-only tool, resource, prompt입니다. catalog, layout status, index search, write-gate preview, context, operator check/search/research, contract, image diff, AST 검색, 함수 본문 중복 단서, TypeScript/JavaScript 분석을 다룹니다. | `src/`             |
+| MCP 도구         | AI 앱이 호출할 수 있는 로컬 읽기 전용 tool, resource, prompt입니다. catalog, adapter 지원, playbook layout, 권한 모델, index search, write-gate preview, context, operator check/search/research, contract, image diff, AST 검색, 함수 본문 중복 단서, TypeScript/JavaScript 분석을 다룹니다. | `src/`             |
 | 사람이 읽는 문서 | 설치, 분류, 유지보수, 공개 준비, 번역 정책 문서입니다.                                          | `docs/`            |
 | 번역             | 영어 원본을 따라가는 한국어 읽기용 문서입니다.                                                  | `translations/ko/` |
 | 에이전트 어댑터  | 특정 에이전트 환경별 설정 메모입니다.                                                           | `adapters/`        |
@@ -56,11 +56,11 @@ npx ai-agent-playbook bootstrap <target-project>
 npx ai-agent-playbook operator check <target-project> --json
 ```
 
-처음 쓰는 경우에는 [처음 10분 사용법](docs/quick-start.ko.md)부터 봅니다. `npx`, global install, skills, project bootstrap이 각각 무엇을 하는지 파일을 쓰기 전에 설명합니다.
+처음 쓰는 경우에는 [처음 10분 사용법](docs/quick-start.ko.md)부터 봅니다. 파일을 쓰기 전에 `npx`, 전역 설치, 스킬 설치, 프로젝트 bootstrap이 각각 무엇을 하는지 설명합니다.
 
-예시에서 꺾쇠괄호 안의 이름은 placeholder입니다. `<target-project>`는 검사할 프로젝트 폴더로 바꾸거나, 터미널이 이미 그 프로젝트 안에 있다면 `.`을 씁니다. 공백이 있는 경로는 따옴표로 감싸고, 공유 이슈, 문서, PR에는 개인 로컬 경로를 넣지 않습니다.
+예시에서 꺾쇠괄호 안의 이름은 자리 표시자입니다. `<target-project>`는 검사할 프로젝트 폴더로 바꾸거나, 터미널이 이미 그 프로젝트 안에 있다면 `.`을 씁니다. 공백이 있는 경로는 따옴표로 감싸고, 공유 이슈, 문서, PR에는 개인 로컬 경로를 넣지 않습니다.
 
-사용 중인 AI 앱이 MCP를 지원한다면 `npx ai-agent-playbook mcp` 같은 로컬 서버 명령을 등록할 수 있습니다. 그러면 명령어를 전부 외우지 않아도 AI에게 playbook context 점검, operator search, deep local analysis를 자연어로 요청할 수 있습니다. 이 버전의 MCP 도구는 read-only입니다.
+사용 중인 AI 앱이 MCP를 지원한다면 `npx ai-agent-playbook mcp` 같은 로컬 서버 명령을 등록할 수 있습니다. 그러면 명령어를 전부 외우지 않아도 AI에게 playbook context 점검, capability/skill/workflow/adapter resource 읽기, operator search, deep local analysis를 자연어로 요청할 수 있습니다. MCP 도구는 기본적으로 읽기 전용입니다.
 
 어느 디렉터리에서든 짧은 `ai-playbook` 명령을 쓰고 싶다면 전역으로 설치합니다.
 
@@ -81,11 +81,11 @@ npm 패키지는 CLI를 설치합니다. 스킬 복사, `.ai-playbook/` 생성, 
 ## 평소 작업 흐름
 
 ```text
-npx 또는 global install
+npx 또는 전역 설치
   -> skills install 또는 update
   -> 에이전트 재시작
   -> 대상 프로젝트 점검
-  -> 프로젝트에 로컬 playbook file이 필요할 때만 .ai-playbook/ bootstrap
+  -> 프로젝트에 로컬 playbook 파일이 필요할 때만 .ai-playbook/ bootstrap
   -> operator check/search와 managed cleanup을 명시적으로 실행
 ```
 
@@ -101,32 +101,34 @@ npx ai-agent-playbook operator research <target-project> --query "project risks"
 
 검색, 관리 파일 정리, adapter 설정, plan, worklog 명령은 [명령어 가이드](docs/commands.ko.md)를 봅니다.
 
+`.ai-playbook/`을 생성한 뒤에는 에이전트가 `START_HERE.md`에서 시작하고, 이어서 `CURRENT.md`, `questions.md`, 관련 memory/maps/contracts, 해당 workflow recipe를 읽어야 합니다. `runtime/` 아래 생성 파일은 검토와 승격 전까지 신뢰된 memory가 아니라 근거 후보입니다.
+
 ## 저장소 지도
 
 ```text
 bin/                  ai-playbook CLI 진입점
 src/                  CLI 런타임 구현
 skills/
-  ai-harness/        MCP, skill, agent, context, cache, index design 스킬
-  architecture/      boundary, feature slice, domain model, monorepo/package architecture 스킬
+  ai-harness/        MCP, skill, agent, context, fact gate, witness, cache, index 설계 스킬
+  architecture/      boundary, feature slice, domain model, monorepo/package 아키텍처 스킬
   backend/           API, backend change safety, connector, server-rendered flow 스킬
-  data/              data pipeline, analytics, reporting, migration integrity 스킬
+  data/              data pipeline, analytics, source registry, reporting, migration integrity 스킬
   database/          schema, migration, SQL, data integrity 스킬
-  delivery/          planning, verification, testing, Git, PR, worklog 스킬
+  delivery/          planning, eval, verification, testing, Git, PR, worklog 스킬
   devops/            CI/CD, container, package release, deployment, operations triage 스킬
   design/            design direction, brand identity, reference analysis, image/Figma handoff 스킬
   frontend/          UI, browser, state/data, accessibility, visual QA, design-system, interactive media 스킬
   mobile/            native release, permission, offline sync, hybrid, WebView, device QA 스킬
   security/          auth, dependency supply chain, license/notice, security review, compliance gate, risk 스킬
-  project/            bootstrap, onboarding, project planning, documentation, project-memory 스킬
-  quality/            UI quality, cleanup, review 스킬
-  git/                commit, PR, push, worklog 스킬
-  meta/               skill-authoring 스킬
-  legacy/             legacy-system maintenance 스킬
+  project/           bootstrap, onboarding, project planning, documentation, project-memory 스킬
+  quality/           UI quality, cleanup, review 스킬
+  git/               commit, PR, push, worklog 스킬
+  meta/              skill-authoring 스킬
+  legacy/            legacy-system maintenance 스킬
 templates/
   agents/             루트 에이전트 지침 템플릿과 프로젝트 profile
   codex-home/         선택적 개인 Codex home AGENTS.md 템플릿
-  project-playbook/   복사용 ai-playbook project-memory 템플릿
+  project-playbook/   복사용 ai-playbook 프로젝트 메모리 템플릿
 examples/             worklog, prompt, handoff 예시
 translations/         사람이 읽는 번역본. 스킬 설치 대상이 아님
 adapters/             에이전트별 설치 메모와 선택적 hook PoC
@@ -160,27 +162,27 @@ test/                 Node CLI와 adapter 테스트
 - `cleanup-ai-slop`: 신뢰가 낮거나 과하게 복잡하거나 중복된 코드를 동작 변경 없이 정리할 때.
 - `review-work-light`: 차단형 리뷰 절차 없이 최근 구현 작업을 인수인계 전에 검토할 때.
 
-### Design
+### 디자인
 
-- `design-brief-direction`: vague product, page, brand, UI request를 design direction, visual language, constraint, decision-ready brief로 바꿀 때.
-- `brand-identity-system`: brand identity, typography, color, logo direction, iconography, voice, visual identity rule을 정의, 검토, 적용할 때.
-- `design-reference-analysis`: UI 구현 또는 refactoring 전에 screenshot, competitor site, reference app, visual sample, design board를 분석할 때.
-- `image-to-code-handoff`: generated image, screenshot, mockup, reference board, Figma frame을 implementation-ready UI spec과 verification criteria로 바꿀 때.
+- `design-brief-direction`: 모호한 제품, 페이지, 브랜드, UI 요청을 디자인 방향, 시각 언어, 제약, 결정 가능한 brief로 정리할 때.
+- `brand-identity-system`: 브랜드 정체성, 타이포그래피, 색상, 로고 방향, 아이콘, 보이스, 시각 규칙을 정의·검토·적용할 때.
+- `design-reference-analysis`: UI 구현 또는 리팩터링 전에 screenshot, 경쟁 서비스, reference app, visual sample, design board를 분석할 때.
+- `image-to-code-handoff`: generated image, screenshot, mockup, reference board, Figma frame을 구현 가능한 UI spec과 검증 기준으로 바꿀 때.
 
 ### Git과 메타
 
 - `commit-worklog-guardrails`: staging, commit, push, PR, release note, worklog를 다룰 때.
 - `agent-skill-authoring`: 재사용 agent skill과 reference를 만들거나 검토·재정리할 때.
 
-### Harness OS v2 Capabilities
+### Harness OS v2 역량
 
-- `mcp-server-design`: MCP tool, resource, prompt, permission tier, write gate, cache/index surface를 설계할 때.
-- `context-engineering-memory-design`: agent instruction, context surface, prompt/cache budget, project memory, compaction behavior, durable memory promotion, stale fact handling을 설계하거나 검토할 때.
-- `agent-orchestration-handoff`: agent, subagent, worker, review pass, long-running handoff로 작업을 나눌 때 bounded contract와 evidence ledger를 다룰 때.
-- `skill-pack-governance`: skill pack, taxonomy category, compatibility wrapper, reference routing, translation, install/sync behavior, reusable skill governance를 추가·재정리·검토·채택할 때.
+- `mcp-server-design`: MCP tool, resource, prompt, 권한 단계, write gate, cache/index 표면을 설계할 때.
+- `context-engineering-memory-design`: agent instruction, context surface, prompt/cache budget, project memory, compaction, durable memory promotion, stale fact 처리 방식을 설계하거나 검토할 때.
+- `agent-orchestration-handoff`: agent, subagent, worker, review pass, long-running handoff로 작업을 나눌 때 제한된 계약과 evidence ledger를 다룰 때.
+- `skill-pack-governance`: skill pack, taxonomy category, compatibility wrapper, reference routing, 번역, install/sync 동작, reusable skill governance를 추가·재정리·검토·채택할 때.
 - `runtime-index-cache-design`: runtime report, index, graph, cache, artifact schema, invalidation, canon promotion, generated evidence, local-only runtime storage를 설계하거나 검토할 때.
-- `evidence-locator-integrity`: claim, report, citation, memory update, handoff의 reopenable locator, scan range, freshness, confidence, source boundary, generated-evidence caveat를 확인할 때.
-- `boundary-review`: FSD, layered, DDD, monorepo, package ownership, dependency direction, coupling boundary를 검토할 때.
+- `evidence-locator-integrity`: claim, report, citation, memory update, handoff의 다시 열 수 있는 locator, scan range, freshness, confidence, source boundary, generated-evidence caveat를 확인할 때.
+- `boundary-review`: FSD, layered architecture, DDD, monorepo, package ownership, dependency direction, coupling boundary를 검토할 때.
 - `feature-slice-boundary`: FSD, feature-sliced, vertical-slice, feature-first, route-level, module-level, component-domain boundary를 바꾸거나 검토할 때.
 - `domain-model-change`: domain entity, aggregate, value object, service, policy, use case, repository, adapter, invariant, transaction boundary를 바꾸거나 검토할 때.
 - `monorepo-package-boundary`: monorepo package, workspace dependency, package export, internal library, build graph, generated type, cross-package release impact를 바꾸거나 검토할 때.

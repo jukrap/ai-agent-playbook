@@ -328,6 +328,8 @@ Global install을 했다면 아래 명령도 같습니다.
 ai-playbook mcp
 ```
 
+서버는 `ai-playbook://capabilities`, `ai-playbook://skills`, `ai-playbook://workflows`, `ai-playbook://adapters`, `ai-playbook://playbook-layout-v2`, `ai-playbook://mcp-permission-model` 읽기 전용 resource를 노출합니다. AI 앱은 이 resource로 capability catalog, skill taxonomy, workflow recipe, Codex/Claude adapter 지원, `.ai-playbook` 읽기 순서, permission tier를 먼저 파악한 뒤 필요한 tool을 고를 수 있습니다.
+
 서버는 아래 read-only 도구를 노출합니다.
 
 - playbook context: `playbook_context`, `context_status`, `context_list`
@@ -338,7 +340,7 @@ ai-playbook mcp
 
 서버는 `repo_onboarding_runbook`, `harness_extension_plan`, `harness_governance_review`, `reference_adoption_review`, `backend_change_review`, `architecture_boundary_review`, `auth_access_control_review`, `dependency_supply_chain_review`, `package_release_readiness_review`, `deployment_release_review`, `mobile_release_review`, `connector_integration_review`, `design_reference_handoff_review`, `frontend_quality_review`, `interactive_experience_review`, `data_integrity_review`, `data_pipeline_review`, `database_change_review`, `adr_spec_handoff_review`, `documentation_package_review`, `workflow_run_review`, `eval_harness_review`, `capability_witness_review`, `pre_action_fact_gate_review`, `knowledge_source_review`, `canon_promotion_review`, `index_interpretation_review`, `agent_orchestration_review`, `repo_graph_review`, `ci_quality_gate_review`, `release_deployment_gate_review`, `security_compliance_gate_review` prompt도 노출합니다. Prompt는 재사용 가능한 작업 brief이며, 그 자체로 쓰기 권한을 열지는 않습니다.
 
-MCP 계층은 기본적으로 read-only입니다. `mcp --enable-write-tools`를 쓰면 `workflow_run_start`와 `write_gate_advisory`도 노출하지만, 둘 다 tool-call `apply` boolean을 요구하고 `apply`가 false이면 dry-run으로 남습니다. 그래도 bootstrap, install, update, uninstall, prune, snapshot apply, run record, canon promotion, rename, rewrite, project source write command는 노출하지 않습니다.
+MCP 계층은 기본적으로 read-only입니다. `mcp --enable-write-tools`를 쓰면 `workflow_run_start`, `write_gate_advisory`, `reference_ledger_update`, `reference_ledger_decision`, `reference_source_registry_update`도 노출합니다. 쓰기 가능한 모든 tool은 tool-call `apply` boolean을 요구하고, `apply`가 false이면 dry-run으로 남습니다. 그래도 bootstrap, install, update, uninstall, prune, snapshot apply, run record, canon promotion, rename, rewrite, project source write command는 노출하지 않습니다.
 
 ## Adapter setup
 

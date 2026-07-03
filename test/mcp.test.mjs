@@ -186,6 +186,9 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://capabilities'), true);
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://skills'), true);
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://workflows'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://adapters'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://playbook-layout-v2'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://mcp-permission-model'), true);
 
     const prompts = await client.listPrompts();
     const promptNames = prompts.prompts.map((prompt) => prompt.name);
@@ -235,6 +238,24 @@ test('mcp server lists read-only playbook tools and calls operator search withou
 
     const resource = await client.readResource({ uri: 'ai-playbook://workflows' });
     assert.equal(JSON.parse(resource.contents[0].text).summary.workflows, 22);
+
+    const adapterResource = await client.readResource({ uri: 'ai-playbook://adapters' });
+    const adapterPayload = JSON.parse(adapterResource.contents[0].text);
+    assert.equal(adapterPayload.summary.primary, 'codex-app');
+    assert.equal(adapterPayload.adapters.some((adapter) => adapter.id === 'codex' && adapter.supports.includes('Codex App on Windows')), true);
+
+    const layoutResource = await client.readResource({ uri: 'ai-playbook://playbook-layout-v2' });
+    const layoutPayload = JSON.parse(layoutResource.contents[0].text);
+    assert.equal(layoutPayload.summary.layoutVersion, '2');
+    assert.equal(layoutPayload.readOrder.includes('.ai-playbook/START_HERE.md'), true);
+    assert.equal(layoutPayload.usageRules.some((rule) => rule.includes('runtime artifacts as evidence candidates')), true);
+
+    const permissionResource = await client.readResource({ uri: 'ai-playbook://mcp-permission-model' });
+    const permissionPayload = JSON.parse(permissionResource.contents[0].text);
+    assert.equal(permissionPayload.summary.defaultMode, 'read-only');
+    assert.equal(permissionPayload.defaultResources.includes('adapter_support'), true);
+    assert.equal(permissionPayload.optInWriteTools.includes('reference_source_registry_update'), true);
+    assert.equal(permissionPayload.optInWriteTools.includes('reference_ledger_decision'), true);
 
     const workflowRunPreview = await client.callTool({
       name: 'workflow_run_preview',

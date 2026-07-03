@@ -564,7 +564,10 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
   const resources = [
     resource('capability_catalog', 'ai-playbook://capabilities', 'Harness OS capability catalog.', () => capabilityCatalog({ repoRoot })),
     resource('skill_catalog', 'ai-playbook://skills', 'Harness OS skill taxonomy catalog.', () => skillCatalog({ repoRoot })),
-    resource('workflow_list', 'ai-playbook://workflows', 'Harness OS workflow recipe catalog.', () => workflowCatalog())
+    resource('workflow_list', 'ai-playbook://workflows', 'Harness OS workflow recipe catalog.', () => workflowCatalog()),
+    resource('adapter_support', 'ai-playbook://adapters', 'Agent adapter support and MCP setup summary.', () => adapterSupportResource()),
+    resource('playbook_layout_v2', 'ai-playbook://playbook-layout-v2', 'Project playbook v2 usage, layout roles, and read order.', () => playbookLayoutV2Resource()),
+    resource('mcp_permission_model', 'ai-playbook://mcp-permission-model', 'MCP resource, prompt, tool, and permission-tier summary.', () => mcpPermissionModelResource())
   ];
 
   for (const item of resources) {
@@ -1685,6 +1688,154 @@ function tool(name, description, schema, handler) {
 
 function resource(name, uri, description, handler) {
   return { name, uri, description, handler };
+}
+
+function adapterSupportResource() {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'mcp.resource.adapter-support',
+    ok: true,
+    summary: {
+      adapters: 2,
+      primary: 'codex-app',
+      defaultMcpCommand: 'npx ai-agent-playbook mcp',
+      globalMcpCommand: 'ai-playbook mcp'
+    },
+    adapters: [
+      {
+        id: 'codex',
+        supports: ['Codex CLI', 'Codex App on Windows'],
+        docs: ['adapters/codex/README.md'],
+        mcp: {
+          command: 'npx',
+          args: ['ai-agent-playbook', 'mcp'],
+          globalCommand: 'ai-playbook mcp'
+        },
+        notes: [
+          'Codex App is the primary interactive target for this repository.',
+          'Register MCP as a local stdio server when the app supports MCP tools.',
+          'Adapter hooks are optional reminders; durable rules still live in AGENTS.md and .ai-playbook/.'
+        ]
+      },
+      {
+        id: 'claude-code',
+        supports: ['Claude Code'],
+        docs: ['adapters/claude-code/README.md'],
+        mcp: {
+          command: 'npx',
+          args: ['ai-agent-playbook', 'mcp'],
+          globalCommand: 'ai-playbook mcp'
+        },
+        notes: [
+          'Use adapter config/check commands for reviewable local setup hints.',
+          'Do not assume another runtime hook or slash-command environment exists.',
+          'Translate reusable guidance into project-local rules before relying on it.'
+        ]
+      }
+    ],
+    boundaries: [
+      'The npm package does not automatically install hooks, slash commands, skills, or project playbooks.',
+      'MCP is read-only by default; write-capable tools require server opt-in and apply in the tool call.',
+      'Project source writes are not exposed through MCP.'
+    ]
+  };
+}
+
+function playbookLayoutV2Resource() {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'mcp.resource.playbook-layout-v2',
+    ok: true,
+    summary: {
+      layoutVersion: '2',
+      memoryRequiresExplicitPromotion: true,
+      runtimeIsGeneratedEvidence: true,
+      defaultTemplate: 'templates/project-playbook'
+    },
+    requiredFiles: ['README.md', 'START_HERE.md', 'CURRENT.md', 'questions.md', 'manifest.json'],
+    readOrder: [
+      'root AGENTS.md and nearest local agent instructions',
+      '.ai-playbook/START_HERE.md',
+      '.ai-playbook/CURRENT.md',
+      '.ai-playbook/questions.md',
+      'relevant memory/context, maps, decisions, contracts, and glossary entries',
+      'relevant workflow recipe or runbook',
+      'runtime reports only as generated evidence'
+    ],
+    topLevelDirectories: [
+      { path: 'policy/', role: 'Project-local rules, safety notes, and skill-selection policy.' },
+      { path: 'memory/', role: 'Reviewed long-lived project knowledge.' },
+      { path: 'workflows/', role: 'Recipes, runbooks, plans, runs, worklogs, and handoffs.' },
+      { path: 'knowledge/', role: 'Source registries, reference ledgers, and reviewed research inputs.' },
+      { path: 'runtime/', role: 'Generated cache, indexes, graphs, reports, snapshots, and temporary files.' },
+      { path: 'integrations/', role: 'Optional MCP, adapter, hook, and command configuration.' },
+      { path: 'archive/', role: 'Historical material that should not steer current work by default.' }
+    ],
+    usageRules: [
+      'Read START_HERE.md before planning substantial work.',
+      'Use CURRENT.md and questions.md to avoid stale assumptions.',
+      'Use runtime artifacts as evidence candidates, not trusted memory.',
+      'Promote generated facts into memory only through an explicit reviewed process.',
+      'Keep private local paths, credentials, internal URLs, branch names, and PR numbers out of public docs.'
+    ]
+  };
+}
+
+function mcpPermissionModelResource() {
+  const readOnlyResources = [
+    'capability_catalog',
+    'skill_catalog',
+    'workflow_list',
+    'adapter_support',
+    'playbook_layout_v2',
+    'mcp_permission_model'
+  ];
+  const optInWriteTools = [
+    'workflow_run_start',
+    'write_gate_advisory',
+    'reference_ledger_update',
+    'reference_ledger_decision',
+    'reference_source_registry_update'
+  ];
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'mcp.resource.permission-model',
+    ok: true,
+    summary: {
+      defaultMode: 'read-only',
+      resources: readOnlyResources.length,
+      optInWriteTools: optInWriteTools.length,
+      projectWriteTools: 0
+    },
+    tiers: [
+      { id: 'read', writes: false, purpose: 'Search, state, catalogs, layout status, resources, prompts, and analysis.' },
+      { id: 'scaffold', writes: true, purpose: 'Create bounded playbook records such as workflow runs.' },
+      { id: 'managed-write', writes: true, purpose: 'Update managed files inside .ai-playbook.' },
+      { id: 'project-write', writes: false, purpose: 'Project source modification is not exposed by this MCP server.' }
+    ],
+    defaultResources: readOnlyResources,
+    optInWriteTools,
+    writeRequirements: [
+      'Start the server with --enable-write-tools.',
+      'Pass apply: true in the individual tool call.',
+      'Return a dry-run preview when apply is false.',
+      'Validate target paths before writing.',
+      'Write only bounded playbook, knowledge, or runtime artifacts.'
+    ],
+    nonExposedWrites: [
+      'bootstrap',
+      'install',
+      'update',
+      'uninstall',
+      'prune',
+      'snapshot apply',
+      'canon promotion',
+      'rename',
+      'rewrite',
+      'project source write'
+    ]
+  };
 }
 
 function promptMessage(lines) {

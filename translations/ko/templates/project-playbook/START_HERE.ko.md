@@ -15,6 +15,14 @@
 - 관련 진행 중 계획:
 - 최신 worklog summary:
 
+## 에이전트 진입 체크리스트
+
+- 도구를 고르기 전에 루트 `AGENTS.md`와 더 가까운 하위 에이전트 지침을 확인합니다.
+- 계획하거나 수정하기 전에 `CURRENT.md`와 `questions.md`를 읽습니다.
+- 코드 작업이라면 관련 `memory/context/`, `maps/`, `contracts/`, workflow recipe를 확인합니다.
+- 오래되었거나 위험하거나 낯선 작업이라면 수정 전에 read-only operator 점검을 실행합니다.
+- `runtime/` 보고서는 검토된 사실이 `memory/` 또는 `knowledge/`로 승격되기 전까지 생성된 근거로만 다룹니다.
+
 ## 다음에 실행할 가능성이 큰 명령
 
 ```bash

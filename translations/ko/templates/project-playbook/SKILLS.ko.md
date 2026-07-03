@@ -22,14 +22,38 @@
 - `project-bootstrap`: 얇은 루트 에이전트 부트스트랩과 `.ai-playbook/` 설정.
 - `repo-onboarding`: 낯설거나 오래된 저장소 진입.
 - `project-doc-system`: `AGENTS.md`, `.ai-playbook/`, maps, runbooks, plans, worklogs 정리.
-- `api-contract-boundary`: API 연동 변경 또는 리뷰.
-- `ui-style-policy`: UI 스타일 정책 선택 또는 문서화.
-- `style-quality-review`: 재설계 없이 눈에 보이는 UI 스타일 리뷰.
-- `frontend-ui-polish`: 제품 의도를 보존하면서 보이는 UI surface를 구현하거나 다듬을 때.
+- `git-worklog-guardrails`: 스테이징, 커밋, 푸시, PR 본문, 작업 기록.
+- `pre-action-fact-gate`: 영향이 큰 작업 전에 사실, 근거 위치, 쓰기 위험, 되돌림 경로를 확인할 때.
+- `change-safety` 또는 `review-work-light`: 최근 구현 작업을 인수인계 전에 점검할 때.
 - `cleanup-ai-slop`: 신뢰가 낮아 보이는 코드를 범위를 제한해 동작 보존 방식으로 정리할 때.
-- `review-work-light`: automatic blocking 없이 최근 구현 작업을 인수인계 전에 검토할 때.
-- `commit-worklog-guardrails`: staging, commit, push, PR 본문, worklog.
-- `legacy-*`: 숨은 결합이나 호환성 제약이 있는 레거시 시스템 변경.
+
+## 역량별 라우팅
+
+스택명 스킬보다 작업 능력 중심 스킬을 먼저 고릅니다.
+
+- 기반과 문서: `project-bootstrap`, `repo-onboarding`, `project-doc-system`, `documentation-artifact-package`, `adr-spec-handoff`.
+- 전달과 품질 게이트: `git-worklog-guardrails`, `ci-quality-gate`, `ci-failure-triage`, `flaky-test-triage`, `eval-harness-design`, `capability-witness-history`.
+- 아키텍처: `boundary-review`, `feature-slice-boundary`, `domain-model-change`, `monorepo-package-boundary`.
+- 프론트엔드와 구현 디자인: `frontend-ui-polish`, `frontend-state-data-flow`, `frontend-accessibility-review`, `browser-dom-change`, `design-system-handoff`.
+- 디자인 방향과 원본 인수인계: `design-brief-direction`, `brand-identity-system`, `design-reference-analysis`, `image-to-code-handoff`.
+- 인터랙션과 3D 화면: `interactive-media-3d-review`를 쓰고, 렌더링 검증은 프론트엔드 품질 스킬과 함께 확인합니다.
+- 백엔드와 연동: `backend-change-safety`, `api-contract-boundary`, `server-rendered-change`, `connector-integration-change`.
+- 데이터베이스와 데이터: `database-change-safety`, `schema-migration-plan`, `query-performance-review`, `data-integrity-constraints`, `data-pipeline-review`, `data-contract-lineage-review`.
+- DevOps와 릴리스: `container-change-safety`, `deployment-release-check`, `package-publish-readiness`, `observability-incident-triage`.
+- 보안과 컴플라이언스: `security-review`, `auth-access-control`, `dependency-supply-chain-review`, `license-notice-review`, `security-compliance-gate`.
+- 모바일: `native-release-readiness`, `device-permission-qa`, `offline-sync-review`.
+- AI 하네스: `mcp-server-design`, `agent-skill-authoring`, `skill-pack-governance`, `context-engineering-memory-design`, `runtime-index-cache-design`, `agent-orchestration-handoff`.
+- 레거시 호환성: 먼저 `legacy-change-safety`를 사용하고, 스택 세부사항이 중요할 때만 `legacy-java-spring-mvc`, `legacy-php-lamp`, `legacy-dotnet-webforms`, `legacy-jquery-web`, `legacy-android-webview-hybrid` 같은 wrapper를 추가합니다.
+
+## MCP를 사용할 수 있을 때
+
+AI 앱에서 playbook MCP 서버를 사용할 수 있다면 수정 전에 read-only 탐색을 우선합니다.
+
+- 리소스부터 읽습니다: `ai-playbook://capabilities`, `ai-playbook://skills`, `ai-playbook://workflows`, `ai-playbook://adapters`, `ai-playbook://playbook-layout-v2`, `ai-playbook://mcp-permission-model`.
+- catalog와 layout 도구로 필요한 스킬, recipe, playbook 파일을 고릅니다.
+- 큰 수정 전에는 `operator_check`, `operator_search`, `operator_preflight`, `write_gate_preview`, 도메인별 도구를 사용합니다.
+- 쓰기 가능한 MCP 도구가 당연히 있다고 가정하지 않습니다. 해당 도구는 `mcp --enable-write-tools`와 명시적 tool-call `apply: true`가 모두 필요합니다.
+- runtime report, index, screenshot, graph hint는 검토와 승격 전까지 신뢰된 memory로 취급하지 않습니다.
 
 ## 구조 증거
 

@@ -328,6 +328,8 @@ If you installed globally, this equivalent command is shorter:
 ai-playbook mcp
 ```
 
+The server exposes read-only resources for `ai-playbook://capabilities`, `ai-playbook://skills`, `ai-playbook://workflows`, `ai-playbook://adapters`, `ai-playbook://playbook-layout-v2`, and `ai-playbook://mcp-permission-model`. These resources help AI apps discover the capability catalog, skill taxonomy, workflow recipes, Codex/Claude adapter support, `.ai-playbook` reading order, and permission tier before picking tools.
+
 The server exposes read-only tools for:
 
 - playbook context: `playbook_context`, `context_status`, `context_list`
@@ -338,7 +340,7 @@ The server exposes read-only tools for:
 
 The server also exposes prompts for `repo_onboarding_runbook`, `harness_extension_plan`, `harness_governance_review`, `reference_adoption_review`, `backend_change_review`, `architecture_boundary_review`, `auth_access_control_review`, `dependency_supply_chain_review`, `package_release_readiness_review`, `deployment_release_review`, `mobile_release_review`, `connector_integration_review`, `design_reference_handoff_review`, `frontend_quality_review`, `interactive_experience_review`, `data_integrity_review`, `data_pipeline_review`, `database_change_review`, `adr_spec_handoff_review`, `documentation_package_review`, `workflow_run_review`, `eval_harness_review`, `capability_witness_review`, `pre_action_fact_gate_review`, `knowledge_source_review`, `canon_promotion_review`, `index_interpretation_review`, `agent_orchestration_review`, `repo_graph_review`, `ci_quality_gate_review`, `release_deployment_gate_review`, and `security_compliance_gate_review`. Prompts are reusable task briefs; they do not grant write access by themselves.
 
-The MCP layer is read-only by default. With `mcp --enable-write-tools`, it also exposes `workflow_run_start` and `write_gate_advisory`; both require a tool-call `apply` boolean and stay dry-run when `apply` is false. It still does not expose bootstrap, install, update, uninstall, prune, snapshot apply, run record, canon promotion, rename, rewrite, or any project source write command.
+The MCP layer is read-only by default. With `mcp --enable-write-tools`, it also exposes `workflow_run_start`, `write_gate_advisory`, `reference_ledger_update`, `reference_ledger_decision`, and `reference_source_registry_update`; every write-capable tool requires a tool-call `apply` boolean and stays dry-run when `apply` is false. It still does not expose bootstrap, install, update, uninstall, prune, snapshot apply, run record, canon promotion, rename, rewrite, or any project source write command.
 
 ## Adapter setup
 

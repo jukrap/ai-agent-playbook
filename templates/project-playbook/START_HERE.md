@@ -15,6 +15,14 @@ Keep this file short. It is a pointer, not a worklog, plan, or architecture map.
 - Relevant active plan:
 - Latest worklog summary:
 
+## Agent entry checklist
+
+- Confirm the root `AGENTS.md` and any nearer agent instructions before choosing tooling.
+- Read `CURRENT.md` and `questions.md` before planning or editing.
+- For code work, check the relevant `memory/context/`, `maps/`, `contracts/`, and workflow recipe.
+- For stale, risky, or unfamiliar work, run read-only operator checks before editing.
+- Treat `runtime/` reports as generated evidence until a reviewed fact is promoted into `memory/` or `knowledge/`.
+
 ## Next likely command
 
 ```bash

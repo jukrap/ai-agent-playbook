@@ -22,14 +22,38 @@ Use installed playbook skills for recurring repository concerns:
 - `project-bootstrap`: setting up a thin root agent bootstrap and `.ai-playbook/`.
 - `repo-onboarding`: entering an unfamiliar or stale repository.
 - `project-doc-system`: organizing `AGENTS.md`, `.ai-playbook/`, maps, runbooks, plans, and worklogs.
-- `api-contract-boundary`: changing or reviewing API integration.
-- `ui-style-policy`: selecting or documenting UI styling policy.
-- `style-quality-review`: reviewing visible UI style without redesigning.
-- `frontend-ui-polish`: implementing or refining visible UI surfaces while preserving product intent.
+- `git-worklog-guardrails`: staging, committing, pushing, PR bodies, or worklogs.
+- `pre-action-fact-gate`: checking facts, source locators, write risk, and rollback before high-impact actions.
+- `change-safety` or `review-work-light`: reviewing recent implementation work before handoff.
 - `cleanup-ai-slop`: cleaning low-trust code in a bounded behavior-preserving way.
-- `review-work-light`: reviewing recent implementation work before handoff without automatic blocking.
-- `commit-worklog-guardrails`: staging, committing, pushing, PR bodies, or worklogs.
-- `legacy-*`: changing legacy systems with hidden coupling or compatibility constraints.
+
+## Capability routing
+
+Prefer capability-first skills before stack-name skills:
+
+- Foundation and docs: `project-bootstrap`, `repo-onboarding`, `project-doc-system`, `documentation-artifact-package`, `adr-spec-handoff`.
+- Delivery and quality gates: `git-worklog-guardrails`, `ci-quality-gate`, `ci-failure-triage`, `flaky-test-triage`, `eval-harness-design`, `capability-witness-history`.
+- Architecture: `boundary-review`, `feature-slice-boundary`, `domain-model-change`, `monorepo-package-boundary`.
+- Frontend and design implementation: `frontend-ui-polish`, `frontend-state-data-flow`, `frontend-accessibility-review`, `browser-dom-change`, `design-system-handoff`.
+- Design direction and source handoff: `design-brief-direction`, `brand-identity-system`, `design-reference-analysis`, `image-to-code-handoff`.
+- Interactive and 3D surfaces: `interactive-media-3d-review` plus frontend quality skills for rendered verification.
+- Backend and integrations: `backend-change-safety`, `api-contract-boundary`, `server-rendered-change`, `connector-integration-change`.
+- Database and data: `database-change-safety`, `schema-migration-plan`, `query-performance-review`, `data-integrity-constraints`, `data-pipeline-review`, `data-contract-lineage-review`.
+- DevOps and release: `container-change-safety`, `deployment-release-check`, `package-publish-readiness`, `observability-incident-triage`.
+- Security and compliance: `security-review`, `auth-access-control`, `dependency-supply-chain-review`, `license-notice-review`, `security-compliance-gate`.
+- Mobile: `native-release-readiness`, `device-permission-qa`, `offline-sync-review`.
+- AI harness: `mcp-server-design`, `agent-skill-authoring`, `skill-pack-governance`, `context-engineering-memory-design`, `runtime-index-cache-design`, `agent-orchestration-handoff`.
+- Legacy compatibility: use `legacy-change-safety` first, then stack wrappers such as `legacy-java-spring-mvc`, `legacy-php-lamp`, `legacy-dotnet-webforms`, `legacy-jquery-web`, or `legacy-android-webview-hybrid` only when that stack detail matters.
+
+## MCP-aware use
+
+When an AI app has the playbook MCP server available, prefer read-only discovery before editing:
+
+- Read resources: `ai-playbook://capabilities`, `ai-playbook://skills`, `ai-playbook://workflows`, `ai-playbook://adapters`, `ai-playbook://playbook-layout-v2`, and `ai-playbook://mcp-permission-model`.
+- Use catalog and layout tools to choose skills, recipes, and playbook files.
+- Use `operator_check`, `operator_search`, `operator_preflight`, `write_gate_preview`, and domain-specific tools before broad edits.
+- Do not assume write-capable MCP tools exist. They require `mcp --enable-write-tools` and an explicit tool-call `apply: true`.
+- Do not treat runtime reports, indexes, screenshots, or graph hints as trusted memory until reviewed and promoted.
 
 ## Structural evidence
 

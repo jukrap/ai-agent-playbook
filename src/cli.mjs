@@ -33,6 +33,7 @@ import {
   initContext,
   initContracts,
   initReferenceAdoptionLedger,
+  inspectReferenceProject,
   inventoryReferenceDirectory,
   listContexts,
   listContracts,
@@ -582,6 +583,31 @@ export async function runCli(argv, io = {}) {
         write(stdout, `Reference inventory: ${result.summary.projects}/${result.summary.totalProjects} project(s), ${result.summary.files} file(s)\n`);
         for (const project of result.projects) {
           write(stdout, `[${project.id}] ${project.candidateCapabilities.join(', ') || 'unclassified'} (${project.files} file(s))\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'inspect') {
+      const result = await inspectReferenceProject({
+        target: resolveTarget(cwd, targetArg),
+        project: typeof parsed.flags.project === 'string' ? parsed.flags.project : undefined,
+        maxDepth: parseMaxDepth(parsed.flags['max-depth'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else if (result.ok) {
+        write(stdout, `Reference inspect: ${result.project} [${String(result.summary.priority).toUpperCase()}] ${result.summary.files} file(s)\n`);
+        for (const item of result.review.readOrder) {
+          write(stdout, `[READ] ${item.path} - ${item.reason}\n`);
+        }
+        for (const question of result.review.adoptionQuestions) {
+          write(stdout, `[QUESTION] ${question}\n`);
+        }
+      } else {
+        write(stdout, `Reference inspect: blocked (${result.summary.conflicts} conflict(s))\n`);
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -1527,6 +1553,8 @@ function needsValue(key) {
     'contract',
     'threshold',
     'max-results',
+    'max-depth',
+    'project',
     'ledger',
     'codex-root',
     'agents-root',
@@ -1601,6 +1629,15 @@ function parseMaxResults(value, defaultValue = 20) {
   return parsed;
 }
 
+function parseMaxDepth(value, defaultValue = 6) {
+  if (value === undefined || value === false) return defaultValue;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 100) {
+    throw new Error('Invalid --max-depth; expected an integer from 1 to 100.');
+  }
+  return parsed;
+}
+
 function helpText() {
   return `ai-playbook
 
@@ -1625,6 +1662,7 @@ Usage:
   ai-playbook workflow run-preview <target> --recipe <recipe-id> [--json]
   ai-playbook workflow run-start <target> --recipe <recipe-id> [--apply] [--json]
   ai-playbook reference inventory <reference-dir> [--max-results N] [--json]
+  ai-playbook reference inspect <reference-dir> --project <name> [--max-depth N] [--json]
   ai-playbook reference adoption-queue <reference-dir> [--max-results N] [--ledger <ledger.md>] [--json]
   ai-playbook reference source-registry-preview <reference-dir> [--max-results N] [--json]
   ai-playbook reference source-registry-check <target> [--path <sources.json>] [--reference-dir <dir>] [--json]

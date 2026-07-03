@@ -3,6 +3,7 @@ import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
   assertDirectory,
+  isSafePortablePath,
   normalizePortablePath,
   resolvePlaybookLayout,
   SCHEMA_VERSION
@@ -12,6 +13,19 @@ const DEFAULT_MAX_PROJECTS = 100;
 const DEFAULT_MAX_DEPTH = 6;
 const DEFAULT_QUEUE_RESULTS = 20;
 const REPRESENTATIVE_LIMIT = 16;
+const REPRESENTATIVE_CATEGORY_ORDER = [
+  'overview',
+  'agent',
+  'skill',
+  'mcp',
+  'workflow',
+  'connector',
+  'runtime',
+  'memory',
+  'security',
+  'package',
+  'other'
+];
 const LEDGER_PATH = 'knowledge/reference-adoption-ledger.md';
 const LEDGER_STATUSES = new Set(['new', 'reviewed', 'adopted', 'deferred', 'rejected']);
 const LOCAL_ABSOLUTE_PATH_PATTERN = /(?:[A-Za-z]:[\\/][^\s|)`]+|\\\\[^\\/\s|)`]+[\\/][^\s|)`]+)/;
@@ -126,6 +140,65 @@ export async function buildReferenceAdoptionQueue({
     mode: { localOnly: true, network: false, writes: false },
     summary,
     queue,
+    warnings,
+    conflicts
+  };
+}
+
+export async function inspectReferenceProject({
+  target,
+  project,
+  maxDepth = DEFAULT_MAX_DEPTH
+}) {
+  await assertDirectory(target, 'Reference directory does not exist');
+  const resolvedTarget = path.resolve(target);
+  const generatedAt = new Date().toISOString();
+  const warnings = [];
+  const conflicts = [];
+  const resolvedProject = resolveReferenceProjectPath({ target: resolvedTarget, project });
+
+  if (!project) {
+    conflicts.push(referenceInspectFinding('reference-inspect.project-required', 'Reference inspect requires --project <name>.', []));
+  } else if (!resolvedProject.ok) {
+    conflicts.push(referenceInspectFinding('reference-inspect.project-path-invalid', 'Project must be one top-level portable reference directory name.', [normalizePortablePath(String(project))]));
+  } else if (!await isDirectoryPath(resolvedProject.path)) {
+    conflicts.push(referenceInspectFinding('reference-inspect.project-missing', 'Reference project directory does not exist.', [resolvedProject.relativePath]));
+  }
+
+  const analyzed = conflicts.length === 0
+    ? await analyzeReferenceProject({
+      root: resolvedProject.path,
+      id: resolvedProject.relativePath,
+      maxDepth
+    })
+    : null;
+  const queueItem = analyzed ? referenceQueueItem(analyzed, null) : null;
+  const review = queueItem ? referenceInspectReview(queueItem) : null;
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'reference.inspect',
+    ok: conflicts.length === 0,
+    target: resolvedTarget,
+    mode: { localOnly: true, network: false, writes: false },
+    generatedAt,
+    project: resolvedProject.relativePath,
+    summary: {
+      files: analyzed?.files ?? 0,
+      directories: analyzed?.directories ?? 0,
+      skippedDirectories: analyzed?.skippedDirectories ?? 0,
+      score: queueItem?.score ?? 0,
+      priority: queueItem?.priority ?? null,
+      representativeFiles: queueItem?.representativeFiles.length ?? 0,
+      warnings: warnings.length,
+      conflicts: conflicts.length
+    },
+    signals: analyzed?.signals ?? emptySignals(),
+    signalHighlights: queueItem?.signalHighlights ?? [],
+    recommendedCapabilities: queueItem?.recommendedCapabilities ?? [],
+    candidateCapabilities: queueItem?.candidateCapabilities ?? [],
+    representativeFiles: queueItem?.representativeFiles ?? [],
+    review,
     warnings,
     conflicts
   };
@@ -439,7 +512,7 @@ async function analyzeReferenceProject({ root, id, maxDepth }) {
     directories: 0,
     skippedDirectories: 0,
     signals: emptySignals(),
-    representativeFiles: []
+    representativeFileCandidates: []
   };
   await walkReferenceProject({ current: root, relative: '', depth: 0, maxDepth, state });
   return {
@@ -450,7 +523,7 @@ async function analyzeReferenceProject({ root, id, maxDepth }) {
     skippedDirectories: state.skippedDirectories,
     signals: state.signals,
     candidateCapabilities: candidateCapabilities(state.signals),
-    representativeFiles: state.representativeFiles
+    representativeFiles: selectRepresentativeFiles(state.representativeFileCandidates)
   };
 }
 
@@ -475,8 +548,8 @@ async function walkReferenceProject({ current, relative, depth, maxDepth, state 
       state.files += 1;
       const portablePath = normalizePortablePath(childRelative);
       addSignals(state.signals, portablePath);
-      if (state.representativeFiles.length < REPRESENTATIVE_LIMIT && isRepresentativeFile(portablePath)) {
-        state.representativeFiles.push(portablePath);
+      if (isRepresentativeFile(portablePath)) {
+        state.representativeFileCandidates.push(portablePath);
       }
     }
   }
@@ -553,6 +626,34 @@ function isRepresentativeFile(relativePath) {
   );
 }
 
+function selectRepresentativeFiles(candidates, limit = REPRESENTATIVE_LIMIT) {
+  const buckets = new Map(REPRESENTATIVE_CATEGORY_ORDER.map((category) => [category, []]));
+  for (const candidate of candidates) {
+    const category = representativeFileCategory(candidate);
+    buckets.get(category)?.push(candidate);
+  }
+
+  const selected = [];
+  const seen = new Set();
+  while (selected.length < limit) {
+    let added = false;
+    for (const category of REPRESENTATIVE_CATEGORY_ORDER) {
+      const bucket = buckets.get(category);
+      while (bucket?.length) {
+        const candidate = bucket.shift();
+        if (seen.has(candidate)) continue;
+        selected.push(candidate);
+        seen.add(candidate);
+        added = true;
+        break;
+      }
+      if (selected.length >= limit) break;
+    }
+    if (!added) break;
+  }
+  return selected;
+}
+
 function candidateCapabilities(signals) {
   const capabilities = [];
   if (signals.skills > 0) capabilities.push('skill-pack');
@@ -565,6 +666,87 @@ function candidateCapabilities(signals) {
   if (signals.tests > 0) capabilities.push('verification');
   if (signals.docs > 0) capabilities.push('documentation');
   return capabilities;
+}
+
+function referenceInspectReview(item) {
+  return {
+    readOrder: item.representativeFiles.slice(0, 10).map((filePath) => ({
+      path: filePath,
+      reason: representativeFileReason(filePath)
+    })),
+    adoptionQuestions: referenceInspectQuestions(item),
+    nextActions: item.nextActions
+  };
+}
+
+function referenceInspectQuestions(item) {
+  const questions = [
+    'Which behavior is reusable as a local skill, workflow, MCP surface, validator, or reference note?',
+    'What evidence proves the pattern works without copying upstream prose or raw source content?',
+    'Which local permission tier should own this pattern: read, scaffold, managed-write, or project-write?'
+  ];
+  if (item.recommendedCapabilities.includes('security')) {
+    questions.push('Does the reference imply a security rule, dependency check, secret boundary, or compliance artifact that should be validated locally?');
+  }
+  if (item.recommendedCapabilities.includes('backend') || item.candidateCapabilities.includes('connector-reference')) {
+    questions.push('What credential, retry, idempotency, or adapter contract needs to be documented before adoption?');
+  }
+  if (item.recommendedCapabilities.includes('delivery')) {
+    questions.push('Which test, CI gate, handoff, or workflow stop condition should become reusable verification guidance?');
+  }
+  return questions;
+}
+
+function representativeFileReason(filePath) {
+  const category = representativeFileCategory(filePath);
+  if (category === 'overview') return 'Project overview and setup shape.';
+  if (category === 'agent') return 'Agent instruction and repository policy surface.';
+  if (category === 'skill') return 'Skill trigger, workflow, or reference packaging pattern.';
+  if (category === 'package') return 'Runtime, command, dependency, or package boundary signal.';
+  if (category === 'security') return 'Security, secret, or compliance review signal.';
+  if (category === 'mcp') return 'MCP resource, prompt, tool, or permission model signal.';
+  if (category === 'workflow') return 'Workflow, runbook, stop condition, or handoff pattern.';
+  if (category === 'connector') return 'Connector, adapter, credential, or integration contract signal.';
+  if (category === 'runtime') return 'Runtime index, cache, graph, or generated evidence signal.';
+  if (category === 'memory') return 'Memory, canon, source registry, or promotion boundary signal.';
+  return 'Representative file selected by local reference signal scan.';
+}
+
+function representativeFileCategory(filePath) {
+  const lower = filePath.toLowerCase();
+  const basename = path.posix.basename(lower);
+  if (basename === 'readme.md') return 'overview';
+  if (basename === 'agents.md') return 'agent';
+  if (basename === 'skill.md' || lower.includes('/skills/')) return 'skill';
+  if (lower.includes('mcp') || lower.includes('modelcontextprotocol')) return 'mcp';
+  if (lower.includes('workflow') || lower.includes('/runbook') || lower.includes('/recipe') || lower.includes('/.github/workflows/')) return 'workflow';
+  if (lower.includes('connector') || lower.includes('adapter') || lower.includes('integration')) return 'connector';
+  if (lower.includes('graph') || lower.includes('index') || lower.includes('cache') || lower.includes('lens')) return 'runtime';
+  if (lower.includes('canon') || lower.includes('memory') || lower.includes('knowledge')) return 'memory';
+  if (basename === 'security.md' || lower.includes('security')) return 'security';
+  if (basename === 'package.json' || basename === 'pyproject.toml' || basename === 'cargo.toml') return 'package';
+  return 'other';
+}
+
+function resolveReferenceProjectPath({ target, project }) {
+  const normalized = normalizePortablePath(project ?? '');
+  if (!normalized || normalized.includes('/') || !isSafePortablePath(normalized)) {
+    return {
+      ok: false,
+      path: path.resolve(target, normalized || '.'),
+      relativePath: normalized
+    };
+  }
+  const resolvedPath = path.resolve(target, normalized);
+  const relative = path.relative(target, resolvedPath);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    return { ok: false, path: resolvedPath, relativePath: normalized };
+  }
+  return { ok: true, path: resolvedPath, relativePath: normalized };
+}
+
+function referenceInspectFinding(id, message, paths) {
+  return { id, message, paths };
 }
 
 function resolveLedgerPath({ target, filePath }) {

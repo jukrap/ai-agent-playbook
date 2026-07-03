@@ -101,6 +101,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'workflow_list',
       'workflow_run_preview',
       'reference_inventory',
+      'reference_inspect',
       'reference_adoption_queue',
       'reference_source_registry_preview',
       'reference_source_registry_check',
@@ -404,6 +405,19 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(inventory.structuredContent.ok, true);
     assert.equal(inventory.structuredContent.summary.projects, 2);
     assert.equal(inventory.structuredContent.projects[0].candidateCapabilities.includes('skill-pack'), true);
+
+    const referenceInspect = await client.callTool({
+      name: 'reference_inspect',
+      arguments: {
+        target: path.join(target, '_reference'),
+        project: 'new-reference-pack'
+      }
+    });
+    assert.equal(referenceInspect.structuredContent.ok, true);
+    assert.equal(referenceInspect.structuredContent.mode.writes, false);
+    assert.equal(referenceInspect.structuredContent.project, 'new-reference-pack');
+    assert.equal(referenceInspect.structuredContent.review.readOrder.some((entry) => entry.path === 'README.md'), true);
+    assert.deepEqual(await listRelativeFiles(target), before);
 
     const adoptionQueue = await client.callTool({
       name: 'reference_adoption_queue',

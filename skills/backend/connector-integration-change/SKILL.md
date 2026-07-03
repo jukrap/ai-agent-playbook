@@ -19,3 +19,5 @@ Use this as the primary backend skill for connector, adapter, webhook, and integ
 Read `references/connector-contract-checks.md` for connector contract, metadata, operation, and compatibility review.
 
 Read `references/credential-webhook-error-handling.md` for credential, webhook lifecycle, retry, and error handling checks.
+
+Read `references/stateful-server-thin-client.md` when an integration splits local clients, server-owned state, queues, caches, indexes, connector jobs, and credential resolution.

@@ -17,3 +17,5 @@ Use this as the primary security skill for dependency, SBOM, license, and proven
 ## Reference
 
 Read `references/dependency-supply-chain-checklist.md` before adding/updating packages, changing lockfiles, reviewing CVEs, or preparing release compliance evidence.
+
+Read `references/sbom-attestation-release-gate.md` when a release needs SBOM generation, license election, VEX/exception handling, image/source attestation, or artifact provenance verification.

@@ -11,6 +11,7 @@ Skill taxonomy v2 uses capability categories as the primary axis. Stack-specific
 - `backend`: API contracts, connectors, auth, server-rendered flows, workers, and integrations.
 - `database`: schema change, migration, SQL, reporting, and data integrity.
 - `devops`: CI/CD, containers, package releases, deployment, configuration, and observability.
+- `design`: design direction, brand identity, reference analysis, visual evidence, and image/Figma handoff.
 - `security`: secrets, threat modeling, authorization, dependency risk, and compliance evidence.
 - `mobile`: Expo, React Native, native app release, permissions, offline sync, WebView bridge, and device QA.
 - `data`: analytics, pipelines, ETL, dashboards, source registries, and data quality.
@@ -110,6 +111,17 @@ Package, license, and connector governance skills keep artifact compliance separ
 - `backend/connector-integration-change`: connector contracts, credential handling, webhook lifecycle, retry behavior, registration metadata, and host-runtime compatibility.
 
 Review guidance should not log into registries, publish packages, make live external calls, or claim legal approval unless the project explicitly defines those steps and the user asks for them.
+
+## Design Reference Pack
+
+Design skills separate visual direction and source interpretation from frontend implementation:
+
+- `design/design-brief-direction`: product type, audience, visual language, style dials, constraints, anti-patterns, and decision-ready briefs.
+- `design/brand-identity-system`: typography, color, logo usage, iconography, imagery, voice, brand applications, and identity review gates.
+- `design/design-reference-analysis`: reference screenshots, competitor sites, design boards, reusable principles, source boundaries, and visual evidence packages.
+- `design/image-to-code-handoff`: generated images, screenshots, mockups, reference boards, Figma frames, UI contracts, responsive rules, and verification criteria.
+
+Design guidance should not copy upstream visuals, brand marks, private Figma URLs, local paths, generated mockup artifacts, or proprietary copy into public docs. Generated design evidence belongs in runtime reports until a design brief, identity rule, or implementation contract is reviewed and accepted.
 
 ## Frontend Quality Pack
 

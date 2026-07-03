@@ -114,6 +114,7 @@ skills/
   database/          Schema, migration, SQL, and data integrity skills
   delivery/          Planning, eval, verification, testing, Git, PR, and worklog skills
   devops/            CI/CD, container, package release, deployment, and operations triage skills
+  design/            Design direction, brand identity, reference analysis, and image/Figma handoff skills
   frontend/          UI, browser, state/data, accessibility, visual QA, design-system, and interactive media skills
   mobile/            Native release, permission, offline sync, hybrid, WebView, and device QA skills
   security/          Auth, dependency supply chain, license/notice, security review, compliance gate, and risk skills
@@ -158,6 +159,13 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `frontend-ui-polish`: implement or refine visible frontend UI surfaces while preserving product intent and existing design conventions.
 - `cleanup-ai-slop`: clean low-trust, overcomplicated, duplicated, or mechanically generated code while preserving behavior.
 - `review-work-light`: review recent implementation work before handoff without starting a blocking review process.
+
+### Design
+
+- `design-brief-direction`: turn a vague product, page, brand, or UI request into a design direction, visual language, constraints, and decision-ready brief.
+- `brand-identity-system`: define, review, or apply brand identity, typography, color, logo direction, iconography, voice, or visual identity rules.
+- `design-reference-analysis`: analyze screenshots, competitor sites, reference apps, visual samples, or design boards before implementing or refactoring UI.
+- `image-to-code-handoff`: turn generated images, screenshots, mockups, reference boards, or Figma frames into implementation-ready UI specs and verification criteria.
 
 ### Git and Meta
 
@@ -205,6 +213,10 @@ Each `SKILL.md` is short and trigger-focused. Longer reusable detail belongs in 
 - `deployment-release-check`: prepare, review, or troubleshoot releases, deploys, rollbacks, feature flags, artifacts, migration gates, and post-deploy checks.
 - `package-publish-readiness`: prepare, review, or troubleshoot package publishing, release artifacts, package metadata, registry dry-runs, generated bundles, binaries, or marketplace distribution.
 - `observability-incident-triage`: triage incidents, production errors, alerts, latency, error rates, queue backlogs, job failures, logs, metrics, and traces.
+- `design-brief-direction`: create design direction briefs before visual implementation or redesign work.
+- `brand-identity-system`: define or review identity systems, typography, colors, logo usage, iconography, and brand application rules.
+- `design-reference-analysis`: extract reusable visual principles and evidence from design references without copying upstream visuals.
+- `image-to-code-handoff`: convert images, screenshots, mockups, reference boards, or Figma frames into UI contracts.
 - `browser-dom-change`: change browser DOM behavior, jQuery flows, event handlers, selectors, forms, plugins, or script-loaded UI.
 - `frontend-state-data-flow`: change frontend state ownership, server/client cache behavior, data fetching, optimistic updates, URL state, or stale UI bugs.
 - `frontend-accessibility-review`: review keyboard access, focus management, semantics, forms, dialogs, menus, announcements, contrast, and accessible states.

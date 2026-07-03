@@ -829,6 +829,7 @@ test('reference inventory summarizes local reference collections without writing
   assert.equal(queueReport.ok, true);
   assert.equal(queueReport.mode.writes, false);
   assert.equal(queueReport.summary.queueItems, 1);
+  assert.equal('ledgerStatuses' in queueReport.summary, false);
   assert.equal(queueReport.queue[0].project, 'repo-lens-like');
   assert.equal(queueReport.queue[0].recommendedCapabilities.includes('ai-harness'), true);
   assert.equal(queueReport.queue[0].signalHighlights.some((item) => item.signal === 'mcp'), true);
@@ -848,6 +849,28 @@ test('reference inventory summarizes local reference collections without writing
   assert.deepEqual(await listRelativeFiles(target), before);
 
   await mkdir(path.join(target, '.ai-playbook', 'knowledge'), { recursive: true });
+  const ledgerPath = path.join(target, '.ai-playbook', 'knowledge', 'reference-adoption-ledger.md');
+  await writeFile(ledgerPath, [
+    '# Reference Adoption Ledger',
+    '',
+    '| Status | Reference ID | Capability | Useful Pattern | Local Adoption | Risk/Noise | Decision Date |',
+    '| --- | --- | --- | --- | --- | --- | --- |',
+    '| adopted | repo-lens-like | ai-harness | MCP surface pattern | local queue annotation | none | 2026-07-03 |',
+    ''
+  ].join('\n'));
+  const beforeLedgerQueue = await listRelativeFiles(target);
+  const ledgerQueue = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-queue', referenceRoot, '--max-results', '2', '--ledger', ledgerPath, '--json'], ledgerQueue), 0);
+  const ledgerQueueReport = JSON.parse(ledgerQueue.out());
+  assert.equal(ledgerQueueReport.ok, true);
+  assert.equal(ledgerQueueReport.summary.ledgerStatuses.adopted, 1);
+  assert.equal(ledgerQueueReport.summary.ledgerStatuses.new, 1);
+  const adoptedQueueItem = ledgerQueueReport.queue.find((item) => item.project === 'repo-lens-like');
+  assert.equal(adoptedQueueItem.ledgerStatus, 'adopted');
+  assert.equal(adoptedQueueItem.ledgerCapability, 'ai-harness');
+  assert.equal(adoptedQueueItem.ledgerDecisionDate, '2026-07-03');
+  assert.deepEqual(await listRelativeFiles(target), beforeLedgerQueue);
+
   await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'sources.json'), `${JSON.stringify(sourceReport.registry, null, 2)}\n`);
   const beforeSourceCheck = await listRelativeFiles(target);
   const sourceCheck = capture(target);

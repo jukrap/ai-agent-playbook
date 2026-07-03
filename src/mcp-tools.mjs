@@ -96,10 +96,12 @@ export function registerPlaybookMcpTools(server, options) {
     })),
     tool('reference_adoption_queue', 'Score local reference collections into a read-only adoption queue.', {
       target: targetSchema.describe('Reference directory to queue for adoption review.'),
-      maxResults: maxResultsSchema
+      maxResults: maxResultsSchema,
+      ledgerPath: z.string().min(1).optional().describe('Optional reference adoption ledger path used to annotate queue status.')
     }, (args) => buildReferenceAdoptionQueue({
       target: args.target,
-      maxResults: args.maxResults ?? 20
+      maxResults: args.maxResults ?? 20,
+      ledgerPath: args.ledgerPath
     })),
     tool('reference_source_registry_preview', 'Preview knowledge/sources.json entries from a local reference adoption queue without writing files.', {
       target: targetSchema.describe('Reference directory to convert into source registry candidates.'),

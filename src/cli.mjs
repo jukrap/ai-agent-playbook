@@ -587,14 +587,16 @@ export async function runCli(argv, io = {}) {
     if (command === 'reference' && subcommand === 'adoption-queue') {
       const result = await buildReferenceAdoptionQueue({
         target: resolveTarget(cwd, targetArg),
-        maxResults: parseMaxResults(parsed.flags['max-results'])
+        maxResults: parseMaxResults(parsed.flags['max-results']),
+        ledgerPath: resolveOptionalPath(cwd, parsed.flags.ledger)
       });
       if (parsed.flags.json) {
         writeJson(stdout, result);
       } else {
         write(stdout, `Reference adoption queue: ${result.summary.queueItems} item(s)\n`);
         for (const item of result.queue) {
-          write(stdout, `[${item.priority.toUpperCase()}] ${item.project} -> ${item.recommendedCapabilities.join(', ') || 'manual-review'} (${item.score})\n`);
+          const ledgerStatus = item.ledgerStatus ? ` ledger=${item.ledgerStatus}` : '';
+          write(stdout, `[${item.priority.toUpperCase()}] ${item.project} -> ${item.recommendedCapabilities.join(', ') || 'manual-review'} (${item.score})${ledgerStatus}\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -1441,6 +1443,7 @@ function needsValue(key) {
     'contract',
     'threshold',
     'max-results',
+    'ledger',
     'codex-root',
     'agents-root',
     'recipe',
@@ -1538,7 +1541,7 @@ Usage:
   ai-playbook workflow run-preview <target> --recipe <recipe-id> [--json]
   ai-playbook workflow run-start <target> --recipe <recipe-id> [--apply] [--json]
   ai-playbook reference inventory <reference-dir> [--max-results N] [--json]
-  ai-playbook reference adoption-queue <reference-dir> [--max-results N] [--json]
+  ai-playbook reference adoption-queue <reference-dir> [--max-results N] [--ledger <ledger.md>] [--json]
   ai-playbook reference source-registry-preview <reference-dir> [--max-results N] [--json]
   ai-playbook reference source-registry-check <target> [--path <sources.json>] [--reference-dir <dir>] [--json]
   ai-playbook reference ledger-check <target> [--path <ledger.md>] [--strict] [--json]

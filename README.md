@@ -5,7 +5,7 @@
 <h1 align="center">AI Agent Playbook</h1>
 
 <p align="center">
-  A practical, reusable playbook for AI agents that need to work carefully inside real software repositories.
+  A repository-scale harness for AI coding agents: reusable skills, project memory, runtime checks, and MCP tools for careful software work.
 </p>
 
 <p align="center">
@@ -23,7 +23,7 @@
 
 ## What This Is
 
-AI Agent Playbook is a small shelf of reusable agent skills, project templates, project-memory guides, a dependency-light runtime CLI, and a local MCP tool server for read-only analysis.
+AI Agent Playbook is a local-first AI harness for real software repositories. It combines capability-focused skills, copyable project memory, a dependency-light runtime CLI, and an optional local MCP server so agents can inspect, plan, verify, and hand off work without guessing.
 
 It helps coding agents stop guessing. The playbook nudges agents to inspect the repository first, respect local rules, keep API boundaries clear, write useful worklogs, and verify changes before calling work done.
 
@@ -39,7 +39,7 @@ It is not a slash-command pack, a Codex plugin, or an auto-running agent. The de
 | Project templates | Copyable root agent rules, stack profiles, and project-memory files for current facts, vocabulary, maps, decisions, and evidence. | `templates/`       |
 | Runtime harness   | A small CLI for bootstrapping `.ai-playbook/`, health checks, context, runs, contracts, plans, and worklogs. | `bin/`, `src/`     |
 | MCP tools         | Local read-only tools, resources, and prompts for AI apps: catalogs, adapter support/readiness, reference adoption, playbook layout, permission model, index search, write-gate preview, context, operator checks, research, contracts, image diff, AST search, clone cues, and TypeScript/JavaScript analysis. | `src/`             |
-| Human docs        | Installation, classification, maintenance, publishing, and translation notes.                       | `docs/`            |
+| Human docs        | Lifecycle, command, classification, maintenance, publishing, and translation notes.                  | `docs/`            |
 | Translations      | Korean reading copies that mirror English source files.                                             | `translations/ko/` |
 | Agent adapters    | Setup notes for specific agent environments.                                                        | `adapters/`        |
 
@@ -76,7 +76,7 @@ The npm package installs the CLI. It does not automatically copy skills, create 
 - `mcp` starts a local stdio MCP server for AI apps. It does not write files by itself.
 - Runtime hooks and adapter settings are optional and are never installed by default.
 
-For command-by-command usage, see [Command guide](docs/commands.md). For update, uninstall, local checkout, PowerShell compatibility, ownership markers, and cleanup details, see [Install, update, and uninstall](docs/installation.md).
+For command-by-command usage, see [Command guide](docs/commands.md). For update, uninstall, local checkout, PowerShell compatibility, ownership markers, and cleanup details, see [Lifecycle guide](docs/lifecycle.md).
 
 ## Everyday Flow
 
@@ -132,7 +132,7 @@ templates/
 examples/             Worklog, prompt, and handoff examples
 translations/         Human translations; never install these as skills
 adapters/             Agent-specific install notes and optional hook PoCs
-docs/                 Classification, installation, publishing, and maintenance notes
+docs/                 Lifecycle, classification, publishing, and maintenance notes
 docs/assets/          README and documentation images
 scripts/              Validation and local sync helpers
 test/                 Node CLI and adapter tests
@@ -269,7 +269,7 @@ Enterprise stacks and data-heavy flows:
 - [Repository context](CONTEXT.md): core terms and design intent for the playbook.
 - [First 10 minutes](docs/quick-start.md): beginner-friendly first run, glossary, and safe command order.
 - [Command guide](docs/commands.md): what each CLI command does, when to use it, and whether it writes files.
-- [Install, update, and uninstall](docs/installation.md): npm/npx usage, global CLI setup, skill lifecycle, project bootstrap, cleanup, and legacy PowerShell paths.
+- [Lifecycle guide](docs/lifecycle.md): npm/npx usage, global CLI setup, skill lifecycle, project bootstrap/removal, cleanup, and legacy PowerShell paths.
 - [Runtime harness](docs/harness-runtime.md): runtime principles, JSON contract notes, overwrite policy, and target-project flow.
 - [Harness OS](docs/harness-os.md): v1 redesign principles for catalogs, layout, runtime, MCP, and skills.
 - [Playbook layout v2](docs/playbook-layout-v2.md): `.ai-playbook` v2 directory roles and migration commands.

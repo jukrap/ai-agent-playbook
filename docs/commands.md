@@ -4,7 +4,7 @@ This page is the command reference for AI Agent Playbook. It explains what each 
 
 If you are trying the tool for the first time, read [First 10 minutes](quick-start.md) before using this full reference.
 
-For installation, update, uninstall, and npm details, see [Install, update, and uninstall](installation.md). For runtime design and JSON contract notes, see [Runtime harness](harness-runtime.md).
+For lifecycle details covering install, update, uninstall, and npm usage, see [Lifecycle guide](lifecycle.md). For runtime design and JSON contract notes, see [Runtime harness](harness-runtime.md).
 
 ## How to run commands
 

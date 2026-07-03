@@ -53,7 +53,7 @@ For a legacy or documentation-heavy project, usually add only `.ai-playbook/STAR
 
 ## Local sync
 
-For the full new-computer setup, see `../../docs/installation.md`. From the repository root, use this once after cloning:
+For the full new-computer setup, see `../../docs/lifecycle.md`. From the repository root, use this once after cloning:
 
 ```powershell
 node .\bin\ai-playbook.mjs skills install

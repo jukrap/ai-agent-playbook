@@ -1,10 +1,10 @@
 # 명령어 가이드
 
-이 문서는 AI Agent Playbook 명령어 reference입니다. 각 명령이 무엇을 하는지, 파일을 쓰는지, 어떤 순서로 실행하면 안전한지 설명합니다.
+이 문서는 AI Agent Playbook 명령어 설명서입니다. 각 명령이 무엇을 하는지, 파일을 쓰는지, 어떤 순서로 실행하면 안전한지 설명합니다.
 
-처음 사용하는 경우에는 전체 reference를 보기 전에 [처음 10분 사용법](quick-start.ko.md)을 먼저 읽는 것을 권장합니다.
+처음 사용하는 경우에는 전체 설명서를 보기 전에 [처음 10분 사용법](quick-start.ko.md)을 먼저 읽는 것을 권장합니다.
 
-설치, 업데이트, 삭제, npm 사용 방식은 [설치, 업데이트, 삭제](installation.ko.md)를 보세요. Runtime 설계와 JSON contract 설명은 [Runtime harness](harness-runtime.ko.md)를 보세요.
+설치, 업데이트, 삭제, npm 사용 방식은 [사용 수명주기](lifecycle.ko.md)를 보세요. 런타임 설계와 JSON 계약 설명은 [런타임 하네스](harness-runtime.ko.md)를 보세요.
 
 ## 명령 실행 방식
 
@@ -12,24 +12,24 @@
 
 | 형태 | 언제 쓰나 |
 | ---- | --------- |
-| `npx ai-agent-playbook ...` | 현재 프로젝트에 dependency를 추가하지 않고 최신 배포 패키지를 실행할 때 기본으로 사용합니다. |
+| `npx ai-agent-playbook ...` | 현재 프로젝트에 의존성을 추가하지 않고 최신 배포 패키지를 실행할 때 기본으로 사용합니다. |
 | `ai-playbook ...` | `npm install -g ai-agent-playbook` 뒤에 짧은 전역 명령을 쓰고 싶을 때 사용합니다. |
-| `node .\bin\ai-playbook.mjs ...` | 이 repository를 checkout한 폴더 안에서 직접 실행할 때 사용합니다. |
-| `npx ai-agent-playbook mcp` | AI 앱이 read-only playbook 도구를 대신 호출하게 하려면 로컬 stdio MCP 서버 명령으로 등록합니다. 명시적 opt-in scaffold/managed-write tool이 필요할 때만 `--enable-write-tools`를 추가합니다. |
+| `node .\bin\ai-playbook.mjs ...` | 이 저장소를 체크아웃한 폴더 안에서 직접 실행할 때 사용합니다. |
+| `npx ai-agent-playbook mcp` | AI 앱이 읽기 전용 플레이북 도구를 대신 호출하게 하려면 로컬 표준 입출력 MCP 서버 명령으로 등록합니다. 명시적으로 선택한 발판 생성/관리 파일 쓰기 도구가 필요할 때만 `--enable-write-tools`를 추가합니다. |
 
 아래 예시의 `npx ai-agent-playbook`은 설치 방식에 따라 `ai-playbook` 또는 `node .\bin\ai-playbook.mjs`로 바꿔 실행할 수 있습니다.
 
-`<target>` 또는 `<target-project>`는 playbook을 적용하거나 검사할 대상 프로젝트 폴더입니다. 터미널이 이미 그 프로젝트 안에 있다면 `.`을 쓸 수 있습니다.
+`<target>` 또는 `<target-project>`는 플레이북을 적용하거나 검사할 대상 프로젝트 폴더입니다. 터미널이 이미 그 프로젝트 안에 있다면 `.`을 쓸 수 있습니다.
 
 ### 예시 입력 방법
 
-- 꺾쇠괄호를 그대로 입력하지 않습니다. `<target-project>`, `<file>`, `<text>`, `<run-id>` 같은 placeholder를 실제 값으로 바꿉니다.
+- 꺾쇠괄호를 그대로 입력하지 않습니다. `<target-project>`, `<file>`, `<text>`, `<run-id>` 같은 자리표시자를 실제 값으로 바꿉니다.
 - 이미 대상 프로젝트 폴더 안에 있다면 target으로 `.`을 쓰는 편이 간단합니다.
 - 공백이 있는 경로나 문장은 따옴표로 감쌉니다. 예: `".\example app"`, `"auth flow change"`.
-- `--path <file>`은 보통 target project 안의 경로입니다. 예: `src/example.ts`. 절대 경로일 필요는 없습니다.
+- `--path <file>`은 보통 대상 프로젝트 안의 경로입니다. 예: `src/example.ts`. 절대 경로일 필요는 없습니다.
 - 익숙하지 않다면 명령은 한 줄로 입력합니다. PowerShell에서 긴 명령을 여러 줄로 나눌 때만 backtick을 사용합니다.
 - `> preflight.json` 같은 redirection은 shell이 처리합니다. CLI는 JSON을 출력하고, shell이 파일로 저장합니다.
-- 공유 예시에는 개인 폴더, 고객명, credential, internal URL을 넣지 않습니다. 대신 `<target-project>` 같은 placeholder를 사용합니다.
+- 공유 예시에는 개인 폴더, 고객명, 자격 증명, 내부 URL을 넣지 않습니다. 대신 `<target-project>` 같은 자리표시자를 사용합니다.
 
 터미널이 대상 프로젝트 안에 있다면 아래처럼 쓸 수 있습니다.
 
@@ -99,23 +99,23 @@ npx ai-agent-playbook operator check <target-project> --json
 
 `skills install`은 사용자 수준 skill 폴더를 바꿉니다. `bootstrap`은 대상 프로젝트를 바꿉니다. 둘은 별도 단계입니다.
 
-## Skills
+## 스킬
 
-Skill은 재사용 가능한 사용자 수준 지침입니다. 각 대상 repository 안이 아니라 Codex와 agent의 일반 skill root에 설치됩니다.
+스킬은 재사용 가능한 사용자 수준 지침입니다. 각 대상 저장소 안이 아니라 Codex와 에이전트의 일반 스킬 루트에 설치됩니다.
 
 | 명령 | 언제 쓰나 | 파일을 쓰나 | 예시 |
 | ---- | --------- | ----------- | ---- |
-| `skills check` | 이 playbook의 skill이 설치됐는지, 누락됐는지, 수정됐는지, 같은 이름의 unmanaged copy와 충돌하는지 봅니다. | 아니오 | `npx ai-agent-playbook skills check --json` |
-| `skills lint` | 공개 전 source `SKILL.md`의 trigger 중심 description, frontmatter 형태, missing reference link, shallow reference file을 점검합니다. | 아니오 | `npx ai-agent-playbook skills lint --json` |
+| `skills check` | 이 플레이북의 스킬이 설치됐는지, 누락됐는지, 수정됐는지, 같은 이름의 비관리 복사본과 충돌하는지 봅니다. | 아니오 | `npx ai-agent-playbook skills check --json` |
+| `skills lint` | 공개 전 원본 `SKILL.md`의 사용 조건 중심 설명, frontmatter 형태, 누락된 참고 링크, 얕은 참고 파일을 점검합니다. | 아니오 | `npx ai-agent-playbook skills lint --json` |
 | `skills install` | 재사용 스킬을 처음 설치합니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook skills install --dry-run` 뒤 `npx ai-agent-playbook skills install` |
-| `skills update` | 패키지나 checkout이 바뀐 뒤 설치된 managed skill을 갱신합니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook skills update --dry-run` 뒤 `npx ai-agent-playbook skills update` |
-| `skills uninstall` | 이 playbook이 설치한 수정되지 않은 managed skill을 제거합니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook skills uninstall --dry-run` 뒤 `npx ai-agent-playbook skills uninstall` |
+| `skills update` | 패키지나 체크아웃이 바뀐 뒤 설치된 관리 대상 스킬을 갱신합니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook skills update --dry-run` 뒤 `npx ai-agent-playbook skills update` |
+| `skills uninstall` | 이 플레이북이 설치한 수정되지 않은 관리 대상 스킬을 제거합니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook skills uninstall --dry-run` 뒤 `npx ai-agent-playbook skills uninstall` |
 
-Skills 명령은 `.ai-agent-playbook-install.json` marker와 content hash를 사용합니다. 기본적으로 다른 사람이 만든 skill은 제거하지 않습니다.
+스킬 명령은 `.ai-agent-playbook-install.json` 표식과 내용 해시를 사용합니다. 기본적으로 다른 사람이 만든 스킬은 제거하지 않습니다.
 
-## Project playbook
+## 프로젝트 플레이북
 
-Project playbook 명령은 대상 repository 하나의 `.ai-playbook/`을 관리합니다.
+프로젝트 플레이북 명령은 대상 저장소 하나의 `.ai-playbook/`을 관리합니다.
 
 | 명령 | 언제 쓰나 | 파일을 쓰나 | 예시 |
 | ---- | --------- | ----------- | ---- |

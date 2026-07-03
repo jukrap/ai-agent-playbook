@@ -106,7 +106,7 @@ Skills are reusable user-level guidance. They are installed under common Codex a
 | Command | When to use it | Writes files? | Example |
 | ------- | -------------- | ------------- | ------- |
 | `skills check` | See whether this playbook's skills are installed, missing, modified, or blocked by same-name unmanaged copies. | No | `npx ai-agent-playbook skills check --json` |
-| `skills lint` | Review source `SKILL.md` files for trigger-focused descriptions, frontmatter shape, and missing reference links before publishing. | No | `npx ai-agent-playbook skills lint --json` |
+| `skills lint` | Review source `SKILL.md` files for trigger-focused descriptions, frontmatter shape, missing reference links, and shallow reference files before publishing. | No | `npx ai-agent-playbook skills lint --json` |
 | `skills install` | Install reusable skills for the first time. | Yes, unless `--dry-run` | `npx ai-agent-playbook skills install --dry-run` then `npx ai-agent-playbook skills install` |
 | `skills update` | Refresh installed managed skills after the package or checkout changes. | Yes, unless `--dry-run` | `npx ai-agent-playbook skills update --dry-run` then `npx ai-agent-playbook skills update` |
 | `skills uninstall` | Remove unmodified managed skills installed by this playbook. | Yes, unless `--dry-run` | `npx ai-agent-playbook skills uninstall --dry-run` then `npx ai-agent-playbook skills uninstall` |

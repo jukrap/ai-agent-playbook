@@ -15,11 +15,12 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 2. Create `skills/<category>/<skill-name>/SKILL.md`.
 3. Keep `SKILL.md` focused on trigger, workflow, and when to read references.
 4. Move long rules, checklists, examples, and provider-specific details into `references/*.md`.
-5. Add or update `agents/openai.yaml` only if the skill UI metadata needs to be exposed.
-6. Add the Korean translation at `translations/ko/skills/<category>/<skill-name>.ko.md`.
-7. Translate any reference files under the matching `translations/ko/skills/**/references/` path.
-8. Update `README.md` and `docs/classification.md` if the skill changes the public category map.
-9. Run validation and sync installed copies.
+5. Keep references substantive enough to carry reusable procedure, evidence, examples, or stack/profile detail; avoid placeholder references.
+6. Add or update `agents/openai.yaml` only if the skill UI metadata needs to be exposed.
+7. Add the Korean translation at `translations/ko/skills/<category>/<skill-name>.ko.md`.
+8. Translate any reference files under the matching `translations/ko/skills/**/references/` path.
+9. Update `README.md` and `docs/classification.md` if the skill changes the public category map.
+10. Run validation and sync installed copies.
 
 ## Adding a project template
 

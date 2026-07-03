@@ -13,3 +13,7 @@ Use this as the primary database skill for safe data changes.
 2. Separate additive, compatible, destructive, and backfill changes.
 3. Check indexes, locks, nullability, defaults, constraints, reporting consumers, and deployment order.
 4. Verify with migration dry runs, before/after queries, and application compatibility checks when possible.
+
+## Reference
+
+Read `references/database-change-review-matrix.md` when a database change needs expand/contract sequencing, online safety checks, reporting consumer review, stored procedure impact, backfill planning, or rollback evidence.

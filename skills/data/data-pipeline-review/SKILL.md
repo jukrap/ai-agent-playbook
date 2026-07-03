@@ -14,3 +14,6 @@ Use this as the primary data skill for pipeline and analytics reliability.
 3. Separate source-of-truth data from derived reports and generated artifacts.
 4. Verify with row counts, reconciliation queries, sample records, and dashboard checks when possible.
 
+## Reference
+
+Read `references/pipeline-reconciliation-and-backfill.md` when a pipeline review needs source contract checks, freshness guarantees, idempotent jobs, replay/backfill planning, data quality alerts, or dashboard reconciliation.

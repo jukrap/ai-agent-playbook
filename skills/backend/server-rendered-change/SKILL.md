@@ -14,3 +14,6 @@ Use this as the primary backend skill for server-rendered request/response flows
 3. Treat template fragments, stored procedures, mapper SQL, and session keys as contracts.
 4. Verify GET, POST, validation failure, auth/session, and deployment-shape cases when relevant.
 
+## Reference
+
+Read `references/request-view-session-contract.md` when a server-rendered change touches forms, redirects, validation messages, model/view keys, session state, template fragments, stored procedures, or compatibility with old routes.

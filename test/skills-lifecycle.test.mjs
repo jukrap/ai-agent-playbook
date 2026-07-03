@@ -237,7 +237,7 @@ test('skills lint --json reports trigger and reference quality without writing f
   await writeFile(path.join(root, 'skills', 'project', 'bad-skill', 'SKILL.md'), [
     '---',
     'name: bad-skill',
-    'description: This skill helps you do many things by following a long workflow that should have been reference material instead of a trigger.',
+    'description: This skill helps you do many things by following a long workflow that should have been reference material instead of a trigger, including project setup, delivery, documentation, release, integration, and validation work.',
     'owner: local',
     '---',
     '# Bad Skill',

@@ -1,6 +1,6 @@
 ---
 name: knowledge-retrieval-pipeline-review
-description: Use when reviewing document ingestion, parsing, chunking, metadata, deduplication, embeddings, vector stores, retrieval quality, citations, access control, or stale RAG/search indexes.
+description: Use when reviewing document ingestion, parsing, chunking, metadata, deduplication, embeddings, vector stores, retrieval quality, citations, or stale RAG/search indexes.
 ---
 
 # Knowledge Retrieval Pipeline Review

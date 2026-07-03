@@ -1,6 +1,6 @@
 ---
 name: package-publish-readiness
-description: Use when preparing, reviewing, or troubleshooting package publishing, release artifacts, package metadata, registry dry-runs, generated bundles, binaries, or marketplace distribution.
+description: Use when preparing, reviewing, or troubleshooting package publishing, release artifacts, metadata, registry dry-runs, generated bundles, binaries, or marketplaces.
 ---
 
 # Package Publish Readiness

@@ -1,6 +1,6 @@
 ---
 name: schema-migration-plan
-description: Use when planning or reviewing database schema migrations, DDL, indexes, constraints, defaults, nullability, seeds, views, triggers, stored procedures, or expand/contract rollout steps.
+description: Use when planning or reviewing database schema migrations, DDL, indexes, constraints, defaults, nullability, seeds, views, triggers, or expand/contract rollout.
 ---
 
 # Schema Migration Plan

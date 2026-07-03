@@ -1,6 +1,6 @@
 ---
 name: test-verification-strategy
-description: Use when planning, reviewing, or repairing verification strategy, test scope, unit/integration/e2e/contract/manual checks, coverage gaps, risk-based test selection, or release confidence.
+description: Use when planning, reviewing, or repairing verification strategy, test scope, contract/manual checks, coverage gaps, risk-based selection, or release confidence.
 ---
 
 # Test Verification Strategy
@@ -19,4 +19,3 @@ Use this as the primary delivery skill for choosing and defending verification c
 Read `references/risk-based-test-plan.md` for test scope, blast radius, and release confidence planning.
 
 Read `references/verification-matrix.md` for mapping change types to concrete verification commands and evidence.
-

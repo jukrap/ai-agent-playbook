@@ -1,6 +1,6 @@
 ---
 name: frontend-ui-polish
-description: Use when implementing or refining visible frontend UI surfaces, responsive layout, interaction states, visual hierarchy, or production polish while preserving the product intent and existing design system.
+description: Use when refining visible frontend UI surfaces, responsive layout, interaction states, visual hierarchy, or production polish within existing product intent.
 ---
 
 # Frontend UI Polish

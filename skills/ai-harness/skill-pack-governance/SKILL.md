@@ -1,6 +1,6 @@
 ---
 name: skill-pack-governance
-description: Use when adding, reorganizing, reviewing, or adopting skill packs, taxonomy categories, compatibility wrappers, reference routing, translations, install/sync behavior, or reusable skill governance.
+description: Use when adding, reorganizing, reviewing, or adopting skill packs, taxonomy categories, compatibility wrappers, references, translations, or install/sync behavior.
 ---
 
 # Skill Pack Governance

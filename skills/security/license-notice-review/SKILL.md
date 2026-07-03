@@ -1,6 +1,6 @@
 ---
 name: license-notice-review
-description: Use when reviewing first-party licenses, third-party notices, attribution, vendored code, generated artifacts, copied snippets, dual-license choices, redistribution scope, or compliance evidence.
+description: Use when reviewing licenses, notices, attribution, vendored code, copied snippets, generated artifacts, redistribution scope, or compliance evidence.
 ---
 
 # License Notice Review

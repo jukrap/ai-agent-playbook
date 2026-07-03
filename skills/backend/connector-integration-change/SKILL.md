@@ -1,6 +1,6 @@
 ---
 name: connector-integration-change
-description: Use when changing API connectors, workflow nodes, MCP adapters, webhooks, OAuth apps, import/export bridges, sync jobs, third-party integrations, connector registration, or credential handling.
+description: Use when changing API connectors, MCP adapters, webhooks, OAuth apps, import/export bridges, sync jobs, third-party integrations, or credential handling.
 ---
 
 # Connector Integration Change

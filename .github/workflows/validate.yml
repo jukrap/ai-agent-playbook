@@ -36,7 +36,7 @@ jobs:
         shell: pwsh
         run: ./scripts/validate-translations.ps1
 
-      - name: Validate public docs
+      - name: Validate public and MCP docs
         shell: pwsh
         run: ./scripts/validate-public-docs.ps1
 

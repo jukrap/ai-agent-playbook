@@ -21,7 +21,9 @@ Default resources expose compact structured context that AI apps can read before
 - `ai-playbook://skills`: skill taxonomy and compatibility wrapper metadata.
 - `ai-playbook://workflows`: bundled workflow recipes.
 - `ai-playbook://adapters`: Codex, Codex App, Claude Code, and MCP setup summary.
+- `ai-playbook://adapter-readiness`: adapter check/config commands, readiness checks, and no-write boundaries.
 - `ai-playbook://playbook-layout-v2`: `.ai-playbook` v2 layout roles and recommended read order.
+- `ai-playbook://reference-adoption`: reference registry, ledger, status, and promotion boundary summary.
 - `ai-playbook://mcp-permission-model`: this permission model as structured JSON.
 
 Gate and graph review prompts include:

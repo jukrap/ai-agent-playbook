@@ -66,6 +66,7 @@ npm run check
 npm test
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
+.\scripts\validate-mcp-docs.ps1
 .\scripts\validate-public-docs.ps1
 .\scripts\sync-skills.ps1 -WhatIf
 .\install.ps1 -SkipValidation -WhatIf

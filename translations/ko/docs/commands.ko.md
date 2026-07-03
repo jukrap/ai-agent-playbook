@@ -328,12 +328,12 @@ Global install을 했다면 아래 명령도 같습니다.
 ai-playbook mcp
 ```
 
-서버는 `ai-playbook://capabilities`, `ai-playbook://skills`, `ai-playbook://workflows`, `ai-playbook://adapters`, `ai-playbook://playbook-layout-v2`, `ai-playbook://mcp-permission-model` 읽기 전용 resource를 노출합니다. AI 앱은 이 resource로 capability catalog, skill taxonomy, workflow recipe, Codex/Claude adapter 지원, `.ai-playbook` 읽기 순서, permission tier를 먼저 파악한 뒤 필요한 tool을 고를 수 있습니다.
+서버는 `ai-playbook://capabilities`, `ai-playbook://skills`, `ai-playbook://workflows`, `ai-playbook://adapters`, `ai-playbook://adapter-readiness`, `ai-playbook://playbook-layout-v2`, `ai-playbook://reference-adoption`, `ai-playbook://mcp-permission-model` 읽기 전용 resource를 노출합니다. AI 앱은 이 resource로 capability catalog, skill taxonomy, workflow recipe, Codex/Claude adapter 지원, adapter readiness check, `.ai-playbook` 읽기 순서, reference adoption boundary, permission tier를 먼저 파악한 뒤 필요한 tool을 고를 수 있습니다.
 
 서버는 아래 read-only 도구를 노출합니다.
 
 - playbook context: `playbook_context`, `context_status`, `context_list`
-- catalog와 layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_inspect`, `reference_adoption_queue`, `reference_capability_matrix`, `reference_adoption_plan`, `reference_adoption_status`, `reference_source_registry_preview`, `reference_source_registry_check`, `reference_ledger_check`, `reference_ledger_decision_preview`, `playbook_layout`, `index_status`, `runtime_schema_check`, `evidence_locator_check`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `repo_graph_preview`, `write_gate_preview`, `canon_check`
+- catalog와 layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_inspect`, `reference_adoption_queue`, `reference_capability_matrix`, `reference_adoption_plan`, `reference_adoption_status`, `reference_source_registry_preview`, `reference_source_registry_check`, `reference_source_registry_update_preview`, `reference_ledger_check`, `reference_ledger_update_preview`, `reference_ledger_decision_preview`, `playbook_layout`, `index_status`, `runtime_schema_check`, `evidence_locator_check`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `repo_graph_preview`, `write_gate_preview`, `canon_check`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules와 project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA와 deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`

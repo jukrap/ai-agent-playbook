@@ -1,18 +1,22 @@
-# Legacy Database Heavy System
+# 데이터베이스 중심 레거시 시스템
 
-Business rules가 stored procedures, triggers, views, direct SQL, scheduled jobs, database-shaped contracts에 있는 legacy system을 유지보수할 때 사용합니다.
+업무 규칙이 저장 프로시저, 트리거, 뷰, 직접 SQL, 예약 작업, 데이터베이스 형태의 계약에 있는 레거시 시스템을 유지보수할 때 사용합니다.
 
 ## 진행 절차
 
-1. 변경과 관련된 tables, views, stored procedures, triggers, jobs, direct SQL call sites를 식별합니다.
-2. application code와 database-side behavior를 모두 추적한 뒤 수정합니다.
-3. transaction boundaries, locking, isolation, rollback behavior, batch volume을 확인합니다.
-4. migration과 compatibility가 명시되지 않았으면 기존 data shape를 보존합니다.
-5. representative data와 rollback path로 검증합니다.
+1. 변경과 관련된 테이블, 뷰, 저장 프로시저, 트리거, 작업, 직접 SQL 호출 지점을 식별합니다.
+2. 애플리케이션 코드와 데이터베이스 쪽 동작을 모두 추적한 뒤 수정합니다.
+3. 트랜잭션 경계, 잠금, 격리 수준, 되돌림 동작, 배치 물량을 확인합니다.
+4. 마이그레이션과 호환성이 명시되지 않았으면 기존 데이터 형태를 보존합니다.
+5. 대표 데이터와 되돌림 경로로 검증합니다.
 
 ## Guardrails
 
-- 모든 caller 확인 없이 column rename, procedure parameter 변경, result set 변경을 하지 않습니다.
-- ORM model이 모든 database behavior를 반영한다고 가정하지 않습니다.
-- trigger side effect를 보이지 않는 구현 세부사항으로 취급하지 않습니다.
-- schema, migration, data backfill, operational risks를 PR/worklog에 기록합니다.
+- 모든 호출 지점 확인 없이 컬럼 이름, 프로시저 매개변수, 결과 집합을 바꾸지 않습니다.
+- ORM 모델이 모든 데이터베이스 동작을 반영한다고 가정하지 않습니다.
+- 트리거의 부수 효과를 보이지 않는 구현 세부사항으로 취급하지 않습니다.
+- 스키마, 마이그레이션, 데이터 보정, 운영 위험을 PR/작업 기록에 남깁니다.
+
+## 참고 자료
+
+저장 프로시저, 트리거, 뷰, 작업, 결과 집합, 데이터베이스 형태의 계약을 바꾸기 전에는 `references/database-coupling-map.md`를 읽습니다.

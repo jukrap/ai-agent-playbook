@@ -1,18 +1,22 @@
-# Legacy Server-rendered Web
+# 레거시 서버 렌더링 웹
 
-Templates, controllers, form posts, server validation, sessions, layouts, partials, mixed server/client behavior가 있는 server-rendered web pages를 유지보수할 때 사용합니다.
+템플릿, 컨트롤러, 폼 제출, 서버 검증, 세션, 레이아웃, 부분 템플릿, 서버/클라이언트 혼합 동작이 있는 서버 렌더링 웹 페이지를 유지보수할 때 사용합니다.
 
 ## 진행 절차
 
-1. route/controller, view model, template, form action, validation, redirect flow를 추적합니다.
-2. markup 또는 CSS 변경 전 layout/partial/include reuse를 확인합니다.
-3. form field names, hidden inputs, CSRF/session behavior, error display를 보존합니다.
-4. 프로젝트가 server-rendered fallback에 의존하면 JavaScript enhancement를 그 흐름과 호환되게 유지합니다.
-5. 관련 있으면 GET, successful POST, validation failure, auth/session edge case를 검증합니다.
+1. 경로/컨트롤러, 뷰 모델, 템플릿, 폼 동작, 검증, 리다이렉트 흐름을 추적합니다.
+2. 마크업 또는 CSS를 바꾸기 전에 레이아웃/부분 템플릿/인클루드 재사용을 확인합니다.
+3. 폼 필드 이름, 숨은 입력, CSRF/세션 동작, 오류 표시를 보존합니다.
+4. 프로젝트가 서버 렌더링 대체 흐름에 의존하면 자바스크립트 보강 동작을 그 흐름과 호환되게 유지합니다.
+5. 관련 있으면 GET, 성공 POST, 검증 실패, 인증/세션 경계 사례를 검증합니다.
 
 ## Guardrails
 
-- server binding 확인 없이 field를 rename하지 않습니다.
-- 모든 consumer 확인 없이 shared fragment 밖으로 markup을 이동하지 않습니다.
-- template naming만 보고 AJAX response shape를 가정하지 않습니다.
-- backend/template contract uncertainty를 worklog 또는 PR에 기록합니다.
+- 서버 바인딩 확인 없이 필드 이름을 바꾸지 않습니다.
+- 모든 소비자를 확인하지 않고 공유 조각 밖으로 마크업을 이동하지 않습니다.
+- 템플릿 이름만 보고 AJAX 응답 형태를 가정하지 않습니다.
+- 백엔드/템플릿 계약이 불확실하면 작업 기록 또는 PR에 기록합니다.
+
+## 참고 자료
+
+경로, 컨트롤러, 템플릿, 폼, 세션, 보강 동작 호환성 점검은 `references/server-rendered-legacy-flow.md`를 읽습니다.

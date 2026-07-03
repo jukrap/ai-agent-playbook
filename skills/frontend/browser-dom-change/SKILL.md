@@ -14,3 +14,6 @@ Use this as the primary frontend skill for DOM-first and legacy browser behavior
 3. Check browser compatibility and script load order before replacing behavior.
 4. Verify the actual browser workflow, including initial load, repeated actions, validation failure, and dynamic DOM updates.
 
+## Reference
+
+Read `references/dom-event-browser-compat.md` before changing delegated events, selectors, plugin lifecycle, form serialization, or script loading.

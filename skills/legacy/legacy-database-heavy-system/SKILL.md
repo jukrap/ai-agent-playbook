@@ -21,3 +21,7 @@ Treat the database as active application code, not passive storage.
 - Do not assume ORM models capture all database behavior.
 - Do not treat trigger side effects as invisible implementation details.
 - Record schema, migration, data backfill, and operational risks in PR/worklog.
+
+## Reference
+
+Read `references/database-coupling-map.md` before changing stored procedures, triggers, views, jobs, result sets, or database-shaped contracts.

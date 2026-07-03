@@ -1,17 +1,21 @@
-# Legacy Batch File Transfer
+# 레거시 배치 파일 전송
 
-Scheduled batches, cron jobs, Windows Task Scheduler, CSV/Excel import-export, SFTP/file drops, EDI-like transfers, nightly integrations를 유지보수할 때 사용합니다.
+예약 배치, cron 작업, Windows 작업 스케줄러, CSV/Excel 가져오기/내보내기, SFTP/파일 드롭, EDI와 비슷한 전송, 야간 연동을 유지보수할 때 사용합니다.
 
 ## 진행 절차
 
-1. scheduler, trigger time, input/output folders, filename patterns, encoding, delimiter, retention rules를 식별합니다.
-2. parsing, validation, deduplication, retries, partial failure, archive/error handling을 추적합니다.
-3. timezone, holidays, business-day rules, file locks, concurrent runs, large-file behavior를 확인합니다.
-4. 모든 producer/consumer를 업데이트하지 않으면 file format contracts를 보존합니다.
-5. 가능하면 good file, malformed file, duplicate file, empty file, rerun scenarios로 검증합니다.
+1. 스케줄러, 실행 시각, 입력/출력 폴더, 파일명 규칙, 인코딩, 구분자, 보관 규칙을 식별합니다.
+2. 파싱, 검증, 중복 제거, 재시도, 부분 실패, 보관/오류 처리를 추적합니다.
+3. 시간대, 휴일, 영업일 규칙, 파일 잠금, 동시 실행, 대용량 파일 동작을 확인합니다.
+4. 모든 생산자/소비자를 함께 바꾸지 않으면 파일 형식 계약을 보존합니다.
+5. 가능하면 정상 파일, 잘못된 파일, 중복 파일, 빈 파일, 재실행 시나리오로 검증합니다.
 
 ## Guardrails
 
-- batch job을 non-idempotent하게 만들지 않습니다.
-- archive/recovery story 없이 file을 delete/overwrite하지 않습니다.
-- partial failures를 success logs 뒤에 숨기지 않습니다.
+- 배치 작업을 멱등하지 않게 만들지 않습니다.
+- 보관/복구 방안 없이 파일을 삭제하거나 덮어쓰지 않습니다.
+- 부분 실패를 성공 로그 뒤에 숨기지 않습니다.
+
+## 참고 자료
+
+배치 계약, 파일 수명 주기, 재시도 동작, 대사, 운영 복구 점검은 `references/file-transfer-boundary.md`를 읽습니다.

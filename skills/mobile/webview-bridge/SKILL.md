@@ -14,3 +14,6 @@ Use this as the primary mobile skill for hybrid app boundaries.
 3. Check Android and iOS differences when the project supports both.
 4. Verify install/launch, bridge call, back navigation, reload, offline/error, and permission cases when relevant.
 
+## Reference
+
+Read `references/webview-message-bridge-contract.md` before changing native-to-web messaging, deep links, embedded auth, file flows, or hybrid navigation.

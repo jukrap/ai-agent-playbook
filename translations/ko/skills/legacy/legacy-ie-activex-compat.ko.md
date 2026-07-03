@@ -1,17 +1,21 @@
-# Legacy IE ActiveX Compat
+# 레거시 IE/ActiveX 호환성
 
-IE mode, ActiveX, old browser APIs, document modes, device plugins, enterprise compatibility constraints에 의존하는 intranet system을 유지보수할 때 사용합니다.
+IE 모드, ActiveX, 오래된 브라우저 API, 문서 모드, 장치 플러그인, 기업 호환성 제약에 의존하는 인트라넷 시스템을 유지보수할 때 사용합니다.
 
 ## 진행 절차
 
-1. target browser, document mode, compatibility view, IE mode policy, required plugins를 식별합니다.
-2. ActiveX/object/embed calls, device integrations, security prompts, registry/group-policy assumptions를 추적합니다.
-3. transpilation/polyfill/runtime support가 증명되지 않으면 modern syntax 또는 API를 피합니다.
-4. event model, encoding, window/dialog behavior, file/device access flow를 보존합니다.
-5. 필요한 browser mode에서 검증하거나, 환경 부재를 blocker로 문서화합니다.
+1. 대상 브라우저, 문서 모드, 호환성 보기, IE 모드 정책, 필요한 플러그인을 식별합니다.
+2. ActiveX/object/embed 호출, 장치 연동, 보안 프롬프트, 레지스트리/그룹 정책 가정을 추적합니다.
+3. 변환/폴리필/실행 지원이 증명되지 않으면 최신 문법 또는 API를 피합니다.
+4. 이벤트 모델, 인코딩, 창/대화상자 동작, 파일/장치 접근 흐름을 보존합니다.
+5. 필요한 브라우저 모드에서 검증하거나 환경 부재를 막힌 지점으로 문서화합니다.
 
 ## Guardrails
 
-- client environment가 지원하지 않으면 ActiveX/device flows를 browser APIs로 대체하지 않습니다.
-- IE-mode claims에 Chromium/modern browser test만 의존하지 않습니다.
-- compatibility assumptions를 PR/worklog에 명시합니다.
+- 클라이언트 환경이 지원하지 않으면 ActiveX/장치 흐름을 브라우저 API로 대체하지 않습니다.
+- IE 모드 주장에 Chromium/최신 브라우저 테스트만 의존하지 않습니다.
+- 호환성 가정을 PR/작업 기록에 명시합니다.
+
+## 참고 자료
+
+지원 환경 기록, 호환성 경계, 보안 프롬프트, 검증 한계는 `references/ie-activex-containment.md`를 읽습니다.

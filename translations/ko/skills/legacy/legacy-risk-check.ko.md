@@ -1,21 +1,23 @@
-# Legacy Risk Check
+# 레거시 위험 점검
 
-Global state, shared CSS/JS, common selectors, templates, forms, API contracts, build output, deployment behavior에 영향을 줄 수 있는 legacy code 변경 전 사용합니다.
+전역 상태, 공유 스타일/스크립트, 공통 선택자, 템플릿, 폼, API 계약, 빌드 산출물, 배포 동작에 영향을 줄 수 있는 레거시 변경 전에 사용합니다.
 
-## Checklist
+## 진행 절차
 
-- 변경할 selector, global variable, function name, route, template fragment, config key, API field를 모두 검색합니다.
-- 어떤 file이 runtime에서 실제로 load되는지 확인합니다.
-- shared CSS/JS, includes, layout templates, plugin initialization, event delegation을 확인합니다.
-- form field names, hidden inputs, CSRF/session handling, redirect flow를 확인합니다.
-- generated/build output과 source files를 구분합니다.
-- 파일 이동 전 deployment 또는 packaging rules를 확인합니다.
+1. 변경할 공유 선택자, 전역 변수, 함수 이름, 경로, 템플릿 조각, 설정 키, API 필드를 모두 검색합니다.
+2. 어떤 파일이 실행 시점에 실제로 로드되는지 확인합니다.
+3. 브라우저, 서버, 데이터베이스, 생성 산출물, 배포, 수동 운영 절차의 영향 범위를 확인합니다.
+4. 실행 소유권이나 검증 가능성이 불명확하면 멈추고 가장 작은 안전한 다음 단계를 보고합니다.
 
-## Stop signals
+## 중단 신호
 
-- 같은 목적의 active file이 여러 개 있고 runtime winner가 불명확함.
-- Backend contract 또는 DB/schema shape가 불명확함.
-- Shared selector/class가 관련 없는 여러 화면에서 사용됨.
-- 신뢰할 verification에 필요한 environment가 없음.
+- 같은 목적의 활성 파일이 여러 개 있고 실제 사용 파일이 불명확합니다.
+- 백엔드 계약 또는 데이터베이스/스키마 형태가 불명확합니다.
+- 공유 선택자나 클래스가 관련 없는 여러 화면에서 사용됩니다.
+- 신뢰할 수 있는 검증에 필요한 환경이 없습니다.
 
-Stop signal이 confidence를 막으면 blocker와 가장 작은 안전한 next step을 보고합니다.
+중단 신호 때문에 확신할 수 없으면 막힌 지점과 가장 작은 안전한 다음 단계를 보고합니다.
+
+## 참고 자료
+
+공유 레거시 자산, 계약, 빌드 산출물, 배포 동작을 바꾸기 전에는 `references/legacy-risk-inventory.md`를 읽습니다.

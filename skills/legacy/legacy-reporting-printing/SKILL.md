@@ -20,3 +20,7 @@ Treat output format, pagination, and device behavior as product contracts.
 - Do not trust screen preview as proof of physical print correctness.
 - Do not change Excel/PDF column order or template fields without downstream consumer checks.
 - Do not assume fonts, printer drivers, or paper sizes are consistent across client machines.
+
+## Reference
+
+Read `references/report-print-contract.md` for report fields, pagination, export, printer, device, and downstream-consumer checks.

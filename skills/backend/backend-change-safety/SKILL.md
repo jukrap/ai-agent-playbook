@@ -21,6 +21,12 @@ Use this as the primary backend skill for non-trivial server-side changes that a
 
 Read `references/backend-change-checklist.md` before implementing or reviewing backend changes with shared runtime, persistence, or integration risk.
 
+Read `references/api-versioning-compatibility.md` when a route, DTO, SDK, event, webhook, or client-visible payload may need compatibility handling.
+
+Read `references/transaction-side-effect-boundary.md` when persistence, external side effects, events, jobs, or retries must stay consistent.
+
+Read `references/config-cache-runtime-contracts.md` when changing configuration, feature flags, caches, process startup, or runtime defaults.
+
 Read `references/stack-profile-selection.md` when the repository stack is known and you need to choose a Java, Kotlin, Node, Python, Go, .NET, or PHP profile.
 
 Read `references/async-boundary-idempotency.md` for workers, queues, scheduled jobs, webhooks, retries, and duplicate-delivery safety.

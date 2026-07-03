@@ -12,3 +12,7 @@
 ## 참고 자료
 
 로컬 관례 유지, FSD/DDD/레이어드 규칙 적용, 패키지 분리, 더 큰 구조 개편을 판단해야 할 때 `references/boundary-redesign-protocol.md`를 읽습니다.
+
+Feature-sliced, layered, domain-driven, modular monolith, legacy seam 중 어느 접근이 맞는지 판단할 때 `references/fsd-ddd-fit-matrix.md`를 읽습니다.
+
+Boundary repair에 staged move, adapter, compatibility shim, import/dependency check가 필요하면 `references/modular-boundary-migration.md`를 읽습니다.

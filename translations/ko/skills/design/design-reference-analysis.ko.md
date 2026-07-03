@@ -14,4 +14,6 @@ Reference material이 product나 public docs에 복사되지 않고 design decis
 
 Analysis sequence와 adoption rule에는 `references/reference-analysis-protocol.md`를 읽습니다.
 
+Reference를 token, component, variant, density, design-system rule로 바꿔야 할 때는 `references/design-system-audit-matrix.md`를 읽습니다.
+
 Screenshot, annotation, before/after evidence requirement에는 `references/visual-evidence-package.md`를 읽습니다.

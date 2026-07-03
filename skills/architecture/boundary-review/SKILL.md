@@ -17,3 +17,7 @@ Use this as the primary architecture skill for module and layer boundaries.
 ## Reference
 
 Read `references/boundary-redesign-protocol.md` when deciding whether to keep local conventions, apply FSD/DDD/layered rules, split packages, or propose a broader restructure.
+
+Read `references/fsd-ddd-fit-matrix.md` when deciding between feature-sliced, layered, domain-driven, modular monolith, or legacy seam approaches.
+
+Read `references/modular-boundary-migration.md` when a boundary repair needs staged moves, adapters, compatibility shims, or import/dependency checks.

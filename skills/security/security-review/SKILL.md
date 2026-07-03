@@ -18,4 +18,8 @@ Use this as the primary security skill for development-time risk review.
 
 Read `references/security-review-protocol.md` for risk classification, data-flow review, evidence, and mitigation notes.
 
+Read `references/threat-model-data-exposure.md` when sensitive data, tenant boundaries, exports, logs, cache, analytics, or AI/tool context may expose information.
+
+Read `references/secrets-credential-boundary.md` when credentials, API keys, tokens, env vars, OAuth apps, CI secrets, or provider configs are touched.
+
 Read `references/agent-tool-threats.md` when the system involves AI agents, MCP/tools, prompt injection, untrusted content, memory, local config, or external communication.

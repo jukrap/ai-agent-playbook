@@ -21,3 +21,7 @@ Read `references/release-gates.md` before approving a release or deployment.
 Read `references/rollback-readiness.md` when a deploy changes artifacts, data, config, feature flags, or runtime topology.
 
 Read `references/gate-decision-contract.md` when recording pass, block, advisory-only, or accepted-risk release decisions.
+
+Read `references/observability-release-loop.md` when release confidence depends on logs, metrics, traces, alerts, queues, or post-deploy monitoring.
+
+Read `references/incident-rollback-handoff.md` when a release, hotfix, or rollback needs a clear operator handoff and containment path.

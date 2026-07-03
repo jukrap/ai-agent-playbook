@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -28,8 +28,11 @@ test('mcp server lists read-only playbook tools and calls operator search withou
   }, null, 2)}\n`);
   await writeFile(path.join(target, 'package-lock.json'), '{"lockfileVersion": 3}\n');
   await mkdir(path.join(target, '_reference', 'reference-pack', 'skills', 'demo'), { recursive: true });
+  await mkdir(path.join(target, '_reference', 'new-reference-pack', 'skills', 'demo'), { recursive: true });
   await writeFile(path.join(target, '_reference', 'reference-pack', 'README.md'), '# Reference Pack\n');
   await writeFile(path.join(target, '_reference', 'reference-pack', 'skills', 'demo', 'SKILL.md'), '---\nname: demo\n---\n# Demo\n');
+  await writeFile(path.join(target, '_reference', 'new-reference-pack', 'README.md'), '# New Reference Pack\n');
+  await writeFile(path.join(target, '_reference', 'new-reference-pack', 'skills', 'demo', 'SKILL.md'), '---\nname: demo-new\n---\n# Demo New\n');
   await mkdir(path.join(target, '.ai-playbook', 'knowledge'), { recursive: true });
   await mkdir(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evals'), { recursive: true });
   await mkdir(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evidence'), { recursive: true });
@@ -102,6 +105,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'reference_source_registry_preview',
       'reference_source_registry_check',
       'reference_ledger_check',
+      'reference_ledger_update_preview',
       'playbook_layout',
       'index_status',
       'runtime_schema_check',
@@ -145,6 +149,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(names.includes('workflow_run_start'), false);
     assert.equal(names.includes('canon_promote'), false);
     assert.equal(listed.tools.every((tool) => tool.annotations?.readOnlyHint === true), true);
+    assert.equal(names.includes('reference_ledger_update'), false);
 
     const resources = await client.listResources();
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://capabilities'), true);
@@ -395,7 +400,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       }
     });
     assert.equal(inventory.structuredContent.ok, true);
-    assert.equal(inventory.structuredContent.summary.projects, 1);
+    assert.equal(inventory.structuredContent.summary.projects, 2);
     assert.equal(inventory.structuredContent.projects[0].candidateCapabilities.includes('skill-pack'), true);
 
     const adoptionQueue = await client.callTool({
@@ -408,10 +413,11 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     });
     assert.equal(adoptionQueue.structuredContent.ok, true);
     assert.equal(adoptionQueue.structuredContent.mode.writes, false);
-    assert.equal(adoptionQueue.structuredContent.summary.queueItems, 1);
+    assert.equal(adoptionQueue.structuredContent.summary.queueItems, 2);
     assert.equal(adoptionQueue.structuredContent.summary.ledgerStatuses.reviewed, 1);
+    assert.equal(adoptionQueue.structuredContent.summary.ledgerStatuses.new, 1);
     assert.equal(adoptionQueue.structuredContent.queue[0].recommendedCapabilities.includes('ai-harness'), true);
-    assert.equal(adoptionQueue.structuredContent.queue[0].ledgerStatus, 'reviewed');
+    assert.equal(adoptionQueue.structuredContent.queue.some((item) => item.ledgerStatus === 'reviewed'), true);
 
     const sourcePreview = await client.callTool({
       name: 'reference_source_registry_preview',
@@ -454,6 +460,21 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     });
     assert.equal(customLedger.structuredContent.ok, true);
     assert.equal(customLedger.structuredContent.summary.capabilities.security.statuses.reviewed, 1);
+
+    const ledgerUpdatePreview = await client.callTool({
+      name: 'reference_ledger_update_preview',
+      arguments: {
+        target,
+        referenceDir: path.join(target, '_reference'),
+        path: '.ai-playbook/knowledge/custom-reference-ledger.md',
+        maxResults: 5
+      }
+    });
+    assert.equal(ledgerUpdatePreview.structuredContent.ok, true);
+    assert.equal(ledgerUpdatePreview.structuredContent.mode.writes, false);
+    assert.equal(ledgerUpdatePreview.structuredContent.summary.added, 1);
+    assert.equal(ledgerUpdatePreview.structuredContent.ledger.content.includes('reference-new-reference-pack'), true);
+    assert.deepEqual(await listRelativeFiles(target), before);
 
     const canon = await client.callTool({
       name: 'canon_check',
@@ -827,9 +848,20 @@ test('mcp tool calls return safe errors for missing targets and traversal paths 
 
 test('mcp write tools require server opt-in and apply before writing files', async () => {
   const target = await tempRepo('mcp write tools-한글-');
-  await mkdir(path.join(target, '.ai-playbook'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'knowledge'), { recursive: true });
+  await mkdir(path.join(target, '_reference', 'reference-pack', 'skills', 'demo'), { recursive: true });
   await mkdir(path.join(target, 'src'), { recursive: true });
   await writeFile(path.join(target, 'src', 'feature.ts'), 'export const feature = true;\n');
+  await writeFile(path.join(target, '_reference', 'reference-pack', 'README.md'), '# Reference Pack\n');
+  await writeFile(path.join(target, '_reference', 'reference-pack', 'skills', 'demo', 'SKILL.md'), '---\nname: demo\n---\n# Demo\n');
+  await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'reference-adoption-ledger.md'), [
+    '# Reference Adoption Ledger',
+    '',
+    '| Status | Reference ID | Capability | Useful Pattern | Local Adoption | Risk/Noise | Decision Date |',
+    '| --- | --- | --- | --- | --- | --- | --- |',
+    '| new |  |  |  |  |  |  |',
+    ''
+  ].join('\n'));
   const before = await listRelativeFiles(target);
 
   const { client, transport } = await connectMcp(['--enable-write-tools']);
@@ -837,11 +869,28 @@ test('mcp write tools require server opt-in and apply before writing files', asy
     const listed = await client.listTools();
     const workflowTool = listed.tools.find((tool) => tool.name === 'workflow_run_start');
     const advisoryTool = listed.tools.find((tool) => tool.name === 'write_gate_advisory');
+    const ledgerTool = listed.tools.find((tool) => tool.name === 'reference_ledger_update');
     assert.equal(Boolean(workflowTool), true);
     assert.equal(Boolean(advisoryTool), true);
+    assert.equal(Boolean(ledgerTool), true);
     assert.equal(workflowTool.annotations?.readOnlyHint, false);
     assert.equal(advisoryTool.annotations?.readOnlyHint, false);
+    assert.equal(ledgerTool.annotations?.readOnlyHint, false);
     assert.equal(listed.tools.some((tool) => tool.name === 'canon_promote'), false);
+
+    const previewLedger = await client.callTool({
+      name: 'reference_ledger_update',
+      arguments: {
+        target,
+        referenceDir: path.join(target, '_reference'),
+        apply: false
+      }
+    });
+    assert.equal(previewLedger.isError, undefined);
+    assert.equal(previewLedger.structuredContent.applied, false);
+    assert.equal(previewLedger.structuredContent.mode.writes, false);
+    assert.equal(previewLedger.structuredContent.summary.added, 1);
+    assert.deepEqual(await listRelativeFiles(target), before);
 
     const previewRun = await client.callTool({
       name: 'workflow_run_start',
@@ -855,6 +904,21 @@ test('mcp write tools require server opt-in and apply before writing files', asy
     assert.equal(previewRun.structuredContent.applied, false);
     assert.equal(previewRun.structuredContent.mode.writes, false);
     assert.deepEqual(await listRelativeFiles(target), before);
+
+    const applyLedger = await client.callTool({
+      name: 'reference_ledger_update',
+      arguments: {
+        target,
+        referenceDir: path.join(target, '_reference'),
+        apply: true
+      }
+    });
+    assert.equal(applyLedger.isError, undefined);
+    assert.equal(applyLedger.structuredContent.applied, true);
+    assert.equal(applyLedger.structuredContent.mode.writes, true);
+    const ledgerText = await readFile(path.join(target, '.ai-playbook', 'knowledge', 'reference-adoption-ledger.md'), 'utf8');
+    assert.equal(ledgerText.includes('reference-reference-pack'), true);
+    assert.equal(ledgerText.includes('| new |  |  |  |  |  |  |'), false);
 
     const applyRun = await client.callTool({
       name: 'workflow_run_start',

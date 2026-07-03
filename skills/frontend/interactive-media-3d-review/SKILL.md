@@ -19,3 +19,5 @@ Use this as the primary frontend skill for interactive rendered surfaces that ca
 Read `references/rendering-scene-contract.md` for scene, canvas, asset, lifecycle, fallback, and performance boundaries.
 
 Read `references/interactive-media-verification.md` for screenshot, pixel, interaction, responsive framing, and nonblank verification checks.
+
+Read `references/threejs-webgl-production.md` for Three.js/WebGL renderer setup, asset budgets, low-power mode, context loss, and disposal checks.

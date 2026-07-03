@@ -1,17 +1,19 @@
 # Backend Change Safety
 
-server-side 변경 중 API mapping 또는 server-rendered flow만의 문제가 아닌 변경을 다룰 때 쓰는 primary backend skill입니다.
+API 매핑이나 서버 렌더링 흐름에만 국한되지 않는 서버 측 변경을 다룰 때 쓰는 기본 백엔드 스킬입니다.
 
-## Workflow
+## 작업 흐름
 
-1. 수정 전에 entrypoint, owner, runtime mode, data store, side effect, downstream consumer를 확인합니다.
-2. 변경을 additive, compatible, behavior-changing, destructive, operational, integration-facing 중 하나로 분류합니다.
-3. controller, service, repository, worker, config, module entrypoint의 기존 responsibility boundary를 유지합니다.
-4. request path, async path, retry/idempotency, permission, configuration, log/metric, rollback shape를 검증합니다.
-5. repository stack이 확인된 뒤에만 `references/stacks/`의 해당 stack profile을 읽습니다.
+1. 수정 전에 진입점, 소유자, 실행 방식, 데이터 저장소, 부수 효과, 하위 소비자를 확인합니다.
+2. 변경을 추가형, 호환형, 동작 변경형, 파괴적 변경, 운영 변경, 연동 노출 변경 중 하나로 분류합니다.
+3. 컨트롤러, 서비스, 저장소 계층, worker, 설정, 모듈 진입점의 기존 책임 경계를 유지합니다.
+4. 요청 경로, 비동기 경로, 재시도와 멱등성, 권한, 설정, 로그와 지표, rollback 형태를 검증합니다.
+5. 저장소 스택이 확인된 뒤에만 `references/stacks/`의 해당 스택 프로필을 읽습니다.
 
-## Reference
+## 참고 자료
 
-shared runtime, persistence, integration risk가 있는 backend 변경을 구현하거나 review하기 전 `references/backend-change-checklist.md`를 읽습니다.
+공유 런타임, 영속성, 연동 위험이 있는 백엔드 변경을 구현하거나 검토하기 전 `references/backend-change-checklist.md`를 읽습니다.
 
-Repository stack이 확인되었고 Java, Kotlin, Node, Python, Go, .NET, PHP profile 중 무엇을 고를지 정해야 할 때 `references/stack-profile-selection.ko.md`를 읽습니다.
+저장소 스택이 확인되었고 Java, Kotlin, Node, Python, Go, .NET, PHP 프로필 중 무엇을 고를지 정해야 할 때 `references/stack-profile-selection.md`를 읽습니다.
+
+worker, queue, scheduled job, webhook, retry, duplicate delivery 안전성은 `references/async-boundary-idempotency.md`를 읽습니다.

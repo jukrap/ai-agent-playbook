@@ -20,3 +20,5 @@ Use this as the primary backend skill for non-trivial server-side changes that a
 Read `references/backend-change-checklist.md` before implementing or reviewing backend changes with shared runtime, persistence, or integration risk.
 
 Read `references/stack-profile-selection.md` when the repository stack is known and you need to choose a Java, Kotlin, Node, Python, Go, .NET, or PHP profile.
+
+Read `references/async-boundary-idempotency.md` for workers, queues, scheduled jobs, webhooks, retries, and duplicate-delivery safety.

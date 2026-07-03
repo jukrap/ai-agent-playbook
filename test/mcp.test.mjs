@@ -239,7 +239,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(catalog.structuredContent.taxonomyVersion, '2');
 
     const resource = await client.readResource({ uri: 'ai-playbook://workflows' });
-    assert.equal(JSON.parse(resource.contents[0].text).summary.workflows, 22);
+    assert.equal(JSON.parse(resource.contents[0].text).summary.workflows, 23);
 
     const adapterResource = await client.readResource({ uri: 'ai-playbook://adapters' });
     const adapterPayload = JSON.parse(adapterResource.contents[0].text);

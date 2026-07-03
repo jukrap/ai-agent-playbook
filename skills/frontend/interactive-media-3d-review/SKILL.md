@@ -21,3 +21,5 @@ Read `references/rendering-scene-contract.md` for scene, canvas, asset, lifecycl
 Read `references/interactive-media-verification.md` for screenshot, pixel, interaction, responsive framing, and nonblank verification checks.
 
 Read `references/threejs-webgl-production.md` for Three.js/WebGL renderer setup, asset budgets, low-power mode, context loss, and disposal checks.
+
+Read `references/threejs-scene-risk-checklist.md` when the scene includes loaded assets, camera choreography, controls, lighting, animation loops, or performance-sensitive devices.

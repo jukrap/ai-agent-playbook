@@ -207,6 +207,12 @@ export const WORKFLOW_RECIPES = [
     title: 'Harness Extension',
     category: 'ai-harness',
     outputs: ['integrations/mcp', 'policy/SKILLS.md']
+  },
+  {
+    id: 'reference-depth-adoption',
+    title: 'Reference Depth Adoption',
+    category: 'ai-harness',
+    outputs: ['knowledge/references', 'workflows/worklogs', 'runtime/reports']
   }
 ];
 

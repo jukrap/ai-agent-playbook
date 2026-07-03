@@ -16,3 +16,5 @@
 스크린샷, 픽셀, 상호작용, 반응형 프레이밍, 비어 있지 않은 출력 검증은 `references/interactive-media-verification.md`를 읽습니다.
 
 Three.js/WebGL 렌더러 설정, 자산 예산, 저전력 모드, 컨텍스트 손실, 해제 점검은 `references/threejs-webgl-production.md`를 읽습니다.
+
+Loaded asset, camera choreography, controls, lighting, animation loop, performance-sensitive device가 얽힌 장면은 `references/threejs-scene-risk-checklist.md`를 읽습니다.

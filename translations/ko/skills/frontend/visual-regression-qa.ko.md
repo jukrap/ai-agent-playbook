@@ -14,3 +14,5 @@ Rendered UI regression check와 visual verification을 위한 primary frontend s
 Screenshot, diff, baseline, artifact review에는 `references/visual-snapshot-checks.md`를 읽습니다.
 
 Breakpoint, text fit, clipping, dynamic content check에는 `references/responsive-overflow-checks.md`를 읽습니다.
+
+Production interaction state, touch/pointer behavior, motion, data-density check에는 `references/interaction-responsive-production.md`를 읽습니다.

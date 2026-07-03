@@ -19,4 +19,6 @@ Use this when reference material should inform design decisions without copying 
 
 Read `references/reference-analysis-protocol.md` for the analysis sequence and adoption rules.
 
+Read `references/design-system-audit-matrix.md` when a reference should inform tokens, components, variants, density, or design-system rules.
+
 Read `references/visual-evidence-package.md` for screenshot, annotation, and before/after evidence requirements.

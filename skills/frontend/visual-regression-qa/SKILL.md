@@ -19,3 +19,5 @@ Use this as the primary frontend skill for rendered UI regression checks and vis
 Read `references/visual-snapshot-checks.md` for screenshot, diff, baseline, and artifact review.
 
 Read `references/responsive-overflow-checks.md` for breakpoint, text fit, clipping, and dynamic content checks.
+
+Read `references/interaction-responsive-production.md` for production interaction states, touch/pointer behavior, motion, and data-density checks.

@@ -15,6 +15,7 @@ The content is not agent-specific. Codex is one installation target. The source 
 - `skills/database`: schema, migration, SQL, reporting query, and data integrity workflows.
 - `skills/delivery`: planning, eval, verification, testing, Git, PR, release note, and worklog workflows.
 - `skills/devops`: CI/CD, container, package release, deployment, rollback, and operations triage workflows.
+- `skills/design`: design direction, brand identity, visual reference analysis, image/Figma handoff, and visual evidence workflows.
 - `skills/frontend`: UI, browser behavior, state/data, accessibility, visual QA, design-system handoff, and interactive media workflows.
 - `skills/git`: commit, PR, push, and worklog guardrails.
 - `skills/legacy`: maintenance workflows where runtime coupling and compatibility dominate.
@@ -110,6 +111,13 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `frontend-ui-polish`: implements or refines visible UI surfaces while preserving product intent and existing design conventions.
 - `cleanup-ai-slop`: removes low-trust code noise in a behavior-preserving, bounded cleanup.
 - `review-work-light`: reviews recent implementation work without turning review into an automatic blocking gate.
+
+## Design map
+
+- `design-brief-direction`: turns vague product, page, brand, or UI requests into a design direction, visual language, constraints, and decision-ready brief.
+- `brand-identity-system`: defines or reviews brand identity, typography, color, logo direction, iconography, voice, and application rules.
+- `design-reference-analysis`: analyzes screenshots, competitor sites, reference apps, visual samples, and design boards without copying upstream visuals.
+- `image-to-code-handoff`: turns generated images, screenshots, mockups, reference boards, and Figma frames into implementation-ready UI contracts.
 
 ## DevOps map
 

@@ -202,6 +202,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'deployment_release_review',
       'mobile_release_review',
       'connector_integration_review',
+      'design_reference_handoff_review',
       'frontend_quality_review',
       'interactive_experience_review',
       'data_integrity_review',
@@ -233,7 +234,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(catalog.structuredContent.taxonomyVersion, '2');
 
     const resource = await client.readResource({ uri: 'ai-playbook://workflows' });
-    assert.equal(JSON.parse(resource.contents[0].text).summary.workflows, 21);
+    assert.equal(JSON.parse(resource.contents[0].text).summary.workflows, 22);
 
     const workflowRunPreview = await client.callTool({
       name: 'workflow_run_preview',
@@ -391,6 +392,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       { name: 'deployment_release_review', toolName: 'workflow_run_preview', expectedText: 'deployment-release', arguments: { target, environment: 'staging' } },
       { name: 'mobile_release_review', toolName: 'workflow_run_preview', expectedText: 'mobile-release', arguments: { target, platform: 'iOS', artifact: 'TestFlight build' } },
       { name: 'connector_integration_review', toolName: 'route_api_hints', expectedText: 'operator_preflight', arguments: { target, integration: 'payments connector' } },
+      { name: 'design_reference_handoff_review', toolName: 'workflow_run_preview', expectedText: 'design-reference-handoff', arguments: { target, surface: 'pricing page', source: 'Figma frame' } },
       { name: 'frontend_quality_review', toolName: 'workflow_run_preview', expectedText: 'frontend-quality-review', arguments: { target, screen: 'login' } },
       { name: 'interactive_experience_review', toolName: 'workflow_run_preview', expectedText: 'interactive-experience-delivery', arguments: { target, surface: '3D product viewer' } },
       { name: 'data_integrity_review', toolName: 'workflow_run_preview', expectedText: 'data-integrity-review', arguments: { target, dataset: 'orders' } },

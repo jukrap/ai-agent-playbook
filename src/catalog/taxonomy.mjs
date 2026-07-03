@@ -13,6 +13,7 @@ export const CAPABILITY_CATEGORIES = [
   { id: 'backend', title: 'Backend', description: 'API contracts, auth, server-rendered flows, workers, and integrations.' },
   { id: 'database', title: 'Database', description: 'Schema change, migration, SQL, reporting, and data integrity.' },
   { id: 'devops', title: 'DevOps', description: 'CI/CD, containers, deployment, runtime configuration, and observability.' },
+  { id: 'design', title: 'Design', description: 'Design direction, brand identity, reference analysis, visual evidence, and image/Figma handoff.' },
   { id: 'security', title: 'Security', description: 'Secrets, threat modeling, authorization, and dependency risk review.' },
   { id: 'mobile', title: 'Mobile', description: 'Expo, React Native, native app release, permissions, offline sync, WebView bridge, and device QA.' },
   { id: 'data', title: 'Data', description: 'Analytics, pipelines, ETL, dashboards, source registries, and data quality.' },
@@ -172,6 +173,12 @@ export const WORKFLOW_RECIPES = [
     title: 'Frontend Quality Review',
     category: 'frontend',
     outputs: ['runtime/reports', 'workflows/worklogs']
+  },
+  {
+    id: 'design-reference-handoff',
+    title: 'Design Reference Handoff',
+    category: 'design',
+    outputs: ['runtime/reports', 'memory/contracts', 'workflows/handoffs']
   },
   {
     id: 'interactive-experience-delivery',

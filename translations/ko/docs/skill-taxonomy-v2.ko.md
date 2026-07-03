@@ -11,6 +11,7 @@ Skill taxonomy v2는 capability category를 1차 축으로 씁니다. 스택별 
 - `backend`: API contract, connector, auth, server-rendered flow, worker, integration.
 - `database`: schema change, migration, SQL, reporting, data integrity.
 - `devops`: CI/CD, container, package release, deployment, configuration, observability.
+- `design`: design direction, brand identity, reference analysis, visual evidence, image/Figma handoff.
 - `security`: secret, threat modeling, authorization, dependency risk, compliance evidence.
 - `mobile`: Expo, React Native, native app release, permission, offline sync, WebView bridge, device QA.
 - `data`: analytics, pipeline, ETL, dashboard, source registry, data quality.
@@ -110,6 +111,17 @@ Package, license, connector governance skill은 artifact compliance를 generic d
 - `backend/connector-integration-change`: connector contract, credential handling, webhook lifecycle, retry behavior, registration metadata, host-runtime compatibility.
 
 Review guidance는 project가 명시적으로 정의하고 사용자가 요청하지 않는 한 registry login, package publish, live external call, legal approval claim을 하지 않습니다.
+
+## Design Reference Pack
+
+Design skill은 visual direction과 source interpretation을 frontend implementation과 분리합니다.
+
+- `design/design-brief-direction`: product type, audience, visual language, style dial, constraint, anti-pattern, decision-ready brief.
+- `design/brand-identity-system`: typography, color, logo usage, iconography, imagery, voice, brand application, identity review gate.
+- `design/design-reference-analysis`: reference screenshot, competitor site, design board, reusable principle, source boundary, visual evidence package.
+- `design/image-to-code-handoff`: generated image, screenshot, mockup, reference board, Figma frame, UI contract, responsive rule, verification criteria.
+
+Design guidance는 upstream visual, brand mark, private Figma URL, local path, generated mockup artifact, proprietary copy를 public docs에 복사하지 않습니다. Generated design evidence는 design brief, identity rule, implementation contract가 검토되고 승인될 때까지 runtime report에 둡니다.
 
 ## Frontend Quality Pack
 

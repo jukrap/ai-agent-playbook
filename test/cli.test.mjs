@@ -48,7 +48,7 @@ test('all bundled workflow recipes preview with required manifest sections', asy
   const list = capture(target);
   assert.equal(await runCli(['workflow', 'list', '--json'], list), 0);
   const listed = JSON.parse(list.out());
-  assert.equal(listed.summary.workflows, 21);
+  assert.equal(listed.summary.workflows, 22);
 
   const before = await listRelativeFiles(target);
   for (const recipe of listed.workflows) {
@@ -120,8 +120,8 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   assert.equal(await runCli(['catalog', 'list', '--json'], catalog), 0);
   const catalogReport = JSON.parse(catalog.out());
   assert.equal(catalogReport.taxonomyVersion, '2');
-  assert.equal(catalogReport.summary.categories, 12);
-  assert.equal(catalogReport.summary.skills, 84);
+  assert.equal(catalogReport.summary.categories, 13);
+  assert.equal(catalogReport.summary.skills, 88);
 
   const catalogCheck = capture(target);
   assert.equal(await runCli(['catalog', 'check', '--json'], catalogCheck), 0);
@@ -139,6 +139,10 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
     'pre-action-fact-gate',
     'knowledge-source-registry',
     'security-compliance-gate',
+    'design-brief-direction',
+    'brand-identity-system',
+    'design-reference-analysis',
+    'image-to-code-handoff',
     'interactive-media-3d-review',
     'design-system-handoff'
   ]) {
@@ -148,12 +152,13 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   const workflow = capture(target);
   assert.equal(await runCli(['workflow', 'list', '--json'], workflow), 0);
   const workflowReport = JSON.parse(workflow.out());
-  assert.equal(workflowReport.summary.workflows, 21);
+  assert.equal(workflowReport.summary.workflows, 22);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'deployment-release'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'package-release-readiness'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'ci-quality-gate'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'architecture-boundary-review'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'frontend-quality-review'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'design-reference-handoff'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'data-integrity-review'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'eval-driven-change'), true);
   assert.equal(workflowReport.workflows.some((item) => item.id === 'knowledge-source-onboarding'), true);
@@ -173,6 +178,13 @@ test('harness os v2 commands expose layout, catalog, index, and write-gate flows
   const interactiveWorkflowPreviewReport = JSON.parse(interactiveWorkflowPreview.out());
   assert.equal(interactiveWorkflowPreviewReport.manifest.skills.some((skill) => skill.includes('interactive media 3D review')), true);
   assert.equal(interactiveWorkflowPreviewReport.manifest.verification.some((item) => item.includes('nonblank screenshot')), true);
+
+  const designWorkflowPreview = capture(target);
+  assert.equal(await runCli(['workflow', 'run-preview', '.', '--recipe', 'design-reference-handoff', '--json'], designWorkflowPreview), 0);
+  const designWorkflowPreviewReport = JSON.parse(designWorkflowPreview.out());
+  assert.equal(designWorkflowPreviewReport.manifest.skills.some((skill) => skill.includes('design brief direction')), true);
+  assert.equal(designWorkflowPreviewReport.manifest.skills.some((skill) => skill.includes('image-to-code handoff')), true);
+  assert.equal(designWorkflowPreviewReport.manifest.verification.some((item) => item.includes('visual evidence package')), true);
 
   const beforeWorkflowPreview = await listRelativeFiles(target);
   const workflowPreview = capture(target);
@@ -1250,6 +1262,11 @@ test('reference capability matrix surfaces broad engineering capability signals'
   await writeFile(path.join(referenceRoot, 'frontend-pack', 'vite.config.ts'), 'export default {};\n');
   await writeFile(path.join(referenceRoot, 'frontend-pack', 'src', 'tokens', 'theme.css'), ':root { --space-1: 4px; }\n');
 
+  await mkdir(path.join(referenceRoot, 'design-pack', 'brand'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'design-pack', 'figma'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'design-pack', 'brand', 'style-guide.md'), '# Brand Style Guide\n');
+  await writeFile(path.join(referenceRoot, 'design-pack', 'figma', 'mockup-reference.md'), '# Figma Mockup Reference\n');
+
   await mkdir(path.join(referenceRoot, 'database-pack', 'migrations'), { recursive: true });
   await mkdir(path.join(referenceRoot, 'database-pack', 'prisma'), { recursive: true });
   await writeFile(path.join(referenceRoot, 'database-pack', 'migrations', '001_create_users.sql'), 'create table users(id int);\n');
@@ -1273,6 +1290,7 @@ test('reference capability matrix surfaces broad engineering capability signals'
   const inventoryReport = JSON.parse(inventory.out());
   assert.equal(inventoryReport.summary.projectsWithSignals.devops >= 1, true);
   assert.equal(inventoryReport.summary.projectsWithSignals.frontend >= 1, true);
+  assert.equal(inventoryReport.summary.projectsWithSignals.design >= 1, true);
   assert.equal(inventoryReport.summary.projectsWithSignals.database >= 1, true);
   assert.equal(inventoryReport.summary.projectsWithSignals.data >= 1, true);
   assert.equal(inventoryReport.summary.projectsWithSignals.mobile >= 1, true);
@@ -1282,6 +1300,7 @@ test('reference capability matrix surfaces broad engineering capability signals'
   const matrixReport = JSON.parse(matrix.out());
   assert.equal(matrixReport.capabilities.devops.projects >= 1, true);
   assert.equal(matrixReport.capabilities.frontend.projects >= 1, true);
+  assert.equal(matrixReport.capabilities.design.projects >= 1, true);
   assert.equal(matrixReport.capabilities.database.projects >= 1, true);
   assert.equal(matrixReport.capabilities.data.projects >= 1, true);
   assert.equal(matrixReport.capabilities.mobile.projects >= 1, true);
@@ -1293,12 +1312,25 @@ test('reference capability matrix surfaces broad engineering capability signals'
   assert.deepEqual(Object.keys(filteredDevopsReport.capabilities), ['devops']);
   assert.equal(filteredDevopsReport.capabilities.devops.projects >= 1, true);
 
+  const filteredDesign = capture(target);
+  assert.equal(await runCli(['reference', 'capability-matrix', referenceRoot, '--capability', 'design', '--max-results', '10', '--json'], filteredDesign), 0);
+  const filteredDesignReport = JSON.parse(filteredDesign.out());
+  assert.deepEqual(Object.keys(filteredDesignReport.capabilities), ['design']);
+  assert.equal(filteredDesignReport.capabilities.design.projects >= 1, true);
+
   const devopsPlan = capture(target);
   assert.equal(await runCli(['reference', 'adoption-plan', referenceRoot, '--capability', 'devops', '--max-results', '2', '--json'], devopsPlan), 0);
   const devopsPlanReport = JSON.parse(devopsPlan.out());
   assert.equal(devopsPlanReport.summary.selectedReferences >= 1, true);
   assert.equal(devopsPlanReport.plan.objective.includes('CI/CD'), true);
   assert.equal(devopsPlanReport.plan.references.some((item) => item.suggestedSurfaces.some((surface) => surface.surface === 'devops-runbook')), true);
+
+  const designPlan = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-plan', referenceRoot, '--capability', 'design', '--max-results', '2', '--json'], designPlan), 0);
+  const designPlanReport = JSON.parse(designPlan.out());
+  assert.equal(designPlanReport.summary.selectedReferences >= 1, true);
+  assert.equal(designPlanReport.plan.objective.includes('design direction'), true);
+  assert.equal(designPlanReport.plan.references.some((item) => item.suggestedSurfaces.some((surface) => surface.surface === 'design-reference-handoff')), true);
   assert.deepEqual(await listRelativeFiles(target), before);
 
   await cleanup(target);

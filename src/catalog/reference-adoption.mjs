@@ -163,14 +163,14 @@ export async function buildReferenceCapabilityMatrix({
   ledgerPath,
   capability
 }) {
+  const capabilityFilter = normalizeMatrixCapability(capability);
   const queue = await buildReferenceAdoptionQueue({
     target,
     maxProjects,
     maxDepth,
-    maxResults,
+    maxResults: capabilityFilter ? maxProjects : maxResults,
     ledgerPath
   });
-  const capabilityFilter = normalizeMatrixCapability(capability);
   const groups = new Map();
 
   for (const item of queue.queue) {
@@ -591,6 +591,10 @@ function referenceQueueItem(project, ledger) {
     representativeFiles: project.representativeFiles,
     nextActions: actions
   };
+  Object.defineProperty(item, 'signalCounts', {
+    value: project.signals,
+    enumerable: false
+  });
   if (ledger) {
     const ledgerEntry = findLedgerEntryForProject(project.id, ledger);
     item.ledgerStatus = ledgerEntry?.status ?? 'new';
@@ -632,14 +636,16 @@ function recordMatrixGroup(groups, capabilityId, item) {
   }
   if (item.recommendedCapabilities.includes(capabilityId)) group.recommendedMatches += 1;
   if (item.candidateCapabilities.includes(capabilityId)) group.candidateMatches += 1;
-  group.topReferences.push(matrixReferenceSummary(item));
+  group.topReferences.push(matrixReferenceSummary(item, capabilityId));
 }
 
-function matrixReferenceSummary(item) {
+function matrixReferenceSummary(item, capabilityId) {
   const summary = {
     project: item.project,
     path: item.path,
     score: item.score,
+    capabilityScore: capabilitySignalScore(item, capabilityId),
+    capabilitySignalCount: capabilitySignalCount(item, capabilityId),
     priority: item.priority,
     recommendedCapabilities: item.recommendedCapabilities,
     candidateCapabilities: item.candidateCapabilities,
@@ -666,11 +672,62 @@ function finalizeMatrixGroup(capabilityId, group) {
     candidateMatches: group.candidateMatches,
     topReferences: group.topReferences
       .sort((left, right) => {
+        if (right.capabilityScore !== left.capabilityScore) return right.capabilityScore - left.capabilityScore;
+        if (right.capabilitySignalCount !== left.capabilitySignalCount) return right.capabilitySignalCount - left.capabilitySignalCount;
         if (right.score !== left.score) return right.score - left.score;
         return left.project.localeCompare(right.project);
       })
       .slice(0, MATRIX_TOP_REFERENCE_LIMIT)
   };
+}
+
+function capabilitySignalCount(item, capabilityId) {
+  const signalNames = capabilitySignalNames(capabilityId);
+  return [...signalNames].reduce((sum, signalName) => sum + (item.signalCounts?.[signalName] ?? 0), 0);
+}
+
+function capabilitySignalScore(item, capabilityId) {
+  const signalNames = capabilitySignalNames(capabilityId);
+  return item.signalHighlights
+    .filter((signal) => signalNames.has(signal.signal))
+    .reduce((sum, signal) => sum + signal.score, 0);
+}
+
+function capabilitySignalNames(capabilityId) {
+  const direct = normalizeMatrixCapability(capabilityId);
+  const names = {
+    security: ['security', 'compliance'],
+    'security-validation': ['security'],
+    'compliance-review': ['compliance'],
+    architecture: ['architecture'],
+    'architecture-boundary': ['architecture'],
+    design: ['design'],
+    'design-system': ['design', 'frontend'],
+    frontend: ['frontend'],
+    'frontend-quality': ['frontend'],
+    backend: ['backend', 'connectors'],
+    'backend-change': ['backend'],
+    'connector-reference': ['connectors'],
+    database: ['database'],
+    'database-change': ['database'],
+    devops: ['devops', 'observability', 'packages'],
+    'devops-release': ['devops', 'packages'],
+    'observability-triage': ['observability'],
+    mobile: ['mobile'],
+    'mobile-release': ['mobile'],
+    data: ['data'],
+    'data-pipeline': ['data'],
+    'ai-harness': ['skills', 'mcp', 'agents', 'hooks', 'memory', 'indexes'],
+    'skill-pack': ['skills'],
+    'agent-workflow': ['agents', 'workflows', 'commands', 'hooks'],
+    'mcp-integration': ['mcp'],
+    delivery: ['workflows', 'commands', 'tests'],
+    verification: ['tests'],
+    foundation: ['docs'],
+    documentation: ['docs'],
+    'runtime-index-canon': ['indexes', 'memory']
+  };
+  return new Set(names[direct] ?? [direct]);
 }
 
 function planSelectionLimit(value) {
@@ -727,8 +784,11 @@ function suggestedAdoptionSurfaces({ item, inspected }) {
   if (ids.has('architecture') || ids.has('architecture-boundary') || signals.architecture > 0) {
     add('architecture-reference', 'Capture boundary, ownership, package, domain, and decision-record patterns without forcing a new architecture.');
   }
-  if (ids.has('frontend') || ids.has('frontend-quality') || ids.has('design-system') || signals.frontend > 0 || signals.design > 0) {
+  if (ids.has('frontend') || ids.has('frontend-quality') || signals.frontend > 0) {
     add('frontend-quality-reference', 'Extract rendered UI, accessibility, design-token, state/data, and visual regression checks as frontend guidance.');
+  }
+  if (ids.has('design') || ids.has('design-system') || signals.design > 0) {
+    add('design-reference-handoff', 'Extract design direction, brand identity, visual reference analysis, image/Figma handoff, and visual evidence contracts.');
   }
   if (ids.has('backend') || ids.has('backend-change') || signals.backend > 0) {
     add('backend-contract-reference', 'Document API, service, worker, route, middleware, and integration contract boundaries before adoption.');
@@ -807,6 +867,7 @@ function adoptionPlanObjective(capability) {
   if (capability === 'security') return 'Turn security and compliance reference signals into local review gates, validators, and safe documentation.';
   if (capability === 'architecture') return 'Identify boundary, ownership, domain modeling, monorepo, and decision-record patterns without forcing architecture changes.';
   if (capability === 'frontend') return 'Extract UI quality, accessibility, state/data flow, design-system, and visual regression practices from reference projects.';
+  if (capability === 'design') return 'Extract design direction, brand identity, reference-analysis, visual evidence, and image/Figma handoff patterns without copying upstream visuals.';
   if (capability === 'backend') return 'Review API, service, worker, route, connector, and integration contracts before adopting backend patterns.';
   if (capability === 'database') return 'Capture migration, schema, query performance, rollback, and integrity checks as database change guidance.';
   if (capability === 'devops') return 'Review CI/CD, container, package, deployment, release, configuration, and observability patterns for reusable runbooks and gates.';
@@ -838,6 +899,9 @@ function adoptionPlanStopConditions(capability) {
   if (capability === 'frontend') {
     stops.push('Rendered states, accessibility, responsive layout, or visual evidence cannot be verified.');
   }
+  if (capability === 'design') {
+    stops.push('Source authority, visual licensing, brand boundary, accessibility target, or allowed match level is unclear.');
+  }
   return stops;
 }
 
@@ -864,6 +928,9 @@ function adoptionPlanVerification(capability) {
   if (capability === 'frontend') {
     verification.push('Verify rendered UI states, accessibility, responsive layout, and visual diff evidence when adopting frontend guidance.');
   }
+  if (capability === 'design') {
+    verification.push('Verify design briefs, visual evidence packages, token/component mapping, responsive states, and accessibility constraints before implementation.');
+  }
   if (capability === 'mobile') {
     verification.push('Verify release-build, permission, signing/profile, and device or simulator evidence when adopting mobile guidance.');
   }
@@ -887,6 +954,9 @@ function adoptionPlanFollowUps(capability) {
   }
   if (capability === 'database' || capability === 'data') {
     followUps.push('Promote only reviewed schema, lineage, metric, or reconciliation facts into durable memory.');
+  }
+  if (capability === 'design') {
+    followUps.push('Keep generated mockups, screenshots, and reference boards as runtime evidence until a design owner accepts the brief or contract.');
   }
   return followUps;
 }
@@ -939,7 +1009,8 @@ function recommendedReferenceCapabilities(signals) {
   const capabilities = [];
   if (signals.security > 0 || signals.compliance > 0) capabilities.push('security');
   if (signals.architecture > 0) capabilities.push('architecture');
-  if (signals.frontend > 0 || signals.design > 0) capabilities.push('frontend');
+  if (signals.design > 0) capabilities.push('design');
+  if (signals.frontend > 0) capabilities.push('frontend');
   if (signals.backend > 0 || signals.connectors > 0) capabilities.push('backend');
   if (signals.database > 0) capabilities.push('database');
   if (signals.devops > 0 || signals.observability > 0 || (signals.packages > 0 && (signals.workflows > 0 || signals.tests > 0))) capabilities.push('devops');
@@ -958,7 +1029,8 @@ function referenceAdoptionActions(signals) {
   if (signals.mcp > 0) actions.push('Classify MCP surfaces as resource, prompt, read tool, scaffold, managed-write, or project-write before adoption.');
   if (signals.agents > 0 || signals.workflows > 0 || signals.hooks > 0) actions.push('Extract worker contracts, stop conditions, and verification handoff patterns.');
   if (signals.architecture > 0) actions.push('Extract architecture boundary, package ownership, and decision-record patterns before recommending restructuring.');
-  if (signals.frontend > 0 || signals.design > 0) actions.push('Capture rendered UI, accessibility, design-system, and visual regression patterns as frontend references.');
+  if (signals.design > 0) actions.push('Capture design direction, brand identity, reference-analysis, image/Figma handoff, and visual evidence patterns as design references.');
+  if (signals.frontend > 0) actions.push('Capture rendered UI, accessibility, design-system, and visual regression patterns as frontend references.');
   if (signals.backend > 0) actions.push('Review API, worker, service, route, and middleware contracts before adopting backend patterns.');
   if (signals.database > 0) actions.push('Capture migration, schema, query, and data-integrity checks as database change references.');
   if (signals.devops > 0 || signals.observability > 0) actions.push('Harvest CI/CD, container, release, deployment, and observability gates as DevOps runbook patterns.');
@@ -1204,13 +1276,22 @@ function isDataPath(lower) {
 function isDesignPath(lower) {
   return includesAny(lower, [
     '/design',
+    '/brand',
     'figma',
+    'mockup',
+    'wireframe',
+    'moodboard',
+    'reference-board',
+    'style-guide',
+    'design-system',
+    'brandkit',
+    'logo',
+    'palette',
     '/tokens/',
     '/themes/',
     'typography',
     '/visual',
-    '/screenshots/',
-    'wireframe'
+    '/screenshots/'
   ]);
 }
 
@@ -1339,6 +1420,9 @@ function referenceInspectQuestions(item) {
   }
   if (item.recommendedCapabilities.includes('frontend')) {
     questions.push('Which rendered states, accessibility checks, responsive breakpoints, or visual regression gates are reusable locally?');
+  }
+  if (item.recommendedCapabilities.includes('design')) {
+    questions.push('Which design direction, brand rule, visual-reference principle, image/Figma handoff contract, or evidence package should become local guidance?');
   }
   if (item.recommendedCapabilities.includes('database')) {
     questions.push('Which migration order, rollback evidence, query check, or data-integrity invariant should become local guidance?');
@@ -1730,7 +1814,7 @@ async function isDirectoryPath(candidate) {
 }
 
 function primaryLedgerCapability(item) {
-  const preferred = ['security', 'architecture', 'frontend', 'backend', 'database', 'devops', 'mobile', 'data', 'ai-harness', 'delivery', 'foundation'];
+  const preferred = ['security', 'architecture', 'design', 'frontend', 'backend', 'database', 'devops', 'mobile', 'data', 'ai-harness', 'delivery', 'foundation'];
   return item.recommendedCapabilities.find((capability) => preferred.includes(capability))
     ?? item.recommendedCapabilities[0]
     ?? item.candidateCapabilities[0]

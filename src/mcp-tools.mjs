@@ -960,7 +960,42 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '',
     'Verification expectations:',
     '- Include happy path, auth failure, permission failure, retry/rate-limit, malformed payload, webhook lifecycle, and registration checks when applicable.',
-    '- Treat route/API hints as navigation evidence, not proof that connector contracts are correct.'
+      '- Treat route/API hints as navigation evidence, not proof that connector contracts are correct.'
+    ]));
+
+  server.registerPrompt('design_reference_handoff_review', {
+    title: 'Design reference handoff review',
+    description: 'Review design direction, brand identity, visual references, image/Figma handoff, and evidence before implementation.',
+    argsSchema: {
+      target: z.string().optional(),
+      surface: z.string().optional(),
+      source: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run a Harness OS design reference handoff review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Surface: ${args.surface ?? '<product surface, screen, flow, brand asset, or component set>'}`,
+    `Source: ${args.source ?? '<reference screenshots, generated mockup, Figma frame, brand guide, or current UI>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe design-reference-handoff',
+    '- reference_adoption_plan with capability design when adopting local reference material',
+    '- operator_preflight for related project context, brand constraints, and existing UI guidance',
+    '- write_gate_preview before suggesting token, component, asset, or documentation edits',
+    '',
+    'Optional evidence:',
+    '- qa_image_diff or browser evidence when before/after or reference screenshots are available',
+    '- skill_catalog to check whether design, frontend, accessibility, and visual QA skills already cover the request',
+    '- index_search or operator_search for existing tokens, components, brand docs, screenshots, and Figma/design notes',
+    '',
+    'Stop conditions:',
+    '- Source authority, visual licensing, brand boundary, or allowed match level is unclear',
+    '- The requested direction would copy upstream branding, proprietary visuals, private paths, internal URLs, or client-only details',
+    '- Accessibility, responsive behavior, content-fit, or reduced-motion expectations are missing',
+    '',
+    'Verification expectations:',
+    '- Name the design brief, reference-analysis findings, image/Figma handoff contract, visual evidence package, token/component mapping, and accessibility checks that are actually available.',
+    '- Treat generated images, screenshots, and reference boards as evidence, not durable design-system truth, until reviewed.'
   ]));
 
   server.registerPrompt('frontend_quality_review', {

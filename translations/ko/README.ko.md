@@ -114,6 +114,7 @@ skills/
   database/          schema, migration, SQL, data integrity 스킬
   delivery/          planning, verification, testing, Git, PR, worklog 스킬
   devops/            CI/CD, container, package release, deployment, operations triage 스킬
+  design/            design direction, brand identity, reference analysis, image/Figma handoff 스킬
   frontend/          UI, browser, state/data, accessibility, visual QA, design-system, interactive media 스킬
   mobile/            native release, permission, offline sync, hybrid, WebView, device QA 스킬
   security/          auth, dependency supply chain, license/notice, security review, compliance gate, risk 스킬
@@ -159,6 +160,13 @@ test/                 Node CLI와 adapter 테스트
 - `cleanup-ai-slop`: 신뢰가 낮거나 과하게 복잡하거나 중복된 코드를 동작 변경 없이 정리할 때.
 - `review-work-light`: 차단형 리뷰 절차 없이 최근 구현 작업을 인수인계 전에 검토할 때.
 
+### Design
+
+- `design-brief-direction`: vague product, page, brand, UI request를 design direction, visual language, constraint, decision-ready brief로 바꿀 때.
+- `brand-identity-system`: brand identity, typography, color, logo direction, iconography, voice, visual identity rule을 정의, 검토, 적용할 때.
+- `design-reference-analysis`: UI 구현 또는 refactoring 전에 screenshot, competitor site, reference app, visual sample, design board를 분석할 때.
+- `image-to-code-handoff`: generated image, screenshot, mockup, reference board, Figma frame을 implementation-ready UI spec과 verification criteria로 바꿀 때.
+
 ### Git과 메타
 
 - `commit-worklog-guardrails`: staging, commit, push, PR, release note, worklog를 다룰 때.
@@ -201,6 +209,10 @@ test/                 Node CLI와 adapter 테스트
 - `deployment-release-check`: release, deploy, rollback, feature flag, artifact, migration gate, post-deploy check를 준비·검토·진단할 때.
 - `package-publish-readiness`: package publishing, release artifact, package metadata, registry dry-run, generated bundle, binary, marketplace distribution을 준비·검토·진단할 때.
 - `observability-incident-triage`: incident, production error, alert, latency, error rate, queue backlog, job failure, log, metric, trace를 triage할 때.
+- `design-brief-direction`: visual implementation 또는 redesign work 전에 design direction brief를 만들 때.
+- `brand-identity-system`: identity system, typography, color, logo usage, iconography, brand application rule을 정의하거나 검토할 때.
+- `design-reference-analysis`: upstream visual을 복사하지 않고 design reference에서 reusable visual principle과 evidence를 추출할 때.
+- `image-to-code-handoff`: image, screenshot, mockup, reference board, Figma frame을 UI contract로 변환할 때.
 - `browser-dom-change`: browser DOM behavior, jQuery flow, event handler, selector, form, plugin, script-loaded UI를 바꿀 때.
 - `frontend-state-data-flow`: frontend state ownership, server/client cache behavior, data fetching, optimistic update, URL state, stale UI bug를 바꿀 때.
 - `frontend-accessibility-review`: keyboard access, focus management, semantic, form, dialog, menu, announcement, contrast, accessible state를 검토할 때.

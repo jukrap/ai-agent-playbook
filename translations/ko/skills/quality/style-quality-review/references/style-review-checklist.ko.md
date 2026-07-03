@@ -1,34 +1,27 @@
-# Style Review Checklist
+# 스타일 품질 검토 체크리스트
 
-## Preserve intent
+## 의도 보존
 
-- 요청받지 않았다면 redesign하지 않습니다.
-- product reason 없이 operational tool에 decorative layout을 추가하지 않습니다.
-- visual hierarchy, density, workflow ergonomics를 consistent하게 유지합니다.
+- 요청받지 않았다면 재설계하지 않습니다.
+- 제품상 이유 없이 운영 도구에 장식적 레이아웃을 추가하지 않습니다.
+- 시각적 위계, 밀도, 작업 흐름의 사용성을 일관되게 유지합니다.
 
-## Check
+## 점검 항목
 
-- mobile/tablet/desktop width에서 overflow
-- long text, labels, table cells, buttons, modals
-- loading, empty, error, disabled, selected states
-- CSS cascade and specificity
-- duplicated values and inconsistent spacing
-- shared primitive bypasses
-- card nesting 또는 unnecessary decoration
+- 모바일, 태블릿, 데스크톱 너비에서 넘침
+- 긴 문장, 라벨, 표 셀, 버튼, 모달
+- 로딩, 비어 있음, 오류, 비활성, 선택 상태
+- CSS 적용 순서와 우선순위 위험
+- 중복 값과 일관되지 않은 간격
+- 공유 기본 요소 우회
+- 카드 중첩 또는 불필요한 장식
 
-## Style policy selection
+## 스타일 정책
 
-- Design system first: shared components, tokens, variants, slots, reusable UI primitives가 있습니다.
-- CSS/class first: stylesheets, CSS modules, scoped CSS, semantic class names가 project convention입니다.
-- Utility class first: Tailwind-style utilities 또는 atomic class composition이 project convention입니다.
-- Inline style first: component-local inline style objects를 명시적으로 선호합니다.
+스타일을 바꾸기 전에 프로젝트의 확립된 정책을 사용합니다. 정책 자체가 불명확하거나 충돌하거나 문서화할 가치가 있다면 먼저 `style-policy-selection`을 사용합니다. 이 스킬은 정책을 알고 난 뒤 렌더링 품질을 검토합니다.
 
-명시적 policy가 없으면 component가 이미 쓰는 local pattern을 유지하고 새 styling system을 도입하지 않습니다.
+## 검증
 
-style policy 자체를 선택, 문서화, 조정해야 할 때 `ui-style-policy`를 사용합니다.
-
-## Verification
-
-- 관련 있으면 repo-defined lint/build를 실행합니다.
-- visible changes에는 browser/device checks를 사용합니다.
-- 실제로 확인한 viewports 또는 scenarios만 언급합니다.
+- 관련 있으면 저장소가 정의한 린트나 빌드를 실행합니다.
+- 눈에 보이는 변경에는 브라우저나 기기 점검을 사용합니다.
+- 실제로 확인한 화면 너비나 시나리오만 언급합니다.

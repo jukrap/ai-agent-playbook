@@ -1,14 +1,12 @@
-# UI Style Policy Compatibility Reference
+# Style Policy Selection Reference
 
-Primary route: `frontend/style-policy-selection`.
+Use the narrowest styling policy supported by repository evidence.
 
-Use the narrowest policy supported by repository evidence.
-
-## Decision order
+## Decision Order
 
 1. **Design system first**
    - Shared components, tokens, variants, slots, or UI primitives exist.
-   - Reuse them before writing custom CSS, utilities, or inline styles.
+   - Reuse them before writing custom CSS, utility classes, or inline styles.
 
 2. **CSS/class first**
    - Stylesheets, CSS modules, scoped CSS, or semantic class names are the project convention.
@@ -22,12 +20,13 @@ Use the narrowest policy supported by repository evidence.
    - Component-local inline style objects are explicitly preferred by project docs, code, or user instruction.
    - Keep inline styles limited to component-local, dynamic, or state-derived values.
 
-## Conflict handling
+## Conflict Handling
 
 - Latest user instruction and repository docs outrank generic style preferences.
 - Existing local component patterns outrank external style advice.
 - Shared design-system primitives outrank one-off custom styling when they cover the needed state.
 - If the project mixes methods, follow the method already used by the touched component unless there is a documented migration.
+- If a migration exists, use the migration target only inside its documented scope.
 
 ## Documentation
 
@@ -36,4 +35,5 @@ When the policy will matter later, record:
 - selected policy
 - evidence source
 - allowed exceptions
+- components or directories covered
 - verification expectations for visible UI changes

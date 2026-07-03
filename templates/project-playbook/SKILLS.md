@@ -34,10 +34,10 @@ Prefer capability-first skills before stack-name skills:
 - Foundation and docs: `project-bootstrap`, `repo-onboarding`, `project-doc-system`, `documentation-artifact-package`, `adr-spec-handoff`.
 - Delivery and quality gates: `git-worklog-guardrails`, `ci-quality-gate`, `ci-failure-triage`, `flaky-test-triage`, `eval-harness-design`, `capability-witness-history`.
 - Architecture: `boundary-review`, `feature-slice-boundary`, `domain-model-change`, `monorepo-package-boundary`.
-- Frontend and design implementation: `frontend-ui-polish`, `frontend-state-data-flow`, `frontend-accessibility-review`, `browser-dom-change`, `design-system-handoff`.
+- Frontend and design implementation: `style-policy-selection`, `frontend-ui-polish`, `frontend-state-data-flow`, `frontend-accessibility-review`, `browser-dom-change`, `design-system-handoff`.
 - Design direction and source handoff: `design-brief-direction`, `brand-identity-system`, `design-reference-analysis`, `image-to-code-handoff`.
 - Interactive and 3D surfaces: `interactive-media-3d-review` plus frontend quality skills for rendered verification.
-- Backend and integrations: `backend-change-safety`, `api-contract-boundary`, `server-rendered-change`, `connector-integration-change`.
+- Backend and integrations: `backend-change-safety`, `api-contract-boundary`, `request-validation-error-contract`, `job-worker-reliability`, `server-rendered-change`, `connector-integration-change`.
 - Database and data: `database-change-safety`, `schema-migration-plan`, `query-performance-review`, `data-integrity-constraints`, `data-pipeline-review`, `data-contract-lineage-review`.
 - DevOps and release: `container-change-safety`, `deployment-release-check`, `package-publish-readiness`, `observability-incident-triage`.
 - Security and compliance: `security-review`, `auth-access-control`, `dependency-supply-chain-review`, `license-notice-review`, `security-compliance-gate`.

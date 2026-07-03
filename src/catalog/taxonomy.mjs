@@ -30,6 +30,10 @@ export const COMPATIBILITY_WRAPPERS = {
     primary: 'frontend/ui-polish',
     references: []
   },
+  'ui-style-policy': {
+    primary: 'frontend/style-policy-selection',
+    references: ['references/style-policy.md']
+  },
   'legacy-java-spring-mvc': {
     primary: 'backend/server-rendered-change',
     references: ['references/java-spring-mvc.md']

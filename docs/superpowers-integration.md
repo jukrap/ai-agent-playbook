@@ -15,7 +15,7 @@ Use process skills first when they apply, then use the smallest relevant playboo
 - New repository or unclear codebase: process planning plus `project-bootstrap`, `repo-onboarding`, or `node .\bin\ai-playbook.mjs bootstrap <target> --dry-run`.
 - Feature planning: process planning plus `project-doc-system` when project docs or `.ai-playbook/` need structure.
 - API integration: implementation process plus `api-contract-boundary`.
-- UI styling policy: implementation or review process plus `ui-style-policy`.
+- UI styling policy: implementation or review process plus `style-policy-selection`; use `ui-style-policy` only for older prompts.
 - UI styling review: review or verification process plus `style-quality-review`.
 - UI implementation polish: implementation or verification process plus `frontend-ui-polish`.
 - Behavior-preserving cleanup: refactoring or verification process plus `cleanup-ai-slop`.

@@ -1,16 +1,16 @@
-# UI Style Policy
+# UI 스타일 정책
 
-visible UI를 바꾸기 전에 repository evidence로 하나의 project styling policy를 선택합니다.
+호환 라우트: `frontend/style-policy-selection`.
 
-## 진행 절차
+이전 이름으로 들어온 요청을 지원하기 위한 진입점입니다. 저장소 스타일링 방식을 선택하거나 문서화할 때만 사용하고, 시각 다듬기, 반응형 검토, 넓은 디자인 방향에는 사용하지 않습니다.
 
-1. project docs, shared UI primitives, tokens, existing components, stylesheets, utilities, inline style usage를 확인합니다.
-2. shared components, variants, slots, tokens가 UI surface를 담당한다면 existing design system을 먼저 사용합니다.
-3. 프로젝트가 이미 쓰는 custom styling layer를 고릅니다: CSS/classes, utility classes, inline style objects.
-4. 한 작업 때문에 parallel styling method를 새로 도입하지 않습니다.
-5. 프로젝트에 guidance가 없고 나중에도 중요하다면 root instructions 또는 `.ai-playbook/`에 durable policy decision을 기록합니다.
-6. policy를 선택한 뒤 visible, responsive, overflow, state review에는 `style-quality-review`를 사용합니다.
+## 작업 흐름
+
+1. 정책 선택은 `frontend/style-policy-selection`으로 라우팅합니다.
+2. 디자인 시스템, CSS/클래스, 유틸리티 클래스, 인라인 스타일 중 무엇을 쓸지 저장소 근거를 보고 선택합니다.
+3. 오래 남을 프로젝트 규칙을 문서화하는 경우가 아니라면 선택 범위를 수정 대상 표면으로 좁힙니다.
+4. 스타일 정책을 선택한 뒤에만 `style-quality-review`나 `ui-polish`를 사용합니다.
 
 ## 참고 자료
 
-policy가 불분명하거나 conflicting style guidance를 정리할 때 `references/style-policy.md`를 읽습니다.
+오래된 프로젝트 문서나 프롬프트가 아직 `ui-style-policy`를 가리킬 때 `references/style-policy.md`를 읽습니다.

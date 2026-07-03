@@ -7,8 +7,8 @@ Skill taxonomy v2 uses capability categories as the primary axis. Stack-specific
 - `foundation`: repo onboarding, bootstrap, project docs, requirements, planning, release notes, and documentation packages.
 - `delivery`: planning, evals, verification, testing, git, PR, and worklog flows.
 - `architecture`: FSD, layered architecture, DDD, monorepos, and boundary review.
-- `frontend`: UI, state, data, accessibility, performance, visual QA, design-system handoff, and interactive media.
-- `backend`: API contracts, connectors, auth, server-rendered flows, workers, and integrations.
+- `frontend`: UI, style policy, state, data, accessibility, performance, visual QA, design-system handoff, and interactive media.
+- `backend`: API contracts, request/error contracts, job/worker reliability, connectors, auth, server-rendered flows, workers, and integrations.
 - `database`: schema change, migration, SQL, reporting, and data integrity.
 - `devops`: CI/CD, containers, package releases, deployment, configuration, and observability.
 - `design`: design direction, brand identity, reference analysis, visual evidence, and image/Figma handoff.
@@ -45,6 +45,8 @@ Backend and security skills use capability-first names:
 
 - `backend/api-contract-boundary`: API and DTO boundary work.
 - `backend/backend-change-safety`: services, modules, jobs, workers, queues, config, and integrations.
+- `backend/request-validation-error-contract`: request parsing, validation, error envelopes, exception mapping, and client-visible failure contracts.
+- `backend/job-worker-reliability`: jobs, workers, queues, schedulers, retries, dead-letter handling, replay, and long-running tasks.
 - `backend/connector-integration-change`: API connectors, workflow nodes, MCP adapters, webhooks, OAuth apps, import/export bridges, sync jobs, registration metadata, and credential handling.
 - `backend/server-rendered-change`: controllers, templates, sessions, forms, redirects, and server-rendered view contracts.
 - `security/auth-access-control`: authentication, authorization, RBAC, tenants, scopes, and object-level access.
@@ -128,6 +130,7 @@ Design guidance should not copy upstream visuals, brand marks, private Figma URL
 Frontend quality skills separate user-visible polish from state/data correctness, accessibility behavior, and rendered regression QA:
 
 - `frontend/browser-dom-change`: DOM-first behavior, jQuery flows, selectors, event handlers, forms, plugins, and script-loaded UI.
+- `frontend/style-policy-selection`: repository styling method selection across design systems, CSS/classes, utility classes, and inline styles.
 - `frontend/frontend-state-data-flow`: state ownership, server/client cache behavior, data fetching, optimistic updates, URL state, loading/error/empty states, and stale UI bugs.
 - `frontend/frontend-accessibility-review`: keyboard access, focus management, semantics, forms, dialogs, menus, announcements, contrast, reduced motion, and accessible interaction states.
 - `frontend/ui-polish`: visible UI quality, responsive layout, accessibility states, visual hierarchy, interaction feedback, and production polish.
@@ -136,6 +139,8 @@ Frontend quality skills separate user-visible polish from state/data correctness
 - `frontend/design-system-handoff`: Figma, brand, design-token, component-library, theme, variant, and visual-spec handoff into repository-native UI primitives.
 
 Framework-specific details belong in references or project-local playbooks. The primary skills should work for React, Vue, Svelte, Angular, server-rendered pages, lighter DOM-first frontends, canvas/media tools, and 3D or chart-heavy interfaces.
+
+`quality/ui-style-policy` remains only as a compatibility route for older prompts and project docs. New project guidance should point to `frontend/style-policy-selection`.
 
 ## Mobile Hardening Pack
 

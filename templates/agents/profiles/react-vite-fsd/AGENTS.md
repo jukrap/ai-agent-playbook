@@ -32,7 +32,7 @@ Use this profile for React, Vite, TypeScript, pnpm, and pragmatic FSD or a simil
 
 ## UI and styling
 
-- Follow the repository's explicit style policy when one exists; use `ui-style-policy` when the policy is unclear or conflicting.
+- Follow the repository's explicit style policy when one exists; use `style-policy-selection` when the policy is unclear or conflicting.
 - If no policy is documented, keep the component's existing local pattern instead of introducing a new styling system.
 - In strong design-system projects, prefer shared UI variants, tokens, and component props before custom styling.
 - Search for existing shared wrappers before creating buttons, inputs, selects, modals, toasts, or pagination.

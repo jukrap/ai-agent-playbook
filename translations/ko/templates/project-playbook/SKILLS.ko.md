@@ -34,10 +34,10 @@
 - 기반과 문서: `project-bootstrap`, `repo-onboarding`, `project-doc-system`, `documentation-artifact-package`, `adr-spec-handoff`.
 - 전달과 품질 게이트: `git-worklog-guardrails`, `ci-quality-gate`, `ci-failure-triage`, `flaky-test-triage`, `eval-harness-design`, `capability-witness-history`.
 - 아키텍처: `boundary-review`, `feature-slice-boundary`, `domain-model-change`, `monorepo-package-boundary`.
-- 프론트엔드와 구현 디자인: `frontend-ui-polish`, `frontend-state-data-flow`, `frontend-accessibility-review`, `browser-dom-change`, `design-system-handoff`.
+- 프론트엔드와 구현 디자인: `style-policy-selection`, `frontend-ui-polish`, `frontend-state-data-flow`, `frontend-accessibility-review`, `browser-dom-change`, `design-system-handoff`.
 - 디자인 방향과 원본 인수인계: `design-brief-direction`, `brand-identity-system`, `design-reference-analysis`, `image-to-code-handoff`.
 - 인터랙션과 3D 화면: `interactive-media-3d-review`를 쓰고, 렌더링 검증은 프론트엔드 품질 스킬과 함께 확인합니다.
-- 백엔드와 연동: `backend-change-safety`, `api-contract-boundary`, `server-rendered-change`, `connector-integration-change`.
+- 백엔드와 연동: `backend-change-safety`, `api-contract-boundary`, `request-validation-error-contract`, `job-worker-reliability`, `server-rendered-change`, `connector-integration-change`.
 - 데이터베이스와 데이터: `database-change-safety`, `schema-migration-plan`, `query-performance-review`, `data-integrity-constraints`, `data-pipeline-review`, `data-contract-lineage-review`.
 - DevOps와 릴리스: `container-change-safety`, `deployment-release-check`, `package-publish-readiness`, `observability-incident-triage`.
 - 보안과 컴플라이언스: `security-review`, `auth-access-control`, `dependency-supply-chain-review`, `license-notice-review`, `security-compliance-gate`.

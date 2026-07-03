@@ -15,7 +15,7 @@
 - 새 저장소 또는 불분명한 codebase: 프로세스 planning과 `project-bootstrap`, `repo-onboarding`, 또는 `node .\bin\ai-playbook.mjs bootstrap <target> --dry-run`.
 - 기능 계획: project docs나 `.ai-playbook/` 구조가 필요하면 프로세스 planning과 `project-doc-system`.
 - API integration: 구현 프로세스와 `api-contract-boundary`.
-- UI styling policy: 구현 또는 리뷰 프로세스와 `ui-style-policy`.
+- UI 스타일 정책: 구현 또는 리뷰 프로세스와 `style-policy-selection`을 함께 사용합니다. `ui-style-policy`는 오래된 프롬프트용 호환 이름으로만 사용합니다.
 - UI styling review: 리뷰 또는 검증 프로세스와 `style-quality-review`.
 - UI implementation polish: 구현 또는 검증 프로세스와 `frontend-ui-polish`.
 - Behavior-preserving cleanup: 리팩터링 또는 검증 프로세스와 `cleanup-ai-slop`.

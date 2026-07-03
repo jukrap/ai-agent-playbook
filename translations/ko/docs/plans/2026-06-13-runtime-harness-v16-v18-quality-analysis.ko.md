@@ -97,7 +97,7 @@ Explicit command가 유용하고 low-noise임이 확인된 뒤에만 hook integr
 ## 추가 개선
 
 - 새 quality skill이 추가될 때 README skill catalog를 더 명확히 합니다.
-- npm package, installed skills, target-project bootstrap의 차이를 installation docs에서 계속 분명하게 설명합니다.
+- npm 패키지, 설치된 스킬, 대상 프로젝트 부트스트랩의 차이를 사용 수명주기 문서에서 계속 분명하게 설명합니다.
 - English source가 바뀌면 Korean translation은 직역보다 읽기 쉽게 다듬습니다.
 - Public docs에는 private path, branch name, PR number, credential, company name, internal URL, external harness-specific assumption을 넣지 않습니다.
 

@@ -1,8 +1,10 @@
-# Install, Update, and Uninstall
+# Lifecycle Guide
+
+This guide covers the full local lifecycle: choosing how to run the CLI, installing, updating, or removing reusable skills, registering MCP manually, bootstrapping or removing `.ai-playbook/`, and using local checkout scripts.
 
 This package is easiest to use through npm or npx. A local Git checkout with the PowerShell scripts is still supported for development, private forks, and Windows environments that prefer explicit local scripts.
 
-If you are using the playbook for the first time, start with [First 10 minutes](quick-start.md), then return here for update, uninstall, local checkout, and cleanup details.
+If you are using the playbook for the first time, start with [First 10 minutes](quick-start.md), then return here for lifecycle details.
 
 There are three separate layers:
 
@@ -13,7 +15,7 @@ There are three separate layers:
 
 Installing the npm package by itself does not copy skills, create `.ai-playbook/`, enable hooks, register MCP settings, or register slash commands. Those actions stay explicit.
 
-## Choose a CLI install style
+## Choose a CLI Entry Point
 
 Use this when Node.js is available. The public package is [`ai-agent-playbook`](https://www.npmjs.com/package/ai-agent-playbook).
 
@@ -55,7 +57,7 @@ After a global install, replace `npx ai-agent-playbook` with `ai-playbook` in th
 
 For the full command reference, see [Command guide](commands.md).
 
-## Skills lifecycle
+## Reusable Skills Lifecycle
 
 Reusable skills are installed into user-level skill roots, not into a target repository:
 
@@ -88,7 +90,7 @@ The ownership marker is `.ai-agent-playbook-install.json` inside each installed 
 
 Restart Codex after skill installation or update so the next session can pick up skill metadata.
 
-## Global CLI lifecycle
+## Global CLI Lifecycle
 
 The global npm package and the copied skills are separate. Removing the global package does not remove copied skills.
 
@@ -286,7 +288,7 @@ node .\bin\ai-playbook.mjs skills install `
 
 The skills lifecycle command does not remove or overwrite other people's same-name skills by default. It only removes obsolete skills when their ownership marker proves they were installed by this playbook. The PowerShell `scripts/sync-skills.ps1` wrapper remains available for local checkout workflows.
 
-## Project playbook install, update, and removal
+## Project Playbook Lifecycle
 
 Templates are not installed automatically as skills. Skills are reusable user-level guidance; the project playbook is per-repository project memory. Use the runtime CLI for the normal path, or copy/adapt templates manually when you need tighter control.
 

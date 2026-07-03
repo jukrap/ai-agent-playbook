@@ -24,4 +24,4 @@ Add an explicit deep local research command without turning the harness into an 
 - Add fixture tests for source/test/playbook/rule/worklog evidence.
 - Confirm no-match output is successful and includes gaps plus next steps.
 - Confirm ignored folders stay ignored and the command writes no files.
-- Update runtime and installation docs with matching Korean translations.
+- Update runtime and lifecycle docs with matching Korean translations.

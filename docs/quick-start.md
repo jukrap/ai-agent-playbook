@@ -166,4 +166,4 @@ Managed uninstall preserves edited project memory and does not edit `.gitignore`
 - It does not block commits.
 - It does not remove other people's skills by default.
 
-For the full command reference, continue with [Command guide](commands.md). For install/update/delete details, see [Install, update, and uninstall](installation.md).
+For the full command reference, continue with [Command guide](commands.md). For install, update, uninstall, and npm lifecycle details, see [Lifecycle guide](lifecycle.md).

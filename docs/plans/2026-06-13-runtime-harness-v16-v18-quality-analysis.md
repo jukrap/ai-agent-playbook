@@ -97,7 +97,7 @@ Promotion criteria:
 ## Additional Improvements
 
 - Improve README skill catalog clarity whenever new quality skills are added.
-- Keep installation docs clear about the difference between the npm package, installed skills, and target-project bootstrap.
+- Keep lifecycle docs clear about the difference between the npm package, installed skills, and target-project bootstrap.
 - Keep Korean translations readable rather than literal when English source changes.
 - Keep public docs free of private paths, branch names, PR numbers, credentials, company names, internal URLs, and external harness-specific assumptions.
 

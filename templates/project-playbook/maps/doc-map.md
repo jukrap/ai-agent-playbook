@@ -11,7 +11,7 @@ Use this map to find the right project memory or public documentation quickly.
 ## Commands and setup
 
 - `docs/commands.md`
-- `docs/installation.md`
+- `docs/lifecycle.md`
 
 ## Runtime harness
 

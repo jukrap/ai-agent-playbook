@@ -38,7 +38,7 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 1. Keep runtime code under `bin/`, `src/`, and `test/`.
 2. Keep the CLI dependency-free unless the feature needs a dependency.
 3. Add tests for every new command, overwrite rule, or path convention.
-4. Update `docs/harness-runtime.md`, `README.md`, installation docs, and Korean translations.
+4. Update `docs/harness-runtime.md`, `README.md`, lifecycle docs, and Korean translations.
 5. Run `npm run check` and `npm test`.
 
 ## Updating commit, PR, or worklog policy

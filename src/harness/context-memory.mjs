@@ -123,7 +123,7 @@ export async function initContext(options) {
         '## Commands and setup',
         '',
         '- docs/commands.md',
-        '- docs/installation.md',
+        '- docs/lifecycle.md',
         '',
         '## Runtime harness',
         '',

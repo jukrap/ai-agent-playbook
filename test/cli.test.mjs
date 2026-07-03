@@ -980,6 +980,7 @@ test('reference inventory summarizes local reference collections without writing
     '| Status | Reference ID | Capability | Useful Pattern | Local Adoption | Risk/Noise | Decision Date |',
     '| --- | --- | --- | --- | --- | --- | --- |',
     '| adopted | repo-lens-like | ai-harness | MCP surface pattern | local queue annotation | none | 2026-07-03 |',
+    '| new | connector-pack | security | Connector safety pattern | review pending | none |  |',
     ''
   ].join('\n'));
   const beforeLedgerQueue = await listRelativeFiles(target);
@@ -1045,6 +1046,151 @@ test('reference inventory summarizes local reference collections without writing
   assert.equal(filteredAdoptionStatusReport.items[0].project, 'repo-lens-like');
   assert.equal(filteredAdoptionStatusReport.capabilities.some((item) => item.capability === 'ai-harness'), true);
   assert.deepEqual(await listRelativeFiles(target), beforeLedgerQueue);
+
+  const ledgerDecisionPreview = capture(target);
+  assert.equal(await runCli([
+    'reference',
+    'ledger-decision',
+    '.',
+    '--reference',
+    'connector-pack',
+    '--status',
+    'rejected',
+    '--capability',
+    'security',
+    '--pattern',
+    'Connector pattern rejected',
+    '--adoption',
+    'Do not adopt',
+    '--risk',
+    'Too much reference noise',
+    '--decision-date',
+    '2026-07-03',
+    '--json'
+  ], ledgerDecisionPreview), 0);
+  const ledgerDecisionPreviewReport = JSON.parse(ledgerDecisionPreview.out());
+  assert.equal(ledgerDecisionPreviewReport.ok, true);
+  assert.equal(ledgerDecisionPreviewReport.applied, false);
+  assert.equal(ledgerDecisionPreviewReport.mode.writes, false);
+  assert.equal(ledgerDecisionPreviewReport.summary.changed, true);
+  assert.equal(ledgerDecisionPreviewReport.operations[0].action, 'preview');
+  assert.equal(ledgerDecisionPreviewReport.decision.before.status, 'new');
+  assert.equal(ledgerDecisionPreviewReport.decision.after.status, 'rejected');
+  assert.equal((await readFile(ledgerPath, 'utf8')).includes('| new | connector-pack | security | Connector safety pattern | review pending | none |  |'), true);
+
+  const ledgerDecisionApply = capture(target);
+  assert.equal(await runCli([
+    'reference',
+    'ledger-decision',
+    '.',
+    '--reference',
+    'connector-pack',
+    '--status',
+    'rejected',
+    '--capability',
+    'security',
+    '--pattern',
+    'Connector pattern rejected',
+    '--adoption',
+    'Do not adopt',
+    '--risk',
+    'Too much reference noise',
+    '--decision-date',
+    '2026-07-03',
+    '--apply',
+    '--json'
+  ], ledgerDecisionApply), 0);
+  const ledgerDecisionApplyReport = JSON.parse(ledgerDecisionApply.out());
+  assert.equal(ledgerDecisionApplyReport.ok, true);
+  assert.equal(ledgerDecisionApplyReport.applied, true);
+  assert.equal(ledgerDecisionApplyReport.mode.writes, true);
+  assert.equal((await readFile(ledgerPath, 'utf8')).includes('| rejected | connector-pack | security | Connector pattern rejected | Do not adopt | Too much reference noise | 2026-07-03 |'), true);
+
+  const ledgerDecisionNoop = capture(target);
+  assert.equal(await runCli([
+    'reference',
+    'ledger-decision',
+    '.',
+    '--reference',
+    'connector-pack',
+    '--status',
+    'rejected',
+    '--decision-date',
+    '2026-07-03',
+    '--apply',
+    '--json'
+  ], ledgerDecisionNoop), 0);
+  const ledgerDecisionNoopReport = JSON.parse(ledgerDecisionNoop.out());
+  assert.equal(ledgerDecisionNoopReport.applied, false);
+  assert.equal(ledgerDecisionNoopReport.summary.changed, false);
+  assert.equal(ledgerDecisionNoopReport.summary.operations, 0);
+
+  const invalidLedgerDecision = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-decision', '.', '--reference', 'connector-pack', '--status', 'done', '--json'], invalidLedgerDecision), 1);
+  const invalidLedgerDecisionReport = JSON.parse(invalidLedgerDecision.out());
+  assert.equal(invalidLedgerDecisionReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-decision.invalid-status'), true);
+
+  const missingLedgerDecision = capture(target);
+  assert.equal(await runCli([
+    'reference',
+    'ledger-decision',
+    '.',
+    '--reference',
+    'connector-pack',
+    '--status',
+    'reviewed',
+    '--path',
+    '.ai-playbook/knowledge/missing-ledger.md',
+    '--json'
+  ], missingLedgerDecision), 1);
+  const missingLedgerDecisionReport = JSON.parse(missingLedgerDecision.out());
+  assert.equal(missingLedgerDecisionReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-decision.ledger-missing'), true);
+
+  const missingReferenceDecision = capture(target);
+  assert.equal(await runCli([
+    'reference',
+    'ledger-decision',
+    '.',
+    '--reference',
+    'unknown-pack',
+    '--status',
+    'reviewed',
+    '--json'
+  ], missingReferenceDecision), 1);
+  const missingReferenceDecisionReport = JSON.parse(missingReferenceDecision.out());
+  assert.equal(missingReferenceDecisionReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-decision.reference-missing'), true);
+
+  const escapedPathDecision = capture(target);
+  assert.equal(await runCli([
+    'reference',
+    'ledger-decision',
+    '.',
+    '--reference',
+    'connector-pack',
+    '--status',
+    'reviewed',
+    '--path',
+    '../outside-ledger.md',
+    '--json'
+  ], escapedPathDecision), 1);
+  const escapedPathDecisionReport = JSON.parse(escapedPathDecision.out());
+  assert.equal(escapedPathDecisionReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-decision.path-invalid'), true);
+
+  const unsafeCellDecision = capture(target);
+  assert.equal(await runCli([
+    'reference',
+    'ledger-decision',
+    '.',
+    '--reference',
+    'connector-pack',
+    '--status',
+    'reviewed',
+    '--adoption',
+    'Do not copy C:\\tmp\\private-notes into the ledger',
+    '--json'
+  ], unsafeCellDecision), 1);
+  const unsafeCellDecisionReport = JSON.parse(unsafeCellDecision.out());
+  assert.equal(unsafeCellDecisionReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-decision.local-absolute-path'), true);
 
   assert.deepEqual(await listRelativeFiles(target), beforeLedgerQueue);
 

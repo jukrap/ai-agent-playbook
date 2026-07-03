@@ -64,6 +64,7 @@ import {
   syncGuides,
   uninstallManagedManifest,
   updateReferenceAdoptionLedger,
+  updateReferenceLedgerDecision,
   updateReferenceSourceRegistry,
   workflowCatalog,
   summarizeRun,
@@ -823,6 +824,42 @@ export async function runCli(argv, io = {}) {
         }
         if (result.ok && result.summary.added > 0 && !parsed.flags.apply) {
           write(stdout, 'Re-run with --apply to append missing reference adoption ledger rows.\n');
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'ledger-decision') {
+      const result = await updateReferenceLedgerDecision({
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        referenceId: typeof parsed.flags.reference === 'string' ? parsed.flags.reference : undefined,
+        status: typeof parsed.flags.status === 'string' ? parsed.flags.status : undefined,
+        capability: typeof parsed.flags.capability === 'string' ? parsed.flags.capability : undefined,
+        pattern: typeof parsed.flags.pattern === 'string' ? parsed.flags.pattern : undefined,
+        adoption: typeof parsed.flags.adoption === 'string' ? parsed.flags.adoption : undefined,
+        risk: typeof parsed.flags.risk === 'string' ? parsed.flags.risk : undefined,
+        decisionDate: typeof parsed.flags['decision-date'] === 'string' ? parsed.flags['decision-date'] : undefined,
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        const state = result.ok
+          ? (result.applied ? 'written' : (result.summary.changed ? 'preview' : 'up to date'))
+          : 'blocked';
+        write(stdout, `Reference ledger decision: ${state}\n`);
+        if (result.decision) {
+          write(stdout, `${result.decision.before.status} -> ${result.decision.after.status}: ${result.decision.referenceId}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+        if (result.ok && result.summary.changed && !parsed.flags.apply) {
+          write(stdout, 'Re-run with --apply to update the reference adoption ledger row.\n');
         }
       }
       return result.ok ? 0 : 1;
@@ -1647,7 +1684,12 @@ function needsValue(key) {
     'status',
     'evidence',
     'kind',
-    'reference-dir'
+    'reference-dir',
+    'reference',
+    'pattern',
+    'adoption',
+    'risk',
+    'decision-date'
   ].includes(key);
 }
 
@@ -1753,6 +1795,7 @@ Usage:
   ai-playbook reference source-registry-update <target> --reference-dir <dir> [--path <sources.json>] [--max-results N] [--apply] [--json]
   ai-playbook reference ledger-init <target> --reference-dir <dir> [--path <ledger.md>] [--max-results N] [--apply] [--json]
   ai-playbook reference ledger-update <target> --reference-dir <dir> [--path <ledger.md>] [--max-results N] [--apply] [--json]
+  ai-playbook reference ledger-decision <target> --reference <id> --status reviewed|adopted|deferred|rejected [--capability <id>] [--pattern <text>] [--adoption <text>] [--risk <text>] [--decision-date YYYY-MM-DD] [--path <ledger.md>] [--apply] [--json]
   ai-playbook reference ledger-check <target> [--path <ledger.md>] [--strict] [--json]
   ai-playbook layout status <target> [--json]
   ai-playbook runtime capability-history <target> [--json]

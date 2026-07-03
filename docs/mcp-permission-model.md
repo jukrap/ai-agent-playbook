@@ -57,6 +57,7 @@ Default read-only additions:
 - `reference_source_registry_preview`
 - `reference_source_registry_check`
 - `reference_ledger_check`
+- `reference_ledger_decision_preview`
 
 ## Write Gate
 

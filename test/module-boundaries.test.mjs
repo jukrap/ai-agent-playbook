@@ -47,6 +47,7 @@ test('harness facade keeps the public runtime exports', () => {
     'draftCanonFacts',
     'initContext',
     'initContracts',
+    'initReferenceAdoptionLedger',
     'inventoryReferenceDirectory',
     'listContexts',
     'listContracts',

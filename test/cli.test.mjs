@@ -922,6 +922,67 @@ test('reference inventory default scans more than twenty top-level projects', as
   await cleanup(target);
 });
 
+test('reference ledger init previews and writes queue ledger safely', async () => {
+  const target = await tempRepo('reference ledger init-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  const referenceRoot = path.join(target, '_reference');
+  await mkdir(path.join(referenceRoot, 'repo-lens-like', 'skills', 'write-gate'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'connector-pack', 'reference', 'connectors'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'repo-lens-like', 'README.md'), '# Repo Lens\n');
+  await writeFile(path.join(referenceRoot, 'repo-lens-like', 'skills', 'write-gate', 'SKILL.md'), '---\nname: write-gate\n---\n# Write Gate\n');
+  await writeFile(path.join(referenceRoot, 'connector-pack', 'package.json'), '{"name":"connector-pack"}\n');
+  await writeFile(path.join(referenceRoot, 'connector-pack', 'reference', 'connectors', 'postgres.md'), '# Postgres\n');
+
+  const before = await listRelativeFiles(target);
+  const defaultPathPreview = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-init', '.', '--reference-dir', referenceRoot, '--json'], defaultPathPreview), 1);
+  const defaultPathReport = JSON.parse(defaultPathPreview.out());
+  assert.equal(defaultPathReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-init.file-exists'), true);
+  assert.equal(defaultPathReport.summary.operations, 0);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const customPath = '.ai-playbook/knowledge/generated-reference-ledger.md';
+  const preview = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-init', '.', '--reference-dir', referenceRoot, '--path', customPath, '--max-results', '2', '--json'], preview), 0);
+  const previewReport = JSON.parse(preview.out());
+  assert.equal(previewReport.ok, true);
+  assert.equal(previewReport.applied, false);
+  assert.equal(previewReport.mode.writes, false);
+  assert.equal(previewReport.summary.entries, 2);
+  assert.equal(previewReport.summary.operations, 1);
+  assert.equal(previewReport.path, customPath);
+  assert.equal(previewReport.ledger.content.includes('reference-repo-lens-like'), true);
+  assert.equal(previewReport.ledger.content.includes(target), false);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const applied = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-init', '.', '--reference-dir', referenceRoot, '--path', customPath, '--max-results', '2', '--apply', '--json'], applied), 0);
+  const appliedReport = JSON.parse(applied.out());
+  assert.equal(appliedReport.ok, true);
+  assert.equal(appliedReport.applied, true);
+  assert.equal(appliedReport.mode.writes, true);
+  const ledgerPath = path.join(target, ...customPath.split('/'));
+  const ledgerText = await readFile(ledgerPath, 'utf8');
+  assert.equal(ledgerText.includes('reference-connector-pack'), true);
+
+  const check = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-check', '.', '--path', customPath, '--json'], check), 0);
+  const checkReport = JSON.parse(check.out());
+  assert.equal(checkReport.ok, true);
+  assert.equal(checkReport.summary.statuses.new, 2);
+
+  const overwrite = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-init', '.', '--reference-dir', referenceRoot, '--path', customPath, '--apply', '--json'], overwrite), 1);
+  const overwriteReport = JSON.parse(overwrite.out());
+  assert.equal(overwriteReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-init.file-exists'), true);
+
+  const unsafePath = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-init', '.', '--reference-dir', referenceRoot, '--path', '../outside.md', '--json'], unsafePath), 1);
+  const unsafePathReport = JSON.parse(unsafePath.out());
+  assert.equal(unsafePathReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-init.path-invalid'), true);
+  await cleanup(target);
+});
+
 test('reference ledger check validates statuses and local-only leaks without writing files', async () => {
   const target = await tempRepo('reference ledger-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);

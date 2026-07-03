@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { readdir, readFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
   assertDirectory,
@@ -128,6 +128,110 @@ export async function buildReferenceAdoptionQueue({
     queue,
     warnings,
     conflicts
+  };
+}
+
+export async function initReferenceAdoptionLedger({
+  target,
+  referenceDir,
+  filePath,
+  maxResults = DEFAULT_QUEUE_RESULTS,
+  apply = false
+}) {
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const resolvedLedger = resolveLedgerPath({ target: resolvedTarget, filePath });
+  const generatedAt = new Date().toISOString();
+  const warnings = [];
+  const conflicts = [];
+
+  if (!resolvedLedger.ok) {
+    conflicts.push({
+      id: 'reference-ledger-init.path-invalid',
+      message: 'Ledger path must stay inside the target repository.',
+      paths: [resolvedLedger.relativePath]
+    });
+  }
+
+  if (!existsSync(playbook.root)) {
+    conflicts.push({
+      id: 'reference-ledger-init.playbook-missing',
+      message: `Missing ${playbook.dir}/. Bootstrap or migrate the playbook before initializing a reference ledger.`,
+      paths: [`${playbook.dir}/`]
+    });
+  }
+
+  if (!referenceDir) {
+    conflicts.push({
+      id: 'reference-ledger-init.reference-dir-required',
+      message: 'Reference directory is required.',
+      paths: []
+    });
+  }
+
+  if (resolvedLedger.ok && existsSync(resolvedLedger.path)) {
+    conflicts.push({
+      id: 'reference-ledger-init.file-exists',
+      message: 'Reference adoption ledger already exists; refusing to overwrite it.',
+      paths: [resolvedLedger.relativePath]
+    });
+  }
+
+  const queue = conflicts.length === 0
+    ? await buildReferenceAdoptionQueue({
+      target: referenceDir,
+      maxResults
+    })
+    : null;
+  if (queue) {
+    warnings.push(...queue.warnings);
+    conflicts.push(...queue.conflicts);
+  }
+
+  const items = queue?.queue ?? [];
+  const content = renderReferenceAdoptionLedger({ items, generatedAt });
+  const operations = resolvedLedger.ok && conflicts.length === 0
+    ? [{
+      id: 'reference-ledger-init.write-ledger',
+      action: apply ? 'write' : 'preview',
+      message: `${apply ? 'Write' : 'Preview'} reference adoption ledger with ${items.length} queued reference row(s).`,
+      paths: [resolvedLedger.relativePath]
+    }]
+    : [];
+
+  const result = {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'reference.adoption-ledger-init',
+    ok: conflicts.length === 0,
+    target: resolvedTarget,
+    mode: { localOnly: true, network: false, writes: Boolean(apply) },
+    generatedAt,
+    applied: false,
+    path: resolvedLedger.relativePath,
+    summary: {
+      entries: items.length,
+      operations: operations.length,
+      warnings: warnings.length,
+      conflicts: conflicts.length
+    },
+    ledger: {
+      path: resolvedLedger.relativePath,
+      content
+    },
+    operations,
+    warnings,
+    conflicts
+  };
+
+  if (!result.ok || !apply) return result;
+
+  await mkdir(path.dirname(resolvedLedger.path), { recursive: true });
+  await writeFile(resolvedLedger.path, content);
+
+  return {
+    ...result,
+    applied: true
   };
 }
 
@@ -519,6 +623,62 @@ function findLedgerEntryForProject(projectId, ledger) {
     if (entry) return entry;
   }
   return null;
+}
+
+function renderReferenceAdoptionLedger({ items, generatedAt }) {
+  const lines = [
+    '# Reference Adoption Ledger',
+    '',
+    `Generated: ${generatedAt}`,
+    '',
+    'Use this ledger to review local reference collections before adopting patterns into skills, MCP surfaces, runtime indexes, workflows, memory, or docs. Keep entries summarized; do not paste raw external files, credentials, private URLs, or local absolute paths.',
+    '',
+    '| Status | Reference ID | Capability | Useful Pattern | Local Adoption | Risk/Noise | Decision Date |',
+    '| --- | --- | --- | --- | --- | --- | --- |'
+  ];
+  for (const item of items) {
+    lines.push(`| ${[
+      'new',
+      `reference-${normalizeLedgerKey(item.project, 'source')}`,
+      primaryLedgerCapability(item),
+      ledgerCell(ledgerPatternSummary(item)),
+      ledgerCell(ledgerAdoptionSummary(item)),
+      ledgerCell('Summarize reusable patterns; do not copy raw reference content.'),
+      ''
+    ].join(' | ')} |`);
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
+function primaryLedgerCapability(item) {
+  const preferred = ['ai-harness', 'delivery', 'backend', 'foundation', 'security', 'data', 'devops'];
+  return item.recommendedCapabilities.find((capability) => preferred.includes(capability))
+    ?? item.recommendedCapabilities[0]
+    ?? item.candidateCapabilities[0]
+    ?? 'uncategorized';
+}
+
+function ledgerPatternSummary(item) {
+  const signals = item.signalHighlights
+    .slice(0, 3)
+    .map((signal) => `${signal.signal}:${signal.count}`)
+    .join(', ');
+  return signals ? `Queue score ${item.score}; signals ${signals}` : `Queue score ${item.score}`;
+}
+
+function ledgerAdoptionSummary(item) {
+  const capabilities = item.recommendedCapabilities.slice(0, 3).join(', ');
+  return capabilities ? `Review for ${capabilities}` : 'Review manually before adoption';
+}
+
+function ledgerCell(value) {
+  return String(value ?? '')
+    .replace(/\|/g, '/')
+    .replace(/\r?\n/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 220);
 }
 
 function ledgerEntryKeys(referenceId) {

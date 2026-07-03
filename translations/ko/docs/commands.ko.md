@@ -154,6 +154,7 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 | `reference adoption-queue <reference-dir>` | local reference collection을 compact adoption backlog로 점수화하고 필요하면 ledger status를 붙입니다. | 아니오 | `npx ai-agent-playbook reference adoption-queue _reference --ledger .ai-playbook/knowledge/reference-adoption-ledger.md --json` |
 | `reference source-registry-preview <reference-dir>` | Adoption queue item을 쓰기 없이 `knowledge/sources.json` 후보로 변환합니다. | 아니오 | `npx ai-agent-playbook reference source-registry-preview _reference --json` |
 | `reference source-registry-check <target>` | `knowledge/sources.json` schema, freshness, duplicate, optional local reference path drift를 검증합니다. | 아니오 | `npx ai-agent-playbook reference source-registry-check <target-project> --reference-dir _reference --json` |
+| `reference ledger-init <target>` | Local reference queue에서 missing reference adoption ledger를 preview하거나 생성합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook reference ledger-init <target-project> --reference-dir _reference --json` |
 | `reference ledger-check <target>` | reference adoption ledger의 status 값과 local-only leak를 검증합니다. | 아니오 | `npx ai-agent-playbook reference ledger-check <target-project> --json` |
 | `runtime capability-history <target>` | benchmark나 telemetry를 실행하지 않고 local append-only capability history를 요약합니다. | 아니오 | `npx ai-agent-playbook runtime capability-history <target-project> --json` |
 | `runtime schema-check <target>` | runtime eval, witness, evidence-envelope, repo-graph, artifact, source-registry JSON을 파일 쓰기 없이 검증합니다. | 아니오 | `npx ai-agent-playbook runtime schema-check <target-project> --path .ai-playbook/runtime/reports/evals/example.json --json` |
@@ -177,6 +178,8 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 `reference source-registry-preview`는 adoption queue 위에서 동작하며 `knowledge/sources.json` candidate object를 반환합니다. Entry locator는 scanned reference root 기준 relative path를 유지하고 privacy tier, credential boundary, freshness, promotion policy, caveat, capability hint, representative file을 포함합니다. 이 명령은 생성된 registry shape를 검증하지만 파일을 쓰거나 source를 memory로 promotion하지 않습니다.
 
 `reference source-registry-check`는 기본적으로 `.ai-playbook/knowledge/sources.json`을 읽고 schema shape, duplicate id, status/privacy/type summary, stale freshness value를 검증합니다. Target project 내부의 다른 registry를 확인하려면 `--path <sources.json>`를 추가합니다. Local reference directory 아래에서 등록된 `referencePath`와 representative file이 아직 존재하는지 내용 읽기 없이 확인하려면 `--reference-dir <dir>`를 추가합니다.
+
+`reference ledger-init`은 local reference adoption queue에서 `.ai-playbook/knowledge/reference-adoption-ledger.md`를 seed합니다. `--apply`가 있을 때만 쓰고, 기존 ledger overwrite는 거부하며, 생성 row는 status, reference id, capability, useful pattern summary, local adoption note, risk/noise note, decision date placeholder로 compact하게 유지합니다.
 
 `reference ledger-check`는 기본적으로 `.ai-playbook/knowledge/reference-adoption-ledger.md`를 검증합니다. 파일을 쓰지 않고 adoption status, local absolute path, internal URL, secret-like token, oversized excerpt를 확인합니다. 대상 프로젝트 내부의 다른 ledger를 확인하려면 `--path <ledger.md>`를 사용합니다. JSON output에는 capability 영역별 adoption status를 볼 수 있도록 `summary.capabilities`가 포함됩니다. Oversized fenced excerpt를 warning이 아니라 실패로 다루려면 `--strict`를 추가합니다.
 

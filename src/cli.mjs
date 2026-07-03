@@ -60,6 +60,7 @@ import {
   syncGuides,
   uninstallManagedManifest,
   updateReferenceAdoptionLedger,
+  updateReferenceSourceRegistry,
   workflowCatalog,
   summarizeRun,
   summarizeWorklogs
@@ -635,6 +636,34 @@ export async function runCli(argv, io = {}) {
         }
         for (const conflict of result.conflicts) {
           write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'source-registry-update') {
+      const result = await updateReferenceSourceRegistry({
+        target: resolveTarget(cwd, targetArg),
+        referenceDir: resolveOptionalPath(cwd, parsed.flags['reference-dir']),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        maxResults: parseMaxResults(parsed.flags['max-results']),
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        const state = result.ok
+          ? (result.applied ? 'written' : (result.summary.added > 0 ? 'preview' : 'up to date'))
+          : 'blocked';
+        write(stdout, `Reference source registry update: ${state} (${result.summary.added} new source${result.summary.added === 1 ? '' : 's'})\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+        if (result.ok && result.summary.added > 0 && !parsed.flags.apply) {
+          write(stdout, 'Re-run with --apply to append missing reference source registry entries.\n');
         }
       }
       return result.ok ? 0 : 1;
@@ -1599,6 +1628,7 @@ Usage:
   ai-playbook reference adoption-queue <reference-dir> [--max-results N] [--ledger <ledger.md>] [--json]
   ai-playbook reference source-registry-preview <reference-dir> [--max-results N] [--json]
   ai-playbook reference source-registry-check <target> [--path <sources.json>] [--reference-dir <dir>] [--json]
+  ai-playbook reference source-registry-update <target> --reference-dir <dir> [--path <sources.json>] [--max-results N] [--apply] [--json]
   ai-playbook reference ledger-init <target> --reference-dir <dir> [--path <ledger.md>] [--max-results N] [--apply] [--json]
   ai-playbook reference ledger-update <target> --reference-dir <dir> [--path <ledger.md>] [--max-results N] [--apply] [--json]
   ai-playbook reference ledger-check <target> [--path <ledger.md>] [--strict] [--json]

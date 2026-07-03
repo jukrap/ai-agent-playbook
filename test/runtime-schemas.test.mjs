@@ -116,6 +116,46 @@ test('runtime schemas accept eval, witness, source registry, and evidence shapes
   }, { path: 'knowledge/sources.json' });
   assert.equal(registry.ok, true);
 
+  const duplicateRegistry = validateSourceRegistry({
+    schemaVersion: '1',
+    sources: [
+      {
+        id: 'local-reference',
+        type: 'docs',
+        title: 'Local reference docs',
+        owner: 'repository',
+        status: 'available',
+        privacyTier: 'internal',
+        credentialBoundary: 'none',
+        updateCadence: 'manual',
+        freshness: '2026-07-03',
+        locatorTypes: ['path-range'],
+        searchModes: ['keyword'],
+        browse: 'open project-relative path and line',
+        promotionPolicy: 'reviewed facts may become knowledge references',
+        caveats: []
+      },
+      {
+        id: 'local-reference',
+        type: 'docs',
+        title: 'Duplicate reference docs',
+        owner: 'repository',
+        status: 'available',
+        privacyTier: 'internal',
+        credentialBoundary: 'none',
+        updateCadence: 'manual',
+        freshness: '2026-07-03',
+        locatorTypes: ['path-range'],
+        searchModes: ['keyword'],
+        browse: 'open project-relative path and line',
+        promotionPolicy: 'reviewed facts may become knowledge references',
+        caveats: []
+      }
+    ]
+  }, { path: 'knowledge/sources.json' });
+  assert.equal(duplicateRegistry.ok, false);
+  assert.equal(duplicateRegistry.conflicts.some((conflict) => conflict.id === 'runtime.schema.duplicate-source-id'), true);
+
   const envelope = validateEvidenceEnvelope({
     schemaVersion: '1',
     kind: 'runtime.evidence-envelope',

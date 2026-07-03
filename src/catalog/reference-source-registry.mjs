@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
   assertDirectory,
@@ -109,7 +109,6 @@ export async function checkReferenceSourceRegistry({
     if (typeof source.id === 'string') {
       if (seenIds.has(source.id)) {
         duplicateIds += 1;
-        conflicts.push(sourceRegistryFinding('reference-source-registry.duplicate-id', `Duplicate source id: ${source.id}.`, [sourcePath]));
       }
       seenIds.add(source.id);
     }
@@ -160,6 +159,138 @@ export async function checkReferenceSourceRegistry({
     warnings,
     conflicts
   });
+}
+
+export async function updateReferenceSourceRegistry({
+  target,
+  referenceDir,
+  filePath,
+  maxResults = DEFAULT_QUEUE_RESULTS,
+  apply = false
+}) {
+  await assertDirectory(target, 'Target repository does not exist');
+  const resolvedTarget = path.resolve(target);
+  const playbook = resolvePlaybookLayout(resolvedTarget);
+  const resolvedRegistry = resolveSourceRegistryPath({ target: resolvedTarget, filePath });
+  const generatedAt = new Date().toISOString();
+  const warnings = [];
+  const conflicts = [];
+
+  if (!resolvedRegistry.ok) {
+    conflicts.push(sourceRegistryFinding('reference-source-registry-update.path-invalid', 'Source registry path must stay inside the target repository.', [resolvedRegistry.relativePath]));
+  }
+
+  if (!existsSync(playbook.root)) {
+    conflicts.push(sourceRegistryFinding('reference-source-registry-update.playbook-missing', `Missing ${playbook.dir}/. Bootstrap or migrate the playbook before updating source registry.`, [`${playbook.dir}/`]));
+  }
+
+  if (!referenceDir) {
+    conflicts.push(sourceRegistryFinding('reference-source-registry-update.reference-dir-required', 'Reference directory is required.', []));
+  }
+
+  const referenceRoot = referenceDir ? resolveReferenceRoot(referenceDir, resolvedTarget) : null;
+  if (referenceRoot && !await isDirectoryPath(referenceRoot)) {
+    conflicts.push(sourceRegistryFinding('reference-source-registry-update.reference-dir-missing', 'Reference directory does not exist.', [normalizePortablePath(String(referenceDir))]));
+  }
+
+  if (resolvedRegistry.ok && !existsSync(resolvedRegistry.path)) {
+    conflicts.push(sourceRegistryFinding('reference-source-registry-update.registry-missing', 'Source registry file is missing; bootstrap the playbook first.', [resolvedRegistry.relativePath]));
+  }
+
+  let currentRegistry = null;
+  if (conflicts.length === 0) {
+    try {
+      currentRegistry = JSON.parse(await readFile(resolvedRegistry.path, 'utf8'));
+    } catch (error) {
+      conflicts.push(sourceRegistryFinding('reference-source-registry-update.malformed-json', `Source registry JSON could not be parsed: ${formatReadError(error)}.`, [resolvedRegistry.relativePath]));
+    }
+  }
+
+  let currentSources = [];
+  if (currentRegistry && conflicts.length === 0) {
+    const currentValidation = validateSourceRegistry(currentRegistry, { path: resolvedRegistry.relativePath });
+    if (currentValidation.conflicts.length > 0) warnings.push(...currentValidation.warnings);
+    conflicts.push(...currentValidation.conflicts);
+    currentSources = Array.isArray(currentRegistry.sources) ? currentRegistry.sources : [];
+  }
+
+  const preview = conflicts.length === 0
+    ? await buildReferenceSourceRegistryPreview({
+      target: referenceRoot,
+      maxResults
+    })
+    : null;
+  if (preview) {
+    warnings.push(...preview.warnings);
+    conflicts.push(...preview.conflicts);
+  }
+
+  const existingIds = new Set(currentSources
+    .filter((source) => isRecord(source) && typeof source.id === 'string')
+    .map((source) => source.id));
+  const candidates = preview?.registry?.sources ?? [];
+  const newSources = candidates.filter((source) => !existingIds.has(source.id));
+  const mergedRegistry = currentRegistry
+    ? {
+      ...currentRegistry,
+      schemaVersion: SCHEMA_VERSION,
+      sources: [
+        ...currentSources,
+        ...newSources
+      ]
+    }
+    : null;
+
+  let schemaValid = false;
+  if (mergedRegistry && conflicts.length === 0) {
+    const mergedValidation = validateSourceRegistry(mergedRegistry, { path: resolvedRegistry.relativePath });
+    schemaValid = mergedValidation.ok;
+    warnings.push(...mergedValidation.warnings);
+    conflicts.push(...mergedValidation.conflicts);
+  }
+
+  const operations = resolvedRegistry.ok && conflicts.length === 0 && newSources.length > 0
+    ? [{
+      id: 'reference-source-registry-update.append-sources',
+      action: apply ? 'write' : 'preview',
+      message: `${apply ? 'Append' : 'Preview'} ${newSources.length} new reference source registry entr${newSources.length === 1 ? 'y' : 'ies'}.`,
+      paths: [resolvedRegistry.relativePath]
+    }]
+    : [];
+
+  const result = {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'reference.source-registry-update',
+    ok: conflicts.length === 0,
+    target: resolvedTarget,
+    mode: { localOnly: true, network: false, writes: Boolean(apply) },
+    generatedAt,
+    applied: false,
+    path: resolvedRegistry.relativePath,
+    summary: {
+      existing: currentSources.length,
+      candidates: candidates.length,
+      added: newSources.length,
+      operations: operations.length,
+      schemaValid,
+      warnings: warnings.length,
+      conflicts: conflicts.length
+    },
+    registry: mergedRegistry,
+    operations,
+    warnings,
+    conflicts
+  };
+
+  if (!result.ok || !apply || operations.length === 0) return result;
+
+  await mkdir(path.dirname(resolvedRegistry.path), { recursive: true });
+  await writeFile(resolvedRegistry.path, `${JSON.stringify(mergedRegistry, null, 2)}\n`);
+
+  return {
+    ...result,
+    applied: true
+  };
 }
 
 function sourceRegistryEntry(item, freshness) {
@@ -296,4 +427,12 @@ function sourceRegistryCheckResult({
 
 function sourceRegistryFinding(id, message, paths) {
   return { id, message, paths };
+}
+
+async function isDirectoryPath(candidate) {
+  try {
+    return (await stat(candidate)).isDirectory();
+  } catch {
+    return false;
+  }
 }

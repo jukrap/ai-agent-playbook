@@ -849,6 +849,51 @@ test('reference inventory summarizes local reference collections without writing
   assert.deepEqual(await listRelativeFiles(target), before);
 
   await mkdir(path.join(target, '.ai-playbook', 'knowledge'), { recursive: true });
+  const sourcesPath = path.join(target, '.ai-playbook', 'knowledge', 'sources.json');
+  await writeFile(sourcesPath, `${JSON.stringify({ schemaVersion: '1', sources: [] }, null, 2)}\n`);
+  const beforeSourceUpdate = await listRelativeFiles(target);
+  const sourceUpdatePreview = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-update', '.', '--reference-dir', referenceRoot, '--max-results', '2', '--json'], sourceUpdatePreview), 0);
+  const sourceUpdatePreviewReport = JSON.parse(sourceUpdatePreview.out());
+  assert.equal(sourceUpdatePreviewReport.ok, true);
+  assert.equal(sourceUpdatePreviewReport.applied, false);
+  assert.equal(sourceUpdatePreviewReport.mode.writes, false);
+  assert.equal(sourceUpdatePreviewReport.summary.existing, 0);
+  assert.equal(sourceUpdatePreviewReport.summary.added, 2);
+  assert.equal(sourceUpdatePreviewReport.summary.operations, 1);
+  assert.equal(sourceUpdatePreviewReport.registry.sources.some((source) => source.id === 'reference-repo-lens-like'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeSourceUpdate);
+  assert.deepEqual(JSON.parse(await readFile(sourcesPath, 'utf8')).sources, []);
+
+  const sourceUpdateApply = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-update', '.', '--reference-dir', referenceRoot, '--max-results', '2', '--apply', '--json'], sourceUpdateApply), 0);
+  const sourceUpdateApplyReport = JSON.parse(sourceUpdateApply.out());
+  assert.equal(sourceUpdateApplyReport.ok, true);
+  assert.equal(sourceUpdateApplyReport.applied, true);
+  assert.equal(sourceUpdateApplyReport.mode.writes, true);
+  const writtenSources = JSON.parse(await readFile(sourcesPath, 'utf8'));
+  assert.equal(writtenSources.sources.length, 2);
+
+  const sourceUpdateSecondRun = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-update', '.', '--reference-dir', referenceRoot, '--max-results', '2', '--apply', '--json'], sourceUpdateSecondRun), 0);
+  const sourceUpdateSecondRunReport = JSON.parse(sourceUpdateSecondRun.out());
+  assert.equal(sourceUpdateSecondRunReport.summary.added, 0);
+  assert.equal(sourceUpdateSecondRunReport.summary.operations, 0);
+  assert.equal(sourceUpdateSecondRunReport.applied, false);
+  assert.deepEqual(JSON.parse(await readFile(sourcesPath, 'utf8')), writtenSources);
+
+  const unsafeSourceUpdatePath = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-update', '.', '--reference-dir', referenceRoot, '--path', '../outside.json', '--json'], unsafeSourceUpdatePath), 1);
+  const unsafeSourceUpdatePathReport = JSON.parse(unsafeSourceUpdatePath.out());
+  assert.equal(unsafeSourceUpdatePathReport.conflicts.some((conflict) => conflict.id === 'reference-source-registry-update.path-invalid'), true);
+
+  const fileReferenceDirPath = path.join(target, 'not-a-source-reference-dir.txt');
+  await writeFile(fileReferenceDirPath, 'not a directory\n');
+  const fileReferenceDir = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-update', '.', '--reference-dir', fileReferenceDirPath, '--json'], fileReferenceDir), 1);
+  const fileReferenceDirReport = JSON.parse(fileReferenceDir.out());
+  assert.equal(fileReferenceDirReport.conflicts.some((conflict) => conflict.id === 'reference-source-registry-update.reference-dir-missing'), true);
+
   const ledgerPath = path.join(target, '.ai-playbook', 'knowledge', 'reference-adoption-ledger.md');
   await writeFile(ledgerPath, [
     '# Reference Adoption Ledger',

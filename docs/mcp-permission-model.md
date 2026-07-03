@@ -49,6 +49,7 @@ Default read-only additions:
 - `repo_graph_preview`
 - `write_gate_preview`
 - `reference_inventory`
+- `reference_inspect`
 - `reference_adoption_queue`
 - `reference_source_registry_preview`
 - `reference_source_registry_check`

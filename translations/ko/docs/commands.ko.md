@@ -151,6 +151,7 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 | `workflow run-preview <target>` | target 또는 bundled recipe에서 workflow run manifest를 run file 생성 없이 preview합니다. | 아니오 | `npx ai-agent-playbook workflow run-preview <target-project> --recipe backend-contract-change --json` |
 | `workflow run-start <target>` | `.ai-playbook/workflows/runs/` 아래 제한된 scaffold-tier run record를 preview하거나 생성합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook workflow run-start <target-project> --recipe deployment-release --json` |
 | `reference inventory <reference-dir>` | 채택할 항목을 판단하기 전에 local reference collection을 요약합니다. | 아니오 | `npx ai-agent-playbook reference inventory _reference --json` |
+| `reference inspect <reference-dir>` | Source content를 복사하지 않고 하나의 top-level reference project를 compact adoption review packet으로 inspect합니다. | 아니오 | `npx ai-agent-playbook reference inspect _reference --project hermes-agent-main --json` |
 | `reference adoption-queue <reference-dir>` | local reference collection을 compact adoption backlog로 점수화하고 필요하면 ledger status를 붙입니다. | 아니오 | `npx ai-agent-playbook reference adoption-queue _reference --ledger .ai-playbook/knowledge/reference-adoption-ledger.md --json` |
 | `reference source-registry-preview <reference-dir>` | Adoption queue item을 쓰기 없이 `knowledge/sources.json` 후보로 변환합니다. | 아니오 | `npx ai-agent-playbook reference source-registry-preview _reference --json` |
 | `reference source-registry-check <target>` | `knowledge/sources.json` schema, freshness, duplicate, optional local reference path drift를 검증합니다. | 아니오 | `npx ai-agent-playbook reference source-registry-check <target-project> --reference-dir _reference --json` |
@@ -174,6 +175,8 @@ Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatte
 | `write-gate preview <target>` | 수정 전에 intent와 optional path 기준 write risk를 preview합니다. | 아니오 | `npx ai-agent-playbook write-gate preview <target-project> --intent "change auth flow" --path src/example.ts --json` |
 | `write-gate advisory <target>` | playbook runtime 아래 pre-write advisory report를 preview하거나 저장합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook write-gate advisory <target-project> --intent "change auth flow" --path src/example.ts --apply --json` |
 | `write-gate post-check <target>` | 수정 뒤 saved advisory snapshot과 현재 file을 비교합니다. | 아니오 | `npx ai-agent-playbook write-gate post-check <target-project> --advisory .ai-playbook/runtime/reports/write-gate/pre-write-advisory.<id>.json --json` |
+
+`reference inspect`는 local reference directory에서 하나의 top-level project를 열고, content를 복사하지 않는 adoption packet을 반환합니다. Packet에는 summary count, signal highlight, capability hint, representative file read order, adoption question, next action이 포함됩니다. Traversal, absolute path, nested project path를 거부해 reference review가 한 collection 범위 안에 머물게 합니다.
 
 `reference adoption-queue`는 `reference inventory` 위에서 동작합니다. Skills, agents, MCP, workflows, memory, indexes, connectors, security, compliance, docs, tests, package metadata 같은 local signal로 top-level reference collection을 점수화합니다. Raw reference contents를 복사하지 않고 recommended capability area, representative file path, next adoption action만 반환합니다. `--ledger <ledger.md>`를 추가하면 reference adoption ledger의 `ledgerStatus`, `ledgerCapability`, `ledgerDecisionDate`를 queue item에 붙입니다.
 
@@ -316,7 +319,7 @@ ai-playbook mcp
 서버는 아래 read-only 도구를 노출합니다.
 
 - playbook context: `playbook_context`, `context_status`, `context_list`
-- catalog와 layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_adoption_queue`, `reference_source_registry_preview`, `reference_source_registry_check`, `reference_ledger_check`, `playbook_layout`, `index_status`, `runtime_schema_check`, `evidence_locator_check`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `repo_graph_preview`, `write_gate_preview`, `canon_check`
+- catalog와 layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_inspect`, `reference_adoption_queue`, `reference_source_registry_preview`, `reference_source_registry_check`, `reference_ledger_check`, `playbook_layout`, `index_status`, `runtime_schema_check`, `evidence_locator_check`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `repo_graph_preview`, `write_gate_preview`, `canon_check`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules와 project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA와 deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`

@@ -21,6 +21,7 @@ import {
   listContracts,
   previewWriteGate,
   inventoryReferenceDirectory,
+  inspectReferenceProject,
   parseMaxChars,
   previewRepoGraph,
   previewWorkflowRun,
@@ -95,6 +96,15 @@ export function registerPlaybookMcpTools(server, options) {
     }, (args) => inventoryReferenceDirectory({
       target: args.target,
       maxProjects: args.maxResults ?? 100
+    })),
+    tool('reference_inspect', 'Inspect one top-level local reference project as a compact no-content adoption review packet.', {
+      target: targetSchema.describe('Reference directory that contains top-level reference projects.'),
+      project: z.string().min(1).describe('Top-level reference project directory name.'),
+      maxDepth: maxResultsSchema.describe('Maximum scan depth inside the selected reference project.')
+    }, (args) => inspectReferenceProject({
+      target: args.target,
+      project: args.project,
+      maxDepth: args.maxDepth ?? 6
     })),
     tool('reference_adoption_queue', 'Score local reference collections into a read-only adoption queue.', {
       target: targetSchema.describe('Reference directory to queue for adoption review.'),
@@ -554,7 +564,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- write_gate_preview before suggesting managed writes',
     '',
     'Optional evidence:',
-    '- reference_inventory, reference_adoption_queue, reference_source_registry_preview, reference_source_registry_check, and reference_ledger_check when adopting external reference material',
+    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_source_registry_preview, reference_source_registry_check, and reference_ledger_check when adopting external reference material',
     '- index_status when runtime indexes, caches, generated evidence, or canon promotion are involved',
     '- playbook_layout when `.ai-playbook` layout changes are involved',
     '',
@@ -1237,7 +1247,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '',
     'Required evidence:',
     '- workflow_run_preview with recipe knowledge-source-onboarding',
-    '- reference_inventory, reference_adoption_queue, reference_source_registry_preview, and reference_source_registry_check for available local reference and source material',
+    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_source_registry_preview, and reference_source_registry_check for available local reference and source material',
     '- reference_ledger_check when external source adoption is in scope',
     '- operator_research for bounded source scans and evidence envelopes',
     '- index_status for generated source indexes and freshness',

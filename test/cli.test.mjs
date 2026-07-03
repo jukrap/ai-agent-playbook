@@ -835,6 +835,29 @@ test('reference inventory summarizes local reference collections without writing
   assert.equal(queueReport.queue[0].signalHighlights.some((item) => item.signal === 'mcp'), true);
   assert.equal(queueReport.queue[0].nextActions.some((item) => item.includes('MCP surfaces')), true);
 
+  const inspect = capture(target);
+  assert.equal(await runCli(['reference', 'inspect', referenceRoot, '--project', 'repo-lens-like', '--json'], inspect), 0);
+  const inspectReport = JSON.parse(inspect.out());
+  assert.equal(inspectReport.ok, true);
+  assert.equal(inspectReport.kind, 'reference.inspect');
+  assert.equal(inspectReport.mode.writes, false);
+  assert.equal(inspectReport.project, 'repo-lens-like');
+  assert.equal(inspectReport.summary.files, 3);
+  assert.equal(inspectReport.recommendedCapabilities.includes('ai-harness'), true);
+  assert.equal(inspectReport.review.readOrder.some((entry) => entry.path === 'README.md'), true);
+  assert.equal(inspectReport.review.adoptionQuestions.length >= 3, true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const unsafeInspect = capture(target);
+  assert.equal(await runCli(['reference', 'inspect', referenceRoot, '--project', '../outside', '--json'], unsafeInspect), 1);
+  const unsafeInspectReport = JSON.parse(unsafeInspect.out());
+  assert.equal(unsafeInspectReport.conflicts.some((conflict) => conflict.id === 'reference-inspect.project-path-invalid'), true);
+
+  const missingInspect = capture(target);
+  assert.equal(await runCli(['reference', 'inspect', referenceRoot, '--project', 'missing-pack', '--json'], missingInspect), 1);
+  const missingInspectReport = JSON.parse(missingInspect.out());
+  assert.equal(missingInspectReport.conflicts.some((conflict) => conflict.id === 'reference-inspect.project-missing'), true);
+
   const sourcePreview = capture(target);
   assert.equal(await runCli(['reference', 'source-registry-preview', referenceRoot, '--max-results', '2', '--json'], sourcePreview), 0);
   const sourceReport = JSON.parse(sourcePreview.out());

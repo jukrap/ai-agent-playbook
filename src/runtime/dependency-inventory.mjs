@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import {
   assertDirectory,
@@ -15,6 +15,7 @@ const EXCLUDED_PARTS = new Set([
   'node_modules',
   'dist',
   'build',
+  '.vite',
   '.next',
   '.turbo',
   'coverage'
@@ -147,7 +148,7 @@ async function readPackageJsonManifest(file, relative, target) {
     packageManager: typeof parsed?.packageManager === 'string' ? parsed.packageManager : null,
     scripts,
     dependencies,
-    lockfiles: existingLockfiles(target, path.dirname(relative), LOCKFILES.get('npm'))
+    lockfiles: existingNpmLockfiles(target, path.dirname(relative))
   };
 }
 
@@ -308,10 +309,17 @@ function addMissingLockfileWarnings(scan) {
     if ((manifest.lockfiles?.length ?? 0) > 0) continue;
     scan.warnings.push({
       id: 'dependency-inventory.lockfile-missing',
-      message: `${manifest.ecosystem} manifest has no adjacent known lockfile: ${manifest.path}.`,
+      message: `${manifest.ecosystem} manifest has no known lockfile: ${manifest.path}.`,
       paths: [manifest.path]
     });
   }
+}
+
+function existingNpmLockfiles(target, relativeDirectory) {
+  const directLockfiles = existingLockfiles(target, relativeDirectory, LOCKFILES.get('npm'));
+  if (directLockfiles.length > 0 || relativeDirectory === '.') return directLockfiles;
+  if (!hasNpmWorkspaceMarker(target)) return directLockfiles;
+  return existingLockfiles(target, '.', LOCKFILES.get('npm'));
 }
 
 function existingLockfiles(target, relativeDirectory, lockfileNames) {
@@ -322,6 +330,14 @@ function existingLockfiles(target, relativeDirectory, lockfileNames) {
     if (existsSync(fullPath)) found.push(normalizePortablePath(path.posix.join(directory, lockfileName)));
   }
   return found;
+}
+
+function hasNpmWorkspaceMarker(target) {
+  if (existsSync(path.join(target, 'pnpm-workspace.yaml'))) return true;
+  const packagePath = path.join(target, 'package.json');
+  if (!existsSync(packagePath)) return false;
+  const parsed = safeJson(readFileSync(packagePath, 'utf8'));
+  return Array.isArray(parsed?.workspaces) || isRecord(parsed?.workspaces);
 }
 
 function lockfileEntry(ecosystem, relative) {

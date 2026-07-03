@@ -15,11 +15,12 @@
 2. `skills/<category>/<skill-name>/SKILL.md`를 만듭니다.
 3. `SKILL.md`는 트리거, 작업 흐름, 참고 자료를 읽을 시점에 집중합니다.
 4. 긴 규칙, 체크리스트, 예시, provider별 세부사항은 `references/*.md`로 옮깁니다.
-5. 스킬 UI metadata가 필요할 때만 `agents/openai.yaml`을 추가하거나 갱신합니다.
-6. 한국어 번역을 `translations/ko/skills/<category>/<skill-name>.ko.md`에 추가합니다.
-7. reference 파일은 `translations/ko/skills/**/references/`의 대응 경로에 번역합니다.
-8. 스킬이 공개 분류 지도를 바꾸면 `README.md`와 `docs/classification.md`를 갱신합니다.
-9. 검증하고 설치된 복사본을 동기화합니다.
+5. Reference는 재사용 절차, evidence, 예시, stack/profile detail을 담을 만큼 충분히 실질적으로 유지하고 placeholder reference를 피합니다.
+6. 스킬 UI metadata가 필요할 때만 `agents/openai.yaml`을 추가하거나 갱신합니다.
+7. 한국어 번역을 `translations/ko/skills/<category>/<skill-name>.ko.md`에 추가합니다.
+8. reference 파일은 `translations/ko/skills/**/references/`의 대응 경로에 번역합니다.
+9. 스킬이 공개 분류 지도를 바꾸면 `README.md`와 `docs/classification.md`를 갱신합니다.
+10. 검증하고 설치된 복사본을 동기화합니다.
 
 ## 프로젝트 템플릿 추가
 

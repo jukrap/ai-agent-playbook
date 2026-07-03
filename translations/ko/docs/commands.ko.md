@@ -106,7 +106,7 @@ Skill은 재사용 가능한 사용자 수준 지침입니다. 각 대상 reposi
 | 명령 | 언제 쓰나 | 파일을 쓰나 | 예시 |
 | ---- | --------- | ----------- | ---- |
 | `skills check` | 이 playbook의 skill이 설치됐는지, 누락됐는지, 수정됐는지, 같은 이름의 unmanaged copy와 충돌하는지 봅니다. | 아니오 | `npx ai-agent-playbook skills check --json` |
-| `skills lint` | 공개 전 source `SKILL.md`의 trigger 중심 description, frontmatter 형태, missing reference link를 점검합니다. | 아니오 | `npx ai-agent-playbook skills lint --json` |
+| `skills lint` | 공개 전 source `SKILL.md`의 trigger 중심 description, frontmatter 형태, missing reference link, shallow reference file을 점검합니다. | 아니오 | `npx ai-agent-playbook skills lint --json` |
 | `skills install` | 재사용 스킬을 처음 설치합니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook skills install --dry-run` 뒤 `npx ai-agent-playbook skills install` |
 | `skills update` | 패키지나 checkout이 바뀐 뒤 설치된 managed skill을 갱신합니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook skills update --dry-run` 뒤 `npx ai-agent-playbook skills update` |
 | `skills uninstall` | 이 playbook이 설치한 수정되지 않은 managed skill을 제거합니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook skills uninstall --dry-run` 뒤 `npx ai-agent-playbook skills uninstall` |

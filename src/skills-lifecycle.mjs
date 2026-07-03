@@ -13,6 +13,7 @@ const OBSOLETE_SKILL_NAMES = [
   'utility-class-first',
   'inline-style-first'
 ];
+const SHALLOW_REFERENCE_LINE_THRESHOLD = 20;
 
 export async function runSkillsLifecycle(options) {
   const {
@@ -104,6 +105,7 @@ export async function lintSkills(options) {
     warnings.push(...skill.warnings);
     conflicts.push(...skill.conflicts);
   }
+  const depth = summarizeSkillDepth(skills);
   return {
     schemaVersion: SCHEMA_VERSION,
     ok: conflicts.length === 0,
@@ -113,6 +115,7 @@ export async function lintSkills(options) {
       pass: skills.filter((skill) => skill.status === 'pass').length,
       warn: skills.filter((skill) => skill.status === 'warn').length,
       conflict: skills.filter((skill) => skill.status === 'conflict').length,
+      depth,
       warnings: warnings.length,
       conflicts: conflicts.length
     },
@@ -120,6 +123,7 @@ export async function lintSkills(options) {
       name: skill.name,
       path: skill.path,
       status: skill.status,
+      depth: skill.depth,
       warnings: skill.warnings.length,
       conflicts: skill.conflicts.length
     })),
@@ -151,6 +155,21 @@ async function lintSkillFile(options) {
   const description = String(parsed.frontmatter.description ?? '').trim();
   const warnings = [];
   const conflicts = [];
+  const referenceFiles = await collectReferenceFiles(skillDir);
+  const referenceStats = [];
+  for (const referenceFile of referenceFiles) {
+    const relativeReferencePath = toPortablePath(path.relative(skillDir, referenceFile));
+    const lineCount = await countLines(referenceFile);
+    const stat = { path: relativeReferencePath, lines: lineCount };
+    referenceStats.push(stat);
+    if (lineCount < SHALLOW_REFERENCE_LINE_THRESHOLD) {
+      warnings.push(lintIssue(
+        'skills.lint.reference-shallow',
+        `${relativePath} reference ${relativeReferencePath} is shallow (${lineCount} lines); move enough reusable procedure, evidence, or examples into references.`,
+        [relativePath, relativeReferencePath]
+      ));
+    }
+  }
   const keys = Object.keys(parsed.frontmatter).sort();
   const extraKeys = keys.filter((key) => !['description', 'name'].includes(key));
   if (!parsed.hasFrontmatter || !parsed.frontmatter.name || !parsed.frontmatter.description) {
@@ -179,9 +198,78 @@ async function lintSkillFile(options) {
     name,
     path: relativePath,
     status: conflicts.length > 0 ? 'conflict' : warnings.length > 0 ? 'warn' : 'pass',
+    depth: {
+      skillLines: lineCount(text),
+      referenceFiles: referenceStats.length,
+      referenceLines: referenceStats.reduce((sum, reference) => sum + reference.lines, 0),
+      shallowReferences: referenceStats.filter((reference) => reference.lines < SHALLOW_REFERENCE_LINE_THRESHOLD).length
+    },
     warnings,
     conflicts
   };
+}
+
+async function collectReferenceFiles(skillDir) {
+  const referencesRoot = path.join(skillDir, 'references');
+  const files = [];
+  await collectMarkdownFiles(referencesRoot, files);
+  return files.sort();
+}
+
+async function collectMarkdownFiles(root, files) {
+  if (!existsSync(root)) return;
+  const entries = await readdir(root, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(root, entry.name);
+    if (entry.isDirectory()) {
+      await collectMarkdownFiles(fullPath, files);
+    } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.md')) {
+      files.push(fullPath);
+    }
+  }
+}
+
+async function countLines(filePath) {
+  return lineCount(await readFile(filePath, 'utf8'));
+}
+
+function lineCount(text) {
+  if (!text) return 0;
+  return text.replace(/\r\n/g, '\n').split('\n').length;
+}
+
+function summarizeSkillDepth(skills) {
+  const skillLines = skills.map((skill) => skill.depth.skillLines);
+  const totalReferenceFiles = skills.reduce((sum, skill) => sum + skill.depth.referenceFiles, 0);
+  const totalReferenceLines = skills.reduce((sum, skill) => sum + skill.depth.referenceLines, 0);
+  return {
+    skillLineThreshold: 60,
+    shallowReferenceLineThreshold: SHALLOW_REFERENCE_LINE_THRESHOLD,
+    skillLines: numberSummary(skillLines),
+    referenceFiles: totalReferenceFiles,
+    referenceLines: {
+      total: totalReferenceLines,
+      average: totalReferenceFiles === 0 ? 0 : roundOne(totalReferenceLines / totalReferenceFiles)
+    },
+    skillsWithReferences: skills.filter((skill) => skill.depth.referenceFiles > 0).length,
+    skillsWithoutReferences: skills.filter((skill) => skill.depth.referenceFiles === 0).length,
+    shallowReferences: skills.reduce((sum, skill) => sum + skill.depth.shallowReferences, 0)
+  };
+}
+
+function numberSummary(values) {
+  if (values.length === 0) {
+    return { min: 0, max: 0, average: 0 };
+  }
+  return {
+    min: Math.min(...values),
+    max: Math.max(...values),
+    average: roundOne(values.reduce((sum, value) => sum + value, 0) / values.length)
+  };
+}
+
+function roundOne(value) {
+  return Math.round(value * 10) / 10;
 }
 
 function parseSkillMarkdown(text) {

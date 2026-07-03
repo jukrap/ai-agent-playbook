@@ -452,6 +452,7 @@ export async function runCli(argv, io = {}) {
         writeJson(stdout, result);
       } else {
         write(stdout, `Skills lint: ${result.ok ? 'ok' : 'needs attention'}\n`);
+        write(stdout, `Depth: ${result.summary.depth.skillLines.average} avg skill lines, ${result.summary.depth.referenceFiles} reference file(s), ${result.summary.depth.referenceLines.average} avg reference lines, ${result.summary.depth.shallowReferences} shallow reference(s)\n`);
         for (const skill of result.skills) {
           write(stdout, `[${skill.status.toUpperCase()}] ${skill.path}\n`);
         }

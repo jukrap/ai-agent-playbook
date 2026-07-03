@@ -90,7 +90,7 @@ MCP 서버는 read-only 도구만 노출합니다. Bootstrap, skill install/upda
 `skills` 명령은 PowerShell wrapper 없이 설치형 스킬을 관리합니다.
 
 - `skills check`는 read-only이며 missing, managed, modified, adoptable, conflict 상태를 보고합니다.
-- `skills lint`는 read-only이며 공개 전에 source `SKILL.md`의 trigger 중심 description, frontmatter 형태, missing reference link를 점검합니다.
+- `skills lint`는 read-only이며 공개 전에 source `SKILL.md`의 trigger 중심 description, frontmatter 형태, missing reference link, shallow reference file을 점검합니다. JSON output에는 depth metric이 포함되어 짧은 trigger file은 짧게 유지하고 재사용 절차는 reference에 둘 수 있습니다.
 - `skills install`과 `skills update`는 반복 실행 가능한 sync 명령입니다. `--dry-run`은 파일을 쓰지 않습니다.
 - `skills check`는 read-only이며 필요한 설치 스킬이 없거나, 로컬에서 수정되었거나, unmanaged conflict에 막히면 non-zero로 종료합니다.
 - `skills uninstall`은 수정되지 않은 관리 대상 스킬만 제거하고, `--dry-run`으로 먼저 preview할 수 있습니다.

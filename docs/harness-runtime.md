@@ -90,7 +90,7 @@ The MCP server exposes only read-only tools. It does not expose bootstrap, skill
 `skills` commands manage installable skills without requiring the PowerShell wrappers.
 
 - `skills check` is read-only and reports missing, managed, modified, adoptable, or conflicting installed skills.
-- `skills lint` is read-only and reviews source `SKILL.md` files for trigger-focused descriptions, frontmatter shape, and missing reference links before publishing.
+- `skills lint` is read-only and reviews source `SKILL.md` files for trigger-focused descriptions, frontmatter shape, missing reference links, and shallow reference files before publishing. JSON output includes depth metrics so short trigger files can stay short while reusable procedures live in references.
 - `skills install` and `skills update` are idempotent sync commands. `--dry-run` writes nothing. Without `--dry-run`, they create or refresh managed skills and write `.ai-agent-playbook-install.json` markers.
 - `skills check` is read-only and exits non-zero when required installed skills are missing, locally modified, or blocked by unmanaged conflicts.
 - `skills uninstall` removes only unmodified managed skills. `--dry-run` previews the removals.

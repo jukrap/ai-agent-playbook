@@ -1,0 +1,33 @@
+name: Announcement
+description: Share a release announcement or project update.
+title: "[Announcement] "
+labels: ["announcement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for release announcements and project updates.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What changed and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: highlights
+    attributes:
+      label: Highlights
+      description: List the main user-facing changes.
+    validations:
+      required: true
+  - type: textarea
+    id: upgrade
+    attributes:
+      label: Upgrade notes
+      description: Include install, migration, or compatibility notes.
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: Mention only checks that actually ran.

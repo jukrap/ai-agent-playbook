@@ -7,7 +7,7 @@
             "type": "command",
             "command": "node \"<path-to-ai-agent-playbook>/adapters/codex/hook.mjs\"",
             "timeout": 5,
-            "statusMessage": "Loading ai-playbook context"
+            "statusMessage": "Loading ai-agent-playbook context"
           }
         ]
       }
@@ -20,7 +20,7 @@
             "type": "command",
             "command": "node \"<path-to-ai-agent-playbook>/adapters/codex/hook.mjs\"",
             "timeout": 5,
-            "statusMessage": "Reloading ai-playbook context"
+            "statusMessage": "Reloading ai-agent-playbook context"
           }
         ]
       }

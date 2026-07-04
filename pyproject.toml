@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ai-playbook-engine"
+name = "ai-agent-playbook-engine"
 version = "0.1.0"
 description = "Optional Python capability engines for ai-agent-playbook."
 readme = "README.md"
@@ -20,7 +20,7 @@ ko = [
 analysis = []
 
 [tool.setuptools]
-package-dir = { "" = "python" }
+package-dir = { "" = "engines/python" }
 
 [tool.setuptools.packages.find]
-where = ["python"]
+where = ["engines/python"]

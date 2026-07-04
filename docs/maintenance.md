@@ -66,6 +66,7 @@ npm run check
 npm run typecheck
 npm test
 .\scripts\validate-python.ps1
+.\scripts\validate-naming.ps1
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 .\scripts\validate-mcp-docs.ps1

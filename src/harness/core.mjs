@@ -23,8 +23,9 @@ export const REQUIRED_PLAYBOOK_FILES = [
 
 export const SCHEMA_VERSION = '1';
 export const DEFAULT_CONTEXT_MAX_CHARS = 12000;
-export const DEFAULT_PLAYBOOK_DIR = '.ai-playbook';
-export const LEGACY_PLAYBOOK_DIR = 'ai-playbook';
+export const DEFAULT_PLAYBOOK_DIR = '.ai-agent-playbook';
+export const LEGACY_PLAYBOOK_DIRS = ['.ai-playbook', 'ai-playbook'];
+export const LEGACY_PLAYBOOK_DIR = LEGACY_PLAYBOOK_DIRS[0];
 export const CONTEXT_SOURCE_FILES = [
   'START_HERE.md',
   'CURRENT.md',
@@ -41,7 +42,7 @@ export const RUNS_DIR = 'workflows/runs';
 export const CONTRACTS_DIR = 'memory/contracts';
 export const WORKLOGS_DIR = 'workflows/worklogs';
 export const GUIDES_DIR = 'knowledge/references/guides';
-export const RUN_SUMMARY_MARKER = '<!-- ai-playbook-run-summary -->';
+export const RUN_SUMMARY_MARKER = '<!-- ai-agent-playbook-run-summary -->';
 
 export const OBSOLETE_STYLE_SKILLS = [
   'design-system-first',
@@ -829,7 +830,7 @@ export function isStaleDate(value) {
 
 export function truncateText(text, maxChars) {
   if (text.length <= maxChars) return { text, truncated: false };
-  const marker = '\n[ai-playbook context truncated]\n';
+  const marker = '\n[ai-agent-playbook context truncated]\n';
   const sliceLength = Math.max(0, maxChars - marker.length);
   return {
     text: `${text.slice(0, sliceLength).trimEnd()}${marker}`,
@@ -1322,7 +1323,9 @@ export async function playbookReferenceUpdatePlan(target, playbookRoot) {
 }
 
 export function replaceLegacyPlaybookRefs(text) {
-  return text.replace(/(^|[^.])ai-playbook\//g, '$1.ai-playbook/');
+  return text
+    .replace(/\.ai-playbook\//g, `${DEFAULT_PLAYBOOK_DIR}/`)
+    .replace(/(^|[^A-Za-z0-9_.-])ai-playbook\//g, `$1${DEFAULT_PLAYBOOK_DIR}/`);
 }
 
 export async function gitignoreMigrationPlan(target) {
@@ -1330,12 +1333,13 @@ export async function gitignoreMigrationPlan(target) {
   const existing = existsSync(file) ? await readFile(file, 'utf8') : '';
   const lines = existing.split(/\r?\n/).map((line) => line.trim());
   if (lines.includes(`${DEFAULT_PLAYBOOK_DIR}/`)) return null;
-  if (!lines.includes(`${LEGACY_PLAYBOOK_DIR}/`)) return null;
+  const ignoredLegacyDirs = LEGACY_PLAYBOOK_DIRS.filter((directory) => lines.includes(`${directory}/`));
+  if (ignoredLegacyDirs.length === 0) return null;
   return {
-    id: 'gitignore.add-dot-playbook',
+    id: 'gitignore.add-active-playbook',
     action: 'append',
-    message: `Add ${DEFAULT_PLAYBOOK_DIR}/ to .gitignore because legacy ${LEGACY_PLAYBOOK_DIR}/ is already ignored.`,
-    paths: ['.gitignore', `${DEFAULT_PLAYBOOK_DIR}/`, `${LEGACY_PLAYBOOK_DIR}/`]
+    message: `Add ${DEFAULT_PLAYBOOK_DIR}/ to .gitignore because legacy playbook paths are already ignored.`,
+    paths: ['.gitignore', `${DEFAULT_PLAYBOOK_DIR}/`, ...ignoredLegacyDirs.map((directory) => `${directory}/`)]
   };
 }
 
@@ -1344,7 +1348,7 @@ export async function applyGitignoreMigration(target) {
   const existing = existsSync(file) ? await readFile(file, 'utf8') : '';
   const lines = existing.split(/\r?\n/).map((line) => line.trim());
   if (lines.includes(`${DEFAULT_PLAYBOOK_DIR}/`)) return;
-  if (!lines.includes(`${LEGACY_PLAYBOOK_DIR}/`)) return;
+  if (!LEGACY_PLAYBOOK_DIRS.some((directory) => lines.includes(`${directory}/`))) return;
   const prefix = existing && !existing.endsWith('\n') ? `${existing}\n` : existing;
   await writeFile(file, `${prefix}${DEFAULT_PLAYBOOK_DIR}/\n`);
 }

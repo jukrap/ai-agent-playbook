@@ -7,6 +7,7 @@ const DEFAULT_TIMEOUT_MS = 8000;
 export async function pythonEngineStatus(options = {}) {
   const repoRoot = path.resolve(options.repoRoot ?? process.cwd());
   const candidates = pythonCandidates(repoRoot);
+  const deprecations = deprecatedPythonEnvWarnings();
   const checked = [];
   let selected = null;
 
@@ -30,10 +31,13 @@ export async function pythonEngineStatus(options = {}) {
       engineAvailable: checked.filter((candidate) => candidate.engineAvailable).length
     },
     candidates: checked,
-    warnings: selected ? [] : [{
-      id: 'python-engine.unavailable',
-      message: 'No Python executable with ai_playbook_engine available.'
-    }]
+    warnings: [
+      ...deprecations,
+      ...(selected ? [] : [{
+        id: 'python-engine.unavailable',
+        message: 'No Python executable with ai_agent_playbook_engine available.'
+      }])
+    ]
   };
 }
 
@@ -47,9 +51,10 @@ export async function runPythonWritingNaturalness(options) {
   } = options;
   const status = await pythonEngineStatus({ repoRoot });
   if (!status.selected) {
+    const unavailable = status.warnings.find((warning) => warning.id === 'python-engine.unavailable') ?? status.warnings[0];
     return {
       ok: false,
-      unavailable: status.warnings[0],
+      unavailable,
       status
     };
   }
@@ -65,7 +70,7 @@ export async function runPythonWritingNaturalness(options) {
   const run = await runPython(candidate.command, [
     ...candidate.args,
     '-m',
-    'ai_playbook_engine',
+    'ai_agent_playbook_engine',
     'writing-naturalness',
     '--json'
   ], {
@@ -114,10 +119,10 @@ function pythonCandidates(repoRoot) {
     candidates.push({ id, command, args, key });
   };
 
-  const envPython = process.env.AI_PLAYBOOK_PYTHON;
+  const envPython = process.env.AI_AGENT_PLAYBOOK_PYTHON;
   if (envPython) {
     const parsed = splitCommandLine(envPython);
-    add('env.AI_PLAYBOOK_PYTHON', parsed.command, parsed.args);
+    add('env.AI_AGENT_PLAYBOOK_PYTHON', parsed.command, parsed.args);
   }
 
   add('venv.windows', path.join(repoRoot, '.venv', 'Scripts', 'python.exe'));
@@ -136,9 +141,9 @@ async function probeCandidate(candidate, repoRoot) {
     'import json, sys',
     'payload = {"executable": sys.executable, "version": sys.version.split()[0]}',
     'try:',
-    '    import ai_playbook_engine',
+    '    import ai_agent_playbook_engine',
     '    payload["engineAvailable"] = True',
-    '    payload["engineVersion"] = getattr(ai_playbook_engine, "__version__", "0.0.0")',
+    '    payload["engineVersion"] = getattr(ai_agent_playbook_engine, "__version__", "0.0.0")',
     'except Exception as exc:',
     '    payload["engineAvailable"] = False',
     '    payload["engineError"] = str(exc)',
@@ -234,13 +239,21 @@ function runPython(command, args, options) {
 }
 
 function pythonEnv(repoRoot) {
-  const pythonPath = path.join(repoRoot, 'python');
+  const pythonPath = path.join(repoRoot, 'engines', 'python');
   const existing = process.env.PYTHONPATH;
   return {
     ...process.env,
     PYTHONPATH: existing ? `${pythonPath}${path.delimiter}${existing}` : pythonPath,
     PYTHONIOENCODING: 'utf-8'
   };
+}
+
+function deprecatedPythonEnvWarnings() {
+  if (!process.env.AI_PLAYBOOK_PYTHON) return [];
+  return [{
+    id: 'python-engine.deprecated-env',
+    message: 'AI_PLAYBOOK_PYTHON is deprecated and ignored. Use AI_AGENT_PLAYBOOK_PYTHON instead.'
+  }];
 }
 
 function splitCommandLine(value) {

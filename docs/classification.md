@@ -29,7 +29,7 @@ Add a new category only when the first real skill in that category exists. When 
 
 ## Runtime category
 
-- `bin/ai-playbook.mjs`: CLI entrypoint.
+- `bin/aapb.mjs`: CLI entrypoint.
 - `src/`: dependency-free Node runtime implementation.
 - `test/`: Node test coverage for bootstrap, doctor, context, guide checks, path migration, adapter hooks, adapter readiness, lifecycle reminders, plan, and worklog commands.
 
@@ -41,9 +41,9 @@ Optional hook or plugin experiments belong in a clearly separated adapter or exp
 
 - `templates/agents`: thin root `AGENTS.md` bootstrap files and stack-specific profiles.
 - `templates/codex-home`: optional personal Codex home guidance for `~/.codex/AGENTS.md`; it is not copied into target repositories by the runtime.
-- `templates/project-playbook`: copyable project-memory template that becomes `.ai-playbook/` in target repositories, including internal `SKILLS.md` and `GIT.md` policy files.
+- `templates/project-playbook`: copyable project-memory template that becomes `.ai-agent-playbook/` in target repositories, including internal `SKILLS.md` and `GIT.md` policy files.
 
-Keep the target project root small. The runtime writes only a thin root `AGENTS.md` bootstrap by default; skill and Git policy belong under `.ai-playbook/`.
+Keep the target project root small. The runtime writes only a thin root `AGENTS.md` bootstrap by default; skill and Git policy belong under `.ai-agent-playbook/`.
 
 ## Process skill compatibility
 
@@ -53,9 +53,9 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 
 ## Project and documentation map
 
-- `project-bootstrap`: sets up root policies and an `.ai-playbook/` layout after inspecting the repository.
-- `repo-onboarding`: reads repo state and existing `.ai-playbook/` context before planning or editing.
-- `project-doc-system`: organizes `.ai-playbook/`, maps, runbooks, decisions, plans, worklogs, and archived notes.
+- `project-bootstrap`: sets up root policies and an `.ai-agent-playbook/` layout after inspecting the repository.
+- `repo-onboarding`: reads repo state and existing `.ai-agent-playbook/` context before planning or editing.
+- `project-doc-system`: organizes `.ai-agent-playbook/`, maps, runbooks, decisions, plans, worklogs, and archived notes.
 - `adr-spec-handoff`: promotes reviewed decisions, specs, milestone outcomes, worklogs, and handoffs into durable project memory.
 - `requirements-prd-scope-review`: shapes vague requests, stakeholder notes, feature ideas, acceptance criteria, and open questions into reviewable PRDs or scope briefs.
 - `issue-planning-triage`: converts specs, bugs, review findings, worklogs, and follow-ups into scoped issues, priorities, dependencies, and task batches.

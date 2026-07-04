@@ -481,7 +481,7 @@ export function registerPlaybookMcpTools(server, options) {
   }
 
   const writeTools = enableWriteTools ? [
-    tool('workflow_run_start', 'Preview or create a bounded workflow run under .ai-playbook/workflows/runs/. Requires apply=true to write.', {
+    tool('workflow_run_start', 'Preview or create a bounded workflow run under .ai-agent-playbook/workflows/runs/. Requires apply=true to write.', {
       target: targetSchema,
       recipe: z.string().min(1).describe('Lowercase hyphenated workflow recipe id.'),
       apply: z.boolean().describe('Must be true to write run files; false returns a dry-run preview.')
@@ -491,7 +491,7 @@ export function registerPlaybookMcpTools(server, options) {
       recipeId: args.recipe,
       apply: Boolean(args.apply)
     })),
-    tool('write_gate_advisory', 'Preview or save a pre-write advisory report under .ai-playbook/runtime/reports/write-gate/. Requires apply=true to write.', {
+    tool('write_gate_advisory', 'Preview or save a pre-write advisory report under .ai-agent-playbook/runtime/reports/write-gate/. Requires apply=true to write.', {
       target: targetSchema,
       intent: z.string().min(1),
       path: pathSchema,
@@ -576,15 +576,15 @@ export function registerPlaybookMcpTools(server, options) {
 export function registerPlaybookMcpResourcesAndPrompts(server, options) {
   const { repoRoot } = options;
   const resources = [
-    resource('capability_catalog', 'ai-playbook://capabilities', 'AI Agent Playbook capability catalog.', () => capabilityCatalog({ repoRoot })),
-    resource('skill_catalog', 'ai-playbook://skills', 'AI Agent Playbook skill taxonomy catalog.', () => skillCatalog({ repoRoot })),
-    resource('workflow_list', 'ai-playbook://workflows', 'AI Agent Playbook workflow recipe catalog.', () => workflowCatalog()),
-    resource('adapter_support', 'ai-playbook://adapters', 'Agent adapter support and MCP setup summary.', () => adapterSupportResource()),
-    resource('adapter_readiness', 'ai-playbook://adapter-readiness', 'Adapter readiness commands, checks, and no-write boundaries.', () => adapterReadinessResource()),
-    resource('agent_usage_guide', 'ai-playbook://agent-usage-guide', 'Short guide for choosing playbook resources, prompts, and read-only tools.', () => agentUsageGuideResource()),
-    resource('playbook_layout', 'ai-playbook://playbook-layout', 'Project playbook layout roles and read order.', () => playbookLayoutResource()),
-    resource('reference_adoption', 'ai-playbook://reference-adoption', 'Reference adoption status, registry, ledger, and promotion boundary summary.', () => referenceAdoptionResource()),
-    resource('mcp_permission_model', 'ai-playbook://mcp-permission-model', 'MCP resource, prompt, tool, and permission-tier summary.', () => mcpPermissionModelResource())
+    resource('capability_catalog', 'ai-agent-playbook://capabilities', 'AI Agent Playbook capability catalog.', () => capabilityCatalog({ repoRoot })),
+    resource('skill_catalog', 'ai-agent-playbook://skills', 'AI Agent Playbook skill taxonomy catalog.', () => skillCatalog({ repoRoot })),
+    resource('workflow_list', 'ai-agent-playbook://workflows', 'AI Agent Playbook workflow recipe catalog.', () => workflowCatalog()),
+    resource('adapter_support', 'ai-agent-playbook://adapters', 'Agent adapter support and MCP setup summary.', () => adapterSupportResource()),
+    resource('adapter_readiness', 'ai-agent-playbook://adapter-readiness', 'Adapter readiness commands, checks, and no-write boundaries.', () => adapterReadinessResource()),
+    resource('agent_usage_guide', 'ai-agent-playbook://agent-usage-guide', 'Short guide for choosing playbook resources, prompts, and read-only tools.', () => agentUsageGuideResource()),
+    resource('playbook_layout', 'ai-agent-playbook://playbook-layout', 'Project playbook layout roles and read order.', () => playbookLayoutResource()),
+    resource('reference_adoption', 'ai-agent-playbook://reference-adoption', 'Reference adoption status, registry, ledger, and promotion boundary summary.', () => referenceAdoptionResource()),
+    resource('mcp_permission_model', 'ai-agent-playbook://mcp-permission-model', 'MCP resource, prompt, tool, and permission-tier summary.', () => mcpPermissionModelResource())
   ];
 
   for (const item of resources) {
@@ -672,7 +672,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     'Optional evidence:',
     '- reference_inventory, reference_inspect, reference_adoption_queue, reference_capability_matrix, reference_adoption_plan, reference_adoption_status, reference_source_registry_preview, reference_source_registry_check, reference_source_registry_update_preview, reference_ledger_check, reference_ledger_update_preview, and reference_ledger_decision_preview when adopting external reference material',
     '- index_status when runtime indexes, caches, generated evidence, or canon promotion are involved',
-    '- playbook_layout when `.ai-playbook` layout changes are involved',
+    '- playbook_layout when `.ai-agent-playbook` layout changes are involved',
     '',
     'Stop conditions:',
     '- Change belongs in a selected reference, recipe, or docs page rather than always-on context',
@@ -1748,7 +1748,7 @@ function adapterSupportResource() {
       adapters: 2,
       primary: 'codex-app',
       defaultMcpCommand: 'npx ai-agent-playbook mcp',
-      globalMcpCommand: 'ai-playbook mcp'
+      globalMcpCommand: 'aapb mcp'
     },
     adapters: [
       {
@@ -1758,12 +1758,12 @@ function adapterSupportResource() {
         mcp: {
           command: 'npx',
           args: ['ai-agent-playbook', 'mcp'],
-          globalCommand: 'ai-playbook mcp'
+          globalCommand: 'aapb mcp'
         },
         notes: [
           'Codex App is the primary interactive target for this repository.',
           'Register MCP as a local stdio server when the app supports MCP tools.',
-          'Adapter hooks are optional reminders; durable rules still live in AGENTS.md and .ai-playbook/.'
+          'Adapter hooks are optional reminders; durable rules still live in AGENTS.md and .ai-agent-playbook/.'
         ]
       },
       {
@@ -1773,7 +1773,7 @@ function adapterSupportResource() {
         mcp: {
           command: 'npx',
           args: ['ai-agent-playbook', 'mcp'],
-          globalCommand: 'ai-playbook mcp'
+          globalCommand: 'aapb mcp'
         },
         notes: [
           'Use adapter config/check commands for reviewable local setup hints.',
@@ -1837,7 +1837,7 @@ function adapterReadinessResource() {
     boundaries: [
       'Adapter readiness is read-only and does not create local settings files.',
       'Rendered config must be reviewed and copied manually by the operator.',
-      'Hooks are optional reminders; durable rules still live in AGENTS.md and .ai-playbook/.'
+      'Hooks are optional reminders; durable rules still live in AGENTS.md and .ai-agent-playbook/.'
     ]
   };
 }
@@ -1881,7 +1881,7 @@ function agentUsageGuideResource() {
     contextBudgetRules: [
       'Read START_HERE.md and CURRENT.md first, then only the context/map/contract files that match the task path.',
       'Prefer operator_search or index_search over opening entire documentation trees.',
-      'Keep runtime reports under .ai-playbook/runtime unless a human-reviewed promotion is explicit.',
+      'Keep runtime reports under .ai-agent-playbook/runtime unless a human-reviewed promotion is explicit.',
       'Use prompts to collect evidence before deciding whether a skill reference or workflow recipe is needed.'
     ]
   };
@@ -1901,11 +1901,11 @@ function playbookLayoutResource() {
     requiredFiles: ['README.md', 'START_HERE.md', 'CURRENT.md', 'questions.md', 'manifest.json'],
     readOrder: [
       'root AGENTS.md and nearest local agent instructions',
-      '.ai-playbook/START_HERE.md',
-      '.ai-playbook/CURRENT.md',
-      '.ai-playbook/questions.md',
-      '.ai-playbook/policy/SKILLS.md when selecting optional skills',
-      '.ai-playbook/policy/GIT.md before staging, committing, pushing, or PR text',
+      '.ai-agent-playbook/START_HERE.md',
+      '.ai-agent-playbook/CURRENT.md',
+      '.ai-agent-playbook/questions.md',
+      '.ai-agent-playbook/policy/SKILLS.md when selecting optional skills',
+      '.ai-agent-playbook/policy/GIT.md before staging, committing, pushing, or PR text',
       'relevant memory/context, memory/maps, memory/decisions, memory/contracts, and glossary entries',
       'relevant workflow recipe or workflow runbook',
       'runtime reports only as generated evidence'
@@ -1937,8 +1937,8 @@ function referenceAdoptionResource() {
     summary: {
       writes: false,
       statusTool: 'reference_adoption_status',
-      sourceRegistry: '.ai-playbook/knowledge/sources.json',
-      ledger: '.ai-playbook/knowledge/reference-adoption-ledger.md'
+      sourceRegistry: '.ai-agent-playbook/knowledge/sources.json',
+      ledger: '.ai-agent-playbook/knowledge/reference-adoption-ledger.md'
     },
     readOnlyTools: [
       'reference_inventory',
@@ -2018,7 +2018,7 @@ function mcpPermissionModelResource() {
     tiers: [
       { id: 'read', writes: false, purpose: 'Search, state, catalogs, layout status, resources, prompts, and analysis.' },
       { id: 'scaffold', writes: true, purpose: 'Create bounded playbook records such as workflow runs.' },
-      { id: 'managed-write', writes: true, purpose: 'Update managed files inside .ai-playbook.' },
+      { id: 'managed-write', writes: true, purpose: 'Update managed files inside .ai-agent-playbook.' },
       { id: 'project-write', writes: false, purpose: 'Project source modification is not exposed by this MCP server.' }
     ],
     defaultResources: readOnlyResources,

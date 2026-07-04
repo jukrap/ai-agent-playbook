@@ -18,7 +18,9 @@ foreach ($file in $translatedSkillFiles) {
 
 $excludedDirs = @(
   '.git',
+  '.ai-agent-playbook',
   '.ai-playbook',
+  'ai-playbook',
   '.venv',
   '.next',
   '.turbo',

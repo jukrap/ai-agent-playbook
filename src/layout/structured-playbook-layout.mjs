@@ -4,7 +4,7 @@ import path from 'node:path';
 import {
   assertDirectory,
   DEFAULT_PLAYBOOK_DIR,
-  LEGACY_PLAYBOOK_DIR,
+  LEGACY_PLAYBOOK_DIRS,
   normalizePortablePath,
   resolvePlaybookLayout,
   SCHEMA_VERSION,
@@ -140,36 +140,49 @@ const LEGACY_LAYOUT_DIRECTORY_TARGETS = [
 ];
 
 const STRUCTURED_REFERENCE_REPLACEMENTS = [
-  [/\.ai-playbook\/SKILLS\.md/g, '.ai-playbook/policy/SKILLS.md'],
-  [/\.ai-playbook\/GIT\.md/g, '.ai-playbook/policy/GIT.md'],
-  [/\.ai-playbook\/context\//g, '.ai-playbook/memory/context/'],
-  [/\.ai-playbook\/maps\//g, '.ai-playbook/memory/maps/'],
-  [/\.ai-playbook\/decisions\//g, '.ai-playbook/memory/decisions/'],
-  [/\.ai-playbook\/contracts\//g, '.ai-playbook/memory/contracts/'],
-  [/\.ai-playbook\/rules\//g, '.ai-playbook/policy/rules/'],
-  [/\.ai-playbook\/runbooks\//g, '.ai-playbook/workflows/runbooks/'],
-  [/\.ai-playbook\/plans\//g, '.ai-playbook/workflows/plans/'],
-  [/\.ai-playbook\/runs\//g, '.ai-playbook/workflows/runs/'],
-  [/\.ai-playbook\/worklogs\//g, '.ai-playbook/workflows/worklogs/'],
-  [/\.ai-playbook\/handoffs\//g, '.ai-playbook/workflows/handoffs/'],
-  [/\.ai-playbook\/guides\//g, '.ai-playbook/knowledge/references/guides/']
+  [/\.ai-playbook\/SKILLS\.md/g, '.ai-agent-playbook/policy/SKILLS.md'],
+  [/\.ai-playbook\/GIT\.md/g, '.ai-agent-playbook/policy/GIT.md'],
+  [/\.ai-playbook\/context\//g, '.ai-agent-playbook/memory/context/'],
+  [/\.ai-playbook\/maps\//g, '.ai-agent-playbook/memory/maps/'],
+  [/\.ai-playbook\/decisions\//g, '.ai-agent-playbook/memory/decisions/'],
+  [/\.ai-playbook\/contracts\//g, '.ai-agent-playbook/memory/contracts/'],
+  [/\.ai-playbook\/rules\//g, '.ai-agent-playbook/policy/rules/'],
+  [/\.ai-playbook\/runbooks\//g, '.ai-agent-playbook/workflows/runbooks/'],
+  [/\.ai-playbook\/plans\//g, '.ai-agent-playbook/workflows/plans/'],
+  [/\.ai-playbook\/runs\//g, '.ai-agent-playbook/workflows/runs/'],
+  [/\.ai-playbook\/worklogs\//g, '.ai-agent-playbook/workflows/worklogs/'],
+  [/\.ai-playbook\/handoffs\//g, '.ai-agent-playbook/workflows/handoffs/'],
+  [/\.ai-playbook\/guides\//g, '.ai-agent-playbook/knowledge/references/guides/'],
+  [/\.ai-agent-playbook\/SKILLS\.md/g, '.ai-agent-playbook/policy/SKILLS.md'],
+  [/\.ai-agent-playbook\/GIT\.md/g, '.ai-agent-playbook/policy/GIT.md'],
+  [/\.ai-agent-playbook\/context\//g, '.ai-agent-playbook/memory/context/'],
+  [/\.ai-agent-playbook\/maps\//g, '.ai-agent-playbook/memory/maps/'],
+  [/\.ai-agent-playbook\/decisions\//g, '.ai-agent-playbook/memory/decisions/'],
+  [/\.ai-agent-playbook\/contracts\//g, '.ai-agent-playbook/memory/contracts/'],
+  [/\.ai-agent-playbook\/rules\//g, '.ai-agent-playbook/policy/rules/'],
+  [/\.ai-agent-playbook\/runbooks\//g, '.ai-agent-playbook/workflows/runbooks/'],
+  [/\.ai-agent-playbook\/plans\//g, '.ai-agent-playbook/workflows/plans/'],
+  [/\.ai-agent-playbook\/runs\//g, '.ai-agent-playbook/workflows/runs/'],
+  [/\.ai-agent-playbook\/worklogs\//g, '.ai-agent-playbook/workflows/worklogs/'],
+  [/\.ai-agent-playbook\/handoffs\//g, '.ai-agent-playbook/workflows/handoffs/'],
+  [/\.ai-agent-playbook\/guides\//g, '.ai-agent-playbook/knowledge/references/guides/']
 ];
 
 export async function describePlaybookLayout({ target }) {
   await assertDirectory(target, 'Target repository does not exist');
   const resolvedTarget = path.resolve(target);
   const playbook = resolvePlaybookLayout(resolvedTarget);
-  const legacyRoot = path.join(resolvedTarget, LEGACY_PLAYBOOK_DIR);
+  const legacySources = existingLegacySources(resolvedTarget);
   const checks = [];
   const missingDirectories = [];
   const missingFiles = [];
   const warnings = [];
 
-  if (existsSync(legacyRoot)) {
+  for (const legacy of legacySources) {
     warnings.push({
       id: 'layout.legacy-path-present',
-      message: `${LEGACY_PLAYBOOK_DIR}/ exists but is not an active playbook path. Use migrate path or remove it after review.`,
-      paths: [`${LEGACY_PLAYBOOK_DIR}/`]
+      message: `${legacy}/ exists but is not an active playbook path. Use migrate path or remove it after review.`,
+      paths: [`${legacy}/`]
     });
   }
 
@@ -217,7 +230,7 @@ export async function migratePlaybookLayout({ target, to = PLAYBOOK_LAYOUT_KIND,
   await assertDirectory(target, 'Target repository does not exist');
   const resolvedTarget = path.resolve(target);
   const playbook = resolvePlaybookLayout(resolvedTarget);
-  const legacyRoot = path.join(resolvedTarget, LEGACY_PLAYBOOK_DIR);
+  const legacySources = existingLegacySources(resolvedTarget);
   const operations = [];
   const warnings = [];
   const conflicts = [];
@@ -225,21 +238,21 @@ export async function migratePlaybookLayout({ target, to = PLAYBOOK_LAYOUT_KIND,
   if (!existsSync(playbook.root)) {
     conflicts.push({
       id: 'layout.playbook-missing',
-      message: existsSync(legacyRoot)
+      message: legacySources.length > 0
         ? `Missing ${DEFAULT_PLAYBOOK_DIR}/. Run migrate path before migrating the playbook layout.`
         : `Missing ${DEFAULT_PLAYBOOK_DIR}/; run bootstrap first.`,
-      paths: existsSync(legacyRoot)
-        ? [`${DEFAULT_PLAYBOOK_DIR}/`, `${LEGACY_PLAYBOOK_DIR}/`]
+      paths: legacySources.length > 0
+        ? [`${DEFAULT_PLAYBOOK_DIR}/`, ...legacySources.map((directory) => `${directory}/`)]
         : [`${DEFAULT_PLAYBOOK_DIR}/`]
     });
   }
 
   if (conflicts.length === 0) {
-    if (existsSync(legacyRoot)) {
+    for (const legacy of legacySources) {
       warnings.push({
         id: 'layout.legacy-path-present',
-        message: `${LEGACY_PLAYBOOK_DIR}/ exists but is not used as the active playbook path.`,
-        paths: [`${LEGACY_PLAYBOOK_DIR}/`]
+        message: `${legacy}/ exists but is not used as the active playbook path.`,
+        paths: [`${legacy}/`]
       });
     }
 
@@ -464,7 +477,25 @@ function replaceStructuredPlaybookRefs(text) {
   for (const [pattern, replacement] of STRUCTURED_REFERENCE_REPLACEMENTS) {
     updated = updated.replace(pattern, replacement);
   }
+  updated = updated
+    .replace(/(^|[^A-Za-z0-9_.-])ai-playbook\/SKILLS\.md/g, '$1.ai-agent-playbook/policy/SKILLS.md')
+    .replace(/(^|[^A-Za-z0-9_.-])ai-playbook\/GIT\.md/g, '$1.ai-agent-playbook/policy/GIT.md')
+    .replace(/(^|[^A-Za-z0-9_.-])ai-playbook\/context\//g, '$1.ai-agent-playbook/memory/context/')
+    .replace(/(^|[^A-Za-z0-9_.-])ai-playbook\/maps\//g, '$1.ai-agent-playbook/memory/maps/')
+    .replace(/(^|[^A-Za-z0-9_.-])ai-playbook\/decisions\//g, '$1.ai-agent-playbook/memory/decisions/')
+    .replace(/(^|[^A-Za-z0-9_.-])ai-playbook\/contracts\//g, '$1.ai-agent-playbook/memory/contracts/')
+    .replace(/(^|[^A-Za-z0-9_.-])ai-playbook\/rules\//g, '$1.ai-agent-playbook/policy/rules/')
+    .replace(/(^|[^A-Za-z0-9_.-])ai-playbook\/runbooks\//g, '$1.ai-agent-playbook/workflows/runbooks/')
+    .replace(/(^|[^A-Za-z0-9_.-])ai-playbook\/plans\//g, '$1.ai-agent-playbook/workflows/plans/')
+    .replace(/(^|[^A-Za-z0-9_.-])ai-playbook\/runs\//g, '$1.ai-agent-playbook/workflows/runs/')
+    .replace(/(^|[^A-Za-z0-9_.-])ai-playbook\/worklogs\//g, '$1.ai-agent-playbook/workflows/worklogs/')
+    .replace(/(^|[^A-Za-z0-9_.-])ai-playbook\/handoffs\//g, '$1.ai-agent-playbook/workflows/handoffs/')
+    .replace(/(^|[^A-Za-z0-9_.-])ai-playbook\/guides\//g, '$1.ai-agent-playbook/knowledge/references/guides/');
   return updated;
+}
+
+function existingLegacySources(target) {
+  return LEGACY_PLAYBOOK_DIRS.filter((directory) => existsSync(path.join(target, directory)));
 }
 
 function timestampForPath() {

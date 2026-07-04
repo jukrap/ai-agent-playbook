@@ -38,7 +38,7 @@ It is not a slash-command pack, a Codex plugin, or an auto-running agent. The de
 | ----------------- | --------------------------------------------------------------------------------------------------- | ------------------ |
 | Reusable skills   | Trigger-focused operating guides for project, delivery, architecture, frontend, backend, data, database, DevOps, design, mobile, security, harness, quality, and legacy work. | `skills/`          |
 | Project templates | Copyable root agent rules, stack profiles, and project-memory files for current facts, vocabulary, maps, decisions, and evidence. | `templates/`       |
-| Runtime harness   | A small CLI for bootstrapping `.ai-playbook/`, health checks, context, runs, contracts, plans, and worklogs. | `bin/`, `src/`     |
+| Runtime harness   | A small CLI for bootstrapping `.ai-agent-playbook/`, health checks, context, runs, contracts, plans, and worklogs. | `bin/`, `src/`     |
 | MCP tools         | Local read-only tools, resources, and prompts for AI apps: catalogs, adapter support/readiness, usage guide, reference adoption, playbook layout, permission model, natural writing review, index search, write-gate preview, context, operator checks, research, contracts, image diff, AST search, clone cues, and TypeScript/JavaScript analysis. | `src/`             |
 | Human docs        | Lifecycle, command, classification, maintenance, publishing, and translation notes.                  | `docs/`            |
 | Translations      | Korean reading copies that mirror English source files.                                             | `translations/ko/` |
@@ -63,11 +63,11 @@ In examples, names inside angle brackets are placeholders. Replace `<target-proj
 
 If your AI app supports MCP, register a local server command such as `npx ai-agent-playbook mcp`. Then you can ask the AI to inspect playbook context, read the capability/skill/workflow/adapter/usage/reference-adoption resources, run writing or operator checks, or do deep local analysis without remembering every CLI command. MCP tools are read-only by default.
 
-If you want the shorter `ai-playbook` command from any directory, install the package globally:
+If you want the shorter `aapb` command from any directory, install the package globally:
 
 ```powershell
 npm install -g ai-agent-playbook
-ai-playbook --help
+aapb --help
 ```
 
 Python is optional but recommended for deeper local language checks. Node remains the stable CLI and MCP facade; when Python 3.11+ is available, commands such as `writing naturalness-check --engine auto` merge Python-backed Korean/English prose analysis with the built-in JavaScript fallback.
@@ -75,14 +75,14 @@ Python is optional but recommended for deeper local language checks. Node remain
 ```powershell
 py -3.11 -m venv .venv
 .\.venv\Scripts\python -m pip install -U pip kss kiwipiepy
-$env:AI_PLAYBOOK_PYTHON = ".\.venv\Scripts\python.exe"
+$env:AI_AGENT_PLAYBOOK_PYTHON = ".\.venv\Scripts\python.exe"
 npx ai-agent-playbook runtime python-status --json
 npx ai-agent-playbook writing naturalness-check <target-project> --path README.md --lang auto --engine auto --json
 ```
 
 From a source checkout, `.\scripts\bootstrap-python.ps1` creates a local `.venv` and installs the optional Python extras for development. Without Python, the CLI and MCP server still work and return JavaScript fallback results with an `engines.unavailable` warning for Python-backed checks.
 
-The npm package installs the CLI. It does not automatically copy skills, create `.ai-playbook/`, enable hooks, or register slash commands. Keep those actions explicit:
+The npm package installs the CLI. It does not automatically copy skills, create `.ai-agent-playbook/`, enable hooks, or register slash commands. Keep those actions explicit:
 
 - `skills install`, `skills update`, and `skills uninstall` manage reusable user-level skills.
 - `bootstrap`, `guides sync`, `managed *`, `contracts *`, `operator *`, and `qa *` manage or inspect one target project.
@@ -98,7 +98,7 @@ npx or global install
   -> skills install or update
   -> restart the agent
   -> inspect the target project
-  -> bootstrap .ai-playbook/ only when the project needs local playbook files
+  -> bootstrap .ai-agent-playbook/ only when the project needs local playbook files
   -> use operator checks/search and managed cleanup as explicit commands
 ```
 
@@ -114,12 +114,12 @@ npx ai-agent-playbook operator research <target-project> --query "project risks"
 
 See [Command guide](docs/commands.md) for search, managed cleanup, adapter setup, plan, and worklog commands.
 
-After bootstrapping `.ai-playbook/`, agents should start from `START_HERE.md`, then read `CURRENT.md`, `questions.md`, relevant memory/maps/contracts, and the matching workflow recipe. Generated files under `runtime/` are evidence candidates, not trusted memory, until reviewed and promoted.
+After bootstrapping `.ai-agent-playbook/`, agents should start from `START_HERE.md`, then read `CURRENT.md`, `questions.md`, relevant memory/maps/contracts, and the matching workflow recipe. Generated files under `runtime/` are evidence candidates, not trusted memory, until reviewed and promoted.
 
 ## Repository Map
 
 ```text
-bin/                  ai-playbook CLI entrypoint
+bin/                  aapb CLI entrypoint
 src/                  CLI runtime implementation
 skills/
   ai-harness/        MCP, skill, agent, context, fact gate, witness, cache, and index design skills
@@ -141,7 +141,7 @@ skills/
 templates/
   agents/             Root agent instruction templates and project profiles
   codex-home/         Optional personal Codex home AGENTS.md template
-  project-playbook/   Copyable ai-playbook project-memory template
+  project-playbook/   Copyable AI Agent Playbook project-memory template
 examples/             Worklog, prompt, and handoff examples
 translations/         Human translations; never install these as skills
 adapters/             Agent-specific install notes and optional hook PoCs
@@ -175,7 +175,7 @@ Detailed triggers live in [Skill catalog](docs/skill-catalog.md). The README kee
 - [Command guide](docs/commands.md): what each CLI command does, when to use it, and whether it writes files.
 - [Lifecycle guide](docs/lifecycle.md): npm/npx usage, global CLI setup, skill lifecycle, project bootstrap/removal, cleanup, and legacy PowerShell paths.
 - [Runtime harness](docs/harness-runtime.md): runtime principles, JSON contract notes, overwrite policy, and target-project flow.
-- [Structured playbook layout](docs/structured-playbook-layout.md): `.ai-playbook` directory roles and migration commands.
+- [Structured playbook layout](docs/structured-playbook-layout.md): `.ai-agent-playbook` directory roles and migration commands.
 - [Capability taxonomy](docs/capability-taxonomy.md): capability-first categories and compatibility wrapper policy.
 - [Skill catalog](docs/skill-catalog.md): long-form skill list and trigger summary.
 - [MCP permission model](docs/mcp-permission-model.md): read, scaffold, managed-write, and project-write tiers.

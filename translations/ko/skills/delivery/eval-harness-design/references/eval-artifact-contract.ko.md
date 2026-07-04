@@ -36,8 +36,8 @@ Eval run report에는 다음을 포함합니다.
 
 ## Storage Boundaries
 
-- Generated eval definition과 report는 `.ai-playbook/runtime/reports/evals/` 또는 `.ai-playbook/runtime/indexes/` 아래에 저장합니다.
-- Human-reviewed eval policy, accepted gate, durable lesson은 검토 후에만 `.ai-playbook/memory/decisions/` 아래에 둡니다.
+- Generated eval definition과 report는 `.ai-agent-playbook/runtime/reports/evals/` 또는 `.ai-agent-playbook/runtime/indexes/` 아래에 저장합니다.
+- Human-reviewed eval policy, accepted gate, durable lesson은 검토 후에만 `.ai-agent-playbook/memory/decisions/` 아래에 둡니다.
 - Raw transcript, 긴 model output, temporary trace를 `memory/`에 승격하지 않습니다.
 - Artifact에는 project-relative portable path를 씁니다. Public docs에는 personal absolute path, credential, branch name, PR number, internal URL을 저장하지 않습니다.
 - 큰 log와 screenshot은 짧은 summary와 hash를 둔 runtime artifact로 유지합니다.

@@ -36,7 +36,7 @@ test('Claude Code context hook emits additionalContext after compaction', async 
   await cleanup(target);
 });
 
-test('context hooks stay silent when .ai-playbook is missing or event is unsupported', async () => {
+test('context hooks stay silent when .ai-agent-playbook is missing or event is unsupported', async () => {
   const target = await tempRepo();
   assert.equal(await runCodexHook({ hook_event_name: 'SessionStart', cwd: target }, { env: {} }), '');
   assert.equal(await runClaudeCodeHook({ hook_event_name: 'PostToolUse', cwd: target }, { env: {} }), '');
@@ -54,7 +54,7 @@ test('lifecycle reminder hooks require explicit opt-in', async () => {
   assert.equal(await runCodexHook(input, { env: {} }), '');
 
   const output = await runCodexHook(input, {
-    env: { AI_PLAYBOOK_HOOK_EVENTS: 'UserPromptSubmit' },
+    env: { AI_AGENT_PLAYBOOK_HOOK_EVENTS: 'UserPromptSubmit' },
     maxChars: 5000
   });
   const parsed = JSON.parse(output);
@@ -66,7 +66,7 @@ test('lifecycle reminder hooks require explicit opt-in', async () => {
 
 test('lifecycle reminder hooks stay quiet for unrelated prompts and missing playbooks', async () => {
   const target = await bootstrappedRepo();
-  const env = { AI_PLAYBOOK_HOOK_EVENTS: 'UserPromptSubmit,PostToolUse' };
+  const env = { AI_AGENT_PLAYBOOK_HOOK_EVENTS: 'UserPromptSubmit,PostToolUse' };
 
   assert.equal(await runCodexHook({
     hook_event_name: 'UserPromptSubmit',
@@ -91,7 +91,7 @@ test('lifecycle reminder hooks stay quiet for legacy ai-playbook without dot pla
     cwd: target,
     prompt: '커밋 전에 상태 확인해줘'
   }, {
-    env: { AI_PLAYBOOK_HOOK_EVENTS: 'UserPromptSubmit' },
+    env: { AI_AGENT_PLAYBOOK_HOOK_EVENTS: 'UserPromptSubmit' },
     maxChars: 5000
   });
 
@@ -110,7 +110,7 @@ test('PostToolUse reminder matches edit-like payload paths without writing files
       patch: '*** Begin Patch\n*** Update File: adapters/codex/README.md\n@@\n-old\n+new\n*** Update File: skills/project/project-bootstrap/SKILL.md\n@@\n-old\n+new\n*** End Patch\n'
     }
   }, {
-    env: { AI_PLAYBOOK_HOOK_EVENTS: 'PostToolUse' },
+    env: { AI_AGENT_PLAYBOOK_HOOK_EVENTS: 'PostToolUse' },
     maxChars: 5000
   });
 
@@ -124,7 +124,7 @@ test('PostToolUse reminder matches edit-like payload paths without writing files
 
 test('PostToolUse reminder stays quiet for non-edit tools or edit payloads without paths', async () => {
   const target = await bootstrappedRepo();
-  const env = { AI_PLAYBOOK_HOOK_EVENTS: 'PostToolUse' };
+  const env = { AI_AGENT_PLAYBOOK_HOOK_EVENTS: 'PostToolUse' };
 
   assert.equal(await runCodexHook({
     hook_event_name: 'PostToolUse',
@@ -155,7 +155,7 @@ test('Stop reminder is opt-in, no-write, and quiet without playbook context', as
     hook_event_name: 'Stop',
     cwd: target
   }, {
-    env: { AI_PLAYBOOK_HOOK_EVENTS: 'Stop' },
+    env: { AI_AGENT_PLAYBOOK_HOOK_EVENTS: 'Stop' },
     maxChars: 5000
   });
   const parsed = JSON.parse(output);
@@ -168,16 +168,16 @@ test('Stop reminder is opt-in, no-write, and quiet without playbook context', as
   assert.equal(await runCodexHook({
     hook_event_name: 'Stop',
     cwd: missing
-  }, { env: { AI_PLAYBOOK_HOOK_EVENTS: 'Stop' } }), '');
+  }, { env: { AI_AGENT_PLAYBOOK_HOOK_EVENTS: 'Stop' } }), '');
 
   await cleanup(target);
   await cleanup(missing);
 });
 
-async function bootstrappedRepo(prefix = '.ai-playbook-test-') {
+async function bootstrappedRepo(prefix = '.ai-agent-playbook-test-') {
   const target = await tempRepo(prefix);
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nCurrent adapter signal\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nCurrent adapter signal\n');
   await writeFile(path.join(target, 'AGENTS.md'), '# Root\n\nRoot agent marker\n');
   return target;
 }
@@ -195,7 +195,7 @@ function capture(cwd) {
   };
 }
 
-async function tempRepo(prefix = '.ai-playbook-test-') {
+async function tempRepo(prefix = '.ai-agent-playbook-test-') {
   return mkdtemp(path.join(os.tmpdir(), prefix));
 }
 

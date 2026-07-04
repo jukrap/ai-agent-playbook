@@ -165,7 +165,7 @@ Data와 documentation skill은 pipeline reliability, reporting correctness, migr
 - `data/analytics-instrumentation-review`: tracking plan, event schema, identity grain, funnel, cohort, experiment, attribution, consent, downstream metric impact.
 - `data/knowledge-retrieval-pipeline-review`: document ingestion, parsing, chunking, metadata, embedding/vector store, retrieval evaluation, citation, access control, stale index.
 - `data/knowledge-source-registry`: source owner, status, freshness, credential boundary, locator shape, search/browse mode, evidence envelope, promotion policy.
-- `project/project-doc-system`: `.ai-playbook` map, runbook, decision, plan, worklog, archive, project-memory hygiene.
+- `project/project-doc-system`: `.ai-agent-playbook` map, runbook, decision, plan, worklog, archive, project-memory hygiene.
 - `project/adr-spec-handoff`: ADR, spec, milestone outcome, implementation handoff, reviewed evidence, durable memory promotion.
 - `project/requirements-prd-scope-review`: PRD, lightweight spec, scope brief, non-goal, acceptance criteria, assumption, open-question list.
 - `project/issue-planning-triage`: issue/task breakdown, triage, priority, dependency, blocked status, ownership, verification planning.
@@ -180,5 +180,5 @@ Generated runtime report는 검토 없이 `memory/`로 승격하지 않습니다
 Catalog 명령은 duplicate skill name, wrapper routing 누락, wrapper reference 누락, category drift를 보고합니다.
 
 ```bash
-ai-playbook catalog check --json
+aapb catalog check --json
 ```

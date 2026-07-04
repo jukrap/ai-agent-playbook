@@ -12,7 +12,7 @@
 
 ## Packaging Rules
 
-- Generated evidence는 검토 전까지 `.ai-playbook/runtime/` 또는 다른 project-local runtime area에 저장합니다.
+- Generated evidence는 검토 전까지 `.ai-agent-playbook/runtime/` 또는 다른 project-local runtime area에 저장합니다.
 - Reviewed decision만 `memory/`, design docs, source comment로 승격합니다.
 - Public docs에는 portable locator와 relative path를 사용합니다.
 - Reusable skill에는 큰 embedded image를 넣지 않습니다. 대신 evidence를 link하거나 요약합니다.

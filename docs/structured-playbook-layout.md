@@ -1,9 +1,9 @@
 # Structured Playbook Layout
 
-The structured `.ai-playbook` layout separates durable project memory from generated runtime output and integration configuration.
+The structured `.ai-agent-playbook` layout separates durable project memory from generated runtime output and integration configuration.
 
 ```text
-.ai-playbook/
+.ai-agent-playbook/
   README.md
   START_HERE.md
   CURRENT.md
@@ -34,7 +34,7 @@ The structured `.ai-playbook` layout separates durable project memory from gener
 
 ## Context Selection
 
-Agents should not read every file in `.ai-playbook/` by default. Start with `START_HERE.md`, `CURRENT.md`, and `questions.md`, then use `operator context --path <file> --json` to choose relevant `memory/context/`, maps, contracts, runbooks, decisions, guides, and plans. If the right file is still unclear, use `operator search` or `index search` before loading larger notes.
+Agents should not read every file in `.ai-agent-playbook/` by default. Start with `START_HERE.md`, `CURRENT.md`, and `questions.md`, then use `operator context --path <file> --json` to choose relevant `memory/context/`, maps, contracts, runbooks, decisions, guides, and plans. If the right file is still unclear, use `operator search` or `index search` before loading larger notes.
 
 Keep generated evidence in `runtime/`, active work evidence in `workflows/runs/`, and durable history in `workflows/worklogs/`. Promote only reviewed facts into `memory/` or `knowledge/`.
 
@@ -53,13 +53,13 @@ Future run creation belongs to the scaffold tier. A run-start implementation may
 Use layout migration in preview mode first:
 
 ```bash
-ai-playbook migrate layout <target> --to structured --json
+aapb migrate layout <target> --to structured --json
 ```
 
 Apply only after reviewing the operations:
 
 ```bash
-ai-playbook migrate layout <target> --to structured --apply
+aapb migrate layout <target> --to structured --apply
 ```
 
 The migration creates structured directories, moves known legacy layout files into their active locations without overwriting conflicts, and archives old locations under `archive/legacy-layout/`.

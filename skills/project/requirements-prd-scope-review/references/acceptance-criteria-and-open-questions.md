@@ -32,4 +32,4 @@ Each criterion should state:
 
 ## Promotion Rule
 
-Promote only reviewed criteria and answered questions into durable project memory. Keep unresolved questions in the active plan, issue, or `.ai-playbook/questions.md` until the owner resolves them.
+Promote only reviewed criteria and answered questions into durable project memory. Keep unresolved questions in the active plan, issue, or `.ai-agent-playbook/questions.md` until the owner resolves them.

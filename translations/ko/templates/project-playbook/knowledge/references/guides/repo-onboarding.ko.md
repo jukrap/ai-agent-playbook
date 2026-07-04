@@ -8,7 +8,7 @@
 2. 루트 파일, README, 에이전트 지침, package/build config, lockfile, script를 확인합니다.
 3. 패키지 관리자, 런타임 버전, test/lint/build 명령, 로컬 전용 정책을 찾습니다.
 4. 관련 entrypoint를 `rg`로 검색합니다.
-5. 존재하면 `.ai-playbook/START_HERE.md`, `CURRENT.md`, 관련 map, 관련 runbook을 읽습니다.
+5. 존재하면 `.ai-agent-playbook/START_HERE.md`, `CURRENT.md`, 관련 map, 관련 runbook을 읽습니다.
 6. 계획 전에 확인된 사실과 해결되지 않은 가정을 말합니다.
 
 ## 피할 것

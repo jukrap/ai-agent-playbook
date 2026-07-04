@@ -12,12 +12,12 @@ const repoRoot = path.resolve(import.meta.dirname, '..');
 
 test('rules check --json reports matching project rules without writing files', async () => {
   const target = await tempRepo('rules check-공백-한글-');
-  await mkdir(path.join(target, '.ai-playbook', 'policy', 'rules'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'policy', 'rules'), { recursive: true });
   await mkdir(path.join(target, '.github', 'instructions'), { recursive: true });
   await mkdir(path.join(target, 'src', '기능 모듈'), { recursive: true });
   await writeFile(path.join(target, 'AGENTS.md'), '# Root rule that should not be re-injected\n');
   await writeFile(path.join(target, 'src', '기능 모듈', 'example.ts'), 'export const value = 1;\n');
-  await writeFile(path.join(target, '.ai-playbook', 'policy', 'rules', 'typescript.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'policy', 'rules', 'typescript.md'), [
     '---',
     'globs:',
     '  - src/**/*.ts',
@@ -46,7 +46,7 @@ test('rules check --json reports matching project rules without writing files', 
   assert.equal(report.path, 'src/기능 모듈/example.ts');
   assert.equal(report.summary.total >= 2, true);
   assert.equal(report.summary.applies, 2);
-  assert.equal(report.rules.some((rule) => rule.path === '.ai-playbook/policy/rules/typescript.md' && rule.applies && rule.reason === 'glob'), true);
+  assert.equal(report.rules.some((rule) => rule.path === '.ai-agent-playbook/policy/rules/typescript.md' && rule.applies && rule.reason === 'glob'), true);
   assert.equal(report.rules.some((rule) => rule.path === '.github/instructions/always.md' && rule.applies && rule.reason === 'alwaysApply'), true);
   assert.equal(report.rules.some((rule) => rule.path === 'AGENTS.md'), false);
   assert.deepEqual(await listRelativeFiles(target), before);
@@ -185,10 +185,10 @@ test('operator check --json aggregates read-only operator signals for a path', a
       typecheck: 'tsc -b --pretty false'
     }
   }, null, 2));
-  await mkdir(path.join(target, '.ai-playbook', 'policy', 'rules'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'policy', 'rules'), { recursive: true });
   await mkdir(path.join(target, 'src', '기능 모듈'), { recursive: true });
   await writeFile(path.join(target, 'src', '기능 모듈', 'example.tsx'), 'export function Example() { return null; }\n');
-  await writeFile(path.join(target, '.ai-playbook', 'policy', 'rules', 'react.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'policy', 'rules', 'react.md'), [
     '---',
     'globs:',
     '  - src/**/*.tsx',
@@ -227,7 +227,7 @@ test('operator check --json reports stale guides as a warning without failing or
   const setup = capture(target);
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], setup), 0);
   await adaptPlaybook(target);
-  await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'references', 'guides', 'runtime-harness.md'), '# locally changed guide\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'knowledge', 'references', 'guides', 'runtime-harness.md'), '# locally changed guide\n');
   const before = await listRelativeFiles(target);
 
   const io = capture(target);
@@ -270,11 +270,11 @@ test('operator search --json finds source, playbook, rules, and worklog matches 
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
   await adaptPlaybook(target);
   await mkdir(path.join(target, 'src', '기능 모듈'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'policy', 'rules'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'workflows', 'worklogs', '2026-06'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'policy', 'rules'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'workflows', 'worklogs', '2026-06'), { recursive: true });
   await writeFile(path.join(target, 'src', '기능 모듈', 'auth-flow.ts'), 'export const authFlow = "token refresh";\n');
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nAuth flow uses token refresh.\n');
-  await writeFile(path.join(target, '.ai-playbook', 'policy', 'rules', 'auth.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nAuth flow uses token refresh.\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'policy', 'rules', 'auth.md'), [
     '---',
     'globs:',
     '  - src/**/*.ts',
@@ -283,7 +283,7 @@ test('operator search --json finds source, playbook, rules, and worklog matches 
     '',
     'Use token refresh checks.'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'workflows', 'worklogs', '2026-06', '2026-06-13-auth.md'), '# Auth worklog\n\nToken refresh was reviewed.\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'workflows', 'worklogs', '2026-06', '2026-06-13-auth.md'), '# Auth worklog\n\nToken refresh was reviewed.\n');
   await mkdir(path.join(target, 'node_modules', 'ignored'), { recursive: true });
   await writeFile(path.join(target, 'node_modules', 'ignored', 'auth.txt'), 'token refresh ignored\n');
   const before = await listRelativeFiles(target);
@@ -309,8 +309,8 @@ test('operator search --json finds source, playbook, rules, and worklog matches 
   assert.equal(report.path, 'src/기능 모듈/auth-flow.ts');
   assert.equal(report.summary.matches >= 4, true);
   assert.equal(report.results.some((result) => result.path === 'src/기능 모듈/auth-flow.ts' && result.category === 'source'), true);
-  assert.equal(report.results.some((result) => result.path === '.ai-playbook/CURRENT.md' && result.category === 'playbook'), true);
-  assert.equal(report.results.some((result) => result.path === '.ai-playbook/policy/rules/auth.md' && result.category === 'rules'), true);
+  assert.equal(report.results.some((result) => result.path === '.ai-agent-playbook/CURRENT.md' && result.category === 'playbook'), true);
+  assert.equal(report.results.some((result) => result.path === '.ai-agent-playbook/policy/rules/auth.md' && result.category === 'rules'), true);
   assert.equal(report.results.some((result) => result.category === 'worklogs'), true);
   assert.equal(report.results.some((result) => result.path.includes('node_modules')), false);
   assert.equal(report.results.every((result) => result.snippets.length > 0), true);
@@ -343,9 +343,9 @@ test('operator research --json correlates local evidence across source tests pla
   await adaptPlaybook(target);
   await mkdir(path.join(target, 'src', 'features', '인증'), { recursive: true });
   await mkdir(path.join(target, 'test'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'policy', 'rules'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'memory', 'context'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'workflows', 'worklogs', '2026-06'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'policy', 'rules'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'memory', 'context'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'workflows', 'worklogs', '2026-06'), { recursive: true });
   await mkdir(path.join(target, 'node_modules', 'ignored'), { recursive: true });
   await writeFile(path.join(target, 'package.json'), JSON.stringify({
     scripts: {
@@ -365,8 +365,8 @@ test('operator research --json correlates local evidence across source tests pla
     '  refreshToken({ token: "abc" });',
     '});'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nAuth flow uses token refresh for session continuity.\n');
-  await writeFile(path.join(target, '.ai-playbook', 'policy', 'rules', 'auth.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nAuth flow uses token refresh for session continuity.\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'policy', 'rules', 'auth.md'), [
     '---',
     'globs:',
     '  - src/features/인증/**/*.mjs',
@@ -375,7 +375,7 @@ test('operator research --json correlates local evidence across source tests pla
     '',
     'Token refresh changes require test evidence.'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'memory', 'context', 'auth.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'memory', 'context', 'auth.md'), [
     '---',
     'globs:',
     '  - src/features/인증/**/*.mjs',
@@ -384,7 +384,7 @@ test('operator research --json correlates local evidence across source tests pla
     '',
     'The auth flow depends on token refresh.'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'workflows', 'worklogs', '2026-06', '2026-06-13-auth.md'), '# Auth worklog\n\nToken refresh risk was reviewed.\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'workflows', 'worklogs', '2026-06', '2026-06-13-auth.md'), '# Auth worklog\n\nToken refresh risk was reviewed.\n');
   await writeFile(path.join(target, 'node_modules', 'ignored', 'auth.txt'), 'token refresh ignored\n');
   const before = await listRelativeFiles(target);
 
@@ -418,8 +418,8 @@ test('operator research --json correlates local evidence across source tests pla
   assert.equal(report.axes.some((axis) => axis.id === 'query'), true);
   assert.equal(report.evidence.some((item) => item.path === 'src/features/인증/auth-flow.mjs' && item.category === 'source'), true);
   assert.equal(report.evidence.some((item) => item.path === 'test/auth-flow.test.mjs' && item.category === 'tests'), true);
-  assert.equal(report.evidence.some((item) => item.path === '.ai-playbook/CURRENT.md' && item.category === 'playbook'), true);
-  assert.equal(report.evidence.some((item) => item.path === '.ai-playbook/policy/rules/auth.md' && item.category === 'rules'), true);
+  assert.equal(report.evidence.some((item) => item.path === '.ai-agent-playbook/CURRENT.md' && item.category === 'playbook'), true);
+  assert.equal(report.evidence.some((item) => item.path === '.ai-agent-playbook/policy/rules/auth.md' && item.category === 'rules'), true);
   assert.equal(report.evidence.some((item) => item.category === 'worklogs'), true);
   assert.equal(report.evidence.some((item) => item.path.includes('node_modules')), false);
   assert.equal(report.related.rules.summary.applies, 1);
@@ -462,16 +462,16 @@ test('operator preflight --json collects advisory signals and a portable no-writ
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
   await adaptPlaybook(target);
   await mkdir(path.join(target, 'src', 'features', '결제'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'memory', 'context'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'policy', 'rules'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'memory', 'contracts', 'active'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'memory', 'context'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'policy', 'rules'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'memory', 'contracts', 'active'), { recursive: true });
   await writeFile(path.join(target, 'src', 'features', '결제', 'Payment Panel.tsx'), [
     'export function PaymentPanel() {',
     '  return "payment cancel";',
     '}'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nPayment cancel work is active.\n');
-  await writeFile(path.join(target, '.ai-playbook', 'memory', 'context', 'payments.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nPayment cancel work is active.\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'memory', 'context', 'payments.md'), [
     '---',
     'globs: ["src/features/결제/**/*.tsx"]',
     '---',
@@ -479,7 +479,7 @@ test('operator preflight --json collects advisory signals and a portable no-writ
     '',
     'Payment cancel changes affect settlement state.'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'policy', 'rules', 'payments.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'policy', 'rules', 'payments.md'), [
     '---',
     'globs:',
     '  - src/features/결제/**/*.tsx',
@@ -488,7 +488,7 @@ test('operator preflight --json collects advisory signals and a portable no-writ
     '',
     'Payment cancel changes require contract evidence.'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'memory', 'contracts', 'active', 'payment-cancel.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'memory', 'contracts', 'active', 'payment-cancel.md'), [
     '---',
     'id: payment-cancel',
     'status: active',
@@ -526,8 +526,8 @@ test('operator preflight --json collects advisory signals and a portable no-writ
   assert.equal(report.path, 'src/features/결제/Payment Panel.tsx');
   assert.equal(report.summary.candidates >= 4, true);
   assert.equal(report.candidates.some((item) => item.path === 'src/features/결제/Payment Panel.tsx' && item.category === 'source'), true);
-  assert.equal(report.candidates.some((item) => item.path === '.ai-playbook/CURRENT.md' && item.category === 'playbook'), true);
-  assert.equal(report.candidates.some((item) => item.path === '.ai-playbook/policy/rules/payments.md' && item.category === 'rules'), true);
+  assert.equal(report.candidates.some((item) => item.path === '.ai-agent-playbook/CURRENT.md' && item.category === 'playbook'), true);
+  assert.equal(report.candidates.some((item) => item.path === '.ai-agent-playbook/policy/rules/payments.md' && item.category === 'rules'), true);
   assert.equal(report.signals.rules.summary.applies, 1);
   assert.equal(report.signals.context.summary.matchingContextFiles >= 2, true);
   assert.equal(report.signals.contracts.summary.matches, 1);
@@ -544,7 +544,7 @@ test('operator preflight --json works without a path and stays read-only', async
   const target = await tempRepo('operator preflight no path-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
   await adaptPlaybook(target);
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nSmoke test evidence gate.\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nSmoke test evidence gate.\n');
   await writeFile(path.join(target, 'README.md'), '# Smoke test\n\nEvidence gate smoke test.\n');
   const before = await listRelativeFiles(target);
 
@@ -564,7 +564,7 @@ test('operator preflight --json works without a path and stays read-only', async
   assert.equal(report.schemaVersion, '1');
   assert.equal(report.ok, true);
   assert.equal('path' in report, false);
-  assert.equal(report.candidates.some((item) => item.path === '.ai-playbook/CURRENT.md'), true);
+  assert.equal(report.candidates.some((item) => item.path === '.ai-agent-playbook/CURRENT.md'), true);
   assert.equal(report.snapshot.intentTerms.includes('evidence'), true);
   assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
@@ -596,7 +596,7 @@ test('operator delta --json compares a preflight snapshot without writing files'
   await writeFile(path.join(target, 'src', 'features', '검색', 'SearchPanel.tsx'), 'export const searchPanel = "search intent changed";\n');
   await rm(path.join(target, 'src', 'features', '검색', 'old.ts'));
   await writeFile(path.join(target, 'docs', 'unrelated.md'), '# Out of scope\n');
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nPlaybook changed after preflight.\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nPlaybook changed after preflight.\n');
   const beforeDelta = await listRelativeFiles(target);
 
   const delta = capture(target);
@@ -665,12 +665,12 @@ test('operator context --json previews path-scoped playbook context without writ
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
   await adaptPlaybook(target);
   await mkdir(path.join(target, 'src', 'features', '결제'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'memory', 'context'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'policy', 'rules'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'memory', 'maps'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'workflows', 'runbooks'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'memory', 'context'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'policy', 'rules'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'memory', 'maps'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'workflows', 'runbooks'), { recursive: true });
   await writeFile(path.join(target, 'src', 'features', '결제', 'PaymentPanel.tsx'), 'export function PaymentPanel() { return null; }\n');
-  await writeFile(path.join(target, '.ai-playbook', 'memory', 'context', 'frontend.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'memory', 'context', 'frontend.md'), [
     '---',
     'globs:',
     '  - src/features/**/*.tsx',
@@ -679,25 +679,25 @@ test('operator context --json previews path-scoped playbook context without writ
     '',
     'PaymentPanel uses route-level state.'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'memory', 'context', 'backend.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'memory', 'context', 'backend.md'), [
     '---',
     'globs:',
     '  - server/**/*.ts',
     '---',
     '# Backend context'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'policy', 'rules', 'react.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'policy', 'rules', 'react.md'), [
     '---',
     'globs: ["src/features/**/*.tsx"]',
     '---',
     '# React rule'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'memory', 'maps', 'repo-map.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'memory', 'maps', 'repo-map.md'), [
     '# Repo Map',
     '',
     'The payment feature lives in `src/features/결제/PaymentPanel.tsx`.'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'workflows', 'runbooks', 'payment.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'workflows', 'runbooks', 'payment.md'), [
     '# Payment runbook',
     '',
     'PaymentPanel manual smoke checks live here.'
@@ -722,13 +722,13 @@ test('operator context --json previews path-scoped playbook context without writ
   assert.equal(report.summary.coreSources, 5);
   assert.equal(report.summary.matchingContextFiles, 2);
   assert.equal(report.summary.docMap, 1);
-  assert.equal(report.docMap.path, '.ai-playbook/memory/maps/doc-map.md');
-  assert.equal(report.contexts.some((item) => item.path === '.ai-playbook/memory/context/root.md' && item.applies && item.reason === 'alwaysApply'), true);
-  assert.equal(report.contexts.some((item) => item.path === '.ai-playbook/memory/context/frontend.md' && item.applies && item.reason === 'glob'), true);
-  assert.equal(report.contexts.some((item) => item.path === '.ai-playbook/memory/context/backend.md' && !item.applies), true);
+  assert.equal(report.docMap.path, '.ai-agent-playbook/memory/maps/doc-map.md');
+  assert.equal(report.contexts.some((item) => item.path === '.ai-agent-playbook/memory/context/root.md' && item.applies && item.reason === 'alwaysApply'), true);
+  assert.equal(report.contexts.some((item) => item.path === '.ai-agent-playbook/memory/context/frontend.md' && item.applies && item.reason === 'glob'), true);
+  assert.equal(report.contexts.some((item) => item.path === '.ai-agent-playbook/memory/context/backend.md' && !item.applies), true);
   assert.equal(report.rules.summary.applies, 1);
-  assert.equal(report.related.some((item) => item.path === '.ai-playbook/memory/maps/repo-map.md' && item.category === 'maps'), true);
-  assert.equal(report.related.some((item) => item.path === '.ai-playbook/workflows/runbooks/payment.md' && item.category === 'runbooks'), true);
+  assert.equal(report.related.some((item) => item.path === '.ai-agent-playbook/memory/maps/repo-map.md' && item.category === 'maps'), true);
+  assert.equal(report.related.some((item) => item.path === '.ai-agent-playbook/workflows/runbooks/payment.md' && item.category === 'runbooks'), true);
   assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
 });
@@ -738,8 +738,8 @@ test('operator analyze --json combines read-only context rules diagnostics map a
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
   await adaptPlaybook(target);
   await mkdir(path.join(target, 'src', 'features', '검색'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'memory', 'context'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'policy', 'rules'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'memory', 'context'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'policy', 'rules'), { recursive: true });
   await writeFile(path.join(target, 'pnpm-lock.yaml'), 'lockfileVersion: 9.0\n');
   await writeFile(path.join(target, 'package.json'), JSON.stringify({
     scripts: {
@@ -753,7 +753,7 @@ test('operator analyze --json combines read-only context rules diagnostics map a
   await writeFile(path.join(target, 'tsconfig.json'), '{}\n');
   await writeFile(path.join(target, 'sgconfig.yml'), 'ruleDirs: []\n');
   await writeFile(path.join(target, 'src', 'features', '검색', 'SearchPanel.tsx'), 'export function SearchPanel() { return null; }\n');
-  await writeFile(path.join(target, '.ai-playbook', 'memory', 'context', 'frontend.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'memory', 'context', 'frontend.md'), [
     '---',
     'globs:',
     '  - src/features/**/*.tsx',
@@ -762,7 +762,7 @@ test('operator analyze --json combines read-only context rules diagnostics map a
     '',
     'SearchPanel is a visible UI surface.'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'policy', 'rules', 'react.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'policy', 'rules', 'react.md'), [
     '---',
     'globs: ["src/features/**/*.tsx"]',
     '---',
@@ -789,9 +789,9 @@ test('operator analyze --json combines read-only context rules diagnostics map a
   assert.equal(report.summary.contextMatches, 2);
   assert.equal(report.diagnostics.packageManager.name, 'pnpm');
   assert.equal(report.map.stack.languages.some((language) => language.extension === '.tsx'), true);
-  assert.equal(report.rules.matches.some((rule) => rule.path === '.ai-playbook/policy/rules/react.md'), true);
-  assert.equal(report.context.matches.some((item) => item.path === '.ai-playbook/memory/context/frontend.md'), true);
-  assert.equal(report.context.matches.some((item) => item.path === '.ai-playbook/memory/context/root.md'), true);
+  assert.equal(report.rules.matches.some((rule) => rule.path === '.ai-agent-playbook/policy/rules/react.md'), true);
+  assert.equal(report.context.matches.some((item) => item.path === '.ai-agent-playbook/memory/context/frontend.md'), true);
+  assert.equal(report.context.matches.some((item) => item.path === '.ai-agent-playbook/memory/context/root.md'), true);
   assert.equal(report.optionalTools.some((tool) => tool.id === 'ast-grep' && tool.status === 'detected'), true);
   assert.equal(report.optionalTools.some((tool) => tool.id === 'lsp' && tool.status === 'project-signals'), true);
   assert.deepEqual(await listRelativeFiles(target), before);
@@ -882,18 +882,18 @@ test('operator audit --json reports playbook drift without writing files', async
   const target = await tempRepo('operator audit-공백-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
   await adaptPlaybook(target);
-  await mkdir(path.join(target, '.ai-playbook', 'memory', 'context'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'memory', 'maps'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'workflows', 'runbooks'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'memory', 'context'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'memory', 'maps'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'workflows', 'runbooks'), { recursive: true });
   await mkdir(path.join(target, 'ai-playbook'), { recursive: true });
-  await writeFile(path.join(target, '.ai-playbook', 'memory', 'maps', 'broken.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'memory', 'maps', 'broken.md'), [
     '# Broken references',
     '',
     '[missing](../runbooks/missing.md)'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'memory', 'maps', 'duplicate-a.md'), '# Same\n\nDuplicate signal\n');
-  await writeFile(path.join(target, '.ai-playbook', 'workflows', 'runbooks', 'duplicate-b.md'), '# Same\n\nDuplicate signal\n');
-  await writeFile(path.join(target, '.ai-playbook', 'memory', 'context', 'orphan.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'memory', 'maps', 'duplicate-a.md'), '# Same\n\nDuplicate signal\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'workflows', 'runbooks', 'duplicate-b.md'), '# Same\n\nDuplicate signal\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'memory', 'context', 'orphan.md'), [
     '---',
     'globs:',
     '  - src/missing/**/*.ts',
@@ -925,22 +925,22 @@ test('operator audit --json includes memory drift for context doc-map and contra
   const target = await tempRepo('operator audit memory drift-공백-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
   await adaptPlaybook(target);
-  await mkdir(path.join(target, '.ai-playbook', 'memory', 'context'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'memory', 'maps'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'memory', 'contracts', 'active'), { recursive: true });
-  await writeFile(path.join(target, '.ai-playbook', 'memory', 'context', 'orphan.md'), [
+  await mkdir(path.join(target, '.ai-agent-playbook', 'memory', 'context'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'memory', 'maps'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'memory', 'contracts', 'active'), { recursive: true });
+  await writeFile(path.join(target, '.ai-agent-playbook', 'memory', 'context', 'orphan.md'), [
     '---',
     'globs:',
     '  - src/missing/**/*.ts',
     '---',
     '# Orphan context'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'memory', 'maps', 'doc-map.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'memory', 'maps', 'doc-map.md'), [
     '# Documentation Map',
     '',
     '- [Missing runbook](../runbooks/missing.md)'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'memory', 'contracts', 'active', 'missing-path.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'memory', 'contracts', 'active', 'missing-path.md'), [
     '---',
     'id: missing-path',
     'status: active',
@@ -973,20 +973,20 @@ test('operator audit --json includes memory drift for context doc-map and contra
 
 test('operator gc previews and removes only obsolete unmodified managed files', async () => {
   const target = await tempRepo('operator gc-공백-한글-');
-  await mkdir(path.join(target, '.ai-playbook', 'knowledge', 'references', 'guides'), { recursive: true });
-  const obsoletePath = '.ai-playbook/knowledge/references/guides/obsolete.md';
-  const editedPath = '.ai-playbook/knowledge/references/guides/edited-obsolete.md';
-  const currentPath = '.ai-playbook/knowledge/references/guides/runtime-harness.md';
+  await mkdir(path.join(target, '.ai-agent-playbook', 'knowledge', 'references', 'guides'), { recursive: true });
+  const obsoletePath = '.ai-agent-playbook/knowledge/references/guides/obsolete.md';
+  const editedPath = '.ai-agent-playbook/knowledge/references/guides/edited-obsolete.md';
+  const currentPath = '.ai-agent-playbook/knowledge/references/guides/runtime-harness.md';
   const obsoleteContent = '# Obsolete\n';
   const editedOriginal = '# Edited original\n';
   const currentContent = await readFile(path.join(repoRoot, 'templates', 'project-playbook', 'knowledge', 'references', 'guides', 'runtime-harness.md'), 'utf8');
   await writeFile(path.join(target, ...obsoletePath.split('/')), obsoleteContent);
   await writeFile(path.join(target, ...editedPath.split('/')), `${editedOriginal}local edit\n`);
   await writeFile(path.join(target, ...currentPath.split('/')), currentContent);
-  await writeFile(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json'), JSON.stringify({
+  await writeFile(path.join(target, '.ai-agent-playbook', '.ai-agent-playbook-install.json'), JSON.stringify({
     schemaVersion: '1',
     source: 'ai-agent-playbook',
-    playbookDir: '.ai-playbook',
+    playbookDir: '.ai-agent-playbook',
     localOnly: true,
     installedAtUtc: '2026-06-13T00:00:00.000Z',
     updatedAtUtc: '2026-06-13T00:00:00.000Z',
@@ -1032,7 +1032,7 @@ test('operator gc previews and removes only obsolete unmodified managed files', 
   assert.equal(await runCli(['operator', 'gc', '.', '--apply', '--json'], applied), 1);
   const appliedReport = JSON.parse(applied.out());
   const after = await listRelativeFiles(target);
-  const manifest = JSON.parse(await readFile(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
+  const manifest = JSON.parse(await readFile(path.join(target, '.ai-agent-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
 
   assert.equal(appliedReport.applied, true);
   assert.equal(after.includes(obsoletePath), false);
@@ -1046,15 +1046,15 @@ test('operator gc previews and removes only obsolete unmodified managed files', 
 
 test('operator gc rejects non-portable manifest paths before removal', async () => {
   const target = await tempRepo('operator gc traversal-공백-한글-');
-  await mkdir(path.join(target, '.ai-playbook', 'knowledge', 'references', 'guides'), { recursive: true });
-  const actualPath = '.ai-playbook/knowledge/references/guides/obsolete.md';
-  const manifestPath = '.ai-playbook/../.ai-playbook/knowledge/references/guides/obsolete.md';
+  await mkdir(path.join(target, '.ai-agent-playbook', 'knowledge', 'references', 'guides'), { recursive: true });
+  const actualPath = '.ai-agent-playbook/knowledge/references/guides/obsolete.md';
+  const manifestPath = '.ai-agent-playbook/../.ai-agent-playbook/knowledge/references/guides/obsolete.md';
   const obsoleteContent = '# Obsolete\n';
   await writeFile(path.join(target, ...actualPath.split('/')), obsoleteContent);
-  await writeFile(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json'), JSON.stringify({
+  await writeFile(path.join(target, '.ai-agent-playbook', '.ai-agent-playbook-install.json'), JSON.stringify({
     schemaVersion: '1',
     source: 'ai-agent-playbook',
-    playbookDir: '.ai-playbook',
+    playbookDir: '.ai-agent-playbook',
     localOnly: true,
     installedAtUtc: '2026-06-13T00:00:00.000Z',
     updatedAtUtc: '2026-06-13T00:00:00.000Z',
@@ -1200,14 +1200,14 @@ async function tempRepo(prefix) {
 }
 
 async function adaptPlaybook(target) {
-  await writeFile(path.join(target, '.ai-playbook', 'START_HERE.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'START_HERE.md'), [
     '# Start Here',
     '',
     '## Current objective',
     '',
     '- No active implementation task.'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), [
     '# Current State',
     '',
     '## Baseline',
@@ -1215,7 +1215,7 @@ async function adaptPlaybook(target) {
     '- Product shape: test fixture.',
     '- Verification commands: fixture-defined.'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'questions.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'questions.md'), [
     '# Questions',
     '',
     '| Status | Question |',

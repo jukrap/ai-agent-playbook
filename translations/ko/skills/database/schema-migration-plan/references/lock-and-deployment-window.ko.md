@@ -13,7 +13,7 @@ Migration safety가 lock, long-running statement, deployment window, batching, o
 
 - Application version order를 명시합니다. Schema first, app first, dual-write, feature flag, queue/job pause, maintenance window 중 무엇인지 봅니다.
 - Background job, scheduled import, report generation, export, API write 중 pause 또는 watch 대상이 있는지 확인합니다.
-- Runtime evidence는 검토 전까지 `.ai-playbook/runtime/reports` 또는 동등한 generated-output 영역에 둡니다.
+- Runtime evidence는 검토 전까지 `.ai-agent-playbook/runtime/reports` 또는 동등한 generated-output 영역에 둡니다.
 - 검토된 decision이나 durable constraint만 memory map 또는 contract로 승격합니다.
 
 ## Verification

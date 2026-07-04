@@ -1,18 +1,18 @@
 # Project Playbook Template
 
-Copy this folder into a target repository as `.ai-playbook/`.
+Copy this folder into a target repository as `.ai-agent-playbook/`.
 
 The folder is project memory for agents and maintainers. It keeps policy, durable memory, workflows, knowledge sources, runtime output, integrations, and archived notes separate so a future session can resume without rereading the whole repository.
 
 Preferred setup from this repository:
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
-node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
-node .\bin\ai-playbook.mjs migrate path <target-repo> --json
-node .\bin\ai-playbook.mjs doctor <target-repo>
+node .\bin\aapb.mjs bootstrap <target-repo> --dry-run
+node .\bin\aapb.mjs bootstrap <target-repo> --local-only
+node .\bin\aapb.mjs guides sync <target-repo> --dry-run
+node .\bin\aapb.mjs guides sync <target-repo> --check --diff --json
+node .\bin\aapb.mjs migrate path <target-repo> --json
+node .\bin\aapb.mjs doctor <target-repo>
 ```
 
 For legacy `ai-playbook/` projects, keep `migrate path` in preview mode until the planned folder move, reference updates, and `.gitignore` change have been reviewed.
@@ -42,8 +42,8 @@ When docs disagree, prefer:
 
 1. Latest user instruction.
 2. Actual code, configuration, and command output.
-3. Root `AGENTS.md`, `.ai-playbook/policy/SKILLS.md`, and `.ai-playbook/policy/GIT.md`.
-4. `.ai-playbook/CURRENT.md`, memory context, maps, runbooks, contracts, and decisions.
+3. Root `AGENTS.md`, `.ai-agent-playbook/policy/SKILLS.md`, and `.ai-agent-playbook/policy/GIT.md`.
+4. `.ai-agent-playbook/CURRENT.md`, memory context, maps, runbooks, contracts, and decisions.
 5. Workflow runs, worklogs, and archived notes.
 
 Runs are in-progress evidence. Worklogs are history. Promote facts that remain current into `CURRENT.md`, `memory/context/`, `memory/maps/`, `workflows/runbooks/`, `memory/contracts/`, or `memory/decisions/`.
@@ -68,6 +68,6 @@ Do not add runtime hooks before this document harness works on its own. If the p
 
 ## Commit policy
 
-Decide per project whether `.ai-playbook/` is committed or local-only. If local-only, add it to `.gitignore` before writing project-specific notes.
+Decide per project whether `.ai-agent-playbook/` is committed or local-only. If local-only, add it to `.gitignore` before writing project-specific notes.
 
 Do not store credentials, private URLs, customer data, personal paths, raw logs with sensitive values, or machine-specific secrets here.

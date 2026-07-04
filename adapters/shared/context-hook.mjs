@@ -26,14 +26,14 @@ const PATH_KEYS = new Set([
 
 export async function runContextHook(input, options = {}) {
   const env = options.env ?? process.env;
-  const allowedEvents = enabledHookEvents(options.allowedEvents ?? DEFAULT_CONTEXT_EVENTS, options.hookEvents ?? env.AI_PLAYBOOK_HOOK_EVENTS);
+  const allowedEvents = enabledHookEvents(options.allowedEvents ?? DEFAULT_CONTEXT_EVENTS, options.hookEvents ?? env.AI_AGENT_PLAYBOOK_HOOK_EVENTS);
   const hookEventName = typeof input?.hook_event_name === 'string' ? input.hook_event_name : '';
   if (!allowedEvents.includes(hookEventName)) return '';
 
   const target = typeof input.cwd === 'string' && input.cwd.trim()
     ? input.cwd
     : options.cwd ?? process.cwd();
-  const maxChars = safeMaxChars(options.maxChars ?? env.AI_PLAYBOOK_CONTEXT_MAX_CHARS);
+  const maxChars = safeMaxChars(options.maxChars ?? env.AI_AGENT_PLAYBOOK_CONTEXT_MAX_CHARS);
 
   try {
     if (hookEventName === 'UserPromptSubmit') {
@@ -109,10 +109,10 @@ function promptReminderOutput(input, target, hookEventName, maxChars) {
   const reminders = promptReminders(prompt);
   if (reminders.length === 0) return '';
   return hookOutput(hookEventName, limitReminder([
-    '<ai-playbook-reminder>',
+    '<ai-agent-playbook-reminder>',
     'The current prompt looks like it touches repository handoff or guardrail work.',
     ...reminders,
-    '</ai-playbook-reminder>'
+    '</ai-agent-playbook-reminder>'
   ].join('\n'), maxChars));
 }
 
@@ -124,21 +124,21 @@ function postToolUseReminderOutput(input, target, hookEventName, maxChars) {
   const reminders = pathReminders(changedPaths);
   if (reminders.length === 0) return '';
   return hookOutput(hookEventName, limitReminder([
-    '<ai-playbook-reminder>',
+    '<ai-agent-playbook-reminder>',
     `Edit-like tool output referenced: ${changedPaths.join(', ')}`,
     ...reminders,
-    '</ai-playbook-reminder>'
+    '</ai-agent-playbook-reminder>'
   ].join('\n'), maxChars));
 }
 
 function stopReminderOutput(target, hookEventName, maxChars) {
   if (!hasPlaybook(target)) return '';
   return hookOutput(hookEventName, limitReminder([
-    '<ai-playbook-reminder>',
+    '<ai-agent-playbook-reminder>',
     'Session ending. If repository state changed, keep handoff facts visible in CURRENT.md, plans, worklogs, or project docs.',
     '- Run doctor manually when setup, guide freshness, or worklog freshness is uncertain.',
     '- This Stop reminder does not block, continue the session, run doctor, write files, or call the network.',
-    '</ai-playbook-reminder>'
+    '</ai-agent-playbook-reminder>'
   ].join('\n'), maxChars));
 }
 
@@ -221,8 +221,8 @@ function extractPatchPaths(value) {
 
 function pathReminders(paths) {
   const reminders = new Set();
-  if (paths.some((item) => item === 'AGENTS.md' || item.endsWith('/AGENTS.md') || item.startsWith('.ai-playbook/') || item.startsWith('ai-playbook/'))) {
-    reminders.add('- Project policy reminder: durable rules and memory should stay visible in AGENTS.md, .ai-playbook/, or project docs.');
+  if (paths.some((item) => item === 'AGENTS.md' || item.endsWith('/AGENTS.md') || item.startsWith('.ai-agent-playbook/') || item.startsWith('.ai-playbook/') || item.startsWith('ai-playbook/'))) {
+    reminders.add('- Project policy reminder: durable rules and memory should stay visible in AGENTS.md, .ai-agent-playbook/, or project docs.');
   }
   if (paths.some((item) => item.startsWith('skills/'))) {
     reminders.add('- Skill reminder: keep SKILL.md concise and trigger-focused; put longer reusable detail in references/ and validate skills.');
@@ -268,7 +268,7 @@ function limitReminder(text, maxChars) {
 }
 
 function debug(label, error) {
-  if (!process.env.AI_PLAYBOOK_DEBUG) return;
-  const prefix = label ? `[ai-playbook ${label}]` : '[ai-playbook hook]';
+  if (!process.env.AI_AGENT_PLAYBOOK_DEBUG) return;
+  const prefix = label ? `[ai-agent-playbook ${label}]` : '[ai-agent-playbook hook]';
   process.stderr.write(`${prefix} ${error instanceof Error ? error.message : String(error)}\n`);
 }

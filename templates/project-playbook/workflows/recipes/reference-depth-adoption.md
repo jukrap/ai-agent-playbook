@@ -24,11 +24,11 @@ Use this recipe when a local reference collection should be audited before stren
 
 ## Tools
 
-- ai-playbook reference inventory <reference-dir> --json
-- ai-playbook reference adoption-queue <reference-dir> --json
-- ai-playbook reference capability-matrix <reference-dir> --json
-- ai-playbook reference adoption-plan <reference-dir> --capability <capability> --json
-- ai-playbook reference ledger-check <target> --path <ledger> --json when a ledger exists
+- aapb reference inventory <reference-dir> --json
+- aapb reference adoption-queue <reference-dir> --json
+- aapb reference capability-matrix <reference-dir> --json
+- aapb reference adoption-plan <reference-dir> --capability <capability> --json
+- aapb reference ledger-check <target> --path <ledger> --json when a ledger exists
 
 ## Procedure
 

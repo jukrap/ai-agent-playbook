@@ -5,7 +5,7 @@ Keep only active execution plans here.
 From this repository, scaffold a dated plan file with:
 
 ```powershell
-node .\bin\ai-playbook.mjs plan new <target-repo> --title "short-plan-title"
+node .\bin\aapb.mjs plan new <target-repo> --title "short-plan-title"
 ```
 
 ## Rules

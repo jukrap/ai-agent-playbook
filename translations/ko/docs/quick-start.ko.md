@@ -6,12 +6,12 @@ AI Agent Playbook에는 서로 다른 네 계층이 있습니다.
 
 | 계층 | 의미 | 설치 위치 |
 | ---- | ---- | --------- |
-| CLI 패키지 | `ai-playbook` 명령과 함께 묶인 원본 파일입니다. | npm 캐시, npm 전역 위치, 또는 특정 프로젝트의 `node_modules`. |
+| CLI 패키지 | `aapb` 명령과 함께 묶인 원본 파일입니다. | npm 캐시, npm 전역 위치, 또는 특정 프로젝트의 `node_modules`. |
 | 스킬 | 온보딩, 리뷰, UI 다듬기, 레거시 유지보수 같은 재사용 에이전트 지침입니다. | `.codex/skills`, `.agents/skills` 같은 사용자 수준 스킬 폴더. |
-| 프로젝트 플레이북 | `.ai-playbook/` 아래의 로컬 프로젝트 기억입니다. 현재 사실, 작업 어휘, 지도, 실행 기록, 계약, 작업 기록을 포함합니다. | 대상 프로젝트 저장소 하나. |
+| 프로젝트 플레이북 | `.ai-agent-playbook/` 아래의 로컬 프로젝트 기억입니다. 현재 사실, 작업 어휘, 지도, 실행 기록, 계약, 작업 기록을 포함합니다. | 대상 프로젝트 저장소 하나. |
 | MCP 도구 | AI 앱이 문맥, 검색, 진단, AST 검색, 함수 본문 중복 단서, TypeScript/JavaScript 분석을 호출할 수 있는 선택적 읽기 전용 도구입니다. | AI 앱에 로컬 표준 입출력 서버 명령으로 등록합니다. |
 
-npm 패키지를 설치해도 스킬 설치, 프로젝트 `.ai-playbook/` 생성, MCP 설정 등록은 자동으로 일어나지 않습니다. 이 단계들은 명시적으로 실행합니다.
+npm 패키지를 설치해도 스킬 설치, 프로젝트 `.ai-agent-playbook/` 생성, MCP 설정 등록은 자동으로 일어나지 않습니다. 이 단계들은 명시적으로 실행합니다.
 
 ## 1. 전역 설치 없이 CLI 실행
 
@@ -25,10 +25,10 @@ npx ai-agent-playbook --help
 
 ```powershell
 npm install -g ai-agent-playbook
-ai-playbook --help
+aapb --help
 ```
 
-그 뒤에는 `ai-playbook ...`과 `npx ai-agent-playbook ...`이 같은 종류의 명령이라고 보면 됩니다. 아래 예시는 부담이 가장 적은 `npx`를 기준으로 씁니다.
+그 뒤에는 `aapb ...`과 `npx ai-agent-playbook ...`이 같은 종류의 명령이라고 보면 됩니다. 아래 예시는 부담이 가장 적은 `npx`를 기준으로 씁니다.
 
 ## 예시 명령 읽는 법
 
@@ -70,13 +70,13 @@ npx ai-agent-playbook operator check <target-project> --json
 
 ## 5. 프로젝트 bootstrap 미리 보기
 
-`bootstrap`은 루트 `AGENTS.md`와 `.ai-playbook/` 같은 프로젝트 수준 파일을 만듭니다.
+`bootstrap`은 루트 `AGENTS.md`와 `.ai-agent-playbook/` 같은 프로젝트 수준 파일을 만듭니다.
 
 ```powershell
 npx ai-agent-playbook bootstrap <target-project> --dry-run
 ```
 
-대상 프로젝트에서 `.ai-playbook/`을 Git에 올리지 않을 거라면 `--local-only`를 붙입니다.
+대상 프로젝트에서 `.ai-agent-playbook/`을 Git에 올리지 않을 거라면 `--local-only`를 붙입니다.
 
 ```powershell
 npx ai-agent-playbook bootstrap <target-project> --local-only --dry-run
@@ -88,7 +88,7 @@ npx ai-agent-playbook bootstrap <target-project> --local-only --dry-run
 npx ai-agent-playbook bootstrap <target-project> --local-only
 ```
 
-프로젝트에서 `.ai-playbook/`을 커밋해야 한다면 `--local-only`를 빼고 실행합니다.
+프로젝트에서 `.ai-agent-playbook/`을 커밋해야 한다면 `--local-only`를 빼고 실행합니다.
 
 ## 6. 위험한 수정 전후 비교
 
@@ -147,8 +147,8 @@ npx ai-agent-playbook managed uninstall <target-project> --apply --json
 | 용어 | 의미 |
 | ---- | ---- |
 | `npx ai-agent-playbook` | 전역 설치 없이 배포 패키지를 실행합니다. 기본으로 추천합니다. |
-| `ai-playbook` | `npm install -g ai-agent-playbook` 뒤 사용할 수 있는 짧은 명령입니다. |
-| `node .\bin\ai-playbook.mjs` | 이 저장소 소스 체크아웃에서 직접 실행합니다. |
+| `aapb` | `npm install -g ai-agent-playbook` 뒤 사용할 수 있는 짧은 명령입니다. |
+| `node .\bin\aapb.mjs` | 이 저장소 소스 체크아웃에서 직접 실행합니다. |
 | `skills install` | 재사용 스킬을 사용자 수준 스킬 폴더에 복사합니다. |
 | `bootstrap` | 프로젝트 기억 파일을 대상 프로젝트 하나에 복사합니다. |
 | `operator check` | 읽기 전용 프로젝트 상태 점검입니다. |

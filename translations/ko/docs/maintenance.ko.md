@@ -35,7 +35,7 @@
 
 ## 런타임 CLI 갱신
 
-1. CLI entrypoint는 `bin/ai-playbook.mjs`에 둡니다.
+1. CLI entrypoint는 `bin/aapb.mjs`에 둡니다.
 2. 구현은 `src/` 아래에 두고 template 내용은 중복하지 않습니다.
 3. 테스트는 `test/` 아래에 추가합니다.
 4. `docs/harness-runtime.md`, `README.md`, 사용 수명주기 문서, 한국어 번역을 함께 갱신합니다.
@@ -66,6 +66,7 @@ npm run check
 npm run typecheck
 npm test
 .\scripts\validate-python.ps1
+.\scripts\validate-naming.ps1
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 .\scripts\validate-mcp-docs.ps1

@@ -60,7 +60,7 @@ test('runtime schemas accept eval, witness, source registry, and evidence shapes
     graders: [{ type: 'rule', command: 'node test/prompt-contracts.test.mjs' }],
     successCriteria: { requiredSections: ['Required evidence', 'Stop conditions'] },
     budgets: { maxRuntimeMs: 30000, maxExternalCalls: 0 },
-    storage: { runtimePath: '.ai-playbook/runtime/reports/evals/prompt-regression.json' }
+    storage: { runtimePath: '.ai-agent-playbook/runtime/reports/evals/prompt-regression.json' }
   }, { path: 'runtime/reports/evals/prompt-regression.json' });
   assert.equal(evalDefinition.ok, true);
 
@@ -72,7 +72,7 @@ test('runtime schemas accept eval, witness, source registry, and evidence shapes
     environment: { os: 'windows', node: '22.x' },
     attempts: { count: 1, retryPolicy: 'none' },
     results: [{ grader: 'rule', status: 'pass' }],
-    artifacts: ['.ai-playbook/runtime/reports/evals/prompt-regression-run.json'],
+    artifacts: ['.ai-agent-playbook/runtime/reports/evals/prompt-regression-run.json'],
     caveats: [],
     decision: 'accepted'
   }, { path: 'runtime/reports/evals/prompt-regression-run.json' });
@@ -89,7 +89,7 @@ test('runtime schemas accept eval, witness, source registry, and evidence shapes
     status: 'pass',
     durationMs: 1200,
     summary: 'Prompt contract test passed.',
-    artifacts: ['.ai-playbook/runtime/reports/witness/prompt-contract.json'],
+    artifacts: ['.ai-agent-playbook/runtime/reports/witness/prompt-contract.json'],
     baseline: 'previous pass',
     caveats: []
   }, { path: 'runtime/reports/witness/prompt-contract.json' });
@@ -202,10 +202,10 @@ test('runtime repo graph schema accepts source-backed nodes and edges', () => {
     target: 'C:\\workspace\\project',
     applied: false,
     mode: { localOnly: true, network: false, writes: false },
-    graph: '.ai-playbook/runtime/graphs/repo-graph.json',
+    graph: '.ai-agent-playbook/runtime/graphs/repo-graph.json',
     generatedAt: '2026-07-03T00:00:00.000Z',
     scanRange: { sourceReports: ['runtime.file-inventory'], maxNodes: 100, maxEdges: 200 },
-    sources: [{ kind: 'runtime.file-inventory', index: '.ai-playbook/runtime/indexes/file-inventory.json', entries: 2 }],
+    sources: [{ kind: 'runtime.file-inventory', index: '.ai-agent-playbook/runtime/indexes/file-inventory.json', entries: 2 }],
     nodes: [
       { id: 'file:src/app.ts', kind: 'file', label: 'src/app.ts', path: 'src/app.ts', source: 'runtime.file-inventory' },
       { id: 'symbol:src/app.ts:1:handler', kind: 'symbol', label: 'handler', path: 'src/app.ts', line: 1, source: 'pattern.javascript.function' }
@@ -229,10 +229,10 @@ test('runtime repo graph schema rejects unsafe paths, invalid edge kinds, and da
     target: 'C:\\workspace\\project',
     applied: false,
     mode: { localOnly: true, network: false, writes: false },
-    graph: 'C:\\workspace\\project\\.ai-playbook\\runtime\\graphs\\repo-graph.json',
+    graph: 'C:\\workspace\\project\\.ai-agent-playbook\\runtime\\graphs\\repo-graph.json',
     generatedAt: '2026-07-03T00:00:00.000Z',
     scanRange: { sourceReports: ['runtime.file-inventory'], maxNodes: 100, maxEdges: 200 },
-    sources: [{ kind: 'runtime.file-inventory', index: 'C:\\workspace\\project\\.ai-playbook\\runtime\\indexes\\file-inventory.json', entries: 2 }],
+    sources: [{ kind: 'runtime.file-inventory', index: 'C:\\workspace\\project\\.ai-agent-playbook\\runtime\\indexes\\file-inventory.json', entries: 2 }],
     nodes: [
       { id: 'file:src/app.ts', kind: 'file', label: 'src/app.ts', path: 'src/app.ts', source: 'runtime.file-inventory' },
       { id: 'route:bad', kind: 'route', label: 'sk-proj-this-is-secret-shaped-1234567890', path: 'C:\\workspace\\project\\src\\bad.ts', source: 'runtime.route-api-hints' }

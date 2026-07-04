@@ -11,20 +11,20 @@ const repoRoot = path.resolve(import.meta.dirname, '..');
 
 test('config preview resolves explicit user target local and environment precedence without writing files', async () => {
   const target = await tempRepo('config precedence-공백-한글-');
-  await mkdir(path.join(target, '.ai-playbook'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook'), { recursive: true });
   const userConfig = path.join(target, 'user-config.json');
   await writeJson(userConfig, {
     context: { maxChars: 7000 },
     workflow: { defaultRecipe: 'legacy-change' },
     runtime: { indexMaxFiles: 5 }
   });
-  await writeJson(path.join(target, '.ai-playbook', 'config.json'), {
+  await writeJson(path.join(target, '.ai-agent-playbook', 'config.json'), {
     context: { maxChars: 9000 },
     runtime: { indexMaxFiles: 30 }
   });
-  await writeJson(path.join(target, '.ai-playbook', 'config.local.json'), {
+  await writeJson(path.join(target, '.ai-agent-playbook', 'config.local.json'), {
     workflow: { defaultRecipe: 'security-audit' },
-    runtime: { cacheDir: '.ai-playbook/runtime/cache/custom' },
+    runtime: { cacheDir: '.ai-agent-playbook/runtime/cache/custom' },
     mcp: { enableWriteTools: true }
   });
 
@@ -33,8 +33,8 @@ test('config preview resolves explicit user target local and environment precede
     target,
     userConfigPath: userConfig,
     env: {
-      AI_PLAYBOOK_CONTEXT_MAX_CHARS: '11000',
-      AI_PLAYBOOK_ENABLE_WRITE_TOOLS: 'false'
+      AI_AGENT_PLAYBOOK_CONTEXT_MAX_CHARS: '11000',
+      AI_AGENT_PLAYBOOK_ENABLE_WRITE_TOOLS: 'false'
     }
   });
 
@@ -43,7 +43,7 @@ test('config preview resolves explicit user target local and environment precede
   assert.equal(report.mode.readsUserConfig, true);
   assert.equal(report.config.context.maxChars, 11000);
   assert.equal(report.config.workflow.defaultRecipe, 'security-audit');
-  assert.equal(report.config.runtime.cacheDir, '.ai-playbook/runtime/cache/custom');
+  assert.equal(report.config.runtime.cacheDir, '.ai-agent-playbook/runtime/cache/custom');
   assert.equal(report.config.runtime.indexMaxFiles, 30);
   assert.equal(report.config.mcp.enableWriteTools, false);
   assert.equal(report.sourceMap['context.maxChars'], 'environment');
@@ -62,7 +62,7 @@ test('config preview falls back safely when config files are missing', async () 
 
   assert.equal(report.ok, true);
   assert.equal(report.config.context.maxChars, 12000);
-  assert.equal(report.config.runtime.cacheDir, '.ai-playbook/runtime/cache');
+  assert.equal(report.config.runtime.cacheDir, '.ai-agent-playbook/runtime/cache');
   assert.equal(report.mode.readsUserConfig, false);
   assert.equal(report.sources.some((source) => source.id === 'user' && source.status === 'skipped'), true);
   assert.equal(report.sources.some((source) => source.id === 'target' && source.status === 'missing'), true);
@@ -71,8 +71,8 @@ test('config preview falls back safely when config files are missing', async () 
 
 test('config preview reports malformed config and unsafe runtime paths', async () => {
   const malformedTarget = await tempRepo('config malformed-한글-');
-  await mkdir(path.join(malformedTarget, '.ai-playbook'), { recursive: true });
-  await writeFile(path.join(malformedTarget, '.ai-playbook', 'config.json'), '{broken json\n');
+  await mkdir(path.join(malformedTarget, '.ai-agent-playbook'), { recursive: true });
+  await writeFile(path.join(malformedTarget, '.ai-agent-playbook', 'config.json'), '{broken json\n');
 
   const malformed = await previewHarnessConfig({ target: malformedTarget, env: {} });
   assert.equal(malformed.ok, false);
@@ -80,8 +80,8 @@ test('config preview reports malformed config and unsafe runtime paths', async (
   await cleanup(malformedTarget);
 
   const unsafeTarget = await tempRepo('config unsafe-한글-');
-  await mkdir(path.join(unsafeTarget, '.ai-playbook'), { recursive: true });
-  await writeJson(path.join(unsafeTarget, '.ai-playbook', 'config.local.json'), {
+  await mkdir(path.join(unsafeTarget, '.ai-agent-playbook'), { recursive: true });
+  await writeJson(path.join(unsafeTarget, '.ai-agent-playbook', 'config.local.json'), {
     runtime: { cacheDir: '../outside' }
   });
 
@@ -93,12 +93,12 @@ test('config preview reports malformed config and unsafe runtime paths', async (
 
 test('config preview CLI reports resolved config without creating files', async () => {
   const target = await tempRepo('config cli-공백-');
-  await mkdir(path.join(target, '.ai-playbook'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook'), { recursive: true });
   const userConfig = path.join(target, 'user-config.json');
   await writeJson(userConfig, {
     context: { maxChars: 8000 }
   });
-  await writeJson(path.join(target, '.ai-playbook', 'config.json'), {
+  await writeJson(path.join(target, '.ai-agent-playbook', 'config.json'), {
     context: { maxChars: 9000 }
   });
   const before = await listRelativeFiles(target);

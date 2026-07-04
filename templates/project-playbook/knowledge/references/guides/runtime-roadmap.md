@@ -1,6 +1,6 @@
 # Runtime Roadmap Guide
 
-Use this guide when a project already has `.ai-playbook/` and you are deciding whether to keep the document harness only or add optional runtime hooks.
+Use this guide when a project already has `.ai-agent-playbook/` and you are deciding whether to keep the document harness only or add optional runtime hooks.
 
 The default answer should be document harness first. Runtime hooks are useful only when the project benefits from automatic reminders or context injection and the agent environment supports those hooks reliably.
 
@@ -10,7 +10,7 @@ Before considering hooks:
 
 - Run `doctor` and record remaining warnings.
 - Adapt `START_HERE.md`, `CURRENT.md`, and `questions.md` so they no longer contain template prompts.
-- Decide whether `.ai-playbook/` is committed or local-only.
+- Decide whether `.ai-agent-playbook/` is committed or local-only.
 - Move durable current facts into `CURRENT.md`, maps, runbooks, or decisions.
 - Use `context status --path` to decide which path-scoped memory to read before loading extra notes.
 - Use `run start/status/record` for active evidence on long tasks.
@@ -25,12 +25,12 @@ Before considering hooks:
 
 Consider optional hooks only when all of these are true:
 
-- The project has a clear root agent entrypoint and current `.ai-playbook/` files.
+- The project has a clear root agent entrypoint and current `.ai-agent-playbook/` files.
 - The team understands which docs are public and which are local-only.
 - The target agent supports lifecycle hooks in the current environment.
 - Hook output can be tested with local fixtures before enabling it in daily work.
 - The source adapter passes `adapter check` for this target project.
-- Optional reminder events are enabled explicitly with a local setting such as `AI_PLAYBOOK_HOOK_EVENTS`, not by default.
+- Optional reminder events are enabled explicitly with a local setting such as `AI_AGENT_PLAYBOOK_HOOK_EVENTS`, not by default.
 - The hook can be disabled through configuration.
 - Native project instructions and injected context will not duplicate each other.
 - The hook does not write project files automatically.
@@ -58,7 +58,7 @@ Avoid hooks that:
 
 ## Suggested Migration Order
 
-1. Stabilize `.ai-playbook/` and run `doctor`.
+1. Stabilize `.ai-agent-playbook/` and run `doctor`.
 2. If the project still uses legacy `ai-playbook/`, preview `migrate path --json` and apply only after reviewing the folder move, reference updates, and `.gitignore` change.
 3. Add any missing guides with `guides sync --dry-run`, then a reviewed `guides sync`; use `guides sync --check --diff --json` to review stale guides before overwriting local edits.
 4. Run `managed check` when deciding whether copied playbook files can be removed or adopted.
@@ -72,10 +72,10 @@ Avoid hooks that:
 
 For Codex App and Claude Code, prefer Node-based hooks with short timeouts. Hook programs should write supported JSON to stdout, write debug logs to stderr, handle Windows paths safely, and avoid network calls by default.
 
-Do not require a global `ai-playbook` command. The stable invocation remains:
+Do not require a global `aapb` command. The stable invocation remains:
 
 ```powershell
-node .\bin\ai-playbook.mjs <command>
+node .\bin\aapb.mjs <command>
 ```
 
 The source playbook repository includes read-only adapter examples. Treat them as local starting points, not project requirements.
@@ -83,14 +83,14 @@ The source playbook repository includes read-only adapter examples. Treat them a
 Before enabling one of those examples, run the corresponding read-only check from the source checkout:
 
 ```powershell
-node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --json
-node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --json
+node .\bin\aapb.mjs adapter check <target-repo> --adapter codex --json
+node .\bin\aapb.mjs adapter check <target-repo> --adapter claude-code --json
 ```
 
 Enable extra reminder events only in a local hook setting:
 
 ```powershell
-$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse,Stop'
+$env:AI_AGENT_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse,Stop'
 ```
 
 These events should stay quiet for unrelated prompts, missing playbooks, unsupported payloads, and non-edit tools. `Stop` is only a handoff reminder; it should not block, request continuation, run doctor, write files, or call the network.

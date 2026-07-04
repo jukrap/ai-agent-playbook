@@ -1,45 +1,45 @@
 # Runtime Harness Guide
 
-Use this guide after copying `templates/project-playbook/` into a target project as `.ai-playbook/`.
+Use this guide after copying `templates/project-playbook/` into a target project as `.ai-agent-playbook/`.
 
-The runtime harness is the combination of root agent files, `.ai-playbook/` project memory, installable skills, and the small CLI in this repository. It is meant to make agent setup repeatable without pretending every project needs the same workflow.
+The runtime harness is the combination of root agent files, `.ai-agent-playbook/` project memory, installable skills, and the small CLI in this repository. It is meant to make agent setup repeatable without pretending every project needs the same workflow.
 
 ## Normal setup flow
 
 From this repository:
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
-node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
-node .\bin\ai-playbook.mjs migrate path <target-repo> --json
-node .\bin\ai-playbook.mjs managed check <target-repo> --json
-node .\bin\ai-playbook.mjs managed catalog <target-repo> --json
-node .\bin\ai-playbook.mjs managed prune <target-repo> --path .ai-playbook/knowledge/references/guides/runtime-harness.md --json
-node .\bin\ai-playbook.mjs managed uninstall <target-repo> --json
-node .\bin\ai-playbook.mjs doctor <target-repo>
-node .\bin\ai-playbook.mjs context status <target-repo> --path src/example.ts --json
-node .\bin\ai-playbook.mjs run start <target-repo> --title "short-run-title" --dry-run
-node .\bin\ai-playbook.mjs run status <target-repo> --json
-node .\bin\ai-playbook.mjs contracts check <target-repo> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator check <target-repo> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator search <target-repo> --query "auth flow" --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator context <target-repo> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator analyze <target-repo> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator map <target-repo> --json
-node .\bin\ai-playbook.mjs operator audit <target-repo> --json
-node .\bin\ai-playbook.mjs operator gc <target-repo> --json
-node .\bin\ai-playbook.mjs rules check <target-repo> --path src/example.ts --json
-node .\bin\ai-playbook.mjs diagnostics check <target-repo> --json
-node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
+node .\bin\aapb.mjs bootstrap <target-repo> --dry-run
+node .\bin\aapb.mjs bootstrap <target-repo> --local-only
+node .\bin\aapb.mjs guides sync <target-repo> --dry-run
+node .\bin\aapb.mjs guides sync <target-repo> --check --diff --json
+node .\bin\aapb.mjs migrate path <target-repo> --json
+node .\bin\aapb.mjs managed check <target-repo> --json
+node .\bin\aapb.mjs managed catalog <target-repo> --json
+node .\bin\aapb.mjs managed prune <target-repo> --path .ai-agent-playbook/knowledge/references/guides/runtime-harness.md --json
+node .\bin\aapb.mjs managed uninstall <target-repo> --json
+node .\bin\aapb.mjs doctor <target-repo>
+node .\bin\aapb.mjs context status <target-repo> --path src/example.ts --json
+node .\bin\aapb.mjs run start <target-repo> --title "short-run-title" --dry-run
+node .\bin\aapb.mjs run status <target-repo> --json
+node .\bin\aapb.mjs contracts check <target-repo> --path src/example.ts --json
+node .\bin\aapb.mjs operator check <target-repo> --path src/example.ts --json
+node .\bin\aapb.mjs operator search <target-repo> --query "auth flow" --path src/example.ts --json
+node .\bin\aapb.mjs operator context <target-repo> --path src/example.ts --json
+node .\bin\aapb.mjs operator analyze <target-repo> --path src/example.ts --json
+node .\bin\aapb.mjs operator map <target-repo> --json
+node .\bin\aapb.mjs operator audit <target-repo> --json
+node .\bin\aapb.mjs operator gc <target-repo> --json
+node .\bin\aapb.mjs rules check <target-repo> --path src/example.ts --json
+node .\bin\aapb.mjs diagnostics check <target-repo> --json
+node .\bin\aapb.mjs qa tui-check .\capture.txt --cols 100 --json
 ```
 
 Use `--dry-run` first when the target already has agent docs. Bootstrap preflights writes before creating files, but conflicts still need review. Use `--force` only after inspecting conflicts and deciding the generated file should replace the existing one.
 
-Use `guides sync` after the target already has `.ai-playbook/` and you only want missing guide files from a newer playbook checkout. By default it keeps existing guides, root policies, current project notes, plans, and worklogs. Use `guides sync --check --diff --json` when reviewing stale guides before replacing local edits.
+Use `guides sync` after the target already has `.ai-agent-playbook/` and you only want missing guide files from a newer playbook checkout. By default it keeps existing guides, root policies, current project notes, plans, and worklogs. Use `guides sync --check --diff --json` when reviewing stale guides before replacing local edits.
 
-If the project still has a legacy `ai-playbook/` folder, use `migrate path --json` to preview the move to `.ai-playbook/`, reference updates, and `.gitignore` change. Add `--apply` only after reviewing the preview. If both paths exist, stop and merge manually.
+If the project still has a legacy `ai-playbook/` folder, use `migrate path --json` to preview the move to `.ai-agent-playbook/`, reference updates, and `.gitignore` change. Add `--apply` only after reviewing the preview. If both paths exist, stop and merge manually.
 
 Use `managed check` to inspect the project-level install marker and `managed catalog` to see owned files by kind and status. Use `managed adopt --apply` only when older copied files match current templates, `managed prune --apply --path <managed-path>` only after previewing a selected unmodified file, and `managed uninstall --apply` only after previewing which unmodified files would be removed. Locally edited files are preserved.
 
@@ -48,13 +48,13 @@ Use `managed check` to inspect the project-level install marker and `managed cat
 Use the CLI for repeatable file placement:
 
 ```powershell
-node .\bin\ai-playbook.mjs plan new <target-repo> --title "short-plan-title"
-node .\bin\ai-playbook.mjs run start <target-repo> --title "short-run-title" --dry-run
-node .\bin\ai-playbook.mjs run record <target-repo> --run-id short-run-title --type evidence --status pass --message "Verification passed" --evidence .ai-playbook/workflows/runs/short-run-title/evidence/verification.txt
-node .\bin\ai-playbook.mjs contracts list <target-repo> --json
-node .\bin\ai-playbook.mjs worklog new <target-repo> --title "short-worklog-title"
-node .\bin\ai-playbook.mjs worklog summarize <target-repo> --month YYYY-MM
-node .\bin\ai-playbook.mjs doctor <target-repo> --strict
+node .\bin\aapb.mjs plan new <target-repo> --title "short-plan-title"
+node .\bin\aapb.mjs run start <target-repo> --title "short-run-title" --dry-run
+node .\bin\aapb.mjs run record <target-repo> --run-id short-run-title --type evidence --status pass --message "Verification passed" --evidence .ai-agent-playbook/workflows/runs/short-run-title/evidence/verification.txt
+node .\bin\aapb.mjs contracts list <target-repo> --json
+node .\bin\aapb.mjs worklog new <target-repo> --title "short-worklog-title"
+node .\bin\aapb.mjs worklog summarize <target-repo> --month YYYY-MM
+node .\bin\aapb.mjs doctor <target-repo> --strict
 ```
 
 Use skills for behavior during the session:
@@ -81,7 +81,7 @@ Use operator-triggered diagnostics when an agent needs stronger evidence but a h
 
 ## File placement rules
 
-- Keep root `AGENTS.md` as a thin bootstrap. Keep skill and Git policy in `.ai-playbook/policy/SKILLS.md` and `.ai-playbook/policy/GIT.md`.
+- Keep root `AGENTS.md` as a thin bootstrap. Keep skill and Git policy in `.ai-agent-playbook/policy/SKILLS.md` and `.ai-agent-playbook/policy/GIT.md`.
 - Keep current facts in `CURRENT.md`.
 - Keep path-scoped reading hints in `memory/context/`.
 - Keep documentation locations in `memory/maps/doc-map.md`.
@@ -98,9 +98,9 @@ Do not create loose markdown files at the project root unless the repository alr
 
 ## Local-only policy
 
-Decide whether `.ai-playbook/` is committed or local-only before writing project-specific details.
+Decide whether `.ai-agent-playbook/` is committed or local-only before writing project-specific details.
 
-Use local-only mode when the notes may include private context, unfinished analysis, raw logs, sensitive URLs, or customer-specific details. If the project commits `.ai-playbook/`, scrub it like public documentation.
+Use local-only mode when the notes may include private context, unfinished analysis, raw logs, sensitive URLs, or customer-specific details. If the project commits `.ai-agent-playbook/`, scrub it like public documentation.
 
 ## Maintenance cadence
 

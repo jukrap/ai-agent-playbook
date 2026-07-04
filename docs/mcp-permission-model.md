@@ -6,7 +6,7 @@ The playbook MCP server defaults to read-only analysis and catalog access.
 
 - `read`: search, state, catalogs, layout status, and analysis.
 - `scaffold`: create plans, worklogs, runs, or other bounded playbook records.
-- `managed-write`: update managed files inside `.ai-playbook`.
+- `managed-write`: update managed files inside `.ai-agent-playbook`.
 - `project-write`: modify project source files. This tier is disabled by default.
 
 ## Current Default
@@ -19,15 +19,15 @@ Read-only tools may call optional local engines when their tool schema exposes t
 
 Default resources expose compact structured context that AI apps can read before choosing tools:
 
-- `ai-playbook://capabilities`: capability catalog and coverage summary.
-- `ai-playbook://skills`: skill taxonomy and compatibility wrapper metadata.
-- `ai-playbook://workflows`: bundled workflow recipes.
-- `ai-playbook://adapters`: Codex, Codex App, Claude Code, and MCP setup summary.
-- `ai-playbook://adapter-readiness`: adapter check/config commands, readiness checks, and no-write boundaries.
-- `ai-playbook://agent-usage-guide`: short routing guide for choosing resources, prompts, and read-only tools.
-- `ai-playbook://playbook-layout`: structured `.ai-playbook` layout roles and recommended read order.
-- `ai-playbook://reference-adoption`: reference registry, ledger, status, and promotion boundary summary.
-- `ai-playbook://mcp-permission-model`: this permission model as structured JSON.
+- `ai-agent-playbook://capabilities`: capability catalog and coverage summary.
+- `ai-agent-playbook://skills`: skill taxonomy and compatibility wrapper metadata.
+- `ai-agent-playbook://workflows`: bundled workflow recipes.
+- `ai-agent-playbook://adapters`: Codex, Codex App, Claude Code, and MCP setup summary.
+- `ai-agent-playbook://adapter-readiness`: adapter check/config commands, readiness checks, and no-write boundaries.
+- `ai-agent-playbook://agent-usage-guide`: short routing guide for choosing resources, prompts, and read-only tools.
+- `ai-agent-playbook://playbook-layout`: structured `.ai-agent-playbook` layout roles and recommended read order.
+- `ai-agent-playbook://reference-adoption`: reference registry, ledger, status, and promotion boundary summary.
+- `ai-agent-playbook://mcp-permission-model`: this permission model as structured JSON.
 
 Gate and graph review prompts include:
 
@@ -37,15 +37,15 @@ Gate and graph review prompts include:
 - `release_deployment_gate_review`
 - `security_compliance_gate_review`
 
-Scaffold-tier and managed-write tools are not exposed by default. Start the local server with `ai-playbook mcp --enable-write-tools` only when an AI app should see opt-in write tools.
+Scaffold-tier and managed-write tools are not exposed by default. Start the local server with `aapb mcp --enable-write-tools` only when an AI app should see opt-in write tools.
 
 Opt-in write tools currently include:
 
-- `workflow_run_start`: preview or create workflow run files under `.ai-playbook/workflows/runs/`.
-- `write_gate_advisory`: preview or save a runtime advisory under `.ai-playbook/runtime/reports/write-gate/`.
-- `reference_ledger_update`: preview or append missing rows in `.ai-playbook/knowledge/reference-adoption-ledger.md`.
+- `workflow_run_start`: preview or create workflow run files under `.ai-agent-playbook/workflows/runs/`.
+- `write_gate_advisory`: preview or save a runtime advisory under `.ai-agent-playbook/runtime/reports/write-gate/`.
+- `reference_ledger_update`: preview or append missing rows in `.ai-agent-playbook/knowledge/reference-adoption-ledger.md`.
 - `reference_ledger_decision`: preview or update one existing reference adoption ledger decision row.
-- `reference_source_registry_update`: preview or append missing entries in `.ai-playbook/knowledge/sources.json`.
+- `reference_source_registry_update`: preview or append missing entries in `.ai-agent-playbook/knowledge/sources.json`.
 
 All write-capable tools require a tool-call `apply` boolean. `apply: false` returns a dry-run preview, and `apply: true` writes only through existing target path validation.
 

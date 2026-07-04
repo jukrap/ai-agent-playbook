@@ -11,7 +11,7 @@ Improve prose quality without changing what the document means.
 
 1. Identify language, audience, source type, and whether this is a light edit, translation cleanup, or full rewrite.
 2. Preserve facts, numbers, names, dates, warnings, release scope, legal meaning, and technical contracts before changing style.
-3. Run `ai-playbook writing naturalness-check <target> --path <file> --lang auto --engine auto --json` when a local file is available.
+3. Run `aapb writing naturalness-check <target> --path <file> --lang auto --engine auto --json` when a local file is available.
 4. Remove machine-like phrasing, translationese, forced symmetry, inflated claims, and repetitive rhythm.
 5. Keep the writer's voice, domain vocabulary, and useful bluntness; do not over-polish into generic marketing copy.
 6. Refuse requests framed as detector bypass, evaluation evasion, fake authorship, or policy avoidance.

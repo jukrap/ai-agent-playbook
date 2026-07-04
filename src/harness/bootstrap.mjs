@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
   DEFAULT_PLAYBOOK_DIR,
-  LEGACY_PLAYBOOK_DIR,
+  LEGACY_PLAYBOOK_DIRS,
   SCHEMA_VERSION,
   applyGitignoreMigration,
   assertDirectory,
@@ -89,29 +89,37 @@ export async function migratePlaybookPath(options) {
   await assertDirectory(target, 'Target repository does not exist');
 
   const resolvedTarget = path.resolve(target);
-  const legacyRoot = path.join(resolvedTarget, LEGACY_PLAYBOOK_DIR);
-  const dotRoot = path.join(resolvedTarget, DEFAULT_PLAYBOOK_DIR);
-  const hasLegacy = existsSync(legacyRoot);
-  const hasDot = existsSync(dotRoot);
+  const activeRoot = path.join(resolvedTarget, DEFAULT_PLAYBOOK_DIR);
+  const legacySources = LEGACY_PLAYBOOK_DIRS
+    .map((directory) => ({ directory, root: path.join(resolvedTarget, directory), exists: existsSync(path.join(resolvedTarget, directory)) }))
+    .filter((source) => source.exists);
+  const hasActive = existsSync(activeRoot);
+  const selectedLegacy = legacySources[0] ?? null;
   const operations = [];
   const warnings = [];
   const conflicts = [];
 
-  if (hasDot && hasLegacy) {
+  if (hasActive && legacySources.length > 0) {
     conflicts.push({
       id: 'playbook.destination-exists',
-      message: `Both ${DEFAULT_PLAYBOOK_DIR}/ and ${LEGACY_PLAYBOOK_DIR}/ exist; review and merge manually.`,
-      paths: [`${DEFAULT_PLAYBOOK_DIR}/`, `${LEGACY_PLAYBOOK_DIR}/`]
+      message: `${DEFAULT_PLAYBOOK_DIR}/ already exists beside legacy playbook path(s); review and merge manually.`,
+      paths: [`${DEFAULT_PLAYBOOK_DIR}/`, ...legacySources.map((source) => `${source.directory}/`)]
     });
-  } else if (!hasLegacy && !hasDot) {
+  } else if (!hasActive && legacySources.length > 1) {
+    conflicts.push({
+      id: 'playbook.multiple-legacy-sources',
+      message: `Multiple legacy playbook paths exist; choose one before migrating to ${DEFAULT_PLAYBOOK_DIR}/.`,
+      paths: legacySources.map((source) => `${source.directory}/`)
+    });
+  } else if (!hasActive && legacySources.length === 0) {
     conflicts.push({
       id: 'playbook.source-missing',
-      message: `Missing ${LEGACY_PLAYBOOK_DIR}/ and ${DEFAULT_PLAYBOOK_DIR}/; run bootstrap or inspect the target first.`,
-      paths: [`${LEGACY_PLAYBOOK_DIR}/`, `${DEFAULT_PLAYBOOK_DIR}/`]
+      message: `Missing legacy playbook source paths and ${DEFAULT_PLAYBOOK_DIR}/; run bootstrap or inspect the target first.`,
+      paths: [...LEGACY_PLAYBOOK_DIRS.map((directory) => `${directory}/`), `${DEFAULT_PLAYBOOK_DIR}/`]
     });
-  } else if (hasDot) {
+  } else if (hasActive) {
     warnings.push({
-      id: 'playbook.already-dot-path',
+      id: 'playbook.already-active-path',
       message: `${DEFAULT_PLAYBOOK_DIR}/ already exists; no path migration is needed.`,
       paths: [`${DEFAULT_PLAYBOOK_DIR}/`]
     });
@@ -119,20 +127,20 @@ export async function migratePlaybookPath(options) {
     operations.push({
       id: 'playbook.move',
       action: 'move',
-      message: `Move ${LEGACY_PLAYBOOK_DIR}/ to ${DEFAULT_PLAYBOOK_DIR}/.`,
-      paths: [`${LEGACY_PLAYBOOK_DIR}/`, `${DEFAULT_PLAYBOOK_DIR}/`]
+      message: `Move ${selectedLegacy.directory}/ to ${DEFAULT_PLAYBOOK_DIR}/.`,
+      paths: [`${selectedLegacy.directory}/`, `${DEFAULT_PLAYBOOK_DIR}/`]
     });
   }
 
-  const referencePlanRoot = hasDot ? dotRoot : legacyRoot;
-  const referencePlan = existsSync(referencePlanRoot)
+  const referencePlanRoot = hasActive ? activeRoot : selectedLegacy?.root;
+  const referencePlan = referencePlanRoot && existsSync(referencePlanRoot)
     ? await playbookReferenceUpdatePlan(resolvedTarget, referencePlanRoot)
     : [];
   if (referencePlan.length > 0) {
     operations.push({
       id: 'references.update',
       action: 'replace',
-      message: `Update ${referencePlan.length} file(s) from ${LEGACY_PLAYBOOK_DIR}/ references to ${DEFAULT_PLAYBOOK_DIR}/.`,
+      message: `Update ${referencePlan.length} file(s) from legacy playbook references to ${DEFAULT_PLAYBOOK_DIR}/.`,
       paths: referencePlan.map((item) => toPortablePath(path.relative(resolvedTarget, item.file)))
     });
   }
@@ -143,13 +151,13 @@ export async function migratePlaybookPath(options) {
   const ok = conflicts.length === 0;
   let movedPlaybook = false;
   if (apply && ok) {
-    if (hasLegacy && !hasDot) {
-      await rename(legacyRoot, dotRoot);
+    if (selectedLegacy && !hasActive) {
+      await rename(selectedLegacy.root, activeRoot);
       movedPlaybook = true;
     }
     for (const item of referencePlan) {
-      const file = item.file.startsWith(legacyRoot)
-        ? path.join(dotRoot, path.relative(legacyRoot, item.file))
+      const file = selectedLegacy && item.file.startsWith(selectedLegacy.root)
+        ? path.join(activeRoot, path.relative(selectedLegacy.root, item.file))
         : item.file;
       await writeFile(file, replaceLegacyPlaybookRefs(await readFile(file, 'utf8')));
     }

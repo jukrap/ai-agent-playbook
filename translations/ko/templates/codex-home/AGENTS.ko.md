@@ -36,8 +36,8 @@
 - 작업에 필요한 최소한의 스킬만 사용합니다.
 - 설치된 스킬은 재사용 도우미로 보고, 더 높은 우선순위의 규칙처럼 다루지 않습니다.
 - 사용자가 스킬을 지명하면 사용을 시도하되, 사용자 지시나 프로젝트 로컬 정책보다 우선하지 않습니다.
-- 프로젝트에 `.ai-playbook/`이 있으면 `.ai-playbook/START_HERE.md`, `.ai-playbook/CURRENT.md`, 관련 map, runbook, plan, decision, worklog만 읽습니다.
-- 프로젝트가 `.ai-playbook/`을 사용한다면 새 에이전트용 프로젝트 메모리는 기존 `.ai-playbook/` 구조 아래에 둡니다. 저장소 루트에 일회성 markdown 파일을 흩뿌리지 않습니다.
+- 프로젝트에 `.ai-agent-playbook/`이 있으면 `.ai-agent-playbook/START_HERE.md`, `.ai-agent-playbook/CURRENT.md`, 관련 map, runbook, plan, decision, worklog만 읽습니다.
+- 프로젝트가 `.ai-agent-playbook/`을 사용한다면 새 에이전트용 프로젝트 메모리는 기존 `.ai-agent-playbook/` 구조 아래에 둡니다. 저장소 루트에 일회성 markdown 파일을 흩뿌리지 않습니다.
 
 ## 구현
 
@@ -49,7 +49,7 @@
 
 ## Git, PR, Worklog
 
-- 스테이징, 커밋, 푸시, 커밋 메시지 작성, PR 본문 작성 전에 프로젝트 `.ai-playbook/policy/GIT.md`가 있으면 먼저 읽습니다.
+- 스테이징, 커밋, 푸시, 커밋 메시지 작성, PR 본문 작성 전에 프로젝트 `.ai-agent-playbook/policy/GIT.md`가 있으면 먼저 읽습니다.
 - 프로젝트나 사용자가 autonomous commit을 명시적으로 허용하지 않았다면 커밋 전에 묻습니다.
 - 명시적으로 stage합니다. 저장소 관례가 허용하고 diff를 이미 확인한 경우가 아니라면 `git add .`를 피합니다.
 - 커밋 전 staged files를 확인하고 local-only 또는 민감한 문서가 포함되지 않았는지 봅니다.

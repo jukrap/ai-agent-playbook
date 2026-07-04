@@ -25,16 +25,17 @@ rg -n --glob '!docs/publishing-checklist.md' "PERSONAL_NAME|COMPANY_NAME|CUSTOME
 
 ```powershell
 npm run check
+npm run typecheck
 npm test
 npm pack --dry-run --json
-.\scripts\validate-skills.ps1
-.\scripts\validate-translations.ps1
-.\scripts\validate-mcp-docs.ps1
-.\scripts\validate-public-docs.ps1
+npm run validate:python
+npm run validate:all
 .\scripts\sync-skills.ps1 -WhatIf
 .\install.ps1 -SkipValidation -WhatIf
 .\update.ps1 -SkipValidation -WhatIf
 ```
+
+The PowerShell validation scripts call the same Node validators and are kept for Windows checkout workflows. Prefer the npm scripts when documenting cross-platform release steps.
 
 If skill source files changed, run `.\scripts\sync-skills.ps1` after validation.
 

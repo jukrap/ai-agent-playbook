@@ -39,7 +39,7 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 2. Keep the CLI dependency-free unless the feature needs a dependency.
 3. Add tests for every new command, overwrite rule, or path convention.
 4. Update `docs/harness-runtime.md`, `README.md`, lifecycle docs, and Korean translations.
-5. Run `npm run check`, `npm run typecheck`, `npm test`, and Python validation when the runtime or engine bridge changes.
+5. Run `npm run check`, `npm run typecheck`, `npm test`, and `npm run validate:python` when the runtime or engine bridge changes.
 
 ## Updating commit, PR, or worklog policy
 
@@ -65,18 +65,14 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 npm run check
 npm run typecheck
 npm test
-.\scripts\validate-python.ps1
-.\scripts\validate-naming.ps1
-.\scripts\validate-skills.ps1
-.\scripts\validate-translations.ps1
-.\scripts\validate-mcp-docs.ps1
-.\scripts\validate-public-docs.ps1
+npm run validate:python
+npm run validate:all
 .\scripts\sync-skills.ps1 -WhatIf
 .\install.ps1 -SkipValidation -WhatIf
 .\update.ps1 -SkipValidation -WhatIf
 ```
 
-If validation scripts change, update `.github/workflows/validate.yml` in the same change.
+The PowerShell validation scripts remain Windows-friendly wrappers around the same Node validators. Use the npm scripts as the cross-platform path for macOS, Linux, CI, and package consumers. If validation scripts change, update `.github/workflows/validate.yml` in the same change.
 
 When skill source files changed, sync installed copies after validation:
 

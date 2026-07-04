@@ -39,7 +39,7 @@
 2. 구현은 `src/` 아래에 두고 template 내용은 중복하지 않습니다.
 3. 테스트는 `test/` 아래에 추가합니다.
 4. `docs/harness-runtime.md`, `README.md`, 사용 수명주기 문서, 한국어 번역을 함께 갱신합니다.
-5. Runtime 또는 engine bridge가 바뀌면 `npm run check`, `npm run typecheck`, `npm test`, Python 검증을 함께 실행합니다.
+5. 런타임 또는 엔진 연결부가 바뀌면 `npm run check`, `npm run typecheck`, `npm test`, `npm run validate:python`을 함께 실행합니다.
 
 ## Commit, PR, worklog 정책 갱신
 
@@ -65,18 +65,14 @@
 npm run check
 npm run typecheck
 npm test
-.\scripts\validate-python.ps1
-.\scripts\validate-naming.ps1
-.\scripts\validate-skills.ps1
-.\scripts\validate-translations.ps1
-.\scripts\validate-mcp-docs.ps1
-.\scripts\validate-public-docs.ps1
+npm run validate:python
+npm run validate:all
 .\scripts\sync-skills.ps1 -WhatIf
 .\install.ps1 -SkipValidation -WhatIf
 .\update.ps1 -SkipValidation -WhatIf
 ```
 
-검증 스크립트가 바뀌면 같은 변경에서 `.github/workflows/validate.yml`도 갱신합니다.
+PowerShell 검증 스크립트는 같은 Node 검증기를 부르는 Windows용 래퍼로 유지합니다. macOS, Linux, CI, 패키지 사용자는 npm 명령을 기본 경로로 사용합니다. 검증 스크립트가 바뀌면 같은 변경에서 `.github/workflows/validate.yml`도 갱신합니다.
 
 스킬 원본 파일이 바뀌었으면 검증 뒤 설치된 복사본을 동기화합니다.
 

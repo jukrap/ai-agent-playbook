@@ -19,9 +19,9 @@
 
 반복되는 저장소 관심사에는 설치된 playbook 스킬을 사용합니다.
 
-- `project-bootstrap`: 얇은 루트 에이전트 부트스트랩과 `.ai-playbook/` 설정.
+- `project-bootstrap`: 얇은 루트 에이전트 부트스트랩과 `.ai-agent-playbook/` 설정.
 - `repo-onboarding`: 낯설거나 오래된 저장소 진입.
-- `project-doc-system`: `AGENTS.md`, `.ai-playbook/`, maps, runbooks, plans, worklogs 정리.
+- `project-doc-system`: `AGENTS.md`, `.ai-agent-playbook/`, maps, runbooks, plans, worklogs 정리.
 - `natural-writing-humanization`: README, 문서, PR 본문, 배포 노트, 공개 요약, 한국어/영어 글 작성 또는 번역.
 - `git-worklog-guardrails`: 스테이징, 커밋, 푸시, PR 본문, 작업 기록.
 - `pre-action-fact-gate`: 영향이 큰 작업 전에 사실, 근거 위치, 쓰기 위험, 되돌림 경로를 확인할 때.
@@ -50,9 +50,9 @@
 
 AI 앱에서 playbook MCP 서버를 사용할 수 있다면 수정 전에 read-only 탐색을 우선합니다.
 
-- 리소스부터 읽습니다: `ai-playbook://capabilities`, `ai-playbook://skills`, `ai-playbook://workflows`, `ai-playbook://adapters`, `ai-playbook://playbook-layout`, `ai-playbook://mcp-permission-model`.
+- 리소스부터 읽습니다: `ai-agent-playbook://capabilities`, `ai-agent-playbook://skills`, `ai-agent-playbook://workflows`, `ai-agent-playbook://adapters`, `ai-agent-playbook://playbook-layout`, `ai-agent-playbook://mcp-permission-model`.
 - catalog와 layout 도구로 필요한 스킬, recipe, playbook 파일을 고릅니다.
-- 큰 수정 전이나 관련 `.ai-playbook/` 문맥이 불분명할 때는 `operator_context`, `operator_search`, `index_search`, `operator_preflight`, `write_gate_preview`, 도메인별 도구를 사용합니다.
+- 큰 수정 전이나 관련 `.ai-agent-playbook/` 문맥이 불분명할 때는 `operator_context`, `operator_search`, `index_search`, `operator_preflight`, `write_gate_preview`, 도메인별 도구를 사용합니다.
 - README, 문서, 번역, PR 본문, 배포 노트, 독자를 위한 요약을 검토할 때는 `engine: "auto"`를 지정한 `writing_naturalness_check`와 `natural_writing_review` prompt를 사용합니다.
 - 쓰기 가능한 MCP 도구가 당연히 있다고 가정하지 않습니다. 해당 도구는 `mcp --enable-write-tools`와 명시적 tool-call `apply: true`가 모두 필요합니다.
 - runtime report, index, screenshot, graph hint는 검토와 승격 전까지 신뢰된 memory로 취급하지 않습니다.
@@ -70,12 +70,12 @@ AI 앱에서 playbook MCP 서버를 사용할 수 있다면 수정 전에 read-o
 
 다른 에이전트 런타임의 hook, slash command, plugin environment variable이 여기서 동작한다고 가정하지 않습니다. 다른 에이전트 기준으로 작성된 스킬이나 도구라면 의도를 지원되는 명령과 저장소 로컬 규칙으로 옮깁니다.
 
-이 프로젝트가 나중에 runtime hook을 켜더라도 선택 사항으로 유지하고 문서화합니다. Hook은 reminder나 context를 주입할 수 있지만 durable rule은 여전히 `AGENTS.md`, `.ai-playbook/`, project docs에 있어야 합니다.
+이 프로젝트가 나중에 runtime hook을 켜더라도 선택 사항으로 유지하고 문서화합니다. Hook은 reminder나 context를 주입할 수 있지만 durable rule은 여전히 `AGENTS.md`, `.ai-agent-playbook/`, project docs에 있어야 합니다.
 
 ## Skill 대신 project docs에 써야 할 때
 
-- `AGENTS.md`에는 루트 진입점만 두고, 상시 skill 정책은 이 파일에, 더 긴 프로젝트 지침은 `.ai-playbook/` 문서에 둡니다.
+- `AGENTS.md`에는 루트 진입점만 두고, 상시 skill 정책은 이 파일에, 더 긴 프로젝트 지침은 `.ai-agent-playbook/` 문서에 둡니다.
 - 제품 범위는 제품/명세 문서에 둡니다.
 - 마일스톤은 계획 문서에 둡니다.
-- 프로젝트 메모리는 `.ai-playbook/` 아래에 둡니다.
+- 프로젝트 메모리는 `.ai-agent-playbook/` 아래에 둡니다.
 - 프로젝트를 넘어 재사용되는 동작일 때만 스킬을 만들거나 설치합니다.

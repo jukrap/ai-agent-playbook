@@ -354,8 +354,8 @@ export async function createWriteGateAdvisory({ repoRoot, target, intent, filePa
 function isPlaybookRuntimePath(filePath) {
   const portablePath = normalizePortablePath(filePath);
   return (
-    portablePath === '.ai-playbook/runtime' ||
-    portablePath.startsWith('.ai-playbook/runtime/')
+    portablePath === '.ai-agent-playbook/runtime' ||
+    portablePath.startsWith('.ai-agent-playbook/runtime/')
   );
 }
 

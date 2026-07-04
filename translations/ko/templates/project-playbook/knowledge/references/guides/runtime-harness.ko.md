@@ -1,45 +1,45 @@
 # 런타임 하네스 가이드
 
-`templates/project-playbook/`을 대상 프로젝트에 `.ai-playbook/`로 복사한 뒤 이 가이드를 사용합니다.
+`templates/project-playbook/`을 대상 프로젝트에 `.ai-agent-playbook/`로 복사한 뒤 이 가이드를 사용합니다.
 
-런타임 하네스는 루트 에이전트 파일, `.ai-playbook/` 프로젝트 메모리, 설치형 스킬, 이 저장소의 작은 CLI를 합친 것입니다. 모든 프로젝트에 같은 작업 흐름이 필요하다고 단정하지 않으면서도 에이전트 설정을 반복 가능하게 만드는 것이 목적입니다.
+런타임 하네스는 루트 에이전트 파일, `.ai-agent-playbook/` 프로젝트 메모리, 설치형 스킬, 이 저장소의 작은 CLI를 합친 것입니다. 모든 프로젝트에 같은 작업 흐름이 필요하다고 단정하지 않으면서도 에이전트 설정을 반복 가능하게 만드는 것이 목적입니다.
 
 ## 일반 설정 흐름
 
 이 저장소에서 실행합니다.
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
-node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
-node .\bin\ai-playbook.mjs migrate path <target-repo> --json
-node .\bin\ai-playbook.mjs managed check <target-repo> --json
-node .\bin\ai-playbook.mjs managed catalog <target-repo> --json
-node .\bin\ai-playbook.mjs managed prune <target-repo> --path .ai-playbook/knowledge/references/guides/runtime-harness.md --json
-node .\bin\ai-playbook.mjs managed uninstall <target-repo> --json
-node .\bin\ai-playbook.mjs doctor <target-repo>
-node .\bin\ai-playbook.mjs context status <target-repo> --path src/example.ts --json
-node .\bin\ai-playbook.mjs run start <target-repo> --title "short-run-title" --dry-run
-node .\bin\ai-playbook.mjs run status <target-repo> --json
-node .\bin\ai-playbook.mjs contracts check <target-repo> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator check <target-repo> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator search <target-repo> --query "auth flow" --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator context <target-repo> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator analyze <target-repo> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator map <target-repo> --json
-node .\bin\ai-playbook.mjs operator audit <target-repo> --json
-node .\bin\ai-playbook.mjs operator gc <target-repo> --json
-node .\bin\ai-playbook.mjs rules check <target-repo> --path src/example.ts --json
-node .\bin\ai-playbook.mjs diagnostics check <target-repo> --json
-node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
+node .\bin\aapb.mjs bootstrap <target-repo> --dry-run
+node .\bin\aapb.mjs bootstrap <target-repo> --local-only
+node .\bin\aapb.mjs guides sync <target-repo> --dry-run
+node .\bin\aapb.mjs guides sync <target-repo> --check --diff --json
+node .\bin\aapb.mjs migrate path <target-repo> --json
+node .\bin\aapb.mjs managed check <target-repo> --json
+node .\bin\aapb.mjs managed catalog <target-repo> --json
+node .\bin\aapb.mjs managed prune <target-repo> --path .ai-agent-playbook/knowledge/references/guides/runtime-harness.md --json
+node .\bin\aapb.mjs managed uninstall <target-repo> --json
+node .\bin\aapb.mjs doctor <target-repo>
+node .\bin\aapb.mjs context status <target-repo> --path src/example.ts --json
+node .\bin\aapb.mjs run start <target-repo> --title "short-run-title" --dry-run
+node .\bin\aapb.mjs run status <target-repo> --json
+node .\bin\aapb.mjs contracts check <target-repo> --path src/example.ts --json
+node .\bin\aapb.mjs operator check <target-repo> --path src/example.ts --json
+node .\bin\aapb.mjs operator search <target-repo> --query "auth flow" --path src/example.ts --json
+node .\bin\aapb.mjs operator context <target-repo> --path src/example.ts --json
+node .\bin\aapb.mjs operator analyze <target-repo> --path src/example.ts --json
+node .\bin\aapb.mjs operator map <target-repo> --json
+node .\bin\aapb.mjs operator audit <target-repo> --json
+node .\bin\aapb.mjs operator gc <target-repo> --json
+node .\bin\aapb.mjs rules check <target-repo> --path src/example.ts --json
+node .\bin\aapb.mjs diagnostics check <target-repo> --json
+node .\bin\aapb.mjs qa tui-check .\capture.txt --cols 100 --json
 ```
 
 대상 프로젝트에 이미 에이전트 문서가 있으면 먼저 `--dry-run`을 사용합니다. Bootstrap은 파일을 만들기 전에 쓰기 작업을 먼저 점검하지만, 충돌은 여전히 검토해야 합니다. 충돌을 확인하고 생성 파일이 기존 파일을 대체해야 한다고 판단한 뒤에만 `--force`를 사용합니다.
 
-대상 프로젝트에 이미 `.ai-playbook/`이 있고 새 playbook checkout의 누락된 가이드만 가져오고 싶다면 `guides sync`를 사용합니다. 기본값은 기존 가이드, 루트 정책, 현재 프로젝트 메모, plan, worklog를 유지합니다. Local edit을 교체하기 전 stale guide를 검토하려면 `guides sync --check --diff --json`을 사용합니다.
+대상 프로젝트에 이미 `.ai-agent-playbook/`이 있고 새 playbook checkout의 누락된 가이드만 가져오고 싶다면 `guides sync`를 사용합니다. 기본값은 기존 가이드, 루트 정책, 현재 프로젝트 메모, plan, worklog를 유지합니다. Local edit을 교체하기 전 stale guide를 검토하려면 `guides sync --check --diff --json`을 사용합니다.
 
-프로젝트가 아직 legacy `ai-playbook/` 폴더를 사용한다면 `migrate path --json`으로 `.ai-playbook/` 이동, 참조 갱신, `.gitignore` 변경을 먼저 preview합니다. Preview를 검토한 뒤에만 `--apply`를 추가합니다. 두 경로가 모두 있으면 멈추고 수동으로 병합합니다.
+프로젝트가 아직 legacy `ai-playbook/` 폴더를 사용한다면 `migrate path --json`으로 `.ai-agent-playbook/` 이동, 참조 갱신, `.gitignore` 변경을 먼저 preview합니다. Preview를 검토한 뒤에만 `--apply`를 추가합니다. 두 경로가 모두 있으면 멈추고 수동으로 병합합니다.
 
 `managed check`로 project-level install marker를 확인하고 `managed catalog`로 소유 파일을 kind/status별로 봅니다. 오래전에 복사한 파일이 현재 template과 일치할 때만 `managed adopt --apply`를 사용하고, 선택한 수정되지 않은 파일을 preview한 뒤에만 `managed prune --apply --path <managed-path>`를 사용하며, 어떤 수정되지 않은 파일이 제거될지 preview한 뒤에만 `managed uninstall --apply`를 사용합니다. 로컬에서 수정된 파일은 보존됩니다.
 
@@ -48,13 +48,13 @@ node .\bin\ai-playbook.mjs qa tui-check .\capture.txt --cols 100 --json
 반복 가능한 파일 배치에는 CLI를 사용합니다.
 
 ```powershell
-node .\bin\ai-playbook.mjs plan new <target-repo> --title "short-plan-title"
-node .\bin\ai-playbook.mjs run start <target-repo> --title "short-run-title" --dry-run
-node .\bin\ai-playbook.mjs run record <target-repo> --run-id short-run-title --type evidence --status pass --message "Verification passed" --evidence .ai-playbook/workflows/runs/short-run-title/evidence/verification.txt
-node .\bin\ai-playbook.mjs contracts list <target-repo> --json
-node .\bin\ai-playbook.mjs worklog new <target-repo> --title "short-worklog-title"
-node .\bin\ai-playbook.mjs worklog summarize <target-repo> --month YYYY-MM
-node .\bin\ai-playbook.mjs doctor <target-repo> --strict
+node .\bin\aapb.mjs plan new <target-repo> --title "short-plan-title"
+node .\bin\aapb.mjs run start <target-repo> --title "short-run-title" --dry-run
+node .\bin\aapb.mjs run record <target-repo> --run-id short-run-title --type evidence --status pass --message "Verification passed" --evidence .ai-agent-playbook/workflows/runs/short-run-title/evidence/verification.txt
+node .\bin\aapb.mjs contracts list <target-repo> --json
+node .\bin\aapb.mjs worklog new <target-repo> --title "short-worklog-title"
+node .\bin\aapb.mjs worklog summarize <target-repo> --month YYYY-MM
+node .\bin\aapb.mjs doctor <target-repo> --strict
 ```
 
 세션 중 행동에는 스킬을 사용합니다.
@@ -81,7 +81,7 @@ Agent에게 더 강한 evidence가 필요하지만 hook까지는 과할 때 oper
 
 ## 파일 배치 규칙
 
-- 루트 `AGENTS.md`는 얇은 부트스트랩으로 유지합니다. skill/Git 정책은 `.ai-playbook/policy/SKILLS.md`와 `.ai-playbook/policy/GIT.md`에 둡니다.
+- 루트 `AGENTS.md`는 얇은 부트스트랩으로 유지합니다. skill/Git 정책은 `.ai-agent-playbook/policy/SKILLS.md`와 `.ai-agent-playbook/policy/GIT.md`에 둡니다.
 - 현재 사실은 `CURRENT.md`에 둡니다.
 - Path-scoped 읽기 힌트는 `memory/context/`에 둡니다.
 - 문서 위치는 `memory/maps/doc-map.md`에 둡니다.
@@ -98,9 +98,9 @@ Agent에게 더 강한 evidence가 필요하지만 hook까지는 과할 때 oper
 
 ## 로컬 전용 정책
 
-프로젝트별 세부사항을 쓰기 전에 `.ai-playbook/`을 커밋할지 로컬 전용으로 둘지 결정합니다.
+프로젝트별 세부사항을 쓰기 전에 `.ai-agent-playbook/`을 커밋할지 로컬 전용으로 둘지 결정합니다.
 
-메모에 비공개 맥락, 끝나지 않은 분석, 원본 로그, 민감한 URL, 특정 고객 세부사항이 들어갈 수 있으면 로컬 전용 모드를 사용합니다. 프로젝트가 `.ai-playbook/`을 커밋한다면 공개 문서처럼 민감한 내용을 정리합니다.
+메모에 비공개 맥락, 끝나지 않은 분석, 원본 로그, 민감한 URL, 특정 고객 세부사항이 들어갈 수 있으면 로컬 전용 모드를 사용합니다. 프로젝트가 `.ai-agent-playbook/`을 커밋한다면 공개 문서처럼 민감한 내용을 정리합니다.
 
 ## 유지보수 주기
 

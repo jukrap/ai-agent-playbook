@@ -12,7 +12,7 @@
 - `security/dependency-supply-chain-review` already covers dependency, lockfile, SBOM, license, provenance, container, and CVE review.
 - `devops/deployment-release-check` covers deployment gates and rollback readiness.
 - MCP prompts cover deployment, frontend quality, data integrity, and ADR/spec handoff review.
-- Workflow run scaffold exists for creating bounded run records under `.ai-playbook/workflows/runs/`.
+- Workflow run scaffold exists for creating bounded run records under `.ai-agent-playbook/workflows/runs/`.
 
 ## Reference-Derived Rules To Adopt
 

@@ -40,7 +40,7 @@
 
 - Capability eval, regression eval, code/rule/model/human grader, pass@k/pass^k, cost/latency caveat, release-critical threshold.
 - Prompt change, workflow recipe, MCP prompt, write tier, skill behavior에 대한 eval definition.
-- Eval definition, run history, release summary를 promotion 전까지 `.ai-playbook/runtime/` 또는 workflow run record 아래에 분리합니다.
+- Eval definition, run history, release summary를 promotion 전까지 `.ai-agent-playbook/runtime/` 또는 workflow run record 아래에 분리합니다.
 
 **Acceptance:**
 
@@ -88,7 +88,7 @@
 **Acceptance:**
 
 - 기본 command는 read-only입니다.
-- History는 `.ai-playbook/runtime/reports/witness/` 또는 `.ai-playbook/runtime/indexes/` 아래에 둡니다.
+- History는 `.ai-agent-playbook/runtime/reports/witness/` 또는 `.ai-agent-playbook/runtime/indexes/` 아래에 둡니다.
 - 명시적 managed-write tier가 생기기 전까지 MCP는 read tool만 노출합니다.
 
 ## Workstream C: Pre-Action Fact Gate

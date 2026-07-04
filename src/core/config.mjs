@@ -331,11 +331,11 @@ function readEnvOverrides(env, playbook) {
   const conflicts = [];
   const values = {};
 
-  readIntegerEnv(env, 'AI_PLAYBOOK_CONTEXT_MAX_CHARS', 'context.maxChars', values, conflicts, 500);
-  readStringEnv(env, 'AI_PLAYBOOK_DEFAULT_RECIPE', 'workflow.defaultRecipe', values);
-  readRuntimePathEnv(env, 'AI_PLAYBOOK_RUNTIME_CACHE_DIR', 'runtime.cacheDir', values, conflicts, playbook);
-  readIntegerEnv(env, 'AI_PLAYBOOK_INDEX_MAX_FILES', 'runtime.indexMaxFiles', values, conflicts, 1);
-  readBooleanEnv(env, 'AI_PLAYBOOK_ENABLE_WRITE_TOOLS', 'mcp.enableWriteTools', values, conflicts);
+  readIntegerEnv(env, 'AI_AGENT_PLAYBOOK_CONTEXT_MAX_CHARS', 'context.maxChars', values, conflicts, 500);
+  readStringEnv(env, 'AI_AGENT_PLAYBOOK_DEFAULT_RECIPE', 'workflow.defaultRecipe', values);
+  readRuntimePathEnv(env, 'AI_AGENT_PLAYBOOK_RUNTIME_CACHE_DIR', 'runtime.cacheDir', values, conflicts, playbook);
+  readIntegerEnv(env, 'AI_AGENT_PLAYBOOK_INDEX_MAX_FILES', 'runtime.indexMaxFiles', values, conflicts, 1);
+  readBooleanEnv(env, 'AI_AGENT_PLAYBOOK_ENABLE_WRITE_TOOLS', 'mcp.enableWriteTools', values, conflicts);
 
   const flattened = flattenConfig(values);
   summary.keys = Object.keys(flattened);

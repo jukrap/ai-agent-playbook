@@ -16,7 +16,7 @@
 
 ## Design Principles
 
-- **Graph is evidence, not truth:** Repo graph output stays under `.ai-playbook/runtime/` and names source indexes, scan range, timestamp, and confidence.
+- **Graph is evidence, not truth:** Repo graph output stays under `.ai-agent-playbook/runtime/` and names source indexes, scan range, timestamp, and confidence.
 - **Locator before claim:** Any cited file, source, report, or registry item should be reopenable through a target-relative locator or a declared external source boundary.
 - **Gate before ship:** CI, release, security, license, dependency, migration, and documentation gates should be explicit workflow steps with stop conditions.
 - **No hidden writes:** Runtime graph and gate checks are read-only by default. Any future write uses existing `--apply`/write-gate patterns and remains inside managed playbook paths.
@@ -258,8 +258,8 @@ npm test
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 .\scripts\validate-public-docs.ps1
-node bin\ai-playbook.mjs catalog check --json
-node bin\ai-playbook.mjs skills lint --json
+node bin\aapb.mjs catalog check --json
+node bin\aapb.mjs skills lint --json
 .\scripts\sync-skills.ps1 -WhatIf
 .\install.ps1 -SkipValidation -WhatIf
 .\update.ps1 -SkipValidation -WhatIf
@@ -292,5 +292,5 @@ git diff --check
 - No MCP project-write tools.
 - No automatic code rewrite, rename, migration, deployment, package publish, or remote issue update.
 - No default network calls for CVE, package registry, deployment, analytics, or documentation crawling.
-- No direct promotion of generated graph facts into `.ai-playbook/memory/`.
+- No direct promotion of generated graph facts into `.ai-agent-playbook/memory/`.
 - No raw reference-project prose, branding, or large excerpts in public docs.

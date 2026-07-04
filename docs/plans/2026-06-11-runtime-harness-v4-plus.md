@@ -4,7 +4,7 @@
 
 **Goal:** Extend the runtime harness beyond read-only adapter reminders without losing the current document-first, opt-in, no-network, no-hidden-policy boundary.
 
-**Architecture:** Keep the CLI and `.ai-playbook/` document harness as the stable core. Add runtime automation in layers: diagnostics first, local configuration helpers second, and only then carefully controlled blocking or continuation experiments. Every runtime behavior must be disabled by default unless the plan explicitly says otherwise.
+**Architecture:** Keep the CLI and `.ai-agent-playbook/` document harness as the stable core. Add runtime automation in layers: diagnostics first, local configuration helpers second, and only then carefully controlled blocking or continuation experiments. Every runtime behavior must be disabled by default unless the plan explicitly says otherwise.
 
 **Tech Stack:** Dependency-free Node ESM, Node test runner, PowerShell validation scripts, Markdown source docs with Korean translations.
 
@@ -18,7 +18,7 @@ The repository already has:
 - JSON schema version `1` for doctor, guide check, context, and adapter readiness;
 - Codex and Claude Code read-only hook wrappers over a shared context runner;
 - default hook events `SessionStart` and `PostCompact`;
-- opt-in `UserPromptSubmit` and `PostToolUse` lifecycle reminders via `AI_PLAYBOOK_HOOK_EVENTS`;
+- opt-in `UserPromptSubmit` and `PostToolUse` lifecycle reminders via `AI_AGENT_PLAYBOOK_HOOK_EVENTS`;
 - fixture coverage for supported hook output, quiet paths, spaces, non-ASCII paths, and no-write behavior.
 
 The next work should not replace that baseline with a full runtime-first harness. It should make the document and CLI harness more observable, then make optional runtime use easier to verify.
@@ -93,7 +93,7 @@ V4 should strengthen the core CLI before adding stronger hook behavior.
 **Design:**
 
 - Add doctor checks under category `freshness`.
-- Detect months that have files under `.ai-playbook/worklogs/YYYY-MM/*.md` but no corresponding `.ai-playbook/worklogs/summaries/YYYY-MM.md`.
+- Detect months that have files under `.ai-agent-playbook/worklogs/YYYY-MM/*.md` but no corresponding `.ai-agent-playbook/worklogs/summaries/YYYY-MM.md`.
 - Detect a summary file older than one or more worklog entries in the same month.
 - Warn, not fail, in default doctor mode.
 - Fail only in `doctor --strict` if the repository already treats all warnings as strict failures.
@@ -149,11 +149,11 @@ Only do this after Tasks 1-3 are reviewed.
 
 **Design:**
 
-- Add `Stop` as an opt-in event through `AI_PLAYBOOK_HOOK_EVENTS`.
+- Add `Stop` as an opt-in event through `AI_AGENT_PLAYBOOK_HOOK_EVENTS`.
 - Keep it non-blocking.
 - Do not request continuation.
 - Do not execute doctor automatically.
-- Output only a short reminder when the target has `.ai-playbook/`.
+- Output only a short reminder when the target has `.ai-agent-playbook/`.
 - Use a cooldown or deterministic quiet path if the event would fire too often. If no reliable cooldown can be implemented without state files, do not add `Stop` yet.
 
 **Tests:**
@@ -183,9 +183,9 @@ V5 is worthwhile only if users are actually enabling hooks manually and repeatin
 ### Suggested CLI
 
 ```powershell
-node .\bin\ai-playbook.mjs adapter config <target> --adapter codex --json
-node .\bin\ai-playbook.mjs adapter config <target> --adapter claude-code --json
-node .\bin\ai-playbook.mjs adapter check <target> --adapter codex --settings <local-settings-path> --json
+node .\bin\aapb.mjs adapter config <target> --adapter codex --json
+node .\bin\aapb.mjs adapter config <target> --adapter claude-code --json
+node .\bin\aapb.mjs adapter check <target> --adapter codex --settings <local-settings-path> --json
 ```
 
 ### V5 Boundaries
@@ -215,7 +215,7 @@ V6 should stay smaller than blocking. After V4 and V5, the next safe runtime ste
 
 ### V6 Scope
 
-1. Add `Stop` to `AI_PLAYBOOK_HOOK_EVENTS` as an optional reminder event.
+1. Add `Stop` to `AI_AGENT_PLAYBOOK_HOOK_EVENTS` as an optional reminder event.
 2. Emit a short handoff reminder only when the target has a playbook.
 3. Keep blocking, continuation, and automatic doctor execution out of V6.
 
@@ -250,7 +250,7 @@ V7 is optional. Keep it smaller than a full plugin: add adapter-local package sh
 ### V7 Goals
 
 - Expose the same hook, config, and check commands behind a thin runtime-specific shell.
-- Keep project rules in `AGENTS.md` and `.ai-playbook/`, not in plugin-only files.
+- Keep project rules in `AGENTS.md` and `.ai-agent-playbook/`, not in plugin-only files.
 - Keep adapter-specific files under `adapters/`.
 - Keep plugin installation and user configuration mutation out of scope.
 

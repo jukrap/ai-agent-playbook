@@ -10,12 +10,12 @@ $venv = Join-Path $repoRoot ".venv"
 function Resolve-Python {
   param([string]$Requested)
   if ($Requested) { return @($Requested) }
-  if ($env:AI_PLAYBOOK_PYTHON) { return @($env:AI_PLAYBOOK_PYTHON) }
+  if ($env:AI_AGENT_PLAYBOOK_PYTHON) { return @($env:AI_AGENT_PLAYBOOK_PYTHON) }
   $py = Get-Command py -ErrorAction SilentlyContinue
   if ($py) { return @("py", "-3") }
   $python = Get-Command python -ErrorAction SilentlyContinue
   if ($python) { return @("python") }
-  throw "Python 3.11+ was not found. Install Python or set AI_PLAYBOOK_PYTHON."
+  throw "Python 3.11+ was not found. Install Python or set AI_AGENT_PLAYBOOK_PYTHON."
 }
 
 $pythonCommand = @(Resolve-Python -Requested $Python)

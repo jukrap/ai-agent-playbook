@@ -15,6 +15,7 @@ test('harness facade keeps the public runtime exports', () => {
     'INSTALL_MANIFEST_FILE',
     'INSTALL_SOURCE',
     'LEGACY_PLAYBOOK_DIR',
+    'LEGACY_PLAYBOOK_DIRS',
     'REQUIRED_PLAYBOOK_FILES',
     'RUNS_DIR',
     'SCHEMA_VERSION',

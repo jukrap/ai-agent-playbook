@@ -48,6 +48,6 @@
 - [ ] `.\scripts\validate-skills.ps1`를 실행합니다.
 - [ ] `.\scripts\validate-translations.ps1`를 실행합니다.
 - [ ] `.\scripts\validate-public-docs.ps1`를 실행합니다.
-- [ ] `node bin\ai-playbook.mjs catalog check --json`을 실행합니다.
+- [ ] `node bin\aapb.mjs catalog check --json`을 실행합니다.
 - [ ] `git diff --check`를 실행합니다.
 - [ ] 명시 파일만 stage하고 staged diff를 확인한 뒤 commit합니다.

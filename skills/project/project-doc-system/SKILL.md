@@ -1,6 +1,6 @@
 ---
 name: project-doc-system
-description: Use when creating, reorganizing, or reviewing project AI docs such as AGENTS.md, ai-playbook, project specs, plans, maps, runbooks, worklogs, or local-only documentation.
+description: Use when creating, reorganizing, or reviewing project AI docs such as AGENTS.md, .ai-agent-playbook, project specs, plans, maps, runbooks, worklogs, or local-only documentation.
 ---
 
 # Project Doc System
@@ -10,7 +10,7 @@ Separate working rules from product facts and keep stale notes out of active gui
 ## Workflow
 
 1. Inspect existing docs and git/local-only policy before proposing structure.
-2. Keep `AGENTS.md` as a thin entrypoint; move current project memory into `.ai-playbook/`.
+2. Keep `AGENTS.md` as a thin entrypoint; move current project memory into `.ai-agent-playbook/`.
 3. Separate current truth, working vocabulary, maps, runbooks, decisions, active plans, worklogs, and archived notes.
 4. Preserve dated prompts, handoffs, and worklogs as history unless their rules are still current.
 5. Promote still-current facts and stable shared terms from worklogs into `CURRENT.md`, maps, runbooks, or decisions.

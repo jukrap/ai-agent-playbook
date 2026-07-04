@@ -1,6 +1,6 @@
 # 사용 수명주기
 
-이 문서는 명령 실행 방식 선택, 재사용 스킬 설치/업데이트/삭제, MCP 수동 등록, `.ai-playbook/` 생성과 제거, 로컬 체크아웃 스크립트 사용까지 전체 흐름을 다룹니다.
+이 문서는 명령 실행 방식 선택, 재사용 스킬 설치/업데이트/삭제, MCP 수동 등록, `.ai-agent-playbook/` 생성과 제거, 로컬 체크아웃 스크립트 사용까지 전체 흐름을 다룹니다.
 
 이 패키지는 npm 또는 npx로 사용하는 방식이 가장 쉽습니다. 로컬 Git 체크아웃과 PowerShell 스크립트는 개발, 비공개 포크, 명시적인 로컬 스크립트를 선호하는 Windows 환경을 위해 계속 지원합니다.
 
@@ -8,12 +8,12 @@
 
 세 계층은 서로 다릅니다.
 
-1. npm 패키지는 `ai-playbook` CLI와 함께 묶인 원본 파일을 설치합니다.
+1. npm 패키지는 `aapb` CLI와 함께 묶인 원본 파일을 설치합니다.
 2. `skills install`은 재사용 스킬을 사용자 수준 스킬 루트에 복사합니다.
 3. `bootstrap`은 대상 저장소 하나에 프로젝트 플레이북을 복사합니다.
 4. `mcp`는 MCP를 지원하는 AI 앱이 실행할 때만 로컬 stdio 서버를 시작합니다.
 
-npm 패키지 설치만으로는 스킬 복사, `.ai-playbook/` 생성, 훅 활성화, MCP 설정 등록, 명령 단축 등록이 일어나지 않습니다. 그런 작업은 명시적으로 실행해야 합니다.
+npm 패키지 설치만으로는 스킬 복사, `.ai-agent-playbook/` 생성, 훅 활성화, MCP 설정 등록, 명령 단축 등록이 일어나지 않습니다. 그런 작업은 명시적으로 실행해야 합니다.
 
 ## CLI 설치 방식 선택
 
@@ -24,9 +24,9 @@ Node.js를 사용할 수 있을 때 사용합니다. 공개 패키지는 [`ai-ag
 | 목표 | 명령 | 결과 |
 | ---- | ---- | ---- |
 | 도구를 시험하거나 가끔 실행 | `npx ai-agent-playbook --help` | npm이 해당 명령에 필요한 패키지를 받아 실행합니다. 프로젝트 의존성은 추가하지 않습니다. |
-| 어느 디렉터리에서든 `ai-playbook` 사용 | `npm install -g ai-agent-playbook` | 전역 명령을 설치합니다. 업데이트는 `npm install -g ai-agent-playbook@latest`를 사용합니다. |
-| 한 프로젝트에 도구 고정 | `npm install -D ai-agent-playbook` | 개발 의존성과 `node_modules/ai-agent-playbook`을 추가합니다. 실행은 `npx ai-playbook ...`을 사용합니다. |
-| 소스 체크아웃에서 작업 | `node .\bin\ai-playbook.mjs --help` | 체크아웃된 저장소를 직접 실행합니다. |
+| 어느 디렉터리에서든 `aapb` 사용 | `npm install -g ai-agent-playbook` | 전역 명령을 설치합니다. 업데이트는 `npm install -g ai-agent-playbook@latest`를 사용합니다. |
+| 한 프로젝트에 도구 고정 | `npm install -D ai-agent-playbook` | 개발 의존성과 `node_modules/ai-agent-playbook`을 추가합니다. 실행은 `npx ai-agent-playbook ...`을 사용합니다. |
+| 소스 체크아웃에서 작업 | `node .\bin\aapb.mjs --help` | 체크아웃된 저장소를 직접 실행합니다. |
 | AI 앱이 읽기 전용 도구를 호출하게 하기 | `npx ai-agent-playbook mcp` | AI 앱의 로컬 표준 입출력 MCP 서버 명령으로 등록합니다. |
 
 그냥 `npm install ai-agent-playbook`을 일반적인 첫 단계처럼 쓰지는 않는 편이 좋습니다. 현재 프로젝트의 실행 의존성처럼 추가하고 싶을 때만 사용합니다. 이 명령은 현재 프로젝트의 `node_modules`에 설치하지만, 그래도 스킬 설치나 프로젝트 플레이북 부트스트랩은 하지 않습니다.
@@ -49,11 +49,11 @@ npx ai-agent-playbook operator check <target-project> --json
 
 ```powershell
 npm install -g ai-agent-playbook
-ai-playbook --help
-ai-playbook skills check
+aapb --help
+aapb skills check
 ```
 
-전역 설치 후에는 아래 예시의 `npx ai-agent-playbook`을 `ai-playbook`으로 바꿔 실행할 수 있습니다.
+전역 설치 후에는 아래 예시의 `npx ai-agent-playbook`을 `aapb`으로 바꿔 실행할 수 있습니다.
 
 전체 명령어 설명은 [명령어 가이드](commands.ko.md)를 봅니다.
 
@@ -65,7 +65,7 @@ CLI, 스킬 수명주기, 프로젝트 부트스트랩, MCP 서버에는 Node.js
 
 ```powershell
 .\scripts\bootstrap-python.ps1
-node .\bin\ai-playbook.mjs runtime python-status --json
+node .\bin\aapb.mjs runtime python-status --json
 ```
 
 npm 또는 전역 설치를 사용하는 경우에는 Python 3.11 이상 가상 환경을 만들고 하네스가 그 Python을 보게 합니다.
@@ -73,7 +73,7 @@ npm 또는 전역 설치를 사용하는 경우에는 Python 3.11 이상 가상 
 ```powershell
 py -3.11 -m venv .venv
 .\.venv\Scripts\python -m pip install -U pip kss kiwipiepy
-$env:AI_PLAYBOOK_PYTHON = ".\.venv\Scripts\python.exe"
+$env:AI_AGENT_PLAYBOOK_PYTHON = ".\.venv\Scripts\python.exe"
 npx ai-agent-playbook runtime python-status --json
 ```
 
@@ -121,7 +121,7 @@ npm install -g ai-agent-playbook@latest
 npm uninstall -g ai-agent-playbook
 ```
 
-복사된 스킬을 제거하려면 `npx ai-agent-playbook skills uninstall` 또는 `ai-playbook skills uninstall`을 사용합니다.
+복사된 스킬을 제거하려면 `npx ai-agent-playbook skills uninstall` 또는 `aapb skills uninstall`을 사용합니다.
 
 ## MCP 등록
 
@@ -138,7 +138,7 @@ npx ai-agent-playbook mcp
 ```json
 {
   "mcpServers": {
-    "ai-playbook": {
+    "ai-agent-playbook": {
       "command": "npx",
       "args": ["ai-agent-playbook", "mcp"]
     }
@@ -151,8 +151,8 @@ npx ai-agent-playbook mcp
 ```json
 {
   "mcpServers": {
-    "ai-playbook": {
-      "command": "ai-playbook",
+    "ai-agent-playbook": {
+      "command": "aapb",
       "args": ["mcp"]
     }
   }
@@ -172,16 +172,16 @@ npx ai-agent-playbook mcp
 | `skills check` | 아니오 | 스킬 상태를 보고합니다. |
 | `skills install` / `skills update` | `--dry-run`이 없으면 예 | 사용자 스킬 루트를 변경합니다. |
 | `skills uninstall` | `--dry-run`이 없으면 예 | 사용자 스킬 루트에서 관리 대상 스킬을 제거합니다. |
-| `bootstrap <target>` | `--dry-run`이 없으면 예 | 대상 프로젝트의 루트 `AGENTS.md`와 `.ai-playbook/`을 변경합니다. |
-| `guides sync <target>` | `--dry-run` 또는 `--check`가 없으면 예 | 대상 프로젝트의 `.ai-playbook/knowledge/references/guides/`를 변경합니다. |
-| `context init` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-playbook/memory/context/`와 `.ai-playbook/memory/maps/doc-map.md`를 변경합니다. |
+| `bootstrap <target>` | `--dry-run`이 없으면 예 | 대상 프로젝트의 루트 `AGENTS.md`와 `.ai-agent-playbook/`을 변경합니다. |
+| `guides sync <target>` | `--dry-run` 또는 `--check`가 없으면 예 | 대상 프로젝트의 `.ai-agent-playbook/knowledge/references/guides/`를 변경합니다. |
+| `context init` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-agent-playbook/memory/context/`와 `.ai-agent-playbook/memory/maps/doc-map.md`를 변경합니다. |
 | `context list/status` | 아니오 | 경로 범위 프로젝트 기억을 읽기 전용으로 점검합니다. |
-| `run start/summarize` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-playbook/workflows/runs/`를 변경합니다. |
+| `run start/summarize` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-agent-playbook/workflows/runs/`를 변경합니다. |
 | `run record` | 예 | 선택한 실행 장부에 이벤트 하나를 추가합니다. |
 | `run status` | 아니오 | 실행 상태를 읽기 전용으로 점검합니다. |
-| `contracts init` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-playbook/memory/contracts/`를 변경합니다. |
+| `contracts init` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-agent-playbook/memory/contracts/`를 변경합니다. |
 | `contracts list/check` | 아니오 | 계약 문서를 읽기 전용으로 점검합니다. |
-| `managed adopt/prune/uninstall` | `--apply`가 없으면 아니오 | 대상 프로젝트의 `.ai-playbook/` 관리 파일을 변경합니다. |
+| `managed adopt/prune/uninstall` | `--apply`가 없으면 아니오 | 대상 프로젝트의 `.ai-agent-playbook/` 관리 파일을 변경합니다. |
 | `operator check/search/research/context/analyze/map/audit` | 아니오 | 대상 프로젝트를 읽기 전용으로 진단합니다. |
 | `operator analyze --deep` | 아니오 | AST-grep, 정확한 함수 본문 중복 단서, TypeScript/JavaScript 분석 신호를 읽기 전용으로 반환합니다. |
 | `operator gc` | `--apply`가 없으면 아니오 | 대상 프로젝트의 오래되고 수정되지 않은 관리 플레이북 파일을 변경합니다. |
@@ -236,8 +236,8 @@ Set-Location $target
 ### 3. 스킬 설치
 
 ```powershell
-node .\bin\ai-playbook.mjs skills install --dry-run
-node .\bin\ai-playbook.mjs skills install
+node .\bin\aapb.mjs skills install --dry-run
+node .\bin\aapb.mjs skills install
 ```
 
 Node CLI는 `skills/<category>/<skill>`의 설치형 스킬을 아래 위치로 복사합니다.
@@ -279,7 +279,7 @@ Test-Path "$env:USERPROFILE\.codex\skills\commit-worklog-guardrails\SKILL.md"
 
 ```powershell
 Set-Location "$env:USERPROFILE\Documents\ai-agent-playbook"
-node .\bin\ai-playbook.mjs skills update
+node .\bin\aapb.mjs skills update
 ```
 
 CLI 업데이트는 현재 체크아웃의 관리 대상 설치 스킬을 갱신합니다. 더 최신 원본이 필요하면 먼저 체크아웃을 가져옵니다. 동기화 뒤에는 Codex를 재시작합니다.
@@ -287,7 +287,7 @@ CLI 업데이트는 현재 체크아웃의 관리 대상 설치 스킬을 갱신
 위험한 업데이트 전에는 미리보기를 먼저 사용합니다.
 
 ```powershell
-node .\bin\ai-playbook.mjs skills update --dry-run
+node .\bin\aapb.mjs skills update --dry-run
 ```
 
 호환용 PowerShell 업데이트 스크립트는 여전히 `--ff-only` 가져오기 후 설치기를 실행합니다.
@@ -303,7 +303,7 @@ node .\bin\ai-playbook.mjs skills update --dry-run
 기본 스킬 디렉터리가 아닌 곳을 써야 할 때만 사용합니다.
 
 ```powershell
-node .\bin\ai-playbook.mjs skills install `
+node .\bin\aapb.mjs skills install `
   --codex-root "$env:USERPROFILE\.codex\skills" `
   --agents-root "$env:USERPROFILE\.agents\skills"
 ```
@@ -323,15 +323,15 @@ npx ai-agent-playbook bootstrap <target-project> --dry-run
 npx ai-agent-playbook operator check <target-project> --json
 ```
 
-전역 설치 후에는 `npx ai-agent-playbook`을 `ai-playbook`으로 바꿔 실행합니다. 로컬 체크아웃에서는 `node .\bin\ai-playbook.mjs`로 바꿔 실행합니다. 프로젝트 플레이북, 문맥, 실행 기록, 계약, 관리 파일 정리, 운영자 점검, 어댑터, 계획, 작업 기록 명령 전체 목록은 [명령어 가이드](commands.ko.md)를 봅니다.
+전역 설치 후에는 `npx ai-agent-playbook`을 `aapb`으로 바꿔 실행합니다. 로컬 체크아웃에서는 `node .\bin\aapb.mjs`로 바꿔 실행합니다. 프로젝트 플레이북, 문맥, 실행 기록, 계약, 관리 파일 정리, 운영자 점검, 어댑터, 계획, 작업 기록 명령 전체 목록은 [명령어 가이드](commands.ko.md)를 봅니다.
 
-대상 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다. `.ai-playbook/`을 대상 `.gitignore`에 추가해야 하면 `--local-only`를 사용합니다.
+대상 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다. `.ai-agent-playbook/`을 대상 `.gitignore`에 추가해야 하면 `--local-only`를 사용합니다.
 
-이미 `.ai-playbook/`이 있는 프로젝트에서 새 플레이북 체크아웃의 누락된 가이드 템플릿만 가져오려면 `guides sync`를 사용합니다. `guides sync --check --json`은 원본과 대상 해시를 사용해 오래된 가이드도 보고하고, `--diff`를 추가하면 파일을 쓰지 않고 첫 차이 줄을 보여줍니다. 이 명령은 `--force`로 가이드 파일 덮어쓰기를 명시하지 않는 한 루트 `AGENTS.md`, 플레이북 정책 파일, 프로젝트별 메모를 수정하지 않습니다.
+이미 `.ai-agent-playbook/`이 있는 프로젝트에서 새 플레이북 체크아웃의 누락된 가이드 템플릿만 가져오려면 `guides sync`를 사용합니다. `guides sync --check --json`은 원본과 대상 해시를 사용해 오래된 가이드도 보고하고, `--diff`를 추가하면 파일을 쓰지 않고 첫 차이 줄을 보여줍니다. 이 명령은 `--force`로 가이드 파일 덮어쓰기를 명시하지 않는 한 루트 `AGENTS.md`, 플레이북 정책 파일, 프로젝트별 메모를 수정하지 않습니다.
 
-런타임 명령은 `.ai-playbook/`을 활성 project playbook root로 사용합니다. 새 부트스트랩 결과는 `.ai-playbook/`을 사용하고, 기존 `ai-playbook/` 폴더는 `migrate path`에서만 다룹니다. 레거시 폴더 이동과 참조 갱신은 먼저 `migrate path --json`으로 미리 보고, 검토한 뒤에만 `--apply`를 추가합니다.
+런타임 명령은 `.ai-agent-playbook/`을 활성 project playbook root로 사용합니다. 새 부트스트랩 결과는 `.ai-agent-playbook/`을 사용하고, 기존 `ai-playbook/` 폴더는 `migrate path`에서만 다룹니다. 레거시 폴더 이동과 참조 갱신은 먼저 `migrate path --json`으로 미리 보고, 검토한 뒤에만 `--apply`를 추가합니다.
 
-`bootstrap`과 `guides sync`는 프로젝트 수준 표식인 `.ai-playbook/.ai-agent-playbook-install.json`을 관리합니다. `managed check`로 확인하고, `managed catalog`로 소유 파일을 종류와 상태별로 검토하고, 오래된 일치 설치본에는 `managed adopt --apply`를, 선택한 수정되지 않은 관리 파일 제거에는 `managed prune --apply --path <managed-path>`를, 전체 수정되지 않은 관리 파일 제거에는 `managed uninstall --apply`를 사용합니다. 정리와 제거 명령은 로컬에서 수정된 파일을 보존하고 `.gitignore` 정리는 작업자에게 맡깁니다.
+`bootstrap`과 `guides sync`는 프로젝트 수준 표식인 `.ai-agent-playbook/.ai-agent-playbook-install.json`을 관리합니다. `managed check`로 확인하고, `managed catalog`로 소유 파일을 종류와 상태별로 검토하고, 오래된 일치 설치본에는 `managed adopt --apply`를, 선택한 수정되지 않은 관리 파일 제거에는 `managed prune --apply --path <managed-path>`를, 전체 수정되지 않은 관리 파일 제거에는 `managed uninstall --apply`를 사용합니다. 정리와 제거 명령은 로컬에서 수정된 파일을 보존하고 `.gitignore` 정리는 작업자에게 맡깁니다.
 
 대상 저장소에서 프로젝트 플레이북을 제거할 때는 아래 미리보기 우선 흐름을 사용합니다.
 
@@ -341,7 +341,7 @@ npx ai-agent-playbook managed uninstall <target-project> --json
 npx ai-agent-playbook managed uninstall <target-project> --apply --json
 ```
 
-`managed uninstall --apply`는 `.ai-playbook/.ai-agent-playbook-install.json`에 기록되어 있고 현재 해시가 manifest와 같은 파일만 제거합니다. 수정된 프로젝트 기억은 보존하며 `.gitignore`는 수정하지 않습니다.
+`managed uninstall --apply`는 `.ai-agent-playbook/.ai-agent-playbook-install.json`에 기록되어 있고 현재 해시가 manifest와 같은 파일만 제거합니다. 수정된 프로젝트 기억은 보존하며 `.gitignore`는 수정하지 않습니다.
 
 선택적 어댑터 훅 예시는 내부적으로 `context` 명령을 사용합니다. 이 예시는 읽기 전용이며 `adapters/`에서 수동으로 활성화해야 합니다. `adapter config`로 자리표시자가 없는 로컬 설정을 렌더링한 뒤, 로컬 설정 파일을 수동으로 편집하고 `adapter check --settings <local-settings-path>`로 확인합니다. 운영자 진단, 규칙, TUI, 어댑터 명령 예시는 [명령어 가이드](commands.ko.md)를 봅니다.
 
@@ -361,14 +361,14 @@ npx ai-agent-playbook worklog summarize <target-project> --month 2026-06
 ```powershell
 $projectRoot = Join-Path $env:USERPROFILE 'Documents\example-project'
 Copy-Item .\templates\agents\global\AGENTS.md (Join-Path $projectRoot 'AGENTS.md')
-Copy-Item .\templates\project-playbook (Join-Path $projectRoot '.ai-playbook') -Recurse
+Copy-Item .\templates\project-playbook (Join-Path $projectRoot '.ai-agent-playbook') -Recurse
 ```
 
-`templates/agents/global/`은 `AGENTS.md`용 프로젝트 루트 부트스트랩 템플릿 폴더입니다. 스킬/Git 정책은 `templates/project-playbook/`에서 복사되는 `.ai-playbook/policy/SKILLS.md`, `.ai-playbook/policy/GIT.md`에 둡니다. 그 다음 스택이 확인된 경우에만 `templates/agents/profiles/**`에서 가장 가까운 프로필을 병합하고, 필요한 가이드는 `templates/project-playbook/knowledge/references/guides/**`에서 고릅니다.
+`templates/agents/global/`은 `AGENTS.md`용 프로젝트 루트 부트스트랩 템플릿 폴더입니다. 스킬/Git 정책은 `templates/project-playbook/`에서 복사되는 `.ai-agent-playbook/policy/SKILLS.md`, `.ai-agent-playbook/policy/GIT.md`에 둡니다. 그 다음 스택이 확인된 경우에만 `templates/agents/profiles/**`에서 가장 가까운 프로필을 병합하고, 필요한 가이드는 `templates/project-playbook/knowledge/references/guides/**`에서 고릅니다.
 
 ## Codex 스킬 설치기 참고
 
-Codex의 스킬 설치기는 인증이 가능할 때 Git 저장소 경로에서 개별 스킬을 설치할 수 있습니다. 하지만 이 플레이북은 `npx ai-agent-playbook skills install` 또는 전역 `ai-playbook skills update` 경로를 권장합니다.
+Codex의 스킬 설치기는 인증이 가능할 때 Git 저장소 경로에서 개별 스킬을 설치할 수 있습니다. 하지만 이 플레이북은 `npx ai-agent-playbook skills install` 또는 전역 `aapb skills update` 경로를 권장합니다.
 
 - 저장소에 여러 스킬이 있습니다.
 - 복사용 템플릿과 문서도 함께 있습니다.
@@ -379,4 +379,4 @@ Codex의 스킬 설치기는 인증이 가능할 때 Git 저장소 경로에서 
 
 이 저장소는 외부 작업 흐름 스킬 묶음을 설치하지 않습니다. 별도로 설치한 뒤 필요할 때 이 스킬들과 함께 사용합니다.
 
-프로젝트가 나중에 훅 기반 런타임을 채택하더라도 명시적 선택으로 유지하고 대상 프로젝트의 `.ai-playbook/`에 문서화합니다. 프로젝트는 문서 하네스만으로도 이해하고 사용할 수 있어야 합니다.
+프로젝트가 나중에 훅 기반 런타임을 채택하더라도 명시적 선택으로 유지하고 대상 프로젝트의 `.ai-agent-playbook/`에 문서화합니다. 프로젝트는 문서 하네스만으로도 이해하고 사용할 수 있어야 합니다.

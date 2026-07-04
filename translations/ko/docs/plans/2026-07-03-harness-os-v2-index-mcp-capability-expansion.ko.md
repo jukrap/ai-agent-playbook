@@ -4,7 +4,7 @@
 
 **Goal:** AI Agent Playbook를 단순한 skill/playbook catalog에서 더 넓은 개발 운영 표면으로 확장합니다. 더 풍부한 local runtime index, 쓸모 있는 read-only MCP resource/prompt, workflow run record, devops/frontend quality/mobile/data/documentation/harness extension capability pack을 추가합니다.
 
-**Architecture:** trusted memory, generated runtime evidence, integration setting을 계속 분리합니다. Runtime index output은 `.ai-playbook/runtime/` 아래 local generated artifact로 두고, promoted fact는 명시적인 canon promotion을 거쳐야 합니다. MCP는 기본 read-only이며 scaffold/write 동작은 opt-in 및 audit 가능한 방식으로만 둡니다.
+**Architecture:** trusted memory, generated runtime evidence, integration setting을 계속 분리합니다. Runtime index output은 `.ai-agent-playbook/runtime/` 아래 local generated artifact로 두고, promoted fact는 명시적인 canon promotion을 거쳐야 합니다. MCP는 기본 read-only이며 scaffold/write 동작은 opt-in 및 audit 가능한 방식으로만 둡니다.
 
 **Reference Inputs:** local reference collection은 pattern input으로만 사용합니다. contract, schema, validation idea, workflow boundary, skill-authoring style을 채택합니다. 큰 upstream excerpt, upstream branding, 개인 절대 경로, internal URL, reference-specific noisy name은 public docs에 복사하지 않습니다.
 
@@ -12,7 +12,7 @@
 
 ## Current Baseline
 
-- `.ai-playbook` layout v2는 memory/runtime/integration 분리를 갖고 있습니다.
+- `.ai-agent-playbook` layout v2는 memory/runtime/integration 분리를 갖고 있습니다.
 - Catalog check는 taxonomy v2와 compatibility wrapper를 이해합니다.
 - Reference inventory와 ledger validation이 있습니다.
 - Write-gate advisory/post-check와 canon draft/check/promote는 read-only default를 유지합니다.
@@ -56,7 +56,7 @@
 **Acceptance:**
 
 - JS/TS, Java/Kotlin/C#/PHP/Python/Go fixture에서 기본 pattern 수준으로 동작합니다.
-- `.ai-playbook/runtime/`, dependency directory, binary file, large generated file은 건너뜁니다.
+- `.ai-agent-playbook/runtime/`, dependency directory, binary file, large generated file은 건너뜁니다.
 - 명시적인 미래 `--apply` command가 추가되기 전까지 파일을 쓰지 않습니다.
 
 ### Task A2: Route/API/Data Map Hints
@@ -131,7 +131,7 @@
 
 **Acceptance:**
 
-- MCP는 `.ai-playbook/runtime/indexes`와 `.ai-playbook/runtime/reports`만 읽습니다.
+- MCP는 `.ai-agent-playbook/runtime/indexes`와 `.ai-agent-playbook/runtime/reports`만 읽습니다.
 - index가 없으면 실행 가능한 empty state를 반환합니다.
 - MCP write tool은 기본으로 노출하지 않습니다.
 
@@ -179,7 +179,7 @@
 
 - Command: `workflow run-preview <recipe> <target>`
 - Output은 recipe id, inputs, selected skill categories, planned artifacts, verification, blockers, handoff notes를 포함합니다.
-- Preview는 read-only입니다. 미래 apply는 `.ai-playbook/workflows/runs/` 아래에만 씁니다.
+- Preview는 read-only입니다. 미래 apply는 `.ai-agent-playbook/workflows/runs/` 아래에만 씁니다.
 
 **Acceptance:**
 

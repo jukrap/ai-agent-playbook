@@ -4,7 +4,7 @@ Source registry는 어떤 knowledge source가 있고, 어떻게 search/browse할
 
 ## Registry Location
 
-Project-local source metadata에는 `.ai-playbook/knowledge/sources.json`을 사용합니다. Source summary는 `knowledge/references/`, exploratory note는 `knowledge/research/`, generated report는 `runtime/`에 둡니다.
+Project-local source metadata에는 `.ai-agent-playbook/knowledge/sources.json`을 사용합니다. Source summary는 `knowledge/references/`, exploratory note는 `knowledge/research/`, generated report는 `runtime/`에 둡니다.
 
 ## Source Entry
 

@@ -4,7 +4,7 @@
 
 **Goal:** 현재 AI Agent Playbook v2 preview surface를 transaction handoff, reference adoption validation, 명시적 runtime-to-memory promotion을 갖춘 evidence lifecycle로 확장합니다.
 
-**Architecture:** 기본 harness는 read-only와 local-first를 유지합니다. Generated evidence는 `.ai-playbook/runtime/` 아래에 두고, 장기 신뢰 fact는 명시적 promotion command를 통해 source, scan range, confidence, drift check와 함께 `.ai-playbook/memory/`로 이동합니다. MCP는 write tier가 명시적으로 활성화되기 전까지 discovery와 read-only analysis surface로 유지합니다.
+**Architecture:** 기본 harness는 read-only와 local-first를 유지합니다. Generated evidence는 `.ai-agent-playbook/runtime/` 아래에 두고, 장기 신뢰 fact는 명시적 promotion command를 통해 source, scan range, confidence, drift check와 함께 `.ai-agent-playbook/memory/`로 이동합니다. MCP는 write tier가 명시적으로 활성화되기 전까지 discovery와 read-only analysis surface로 유지합니다.
 
 **Tech Stack:** Dependency-light Node ESM CLI, Node test runner, stdio MCP tools/resources/prompts, Korean translation이 있는 Markdown docs, PowerShell validation scripts.
 
@@ -13,7 +13,7 @@
 ## Current Baseline
 
 - `reference inventory`는 큰 source content를 복사하지 않고 local reference collection을 요약합니다.
-- `reference ledger-check`는 `.ai-playbook/knowledge/reference-adoption-ledger.md`의 adoption status와 local-only leak pattern을 검증합니다.
+- `reference ledger-check`는 `.ai-agent-playbook/knowledge/reference-adoption-ledger.md`의 adoption status와 local-only leak pattern을 검증합니다.
 - `write-gate preview`는 read-only를 유지하면서 transaction id와 planned runtime advisory path를 반환합니다.
 - MCP는 read-only reference inventory, ledger validation, reference adoption review prompt surface를 노출합니다.
 - Runtime output은 사람이 신뢰하는 memory와 분리되어 있습니다.
@@ -80,7 +80,7 @@
 **Steps:**
 
 1. 기본은 preview이고 `--apply`가 있을 때만 쓰는 새 `write-gate advisory <target>` command failing test를 추가합니다.
-2. Advisory write는 target path가 `.ai-playbook/runtime/reports/write-gate/` 내부로 resolve되지 않으면 거부하는지 확인합니다.
+2. Advisory write는 target path가 `.ai-agent-playbook/runtime/reports/write-gate/` 내부로 resolve되지 않으면 거부하는지 확인합니다.
 3. MCP가 기본적으로 apply-capable command를 노출하지 않는지 확인합니다.
 4. Targeted test를 실행합니다.
 
@@ -152,7 +152,7 @@
    {
      "id": "route.auth.login",
      "kind": "route-api-hint",
-     "sourceReport": ".ai-playbook/runtime/reports/example.json",
+     "sourceReport": ".ai-agent-playbook/runtime/reports/example.json",
      "scanRange": ["src/**"],
      "confidence": "medium",
      "observedAt": "YYYY-MM-DD"
@@ -187,7 +187,7 @@
 **Steps:**
 
 1. `canon promote <target> --source <runtime-report> --to <memory-path>` preview mode failing test를 추가합니다.
-2. 기본 mode가 파일을 쓰지 않고, promotion destination이 `.ai-playbook/memory/` 또는 `.ai-playbook/knowledge/references/` 밖이면 거부하는지 확인합니다.
+2. 기본 mode가 파일을 쓰지 않고, promotion destination이 `.ai-agent-playbook/memory/` 또는 `.ai-agent-playbook/knowledge/references/` 밖이면 거부하는지 확인합니다.
 3. Preview behavior가 안정된 뒤에만 `--apply` test를 추가합니다.
 4. Proposed file path, source report, fact ids, warnings, conflicts를 포함하는 preview output을 구현합니다.
 5. Reviewed fact에 대해서만, 그리고 허용된 memory/knowledge path 내부에서만 `--apply`를 구현합니다.

@@ -1,15 +1,15 @@
 # Runtime Harness V8 Migration Hardening
 
-**Goal:** Make existing-project adoption safer after the `.ai-playbook/` path change without adding blocking hooks, continuation, automatic doctor execution, or settings writes.
+**Goal:** Make existing-project adoption safer after the `.ai-agent-playbook/` path change without adding blocking hooks, continuation, automatic doctor execution, or settings writes.
 
 **Architecture:** Keep the document and CLI harness as the default path. Add small, deterministic CLI checks that help users preview writes, review stale guides, and move legacy playbook paths only after explicit approval.
 
 ## Scope
 
 - Add a read-only `migrate path <target>` preview for legacy `ai-playbook/` projects.
-- Add `migrate path <target> --apply` for the reviewed folder move from `ai-playbook/` to `.ai-playbook/`.
-- Update root and playbook references from `ai-playbook/` to `.ai-playbook/` during the migration.
-- Add `.ai-playbook/` to `.gitignore` during migration only when the legacy path is already ignored, while preserving the legacy ignore entry for transition compatibility.
+- Add `migrate path <target> --apply` for the reviewed folder move from `ai-playbook/` to `.ai-agent-playbook/`.
+- Update root and playbook references from `ai-playbook/` to `.ai-agent-playbook/` during the migration.
+- Add `.ai-agent-playbook/` to `.gitignore` during migration only when the legacy path is already ignored, while preserving the legacy ignore entry for transition compatibility.
 - Make bootstrap preflight all planned writes before creating files so conflicts do not leave partial playbook output behind.
 - Add `guides sync --check --diff` to show the first differing line for stale guides without writing files.
 
@@ -20,14 +20,14 @@
 - Do not call the network.
 - Do not treat `--force` as a migration strategy.
 - Do not modify unrelated project files during path migration.
-- Keep legacy `ai-playbook/` read/write compatibility when `.ai-playbook/` is absent.
+- Keep legacy `ai-playbook/` read/write compatibility when `.ai-agent-playbook/` is absent.
 
 ## Test Coverage
 
 - Bootstrap conflict preflight refuses existing root policy files without partial writes.
 - Guide check diff reports stale guide line differences and remains read-only.
 - Migration preview reports folder move, reference updates, and `.gitignore` changes without writing files.
-- Migration apply moves the legacy folder, updates references, and keeps doctor compatible with `.ai-playbook/`.
+- Migration apply moves the legacy folder, updates references, and keeps doctor compatible with `.ai-agent-playbook/`.
 - Migration conflict reports both-path conflicts without writing files.
 - Tests include spaces and non-ASCII characters in target paths.
 

@@ -18,14 +18,14 @@
 - No hook installation or automatic context injection.
 - No slash commands or plugin packaging.
 - No background analysis refresh.
-- No generated `.ai-playbook/maps/` output.
+- No generated `.ai-agent-playbook/maps/` output.
 - No blocking feedback, continuation, or automatic doctor execution.
 
 ## Interfaces
 
 ```powershell
-node .\bin\ai-playbook.mjs operator context <target> --path src/example.ts --json
-node .\bin\ai-playbook.mjs operator map <target> --json
+node .\bin\aapb.mjs operator context <target> --path src/example.ts --json
+node .\bin\aapb.mjs operator map <target> --json
 ```
 
 `operator context --json` returns:
@@ -65,7 +65,7 @@ node .\bin\ai-playbook.mjs operator map <target> --json
 
 - Add failing tests first for both new commands.
 - Include Windows-style path handling through path normalization, spaces, and non-ASCII fixture paths.
-- Verify `operator context` reports matching and non-matching `.ai-playbook/context` files, matching rules, and related maps/runbooks.
+- Verify `operator context` reports matching and non-matching `.ai-agent-playbook/context` files, matching rules, and related maps/runbooks.
 - Verify `operator map` reports package manager, frameworks, language counts, entrypoints, module boundaries, test files, configs, commands, TODO/debug/security signals, and ignored dependency directories.
 - Verify both commands are no-write by comparing file lists before and after execution.
 - Run the full CLI test suite and repository validation commands.

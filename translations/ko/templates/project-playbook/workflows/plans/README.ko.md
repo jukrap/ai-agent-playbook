@@ -5,7 +5,7 @@
 이 저장소에서 날짜가 붙은 plan 파일을 만들려면:
 
 ```powershell
-node .\bin\ai-playbook.mjs plan new <target-repo> --title "short-plan-title"
+node .\bin\aapb.mjs plan new <target-repo> --title "short-plan-title"
 ```
 
 ## 규칙

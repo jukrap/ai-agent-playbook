@@ -9,7 +9,7 @@ Recommended CLI flow:
 ```powershell
 npx ai-agent-playbook run start <target-repo> --title "Feature slice" --dry-run
 npx ai-agent-playbook run start <target-repo> --title "Feature slice"
-npx ai-agent-playbook run record <target-repo> --run-id feature-slice --type evidence --status pass --message "Verification passed" --evidence .ai-playbook/workflows/runs/feature-slice/evidence/verification.txt
+npx ai-agent-playbook run record <target-repo> --run-id feature-slice --type evidence --status pass --message "Verification passed" --evidence .ai-agent-playbook/workflows/runs/feature-slice/evidence/verification.txt
 npx ai-agent-playbook run status <target-repo> --run-id feature-slice --json
 npx ai-agent-playbook run summarize <target-repo> --run-id feature-slice --dry-run
 ```

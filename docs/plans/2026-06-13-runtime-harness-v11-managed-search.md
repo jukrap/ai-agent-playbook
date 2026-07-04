@@ -6,7 +6,7 @@
 
 ## Scope
 
-- Add `.ai-playbook/.ai-agent-playbook-install.json` for copied project harness files.
+- Add `.ai-agent-playbook/.ai-agent-playbook-install.json` for copied project harness files.
 - Add `managed check`, `managed adopt`, and `managed uninstall`.
 - Add `operator search <target> --query <text> [--path <file>] [--max-results N] [--json]`.
 - Keep `operator check` low-noise and unchanged.

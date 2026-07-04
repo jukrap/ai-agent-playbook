@@ -2,7 +2,7 @@
 
 **목표:** 기존 reference adoption ledger에 local reference queue의 누락 row만 append하는 preview-first update command를 추가해, 이미 검토한 decision row를 덮어쓰지 않게 합니다.
 
-**이유:** `reference ledger-init`은 missing ledger 생성에는 안전하지만, bootstrap된 `.ai-playbook` layout에는 이미 `knowledge/reference-adoption-ledger.md`가 있습니다. 이런 프로젝트에는 기존 `reviewed`, `adopted`, `deferred`, `rejected` row를 보존하면서 새 reference candidate만 추가하는 append-only adoption path가 필요합니다.
+**이유:** `reference ledger-init`은 missing ledger 생성에는 안전하지만, bootstrap된 `.ai-agent-playbook` layout에는 이미 `knowledge/reference-adoption-ledger.md`가 있습니다. 이런 프로젝트에는 기존 `reviewed`, `adopted`, `deferred`, `rejected` row를 보존하면서 새 reference candidate만 추가하는 append-only adoption path가 필요합니다.
 
 **아키텍처:** 기존 ledger path와 함께 `buildReferenceAdoptionQueue`를 재사용해 write 전에 prior status를 감지합니다. `ledgerStatus`가 `new`인 queue item만 compact Markdown table row로 만들고, 실제 row를 append할 때 starter blank template row는 제거합니다. 쓰기는 `--apply`가 있을 때만 수행합니다. MCP write access는 `--enable-write-tools`와 `apply: true` 뒤에 둡니다.
 

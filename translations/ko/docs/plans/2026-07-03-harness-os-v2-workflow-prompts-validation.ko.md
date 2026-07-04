@@ -72,7 +72,7 @@
 **Behavior:**
 
 - 미래 `workflow run-start`는 project-write가 아니라 scaffold-tier로 문서화합니다.
-- `.ai-playbook/workflows/runs/` 아래에만 쓸 수 있습니다.
+- `.ai-agent-playbook/workflows/runs/` 아래에만 쓸 수 있습니다.
 - manifest, criteria file, append-only ledger, handoff stub를 써야 합니다.
 
 **Acceptance:**
@@ -138,7 +138,7 @@
 
 **Behavior:**
 
-- `.ai-playbook/config.json`과 `.ai-playbook/config.local.json`을 문서화된 순서로 읽습니다.
+- `.ai-agent-playbook/config.json`과 `.ai-agent-playbook/config.local.json`을 문서화된 순서로 읽습니다.
 - Env override는 명시적이고 좁게 유지합니다.
 - Preview command는 resolved value와 source file을 파일 쓰기 없이 보고합니다.
 - Unsafe path, traversal, malformed JSON, symlinked trusted config는 warning 또는 conflict를 냅니다.

@@ -22,10 +22,10 @@ Add an operator-triggered audit and cleanup preview layer for project playbooks 
 - broken relative markdown links in playbook markdown files;
 - context files whose `globs` do not match any current project file;
 - duplicate playbook markdown content;
-- simultaneous `.ai-playbook/` and legacy `ai-playbook/` folders;
+- simultaneous `.ai-agent-playbook/` and legacy `ai-playbook/` folders;
 - managed manifest missing, malformed, missing file, or modified file states.
 
-`operator gc` uses `.ai-playbook/.ai-agent-playbook-install.json` as the safety boundary. It removes a file only when `--apply` is provided and all of these are true:
+`operator gc` uses `.ai-agent-playbook/.ai-agent-playbook-install.json` as the safety boundary. It removes a file only when `--apply` is provided and all of these are true:
 
 - the file is listed in the managed manifest;
 - the file is under the active playbook directory;
@@ -37,9 +37,9 @@ Modified files are preserved and reported as conflicts. Preview mode writes noth
 ## Public Interface
 
 ```powershell
-node .\bin\ai-playbook.mjs operator audit <target> --json
-node .\bin\ai-playbook.mjs operator gc <target> --json
-node .\bin\ai-playbook.mjs operator gc <target> --apply --json
+node .\bin\aapb.mjs operator audit <target> --json
+node .\bin\aapb.mjs operator gc <target> --json
+node .\bin\aapb.mjs operator gc <target> --apply --json
 ```
 
 `operator audit --json` returns `{ schemaVersion, ok, target, summary, findings, sections, warnings }`.

@@ -19,7 +19,7 @@
 ## Evidence Hygiene
 
 - Prefer target-relative paths and source registry ids over personal absolute paths or private URLs.
-- Keep generated reports under `.ai-playbook/runtime/` and promote only reviewed facts into durable memory.
+- Keep generated reports under `.ai-agent-playbook/runtime/` and promote only reviewed facts into durable memory.
 - Do not paste credentials, token-shaped examples, private URLs, long logs, personal paths, customer data, or internal incident details into public docs.
 - Use bounded summaries instead of raw scanner output when the output contains private paths or environment details.
 - Include scan range for absence claims such as no secrets found, no affected routes found, or no license obligations found.

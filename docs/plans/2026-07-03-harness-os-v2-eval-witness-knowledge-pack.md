@@ -40,7 +40,7 @@
 
 - Capability evals, regression evals, code/rule/model/human graders, pass@k/pass^k, cost/latency caveats, and release-critical thresholds.
 - Eval definitions for prompt changes, workflow recipes, MCP prompts, write tiers, and skill behavior.
-- Separating eval definitions, run history, and release summaries under `.ai-playbook/runtime/` or workflow run records until promoted.
+- Separating eval definitions, run history, and release summaries under `.ai-agent-playbook/runtime/` or workflow run records until promoted.
 
 **Acceptance:**
 
@@ -88,7 +88,7 @@
 **Acceptance:**
 
 - Default commands are read-only.
-- History lives under `.ai-playbook/runtime/reports/witness/` or `.ai-playbook/runtime/indexes/`.
+- History lives under `.ai-agent-playbook/runtime/reports/witness/` or `.ai-agent-playbook/runtime/indexes/`.
 - MCP exposes only read tools until an explicit managed-write tier exists.
 
 ## Workstream C: Pre-Action Fact Gate

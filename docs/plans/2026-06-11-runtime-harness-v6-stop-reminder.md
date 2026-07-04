@@ -13,8 +13,8 @@
 ## Boundaries
 
 - `Stop` is disabled by default.
-- `Stop` is enabled only through `AI_PLAYBOOK_HOOK_EVENTS`.
-- `Stop` emits no output when the target has no `.ai-playbook/` or compatible legacy playbook.
+- `Stop` is enabled only through `AI_AGENT_PLAYBOOK_HOOK_EVENTS`.
+- `Stop` emits no output when the target has no `.ai-agent-playbook/` or compatible legacy playbook.
 - `Stop` does not run `doctor`, block the hook, request continuation, write files, rewrite tool output, or call the network.
 - Public docs must not include private paths, branch names, pull request numbers, credentials, company names, or internal URLs.
 
@@ -26,8 +26,8 @@
 
 **Steps:**
 
-1. Add a test that `Stop` is quiet without `AI_PLAYBOOK_HOOK_EVENTS`.
-2. Add a test that `Stop` emits valid hook JSON when `AI_PLAYBOOK_HOOK_EVENTS=Stop` and the target has a playbook.
+1. Add a test that `Stop` is quiet without `AI_AGENT_PLAYBOOK_HOOK_EVENTS`.
+2. Add a test that `Stop` emits valid hook JSON when `AI_AGENT_PLAYBOOK_HOOK_EVENTS=Stop` and the target has a playbook.
 3. Add a test that missing playbook targets stay quiet.
 4. Assert no files are written by comparing file lists before and after.
 

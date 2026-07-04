@@ -9,13 +9,13 @@ const execFileAsync = promisify(execFile);
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
-test('package metadata exposes ai-playbook bin and is publishable', async () => {
+test('package metadata exposes aapb bin and is publishable', async () => {
   const packageJson = JSON.parse(await readFile(path.join(repoRoot, 'package.json'), 'utf8'));
 
   assert.equal(packageJson.name, 'ai-agent-playbook');
   assert.notEqual(packageJson.private, true);
   assert.deepEqual(packageJson.bin, {
-    'ai-playbook': 'bin/ai-playbook.mjs'
+    aapb: 'bin/aapb.mjs'
   });
   assert.equal(packageJson.license, 'MIT');
   assert.equal(packageJson.repository.type, 'git');
@@ -29,7 +29,7 @@ test('npm pack dry-run includes runtime files and excludes local/test payloads',
   const [pack] = JSON.parse(stdout);
   const files = pack.files.map((file) => file.path);
 
-  assert.equal(files.includes('bin/ai-playbook.mjs'), true);
+  assert.equal(files.includes('bin/aapb.mjs'), true);
   assert.equal(files.includes('src/cli.mjs'), true);
   assert.equal(files.includes('src/catalog/taxonomy.mjs'), true);
   assert.equal(files.includes('src/catalog/reference-adoption.mjs'), true);
@@ -40,7 +40,7 @@ test('npm pack dry-run includes runtime files and excludes local/test payloads',
   assert.equal(files.includes('src/runtime/schemas.mjs'), true);
   assert.equal(files.includes('src/runtime/capability-history.mjs'), true);
   assert.equal(files.includes('pyproject.toml'), true);
-  assert.equal(files.includes('python/ai_playbook_engine/__main__.py'), true);
+  assert.equal(files.includes('engines/python/ai_agent_playbook_engine/__main__.py'), true);
   assert.equal(files.includes('scripts/bootstrap-python.ps1'), true);
   assert.equal(files.includes('scripts/validate-python.ps1'), true);
   assert.equal(files.includes('src/skills-lifecycle.mjs'), true);

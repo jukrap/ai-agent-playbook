@@ -14,8 +14,8 @@
 
 This slice exposes two opt-in tools:
 
-- `workflow_run_start`: scaffold-tier creation under `.ai-playbook/workflows/runs/`.
-- `write_gate_advisory`: managed-write runtime report creation under `.ai-playbook/runtime/reports/write-gate/`.
+- `workflow_run_start`: scaffold-tier creation under `.ai-agent-playbook/workflows/runs/`.
+- `write_gate_advisory`: managed-write runtime report creation under `.ai-agent-playbook/runtime/reports/write-gate/`.
 
 It does not expose project source rewriting, managed uninstall/prune, canon promotion, migrations, contracts snapshot writes, or package installation.
 
@@ -23,9 +23,9 @@ It does not expose project source rewriting, managed uninstall/prune, canon prom
 
 ### Task 1: Server Option
 
-- [x] Parse `ai-playbook mcp --enable-write-tools`.
+- [x] Parse `aapb mcp --enable-write-tools`.
 - [x] Pass `enableWriteTools` into `runMcpServer` and `registerPlaybookMcpTools`.
-- [x] Keep default `ai-playbook mcp` behavior unchanged.
+- [x] Keep default `aapb mcp` behavior unchanged.
 
 ### Task 2: Tool Registration
 

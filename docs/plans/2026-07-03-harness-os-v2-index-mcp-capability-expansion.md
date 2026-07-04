@@ -4,7 +4,7 @@
 
 **Goal:** Turn AI Agent Playbook from a cataloged skill/playbook toolkit into a broader development operating surface: richer local runtime indexes, more useful read-only MCP resources/prompts, workflow run records, and additional capability packs across devops, frontend quality, mobile, data, documentation, and harness extension.
 
-**Architecture:** Keep trusted memory, generated runtime evidence, and integration settings separate. Runtime index outputs remain local generated artifacts under `.ai-playbook/runtime/`; promoted facts require explicit canon promotion. MCP remains read-only by default, with scaffold/write behavior opt-in and auditable.
+**Architecture:** Keep trusted memory, generated runtime evidence, and integration settings separate. Runtime index outputs remain local generated artifacts under `.ai-agent-playbook/runtime/`; promoted facts require explicit canon promotion. MCP remains read-only by default, with scaffold/write behavior opt-in and auditable.
 
 **Reference Inputs:** Use local reference collections as pattern input only. Adopt contracts, schemas, validation ideas, workflow boundaries, and skill-authoring style. Do not copy large upstream excerpts, upstream branding, personal absolute paths, internal URLs, or noisy reference-specific names into public docs.
 
@@ -12,7 +12,7 @@
 
 ## Current Baseline
 
-- `.ai-playbook` layout v2 exists with memory/runtime/integration separation.
+- `.ai-agent-playbook` layout v2 exists with memory/runtime/integration separation.
 - Catalog checks understand taxonomy v2 and compatibility wrappers.
 - Reference inventory and ledger validation exist.
 - Write-gate advisory/post-check and canon draft/check/promote exist with read-only defaults.
@@ -56,7 +56,7 @@
 **Acceptance:**
 
 - Works on JS/TS, Java/Kotlin/C#/PHP/Python/Go fixtures at basic pattern level.
-- Skips `.ai-playbook/runtime/`, dependency directories, binary files, and large generated files.
+- Skips `.ai-agent-playbook/runtime/`, dependency directories, binary files, and large generated files.
 - Does not write files unless an explicit future `--apply` command is added.
 
 ### Task A2: Route/API/Data Map Hints
@@ -131,7 +131,7 @@
 
 **Acceptance:**
 
-- MCP reads only `.ai-playbook/runtime/indexes` and `.ai-playbook/runtime/reports`.
+- MCP reads only `.ai-agent-playbook/runtime/indexes` and `.ai-agent-playbook/runtime/reports`.
 - Missing indexes return actionable empty states.
 - No MCP write tool is exposed by default.
 
@@ -179,7 +179,7 @@
 
 - Command: `workflow run-preview <recipe> <target>`
 - Output includes recipe id, inputs, selected skill categories, planned artifacts, verification, blockers, and handoff notes.
-- Preview is read-only. Future apply writes only under `.ai-playbook/workflows/runs/`.
+- Preview is read-only. Future apply writes only under `.ai-agent-playbook/workflows/runs/`.
 
 **Acceptance:**
 

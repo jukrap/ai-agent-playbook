@@ -9,7 +9,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { runCli } from '../src/cli.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
-const cliPath = path.join(repoRoot, 'bin', 'ai-playbook.mjs');
+const cliPath = path.join(repoRoot, 'bin', 'aapb.mjs');
 
 test('mcp server lists read-only playbook tools and calls operator search without writing files', async () => {
   const target = await tempRepo('mcp target-공백-');
@@ -33,14 +33,14 @@ test('mcp server lists read-only playbook tools and calls operator search withou
   await writeFile(path.join(target, '_reference', 'reference-pack', 'skills', 'demo', 'SKILL.md'), '---\nname: demo\n---\n# Demo\n');
   await writeFile(path.join(target, '_reference', 'new-reference-pack', 'README.md'), '# New Reference Pack\n');
   await writeFile(path.join(target, '_reference', 'new-reference-pack', 'skills', 'demo', 'SKILL.md'), '---\nname: demo-new\n---\n# Demo New\n');
-  await mkdir(path.join(target, '.ai-playbook', 'knowledge'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evals'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evidence'), { recursive: true });
-  await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'sources.json'), `${JSON.stringify({
+  await mkdir(path.join(target, '.ai-agent-playbook', 'knowledge'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'runtime', 'reports', 'evals'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'runtime', 'reports', 'evidence'), { recursive: true });
+  await writeFile(path.join(target, '.ai-agent-playbook', 'knowledge', 'sources.json'), `${JSON.stringify({
     schemaVersion: '1',
     sources: []
   }, null, 2)}\n`);
-  await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'status-sources.json'), `${JSON.stringify({
+  await writeFile(path.join(target, '.ai-agent-playbook', 'knowledge', 'status-sources.json'), `${JSON.stringify({
     schemaVersion: '1',
     sources: [{
       id: 'reference-reference-pack',
@@ -63,7 +63,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       representativeFiles: ['README.md']
     }]
   }, null, 2)}\n`);
-  await writeFile(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evals', 'prompt-regression.json'), `${JSON.stringify({
+  await writeFile(path.join(target, '.ai-agent-playbook', 'runtime', 'reports', 'evals', 'prompt-regression.json'), `${JSON.stringify({
     schemaVersion: '1',
     kind: 'runtime.eval-definition',
     id: 'prompt-regression',
@@ -75,9 +75,9 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     graders: [{ type: 'rule', command: 'node test/prompt-contracts.test.mjs' }],
     successCriteria: { requiredSections: ['Required evidence'] },
     budgets: { maxRuntimeMs: 30000, maxExternalCalls: 0 },
-    storage: { runtimePath: '.ai-playbook/runtime/reports/evals/prompt-regression.json' }
+    storage: { runtimePath: '.ai-agent-playbook/runtime/reports/evals/prompt-regression.json' }
   }, null, 2)}\n`);
-  await writeFile(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evidence', 'ok.json'), `${JSON.stringify({
+  await writeFile(path.join(target, '.ai-agent-playbook', 'runtime', 'reports', 'evidence', 'ok.json'), `${JSON.stringify({
     schemaVersion: '1',
     kind: 'runtime.evidence-envelope',
     sourceId: 'local-reference',
@@ -91,7 +91,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     caveats: [],
     promotionStatus: 'runtime-only'
   }, null, 2)}\n`);
-  await writeFile(path.join(target, '.ai-playbook', 'runtime', 'reports', 'evidence', 'bad.json'), `${JSON.stringify({
+  await writeFile(path.join(target, '.ai-agent-playbook', 'runtime', 'reports', 'evidence', 'bad.json'), `${JSON.stringify({
     schemaVersion: '1',
     kind: 'runtime.evidence-envelope',
     sourceId: 'local-reference',
@@ -104,7 +104,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     caveats: [],
     promotionStatus: 'trusted'
   }, null, 2)}\n`);
-  await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'custom-reference-ledger.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'knowledge', 'custom-reference-ledger.md'), [
     '# Custom Reference Adoption Ledger',
     '',
     '| Status | Reference ID | Capability | Useful Pattern | Local Adoption | Risk/Noise | Decision Date |',
@@ -192,15 +192,15 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(names.includes('reference_source_registry_update'), false);
 
     const resources = await client.listResources();
-    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://capabilities'), true);
-    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://skills'), true);
-    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://workflows'), true);
-    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://adapters'), true);
-    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://adapter-readiness'), true);
-    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://agent-usage-guide'), true);
-    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://playbook-layout'), true);
-    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://reference-adoption'), true);
-    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://mcp-permission-model'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-agent-playbook://capabilities'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-agent-playbook://skills'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-agent-playbook://workflows'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-agent-playbook://adapters'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-agent-playbook://adapter-readiness'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-agent-playbook://agent-usage-guide'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-agent-playbook://playbook-layout'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-agent-playbook://reference-adoption'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-agent-playbook://mcp-permission-model'), true);
 
     const prompts = await client.listPrompts();
     const promptNames = prompts.prompts.map((prompt) => prompt.name);
@@ -249,43 +249,43 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(catalog.structuredContent.ok, true);
     assert.equal(catalog.structuredContent.taxonomyKind, 'capability');
 
-    const resource = await client.readResource({ uri: 'ai-playbook://workflows' });
+    const resource = await client.readResource({ uri: 'ai-agent-playbook://workflows' });
     assert.equal(JSON.parse(resource.contents[0].text).summary.workflows, 23);
 
-    const adapterResource = await client.readResource({ uri: 'ai-playbook://adapters' });
+    const adapterResource = await client.readResource({ uri: 'ai-agent-playbook://adapters' });
     const adapterPayload = JSON.parse(adapterResource.contents[0].text);
     assert.equal(adapterPayload.summary.primary, 'codex-app');
     assert.equal(adapterPayload.adapters.some((adapter) => adapter.id === 'codex' && adapter.supports.includes('Codex App on Windows')), true);
 
-    const adapterReadinessResource = await client.readResource({ uri: 'ai-playbook://adapter-readiness' });
+    const adapterReadinessResource = await client.readResource({ uri: 'ai-agent-playbook://adapter-readiness' });
     const adapterReadinessPayload = JSON.parse(adapterReadinessResource.contents[0].text);
     assert.equal(adapterReadinessPayload.summary.writes, false);
     assert.equal(adapterReadinessPayload.supportedAdapters.includes('codex'), true);
     assert.equal(adapterReadinessPayload.commands.some((command) => command.command.includes('adapter check <target-project> --adapter codex')), true);
     assert.equal(adapterReadinessPayload.checks.includes('context.non-empty'), true);
 
-    const usageResource = await client.readResource({ uri: 'ai-playbook://agent-usage-guide' });
+    const usageResource = await client.readResource({ uri: 'ai-agent-playbook://agent-usage-guide' });
     const usagePayload = JSON.parse(usageResource.contents[0].text);
     assert.equal(usagePayload.summary.defaultMode, 'read-only');
     assert.equal(usagePayload.whenToUse.some((item) => item.firstSurfaces.includes('writing_naturalness_check')), true);
 
-    const layoutResource = await client.readResource({ uri: 'ai-playbook://playbook-layout' });
+    const layoutResource = await client.readResource({ uri: 'ai-agent-playbook://playbook-layout' });
     const layoutPayload = JSON.parse(layoutResource.contents[0].text);
     assert.equal(layoutPayload.summary.layoutKind, 'structured');
-    assert.equal(layoutPayload.readOrder.includes('.ai-playbook/START_HERE.md'), true);
+    assert.equal(layoutPayload.readOrder.includes('.ai-agent-playbook/START_HERE.md'), true);
     assert.equal(layoutPayload.usageRules.some((rule) => rule.includes('runtime artifacts as evidence candidates')), true);
 
-    const referenceResource = await client.readResource({ uri: 'ai-playbook://reference-adoption' });
+    const referenceResource = await client.readResource({ uri: 'ai-agent-playbook://reference-adoption' });
     const referencePayload = JSON.parse(referenceResource.contents[0].text);
     assert.equal(referencePayload.summary.statusTool, 'reference_adoption_status');
-    assert.equal(referencePayload.summary.sourceRegistry, '.ai-playbook/knowledge/sources.json');
+    assert.equal(referencePayload.summary.sourceRegistry, '.ai-agent-playbook/knowledge/sources.json');
     assert.equal(referencePayload.readOnlyTools.includes('reference_adoption_status'), true);
     assert.equal(referencePayload.readOnlyTools.includes('reference_source_registry_update_preview'), true);
     assert.equal(referencePayload.readOnlyTools.includes('reference_ledger_update_preview'), true);
     assert.equal(referencePayload.optInWriteTools.includes('reference_source_registry_update'), true);
     assert.equal(referencePayload.promotionRules.some((rule) => rule.includes('Do not copy raw upstream excerpts')), true);
 
-    const permissionResource = await client.readResource({ uri: 'ai-playbook://mcp-permission-model' });
+    const permissionResource = await client.readResource({ uri: 'ai-agent-playbook://mcp-permission-model' });
     const permissionPayload = JSON.parse(permissionResource.contents[0].text);
     assert.equal(permissionPayload.summary.defaultMode, 'read-only');
     assert.equal(permissionPayload.defaultResources.includes('adapter_support'), true);
@@ -320,7 +320,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       name: 'runtime_schema_check',
       arguments: {
         target,
-        path: '.ai-playbook/runtime/reports/evals/prompt-regression.json'
+        path: '.ai-agent-playbook/runtime/reports/evals/prompt-regression.json'
       }
     });
     assert.equal(runtimeSchema.isError, undefined);
@@ -332,7 +332,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       name: 'runtime_schema_check',
       arguments: {
         target,
-        path: '.ai-playbook/knowledge/sources.json'
+        path: '.ai-agent-playbook/knowledge/sources.json'
       }
     });
     assert.equal(sourceSchema.structuredContent.ok, true);
@@ -342,7 +342,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       name: 'runtime_schema_check',
       arguments: {
         target,
-        path: '.ai-playbook/runtime/reports/evidence/bad.json',
+        path: '.ai-agent-playbook/runtime/reports/evidence/bad.json',
         kind: 'runtime.evidence-envelope'
       }
     });
@@ -354,7 +354,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       name: 'evidence_locator_check',
       arguments: {
         target,
-        path: '.ai-playbook/runtime/reports/evidence/ok.json'
+        path: '.ai-agent-playbook/runtime/reports/evidence/ok.json'
       }
     });
     assert.equal(evidenceLocator.isError, undefined);
@@ -366,7 +366,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       name: 'evidence_locator_check',
       arguments: {
         target,
-        path: '.ai-playbook/runtime/reports/evidence/bad.json'
+        path: '.ai-agent-playbook/runtime/reports/evidence/bad.json'
       }
     });
     assert.equal(badEvidenceLocator.structuredContent.ok, false);
@@ -473,15 +473,15 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       { name: 'data_integrity_review', toolName: 'workflow_run_preview', expectedText: 'data-integrity-review', arguments: { target, dataset: 'orders' } },
       { name: 'data_pipeline_review', toolName: 'operator_map', expectedText: 'data-integrity-review', arguments: { target, scope: 'orders events', intent: 'lineage and quality review' } },
       { name: 'database_change_review', toolName: 'workflow_run_preview', expectedText: 'database-migration', arguments: { target, schema: 'orders table' } },
-      { name: 'adr_spec_handoff_review', toolName: 'canon_check', expectedText: 'write_gate_preview', arguments: { target, source: '.ai-playbook/workflows/worklogs/example.md' } },
-      { name: 'documentation_package_review', toolName: 'workflow_run_preview', expectedText: 'documentation-package', arguments: { target, artifact: 'release notes', audience: 'support', source: '.ai-playbook/workflows/worklogs/example.md' } },
+      { name: 'adr_spec_handoff_review', toolName: 'canon_check', expectedText: 'write_gate_preview', arguments: { target, source: '.ai-agent-playbook/workflows/worklogs/example.md' } },
+      { name: 'documentation_package_review', toolName: 'workflow_run_preview', expectedText: 'documentation-package', arguments: { target, artifact: 'release notes', audience: 'support', source: '.ai-agent-playbook/workflows/worklogs/example.md' } },
       { name: 'natural_writing_review', toolName: 'writing_naturalness_check', expectedText: 'Preserve meaning', arguments: { target, path: 'docs/natural-writing.md', lang: 'ko', audience: 'maintainer' } },
       { name: 'workflow_run_review', toolName: 'workflow_run_preview', arguments: { target, recipe: 'backend-contract-change' } },
       { name: 'eval_harness_review', toolName: 'workflow_run_preview', expectedText: 'eval-driven-change', arguments: { target, change: 'add grader prompt', evalId: 'prompt-regression' } },
-      { name: 'capability_witness_review', toolName: 'capability_catalog', arguments: { target, capability: 'index search', source: '.ai-playbook/runtime/reports/eval.json' } },
-      { name: 'pre_action_fact_gate_review', toolName: 'operator_preflight', expectedText: 'write_gate_preview', arguments: { target, action: 'delete stale index', evidence: '.ai-playbook/runtime/indexes/file-inventory.json' } },
+      { name: 'capability_witness_review', toolName: 'capability_catalog', arguments: { target, capability: 'index search', source: '.ai-agent-playbook/runtime/reports/eval.json' } },
+      { name: 'pre_action_fact_gate_review', toolName: 'operator_preflight', expectedText: 'write_gate_preview', arguments: { target, action: 'delete stale index', evidence: '.ai-agent-playbook/runtime/indexes/file-inventory.json' } },
       { name: 'knowledge_source_review', toolName: 'reference_source_registry_preview', expectedText: 'knowledge-source-onboarding', arguments: { target, source: '_reference', useCase: 'source registry' } },
-      { name: 'canon_promotion_review', toolName: 'canon_check', arguments: { target, source: '.ai-playbook/runtime/indexes/file-inventory.json' } },
+      { name: 'canon_promotion_review', toolName: 'canon_check', arguments: { target, source: '.ai-agent-playbook/runtime/indexes/file-inventory.json' } },
       { name: 'index_interpretation_review', toolName: 'index_status', arguments: { target, focus: 'routes' } },
       { name: 'agent_orchestration_review', toolName: 'workflow_run_preview', expectedText: 'agent-orchestration-handoff', arguments: { target, goal: 'parallel review', workers: 'researcher, reviewer' } },
       { name: 'repo_graph_review', toolName: 'repo_graph_preview', expectedText: 'evidence_locator_check', arguments: { target, focus: 'routes and packages' } },
@@ -534,7 +534,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       arguments: {
         target: path.join(target, '_reference'),
         maxResults: 5,
-        ledgerPath: path.join(target, '.ai-playbook', 'knowledge', 'custom-reference-ledger.md')
+        ledgerPath: path.join(target, '.ai-agent-playbook', 'knowledge', 'custom-reference-ledger.md')
       }
     });
     assert.equal(adoptionQueue.structuredContent.ok, true);
@@ -550,7 +550,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       arguments: {
         target: path.join(target, '_reference'),
         maxResults: 5,
-        ledgerPath: path.join(target, '.ai-playbook', 'knowledge', 'custom-reference-ledger.md')
+        ledgerPath: path.join(target, '.ai-agent-playbook', 'knowledge', 'custom-reference-ledger.md')
       }
     });
     assert.equal(capabilityMatrix.structuredContent.ok, true);
@@ -567,7 +567,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
         target: path.join(target, '_reference'),
         capability: 'ai-harness',
         maxResults: 5,
-        ledgerPath: path.join(target, '.ai-playbook', 'knowledge', 'custom-reference-ledger.md')
+        ledgerPath: path.join(target, '.ai-agent-playbook', 'knowledge', 'custom-reference-ledger.md')
       }
     });
     assert.equal(filteredCapabilityMatrix.structuredContent.ok, true);
@@ -580,7 +580,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
         target: path.join(target, '_reference'),
         capability: 'ai-harness',
         maxResults: 5,
-        ledgerPath: path.join(target, '.ai-playbook', 'knowledge', 'custom-reference-ledger.md')
+        ledgerPath: path.join(target, '.ai-agent-playbook', 'knowledge', 'custom-reference-ledger.md')
       }
     });
     assert.equal(adoptionPlan.structuredContent.ok, true);
@@ -599,8 +599,8 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       arguments: {
         target,
         referenceDir: path.join(target, '_reference'),
-        path: '.ai-playbook/knowledge/status-sources.json',
-        ledgerPath: '.ai-playbook/knowledge/custom-reference-ledger.md',
+        path: '.ai-agent-playbook/knowledge/status-sources.json',
+        ledgerPath: '.ai-agent-playbook/knowledge/custom-reference-ledger.md',
         maxResults: 5
       }
     });
@@ -624,7 +624,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     });
     assert.equal(sourcePreview.structuredContent.ok, true);
     assert.equal(sourcePreview.structuredContent.mode.writes, false);
-    assert.equal(sourcePreview.structuredContent.candidatePath, '.ai-playbook/knowledge/sources.json');
+    assert.equal(sourcePreview.structuredContent.candidatePath, '.ai-agent-playbook/knowledge/sources.json');
     assert.equal(sourcePreview.structuredContent.summary.schemaValid, true);
     assert.equal(sourcePreview.structuredContent.registry.sources[0].id.startsWith('reference-'), true);
 
@@ -665,7 +665,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       name: 'reference_ledger_check',
       arguments: {
         target,
-        path: '.ai-playbook/knowledge/custom-reference-ledger.md'
+        path: '.ai-agent-playbook/knowledge/custom-reference-ledger.md'
       }
     });
     assert.equal(customLedger.structuredContent.ok, true);
@@ -675,7 +675,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       name: 'reference_ledger_decision_preview',
       arguments: {
         target,
-        path: '.ai-playbook/knowledge/custom-reference-ledger.md',
+        path: '.ai-agent-playbook/knowledge/custom-reference-ledger.md',
         reference: 'reference-pack',
         status: 'adopted',
         decisionDate: '2026-07-03'
@@ -693,7 +693,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       arguments: {
         target,
         referenceDir: path.join(target, '_reference'),
-        path: '.ai-playbook/knowledge/custom-reference-ledger.md',
+        path: '.ai-agent-playbook/knowledge/custom-reference-ledger.md',
         maxResults: 5
       }
     });
@@ -1075,14 +1075,14 @@ test('mcp tool calls return safe errors for missing targets and traversal paths 
 
 test('mcp write tools require server opt-in and apply before writing files', async () => {
   const target = await tempRepo('mcp write tools-한글-');
-  await mkdir(path.join(target, '.ai-playbook', 'knowledge'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'knowledge'), { recursive: true });
   await mkdir(path.join(target, '_reference', 'reference-pack', 'skills', 'demo'), { recursive: true });
   await mkdir(path.join(target, 'src'), { recursive: true });
   await writeFile(path.join(target, 'src', 'feature.ts'), 'export const feature = true;\n');
   await writeFile(path.join(target, '_reference', 'reference-pack', 'README.md'), '# Reference Pack\n');
   await writeFile(path.join(target, '_reference', 'reference-pack', 'skills', 'demo', 'SKILL.md'), '---\nname: demo\n---\n# Demo\n');
-  await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'sources.json'), `${JSON.stringify({ schemaVersion: '1', sources: [] }, null, 2)}\n`);
-  await writeFile(path.join(target, '.ai-playbook', 'knowledge', 'reference-adoption-ledger.md'), [
+  await writeFile(path.join(target, '.ai-agent-playbook', 'knowledge', 'sources.json'), `${JSON.stringify({ schemaVersion: '1', sources: [] }, null, 2)}\n`);
+  await writeFile(path.join(target, '.ai-agent-playbook', 'knowledge', 'reference-adoption-ledger.md'), [
     '# Reference Adoption Ledger',
     '',
     '| Status | Reference ID | Capability | Useful Pattern | Local Adoption | Risk/Noise | Decision Date |',
@@ -1164,7 +1164,7 @@ test('mcp write tools require server opt-in and apply before writing files', asy
     assert.equal(applyLedger.isError, undefined);
     assert.equal(applyLedger.structuredContent.applied, true);
     assert.equal(applyLedger.structuredContent.mode.writes, true);
-    const ledgerText = await readFile(path.join(target, '.ai-playbook', 'knowledge', 'reference-adoption-ledger.md'), 'utf8');
+    const ledgerText = await readFile(path.join(target, '.ai-agent-playbook', 'knowledge', 'reference-adoption-ledger.md'), 'utf8');
     assert.equal(ledgerText.includes('reference-reference-pack'), true);
     assert.equal(ledgerText.includes('| new |  |  |  |  |  |  |'), false);
 
@@ -1196,7 +1196,7 @@ test('mcp write tools require server opt-in and apply before writing files', asy
     assert.equal(applyLedgerDecision.isError, undefined);
     assert.equal(applyLedgerDecision.structuredContent.applied, true);
     assert.equal(applyLedgerDecision.structuredContent.mode.writes, true);
-    const decidedLedgerText = await readFile(path.join(target, '.ai-playbook', 'knowledge', 'reference-adoption-ledger.md'), 'utf8');
+    const decidedLedgerText = await readFile(path.join(target, '.ai-agent-playbook', 'knowledge', 'reference-adoption-ledger.md'), 'utf8');
     assert.equal(decidedLedgerText.includes('| reviewed | reference-reference-pack |'), true);
 
     const applySourceUpdate = await client.callTool({
@@ -1210,7 +1210,7 @@ test('mcp write tools require server opt-in and apply before writing files', asy
     assert.equal(applySourceUpdate.isError, undefined);
     assert.equal(applySourceUpdate.structuredContent.applied, true);
     assert.equal(applySourceUpdate.structuredContent.mode.writes, true);
-    const sourcesText = await readFile(path.join(target, '.ai-playbook', 'knowledge', 'sources.json'), 'utf8');
+    const sourcesText = await readFile(path.join(target, '.ai-agent-playbook', 'knowledge', 'sources.json'), 'utf8');
     assert.equal(JSON.parse(sourcesText).sources.some((source) => source.id === 'reference-reference-pack'), true);
 
     const applyRun = await client.callTool({
@@ -1253,7 +1253,7 @@ test('mcp write tools require server opt-in and apply before writing files', asy
     assert.equal(applyAdvisory.isError, undefined);
     assert.equal(applyAdvisory.structuredContent.advisory.written, true);
     assert.equal(applyAdvisory.structuredContent.mode.writes, true);
-    assert.equal(applyAdvisory.structuredContent.advisory.manifest.advisoryPath.startsWith('.ai-playbook/runtime/reports/write-gate/'), true);
+    assert.equal(applyAdvisory.structuredContent.advisory.manifest.advisoryPath.startsWith('.ai-agent-playbook/runtime/reports/write-gate/'), true);
     assert.equal(existsSync(path.join(target, applyAdvisory.structuredContent.advisory.manifest.advisoryPath)), true);
   } finally {
     await client.close();
@@ -1270,7 +1270,7 @@ async function connectMcp(extraArgs = []) {
     cwd: repoRoot,
     stderr: 'pipe'
   });
-  const client = new Client({ name: 'ai-playbook-test', version: '1.0.0' });
+  const client = new Client({ name: 'ai-agent-playbook-test', version: '1.0.0' });
   await client.connect(transport);
   return { client, transport };
 }
@@ -1288,7 +1288,7 @@ function capture(cwd) {
   };
 }
 
-async function tempRepo(prefix = '.ai-playbook-test-') {
+async function tempRepo(prefix = '.ai-agent-playbook-test-') {
   return mkdtemp(path.join(os.tmpdir(), prefix));
 }
 

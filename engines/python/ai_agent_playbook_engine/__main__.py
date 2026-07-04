@@ -8,7 +8,7 @@ from .writing_naturalness import analyze_writing_naturalness
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="ai_playbook_engine")
+    parser = argparse.ArgumentParser(prog="ai_agent_playbook_engine")
     subparsers = parser.add_subparsers(dest="command")
 
     writing = subparsers.add_parser("writing-naturalness", help="Analyze Korean or English writing naturalness from JSON stdin.")

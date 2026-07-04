@@ -13,7 +13,7 @@ Use this when migration safety depends on locks, long-running statements, deploy
 
 - Name the application version order: schema first, app first, dual-write, feature flag, queue/job pause, or maintenance window.
 - Identify background jobs, scheduled imports, report generation, exports, and API writes that should be paused or watched.
-- Keep runtime evidence in `.ai-playbook/runtime/reports` or an equivalent generated-output area until reviewed.
+- Keep runtime evidence in `.ai-agent-playbook/runtime/reports` or an equivalent generated-output area until reviewed.
 - Promote only reviewed decisions or durable constraints into memory maps or contracts.
 
 ## Verification

@@ -19,7 +19,7 @@
 - **Prompt as run brief:** MCP prompt는 막연한 전문성이 아니라 required evidence, optional evidence, stop condition, verification을 명시해야 합니다.
 - **Recipe as contract:** 모든 bundled recipe는 stable manifest로 parse되어야 하며 smoke preview test가 있어야 합니다.
 - **Generated evidence stays generated:** Runtime report는 review를 도울 수 있지만 명시적 승격 없이는 memory가 되지 않습니다.
-- **Scaffold before write:** Run record 생성은 `project-write`가 아니라 `scaffold`에 속하며 `.ai-playbook/workflows/runs/` 아래에 머물러야 합니다.
+- **Scaffold before write:** Run record 생성은 `project-write`가 아니라 `scaffold`에 속하며 `.ai-agent-playbook/workflows/runs/` 아래에 머물러야 합니다.
 - **Portable public docs:** Public doc은 private path, source pack name, machine-local identifier, raw reference excerpt를 피해야 합니다.
 
 ## Workstream A: MCP Prompt Pack Follow-Through
@@ -107,7 +107,7 @@
 **Contract:**
 
 - 기본값은 계속 read-only preview입니다.
-- `workflow run-start`는 `.ai-playbook/workflows/runs/` 아래에만 쓸 수 있습니다.
+- `workflow run-start`는 `.ai-agent-playbook/workflows/runs/` 아래에만 쓸 수 있습니다.
 - Run manifest, criteria checklist, evidence notes stub, handoff stub을 써야 합니다.
 - Missing recipe, empty manifest, path traversal, project-source destination을 거부해야 합니다.
 

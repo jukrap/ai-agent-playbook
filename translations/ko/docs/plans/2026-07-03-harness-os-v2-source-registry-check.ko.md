@@ -2,7 +2,7 @@
 
 > **Agentic worker용:** REQUIRED SUB-SKILL: 이 계획을 task 단위로 구현할 때 superpowers:executing-plans를 사용합니다. 단계 추적은 checkbox(`- [ ]`) 문법을 사용합니다.
 
-**목표:** Preview 또는 수동 채택 뒤 `.ai-playbook/knowledge/sources.json`의 reference source metadata를 검증할 수 있는 read-only check를 추가합니다.
+**목표:** Preview 또는 수동 채택 뒤 `.ai-agent-playbook/knowledge/sources.json`의 reference source metadata를 검증할 수 있는 read-only check를 추가합니다.
 
 **아키텍처:** 기존 runtime source registry schema validator를 재사용한 뒤 duplicate id, stale freshness value, optional local reference path existence, representative file drift 같은 source-specific 운영 검사를 추가합니다. Check는 local-only, no-write로 유지합니다.
 
@@ -25,7 +25,7 @@
 
 ### Task 1: Check Model
 
-- [x] 기본적으로 `.ai-playbook/knowledge/sources.json`에서 source registry를 resolve합니다.
+- [x] 기본적으로 `.ai-agent-playbook/knowledge/sources.json`에서 source registry를 resolve합니다.
 - [x] Target project 내부의 optional source registry path를 받습니다.
 - [x] 기존 `runtime.source-registry` validator를 재사용합니다.
 - [x] Source status, privacy tier, type을 집계합니다.

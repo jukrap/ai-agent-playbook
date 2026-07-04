@@ -1,12 +1,12 @@
 # Structured Playbook Cutover
 
-This is a historical change note for the layout and runtime reorganization that introduced the structured `.ai-playbook/` surface.
+This is a historical change note for the layout and runtime reorganization that introduced the structured `.ai-agent-playbook/` surface.
 
 The active guidance now lives in the dedicated documents for layout, capability taxonomy, runtime behavior, MCP permissions, and repository classification. Do not treat this note as the everyday source of truth.
 
 ## What changed
 
-- `.ai-playbook/` became the only active project playbook root.
+- `.ai-agent-playbook/` became the only active project playbook root.
 - Legacy `ai-playbook/` folders moved behind the explicit `migrate path` command.
 - Top-level playbook files were organized under `policy/`, `memory/`, `workflows/`, `knowledge/`, `runtime/`, and `integrations/`.
 - Generated runtime output stayed separate from reviewed project memory.

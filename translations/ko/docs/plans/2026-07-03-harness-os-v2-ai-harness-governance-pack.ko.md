@@ -35,7 +35,7 @@
 
 **Coverage:**
 
-- Agent instruction, root policy, `.ai-playbook`, prompt/context surface, context compaction, durable memory, worklog, map, contract, handoff.
+- Agent instruction, root policy, `.ai-agent-playbook`, prompt/context surface, context compaction, durable memory, worklog, map, contract, handoff.
 - Always-on rule, project-local context, selected skill reference, generated runtime report, archive에 무엇을 둘지.
 - Review-before-promotion과 stale-memory 처리.
 

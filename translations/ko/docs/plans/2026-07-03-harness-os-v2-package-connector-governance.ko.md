@@ -12,7 +12,7 @@
 - `security/dependency-supply-chain-review`는 이미 dependency, lockfile, SBOM, license, provenance, container, CVE review를 다룹니다.
 - `devops/deployment-release-check`는 deployment gate와 rollback readiness를 다룹니다.
 - MCP prompt는 deployment, frontend quality, data integrity, ADR/spec handoff review를 다룹니다.
-- Workflow run scaffold는 `.ai-playbook/workflows/runs/` 아래 bounded run record 생성을 지원합니다.
+- Workflow run scaffold는 `.ai-agent-playbook/workflows/runs/` 아래 bounded run record 생성을 지원합니다.
 
 ## Reference-Derived Rules To Adopt
 

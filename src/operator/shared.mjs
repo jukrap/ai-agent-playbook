@@ -7,7 +7,7 @@ import { INSTALL_MANIFEST_FILE, checkContracts, checkGuides, doctorProject, SCHE
 import { runDeepAnalysis } from '../deep-analysis.mjs';
 
 export const RULE_DIRECTORY_SOURCES = [
-  ['.ai-playbook/policy/rules', '.ai-playbook/policy/rules'],
+  ['.ai-agent-playbook/policy/rules', '.ai-agent-playbook/policy/rules'],
   ['.github/instructions', '.github/instructions'],
   ['.cursor/rules', '.cursor/rules'],
   ['.claude/rules', '.claude/rules']
@@ -21,7 +21,7 @@ export const RULE_FILE_SOURCES = [
 export const RULE_EXTENSIONS = new Set(['.md', '.mdc']);
 export const RULE_EXCLUDED_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.turbo', 'coverage']);
 export const SEARCH_EXCLUDED_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.turbo', 'coverage']);
-export const MAP_EXCLUDED_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.turbo', 'coverage', '.ai-playbook', 'ai-playbook', '_reference']);
+export const MAP_EXCLUDED_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.turbo', 'coverage', '.ai-agent-playbook', '.ai-playbook', 'ai-playbook', '_reference']);
 export const SEARCH_MAX_BYTES = 1_000_000;
 export const MAP_MAX_BYTES = 1_000_000;
 export const PACKAGE_SCRIPT_ORDER = ['check', 'test', 'test:run', 'lint', 'typecheck', 'build'];
@@ -33,7 +33,7 @@ export const PACKAGE_MANAGER_LOCKFILES = [
   ['bun', 'bun.lock']
 ];
 export const CORE_CONTEXT_FILES = ['START_HERE.md', 'CURRENT.md', 'questions.md', 'policy/SKILLS.md', 'policy/GIT.md'];
-export const PLAYBOOK_DIR_CANDIDATES = ['.ai-playbook'];
+export const PLAYBOOK_DIR_CANDIDATES = ['.ai-agent-playbook'];
 export const RELATED_CONTEXT_DIRS = ['memory/maps', 'workflows/runbooks', 'memory/decisions', 'memory/contracts', 'knowledge/references/guides', 'workflows/plans'];
 export const MARKDOWN_EXTENSIONS = new Set(['.md', '.mdc']);
 export const PLAYBOOK_AUDIT_DIRS = ['memory/context', 'memory/maps', 'workflows/runbooks', 'memory/decisions', 'memory/contracts', 'knowledge/references/guides', 'workflows/plans', 'workflows/worklogs', 'policy/rules'];
@@ -131,8 +131,8 @@ export async function preflightContextSummary(options) {
   if (!playbook) {
     warnings.push({
       id: 'operator.context.playbook-missing',
-      message: 'No active .ai-playbook/ folder found. If this project still has ai-playbook/, run migrate path first.',
-      paths: ['.ai-playbook/']
+      message: 'No active .ai-agent-playbook/ folder found. If this project still has a legacy playbook folder, run migrate path first.',
+      paths: ['.ai-agent-playbook/']
     });
   }
   const coreSources = playbook ? await collectCoreContextSources({ target, playbook }) : [];
@@ -353,7 +353,7 @@ export function isIntentScopedChange(filePath, intentTerms, scopedPath) {
 }
 
 export function isPlaybookPath(filePath) {
-  return filePath.startsWith('.ai-playbook/') ||
+  return filePath.startsWith('.ai-agent-playbook/') ||
     filePath.startsWith('.github/instructions/') ||
     filePath.startsWith('.cursor/rules/') ||
     filePath.startsWith('.claude/rules/');
@@ -1432,10 +1432,10 @@ export function trimSnippet(line) {
 }
 
 export function searchCategory(relativePath) {
-  if (relativePath.startsWith('.ai-playbook/policy/rules/')) return 'rules';
-  if (relativePath.startsWith('.ai-playbook/workflows/worklogs/')) return 'worklogs';
-  if (relativePath.startsWith('.ai-playbook/workflows/plans/')) return 'plans';
-  if (relativePath.startsWith('.ai-playbook/')) return 'playbook';
+  if (relativePath.startsWith('.ai-agent-playbook/policy/rules/')) return 'rules';
+  if (relativePath.startsWith('.ai-agent-playbook/workflows/worklogs/')) return 'worklogs';
+  if (relativePath.startsWith('.ai-agent-playbook/workflows/plans/')) return 'plans';
+  if (relativePath.startsWith('.ai-agent-playbook/')) return 'playbook';
   if (relativePath.startsWith('docs/') || relativePath.startsWith('translations/')) return 'docs';
   if (relativePath.startsWith('templates/')) return 'templates';
   if (TEST_FILE_PATTERN.test(relativePath)) return 'tests';
@@ -1797,7 +1797,7 @@ export function summarizeChecks(checks) {
 
 export function sourcePriority(source) {
   return [
-    '.ai-playbook/policy/rules',
+    '.ai-agent-playbook/policy/rules',
     '.github/instructions',
     '.github/copilot-instructions.md',
     '.cursor/rules',

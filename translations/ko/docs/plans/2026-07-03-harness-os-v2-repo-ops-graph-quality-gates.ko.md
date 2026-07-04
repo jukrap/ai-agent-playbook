@@ -16,7 +16,7 @@
 
 ## Design Principles
 
-- **Graph는 evidence이지 truth가 아닙니다:** Repo graph output은 `.ai-playbook/runtime/` 아래에 두며 source index, scan range, timestamp, confidence를 명시합니다.
+- **Graph는 evidence이지 truth가 아닙니다:** Repo graph output은 `.ai-agent-playbook/runtime/` 아래에 두며 source index, scan range, timestamp, confidence를 명시합니다.
 - **Claim 전에 locator가 있어야 합니다:** 인용한 file, source, report, registry item은 target-relative locator 또는 선언된 external source boundary로 다시 열 수 있어야 합니다.
 - **Ship 전에 gate가 있어야 합니다:** CI, release, security, license, dependency, migration, documentation gate는 stop condition이 있는 명시적 workflow step이어야 합니다.
 - **Hidden write는 없습니다:** Runtime graph와 gate check는 기본 read-only입니다. 미래 write는 기존 `--apply`/write-gate pattern을 쓰고 managed playbook path 내부에 제한합니다.
@@ -258,8 +258,8 @@ npm test
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 .\scripts\validate-public-docs.ps1
-node bin\ai-playbook.mjs catalog check --json
-node bin\ai-playbook.mjs skills lint --json
+node bin\aapb.mjs catalog check --json
+node bin\aapb.mjs skills lint --json
 .\scripts\sync-skills.ps1 -WhatIf
 .\install.ps1 -SkipValidation -WhatIf
 .\update.ps1 -SkipValidation -WhatIf
@@ -292,5 +292,5 @@ git diff --check
 - MCP project-write tool은 추가하지 않습니다.
 - 자동 code rewrite, rename, migration, deployment, package publish, remote issue update는 하지 않습니다.
 - CVE, package registry, deployment, analytics, documentation crawling을 위한 default network call은 없습니다.
-- Generated graph fact를 `.ai-playbook/memory/`로 직접 승격하지 않습니다.
+- Generated graph fact를 `.ai-agent-playbook/memory/`로 직접 승격하지 않습니다.
 - Raw reference-project prose, branding, 큰 발췌문은 public docs에 넣지 않습니다.

@@ -1,6 +1,6 @@
 # Project Bootstrap Checklist
 
-Use this checklist when creating root agent files or an `.ai-playbook/` folder for a target project.
+Use this checklist when creating root agent files or an `.ai-agent-playbook/` folder for a target project.
 
 ## Discovery
 
@@ -12,12 +12,12 @@ Use this checklist when creating root agent files or an `.ai-playbook/` folder f
 ## Template selection
 
 - Thin root bootstrap: `templates/agents/global/AGENTS.md`.
-- Skill policy: `templates/project-playbook/policy/SKILLS.md`, copied as `.ai-playbook/policy/SKILLS.md`.
-- Git policy: `templates/project-playbook/policy/GIT.md`, copied as `.ai-playbook/policy/GIT.md`.
-- Project memory: copy `templates/project-playbook/` as `.ai-playbook/`.
+- Skill policy: `templates/project-playbook/policy/SKILLS.md`, copied as `.ai-agent-playbook/policy/SKILLS.md`.
+- Git policy: `templates/project-playbook/policy/GIT.md`, copied as `.ai-agent-playbook/policy/GIT.md`.
+- Project memory: copy `templates/project-playbook/` as `.ai-agent-playbook/`.
 - Stack profile: add the closest `templates/agents/profiles/**/AGENTS.md` only when the stack is confirmed; keep the root entrypoint short.
 
-## Minimum useful `.ai-playbook/`
+## Minimum useful `.ai-agent-playbook/`
 
 For most projects, start with:
 
@@ -59,6 +59,6 @@ Add detailed maps, runbooks, decisions, and guides only when there is project ev
 
 - Do not commit personal absolute paths, private names, credentials, internal URLs, raw tokens, customer data, or machine-local assumptions.
 - Use relative paths in reusable templates.
-- If `.ai-playbook/` is local-only, add it to `.gitignore` before writing private notes.
+- If `.ai-agent-playbook/` is local-only, add it to `.gitignore` before writing private notes.
 - If worklogs are committed, keep them scrubbed and useful for future maintainers.
 - Do not add runtime hooks during bootstrap. Stabilize the document harness first, then use `templates/project-playbook/knowledge/references/guides/runtime-roadmap.md` if the project needs optional hook behavior.

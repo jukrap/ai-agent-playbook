@@ -6,9 +6,9 @@ Each `SKILL.md` stays short and trigger-focused. Longer procedures, examples, st
 
 ## Project And Documentation
 
-- `project-bootstrap`: use when setting up root agent guidance and `.ai-playbook/` structure for a new or inherited project.
+- `project-bootstrap`: use when setting up root agent guidance and `.ai-agent-playbook/` structure for a new or inherited project.
 - `repo-onboarding`: use when inspecting an unfamiliar repository before planning architecture, tooling, edits, or workflow answers.
-- `project-doc-system`: use when organizing `AGENTS.md`, `.ai-playbook/`, maps, runbooks, decisions, plans, and worklogs.
+- `project-doc-system`: use when organizing `AGENTS.md`, `.ai-agent-playbook/`, maps, runbooks, decisions, plans, and worklogs.
 - `adr-spec-handoff`: use when turning decisions, architecture constraints, specs, milestone results, or handoffs into durable memory.
 - `requirements-prd-scope-review`: use when turning broad requests into PRDs, specs, scope boundaries, acceptance criteria, and open questions.
 - `issue-planning-triage`: use when converting specs, bugs, review findings, worklogs, and follow-ups into scoped issues and task batches.

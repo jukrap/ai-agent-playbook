@@ -59,7 +59,7 @@ Extend the current preview-only write gate into a transaction model:
 - pre-write advisory with invocation id, intent, scan range, candidates, blockers, warnings
 - post-write check that reads the matching advisory instead of a moving latest pointer
 - delta checks for unexpected new files, changed generated output, new unsafe casts or escape hatches where detectable
-- machine-readable artifact manifest under `.ai-playbook/runtime/reports`
+- machine-readable artifact manifest under `.ai-agent-playbook/runtime/reports`
 
 Acceptance:
 

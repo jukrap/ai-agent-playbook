@@ -55,7 +55,7 @@ This pack deliberately avoids:
 - [ ] Include inputs, outputs, skills, tools, stop conditions, and verification criteria.
 - [ ] Add `agent orchestration handoff` to the recipe README.
 - [ ] Add matching Korean recipe and README updates.
-- [ ] Run `node bin\ai-playbook.mjs workflow list --json` and confirm the workflow count increases by one.
+- [ ] Run `node bin\aapb.mjs workflow list --json` and confirm the workflow count increases by one.
 
 ### Task 3: Add The Read-Only MCP Prompt
 

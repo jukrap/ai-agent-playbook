@@ -32,4 +32,4 @@ Acceptance criteria는 범위를 확인 가능하게 만들고, open question은
 
 ## Promotion 규칙
 
-검토된 criteria와 답변된 question만 durable project memory로 승격합니다. 해결되지 않은 question은 owner가 해결할 때까지 active plan, issue, `.ai-playbook/questions.md`에 둡니다.
+검토된 criteria와 답변된 question만 durable project memory로 승격합니다. 해결되지 않은 question은 owner가 해결할 때까지 active plan, issue, `.ai-agent-playbook/questions.md`에 둡니다.

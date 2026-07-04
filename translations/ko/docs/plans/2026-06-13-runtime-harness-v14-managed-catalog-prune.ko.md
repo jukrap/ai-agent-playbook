@@ -31,9 +31,9 @@
 ## Public Interface
 
 ```powershell
-node .\bin\ai-playbook.mjs managed catalog <target> --json
-node .\bin\ai-playbook.mjs managed prune <target> --path .ai-playbook/guides/runtime-harness.md --json
-node .\bin\ai-playbook.mjs managed prune <target> --path .ai-playbook/guides/runtime-harness.md --apply --json
+node .\bin\aapb.mjs managed catalog <target> --json
+node .\bin\aapb.mjs managed prune <target> --path .ai-agent-playbook/guides/runtime-harness.md --json
+node .\bin\aapb.mjs managed prune <target> --path .ai-agent-playbook/guides/runtime-harness.md --apply --json
 ```
 
 `managed catalog --json`은 `{ schemaVersion, ok, target, manifestPath, manifest, summary, files, warnings, conflicts }`를 반환합니다.

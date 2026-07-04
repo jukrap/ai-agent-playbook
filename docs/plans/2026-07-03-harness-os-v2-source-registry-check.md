@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a read-only check for `.ai-playbook/knowledge/sources.json` so reference source metadata can be validated after preview or manual adoption.
+**Goal:** Add a read-only check for `.ai-agent-playbook/knowledge/sources.json` so reference source metadata can be validated after preview or manual adoption.
 
 **Architecture:** Reuse the existing runtime source registry schema validator, then add source-specific operational checks: duplicate ids, stale freshness values, optional local reference path existence, and representative file drift. Keep the check local-only and no-write.
 
@@ -25,7 +25,7 @@ It does not write `sources.json`, apply preview output, promote sources into mem
 
 ### Task 1: Check Model
 
-- [x] Resolve the source registry from `.ai-playbook/knowledge/sources.json` by default.
+- [x] Resolve the source registry from `.ai-agent-playbook/knowledge/sources.json` by default.
 - [x] Accept an optional source registry path inside the target project.
 - [x] Reuse the existing `runtime.source-registry` validator.
 - [x] Count source status, privacy tier, and type.

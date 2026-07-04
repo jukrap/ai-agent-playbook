@@ -19,9 +19,9 @@ Use process skills before project guardrail skills when the task is about how to
 
 Use installed playbook skills for recurring repository concerns:
 
-- `project-bootstrap`: setting up a thin root agent bootstrap and `.ai-playbook/`.
+- `project-bootstrap`: setting up a thin root agent bootstrap and `.ai-agent-playbook/`.
 - `repo-onboarding`: entering an unfamiliar or stale repository.
-- `project-doc-system`: organizing `AGENTS.md`, `.ai-playbook/`, maps, runbooks, plans, and worklogs.
+- `project-doc-system`: organizing `AGENTS.md`, `.ai-agent-playbook/`, maps, runbooks, plans, and worklogs.
 - `natural-writing-humanization`: writing or translating README text, docs, PR bodies, release notes, public summaries, or Korean/English prose.
 - `git-worklog-guardrails`: staging, committing, pushing, PR bodies, or worklogs.
 - `pre-action-fact-gate`: checking facts, source locators, write risk, and rollback before high-impact actions.
@@ -50,9 +50,9 @@ Prefer capability-first skills before stack-name skills:
 
 When an AI app has the playbook MCP server available, prefer read-only discovery before editing:
 
-- Read resources: `ai-playbook://capabilities`, `ai-playbook://skills`, `ai-playbook://workflows`, `ai-playbook://adapters`, `ai-playbook://playbook-layout`, and `ai-playbook://mcp-permission-model`.
+- Read resources: `ai-agent-playbook://capabilities`, `ai-agent-playbook://skills`, `ai-agent-playbook://workflows`, `ai-agent-playbook://adapters`, `ai-agent-playbook://playbook-layout`, and `ai-agent-playbook://mcp-permission-model`.
 - Use catalog and layout tools to choose skills, recipes, and playbook files.
-- Use `operator_context`, `operator_search`, `index_search`, `operator_preflight`, `write_gate_preview`, and domain-specific tools before broad edits or when the relevant `.ai-playbook/` context is unclear.
+- Use `operator_context`, `operator_search`, `index_search`, `operator_preflight`, `write_gate_preview`, and domain-specific tools before broad edits or when the relevant `.ai-agent-playbook/` context is unclear.
 - Use `writing_naturalness_check` with `engine: "auto"` and the `natural_writing_review` prompt when reviewing README text, docs, translations, PR bodies, release notes, or reader-facing summaries.
 - Do not assume write-capable MCP tools exist. They require `mcp --enable-write-tools` and an explicit tool-call `apply: true`.
 - Do not treat runtime reports, indexes, screenshots, or graph hints as trusted memory until reviewed and promoted.
@@ -70,12 +70,12 @@ Repository audit or structural evidence tools can help when a repository-wide st
 
 Do not assume another agent runtime's hooks, slash commands, or plugin environment variables work here. If a skill or tool was written for another agent, translate its intent into supported commands and repository-local rules.
 
-If this project later enables runtime hooks, keep them optional and documented. Hooks may remind or inject context, but the durable rule must still live in `AGENTS.md`, `.ai-playbook/`, or project docs.
+If this project later enables runtime hooks, keep them optional and documented. Hooks may remind or inject context, but the durable rule must still live in `AGENTS.md`, `.ai-agent-playbook/`, or project docs.
 
 ## When to write project docs instead of a skill
 
-- Put only the root entrypoint in `AGENTS.md`; put standing skill policy here and longer project instructions in `.ai-playbook/` docs.
+- Put only the root entrypoint in `AGENTS.md`; put standing skill policy here and longer project instructions in `.ai-agent-playbook/` docs.
 - Put product scope in product/spec docs.
 - Put milestones in planning docs.
-- Put project memory under `.ai-playbook/`.
+- Put project memory under `.ai-agent-playbook/`.
 - Create or install a skill only when the behavior is reusable across projects.

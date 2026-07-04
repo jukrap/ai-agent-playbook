@@ -24,11 +24,11 @@ Local reference collection을 감사한 뒤 skill, reference, workflow, MCP surf
 
 ## 유용한 도구
 
-- ai-playbook reference inventory <reference-dir> --json
-- ai-playbook reference adoption-queue <reference-dir> --json
-- ai-playbook reference capability-matrix <reference-dir> --json
-- ai-playbook reference adoption-plan <reference-dir> --capability <capability> --json
-- Ledger가 있으면 ai-playbook reference ledger-check <target> --path <ledger> --json
+- aapb reference inventory <reference-dir> --json
+- aapb reference adoption-queue <reference-dir> --json
+- aapb reference capability-matrix <reference-dir> --json
+- aapb reference adoption-plan <reference-dir> --capability <capability> --json
+- Ledger가 있으면 aapb reference ledger-check <target> --path <ledger> --json
 
 ## 절차
 

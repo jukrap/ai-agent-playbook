@@ -12,7 +12,7 @@
 
 ## Packaging Rules
 
-- Store generated evidence under `.ai-playbook/runtime/` or another project-local runtime area until reviewed.
+- Store generated evidence under `.ai-agent-playbook/runtime/` or another project-local runtime area until reviewed.
 - Promote only reviewed decisions into `memory/`, design docs, or source comments.
 - Use portable locators and relative paths in public docs.
 - Avoid large embedded images in reusable skills. Link or summarize evidence instead.

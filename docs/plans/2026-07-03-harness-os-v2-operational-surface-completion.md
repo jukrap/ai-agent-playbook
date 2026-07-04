@@ -19,7 +19,7 @@
 - **Prompt as run brief:** MCP prompts should name required evidence, optional evidence, stop conditions, and verification, not vague expertise.
 - **Recipe as contract:** Every bundled recipe should parse into a stable manifest and have a smoke preview test.
 - **Generated evidence stays generated:** Runtime reports can support review but must not become memory without explicit promotion.
-- **Scaffold before write:** Run record creation belongs to `scaffold`, not `project-write`, and must stay under `.ai-playbook/workflows/runs/`.
+- **Scaffold before write:** Run record creation belongs to `scaffold`, not `project-write`, and must stay under `.ai-agent-playbook/workflows/runs/`.
 - **Portable public docs:** Public docs must avoid private paths, source pack names, machine-local identifiers, and raw reference excerpts.
 
 ## Workstream A: MCP Prompt Pack Follow-Through
@@ -107,7 +107,7 @@
 **Contract:**
 
 - Default remains read-only preview.
-- `workflow run-start` may write only under `.ai-playbook/workflows/runs/`.
+- `workflow run-start` may write only under `.ai-agent-playbook/workflows/runs/`.
 - It must write a run manifest, criteria checklist, evidence notes stub, and handoff stub.
 - It must reject missing recipe, empty manifest, path traversal, and project-source destinations.
 

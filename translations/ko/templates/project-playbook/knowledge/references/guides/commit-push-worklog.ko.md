@@ -124,4 +124,4 @@ Worklog 원칙:
 - 문제, 결정 경로, 근거, 검증, 남은 리스크를 설명합니다.
 - 파일 목록만 나열하지 않습니다.
 - 프로젝트가 오래 남길 맥락으로 worklog를 사용한다면 commit message 크기의 요약으로 줄이지 않습니다.
-- 현재 사실은 `.ai-playbook/CURRENT.md`, `memory/maps/`, `workflows/runbooks/`, `memory/decisions/`로 승격합니다.
+- 현재 사실은 `.ai-agent-playbook/CURRENT.md`, `memory/maps/`, `workflows/runbooks/`, `memory/decisions/`로 승격합니다.

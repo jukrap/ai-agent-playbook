@@ -47,6 +47,7 @@ jobs:
       - name: Validate public and MCP docs
         shell: pwsh
         run: |
+          ./scripts/validate-naming.ps1
           ./scripts/validate-public-docs.ps1
           ./scripts/validate-mcp-docs.ps1
 

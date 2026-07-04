@@ -37,7 +37,7 @@ export async function buildReferenceSourceRegistryPreview({
     ok: conflicts.length === 0,
     target: queue.target,
     mode: { localOnly: true, network: false, writes: false },
-    candidatePath: '.ai-playbook/knowledge/sources.json',
+    candidatePath: '.ai-agent-playbook/knowledge/sources.json',
     summary: {
       sources: sources.length,
       priorities: queue.summary.priorities,

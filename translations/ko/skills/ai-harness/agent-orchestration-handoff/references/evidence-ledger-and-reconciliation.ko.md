@@ -29,8 +29,8 @@ Multi-agent work는 coordinator가 output을 신뢰하고 비교하고 병합할
 
 - Reviewer가 evidence를 다시 열 수 있을 때만 stable fact를 승격합니다.
 - Durable project knowledge일 때만 `memory/`로 승격합니다.
-- Historical decision path나 milestone evidence는 `.ai-playbook/workflows/worklogs/`로 승격합니다.
-- Future work가 지켜야 하는 boundary는 `.ai-playbook/memory/contracts/`로 승격합니다.
+- Historical decision path나 milestone evidence는 `.ai-agent-playbook/workflows/worklogs/`로 승격합니다.
+- Future work가 지켜야 하는 boundary는 `.ai-agent-playbook/memory/contracts/`로 승격합니다.
 - Generated, stale-prone, large, not-yet-reviewed tool output은 `runtime/`에 둡니다.
 
 ## Handoff Summary

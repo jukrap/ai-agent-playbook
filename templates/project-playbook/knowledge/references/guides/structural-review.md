@@ -40,4 +40,4 @@ Prefer one small next slice by default:
 - include verification commands or audit checks
 - avoid broad goals such as `clean architecture` or `fix all dead code`
 
-Keep durable structure facts in `.ai-playbook/memory/maps/` and durable decisions in `.ai-playbook/memory/decisions/`.
+Keep durable structure facts in `.ai-agent-playbook/memory/maps/` and durable decisions in `.ai-agent-playbook/memory/decisions/`.

@@ -5,10 +5,10 @@
 ## 용어
 
 - `skill`: `SKILL.md`와 선택적 리소스를 포함하는 설치형 폴더.
-- `template`: 대상 환경에 맞게 조정하는 파일 또는 폴더. 보통 얇은 루트 에이전트 부트스트랩, 개인 Codex home 기본값, `.ai-playbook/`입니다.
-- `project playbook`: 대상 프로젝트에서 `.ai-playbook/`가 되는 `templates/project-playbook/` 원본.
+- `template`: 대상 환경에 맞게 조정하는 파일 또는 폴더. 보통 얇은 루트 에이전트 부트스트랩, 개인 Codex home 기본값, `.ai-agent-playbook/`입니다.
+- `project playbook`: 대상 프로젝트에서 `.ai-agent-playbook/`가 되는 `templates/project-playbook/` 원본.
 - `project memory`: 미래 에이전트가 이어서 작업할 수 있도록 돕는 현재 사실, map, runbook, decision, plan, worklog, archive.
-- `runtime harness`: 템플릿 적용, 프로젝트 메모리 상태 점검, plan/worklog 생성을 담당하는 `ai-playbook` CLI 표면.
+- `runtime harness`: 템플릿 적용, 프로젝트 메모리 상태 점검, plan/worklog 생성을 담당하는 `aapb` CLI 표면.
 - `adapter`: 에이전트별 설치 또는 동기화 안내.
 - `legacy`: 아키텍처 순수성보다 런타임 사실, 호환성, 숨은 결합이 더 중요한 기존 운영 시스템.
 - `local-only docs`: 에이전트/개발자 조율에는 쓰지만 제품 저장소에는 커밋하지 않는 프로젝트 메모.

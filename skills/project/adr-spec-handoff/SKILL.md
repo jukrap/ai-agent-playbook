@@ -11,7 +11,7 @@ Use this as the primary project skill for durable decision, spec, and handoff do
 
 1. Identify what changed, why it matters, who will rely on it, and where durable project memory belongs.
 2. Separate current rules, product facts, decisions, open questions, worklog history, and generated evidence.
-3. Promote only reviewed, stable facts into ADRs, specs, maps, runbooks, or `.ai-playbook` memory.
+3. Promote only reviewed, stable facts into ADRs, specs, maps, runbooks, or `.ai-agent-playbook` memory.
 4. Keep raw chat transcripts, noisy references, personal paths, credentials, branch names, and PR numbers out of durable docs.
 
 ## Reference

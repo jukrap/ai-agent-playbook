@@ -20,7 +20,7 @@ This slice adds:
 - A fix for `reference inventory` default scanning so local reference collections over 20 projects are not silently truncated.
 - Command/MCP docs and Korean translations.
 
-It does not write `.ai-playbook/knowledge/sources.json`, promote references into memory, copy raw upstream text, read network sources, or generate embeddings.
+It does not write `.ai-agent-playbook/knowledge/sources.json`, promote references into memory, copy raw upstream text, read network sources, or generate embeddings.
 
 ## Tasks
 

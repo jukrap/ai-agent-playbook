@@ -10,12 +10,12 @@ Deep analysis adds explicit AST-grep and TypeScript/JavaScript language signals.
 
 ## Goals
 
-- Add `ai-playbook mcp` as a local stdio MCP server.
+- Add `aapb mcp` as a local stdio MCP server.
 - Expose read-only playbook tools for context, operator diagnostics, rules, contracts, managed state, and QA.
 - Add `operator analyze --deep` with shared AST and language-analysis logic.
 - Provide individual MCP tools for AST search and TypeScript/JavaScript diagnostics, symbols, references, and definitions.
 - Keep all default behavior explicit, local-only, and no-write.
-- Document how CLI, MCP, skills, adapters, and `.ai-playbook/` relate.
+- Document how CLI, MCP, skills, adapters, and `.ai-agent-playbook/` relate.
 
 ## Non-Goals
 
@@ -36,7 +36,7 @@ npx ai-agent-playbook mcp
 npx ai-agent-playbook operator analyze <target> --deep --path src/example.ts --json
 ```
 
-`ai-playbook mcp` starts a local stdio MCP server. It is meant to be launched by an MCP-capable AI app, not by a human expecting terminal output.
+`aapb mcp` starts a local stdio MCP server. It is meant to be launched by an MCP-capable AI app, not by a human expecting terminal output.
 
 `operator analyze --deep` keeps the existing analyze schema and adds a `deep` section with:
 
@@ -91,7 +91,7 @@ Other languages may be detected by `operator map`, but dedicated LSP support sta
 ```json
 {
   "mcpServers": {
-    "ai-playbook": {
+    "aapb": {
       "command": "npx",
       "args": ["ai-agent-playbook", "mcp"]
     }
@@ -99,7 +99,7 @@ Other languages may be detected by `operator map`, but dedicated LSP support sta
 }
 ```
 
-Global install users may use `ai-playbook mcp` instead. Rendering this config does not write settings files.
+Global install users may use `aapb mcp` instead. Rendering this config does not write settings files.
 
 ## Test Plan
 

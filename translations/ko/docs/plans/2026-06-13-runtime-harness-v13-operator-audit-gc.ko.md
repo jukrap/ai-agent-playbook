@@ -22,10 +22,10 @@ Date: 2026-06-13
 - playbook markdown file의 broken relative markdown link;
 - `globs`가 현재 project file과 맞지 않는 context file;
 - 중복 playbook markdown content;
-- `.ai-playbook/`과 legacy `ai-playbook/` 폴더의 동시 존재;
+- `.ai-agent-playbook/`과 legacy `ai-playbook/` 폴더의 동시 존재;
 - managed manifest missing, malformed, missing file, modified file 상태.
 
-`operator gc`는 `.ai-playbook/.ai-agent-playbook-install.json`을 안전 경계로 사용합니다. `--apply`가 있고 아래 조건이 모두 참일 때만 file을 제거합니다.
+`operator gc`는 `.ai-agent-playbook/.ai-agent-playbook-install.json`을 안전 경계로 사용합니다. `--apply`가 있고 아래 조건이 모두 참일 때만 file을 제거합니다.
 
 - file이 managed manifest에 기록되어 있습니다.
 - file이 active playbook directory 아래에 있습니다.
@@ -37,9 +37,9 @@ Date: 2026-06-13
 ## Public Interface
 
 ```powershell
-node .\bin\ai-playbook.mjs operator audit <target> --json
-node .\bin\ai-playbook.mjs operator gc <target> --json
-node .\bin\ai-playbook.mjs operator gc <target> --apply --json
+node .\bin\aapb.mjs operator audit <target> --json
+node .\bin\aapb.mjs operator gc <target> --json
+node .\bin\aapb.mjs operator gc <target> --apply --json
 ```
 
 `operator audit --json`은 `{ schemaVersion, ok, target, summary, findings, sections, warnings }`를 반환합니다.

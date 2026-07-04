@@ -1,18 +1,18 @@
 # Project Playbook 템플릿
 
-이 폴더를 대상 저장소에 `.ai-playbook/`로 복사합니다.
+이 폴더를 대상 저장소에 `.ai-agent-playbook/`로 복사합니다.
 
 이 폴더는 에이전트와 유지보수자를 위한 프로젝트 기억 공간입니다. 정책, 오래 유지할 지식, 작업 흐름, 지식 출처, 실행 중 생성물, 통합 설정, 보관 자료를 분리해 미래 세션이 전체 저장소를 다시 읽지 않아도 이어서 작업할 수 있게 합니다.
 
 이 저장소에서 권장하는 설정 방식:
 
 ```powershell
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --dry-run
-node .\bin\ai-playbook.mjs bootstrap <target-repo> --local-only
-node .\bin\ai-playbook.mjs guides sync <target-repo> --dry-run
-node .\bin\ai-playbook.mjs guides sync <target-repo> --check --diff --json
-node .\bin\ai-playbook.mjs migrate path <target-repo> --json
-node .\bin\ai-playbook.mjs doctor <target-repo>
+node .\bin\aapb.mjs bootstrap <target-repo> --dry-run
+node .\bin\aapb.mjs bootstrap <target-repo> --local-only
+node .\bin\aapb.mjs guides sync <target-repo> --dry-run
+node .\bin\aapb.mjs guides sync <target-repo> --check --diff --json
+node .\bin\aapb.mjs migrate path <target-repo> --json
+node .\bin\aapb.mjs doctor <target-repo>
 ```
 
 Legacy `ai-playbook/` 프로젝트에서는 폴더 이동, 참조 갱신, `.gitignore` 변경 계획을 검토하기 전까지 `migrate path`를 preview mode로 유지합니다.
@@ -42,8 +42,8 @@ Legacy `ai-playbook/` 프로젝트에서는 폴더 이동, 참조 갱신, `.giti
 
 1. 최신 사용자 지시.
 2. 실제 code, configuration, command output.
-3. 루트 `AGENTS.md`, `.ai-playbook/policy/SKILLS.md`, `.ai-playbook/policy/GIT.md`.
-4. `.ai-playbook/CURRENT.md`, 기억 문맥, 지도, 반복 절차, 계약, 결정.
+3. 루트 `AGENTS.md`, `.ai-agent-playbook/policy/SKILLS.md`, `.ai-agent-playbook/policy/GIT.md`.
+4. `.ai-agent-playbook/CURRENT.md`, 기억 문맥, 지도, 반복 절차, 계약, 결정.
 5. 작업 실행 기록, 작업 이력, 보관 노트.
 
 작업 실행 기록은 진행 중 근거입니다. 작업 이력은 지나간 판단과 결과입니다. 계속 현재인 사실은 `CURRENT.md`, `memory/context/`, `memory/maps/`, `workflows/runbooks/`, `memory/contracts/`, `memory/decisions/`로 승격합니다.
@@ -68,6 +68,6 @@ Legacy `ai-playbook/` 프로젝트에서는 폴더 이동, 참조 갱신, `.giti
 
 ## 커밋 정책
 
-프로젝트별로 `.ai-playbook/`을 commit할지 local-only로 둘지 결정합니다. local-only라면 project-specific note를 쓰기 전에 `.gitignore`에 추가합니다.
+프로젝트별로 `.ai-agent-playbook/`을 commit할지 local-only로 둘지 결정합니다. local-only라면 project-specific note를 쓰기 전에 `.gitignore`에 추가합니다.
 
 credential, private URL, customer data, personal path, 민감값이 있는 raw log, machine-specific secret을 여기에 저장하지 않습니다.

@@ -21,4 +21,4 @@ Record the confirmed contract source:
 - remaining uncertainty
 - verification command or manual check
 
-For long-lived projects, keep durable API facts in `.ai-playbook/memory/maps/api-map.md`.
+For long-lived projects, keep durable API facts in `.ai-agent-playbook/memory/maps/api-map.md`.

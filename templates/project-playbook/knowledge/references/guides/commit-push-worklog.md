@@ -124,4 +124,4 @@ Worklog principles:
 - Explain the problem, decision path, evidence, verification, and remaining risk.
 - Do not simply list files.
 - Do not simplify worklogs into commit-message-sized summaries when the project uses them as durable context.
-- Promote current facts into `.ai-playbook/CURRENT.md`, `memory/maps/`, `workflows/runbooks/`, or `memory/decisions/`.
+- Promote current facts into `.ai-agent-playbook/CURRENT.md`, `memory/maps/`, `workflows/runbooks/`, or `memory/decisions/`.

@@ -1,6 +1,6 @@
 # AI Agent Playbook v2 Reference Source Registry Update
 
-**Goal:** Add a preview-first update command that appends missing local reference source entries to an existing `.ai-playbook/knowledge/sources.json` registry.
+**Goal:** Add a preview-first update command that appends missing local reference source entries to an existing `.ai-agent-playbook/knowledge/sources.json` registry.
 
 **Why now:** `reference source-registry-preview` can generate candidate registry entries, but bootstrapped projects need a safe apply path that preserves existing source decisions and only adds new reference collections discovered from `_reference`.
 

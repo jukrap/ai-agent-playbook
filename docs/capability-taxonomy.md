@@ -165,7 +165,7 @@ Data and documentation skills separate pipeline reliability, reporting correctne
 - `data/analytics-instrumentation-review`: tracking plans, event schemas, identity grain, funnels, cohorts, experiments, attribution, consent, and downstream metric impact.
 - `data/knowledge-retrieval-pipeline-review`: document ingestion, parsing, chunking, metadata, embeddings/vector stores, retrieval evaluation, citations, access control, and stale indexes.
 - `data/knowledge-source-registry`: source owner, status, freshness, credential boundary, locator shape, search/browse mode, evidence envelope, and promotion policy.
-- `project/project-doc-system`: `.ai-playbook` maps, runbooks, decisions, plans, worklogs, archives, and project-memory hygiene.
+- `project/project-doc-system`: `.ai-agent-playbook` maps, runbooks, decisions, plans, worklogs, archives, and project-memory hygiene.
 - `project/adr-spec-handoff`: ADRs, specs, milestone outcomes, implementation handoffs, reviewed evidence, and durable memory promotion.
 - `project/requirements-prd-scope-review`: PRDs, lightweight specs, scope briefs, non-goals, acceptance criteria, assumptions, and open-question lists.
 - `project/issue-planning-triage`: issue/task breakdown, triage, priority, dependencies, blocked status, ownership, and verification planning.
@@ -180,5 +180,5 @@ Generated runtime reports should not be promoted into `memory/` without review. 
 The catalog command reports duplicate skill names, wrapper routing gaps, missing wrapper references, and category drift:
 
 ```bash
-ai-playbook catalog check --json
+aapb catalog check --json
 ```

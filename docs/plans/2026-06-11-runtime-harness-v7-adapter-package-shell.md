@@ -79,7 +79,7 @@ npm test
 **Steps:**
 
 1. Document the shell as optional and local.
-2. Keep the stable default invocation as `node .\bin\ai-playbook.mjs ...`.
+2. Keep the stable default invocation as `node .\bin\aapb.mjs ...`.
 3. State that package shell entrypoints are not installed automatically.
 4. Update Korean translations with English edits.
 

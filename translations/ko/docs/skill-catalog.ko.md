@@ -6,9 +6,9 @@
 
 ## 프로젝트와 문서
 
-- `project-bootstrap`: 새 프로젝트 또는 기존 저장소에 루트 agent 지침과 `.ai-playbook/` 구조를 설정할 때.
+- `project-bootstrap`: 새 프로젝트 또는 기존 저장소에 루트 agent 지침과 `.ai-agent-playbook/` 구조를 설정할 때.
 - `repo-onboarding`: 낯선 저장소에서 아키텍처, 도구, 작업 흐름, 수정 방향을 답하기 전에 먼저 살필 때.
-- `project-doc-system`: `AGENTS.md`, `.ai-playbook/`, maps, runbooks, decisions, plans, worklogs를 정리할 때.
+- `project-doc-system`: `AGENTS.md`, `.ai-agent-playbook/`, maps, runbooks, decisions, plans, worklogs를 정리할 때.
 - `adr-spec-handoff`: 결정, 아키텍처 제약, spec, milestone 결과, handoff를 durable project memory로 정리할 때.
 - `requirements-prd-scope-review`: 넓은 요청을 PRD, spec, scope boundary, acceptance criteria, open question으로 정리할 때.
 - `issue-planning-triage`: spec, bug, review finding, worklog, follow-up을 scoped issue와 task batch로 바꿀 때.

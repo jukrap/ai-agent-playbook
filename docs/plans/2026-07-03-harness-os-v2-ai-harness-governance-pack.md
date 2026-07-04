@@ -35,7 +35,7 @@
 
 **Coverage:**
 
-- Agent instructions, root policies, `.ai-playbook`, prompt/context surfaces, context compaction, durable memory, worklogs, maps, contracts, and handoffs.
+- Agent instructions, root policies, `.ai-agent-playbook`, prompt/context surfaces, context compaction, durable memory, worklogs, maps, contracts, and handoffs.
 - What belongs in always-on rules, project-local context, selected skill references, generated runtime reports, or archive.
 - Review-before-promotion and stale-memory handling.
 

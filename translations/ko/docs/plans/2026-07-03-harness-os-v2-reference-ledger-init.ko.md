@@ -4,7 +4,7 @@
 
 **목표:** Local reference adoption queue에서 reference adoption ledger를 만드는 preview-first scaffold command를 추가해, 외부 harness와 skill reference를 raw reference content 복사 없이 추적할 수 있게 합니다.
 
-**아키텍처:** `buildReferenceAdoptionQueue`와 기존 ledger schema를 재사용합니다. Queue에 오른 reference candidate를 `new` row로 담은 Markdown ledger를 만들고, 기본 대상은 `.ai-playbook/knowledge/reference-adoption-ledger.md`입니다. Overwrite는 거부하며 `--apply`가 있을 때만 씁니다.
+**아키텍처:** `buildReferenceAdoptionQueue`와 기존 ledger schema를 재사용합니다. Queue에 오른 reference candidate를 `new` row로 담은 Markdown ledger를 만들고, 기본 대상은 `.ai-agent-playbook/knowledge/reference-adoption-ledger.md`입니다. Overwrite는 거부하며 `--apply`가 있을 때만 씁니다.
 
 **기술 스택:** Dependency-free Node ESM catalog helper, 기존 CLI routing, Node tests, Korean translation이 포함된 Markdown docs.
 

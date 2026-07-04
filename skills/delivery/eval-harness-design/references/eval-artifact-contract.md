@@ -36,8 +36,8 @@ An eval run report should include:
 
 ## Storage Boundaries
 
-- Store generated eval definitions and reports under `.ai-playbook/runtime/reports/evals/` or `.ai-playbook/runtime/indexes/`.
-- Keep human-reviewed eval policy, accepted gates, or durable lessons under `.ai-playbook/memory/decisions/` only after review.
+- Store generated eval definitions and reports under `.ai-agent-playbook/runtime/reports/evals/` or `.ai-agent-playbook/runtime/indexes/`.
+- Keep human-reviewed eval policy, accepted gates, or durable lessons under `.ai-agent-playbook/memory/decisions/` only after review.
 - Do not promote raw transcripts, long model outputs, or temporary traces into `memory/`.
 - Use portable project-relative paths in artifacts; do not store personal absolute paths, credentials, branch names, PR numbers, or internal URLs in public docs.
 - Keep large logs and screenshots as runtime artifacts with short summaries and hashes.

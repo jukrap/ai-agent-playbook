@@ -34,7 +34,7 @@
 
 ## Verification
 
-- `node bin/ai-playbook.mjs skills lint --json`
+- `node bin/aapb.mjs skills lint --json`
 - `npm run check`
 - `node --test test/skills-lifecycle.test.mjs`
 - `.\scripts\validate-skills.ps1`

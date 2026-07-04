@@ -19,7 +19,7 @@
 ## Evidence Hygiene
 
 - Personal absolute path나 private URL 대신 target-relative path와 source registry id를 우선합니다.
-- Generated report는 `.ai-playbook/runtime/` 아래에 두고, reviewed fact만 durable memory로 승격합니다.
+- Generated report는 `.ai-agent-playbook/runtime/` 아래에 두고, reviewed fact만 durable memory로 승격합니다.
 - Credential, token-shaped example, private URL, 긴 log, personal path, customer data, internal incident detail을 public docs에 붙여 넣지 않습니다.
 - Output에 private path나 environment detail이 있으면 raw scanner output 대신 bounded summary를 사용합니다.
 - no secrets found, no affected routes found, no license obligations found 같은 absence claim에는 scan range를 포함합니다.

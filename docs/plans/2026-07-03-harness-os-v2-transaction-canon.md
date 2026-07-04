@@ -4,7 +4,7 @@
 
 **Goal:** Turn the current AI Agent Playbook v2 preview surface into an evidence lifecycle with transaction handoffs, reference adoption validation, and explicit runtime-to-memory promotion.
 
-**Architecture:** Keep the default harness read-only and local-first. Generated evidence stays under `.ai-playbook/runtime/`; trusted long-term facts move into `.ai-playbook/memory/` only through an explicit promotion command with reviewable source, scan range, confidence, and drift checks. MCP remains a discovery and read-only analysis surface until write tiers are explicitly enabled.
+**Architecture:** Keep the default harness read-only and local-first. Generated evidence stays under `.ai-agent-playbook/runtime/`; trusted long-term facts move into `.ai-agent-playbook/memory/` only through an explicit promotion command with reviewable source, scan range, confidence, and drift checks. MCP remains a discovery and read-only analysis surface until write tiers are explicitly enabled.
 
 **Tech Stack:** Dependency-light Node ESM CLI, Node test runner, stdio MCP tools/resources/prompts, Markdown docs with Korean translations, PowerShell validation scripts.
 
@@ -13,7 +13,7 @@
 ## Current Baseline
 
 - `reference inventory` summarizes local reference collections without copying large source contents.
-- `reference ledger-check` validates adoption statuses and local-only leak patterns in `.ai-playbook/knowledge/reference-adoption-ledger.md`.
+- `reference ledger-check` validates adoption statuses and local-only leak patterns in `.ai-agent-playbook/knowledge/reference-adoption-ledger.md`.
 - `write-gate preview` returns a transaction id and planned runtime advisory path while staying read-only.
 - MCP exposes read-only reference inventory, ledger validation, and reference adoption review prompt surfaces.
 - Runtime output remains separated from human-trusted memory.
@@ -80,7 +80,7 @@
 **Steps:**
 
 1. Add failing tests for a new `write-gate advisory <target>` command that previews by default and writes only with `--apply`.
-2. Assert advisory writes are rejected unless the target path resolves inside `.ai-playbook/runtime/reports/write-gate/`.
+2. Assert advisory writes are rejected unless the target path resolves inside `.ai-agent-playbook/runtime/reports/write-gate/`.
 3. Assert MCP does not expose the apply-capable command by default.
 4. Run targeted tests:
 
@@ -152,7 +152,7 @@
    {
      "id": "route.auth.login",
      "kind": "route-api-hint",
-     "sourceReport": ".ai-playbook/runtime/reports/example.json",
+     "sourceReport": ".ai-agent-playbook/runtime/reports/example.json",
      "scanRange": ["src/**"],
      "confidence": "medium",
      "observedAt": "YYYY-MM-DD"
@@ -187,7 +187,7 @@
 **Steps:**
 
 1. Add failing tests for `canon promote <target> --source <runtime-report> --to <memory-path>` preview mode.
-2. Assert default mode does not write files and rejects promotion destinations outside `.ai-playbook/memory/` or `.ai-playbook/knowledge/references/`.
+2. Assert default mode does not write files and rejects promotion destinations outside `.ai-agent-playbook/memory/` or `.ai-agent-playbook/knowledge/references/`.
 3. Add `--apply` tests only after preview behavior is stable.
 4. Implement preview output with proposed file path, source report, fact ids, warnings, and conflicts.
 5. Implement `--apply` only for reviewed facts and only inside allowed memory/knowledge paths.

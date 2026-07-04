@@ -14,8 +14,8 @@
 
 이 slice는 두 가지 opt-in tool만 노출합니다.
 
-- `workflow_run_start`: `.ai-playbook/workflows/runs/` 아래 scaffold-tier 생성.
-- `write_gate_advisory`: `.ai-playbook/runtime/reports/write-gate/` 아래 managed-write runtime report 생성.
+- `workflow_run_start`: `.ai-agent-playbook/workflows/runs/` 아래 scaffold-tier 생성.
+- `write_gate_advisory`: `.ai-agent-playbook/runtime/reports/write-gate/` 아래 managed-write runtime report 생성.
 
 Project source rewriting, managed uninstall/prune, canon promotion, migration, contracts snapshot write, package installation은 노출하지 않습니다.
 
@@ -23,9 +23,9 @@ Project source rewriting, managed uninstall/prune, canon promotion, migration, c
 
 ### Task 1: Server Option
 
-- [x] `ai-playbook mcp --enable-write-tools`를 parse합니다.
+- [x] `aapb mcp --enable-write-tools`를 parse합니다.
 - [x] `enableWriteTools`를 `runMcpServer`와 `registerPlaybookMcpTools`로 전달합니다.
-- [x] 기본 `ai-playbook mcp` 동작은 바꾸지 않습니다.
+- [x] 기본 `aapb mcp` 동작은 바꾸지 않습니다.
 
 ### Task 2: Tool Registration
 

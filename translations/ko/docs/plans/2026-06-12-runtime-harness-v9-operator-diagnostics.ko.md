@@ -19,7 +19,7 @@
 
 초기 source:
 
-- `.ai-playbook/rules/**/*.md`
+- `.ai-agent-playbook/rules/**/*.md`
 - `.github/instructions/**/*.md`
 - `.cursor/rules/**/*.md`
 - `.claude/rules/**/*.md`

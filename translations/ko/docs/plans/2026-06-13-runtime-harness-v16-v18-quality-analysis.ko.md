@@ -92,7 +92,7 @@ Explicit command가 유용하고 low-noise임이 확인된 뒤에만 hook integr
 - explicit CLI check output이 명확하고 false positive가 낮습니다.
 - real-project smoke test에서 reminder가 누락을 줄입니다.
 - hook output이 native agent context를 밀어내지 않을 만큼 짧습니다.
-- 같은 policy가 runtime state에만 있지 않고 `.ai-playbook/` 또는 public docs에도 남아 있습니다.
+- 같은 policy가 runtime state에만 있지 않고 `.ai-agent-playbook/` 또는 public docs에도 남아 있습니다.
 
 ## 추가 개선
 

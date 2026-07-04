@@ -10,15 +10,15 @@
 
 ### V20: path-scoped context와 documentation map
 
-- `.ai-playbook/context/`를 path-scoped project memory 영역으로 승격합니다.
+- `.ai-agent-playbook/context/`를 path-scoped project memory 영역으로 승격합니다.
 - Context markdown frontmatter `id`, `globs`, `alwaysApply`, `freshness`, `priority`를 지원합니다.
 - `context list`, `context status`, preview-first `context init`을 추가합니다.
-- 오래 남길 documentation map으로 `.ai-playbook/maps/doc-map.md`를 추가합니다.
+- 오래 남길 documentation map으로 `.ai-agent-playbook/maps/doc-map.md`를 추가합니다.
 - `operator context`에 doc-map과 context metadata를 포함합니다.
 
 ### V21: runs evidence ledger
 
-- 진행 중 작업 상태를 위해 `.ai-playbook/runs/<run-id>/`를 추가합니다.
+- 진행 중 작업 상태를 위해 `.ai-agent-playbook/runs/<run-id>/`를 추가합니다.
 - `run start`, `run status`, `run record`, `run summarize`를 추가합니다.
 - `ledger.jsonl`은 append-only로 유지합니다.
 - Run record에서 로컬 절대경로와 credential처럼 보이는 message를 거부합니다.
@@ -26,7 +26,7 @@
 
 ### V22: contracts read-only layer
 
-- Active/pending business rule 또는 invariant를 위한 `.ai-playbook/contracts/`를 추가합니다.
+- Active/pending business rule 또는 invariant를 위한 `.ai-agent-playbook/contracts/`를 추가합니다.
 - Contract frontmatter `id`, `status`, `appliesTo`, `risk`, `approvedAt`, `freshness`를 지원합니다.
 - `contracts list`, `contracts check`, preview-first `contracts init`을 추가합니다.
 - Check는 read-only로 유지합니다. 오래된 항목, pending match, missing path, missing evidence signal만 보고하고 판단하거나 막지 않습니다.

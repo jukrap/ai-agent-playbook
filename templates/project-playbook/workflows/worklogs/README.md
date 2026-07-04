@@ -5,8 +5,8 @@ Worklogs preserve detailed reasoning, blockers, verification, and direction chan
 From this repository, scaffold worklogs and monthly summaries with:
 
 ```powershell
-node .\bin\ai-playbook.mjs worklog new <target-repo> --title "short-worklog-title"
-node .\bin\ai-playbook.mjs worklog summarize <target-repo> --month YYYY-MM
+node .\bin\aapb.mjs worklog new <target-repo> --title "short-worklog-title"
+node .\bin\aapb.mjs worklog summarize <target-repo> --month YYYY-MM
 ```
 
 ## Layout

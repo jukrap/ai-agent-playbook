@@ -1,6 +1,6 @@
 # Runtime Roadmap Guide
 
-프로젝트에 이미 `.ai-playbook/`이 있고 문서 하네스만 유지할지, 선택적 runtime hook을 더할지 판단할 때 사용합니다.
+프로젝트에 이미 `.ai-agent-playbook/`이 있고 문서 하네스만 유지할지, 선택적 runtime hook을 더할지 판단할 때 사용합니다.
 
 기본 답은 문서 하네스 우선입니다. Runtime hook은 프로젝트가 자동 reminder나 context injection에서 이득을 보고, agent 환경이 해당 hook을 안정적으로 지원할 때만 유용합니다.
 
@@ -10,7 +10,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 
 - `doctor`를 실행하고 남은 warning을 기록합니다.
 - `START_HERE.md`, `CURRENT.md`, `questions.md`를 조정해 template prompt가 남지 않게 합니다.
-- `.ai-playbook/`을 commit할지 local-only로 둘지 결정합니다.
+- `.ai-agent-playbook/`을 commit할지 local-only로 둘지 결정합니다.
 - Durable current fact를 `CURRENT.md`, maps, runbooks, decisions로 옮깁니다.
 - 추가 note를 읽기 전에 `context status --path`로 어떤 path-scoped memory를 읽을지 판단합니다.
 - 긴 작업의 active evidence는 `run start/status/record`로 관리합니다.
@@ -25,12 +25,12 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 
 아래가 모두 참일 때만 선택적 hook을 고려합니다.
 
-- 프로젝트에 명확한 root agent entrypoint와 최신 `.ai-playbook/` 파일이 있습니다.
+- 프로젝트에 명확한 root agent entrypoint와 최신 `.ai-agent-playbook/` 파일이 있습니다.
 - 팀이 public docs와 local-only docs의 경계를 이해합니다.
 - 대상 agent가 현재 환경에서 lifecycle hook을 지원합니다.
 - 매일 쓰기 전에 hook output을 local fixture로 테스트할 수 있습니다.
 - Source adapter가 이 대상 프로젝트에서 `adapter check`를 통과합니다.
-- 선택적 reminder event는 기본값이 아니라 `AI_PLAYBOOK_HOOK_EVENTS` 같은 local 설정으로 명시적으로 켭니다.
+- 선택적 reminder event는 기본값이 아니라 `AI_AGENT_PLAYBOOK_HOOK_EVENTS` 같은 local 설정으로 명시적으로 켭니다.
 - Hook을 configuration으로 비활성화할 수 있습니다.
 - Native project instruction과 injected context가 서로 중복되지 않습니다.
 - Hook이 project file을 자동으로 쓰지 않습니다.
@@ -58,7 +58,7 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 
 ## 권장 migration 순서
 
-1. `.ai-playbook/`을 안정화하고 `doctor`를 실행합니다.
+1. `.ai-agent-playbook/`을 안정화하고 `doctor`를 실행합니다.
 2. 프로젝트가 아직 legacy `ai-playbook/`을 사용한다면 `migrate path --json`으로 preview하고, 폴더 이동, 참조 갱신, `.gitignore` 변경을 검토한 뒤에만 적용합니다.
 3. `guides sync --dry-run`으로 누락 guide를 확인한 뒤, 검토한 `guides sync`를 실행합니다. Local edit을 덮어쓰기 전에는 `guides sync --check --diff --json`으로 stale guide를 검토합니다.
 4. 복사된 playbook file 제거 또는 adopt 여부를 판단할 때 `managed check`를 실행합니다.
@@ -72,10 +72,10 @@ Hook을 고려하기 전에 아래를 먼저 합니다.
 
 Codex App과 Claude Code에서는 짧은 timeout을 가진 Node 기반 hook을 선호합니다. Hook program은 지원되는 JSON을 stdout에 쓰고, debug log는 stderr에 쓰며, Windows path를 안전하게 처리하고, 기본적으로 network call을 피해야 합니다.
 
-Global `ai-playbook` 명령을 요구하지 않습니다. 안정 호출은 아래입니다.
+Global `aapb` 명령을 요구하지 않습니다. 안정 호출은 아래입니다.
 
 ```powershell
-node .\bin\ai-playbook.mjs <command>
+node .\bin\aapb.mjs <command>
 ```
 
 원본 playbook 저장소에는 read-only adapter 예시가 있습니다. 이를 프로젝트 필수 조건이 아니라 로컬 출발점으로 다룹니다.
@@ -83,14 +83,14 @@ node .\bin\ai-playbook.mjs <command>
 이 예시 중 하나를 켜기 전에는 source checkout에서 대응하는 read-only check를 실행합니다.
 
 ```powershell
-node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --json
-node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter claude-code --json
+node .\bin\aapb.mjs adapter check <target-repo> --adapter codex --json
+node .\bin\aapb.mjs adapter check <target-repo> --adapter claude-code --json
 ```
 
 추가 reminder event는 local hook 설정에서만 켭니다.
 
 ```powershell
-$env:AI_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse,Stop'
+$env:AI_AGENT_PLAYBOOK_HOOK_EVENTS = 'UserPromptSubmit,PostToolUse,Stop'
 ```
 
 이 event는 관련 없는 prompt, missing playbook, unsupported payload, non-edit tool에서 조용히 빠져야 합니다. `Stop`은 handoff reminder일 뿐이며 block, continuation 요청, doctor 실행, file write, network call을 하지 않아야 합니다.

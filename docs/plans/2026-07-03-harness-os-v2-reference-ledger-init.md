@@ -4,7 +4,7 @@
 
 **Goal:** Add a preview-first scaffold command that creates a reference adoption ledger from a local reference adoption queue, so external harness and skill references can be tracked without copying raw reference content.
 
-**Architecture:** Reuse `buildReferenceAdoptionQueue` and the existing ledger schema. Generate a Markdown ledger with `new` rows for queued reference candidates, target `.ai-playbook/knowledge/reference-adoption-ledger.md` by default, refuse overwrites, and write only when `--apply` is present.
+**Architecture:** Reuse `buildReferenceAdoptionQueue` and the existing ledger schema. Generate a Markdown ledger with `new` rows for queued reference candidates, target `.ai-agent-playbook/knowledge/reference-adoption-ledger.md` by default, refuse overwrites, and write only when `--apply` is present.
 
 **Tech Stack:** Dependency-free Node ESM catalog helper, existing CLI routing, Node tests, Markdown docs with Korean translations.
 

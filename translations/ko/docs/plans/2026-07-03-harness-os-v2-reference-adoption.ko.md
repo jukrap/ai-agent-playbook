@@ -59,7 +59,7 @@ Acceptance:
 - invocation id, intent, scan range, candidates, blockers, warnings가 있는 pre-write advisory
 - 움직이는 latest pointer가 아니라 matching advisory를 읽는 post-write check
 - unexpected new file, changed generated output, detectable unsafe cast/escape hatch 변화 확인
-- `.ai-playbook/runtime/reports` 아래 machine-readable artifact manifest
+- `.ai-agent-playbook/runtime/reports` 아래 machine-readable artifact manifest
 
 Acceptance:
 

@@ -20,7 +20,7 @@
 - 20개가 넘는 local reference collection이 조용히 잘리지 않도록 `reference inventory` 기본 scan을 보정합니다.
 - Command/MCP docs와 Korean translation.
 
-이번 slice에서 하지 않습니다: `.ai-playbook/knowledge/sources.json` 쓰기, reference를 memory로 promotion, upstream raw text 복사, network source 읽기, embedding 생성.
+이번 slice에서 하지 않습니다: `.ai-agent-playbook/knowledge/sources.json` 쓰기, reference를 memory로 promotion, upstream raw text 복사, network source 읽기, embedding 생성.
 
 ## 작업
 

@@ -10,12 +10,12 @@ Deep analysis는 명시적으로 요청할 때만 AST-grep과 TypeScript/JavaScr
 
 ## 목표
 
-- `ai-playbook mcp` 로컬 stdio MCP 서버를 추가합니다.
+- `aapb mcp` 로컬 stdio MCP 서버를 추가합니다.
 - Context, operator diagnostics, rules, contracts, managed state, QA용 read-only playbook 도구를 노출합니다.
 - 공통 AST/언어 분석 로직을 쓰는 `operator analyze --deep`을 추가합니다.
 - AST 검색과 TypeScript/JavaScript diagnostics, symbols, references, definitions용 개별 MCP 도구를 제공합니다.
 - 기본 동작은 계속 명시 실행, local-only, no-write로 유지합니다.
-- CLI, MCP, skills, adapters, `.ai-playbook/`의 역할을 문서화합니다.
+- CLI, MCP, skills, adapters, `.ai-agent-playbook/`의 역할을 문서화합니다.
 
 ## 범위 밖
 
@@ -36,7 +36,7 @@ npx ai-agent-playbook mcp
 npx ai-agent-playbook operator analyze <target> --deep --path src/example.ts --json
 ```
 
-`ai-playbook mcp`는 로컬 stdio MCP 서버를 시작합니다. 사람이 터미널 출력을 보려고 직접 쓰는 명령이 아니라, MCP를 지원하는 AI 앱이 실행하는 명령입니다.
+`aapb mcp`는 로컬 stdio MCP 서버를 시작합니다. 사람이 터미널 출력을 보려고 직접 쓰는 명령이 아니라, MCP를 지원하는 AI 앱이 실행하는 명령입니다.
 
 `operator analyze --deep`은 기존 analyze schema를 유지하면서 아래 `deep` 섹션을 추가합니다.
 
@@ -91,7 +91,7 @@ TypeScript/JavaScript 언어 분석은 TypeScript compiler API를 read-only loca
 ```json
 {
   "mcpServers": {
-    "ai-playbook": {
+    "aapb": {
       "command": "npx",
       "args": ["ai-agent-playbook", "mcp"]
     }
@@ -99,7 +99,7 @@ TypeScript/JavaScript 언어 분석은 TypeScript compiler API를 read-only loca
 }
 ```
 
-Global install 사용자는 `ai-playbook mcp`를 사용할 수 있습니다. 이 설정 렌더링은 settings file을 쓰지 않습니다.
+Global install 사용자는 `aapb mcp`를 사용할 수 있습니다. 이 설정 렌더링은 settings file을 쓰지 않습니다.
 
 ## 테스트 계획
 

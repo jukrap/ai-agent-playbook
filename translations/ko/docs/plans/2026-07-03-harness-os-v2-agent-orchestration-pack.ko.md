@@ -55,7 +55,7 @@
 - [ ] inputs, outputs, skills, tools, stop conditions, verification criteria를 포함합니다.
 - [ ] Recipe README에 `agent orchestration handoff`를 추가합니다.
 - [ ] 한국어 recipe와 README 업데이트를 추가합니다.
-- [ ] `node bin\ai-playbook.mjs workflow list --json`을 실행해 workflow count가 1 증가했는지 확인합니다.
+- [ ] `node bin\aapb.mjs workflow list --json`을 실행해 workflow count가 1 증가했는지 확인합니다.
 
 ### Task 3: Read-Only MCP Prompt 추가
 

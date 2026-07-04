@@ -1,6 +1,6 @@
 # Git, Commit, and PR Policy
 
-Use this file as a portable project-level Git policy inside `.ai-playbook/`. Keep repository-specific branch names, remotes, issue numbers, and protected-branch rules out of this template until a project adapts it.
+Use this file as a portable project-level Git policy inside `.ai-agent-playbook/`. Keep repository-specific branch names, remotes, issue numbers, and protected-branch rules out of this template until a project adapts it.
 
 This is the short policy. It does not replace detailed commit, PR, and worklog guidance such as `knowledge/references/guides/commit-push-worklog.md` when a project needs durable context for future readers.
 

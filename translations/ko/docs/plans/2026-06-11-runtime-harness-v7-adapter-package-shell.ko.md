@@ -79,7 +79,7 @@ npm test
 **단계:**
 
 1. Shell이 optional이고 local이라는 점을 문서화합니다.
-2. 안정 기본 호출은 `node .\bin\ai-playbook.mjs ...`로 유지합니다.
+2. 안정 기본 호출은 `node .\bin\aapb.mjs ...`로 유지합니다.
 3. Package shell entrypoint는 자동 설치되지 않는다고 명시합니다.
 4. English edit과 함께 한국어 번역을 갱신합니다.
 

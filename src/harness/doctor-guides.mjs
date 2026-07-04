@@ -328,7 +328,7 @@ export async function buildProjectContext(options) {
     };
   }
 
-  const rawContext = `<ai-playbook-context>\n${sections.join('\n\n---\n\n')}\n</ai-playbook-context>`;
+  const rawContext = `<ai-agent-playbook-context>\n${sections.join('\n\n---\n\n')}\n</ai-agent-playbook-context>`;
   const { text, truncated } = truncateText(rawContext, maxChars);
   if (truncated) {
     warnings.push(contextWarning('context.truncated', `Context was truncated to ${maxChars} characters.`));

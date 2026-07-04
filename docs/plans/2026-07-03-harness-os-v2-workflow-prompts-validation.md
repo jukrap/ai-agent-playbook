@@ -72,7 +72,7 @@
 **Behavior:**
 
 - Document future `workflow run-start` as scaffold-tier, not project-write.
-- It may write only under `.ai-playbook/workflows/runs/`.
+- It may write only under `.ai-agent-playbook/workflows/runs/`.
 - It must write a manifest, criteria file, append-only ledger, and handoff stub.
 
 **Acceptance:**
@@ -138,7 +138,7 @@
 
 **Behavior:**
 
-- Read `.ai-playbook/config.json` and `.ai-playbook/config.local.json` in a documented order.
+- Read `.ai-agent-playbook/config.json` and `.ai-agent-playbook/config.local.json` in a documented order.
 - Env overrides remain explicit and narrow.
 - Preview command reports resolved values and source files without writing.
 - Unsafe paths, traversal, malformed JSON, and symlinked trusted config produce warnings or conflicts.

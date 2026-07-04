@@ -48,6 +48,6 @@
 - [ ] Run `.\scripts\validate-skills.ps1`.
 - [ ] Run `.\scripts\validate-translations.ps1`.
 - [ ] Run `.\scripts\validate-public-docs.ps1`.
-- [ ] Run `node bin\ai-playbook.mjs catalog check --json`.
+- [ ] Run `node bin\aapb.mjs catalog check --json`.
 - [ ] Run `git diff --check`.
 - [ ] Stage explicit files, inspect staged diff, and commit.

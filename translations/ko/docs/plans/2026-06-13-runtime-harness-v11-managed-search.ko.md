@@ -6,7 +6,7 @@
 
 ## 범위
 
-- 복사된 project harness file을 위해 `.ai-playbook/.ai-agent-playbook-install.json`을 추가합니다.
+- 복사된 project harness file을 위해 `.ai-agent-playbook/.ai-agent-playbook-install.json`을 추가합니다.
 - `managed check`, `managed adopt`, `managed uninstall`을 추가합니다.
 - `operator search <target> --query <text> [--path <file>] [--max-results N] [--json]`을 추가합니다.
 - `operator check`는 low-noise로 유지하고 기존 동작을 바꾸지 않습니다.

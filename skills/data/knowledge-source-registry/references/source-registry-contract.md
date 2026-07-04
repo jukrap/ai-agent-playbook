@@ -4,7 +4,7 @@ A source registry explains which knowledge sources exist, how they can be search
 
 ## Registry Location
 
-Use `.ai-playbook/knowledge/sources.json` for project-local source metadata. Keep source summaries in `knowledge/references/`, exploratory notes in `knowledge/research/`, and generated reports in `runtime/`.
+Use `.ai-agent-playbook/knowledge/sources.json` for project-local source metadata. Keep source summaries in `knowledge/references/`, exploratory notes in `knowledge/research/`, and generated reports in `runtime/`.
 
 ## Source Entry
 

@@ -2,7 +2,7 @@
 
 **Goal:** Add a preview-first update command that appends missing local reference queue rows to an existing reference adoption ledger without overwriting reviewed decisions.
 
-**Why now:** `reference ledger-init` safely creates a missing ledger, but bootstrapped `.ai-playbook` layouts already include `knowledge/reference-adoption-ledger.md`. Those projects need an append-only adoption path that preserves existing `reviewed`, `adopted`, `deferred`, and `rejected` rows while adding only new reference candidates.
+**Why now:** `reference ledger-init` safely creates a missing ledger, but bootstrapped `.ai-agent-playbook` layouts already include `knowledge/reference-adoption-ledger.md`. Those projects need an append-only adoption path that preserves existing `reviewed`, `adopted`, `deferred`, and `rejected` rows while adding only new reference candidates.
 
 **Architecture:** Reuse `buildReferenceAdoptionQueue` with the existing ledger path so prior statuses are detected before any write. Generate compact Markdown table rows from queue items whose `ledgerStatus` is `new`, remove the starter blank template row when appending real rows, and write only when `--apply` is present. Keep MCP write access behind `--enable-write-tools` and `apply: true`.
 

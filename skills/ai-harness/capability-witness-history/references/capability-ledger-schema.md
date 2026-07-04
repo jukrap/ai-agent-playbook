@@ -33,8 +33,8 @@ Never collapse `skipped`, `degraded`, or `unknown` into `pass`.
 ## Ledger Rules
 
 - Append new entries; do not rewrite history except to remove accidentally committed sensitive data.
-- Keep generated ledgers in `.ai-playbook/runtime/reports/capabilities/` or `.ai-playbook/runtime/indexes/`.
-- Promote only reviewed summaries or durable decisions into `.ai-playbook/memory/`.
+- Keep generated ledgers in `.ai-agent-playbook/runtime/reports/capabilities/` or `.ai-agent-playbook/runtime/indexes/`.
+- Promote only reviewed summaries or durable decisions into `.ai-agent-playbook/memory/`.
 - Use portable project-relative artifact paths.
 - Do not store credentials, tokens, personal absolute paths, internal URLs, branch names, PR numbers, or raw private logs in public documentation.
 - Record read-only witnesses separately from write-capability witnesses so default harness behavior remains safe.

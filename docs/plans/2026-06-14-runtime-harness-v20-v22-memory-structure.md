@@ -10,15 +10,15 @@ The default path remains CLI-first, explicit, local-only, preview-first where wr
 
 ### V20: path-scoped context and documentation map
 
-- Promote `.ai-playbook/context/` as a path-scoped project-memory area.
+- Promote `.ai-agent-playbook/context/` as a path-scoped project-memory area.
 - Support context markdown frontmatter: `id`, `globs`, `alwaysApply`, `freshness`, and `priority`.
 - Add `context list`, `context status`, and preview-first `context init`.
-- Add `.ai-playbook/maps/doc-map.md` as the durable documentation map.
+- Add `.ai-agent-playbook/maps/doc-map.md` as the durable documentation map.
 - Include doc-map and context metadata in `operator context`.
 
 ### V21: runs evidence ledger
 
-- Add `.ai-playbook/runs/<run-id>/` for in-progress task state.
+- Add `.ai-agent-playbook/runs/<run-id>/` for in-progress task state.
 - Add `run start`, `run status`, `run record`, and `run summarize`.
 - Keep `ledger.jsonl` append-only.
 - Reject local absolute paths and credential-looking messages in run records.
@@ -26,7 +26,7 @@ The default path remains CLI-first, explicit, local-only, preview-first where wr
 
 ### V22: contracts read-only layer
 
-- Add `.ai-playbook/contracts/` for active and pending business rules or invariants.
+- Add `.ai-agent-playbook/contracts/` for active and pending business rules or invariants.
 - Support contract frontmatter: `id`, `status`, `appliesTo`, `risk`, `approvedAt`, and `freshness`.
 - Add `contracts list`, `contracts check`, and preview-first `contracts init`.
 - Keep checks read-only: report stale, pending, missing-path, and missing-evidence signals without judging or blocking.

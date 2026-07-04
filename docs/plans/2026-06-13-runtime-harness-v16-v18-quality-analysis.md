@@ -92,7 +92,7 @@ Promotion criteria:
 - explicit CLI checks have clear output and low false-positive rates;
 - real-project smoke tests show the reminders reduce misses;
 - hook output is short enough not to crowd native agent context;
-- the same policy remains documented in `.ai-playbook/` or public docs, not only in runtime state.
+- the same policy remains documented in `.ai-agent-playbook/` or public docs, not only in runtime state.
 
 ## Additional Improvements
 

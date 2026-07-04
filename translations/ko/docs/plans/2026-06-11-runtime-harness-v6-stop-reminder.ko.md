@@ -13,8 +13,8 @@
 ## 경계
 
 - `Stop`은 기본값에서 꺼져 있습니다.
-- `Stop`은 `AI_PLAYBOOK_HOOK_EVENTS`를 통해서만 켭니다.
-- 대상에 `.ai-playbook/` 또는 호환 legacy playbook이 없으면 `Stop`은 아무것도 출력하지 않습니다.
+- `Stop`은 `AI_AGENT_PLAYBOOK_HOOK_EVENTS`를 통해서만 켭니다.
+- 대상에 `.ai-agent-playbook/` 또는 호환 legacy playbook이 없으면 `Stop`은 아무것도 출력하지 않습니다.
 - `Stop`은 `doctor`를 실행하지 않고, hook을 block하지 않고, continuation을 요청하지 않고, file을 쓰지 않고, tool output을 다시 쓰지 않고, network call을 하지 않습니다.
 - Public docs에는 private path, branch name, pull request number, credential, company name, internal URL을 넣지 않습니다.
 
@@ -26,8 +26,8 @@
 
 **단계:**
 
-1. `AI_PLAYBOOK_HOOK_EVENTS`가 없으면 `Stop`이 조용한지 테스트합니다.
-2. 대상에 playbook이 있고 `AI_PLAYBOOK_HOOK_EVENTS=Stop`이면 `Stop`이 valid hook JSON을 출력하는지 테스트합니다.
+1. `AI_AGENT_PLAYBOOK_HOOK_EVENTS`가 없으면 `Stop`이 조용한지 테스트합니다.
+2. 대상에 playbook이 있고 `AI_AGENT_PLAYBOOK_HOOK_EVENTS=Stop`이면 `Stop`이 valid hook JSON을 출력하는지 테스트합니다.
 3. Playbook이 없는 대상은 조용한지 테스트합니다.
 4. 실행 전후 file list를 비교해 file write가 없는지 확인합니다.
 

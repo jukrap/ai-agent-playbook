@@ -1,6 +1,6 @@
 # AI Agent Playbook v2 Reference Source Registry Update
 
-**목표:** 기존 `.ai-playbook/knowledge/sources.json` registry에 누락된 local reference source entry만 append하는 preview-first update command를 추가합니다.
+**목표:** 기존 `.ai-agent-playbook/knowledge/sources.json` registry에 누락된 local reference source entry만 append하는 preview-first update command를 추가합니다.
 
 **이유:** `reference source-registry-preview`는 후보 registry entry를 만들 수 있지만, bootstrap된 project에는 기존 source decision을 보존하면서 `_reference`에서 발견한 새 reference collection만 추가하는 안전한 apply path가 필요합니다.
 

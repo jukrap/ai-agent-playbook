@@ -1,4 +1,4 @@
-# Harness OS v2 Database Depth Pack Plan
+# AI Agent Playbook v2 Database Depth Pack Plan
 
 > **For implementers:** Continue after the architecture boundary pack. This plan covers the next weak catalog surface: database currently has one broad change-safety skill and one migration recipe, while the reference inventory shows richer patterns around migration order, credential handling, read-only estimates, reporting queries, connector syncs, and reconciliation.
 

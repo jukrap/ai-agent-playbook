@@ -84,7 +84,7 @@ test('lifecycle reminder hooks stay quiet for unrelated prompts and missing play
   await cleanup(missing);
 });
 
-test('lifecycle reminder hooks accept legacy ai-playbook during transition', async () => {
+test('lifecycle reminder hooks stay quiet for legacy ai-playbook without dot playbook', async () => {
   const target = await legacyRepo();
   const output = await runCodexHook({
     hook_event_name: 'UserPromptSubmit',
@@ -95,9 +95,7 @@ test('lifecycle reminder hooks accept legacy ai-playbook during transition', asy
     maxChars: 5000
   });
 
-  const parsed = JSON.parse(output);
-  assert.equal(parsed.hookSpecificOutput.hookEventName, 'UserPromptSubmit');
-  assert.match(parsed.hookSpecificOutput.additionalContext, /Git guardrail/);
+  assert.equal(output, '');
   await cleanup(target);
 });
 

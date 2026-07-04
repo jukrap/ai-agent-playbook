@@ -4,10 +4,12 @@ import path from 'node:path';
 import {
   CONTEXT_SOURCE_FILES,
   DEFAULT_CONTEXT_MAX_CHARS,
+  GUIDES_DIR,
   OBSOLETE_STYLE_SKILLS,
   REQUIRED_PLAYBOOK_FILES,
   ROOT_BOOTSTRAP_REFS,
   SCHEMA_VERSION,
+  activePlaybookMissingResult,
   assertDirectory,
   checkIdForPlaybookFile,
   contextWarning,
@@ -95,7 +97,7 @@ export async function doctorProject(options) {
     'root-policy-files',
     'policy',
     'root policy files',
-    rootPolicyFiles.length ? `Prefer ${playbook.relativeRoot}SKILLS.md and ${playbook.relativeRoot}GIT.md; root files found: ${rootPolicyFiles.join(', ')}` : 'No root SKILLS.md or GIT.md.',
+    rootPolicyFiles.length ? `Prefer ${playbook.relativeRoot}policy/SKILLS.md and ${playbook.relativeRoot}policy/GIT.md; root files found: ${rootPolicyFiles.join(', ')}` : 'No root SKILLS.md or GIT.md.',
     rootPolicyFiles
   ));
 
@@ -233,9 +235,9 @@ export async function checkGuides(options) {
 
   await assertDirectory(target, 'Target repository does not exist');
 
-  const source = path.join(repoRoot, 'templates', 'project-playbook', 'guides');
+  const source = path.join(repoRoot, 'templates', 'project-playbook', ...GUIDES_DIR.split('/'));
   const playbook = resolvePlaybookLayout(target);
-  const destination = path.join(playbook.root, 'guides');
+  const destination = path.join(playbook.root, ...GUIDES_DIR.split('/'));
   const sourceGuides = await loadGuideManifest(source);
   const guides = [];
   for (const guide of sourceGuides) {
@@ -244,7 +246,7 @@ export async function checkGuides(options) {
     const sourceHash = guide.sourceHash ?? await hashFile(path.join(source, ...rel.split('/')));
     if (!existsSync(destinationFile)) {
       guides.push({
-        path: `${playbook.relativeRoot}guides/${rel}`,
+        path: `${playbook.relativeRoot}${GUIDES_DIR}/${rel}`,
         status: 'missing',
         sourceHash
       });
@@ -252,7 +254,7 @@ export async function checkGuides(options) {
     }
     const targetHash = await hashFile(destinationFile);
     const entry = {
-      path: `${playbook.relativeRoot}guides/${rel}`,
+      path: `${playbook.relativeRoot}${GUIDES_DIR}/${rel}`,
       status: targetHash === sourceHash ? 'present' : 'stale',
       sourceHash,
       targetHash
@@ -354,8 +356,16 @@ export async function syncGuides(options) {
 
   const operations = [];
   const conflicts = [];
-  const source = path.join(repoRoot, 'templates', 'project-playbook', 'guides');
-  const destination = path.join(resolvePlaybookLayout(target).root, 'guides');
+  const missing = activePlaybookMissingResult(target);
+  if (missing) {
+    return {
+      ok: false,
+      operations,
+      conflicts: missing.conflicts
+    };
+  }
+  const source = path.join(repoRoot, 'templates', 'project-playbook', ...GUIDES_DIR.split('/'));
+  const destination = path.join(resolvePlaybookLayout(target).root, ...GUIDES_DIR.split('/'));
   await copyTree(source, destination, {
     dryRun,
     force,

@@ -1,4 +1,4 @@
-# Harness OS v2 Data Analytics Depth Pack 계획
+# AI Agent Playbook v2 Data Analytics Depth Pack 계획
 
 > **구현자용:** AI harness governance prompt slice 이후 이어서 진행합니다. 현재 `data` 카테고리는 유용한 범용 스킬을 갖고 있지만 modern analytics, ingestion, quality, lineage, retrieval-heavy system을 다루기에는 아직 얕습니다.
 

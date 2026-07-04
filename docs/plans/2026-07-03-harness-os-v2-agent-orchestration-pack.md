@@ -1,8 +1,8 @@
-# Harness OS v2 Agent Orchestration Pack Implementation Plan
+# AI Agent Playbook v2 Agent Orchestration Pack Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a reusable Harness OS capability for splitting multi-agent work, preserving bounded evidence, and reconciling handoffs without increasing default write access.
+**Goal:** Add a reusable AI Agent Playbook capability for splitting multi-agent work, preserving bounded evidence, and reconciling handoffs without increasing default write access.
 
 **Architecture:** This pack stays capability-first. It adds one installable `ai-harness` skill, one workflow recipe, one read-only MCP prompt, and public docs/tests so orchestration remains an explicit selected surface rather than always-on prompt bulk.
 

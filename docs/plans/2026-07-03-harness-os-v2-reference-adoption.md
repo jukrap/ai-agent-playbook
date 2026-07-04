@@ -1,8 +1,8 @@
-# Harness OS v2 Reference Adoption Plan
+# AI Agent Playbook v2 Reference Adoption Plan
 
 ## Status
 
-Harness OS v1 introduced the v2 playbook layout, capability taxonomy, workflow recipes, runtime file inventory, read-only MCP catalog/search tools, and a preview-only write gate.
+AI Agent Playbook v1 introduced the v2 playbook layout, capability taxonomy, workflow recipes, runtime file inventory, read-only MCP catalog/search tools, and a preview-only write gate.
 
 The first review found two issues that should be fixed before expanding the surface:
 
@@ -27,7 +27,7 @@ Adoption rule: import patterns and contracts, not noisy upstream branding or raw
 
 ## Direction
 
-Harness OS v2 should move from "layout plus catalogs" to "evidence-backed operating system":
+AI Agent Playbook v2 should move from "layout plus catalogs" to "evidence-backed operating system":
 
 - Every structural claim should state the scan range or artifact that supports it.
 - Runtime reports stay generated and local by default.

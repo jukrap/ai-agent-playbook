@@ -1,8 +1,8 @@
-# Harness OS V2 Transaction And Canon Implementation Plan
+# AI Agent Playbook V2 Transaction And Canon Implementation Plan
 
 > **For implementers:** Execute this plan task by task. Keep each task separately reviewable and commit after a verified logical slice.
 
-**Goal:** Turn the current Harness OS v2 preview surface into an evidence lifecycle with transaction handoffs, reference adoption validation, and explicit runtime-to-memory promotion.
+**Goal:** Turn the current AI Agent Playbook v2 preview surface into an evidence lifecycle with transaction handoffs, reference adoption validation, and explicit runtime-to-memory promotion.
 
 **Architecture:** Keep the default harness read-only and local-first. Generated evidence stays under `.ai-playbook/runtime/`; trusted long-term facts move into `.ai-playbook/memory/` only through an explicit promotion command with reviewable source, scan range, confidence, and drift checks. MCP remains a discovery and read-only analysis surface until write tiers are explicitly enabled.
 
@@ -240,4 +240,4 @@ npm test
 git diff --check
 ```
 
-Expected: all checks pass, staged files contain only the intended Harness OS transaction, canon, skill, MCP, docs, and translation changes.
+Expected: all checks pass, staged files contain only the intended AI Agent Playbook transaction, canon, skill, MCP, docs, and translation changes.

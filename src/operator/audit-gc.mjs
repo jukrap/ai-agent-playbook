@@ -43,7 +43,7 @@ export async function auditOperator(options) {
       'fail',
       'operator.audit.playbook-missing',
       'playbook',
-      'No .ai-playbook/ or legacy ai-playbook/ folder found.',
+      'No active .ai-playbook/ folder found. If this project still has ai-playbook/, run migrate path first.',
       ['.ai-playbook/']
     ));
   }
@@ -52,7 +52,7 @@ export async function auditOperator(options) {
       'warn',
       'operator.audit.legacy-playbook',
       'playbook',
-      'Both .ai-playbook/ and legacy ai-playbook/ exist; review legacy cleanup after migration.',
+      'Both .ai-playbook/ and ai-playbook/ exist; runtime uses only .ai-playbook/. Review legacy cleanup after migration.',
       ['.ai-playbook/', 'ai-playbook/']
     ));
   }
@@ -134,7 +134,7 @@ export async function gcOperator(options) {
   if (!playbook) {
     conflicts.push({
       id: 'operator.gc.playbook-missing',
-      message: 'No .ai-playbook/ or legacy ai-playbook/ folder found.',
+      message: 'No active .ai-playbook/ folder found. If this project still has ai-playbook/, run migrate path first.',
       paths: ['.ai-playbook/']
     });
     return operatorGcResult({ target: resolvedTarget, apply, applied: false, operations, warnings, conflicts });

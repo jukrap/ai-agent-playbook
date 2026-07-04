@@ -1,4 +1,4 @@
-# Harness OS v2 Reference Source Registry Update
+# AI Agent Playbook v2 Reference Source Registry Update
 
 **목표:** 기존 `.ai-playbook/knowledge/sources.json` registry에 누락된 local reference source entry만 append하는 preview-first update command를 추가합니다.
 

@@ -23,7 +23,7 @@ Use process skills first when they apply, then use the smallest relevant playboo
 - Legacy change: debugging or planning process plus the closest `legacy-*` skill.
 - Commit, push, PR, or handoff: verification or branch-finishing process plus `commit-worklog-guardrails`.
 - Creating or revising reusable skills: planning or review process plus `agent-skill-authoring`.
-- Repository-wide structural cleanup: process planning plus `node .\bin\ai-playbook.mjs doctor <target>`, `templates/project-playbook/guides/structural-review.md`, or an installed evidence tool when the project has one.
+- Repository-wide structural cleanup: process planning plus `node .\bin\ai-playbook.mjs doctor <target>`, `templates/project-playbook/knowledge/references/guides/structural-review.md`, or an installed evidence tool when the project has one.
 
 ## Priority
 

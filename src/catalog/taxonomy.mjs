@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { normalizePortablePath, SCHEMA_VERSION } from '../harness/core.mjs';
 
-export const TAXONOMY_VERSION = '2';
+export const TAXONOMY_KIND = 'capability';
 
 export const CAPABILITY_CATEGORIES = [
   { id: 'foundation', title: 'Foundation', description: 'Repository onboarding, bootstrap, and project memory setup.' },
@@ -64,6 +64,7 @@ export const CANONICAL_SKILL_CATEGORIES = {
   'adr-spec-handoff': 'foundation',
   'documentation-artifact-package': 'foundation',
   'issue-planning-triage': 'foundation',
+  'natural-writing-humanization': 'foundation',
   'project-bootstrap': 'foundation',
   'project-doc-system': 'foundation',
   'release-notes-changelog': 'foundation',
@@ -222,7 +223,7 @@ export async function capabilityCatalog({ repoRoot }) {
   return {
     schemaVersion: SCHEMA_VERSION,
     ok: true,
-    taxonomyVersion: TAXONOMY_VERSION,
+    taxonomyKind: TAXONOMY_KIND,
     categories: CAPABILITY_CATEGORIES.map((category) => ({
       ...category,
       skills: skills.skills.filter((skill) => skill.canonicalCategory === category.id).length,
@@ -314,7 +315,7 @@ export async function skillCatalog({ repoRoot }) {
   return {
     schemaVersion: SCHEMA_VERSION,
     ok: conflicts.length === 0,
-    taxonomyVersion: TAXONOMY_VERSION,
+    taxonomyKind: TAXONOMY_KIND,
     skills,
     summary: {
       skills: skills.length,
@@ -332,7 +333,7 @@ export function workflowCatalog() {
   return {
     schemaVersion: SCHEMA_VERSION,
     ok: true,
-    taxonomyVersion: TAXONOMY_VERSION,
+    taxonomyKind: TAXONOMY_KIND,
     workflows: WORKFLOW_RECIPES,
     summary: {
       workflows: WORKFLOW_RECIPES.length,

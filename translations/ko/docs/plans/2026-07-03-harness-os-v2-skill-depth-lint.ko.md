@@ -1,4 +1,4 @@
-# Harness OS v2 Skill Depth Lint
+# AI Agent Playbook v2 Skill Depth Lint
 
 **목표:** 짧고 trigger-focused한 `SKILL.md` 모델을 버리지 않으면서 skill depth를 보이게 만듭니다.
 

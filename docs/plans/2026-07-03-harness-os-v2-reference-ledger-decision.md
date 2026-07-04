@@ -1,4 +1,4 @@
-# Harness OS v2 Reference Ledger Decision Update
+# AI Agent Playbook v2 Reference Ledger Decision Update
 
 **Goal:** Add a preview-first `reference ledger-decision` command that updates one reference adoption ledger row to `reviewed`, `adopted`, `deferred`, or `rejected` without manual markdown editing.
 

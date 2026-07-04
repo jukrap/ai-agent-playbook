@@ -16,8 +16,8 @@ The `global/` name means "stack-neutral project-root base template" inside this 
 ## How to apply
 
 1. Inspect the project's real config, README, build files, and existing docs first.
-2. Start with `global/AGENTS.md` as a short bootstrap; keep skill and Git policy under `.ai-playbook/SKILLS.md` and `.ai-playbook/GIT.md`.
+2. Start with `global/AGENTS.md` as a short bootstrap; keep skill and Git policy under `.ai-playbook/policy/SKILLS.md` and `.ai-playbook/policy/GIT.md`.
 3. Pick the closest stack profile and remove rules that do not apply.
 4. If the project needs durable agent memory, copy `templates/project-playbook/` as `.ai-playbook/`.
-5. If the project needs detailed commit, push, PR, and worklog guidance, adapt `templates/project-playbook/GIT.md` and `templates/project-playbook/guides/commit-push-worklog.md`.
+5. If the project needs detailed commit, push, PR, and worklog guidance, adapt `templates/project-playbook/policy/GIT.md` and `templates/project-playbook/knowledge/references/guides/commit-push-worklog.md`.
 6. Keep project-specific product rules in separate docs. Use `AGENTS.md` only for the minimum entrypoint and local override rules.

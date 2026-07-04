@@ -1,6 +1,6 @@
 # MCP 권한 모델
 
-Harness OS MCP의 기본값은 읽기 전용 분석과 catalog 접근입니다.
+플레이북 MCP 서버의 기본값은 읽기 전용 분석과 catalog 접근입니다.
 
 ## 권한 단계
 
@@ -15,6 +15,8 @@ Harness OS MCP의 기본값은 읽기 전용 분석과 catalog 접근입니다.
 
 기본 prompt는 리뷰 작업을 필수 근거, 선택 근거, 중단 조건, 검증 기대치에 맞춰 안내합니다. Prompt 자체는 쓰기 권한을 열지 않고, 생성된 runtime hint를 memory로 승격하지 않습니다.
 
+읽기 전용 도구는 tool schema가 선택지를 제공할 때 선택형 로컬 엔진을 호출할 수 있습니다. 예를 들어 `writing_naturalness_check`는 `engine: "auto" | "js" | "python"`을 받습니다. Python 경로도 대상 프로젝트 안의 상대 경로 텍스트 파일 하나를 읽고 JSON 결과를 반환할 뿐, 파일을 쓰거나 network를 호출하지 않습니다.
+
 기본 resource는 AI 앱이 도구를 고르기 전에 읽을 수 있는 압축된 구조화 정보를 제공합니다.
 
 - `ai-playbook://capabilities`: capability catalog와 coverage summary.
@@ -22,7 +24,8 @@ Harness OS MCP의 기본값은 읽기 전용 분석과 catalog 접근입니다.
 - `ai-playbook://workflows`: bundled workflow recipe.
 - `ai-playbook://adapters`: Codex, Codex App, Claude Code, MCP 설정 요약.
 - `ai-playbook://adapter-readiness`: adapter check/config 명령, readiness check, no-write boundary.
-- `ai-playbook://playbook-layout-v2`: `.ai-playbook` v2 layout 역할과 권장 읽기 순서.
+- `ai-playbook://agent-usage-guide`: resource, prompt, read-only 도구를 고르는 짧은 사용 순서 안내.
+- `ai-playbook://playbook-layout`: 구조화된 `.ai-playbook` layout 역할과 권장 읽기 순서.
 - `ai-playbook://reference-adoption`: reference registry, ledger, status, promotion boundary 요약.
 - `ai-playbook://mcp-permission-model`: 이 권한 모델의 structured JSON.
 
@@ -56,6 +59,7 @@ Scaffold-tier와 managed-write tool은 기본으로 노출하지 않습니다. A
 - `index_status`
 - `runtime_schema_check`
 - `evidence_locator_check`
+- `writing_naturalness_check`
 - `index_search`
 - `symbol_outline`
 - `dependency_inventory`

@@ -1,4 +1,4 @@
-# Harness OS v2 Reference Ledger Init Plan
+# AI Agent Playbook v2 Reference Ledger Init Plan
 
 > **Agentic worker용:** REQUIRED SUB-SKILL: 이 계획을 task 단위로 구현할 때 superpowers:executing-plans를 사용합니다. 단계 추적은 checkbox(`- [ ]`) 문법을 사용합니다.
 

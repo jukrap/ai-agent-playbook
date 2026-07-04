@@ -1,4 +1,4 @@
-# Harness OS v2 Reference Inspect Packet
+# AI Agent Playbook v2 Reference Inspect Packet
 
 **목표:** 하나의 local reference collection을 adoption 작업용 compact review packet으로 바꾸는 read-only `reference inspect` 표면을 추가합니다.
 

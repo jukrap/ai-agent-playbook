@@ -1,4 +1,4 @@
-# Harness OS v2 Database Depth Pack 계획
+# AI Agent Playbook v2 Database Depth Pack 계획
 
 > **구현자용:** Architecture boundary pack 이후 이어서 진행합니다. 이 계획은 현재 카탈로그에서 약한 축인 database를 다룹니다. 현재 database에는 넓은 change-safety skill 하나와 migration recipe 하나만 있지만, 레퍼런스 인벤토리에는 migration order, credential handling, read-only estimate, reporting query, connector sync, reconciliation에 관한 더 풍부한 패턴이 있습니다.
 

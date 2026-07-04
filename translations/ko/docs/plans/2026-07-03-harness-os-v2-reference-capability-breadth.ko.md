@@ -1,4 +1,4 @@
-# Harness OS v2 Reference Capability Breadth
+# AI Agent Playbook v2 Reference Capability Breadth
 
 **목표:** Local reference queue가 대부분의 project를 broad AI harness bucket으로 몰아넣지 않고 frontend, database, devops, mobile, data, architecture, design, documentation, connector capability signal을 드러내도록 reference adoption classifier를 확장합니다.
 

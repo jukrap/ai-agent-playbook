@@ -12,6 +12,7 @@
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-2f9e44?style=flat-square"></a>
   <a href="https://www.npmjs.com/package/ai-agent-playbook"><img alt="npm package" src="https://img.shields.io/npm/v/ai-agent-playbook?style=flat-square"></a>
   <img alt="Node 18 plus" src="https://img.shields.io/badge/node-18%2B-1c7ed6?style=flat-square">
+  <img alt="Python 3.11 plus optional" src="https://img.shields.io/badge/python-3.11%2B%20optional-3776ab?style=flat-square">
   <img alt="PowerShell installer" src="https://img.shields.io/badge/installer-PowerShell-f08c00?style=flat-square">
   <img alt="Agent agnostic" src="https://img.shields.io/badge/agents-Codex%20%7C%20Claude%20Code%20%7C%20more-e03131?style=flat-square">
 </p>
@@ -38,7 +39,7 @@ It is not a slash-command pack, a Codex plugin, or an auto-running agent. The de
 | Reusable skills   | Trigger-focused operating guides for project, delivery, architecture, frontend, backend, data, database, DevOps, design, mobile, security, harness, quality, and legacy work. | `skills/`          |
 | Project templates | Copyable root agent rules, stack profiles, and project-memory files for current facts, vocabulary, maps, decisions, and evidence. | `templates/`       |
 | Runtime harness   | A small CLI for bootstrapping `.ai-playbook/`, health checks, context, runs, contracts, plans, and worklogs. | `bin/`, `src/`     |
-| MCP tools         | Local read-only tools, resources, and prompts for AI apps: catalogs, adapter support/readiness, reference adoption, playbook layout, permission model, index search, write-gate preview, context, operator checks, research, contracts, image diff, AST search, clone cues, and TypeScript/JavaScript analysis. | `src/`             |
+| MCP tools         | Local read-only tools, resources, and prompts for AI apps: catalogs, adapter support/readiness, usage guide, reference adoption, playbook layout, permission model, natural writing review, index search, write-gate preview, context, operator checks, research, contracts, image diff, AST search, clone cues, and TypeScript/JavaScript analysis. | `src/`             |
 | Human docs        | Lifecycle, command, classification, maintenance, publishing, and translation notes.                  | `docs/`            |
 | Translations      | Korean reading copies that mirror English source files.                                             | `translations/ko/` |
 | Agent adapters    | Setup notes for specific agent environments.                                                        | `adapters/`        |
@@ -60,7 +61,7 @@ New to this playbook? Start with [First 10 minutes](docs/quick-start.md). It exp
 
 In examples, names inside angle brackets are placeholders. Replace `<target-project>` with the project folder you want to inspect, or use `.` when your terminal is already inside that project. Quote paths that contain spaces, and keep private local paths out of shared issues, docs, and PRs.
 
-If your AI app supports MCP, register a local server command such as `npx ai-agent-playbook mcp`. Then you can ask the AI to inspect playbook context, read the capability/skill/workflow/adapter/reference-adoption resources, run operator search, or do deep local analysis without remembering every CLI command. MCP tools are read-only by default.
+If your AI app supports MCP, register a local server command such as `npx ai-agent-playbook mcp`. Then you can ask the AI to inspect playbook context, read the capability/skill/workflow/adapter/usage/reference-adoption resources, run writing or operator checks, or do deep local analysis without remembering every CLI command. MCP tools are read-only by default.
 
 If you want the shorter `ai-playbook` command from any directory, install the package globally:
 
@@ -68,6 +69,18 @@ If you want the shorter `ai-playbook` command from any directory, install the pa
 npm install -g ai-agent-playbook
 ai-playbook --help
 ```
+
+Python is optional but recommended for deeper local language checks. Node remains the stable CLI and MCP facade; when Python 3.11+ is available, commands such as `writing naturalness-check --engine auto` merge Python-backed Korean/English prose analysis with the built-in JavaScript fallback.
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\python -m pip install -U pip kss kiwipiepy
+$env:AI_PLAYBOOK_PYTHON = ".\.venv\Scripts\python.exe"
+npx ai-agent-playbook runtime python-status --json
+npx ai-agent-playbook writing naturalness-check <target-project> --path README.md --lang auto --engine auto --json
+```
+
+From a source checkout, `.\scripts\bootstrap-python.ps1` creates a local `.venv` and installs the optional Python extras for development. Without Python, the CLI and MCP server still work and return JavaScript fallback results with an `engines.unavailable` warning for Python-backed checks.
 
 The npm package installs the CLI. It does not automatically copy skills, create `.ai-playbook/`, enable hooks, or register slash commands. Keep those actions explicit:
 
@@ -120,7 +133,7 @@ skills/
   frontend/          UI, browser, state/data, accessibility, visual QA, design-system, and interactive media skills
   mobile/            Native release, permission, offline sync, hybrid, WebView, and device QA skills
   security/          Auth, dependency supply chain, license/notice, security review, compliance gate, and risk skills
-  project/            Bootstrap, onboarding, project planning, documentation, and project-memory skills
+  project/            Bootstrap, onboarding, project planning, documentation, natural writing, and project-memory skills
   quality/            UI quality review, cleanup, compatibility routes, and lightweight review skills
   git/                Commit, PR, push, and worklog skills
   meta/               Skill-authoring skills
@@ -143,7 +156,7 @@ test/                 Node CLI and adapter tests
 
 Detailed triggers live in [Skill catalog](docs/skill-catalog.md). The README keeps the public map short so the English and Korean versions stay aligned.
 
-- Project and docs: bootstrap, repository onboarding, project memory, ADR/spec handoff, requirements, issue planning, release notes, and documentation packages.
+- Project and docs: bootstrap, repository onboarding, project memory, ADR/spec handoff, requirements, issue planning, release notes, natural writing review, and documentation packages.
 - Delivery and verification: Git/worklogs, verification strategy, CI gates, flaky test triage, test fixtures, and eval harnesses.
 - AI harness: MCP surface design, context and memory design, agent handoff, skill-pack governance, runtime indexes/caches, capability witnesses, and fact gates.
 - Architecture and backend: boundaries, feature slices, domain modeling, monorepos, API contracts, backend change safety, request/error contracts, job/worker reliability, connectors, and server-rendered flows.
@@ -162,9 +175,8 @@ Detailed triggers live in [Skill catalog](docs/skill-catalog.md). The README kee
 - [Command guide](docs/commands.md): what each CLI command does, when to use it, and whether it writes files.
 - [Lifecycle guide](docs/lifecycle.md): npm/npx usage, global CLI setup, skill lifecycle, project bootstrap/removal, cleanup, and legacy PowerShell paths.
 - [Runtime harness](docs/harness-runtime.md): runtime principles, JSON contract notes, overwrite policy, and target-project flow.
-- [Harness OS](docs/harness-os.md): v1 redesign principles for catalogs, layout, runtime, MCP, and skills.
-- [Playbook layout v2](docs/playbook-layout-v2.md): `.ai-playbook` v2 directory roles and migration commands.
-- [Skill taxonomy v2](docs/skill-taxonomy-v2.md): capability-first categories and compatibility wrapper policy.
+- [Structured playbook layout](docs/structured-playbook-layout.md): `.ai-playbook` directory roles and migration commands.
+- [Capability taxonomy](docs/capability-taxonomy.md): capability-first categories and compatibility wrapper policy.
 - [Skill catalog](docs/skill-catalog.md): long-form skill list and trigger summary.
 - [MCP permission model](docs/mcp-permission-model.md): read, scaffold, managed-write, and project-write tiers.
 - [Reference adoption](docs/reference-adoption.md): how to distill external references into local capabilities without prompt noise.
@@ -177,6 +189,7 @@ Detailed triggers live in [Skill catalog](docs/skill-catalog.md). The README kee
 - [Maintenance workflow](docs/maintenance.md): what to update together when adding or changing content.
 - [Translation policy](docs/translation-policy.md): English source and Korean translation rules.
 - [Publishing checklist](docs/publishing-checklist.md): pre-publish hygiene checks.
+- [Structured playbook cutover notes](docs/changes/structured-playbook-cutover.md): historical notes for the layout and runtime reorganization.
 
 ## For Maintainers
 

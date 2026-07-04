@@ -1,4 +1,4 @@
-# Harness OS v2 AI Harness Governance Pack Plan
+# AI Agent Playbook v2 AI Harness Governance Pack Plan
 
 > **For implementers:** Continue after the database depth pack. This plan covers the next weak catalog surface: `ai-harness` currently has MCP design guidance and meta skill authoring guidance, but it lacks first-class skills for context engineering, skill-pack governance, and runtime index/cache design.
 

@@ -1,4 +1,4 @@
-# Harness OS v2 Capability Pack Expansion Plan
+# AI Agent Playbook v2 Capability Pack Expansion Plan
 
 > **구현자용:** workflow/prompt/config/public-validation/runtime-history hardening 이후 이어서 진행합니다. 이 계획은 v2 taxonomy를 capability-first로 유지하면서 skill surface를 넓히고 reference noise를 남기지 않는 것을 목표로 합니다.
 

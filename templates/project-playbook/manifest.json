@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1",
   "source": "ai-agent-playbook",
-  "layoutVersion": "2",
+  "layoutKind": "structured",
   "runtimePolicy": {
     "defaultLocalOnly": true,
     "runtimeIsGenerated": true,

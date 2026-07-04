@@ -1,4 +1,4 @@
-# Harness OS v2 Reference Ledger Update
+# AI Agent Playbook v2 Reference Ledger Update
 
 **Goal:** Add a preview-first update command that appends missing local reference queue rows to an existing reference adoption ledger without overwriting reviewed decisions.
 

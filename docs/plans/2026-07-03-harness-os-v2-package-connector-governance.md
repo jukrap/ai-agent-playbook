@@ -1,4 +1,4 @@
-# Harness OS v2 Package And Connector Governance Plan
+# AI Agent Playbook v2 Package And Connector Governance Plan
 
 > **For implementers:** Continue after testing/QA delivery pack expansion. This plan covers the next high-signal reference pattern: package/release artifact governance, license/notice evidence, and connector/integration safety.
 

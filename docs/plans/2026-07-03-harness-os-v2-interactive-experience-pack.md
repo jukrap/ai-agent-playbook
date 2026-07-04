@@ -1,4 +1,4 @@
-# Harness OS v2 Interactive Experience Pack
+# AI Agent Playbook v2 Interactive Experience Pack
 
 **Goal:** Add a capability-first pack for 3D, WebGL, canvas, interactive media, design-system handoff, and rendered experience verification without turning the harness back into a React-only or frontend-only playbook.
 

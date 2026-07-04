@@ -1,4 +1,4 @@
-# Harness OS v2 Source Registry Check Plan
+# AI Agent Playbook v2 Source Registry Check Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

@@ -29,9 +29,23 @@ The short role split is:
 - `.ai-playbook/`: target-project memory, runs, contracts, guides, plans, and worklogs.
 - Adapters: optional environment-specific hook/config rendering; never the default install path.
 
+## Polyglot capability engine
+
+The stable public facade stays Node-based: `npx ai-agent-playbook`, the global `ai-playbook` command, and the stdio MCP server all run through the same JavaScript entrypoint. Python is a local capability engine behind that facade for checks where it gives a clear benefit, especially Korean/English prose analysis and future analysis/indexing helpers.
+
+Python is recommended, not required. The bridge uses JSON over stdin/stdout, does not keep a daemon alive, does not write files, and does not call the network. Detection order is `AI_PLAYBOOK_PYTHON`, repo-local `.venv`, `python`, `python3`, then Windows `py -3`.
+
+Check the selected interpreter with:
+
+```powershell
+npx ai-agent-playbook runtime python-status --json
+```
+
+For a source checkout, run `.\scripts\bootstrap-python.ps1` to create `.venv` and install optional Korean analysis packages. For package users, any Python 3.11+ environment can be selected with `AI_PLAYBOOK_PYTHON`; optional libraries such as `kss` or `kiwipiepy` are used when installed and skipped otherwise. When Python is missing, Python-backed commands return `engines.unavailable` and keep the JavaScript fallback.
+
 ## Repo-local config preview
 
-`config preview` is a read-only resolver for Harness OS defaults. It reports the final values, source map, source file status, warnings, and conflicts without changing runtime behavior or writing files.
+`config preview` is a read-only resolver for playbook defaults. It reports the final values, source map, source file status, warnings, and conflicts without changing runtime behavior or writing files.
 
 Precedence is:
 
@@ -65,6 +79,8 @@ Runtime artifact JSON must keep a stable evidence envelope: `schemaVersion`, `ki
 
 `graph preview` builds a read-only `runtime.repo-graph` report from current file inventory, symbol outline, dependency inventory, and route/API/data hints. It records compact nodes and source-backed edges for review, but it remains generated runtime evidence. Use canon or documentation promotion before moving stable facts into memory maps.
 
+`writing naturalness-check` is also read-only. It reads one target-relative text file and reports Korean or English prose signals such as translationese, AI-writing phrases, inflated tone, repeated sentence rhythm, and English-term density. `--engine auto` combines the built-in JavaScript fallback with the optional Python engine when available; the JSON result reports `engines.used` and `engines.unavailable`. It never rewrites files, calls a network service, judges authorship, or bypasses detectors. Use the result as an editing checklist before changing README text, docs, translations, PR bodies, release notes, or public summaries.
+
 ## Workflow run records
 
 `workflow run-preview` is the current implemented workflow command. It reads a target-local recipe first, falls back to the bundled recipe, parses the run contract, and returns generated evidence without writing files.
@@ -81,7 +97,7 @@ Start the local server with:
 npx ai-agent-playbook mcp
 ```
 
-An MCP-capable AI app can register that command and then call tools such as `runtime_schema_check`, `operator_search`, `operator_research`, `operator_analyze_deep`, `source_function_clones`, `ast_grep_search`, `lsp_symbols`, `contracts_check`, `managed_check`, and `qa_image_diff`.
+An MCP-capable AI app can register that command and then call tools such as `runtime_schema_check`, `writing_naturalness_check`, `operator_search`, `operator_research`, `operator_analyze_deep`, `source_function_clones`, `ast_grep_search`, `lsp_symbols`, `contracts_check`, `managed_check`, and `qa_image_diff`. The writing tool accepts `engine: "auto" | "js" | "python"` and remains read-only even when it calls the optional local Python engine.
 
 The MCP server exposes only read-only tools. It does not expose bootstrap, skill install/update/uninstall, managed apply operations, contract snapshot apply, run record, AST rewrite/apply, LSP rename, automatic doctor execution, or blocking/continuation behavior.
 
@@ -102,14 +118,14 @@ The MCP server exposes only read-only tools. It does not expose bootstrap, skill
 
 - Copies `templates/project-playbook/` to `<target>/.ai-playbook/`.
 - Writes a thin `<target>/AGENTS.md` from `templates/agents/global/AGENTS.md`. This is a project-root bootstrap, not Codex's personal `~/.codex/AGENTS.md`.
-- Includes `.ai-playbook/SKILLS.md` and `.ai-playbook/GIT.md` as part of the project playbook.
+- Includes `.ai-playbook/policy/SKILLS.md` and `.ai-playbook/policy/GIT.md` as part of the project playbook.
 - Merges a stack profile into `AGENTS.md` when `--profile <name>` is provided.
 - Appends `.ai-playbook/` to `.gitignore` only when `--local-only` is provided.
 - Writes `.ai-playbook/.ai-agent-playbook-install.json` to mark files copied by this playbook. The marker stores only portable relative paths and content hashes.
 - Refuses to overwrite existing files unless `--force` is provided.
 - Preflights all planned writes before creating files. If a conflict is found, the command reports it without leaving a partial `.ai-playbook/` tree behind.
 
-Compatibility: new bootstrap output uses `.ai-playbook/`. Runtime commands still read and write an existing legacy `ai-playbook/` folder when `.ai-playbook/` is absent, so older projects can migrate gradually. If both folders exist, `.ai-playbook/` is preferred.
+Compatibility: new bootstrap output uses `.ai-playbook/`. Legacy `ai-playbook/` folders are no longer active runtime roots; use `migrate path` to preview and apply the explicit folder migration before running project playbook commands. If both folders exist, runtime commands read `.ai-playbook/` and diagnostics warn about the legacy folder.
 
 ## Path migration
 
@@ -151,13 +167,13 @@ Fresh bootstrap output can warn about `playbook adaptation` because `START_HERE.
 
 Use `--json` when a hook, wrapper, or automation needs stable machine-readable output. The JSON contract is versioned with `schemaVersion: "1"` and includes `summary` plus `checks[]` entries with `id`, `level`, `category`, `name`, `message`, and `paths`. The current text output remains the human default.
 
-Worklog summary freshness checks are read-only. They warn when a month has detailed worklogs under `.ai-playbook/worklogs/YYYY-MM/` but no `.ai-playbook/worklogs/summaries/YYYY-MM.md`, or when the summary is older than a detailed entry in that month.
+Worklog summary freshness checks are read-only. They warn when a month has detailed worklogs under `.ai-playbook/workflows/worklogs/YYYY-MM/` but no `.ai-playbook/workflows/worklogs/summaries/YYYY-MM.md`, or when the summary is older than a detailed entry in that month.
 
 Use `doctor --reminder --json` when a wrapper or script needs a small non-blocking signal instead of the full doctor report. It returns `{ schemaVersion, ok, target, reminders }`. Reminder entries use `{ id, level, message, paths }`. The command does not write files and exits successfully after emitting the signal; callers should inspect `ok` and `reminders`.
 
 ## Guide sync
 
-`guides sync` copies current guide templates from this repository to `<target>/.ai-playbook/guides/`.
+`guides sync` copies current guide templates from this repository to `<target>/.ai-playbook/knowledge/references/guides/`.
 
 - Default behavior keeps existing guide files and copies only missing guide files.
 - Use `--dry-run` first to preview additions.
@@ -166,7 +182,7 @@ Use `doctor --reminder --json` when a wrapper or script needs a small non-blocki
 - Add `--diff` with `--check` to include the first differing line and source/target line counts for stale guides. This is still read-only.
 - Stale guides do not fail the default check. They are review signals so local guide edits are not overwritten silently.
 - Use `--force` only when you intentionally want to replace existing guide files with the current template versions.
-- This command does not update `AGENTS.md`, `.ai-playbook/SKILLS.md`, `.ai-playbook/GIT.md`, `CURRENT.md`, plans, worklogs, or project-specific notes.
+- This command does not update `AGENTS.md`, `.ai-playbook/policy/SKILLS.md`, `.ai-playbook/policy/GIT.md`, `CURRENT.md`, plans, worklogs, or project-specific notes.
 
 ## Context output
 
@@ -174,14 +190,16 @@ Use `doctor --reminder --json` when a wrapper or script needs a small non-blocki
 
 - `.ai-playbook/START_HERE.md`
 - `.ai-playbook/CURRENT.md`
-- `.ai-playbook/SKILLS.md`
-- `.ai-playbook/GIT.md`
+- `.ai-playbook/policy/SKILLS.md`
+- `.ai-playbook/policy/GIT.md`
 
 `CURRENT.md` is the place for current facts, active risks, decisions, and short project vocabulary. Larger structural facts, scan ranges, and duplicate or clone cues belong in maps. The context command does not read or re-inject root `AGENTS.md` by default. Use `--json` to return `{ schemaVersion, ok, target, sources, additionalContext, warnings }`. Use `--max-chars N` to cap injected context for hook environments.
 
-Path-scoped context lives under `.ai-playbook/context/`. Context markdown may use frontmatter fields `id`, `globs`, `alwaysApply`, `freshness`, and `priority`, with body sections such as `When to read`, `Current facts`, `Do not assume`, and `Verification hints`.
+When context is too broad, narrow before reading more. Use `operator context --path <file> --json` to preview path-scoped context, rules, maps, runbooks, decisions, contracts, and guides. Use `operator search` or `index search` to find relevant playbook notes before loading large files. Keep raw generated reports in `runtime/` and promote only concise reviewed facts into `memory/` or `knowledge/`.
 
-`context list` and `context status` are read-only. `context status --path <file> --json` returns `{ schemaVersion, ok, target, path, summary, contexts, docMap, warnings, conflicts }` so an operator can see which context files apply to a path and whether `.ai-playbook/maps/doc-map.md` exists. `context init` is preview-first and writes starter context and documentation-map files only when `--dry-run` is omitted.
+Path-scoped context lives under `.ai-playbook/memory/context/`. Context markdown may use frontmatter fields `id`, `globs`, `alwaysApply`, `freshness`, and `priority`, with body sections such as `When to read`, `Current facts`, `Do not assume`, and `Verification hints`.
+
+`context list` and `context status` are read-only. `context status --path <file> --json` returns `{ schemaVersion, ok, target, path, summary, contexts, docMap, warnings, conflicts }` so an operator can see which context files apply to a path and whether `.ai-playbook/memory/maps/doc-map.md` exists. `context init` is preview-first and writes starter context and documentation-map files only when `--dry-run` is omitted.
 
 ## Runs ledger
 
@@ -190,15 +208,15 @@ Path-scoped context lives under `.ai-playbook/context/`. Context markdown may us
 - `runs/` is for the current task: criteria, evidence, blockers, cleanup, and resumable status.
 - `worklogs/` is for durable history after milestones, blockers, direction changes, or long debugging.
 
-`run start` creates `.ai-playbook/runs/<run-id>/` with `brief.md`, `criteria.json`, `ledger.jsonl`, `evidence/`, and `summary.md`. The ledger is append-only JSONL. `run record` appends note, criterion, evidence, blocker, or cleanup events and rejects local absolute paths or credential-looking messages. `run status` is read-only. `run summarize` is preview-first and renders the ledger into `summary.md`.
+`run start` creates `.ai-playbook/workflows/runs/<run-id>/` with `brief.md`, `criteria.json`, `ledger.jsonl`, `evidence/`, and `summary.md`. The ledger is append-only JSONL. `run record` appends note, criterion, evidence, blocker, or cleanup events and rejects local absolute paths or credential-looking messages. `run status` is read-only. `run summarize` is preview-first and renders the ledger into `summary.md`.
 
 ## Contracts
 
-`contracts/` captures important business rules and invariants as markdown. Active contracts live under `.ai-playbook/contracts/active/`; drafts live under `.ai-playbook/contracts/pending/`. Contract frontmatter supports `id`, `status`, `appliesTo`, `risk`, `approvedAt`, and `freshness`.
+`contracts/` captures important business rules and invariants as markdown. Active contracts live under `.ai-playbook/memory/contracts/active/`; drafts live under `.ai-playbook/memory/contracts/pending/`. Contract frontmatter supports `id`, `status`, `appliesTo`, `risk`, `approvedAt`, and `freshness`.
 
-`contracts list` and `contracts check` are read-only. `contracts check --path <file> --json` reports matching active and pending contracts, missing `appliesTo` paths, stale freshness dates, pending-only matches, empty `Required evidence` sections, and contract hash snapshot drift when `.ai-playbook/contracts/.hashes.json` exists. It does not run tests, judge correctness, block commits, approve rules, or edit files.
+`contracts list` and `contracts check` are read-only. `contracts check --path <file> --json` reports matching active and pending contracts, missing `appliesTo` paths, stale freshness dates, pending-only matches, empty `Required evidence` sections, and contract hash snapshot drift when `.ai-playbook/memory/contracts/.hashes.json` exists. It does not run tests, judge correctness, block commits, approve rules, or edit files.
 
-`contracts snapshot` is preview-first. By default it reports the contract, `appliesTo`, and Required evidence paths that would be hashed. `--apply` writes only `.ai-playbook/contracts/.hashes.json`, with portable relative paths and hashes. The snapshot is a freshness aid for operators; it is not an approval cache. `contracts init` is preview-first and writes only the starter folder structure.
+`contracts snapshot` is preview-first. By default it reports the contract, `appliesTo`, and Required evidence paths that would be hashed. `--apply` writes only `.ai-playbook/memory/contracts/.hashes.json`, with portable relative paths and hashes. The snapshot is a freshness aid for operators; it is not an approval cache. `contracts init` is preview-first and writes only the starter folder structure.
 
 ## Operator diagnostics
 
@@ -234,7 +252,7 @@ Use it when quick search is too shallow and the operator wants a broader evidenc
 npx ai-agent-playbook operator context <target> --path src/example.ts --json
 ```
 
-It reports the core context files that exist, `.ai-playbook/context/**/*.md` files whose `globs` or `alwaysApply` frontmatter applies to the path, matching project rules, `.ai-playbook/maps/doc-map.md`, and related maps, runbooks, decisions, or guides that mention the path or file name. JSON output returns `{ schemaVersion, ok, target, path, summary, coreSources, contexts, docMap, rules, related, warnings }`. This command does not write context files, run project commands, or install hooks.
+It reports the core context files that exist, `.ai-playbook/memory/context/**/*.md` files whose `globs` or `alwaysApply` frontmatter applies to the path, matching project rules, `.ai-playbook/memory/maps/doc-map.md`, and related maps, runbooks, decisions, or guides that mention the path or file name. JSON output returns `{ schemaVersion, ok, target, path, summary, coreSources, contexts, docMap, rules, related, warnings }`. This command does not write context files, run project commands, or install hooks.
 
 `operator preflight` and `operator delta` provide an explicit before/after evidence gate without blocking work:
 
@@ -267,7 +285,7 @@ Deep mode adds local AST-grep structural search, exact normalized function-body 
 npx ai-agent-playbook operator map <target> --json
 ```
 
-It reads local project files and reports stack manifests, detected package manager, source language counts, framework dependencies, top-level structure, entrypoint candidates, module boundary directories, quality configs, test file samples, verification command candidates, TODO/debug/security signal snippets, and a compact summary. Common dependency and generated folders are excluded. JSON output returns `{ schemaVersion, ok, target, summary, stack, architecture, quality, concerns, warnings }`. It is read-only and does not create `.ai-playbook/maps/` files; use the report as evidence before deciding what to promote into durable project maps.
+It reads local project files and reports stack manifests, detected package manager, source language counts, framework dependencies, top-level structure, entrypoint candidates, module boundary directories, quality configs, test file samples, verification command candidates, TODO/debug/security signal snippets, and a compact summary. Common dependency and generated folders are excluded. JSON output returns `{ schemaVersion, ok, target, summary, stack, architecture, quality, concerns, warnings }`. It is read-only and does not create `.ai-playbook/memory/maps/` files; use the report as evidence before deciding what to promote into durable project maps.
 
 `operator audit` checks playbook drift without writing files:
 
@@ -374,16 +392,16 @@ These reminders are intentionally narrow. They do not run `doctor`, block tool c
 
 ## Scaffold rules
 
-- Plans are created under `.ai-playbook/plans/YYYY-MM-DD-<slug>.md`.
-- Runs are created under `.ai-playbook/runs/<run-id>/`.
-- Contract starters are created under `.ai-playbook/contracts/`.
-- Worklogs are created under `.ai-playbook/worklogs/YYYY-MM/YYYY-MM-DD-<slug>.md`.
-- Monthly summaries are created under `.ai-playbook/worklogs/summaries/YYYY-MM.md`.
+- Plans are created under `.ai-playbook/workflows/plans/YYYY-MM-DD-<slug>.md`.
+- Runs are created under `.ai-playbook/workflows/runs/<run-id>/`.
+- Contract starters are created under `.ai-playbook/memory/contracts/`.
+- Worklogs are created under `.ai-playbook/workflows/worklogs/YYYY-MM/YYYY-MM-DD-<slug>.md`.
+- Monthly summaries are created under `.ai-playbook/workflows/worklogs/summaries/YYYY-MM.md`.
 - Existing files are not overwritten unless `--force` is provided.
 
 ## Design constraints
 
-- Keep the CLI dependency-light; add runtime dependencies only when a concrete read-only feature requires one.
+- Keep the Node CLI facade dependency-light; add JavaScript runtime dependencies only when a concrete read-only feature requires one, and prefer optional Python engines for heavier local language or analysis work.
 - Keep commands deterministic and file-system focused.
 - Do not encode project-specific product facts in the runtime.
 - Keep reusable templates relative-path based.

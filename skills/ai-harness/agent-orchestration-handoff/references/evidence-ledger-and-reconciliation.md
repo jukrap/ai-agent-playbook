@@ -29,8 +29,8 @@ Each entry should include:
 
 - Promote stable facts only after a reviewer can reopen the evidence.
 - Promote to `memory/` only when the fact is durable project knowledge.
-- Promote to `worklogs/` when the value is historical decision path or milestone evidence.
-- Promote to `contracts/` when future work must obey the boundary.
+- Promote to `.ai-playbook/workflows/worklogs/` when the value is historical decision path or milestone evidence.
+- Promote to `.ai-playbook/memory/contracts/` when future work must obey the boundary.
 - Keep tool output in `runtime/` when it is generated, stale-prone, large, or not yet reviewed.
 
 ## Handoff Summary

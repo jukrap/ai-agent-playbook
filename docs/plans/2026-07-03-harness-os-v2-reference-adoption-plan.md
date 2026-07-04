@@ -1,4 +1,4 @@
-# Harness OS v2 Reference Adoption Plan
+# AI Agent Playbook v2 Reference Adoption Plan
 
 **Goal:** Add a read-only `reference adoption-plan` surface that turns a capability-focused reference matrix into a compact implementation planning packet.
 

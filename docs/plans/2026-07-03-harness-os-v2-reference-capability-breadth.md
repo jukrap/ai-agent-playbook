@@ -1,4 +1,4 @@
-# Harness OS v2 Reference Capability Breadth
+# AI Agent Playbook v2 Reference Capability Breadth
 
 **Goal:** Expand the reference adoption classifier so local reference queues can surface frontend, database, devops, mobile, data, architecture, design, documentation, and connector capability signals instead of collapsing most projects into broad AI harness buckets.
 

@@ -1,4 +1,4 @@
-# Harness OS v2 Reference Adoption Plan
+# AI Agent Playbook v2 Reference Adoption Plan
 
 **목표:** Capability-focused reference matrix를 compact implementation planning packet으로 바꾸는 read-only `reference adoption-plan` 표면을 추가합니다.
 

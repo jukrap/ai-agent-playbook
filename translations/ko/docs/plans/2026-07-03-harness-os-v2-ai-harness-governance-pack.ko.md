@@ -1,4 +1,4 @@
-# Harness OS v2 AI Harness Governance Pack 계획
+# AI Agent Playbook v2 AI Harness Governance Pack 계획
 
 > **구현자용:** Database depth pack 이후 이어서 진행합니다. 이 계획은 현재 카탈로그에서 약한 축인 `ai-harness`를 다룹니다. 현재 ai-harness에는 MCP design 지침과 meta skill authoring 지침이 있지만 context engineering, skill-pack governance, runtime index/cache design 전용 first-class skill은 없습니다.
 

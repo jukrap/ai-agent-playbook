@@ -1,4 +1,4 @@
-# Harness OS v2 MCP Resource And Docs Hardening Plan
+# AI Agent Playbook v2 MCP Resource And Docs Hardening Plan
 
 **Goal:** Make the expanded harness easier for AI apps to discover and use by exposing structured MCP resources, tightening `.ai-playbook` entry guidance, and aligning README/MCP docs with the current implementation.
 

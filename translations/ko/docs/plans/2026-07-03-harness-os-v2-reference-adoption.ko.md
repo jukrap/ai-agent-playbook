@@ -1,8 +1,8 @@
-# Harness OS v2 Reference Adoption Plan
+# AI Agent Playbook v2 Reference Adoption Plan
 
 ## Status
 
-Harness OS v1에서는 v2 playbook layout, capability taxonomy, workflow recipe, runtime file inventory, read-only MCP catalog/search tool, preview-only write gate를 추가했습니다.
+AI Agent Playbook v1에서는 v2 playbook layout, capability taxonomy, workflow recipe, runtime file inventory, read-only MCP catalog/search tool, preview-only write gate를 추가했습니다.
 
 첫 검수에서는 확장 전에 바로 고쳐야 할 문제가 두 가지 있었습니다.
 
@@ -27,7 +27,7 @@ local reference collection은 원문을 그대로 복사할 수 있는 규모가
 
 ## Direction
 
-Harness OS v2는 "layout plus catalog"에서 "evidence-backed operating system"으로 가야 합니다.
+AI Agent Playbook v2는 "layout plus catalog"에서 "evidence-backed operating system"으로 가야 합니다.
 
 - 구조적 주장은 scan range나 근거 artifact를 함께 가져야 합니다.
 - runtime report는 기본적으로 generated/local 산출물로 둡니다.

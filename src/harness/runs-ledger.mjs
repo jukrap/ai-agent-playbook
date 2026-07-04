@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
   RUN_SUMMARY_MARKER,
+  RUNS_DIR,
   SCHEMA_VERSION,
   assertDirectory,
   buildRunSummaryMarkdown,
@@ -32,7 +33,7 @@ export async function startRun(options) {
   const resolvedTarget = path.resolve(target);
   const playbook = resolvePlaybookLayout(resolvedTarget);
   const runId = slugifyTitle(title);
-  const runRoot = `${playbook.dir}/runs/${runId}`;
+  const runRoot = `${playbook.dir}/${RUNS_DIR}/${runId}`;
   const startedAt = new Date().toISOString();
   const files = [
     {
@@ -61,7 +62,7 @@ export async function startRun(options) {
     }
   ];
   const result = await writeMemoryFiles({ target: resolvedTarget, files, dryRun, command: 'run.start' });
-  const evidenceDir = path.join(resolvedTarget, playbook.dir, 'runs', runId, 'evidence');
+  const evidenceDir = path.join(resolvedTarget, playbook.dir, ...RUNS_DIR.split('/'), runId, 'evidence');
   if (!dryRun && result.ok) {
     await mkdir(evidenceDir, { recursive: true });
   } else {
@@ -106,8 +107,8 @@ export async function recordRun(options) {
   if (evidencePath === false) {
     conflicts.push(memoryConflict('run.record.unsafe-evidence', `Refusing non-portable evidence path: ${evidence}`, []));
   }
-  const ledgerPath = path.join(playbook.root, 'runs', normalizedRunId, 'ledger.jsonl');
-  const relativeLedgerPath = `${playbook.dir}/runs/${normalizedRunId}/ledger.jsonl`;
+  const ledgerPath = path.join(playbook.root, ...RUNS_DIR.split('/'), normalizedRunId, 'ledger.jsonl');
+  const relativeLedgerPath = `${playbook.dir}/${RUNS_DIR}/${normalizedRunId}/ledger.jsonl`;
   if (!existsSync(ledgerPath)) {
     conflicts.push(memoryConflict('run.record.missing-ledger', `Missing run ledger ${relativeLedgerPath}.`, [relativeLedgerPath]));
   }
@@ -153,17 +154,17 @@ export async function runStatus(options) {
   const warnings = [];
   const conflicts = [];
   if (!selectedRunId) {
-    conflicts.push(memoryConflict('run.status.missing-run', 'No run id was provided and no runs exist.', [`${playbook.dir}/runs/`]));
+    conflicts.push(memoryConflict('run.status.missing-run', 'No run id was provided and no runs exist.', [`${playbook.dir}/${RUNS_DIR}/`]));
     return runStatusResult({ target: resolvedTarget, runId: null, summary: emptyRunSummary(), criteria: [], events: [], warnings, conflicts });
   }
-  const runRoot = path.join(playbook.root, 'runs', selectedRunId);
+  const runRoot = path.join(playbook.root, ...RUNS_DIR.split('/'), selectedRunId);
   const ledgerPath = path.join(runRoot, 'ledger.jsonl');
   const criteriaPath = path.join(runRoot, 'criteria.json');
   if (!existsSync(ledgerPath)) {
-    conflicts.push(memoryConflict('run.status.missing-ledger', `Missing ${playbook.dir}/runs/${selectedRunId}/ledger.jsonl.`, [`${playbook.dir}/runs/${selectedRunId}/ledger.jsonl`]));
+    conflicts.push(memoryConflict('run.status.missing-ledger', `Missing ${playbook.dir}/${RUNS_DIR}/${selectedRunId}/ledger.jsonl.`, [`${playbook.dir}/${RUNS_DIR}/${selectedRunId}/ledger.jsonl`]));
   }
-  const events = existsSync(ledgerPath) ? await readLedgerEvents(ledgerPath, warnings, `${playbook.dir}/runs/${selectedRunId}/ledger.jsonl`) : [];
-  const criteriaFile = existsSync(criteriaPath) ? await readCriteria(criteriaPath, warnings, `${playbook.dir}/runs/${selectedRunId}/criteria.json`) : [];
+  const events = existsSync(ledgerPath) ? await readLedgerEvents(ledgerPath, warnings, `${playbook.dir}/${RUNS_DIR}/${selectedRunId}/ledger.jsonl`) : [];
+  const criteriaFile = existsSync(criteriaPath) ? await readCriteria(criteriaPath, warnings, `${playbook.dir}/${RUNS_DIR}/${selectedRunId}/criteria.json`) : [];
   const criteria = mergeCriteriaWithLedgerEvents(criteriaFile, events);
   return runStatusResult({
     target: resolvedTarget,
@@ -183,8 +184,8 @@ export async function summarizeRun(options) {
   const playbook = resolvePlaybookLayout(resolvedTarget);
   const normalizedRunId = normalizeRunId(runId);
   const status = await runStatus({ target: resolvedTarget, runId: normalizedRunId });
-  const runRoot = `${playbook.dir}/runs/${normalizedRunId}`;
-  const file = path.join(playbook.root, 'runs', normalizedRunId, 'summary.md');
+  const runRoot = `${playbook.dir}/${RUNS_DIR}/${normalizedRunId}`;
+  const file = path.join(playbook.root, ...RUNS_DIR.split('/'), normalizedRunId, 'summary.md');
   const content = buildRunSummaryMarkdown({ runId: normalizedRunId, events: status.events, criteria: status.criteria });
   if (existsSync(file) && !force && !dryRun) {
     const existing = await readFile(file, 'utf8');

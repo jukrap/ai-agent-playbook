@@ -7,14 +7,18 @@ export const REQUIRED_PLAYBOOK_FILES = [
   'README.md',
   'START_HERE.md',
   'CURRENT.md',
-  'SKILLS.md',
-  'GIT.md',
   'questions.md',
-  'maps/README.md',
-  'runbooks/README.md',
-  'plans/README.md',
-  'worklogs/README.md',
-  'worklogs/summaries/README.md'
+  'manifest.json',
+  'policy/SKILLS.md',
+  'policy/GIT.md',
+  'policy/SAFETY.md',
+  'memory/README.md',
+  'memory/glossary.md',
+  'workflows/README.md',
+  'workflows/recipes/README.md',
+  'knowledge/sources.json',
+  'runtime/README.md',
+  'integrations/README.md'
 ];
 
 export const SCHEMA_VERSION = '1';
@@ -24,15 +28,19 @@ export const LEGACY_PLAYBOOK_DIR = 'ai-playbook';
 export const CONTEXT_SOURCE_FILES = [
   'START_HERE.md',
   'CURRENT.md',
-  'SKILLS.md',
-  'GIT.md'
+  'questions.md',
+  'policy/SKILLS.md',
+  'policy/GIT.md'
 ];
 export const GUIDE_MANIFEST_FILE = 'manifest.json';
 export const INSTALL_MANIFEST_FILE = '.ai-agent-playbook-install.json';
 export const INSTALL_SOURCE = 'ai-agent-playbook';
-export const CONTEXT_DIR = 'context';
-export const RUNS_DIR = 'runs';
-export const CONTRACTS_DIR = 'contracts';
+export const CONTEXT_DIR = 'memory/context';
+export const MAPS_DIR = 'memory/maps';
+export const RUNS_DIR = 'workflows/runs';
+export const CONTRACTS_DIR = 'memory/contracts';
+export const WORKLOGS_DIR = 'workflows/worklogs';
+export const GUIDES_DIR = 'knowledge/references/guides';
 export const RUN_SUMMARY_MARKER = '<!-- ai-playbook-run-summary -->';
 
 export const OBSOLETE_STYLE_SKILLS = [
@@ -45,8 +53,9 @@ export const OBSOLETE_STYLE_SKILLS = [
 export const ROOT_BOOTSTRAP_REFS = [
   'START_HERE.md',
   'CURRENT.md',
-  'SKILLS.md',
-  'GIT.md'
+  'questions.md',
+  'policy/SKILLS.md',
+  'policy/GIT.md'
 ];
 
 export const CORE_TEMPLATE_MARKERS = [
@@ -109,17 +118,22 @@ export function parseMaxChars(value, optionName = '--max-chars') {
 }
 
 export function resolvePlaybookLayout(target) {
-  const defaultRoot = path.join(target, DEFAULT_PLAYBOOK_DIR);
-  const legacyRoot = path.join(target, LEGACY_PLAYBOOK_DIR);
-  const dir = existsSync(defaultRoot)
-    ? DEFAULT_PLAYBOOK_DIR
-    : existsSync(legacyRoot)
-      ? LEGACY_PLAYBOOK_DIR
-      : DEFAULT_PLAYBOOK_DIR;
+  const dir = DEFAULT_PLAYBOOK_DIR;
   return {
     dir,
     root: path.join(target, dir),
     relativeRoot: `${dir}/`
+  };
+}
+
+export function activePlaybookMissingResult(target) {
+  const playbook = resolvePlaybookLayout(target);
+  if (existsSync(playbook.root)) return null;
+  return {
+    ok: false,
+    file: playbook.relativeRoot,
+    operations: [],
+    conflicts: [`Missing ${playbook.relativeRoot}; run bootstrap or migrate path first.`]
   };
 }
 
@@ -190,7 +204,7 @@ export async function collectContextEntries(options) {
 
 export async function readDocMap(options) {
   const { target, playbook } = options;
-  const file = path.join(playbook.root, 'maps', 'doc-map.md');
+  const file = path.join(playbook.root, ...MAPS_DIR.split('/'), 'doc-map.md');
   const relative = normalizePortablePath(path.relative(target, file));
   if (!existsSync(file)) {
     return {
@@ -454,7 +468,7 @@ export function isRecord(value) {
 }
 
 export async function latestRunId(playbookRoot) {
-  const runsRoot = path.join(playbookRoot, RUNS_DIR);
+  const runsRoot = path.join(playbookRoot, ...RUNS_DIR.split('/'));
   if (!existsSync(runsRoot)) return null;
   const entries = await readdir(runsRoot, { withFileTypes: true });
   const directories = [];
@@ -634,7 +648,7 @@ export async function collectContracts(options) {
 
 export async function readContractSnapshot(options) {
   const { target, playbook, warnings, contracts, pathCache } = options;
-  const snapshotPath = `${playbook.dir}/contracts/.hashes.json`;
+  const snapshotPath = `${playbook.dir}/${CONTRACTS_DIR}/.hashes.json`;
   const fullPath = path.join(target, ...snapshotPath.split('/'));
   if (!existsSync(fullPath)) {
     return { path: snapshotPath, exists: false, entries: 0 };
@@ -838,7 +852,7 @@ export async function findCoreTemplateFiles(playbookRoot) {
 
 export async function worklogSummaryFreshnessChecks(playbookRoot, playbookDir) {
   const checks = [];
-  const worklogsRoot = path.join(playbookRoot, 'worklogs');
+  const worklogsRoot = path.join(playbookRoot, ...WORKLOGS_DIR.split('/'));
   const summariesRoot = path.join(worklogsRoot, 'summaries');
   if (!existsSync(worklogsRoot)) return checks;
 
@@ -857,8 +871,8 @@ export async function worklogSummaryFreshnessChecks(playbookRoot, playbookDir) {
     if (worklogFiles.length === 0) continue;
 
     const summaryFile = path.join(summariesRoot, `${month}.md`);
-    const monthPath = `${playbookDir}/worklogs/${month}/`;
-    const summaryPath = `${playbookDir}/worklogs/summaries/${month}.md`;
+    const monthPath = `${playbookDir}/${WORKLOGS_DIR}/${month}/`;
+    const summaryPath = `${playbookDir}/${WORKLOGS_DIR}/summaries/${month}.md`;
     if (!existsSync(summaryFile)) {
       checks.push(result(
         'warn',
@@ -880,7 +894,7 @@ export async function worklogSummaryFreshnessChecks(playbookRoot, playbookDir) {
         'freshness',
         `${month} worklog summary freshness`,
         `The ${month} summary is older than ${latestWorklog.name}.`,
-        [`${playbookDir}/worklogs/${month}/${latestWorklog.name}`, summaryPath]
+        [`${playbookDir}/${WORKLOGS_DIR}/${month}/${latestWorklog.name}`, summaryPath]
       ));
       continue;
     }
@@ -1205,7 +1219,7 @@ export async function sourceTemplateManifestEntries(options) {
     if (includeOnlyExistingAndMatching && sourceHash !== targetHash) continue;
     entries.push({
       path: targetPath,
-      kind: rel.startsWith('guides/') ? 'guide' : 'playbook',
+      kind: rel.startsWith(`${GUIDES_DIR}/`) ? 'guide' : 'playbook',
       source: `templates/project-playbook/${rel}`,
       sourceHash,
       targetHash
@@ -1233,18 +1247,18 @@ export async function sourceTemplateManifestEntries(options) {
 
 export async function sourceGuideManifestEntries(options) {
   const { repoRoot, target, playbook } = options;
-  const sourceRoot = path.join(repoRoot, 'templates', 'project-playbook', 'guides');
+  const sourceRoot = path.join(repoRoot, 'templates', 'project-playbook', ...GUIDES_DIR.split('/'));
   const sourceGuides = await loadGuideManifest(sourceRoot);
   const entries = [];
   for (const guide of sourceGuides) {
     const rel = toPortablePath(guide.path);
-    const targetPath = `${playbook.dir}/guides/${rel}`;
+    const targetPath = `${playbook.dir}/${GUIDES_DIR}/${rel}`;
     const targetFile = path.join(target, ...targetPath.split('/'));
     if (!existsSync(targetFile)) continue;
     entries.push({
       path: targetPath,
       kind: 'guide',
-      source: `templates/project-playbook/guides/${rel}`,
+      source: `templates/project-playbook/${GUIDES_DIR}/${rel}`,
       sourceHash: guide.sourceHash ?? await hashFile(path.join(sourceRoot, ...rel.split('/'))),
       targetHash: await hashFile(targetFile)
     });

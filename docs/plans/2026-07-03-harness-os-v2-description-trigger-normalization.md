@@ -1,4 +1,4 @@
-# Harness OS v2 Description Trigger Normalization
+# AI Agent Playbook v2 Description Trigger Normalization
 
 **Goal:** Reduce skill lint warning noise while keeping skill discovery precise.
 

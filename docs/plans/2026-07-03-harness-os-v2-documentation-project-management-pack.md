@@ -1,4 +1,4 @@
-# Harness OS v2 Documentation And Project Management Pack Plan
+# AI Agent Playbook v2 Documentation And Project Management Pack Plan
 
 > **For implementers:** Continue after the data analytics depth pack. The harness now has stronger engineering, data, runtime, and MCP guidance, but documentation artifacts and project-management workflows still rely mostly on generic project docs and handoff skills.
 

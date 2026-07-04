@@ -1,6 +1,6 @@
-# Harness OS v2 Reference Capability Matrix
+# AI Agent Playbook v2 Reference Capability Matrix
 
-**목표:** Local `_reference` collection을 재사용 가능한 Harness OS capability 영역별로 묶는 read-only `reference capability-matrix` 표면을 추가합니다.
+**목표:** Local `_reference` collection을 재사용 가능한 AI Agent Playbook capability 영역별로 묶는 read-only `reference capability-matrix` 표면을 추가합니다.
 
 **이유:** `reference inventory`, `reference adoption-queue`, `reference inspect`는 후보를 찾고 열 수 있지만, 다음 구현 slice를 고르기 전 ai-harness, delivery, backend, security, foundation 등 capability 영역을 어떤 reference가 뒷받침하는지 compact matrix로 볼 필요가 있습니다.
 

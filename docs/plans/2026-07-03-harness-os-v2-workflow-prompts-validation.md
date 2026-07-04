@@ -1,8 +1,8 @@
-# Harness OS v2 Workflow, Prompt, And Verification Hardening Plan
+# AI Agent Playbook v2 Workflow, Prompt, And Verification Hardening Plan
 
 > **For implementers:** Continue after the runtime index and MCP reader slices. This plan turns the new evidence surfaces into repeatable runs, safer prompts, and stronger validation gates.
 
-**Goal:** Make Harness OS more operational: agents should be able to select a recipe, preview the run contract, collect relevant evidence, follow MCP prompts, and leave verification-ready artifacts without relying on chat history.
+**Goal:** Make AI Agent Playbook more operational: agents should be able to select a recipe, preview the run contract, collect relevant evidence, follow MCP prompts, and leave verification-ready artifacts without relying on chat history.
 
 **Reference inputs:** The local reference set showed recurring patterns worth adopting: machine-evidence contracts with scan ranges, repo-local configuration precedence, no-write and no-data-loss guards, graph-style one-hop impact context, append-only capability history, SBOM/SCA gates, third-party notice checks, and cached bootstrap behavior. Adopt those patterns as local contracts and validators, not as copied upstream prose.
 
@@ -126,7 +126,7 @@
 
 ### Task C1: Repo-Local Harness Config Preview
 
-**Purpose:** Allow projects to declare local Harness OS defaults without coupling them to user-level machine settings.
+**Purpose:** Allow projects to declare local AI Agent Playbook defaults without coupling them to user-level machine settings.
 
 **Planned files:**
 

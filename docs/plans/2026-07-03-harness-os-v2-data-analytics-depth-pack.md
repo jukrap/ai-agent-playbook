@@ -1,4 +1,4 @@
-# Harness OS v2 Data Analytics Depth Pack Plan
+# AI Agent Playbook v2 Data Analytics Depth Pack Plan
 
 > **For implementers:** Continue after the AI harness governance prompt slice. The current `data` category has useful broad skills, but it is still thin for modern analytics, ingestion, quality, lineage, and retrieval-heavy systems.
 

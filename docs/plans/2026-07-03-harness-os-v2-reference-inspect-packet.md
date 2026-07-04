@@ -1,4 +1,4 @@
-# Harness OS v2 Reference Inspect Packet
+# AI Agent Playbook v2 Reference Inspect Packet
 
 **Goal:** Add a read-only `reference inspect` surface that turns one local reference collection into a compact review packet for adoption work.
 

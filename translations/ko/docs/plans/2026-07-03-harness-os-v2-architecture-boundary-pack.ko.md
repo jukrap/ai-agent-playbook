@@ -1,4 +1,4 @@
-# Harness OS v2 Architecture Boundary Pack 계획
+# AI Agent Playbook v2 Architecture Boundary Pack 계획
 
 > **구현자용:** 모바일 하드닝 pack 이후 이어서 진행합니다. 이 계획은 현재 카탈로그에서 약한 축인 architecture를 다룹니다. 현재 architecture에는 넓은 boundary review skill 하나만 있고 feature slicing, domain modeling, monorepo/package ownership 전용 스킬은 없습니다.
 

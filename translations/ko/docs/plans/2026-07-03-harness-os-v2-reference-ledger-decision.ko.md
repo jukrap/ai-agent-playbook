@@ -1,4 +1,4 @@
-# Harness OS v2 Reference Ledger Decision Update
+# AI Agent Playbook v2 Reference Ledger Decision Update
 
 **목표:** Markdown을 수동 편집하지 않고 하나의 reference adoption ledger row를 `reviewed`, `adopted`, `deferred`, `rejected`로 바꾸는 preview-first `reference ledger-decision` command를 추가합니다.
 

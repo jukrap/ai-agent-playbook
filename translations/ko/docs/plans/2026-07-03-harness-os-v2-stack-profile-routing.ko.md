@@ -1,4 +1,4 @@
-# Harness OS v2 Stack Profile Routing 구현 계획
+# AI Agent Playbook v2 Stack Profile Routing 구현 계획
 
 > **Agentic worker용:** REQUIRED SUB-SKILL: 이 계획을 task 단위로 구현할 때는 superpowers:executing-plans를 사용합니다. 단계 추적은 checkbox(`- [ ]`) 문법을 사용합니다.
 

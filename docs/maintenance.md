@@ -39,11 +39,11 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 2. Keep the CLI dependency-free unless the feature needs a dependency.
 3. Add tests for every new command, overwrite rule, or path convention.
 4. Update `docs/harness-runtime.md`, `README.md`, lifecycle docs, and Korean translations.
-5. Run `npm run check` and `npm test`.
+5. Run `npm run check`, `npm run typecheck`, `npm test`, and Python validation when the runtime or engine bridge changes.
 
 ## Updating commit, PR, or worklog policy
 
-- Update both `templates/project-playbook/guides/commit-push-worklog.md` and `skills/git/commit-worklog-guardrails/references/git-worklog-checklist.md`.
+- Update both `templates/project-playbook/knowledge/references/guides/commit-push-worklog.md` and `skills/git/commit-worklog-guardrails/references/git-worklog-checklist.md`.
 - Keep project-copyable guidance in the template.
 - Keep skill-triggered procedural guidance in the skill reference.
 - Update Korean translations for both files in the same change.
@@ -63,7 +63,9 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 
 ```powershell
 npm run check
+npm run typecheck
 npm test
+.\scripts\validate-python.ps1
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 .\scripts\validate-mcp-docs.ps1

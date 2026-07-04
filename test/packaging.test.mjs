@@ -33,16 +33,24 @@ test('npm pack dry-run includes runtime files and excludes local/test payloads',
   assert.equal(files.includes('src/cli.mjs'), true);
   assert.equal(files.includes('src/catalog/taxonomy.mjs'), true);
   assert.equal(files.includes('src/catalog/reference-adoption.mjs'), true);
-  assert.equal(files.includes('src/layout/playbook-layout-v2.mjs'), true);
+  assert.equal(files.includes('src/layout/structured-playbook-layout.mjs'), true);
   assert.equal(files.includes('src/runtime/indexes.mjs'), true);
+  assert.equal(files.includes('src/runtime/python-engine.mjs'), true);
+  assert.equal(files.includes('src/runtime/writing-naturalness.mjs'), true);
   assert.equal(files.includes('src/runtime/schemas.mjs'), true);
   assert.equal(files.includes('src/runtime/capability-history.mjs'), true);
+  assert.equal(files.includes('pyproject.toml'), true);
+  assert.equal(files.includes('python/ai_playbook_engine/__main__.py'), true);
+  assert.equal(files.includes('scripts/bootstrap-python.ps1'), true);
+  assert.equal(files.includes('scripts/validate-python.ps1'), true);
   assert.equal(files.includes('src/skills-lifecycle.mjs'), true);
   assert.equal(files.includes('skills/backend/server-rendered-change/SKILL.md'), true);
   assert.equal(files.includes('skills/project/project-bootstrap/SKILL.md'), true);
+  assert.equal(files.includes('skills/project/natural-writing-humanization/SKILL.md'), true);
   assert.equal(files.includes('templates/project-playbook/manifest.json'), true);
   assert.equal(files.includes('templates/project-playbook/README.md'), true);
   assert.equal(files.includes('templates/project-playbook/knowledge/reference-adoption-ledger.md'), true);
+  assert.equal(files.includes('docs/changes/structured-playbook-cutover.md'), true);
   assert.equal(files.includes('adapters/codex/hook.mjs'), true);
 
   assert.equal(files.some((file) => file.startsWith('test/')), false);

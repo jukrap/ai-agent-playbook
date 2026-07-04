@@ -1,4 +1,4 @@
-# Harness OS v2 MCP Resource And Docs Hardening 계획
+# AI Agent Playbook v2 MCP Resource And Docs Hardening 계획
 
 **목표:** 구조화된 MCP resource를 추가하고, `.ai-playbook` 진입 안내를 강화하며, README/MCP 문서를 현재 구현과 맞춰 확장된 하네스를 AI 앱이 더 쉽게 발견하고 사용할 수 있게 합니다.
 

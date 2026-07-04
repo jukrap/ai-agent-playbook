@@ -1,6 +1,6 @@
-# Harness OS v2 Reference Capability Matrix
+# AI Agent Playbook v2 Reference Capability Matrix
 
-**Goal:** Add a read-only `reference capability-matrix` surface that groups local `_reference` collections by reusable Harness OS capability areas.
+**Goal:** Add a read-only `reference capability-matrix` surface that groups local `_reference` collections by reusable AI Agent Playbook capability areas.
 
 **Why now:** `reference inventory`, `reference adoption-queue`, and `reference inspect` can find and open candidates, but adoption work still needs a compact matrix that shows which references support ai-harness, delivery, backend, security, foundation, and other capability areas before choosing the next implementation slice.
 

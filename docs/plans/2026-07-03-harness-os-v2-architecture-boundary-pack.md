@@ -1,4 +1,4 @@
-# Harness OS v2 Architecture Boundary Pack Plan
+# AI Agent Playbook v2 Architecture Boundary Pack Plan
 
 > **For implementers:** Continue after the mobile hardening pack. This plan covers the next weak catalog surface: architecture currently has one broad boundary review skill and no dedicated skills for feature slicing, domain modeling, or monorepo/package ownership.
 

@@ -1,4 +1,4 @@
-# Harness OS v2 Eval Witness Knowledge Pack Plan
+# AI Agent Playbook v2 Eval Witness Knowledge Pack Plan
 
 > **For implementers:** Continue after the documentation/project-management pack. This plan focuses on the harness reliability layer: evals, capability witnesses, fact gates, and source-aware knowledge retrieval.
 
@@ -8,7 +8,7 @@
 
 ## Baseline
 
-- Harness OS already has runtime indexes, `write-gate preview`, `canon check`, workflow previews, project documentation packaging, and read-only MCP prompts.
+- AI Agent Playbook already has runtime indexes, `write-gate preview`, `canon check`, workflow previews, project documentation packaging, and read-only MCP prompts.
 - Existing skills cover test verification and knowledge retrieval review, but there is no first-class eval artifact model for agent/harness changes.
 - Runtime reports can be generated, but capability history is not yet append-only or baseline-aware.
 - Write-gate preview checks planned writes, but there is no explicit pre-action fact gate that asks for importers, public API, schema, and user intent before risky edits.

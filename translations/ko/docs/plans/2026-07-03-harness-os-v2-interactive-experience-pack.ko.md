@@ -1,4 +1,4 @@
-# Harness OS v2 Interactive Experience Pack
+# AI Agent Playbook v2 Interactive Experience Pack
 
 **목표:** Harness를 다시 React-only 또는 frontend-only playbook으로 되돌리지 않으면서 3D, WebGL, canvas, interactive media, design-system handoff, rendered experience verification을 다루는 capability-first pack을 추가합니다.
 

@@ -1,4 +1,4 @@
-# Harness OS v2 Reference Adoption Status Board
+# AI Agent Playbook v2 Reference Adoption Status Board
 
 **목표:** Local reference queue, capability matrix, adoption ledger, source registry 상태를 하나로 합치는 read-only `reference adoption-status` 표면을 추가합니다.
 

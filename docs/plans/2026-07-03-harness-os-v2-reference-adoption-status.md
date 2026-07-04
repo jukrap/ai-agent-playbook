@@ -1,4 +1,4 @@
-# Harness OS v2 Reference Adoption Status Board
+# AI Agent Playbook v2 Reference Adoption Status Board
 
 **Goal:** Add a read-only `reference adoption-status` surface that joins local reference queue, capability matrix, adoption ledger, and source registry state into one operator status board.
 

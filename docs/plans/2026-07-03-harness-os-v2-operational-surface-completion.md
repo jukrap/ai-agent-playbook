@@ -1,8 +1,8 @@
-# Harness OS v2 Operational Surface Completion Plan
+# AI Agent Playbook v2 Operational Surface Completion Plan
 
 > **For implementers:** Continue after capability pack and recipe expansion. The next goal is to make the new skills discoverable through MCP prompts, keep recipe contracts testable, and prepare bounded scaffold-tier run records without enabling project source writes.
 
-**Goal:** Move Harness OS from "expanded catalog" to "operational harness": a user or agent can choose a workflow, preview required evidence, follow the right prompt, leave a bounded run record when explicitly requested, and promote only reviewed facts into durable memory.
+**Goal:** Move AI Agent Playbook from "expanded catalog" to "operational harness": a user or agent can choose a workflow, preview required evidence, follow the right prompt, leave a bounded run record when explicitly requested, and promote only reviewed facts into durable memory.
 
 **Reference inputs:** The local reference inventory continues to show useful recurring patterns across workflows, MCP resources/prompts, runtime evidence, compliance checks, and agent memory. Adopt the patterns as local contracts and validators. Do not copy upstream wording, project names, personal paths, internal URLs, secrets, branch names, PR numbers, or noisy source labels into public docs.
 

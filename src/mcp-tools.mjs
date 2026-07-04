@@ -18,6 +18,7 @@ import {
   checkReferenceAdoptionLedger,
   checkReferenceSourceRegistry,
   checkRuntimeSchema,
+  checkWritingNaturalness,
   contextStatus,
   describePlaybookLayout,
   listContexts,
@@ -84,9 +85,9 @@ const maxResultsSchema = z.number().int().min(1).max(100).optional();
 export function registerPlaybookMcpTools(server, options) {
   const { repoRoot, enableWriteTools = false } = options;
   const tools = [
-    tool('capability_catalog', 'List Harness OS capability categories, skill counts, and workflow counts.', {}, () => capabilityCatalog({ repoRoot })),
-    tool('skill_catalog', 'List local skills with v2 taxonomy and compatibility wrapper metadata.', {}, () => skillCatalog({ repoRoot })),
-    tool('workflow_list', 'List Harness OS workflow recipes.', {}, () => workflowCatalog()),
+    tool('capability_catalog', 'List AI Agent Playbook capability categories, skill counts, and workflow counts.', {}, () => capabilityCatalog({ repoRoot })),
+    tool('skill_catalog', 'List local skills with capability taxonomy and compatibility wrapper metadata.', {}, () => skillCatalog({ repoRoot })),
+    tool('workflow_list', 'List AI Agent Playbook workflow recipes.', {}, () => workflowCatalog()),
     tool('workflow_run_preview', 'Preview a workflow run manifest from a target or bundled recipe without writing files.', {
       target: targetSchema,
       recipe: z.string().min(1).describe('Lowercase hyphenated workflow recipe id.')
@@ -120,7 +121,7 @@ export function registerPlaybookMcpTools(server, options) {
       maxResults: args.maxResults ?? 20,
       ledgerPath: args.ledgerPath
     })),
-    tool('reference_capability_matrix', 'Group local reference adoption candidates by Harness OS capability without writing files.', {
+    tool('reference_capability_matrix', 'Group local reference adoption candidates by AI Agent Playbook capability without writing files.', {
       target: targetSchema.describe('Reference directory to group for adoption review.'),
       maxResults: maxResultsSchema,
       capability: z.string().min(1).optional().describe('Optional capability id filter.'),
@@ -228,7 +229,7 @@ export function registerPlaybookMcpTools(server, options) {
       decisionDate: args.decisionDate,
       apply: false
     })),
-    tool('playbook_layout', 'Describe whether a target playbook has the v2 layout.', {
+    tool('playbook_layout', 'Describe whether a target playbook has the structured layout.', {
       target: targetSchema
     }, (args) => describePlaybookLayout({ target: args.target })),
     tool('index_status', 'Report the local runtime index status for a target project.', {
@@ -249,6 +250,18 @@ export function registerPlaybookMcpTools(server, options) {
     }, (args) => checkEvidenceLocators({
       target: args.target,
       filePath: args.path
+    })),
+    tool('writing_naturalness_check', 'Check Korean or English writing naturalness without editing files.', {
+      target: targetSchema,
+      path: z.string().min(1).describe('Text or Markdown file path inside the target project.'),
+      lang: z.enum(['auto', 'ko', 'en']).optional().describe('Language to analyze. Defaults to auto.'),
+      engine: z.enum(['auto', 'js', 'python']).optional().describe('Analysis engine. Defaults to auto and uses Python when available.')
+    }, (args) => checkWritingNaturalness({
+      repoRoot,
+      target: args.target,
+      filePath: args.path,
+      lang: args.lang ?? 'auto',
+      engine: args.engine ?? 'auto'
     })),
     tool('index_search', 'Search local project files without writing the runtime index.', {
       target: targetSchema,
@@ -563,12 +576,13 @@ export function registerPlaybookMcpTools(server, options) {
 export function registerPlaybookMcpResourcesAndPrompts(server, options) {
   const { repoRoot } = options;
   const resources = [
-    resource('capability_catalog', 'ai-playbook://capabilities', 'Harness OS capability catalog.', () => capabilityCatalog({ repoRoot })),
-    resource('skill_catalog', 'ai-playbook://skills', 'Harness OS skill taxonomy catalog.', () => skillCatalog({ repoRoot })),
-    resource('workflow_list', 'ai-playbook://workflows', 'Harness OS workflow recipe catalog.', () => workflowCatalog()),
+    resource('capability_catalog', 'ai-playbook://capabilities', 'AI Agent Playbook capability catalog.', () => capabilityCatalog({ repoRoot })),
+    resource('skill_catalog', 'ai-playbook://skills', 'AI Agent Playbook skill taxonomy catalog.', () => skillCatalog({ repoRoot })),
+    resource('workflow_list', 'ai-playbook://workflows', 'AI Agent Playbook workflow recipe catalog.', () => workflowCatalog()),
     resource('adapter_support', 'ai-playbook://adapters', 'Agent adapter support and MCP setup summary.', () => adapterSupportResource()),
     resource('adapter_readiness', 'ai-playbook://adapter-readiness', 'Adapter readiness commands, checks, and no-write boundaries.', () => adapterReadinessResource()),
-    resource('playbook_layout_v2', 'ai-playbook://playbook-layout-v2', 'Project playbook v2 usage, layout roles, and read order.', () => playbookLayoutV2Resource()),
+    resource('agent_usage_guide', 'ai-playbook://agent-usage-guide', 'Short guide for choosing playbook resources, prompts, and read-only tools.', () => agentUsageGuideResource()),
+    resource('playbook_layout', 'ai-playbook://playbook-layout', 'Project playbook layout roles and read order.', () => playbookLayoutResource()),
     resource('reference_adoption', 'ai-playbook://reference-adoption', 'Reference adoption status, registry, ledger, and promotion boundary summary.', () => referenceAdoptionResource()),
     resource('mcp_permission_model', 'ai-playbook://mcp-permission-model', 'MCP resource, prompt, tool, and permission-tier summary.', () => mcpPermissionModelResource())
   ];
@@ -602,7 +616,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       content: {
         type: 'text',
         text: [
-          'Run a Harness OS repo onboarding pass.',
+          'Run an AI Agent Playbook repo onboarding pass.',
           `Target: ${args.target ?? '<target repository>'}`,
           '',
           'Use read-only catalog, layout status, runtime index preview/search, and write-gate preview first.',
@@ -624,7 +638,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       content: {
         type: 'text',
         text: [
-          'Plan a Harness OS extension.',
+          'Plan an AI Agent Playbook extension.',
           `Capability: ${args.capability ?? '<capability>'}`,
           '',
           'Check the capability catalog, skill taxonomy, workflow list, and permission tier before writing implementation files.',
@@ -643,7 +657,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       proposal: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS governance review.',
+    'Run an AI Agent Playbook governance review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Capability: ${args.capability ?? '<capability or category>'}`,
     `Proposal: ${args.proposal ?? '<skill, reference, recipe, runtime command, MCP surface, adapter, plugin, or docs change>'}`,
@@ -687,7 +701,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       content: {
         type: 'text',
         text: [
-          'Run a Harness OS reference adoption review.',
+          'Run an AI Agent Playbook reference adoption review.',
           `Target project: ${args.target ?? '<target repository>'}`,
           `Reference directory: ${args.referenceDir ?? '<reference directory>'}`,
           `Capability focus: ${args.capability ?? '<capability or broad sweep>'}`,
@@ -709,7 +723,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       intent: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS backend change review.',
+    'Run an AI Agent Playbook backend change review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Path: ${args.path ?? '<optional path>'}`,
     `Intent: ${args.intent ?? '<change intent>'}`,
@@ -743,7 +757,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       intent: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS architecture boundary review.',
+    'Run an AI Agent Playbook architecture boundary review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Path: ${args.path ?? '<optional module, package, or boundary path>'}`,
     `Intent: ${args.intent ?? '<architecture review intent>'}`,
@@ -777,7 +791,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       intent: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS auth/access-control review.',
+    'Run an AI Agent Playbook auth/access-control review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Path: ${args.path ?? '<optional path>'}`,
     `Intent: ${args.intent ?? '<auth or authorization concern>'}`,
@@ -810,7 +824,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       ecosystem: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS dependency/supply-chain review.',
+    'Run an AI Agent Playbook dependency/supply-chain review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Ecosystem focus: ${args.ecosystem ?? '<all detected ecosystems>'}`,
     '',
@@ -842,7 +856,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       channel: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS package release readiness review.',
+    'Run an AI Agent Playbook package release readiness review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Artifact: ${args.artifact ?? '<package, CLI, plugin, bundle, or binary>'}`,
     `Channel: ${args.channel ?? '<registry, marketplace, release channel, or distribution path>'}`,
@@ -876,7 +890,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       intent: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS deployment/release review.',
+    'Run an AI Agent Playbook deployment/release review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Environment: ${args.environment ?? '<target environment>'}`,
     `Intent: ${args.intent ?? '<release or deployment intent>'}`,
@@ -910,7 +924,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       artifact: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS mobile release review.',
+    'Run an AI Agent Playbook mobile release review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Platform: ${args.platform ?? '<iOS, Android, Expo, React Native, Flutter, or hybrid target>'}`,
     `Artifact: ${args.artifact ?? '<IPA, APK, AAB, internal build, OTA channel, or release artifact>'}`,
@@ -944,7 +958,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       integration: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS connector/integration review.',
+    'Run an AI Agent Playbook connector/integration review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Path: ${args.path ?? '<optional connector path>'}`,
     `Integration: ${args.integration ?? '<connector, API, webhook, OAuth app, MCP adapter, or sync job>'}`,
@@ -978,7 +992,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       source: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS design reference handoff review.',
+    'Run an AI Agent Playbook design reference handoff review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Surface: ${args.surface ?? '<product surface, screen, flow, brand asset, or component set>'}`,
     `Source: ${args.source ?? '<reference screenshots, generated mockup, Figma frame, brand guide, or current UI>'}`,
@@ -1013,7 +1027,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       screen: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS frontend quality review.',
+    'Run an AI Agent Playbook frontend quality review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Path: ${args.path ?? '<optional path>'}`,
     `Screen or flow: ${args.screen ?? '<screen or user flow>'}`,
@@ -1047,7 +1061,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       surface: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS interactive experience review.',
+    'Run an AI Agent Playbook interactive experience review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Path: ${args.path ?? '<optional rendered surface path>'}`,
     `Surface: ${args.surface ?? '<3D scene, canvas tool, chart, map, video, animation, or design-system surface>'}`,
@@ -1082,7 +1096,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       intent: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS data integrity review.',
+    'Run an AI Agent Playbook data integrity review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Dataset or report: ${args.dataset ?? '<dataset, report, dashboard, or metric>'}`,
     `Intent: ${args.intent ?? '<review intent>'}`,
@@ -1116,7 +1130,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       intent: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS data pipeline review.',
+    'Run an AI Agent Playbook data pipeline review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Scope: ${args.scope ?? '<dataset, report, event, retrieval index, pipeline, or metric>'}`,
     `Intent: ${args.intent ?? '<review intent>'}`,
@@ -1155,7 +1169,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       intent: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS database change review.',
+    'Run an AI Agent Playbook database change review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Schema or object: ${args.schema ?? '<table, migration, query, report, procedure, or constraint>'}`,
     `Intent: ${args.intent ?? '<database change intent>'}`,
@@ -1191,7 +1205,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       intent: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS ADR/spec handoff review.',
+    'Run an AI Agent Playbook ADR/spec handoff review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Source: ${args.source ?? '<plan, worklog, decision, or runtime artifact>'}`,
     `Intent: ${args.intent ?? '<handoff or promotion intent>'}`,
@@ -1226,7 +1240,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       source: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS documentation package review.',
+    'Run an AI Agent Playbook documentation package review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Artifact: ${args.artifact ?? '<PRD, issue plan, release note, changelog, handoff, knowledge package, or documentation bundle>'}`,
     `Audience: ${args.audience ?? '<reader or owner>'}`,
@@ -1258,6 +1272,38 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
     '- Validate public-doc hygiene, translations, links/paths, placeholders, setup commands, examples, and reader-specific handoff expectations when applicable.'
   ]));
 
+  server.registerPrompt('natural_writing_review', {
+    title: 'Natural writing review',
+    description: 'Review Korean or English docs, READMEs, release notes, PR text, and translations for naturalness without rewriting automatically.',
+    argsSchema: {
+      target: z.string().optional(),
+      path: z.string().optional(),
+      lang: z.enum(['auto', 'ko', 'en']).optional(),
+      audience: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook natural writing review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Path: ${args.path ?? '<README, docs page, release note, PR body, translation, or prose file>'}`,
+    `Language: ${args.lang ?? 'auto'}`,
+    `Audience: ${args.audience ?? '<reader or maintainer>'}`,
+    '',
+    'Required evidence:',
+    '- writing_naturalness_check for the target prose file',
+    '- playbook_context or operator_search for local writing, translation, or documentation policy when available',
+    '',
+    'Stop conditions:',
+    '- The request is to bypass AI detectors, evaluations, moderation, authorship checks, or institutional policy',
+    '- Rewriting would change facts, numbers, names, legal meaning, security warnings, or release scope',
+    '- Source language, audience, or intended voice is unclear and the change would be more than light editing',
+    '',
+    'Verification expectations:',
+    '- Preserve meaning, facts, numbers, names, and technical terms.',
+    '- Separate Korean translationese issues from English AI-writing issues.',
+    '- Suggest focused edits or a reviewed replacement only after naming the detected patterns and residual caveats.',
+    '- Do not write files from this prompt; it is a read-only review surface.'
+  ]));
+
   server.registerPrompt('workflow_run_review', {
     title: 'Workflow run review',
     description: 'Preview and review a workflow recipe run contract before starting long-running work.',
@@ -1266,7 +1312,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       recipe: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS workflow run review.',
+    'Run an AI Agent Playbook workflow run review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Recipe: ${args.recipe ?? '<recipe id>'}`,
     '',
@@ -1298,7 +1344,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       evalId: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS eval harness review.',
+    'Run an AI Agent Playbook eval harness review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Change: ${args.change ?? '<prompt, skill, workflow, MCP, write tier, or capability change>'}`,
     `Eval: ${args.evalId ?? '<eval id or baseline>'}`,
@@ -1333,7 +1379,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       source: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS capability witness review.',
+    'Run an AI Agent Playbook capability witness review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Capability: ${args.capability ?? '<capability id or behavior>'}`,
     `Source: ${args.source ?? '<runtime report, eval result, worklog, or manual evidence>'}`,
@@ -1367,7 +1413,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       evidence: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS pre-action fact gate review.',
+    'Run an AI Agent Playbook pre-action fact gate review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Action: ${args.action ?? '<command, edit, migration, deletion, publish, deploy, or promotion>'}`,
     `Evidence: ${args.evidence ?? '<fact, source locator, report, or claim>'}`,
@@ -1402,7 +1448,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       useCase: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS knowledge source review.',
+    'Run an AI Agent Playbook knowledge source review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Source: ${args.source ?? '<source id, connector, dataset, repository, docs folder, or reference set>'}`,
     `Use case: ${args.useCase ?? '<search, browse, retrieval, reporting, onboarding, or promotion>'}`,
@@ -1437,7 +1483,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       source: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS canon promotion review.',
+    'Run an AI Agent Playbook canon promotion review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Runtime source: ${args.source ?? '<runtime report or index>'}`,
     '',
@@ -1468,7 +1514,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       focus: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS index interpretation review.',
+    'Run an AI Agent Playbook index interpretation review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Focus: ${args.focus ?? '<symbols, dependencies, routes, data, or broad review>'}`,
     '',
@@ -1501,7 +1547,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       workers: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS agent orchestration review.',
+    'Run an AI Agent Playbook agent orchestration review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Goal: ${args.goal ?? '<orchestration goal>'}`,
     `Workers or review passes: ${args.workers ?? '<worker count, roles, or review stages>'}`,
@@ -1541,7 +1587,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       focus: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS repo graph review.',
+    'Run an AI Agent Playbook repo graph review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Focus: ${args.focus ?? '<files, symbols, routes, packages, contracts, docs, workflows, or evidence>'}`,
     '',
@@ -1577,7 +1623,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       change: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS CI quality gate review.',
+    'Run an AI Agent Playbook CI quality gate review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Branch or revision: ${args.branch ?? '<branch, revision, or release candidate>'}`,
     `Change: ${args.change ?? '<change scope>'}`,
@@ -1614,7 +1660,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       environment: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS release/deployment gate review.',
+    'Run an AI Agent Playbook release/deployment gate review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Artifact: ${args.artifact ?? '<image, package, build, bundle, release candidate, or revision>'}`,
     `Environment: ${args.environment ?? '<environment, channel, tenant, region, or rollout mode>'}`,
@@ -1654,7 +1700,7 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
       gate: z.string().optional()
     }
   }, (args) => promptMessage([
-    'Run a Harness OS security/compliance gate review.',
+    'Run an AI Agent Playbook security/compliance gate review.',
     `Target: ${args.target ?? '<target repository>'}`,
     `Artifact: ${args.artifact ?? '<source change, package, image, document package, generated bundle, or release candidate>'}`,
     `Gate: ${args.gate ?? '<merge, release, publish, customer handoff, internal handoff, or documentation publication>'}`,
@@ -1796,13 +1842,58 @@ function adapterReadinessResource() {
   };
 }
 
-function playbookLayoutV2Resource() {
+function agentUsageGuideResource() {
+  return {
+    schemaVersion: '1',
+    kind: 'mcp.agent-usage-guide',
+    summary: {
+      purpose: 'Choose the smallest useful playbook surface before reading broad docs or issuing write commands.',
+      defaultMode: 'read-only',
+      memoryBoundary: 'Use runtime outputs as evidence candidates; promote only reviewed facts into memory.'
+    },
+    whenToUse: [
+      {
+        situation: 'start work in a repository',
+        firstSurfaces: ['playbook_layout', 'playbook_context', 'operator_check', 'diagnostics_check'],
+        followUp: ['workflow_run_preview', 'operator_search', 'index_status']
+      },
+      {
+        situation: 'change code or project structure',
+        firstSurfaces: ['operator_preflight', 'write_gate_preview', 'rules_check'],
+        followUp: ['symbol_outline', 'dependency_inventory', 'route_api_hints', 'contracts_check']
+      },
+      {
+        situation: 'write or translate prose',
+        firstSurfaces: ['writing_naturalness_check', 'natural_writing_review'],
+        followUp: ['use engine:auto so Python-backed Korean checks run when available', 'documentation_package_review', 'operator_search']
+      },
+      {
+        situation: 'long or resumable work',
+        firstSurfaces: ['workflow_run_review', 'workflow_run_preview', 'playbook_context'],
+        followUp: ['run status', 'worklogs', 'canon_check']
+      },
+      {
+        situation: 'before handoff or claim of completion',
+        firstSurfaces: ['diagnostics_check', 'operator_audit', 'canon_check'],
+        followUp: ['documentation_package_review', 'release_deployment_gate_review']
+      }
+    ],
+    contextBudgetRules: [
+      'Read START_HERE.md and CURRENT.md first, then only the context/map/contract files that match the task path.',
+      'Prefer operator_search or index_search over opening entire documentation trees.',
+      'Keep runtime reports under .ai-playbook/runtime unless a human-reviewed promotion is explicit.',
+      'Use prompts to collect evidence before deciding whether a skill reference or workflow recipe is needed.'
+    ]
+  };
+}
+
+function playbookLayoutResource() {
   return {
     schemaVersion: SCHEMA_VERSION,
-    kind: 'mcp.resource.playbook-layout-v2',
+    kind: 'mcp.resource.playbook-layout',
     ok: true,
     summary: {
-      layoutVersion: '2',
+      layoutKind: 'structured',
       memoryRequiresExplicitPromotion: true,
       runtimeIsGeneratedEvidence: true,
       defaultTemplate: 'templates/project-playbook'
@@ -1813,8 +1904,10 @@ function playbookLayoutV2Resource() {
       '.ai-playbook/START_HERE.md',
       '.ai-playbook/CURRENT.md',
       '.ai-playbook/questions.md',
-      'relevant memory/context, maps, decisions, contracts, and glossary entries',
-      'relevant workflow recipe or runbook',
+      '.ai-playbook/policy/SKILLS.md when selecting optional skills',
+      '.ai-playbook/policy/GIT.md before staging, committing, pushing, or PR text',
+      'relevant memory/context, memory/maps, memory/decisions, memory/contracts, and glossary entries',
+      'relevant workflow recipe or workflow runbook',
       'runtime reports only as generated evidence'
     ],
     topLevelDirectories: [
@@ -1893,16 +1986,17 @@ function referenceAdoptionResource() {
 }
 
 function mcpPermissionModelResource() {
-  const readOnlyResources = [
-    'capability_catalog',
-    'skill_catalog',
-    'workflow_list',
-    'adapter_support',
-    'adapter_readiness',
-    'playbook_layout_v2',
-    'reference_adoption',
-    'mcp_permission_model'
-  ];
+    const readOnlyResources = [
+      'capability_catalog',
+      'skill_catalog',
+      'workflow_list',
+      'adapter_support',
+      'adapter_readiness',
+      'agent_usage_guide',
+      'playbook_layout',
+      'reference_adoption',
+      'mcp_permission_model'
+    ];
   const optInWriteTools = [
     'workflow_run_start',
     'write_gate_advisory',

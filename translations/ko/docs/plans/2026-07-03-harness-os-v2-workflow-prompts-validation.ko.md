@@ -1,8 +1,8 @@
-# Harness OS v2 Workflow, Prompt, Verification Hardening Plan
+# AI Agent Playbook v2 Workflow, Prompt, Verification Hardening Plan
 
 > **구현자용:** runtime index와 MCP reader slice 이후부터 이어서 실행합니다. 이 계획은 새 evidence surface를 반복 가능한 run, 더 안전한 prompt, 더 강한 validation gate로 연결합니다.
 
-**Goal:** Harness OS를 더 운영 가능한 형태로 만듭니다. Agent는 chat history에만 의존하지 않고 recipe를 선택하고, run contract를 preview하고, 관련 evidence를 모으고, MCP prompt를 따르고, 검증 가능한 artifact를 남길 수 있어야 합니다.
+**Goal:** AI Agent Playbook를 더 운영 가능한 형태로 만듭니다. Agent는 chat history에만 의존하지 않고 recipe를 선택하고, run contract를 preview하고, 관련 evidence를 모으고, MCP prompt를 따르고, 검증 가능한 artifact를 남길 수 있어야 합니다.
 
 **Reference inputs:** local reference set에서 반복적으로 확인된 패턴을 채택합니다. Machine evidence와 scan range 계약, repo-local config precedence, no-write 및 no-data-loss guard, graph-style one-hop impact context, append-only capability history, SBOM/SCA gate, third-party notice check, cached bootstrap behavior가 핵심입니다. 이들은 upstream prose 복사가 아니라 local contract와 validator로 흡수합니다.
 
@@ -126,7 +126,7 @@
 
 ### Task C1: Repo-Local Harness Config Preview
 
-**Purpose:** Project가 user-level machine setting과 결합하지 않고 Harness OS default를 선언할 수 있게 합니다.
+**Purpose:** Project가 user-level machine setting과 결합하지 않고 AI Agent Playbook default를 선언할 수 있게 합니다.
 
 **Planned files:**
 

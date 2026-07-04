@@ -1,8 +1,8 @@
-# Harness OS v2 Operational Surface Completion Plan
+# AI Agent Playbook v2 Operational Surface Completion Plan
 
 > **구현자용:** capability pack과 recipe expansion 이후 이어서 진행합니다. 다음 목표는 새 skill을 MCP prompt로 discoverable하게 만들고, recipe contract를 test 가능하게 유지하며, project source write를 열지 않은 상태에서 제한된 scaffold-tier run record를 준비하는 것입니다.
 
-**목표:** Harness OS를 "확장된 catalog"에서 "운영 가능한 harness"로 옮깁니다. 사용자나 agent가 workflow를 고르고, 필요한 evidence를 preview하고, 적절한 prompt를 따르며, 명시적으로 요청된 경우 제한된 run record를 남기고, 검토된 fact만 durable memory로 승격할 수 있어야 합니다.
+**목표:** AI Agent Playbook를 "확장된 catalog"에서 "운영 가능한 harness"로 옮깁니다. 사용자나 agent가 workflow를 고르고, 필요한 evidence를 preview하고, 적절한 prompt를 따르며, 명시적으로 요청된 경우 제한된 run record를 남기고, 검토된 fact만 durable memory로 승격할 수 있어야 합니다.
 
 **Reference input:** local reference inventory는 workflow, MCP resource/prompt, runtime evidence, compliance check, agent memory 전반에서 유용한 반복 pattern을 계속 보여줍니다. 이 pattern은 local contract와 validator로 채택합니다. Public doc에는 upstream wording, project name, personal path, internal URL, secret, branch name, PR number, noisy source label을 복사하지 않습니다.
 

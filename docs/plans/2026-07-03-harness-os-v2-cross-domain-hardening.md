@@ -1,8 +1,8 @@
-# Harness OS v2 Cross-Domain Hardening Plan
+# AI Agent Playbook v2 Cross-Domain Hardening Plan
 
 ## Goal
 
-Continue the Harness OS v2 expansion after the design pack by strengthening broad engineering coverage: 3D/WebGL, security, backend async boundaries, architecture redesign judgment, reference adoption governance, and Korean translation quality.
+Continue the AI Agent Playbook v2 expansion after the design pack by strengthening broad engineering coverage: 3D/WebGL, security, backend async boundaries, architecture redesign judgment, reference adoption governance, and Korean translation quality.
 
 ## Findings
 

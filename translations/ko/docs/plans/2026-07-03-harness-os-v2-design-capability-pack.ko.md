@@ -1,4 +1,4 @@
-# Harness OS v2 Design Capability Pack
+# AI Agent Playbook v2 Design Capability Pack
 
 **목표:** Local reference source material을 업로드하거나 복사하지 않으면서 design direction, brand identity, visual reference analysis, image-to-code handoff, Figma handoff, visual evidence contract를 담는 capability-first design pack을 추가합니다.
 

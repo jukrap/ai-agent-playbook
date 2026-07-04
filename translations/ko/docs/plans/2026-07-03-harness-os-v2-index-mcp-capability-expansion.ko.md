@@ -1,8 +1,8 @@
-# Harness OS v2 Index, MCP, Capability Expansion Plan
+# AI Agent Playbook v2 Index, MCP, Capability Expansion Plan
 
 > **구현자용:** 완료된 transaction/canon 및 backend/security slice 이후부터 이어서 실행합니다. 각 batch는 독립적으로 검토 가능하고, 검증 가능하고, 커밋 가능해야 합니다.
 
-**Goal:** Harness OS를 단순한 skill/playbook catalog에서 더 넓은 개발 운영 표면으로 확장합니다. 더 풍부한 local runtime index, 쓸모 있는 read-only MCP resource/prompt, workflow run record, devops/frontend quality/mobile/data/documentation/harness extension capability pack을 추가합니다.
+**Goal:** AI Agent Playbook를 단순한 skill/playbook catalog에서 더 넓은 개발 운영 표면으로 확장합니다. 더 풍부한 local runtime index, 쓸모 있는 read-only MCP resource/prompt, workflow run record, devops/frontend quality/mobile/data/documentation/harness extension capability pack을 추가합니다.
 
 **Architecture:** trusted memory, generated runtime evidence, integration setting을 계속 분리합니다. Runtime index output은 `.ai-playbook/runtime/` 아래 local generated artifact로 두고, promoted fact는 명시적인 canon promotion을 거쳐야 합니다. MCP는 기본 read-only이며 scaffold/write 동작은 opt-in 및 audit 가능한 방식으로만 둡니다.
 

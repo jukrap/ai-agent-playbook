@@ -44,8 +44,8 @@ Use `migrate path --json` only as a preview for legacy `ai-playbook/` projects. 
 
 - `.ai-playbook/START_HERE.md`
 - `.ai-playbook/CURRENT.md`
-- `.ai-playbook/SKILLS.md`
-- `.ai-playbook/GIT.md`
+- `.ai-playbook/policy/SKILLS.md`
+- `.ai-playbook/policy/GIT.md`
 
 It does not re-inject root `AGENTS.md` by default.
 

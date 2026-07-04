@@ -1,8 +1,8 @@
-# Harness OS v2 Index, MCP, And Capability Expansion Plan
+# AI Agent Playbook v2 Index, MCP, And Capability Expansion Plan
 
 > **For implementers:** Continue from the completed transaction/canon and backend/security slices. Keep every batch separately reviewable, verified, and committed.
 
-**Goal:** Turn Harness OS from a cataloged skill/playbook toolkit into a broader development operating surface: richer local runtime indexes, more useful read-only MCP resources/prompts, workflow run records, and additional capability packs across devops, frontend quality, mobile, data, documentation, and harness extension.
+**Goal:** Turn AI Agent Playbook from a cataloged skill/playbook toolkit into a broader development operating surface: richer local runtime indexes, more useful read-only MCP resources/prompts, workflow run records, and additional capability packs across devops, frontend quality, mobile, data, documentation, and harness extension.
 
 **Architecture:** Keep trusted memory, generated runtime evidence, and integration settings separate. Runtime index outputs remain local generated artifacts under `.ai-playbook/runtime/`; promoted facts require explicit canon promotion. MCP remains read-only by default, with scaffold/write behavior opt-in and auditable.
 

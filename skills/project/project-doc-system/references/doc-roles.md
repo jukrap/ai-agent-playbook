@@ -10,16 +10,16 @@
 - `.ai-playbook/README.md`: agent-facing project memory index and source-of-truth rules.
 - `.ai-playbook/START_HERE.md`: shortest resume guide for the next agent.
 - `.ai-playbook/CURRENT.md`: current baseline, working vocabulary, active risks, and decisions that still matter.
-- `.ai-playbook/SKILLS.md`: project-level skill selection policy.
-- `.ai-playbook/GIT.md`: short Git, commit, PR, and push policy.
-- `.ai-playbook/maps/**`: repository, runtime, API, route, data, risk, and structural evidence maps.
-- `.ai-playbook/runbooks/**`: repeatable commands and operational procedures.
-- `.ai-playbook/decisions/**`: durable decisions with rationale and evidence.
-- `.ai-playbook/plans/**`: active execution plans only.
-- `.ai-playbook/worklogs/**`: detailed milestone, blocker, direction-change, and debugging records.
+- `.ai-playbook/policy/SKILLS.md`: project-level skill selection policy.
+- `.ai-playbook/policy/GIT.md`: short Git, commit, PR, and push policy.
+- `.ai-playbook/memory/maps/**`: repository, runtime, API, route, data, risk, and structural evidence maps.
+- `.ai-playbook/workflows/runbooks/**`: repeatable commands and operational procedures.
+- `.ai-playbook/memory/decisions/**`: durable decisions with rationale and evidence.
+- `.ai-playbook/workflows/plans/**`: active execution plans only.
+- `.ai-playbook/workflows/worklogs/**`: detailed milestone, blocker, direction-change, and debugging records.
 - `.ai-playbook/archive/**`: stale plans, old handoffs, and retired notes.
 - Project design docs and local reference material: secondary references.
-- `.ai-playbook/guides/runtime-roadmap.md`: optional guidance for deciding whether runtime hooks should reinforce, but not replace, project docs.
+- `.ai-playbook/knowledge/references/guides/runtime-roadmap.md`: optional guidance for deciding whether runtime hooks should reinforce, but not replace, project docs.
 
 ## Source-of-truth priority
 
@@ -34,11 +34,11 @@
 
 - Keep root agent instructions short enough to be a stable entrypoint.
 - Keep current project truth and stable shared terms in `.ai-playbook/CURRENT.md`.
-- Keep structural facts in `.ai-playbook/maps/`.
+- Keep structural facts in `.ai-playbook/memory/maps/`.
 - Keep duplicate or clone signals in maps only when scan range, freshness, and confidence limits are clear.
-- Keep repeated commands in `.ai-playbook/runbooks/`.
-- Keep live plans in `.ai-playbook/plans/`.
-- Keep detailed history in `.ai-playbook/worklogs/`.
+- Keep repeated commands in `.ai-playbook/workflows/runbooks/`.
+- Keep live plans in `.ai-playbook/workflows/plans/`.
+- Keep detailed history in `.ai-playbook/workflows/worklogs/`.
 - Archive stale plans, prompts, and handoffs.
 - Promote current facts from worklogs into `CURRENT.md`, maps, runbooks, or decisions.
 - Prefer one index document over scattered repeated instructions.

@@ -1,4 +1,4 @@
-# Harness OS v2 Reference Ledger Update
+# AI Agent Playbook v2 Reference Ledger Update
 
 **목표:** 기존 reference adoption ledger에 local reference queue의 누락 row만 append하는 preview-first update command를 추가해, 이미 검토한 decision row를 덮어쓰지 않게 합니다.
 

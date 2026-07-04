@@ -1,4 +1,4 @@
-# Harness OS v2 Repo Ops Graph And Quality Gates Plan
+# AI Agent Playbook v2 Repo Ops Graph And Quality Gates Plan
 
 > **구현자용:** eval/witness/source-registry runtime schema와 MCP reader surface 이후 이어서 진행합니다. 각 batch는 검토 가능하고, 검증되고, 번역되며, 커밋된 상태로 유지합니다.
 

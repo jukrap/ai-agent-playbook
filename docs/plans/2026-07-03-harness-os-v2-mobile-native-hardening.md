@@ -1,4 +1,4 @@
-# Harness OS v2 Mobile Native Hardening Plan
+# AI Agent Playbook v2 Mobile Native Hardening Plan
 
 > **For implementers:** Continue after package and connector governance. This plan covers the next weak catalog surface: mobile release readiness, device permission QA, and offline sync behavior across native, React Native, Expo, and hybrid app work.
 

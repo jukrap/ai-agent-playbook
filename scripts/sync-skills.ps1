@@ -191,6 +191,7 @@ function Remove-ObsoleteSkill {
 }
 
 $obsoleteSkillNames = @(
+  'change-safety',
   'design-system-first',
   'css-class-first',
   'utility-class-first',

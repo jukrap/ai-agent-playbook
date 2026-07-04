@@ -25,7 +25,7 @@
 - `natural-writing-humanization`: README, 문서, PR 본문, 배포 노트, 공개 요약, 한국어/영어 글 작성 또는 번역.
 - `git-worklog-guardrails`: 스테이징, 커밋, 푸시, PR 본문, 작업 기록.
 - `pre-action-fact-gate`: 영향이 큰 작업 전에 사실, 근거 위치, 쓰기 위험, 되돌림 경로를 확인할 때.
-- `change-safety` 또는 `review-work-light`: 최근 구현 작업을 인수인계 전에 점검할 때.
+- `review-work-light`: 최근 구현 작업을 인수인계 전에 점검할 때. 백엔드, 데이터베이스, 레거시 위험은 아래의 해당 역량 스킬을 함께 사용합니다.
 - `cleanup-ai-slop`: 신뢰가 낮아 보이는 코드를 범위를 제한해 동작 보존 방식으로 정리할 때.
 
 ## 역량별 라우팅

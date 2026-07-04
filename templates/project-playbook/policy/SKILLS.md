@@ -25,7 +25,7 @@ Use installed playbook skills for recurring repository concerns:
 - `natural-writing-humanization`: writing or translating README text, docs, PR bodies, release notes, public summaries, or Korean/English prose.
 - `git-worklog-guardrails`: staging, committing, pushing, PR bodies, or worklogs.
 - `pre-action-fact-gate`: checking facts, source locators, write risk, and rollback before high-impact actions.
-- `change-safety` or `review-work-light`: reviewing recent implementation work before handoff.
+- `review-work-light`: reviewing recent implementation work before handoff; pair with the relevant backend, database, or legacy skill below when risk is capability-specific.
 - `cleanup-ai-slop`: cleaning low-trust code in a bounded behavior-preserving way.
 
 ## Capability routing

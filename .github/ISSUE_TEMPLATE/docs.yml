@@ -1,0 +1,37 @@
+name: Documentation issue
+description: Report confusing, missing, stale, or mistranslated documentation.
+title: "docs: "
+labels: ["documentation", "needs-triage"]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Document or page
+      placeholder: "README.md, docs/commands.md, translations/ko/..."
+    validations:
+      required: true
+  - type: dropdown
+    id: issue_type
+    attributes:
+      label: Issue type
+      options:
+        - Missing information
+        - Incorrect information
+        - Confusing wording
+        - Korean translation quality
+        - Example does not work
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong?
+      description: Explain what confused you and what you expected to find.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested wording or structure
+      description: Optional. Keep examples free of private paths and secrets.

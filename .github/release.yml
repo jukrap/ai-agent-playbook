@@ -1,0 +1,34 @@
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+      - duplicate
+      - invalid
+    authors:
+      - dependabot
+  categories:
+    - title: Breaking Changes
+      labels:
+        - breaking-change
+        - Semver-Major
+    - title: Features
+      labels:
+        - enhancement
+        - feature
+        - Semver-Minor
+    - title: Fixes
+      labels:
+        - bug
+        - fix
+    - title: Documentation
+      labels:
+        - documentation
+        - docs
+    - title: Release and Packaging
+      labels:
+        - release
+        - packaging
+        - dependencies
+    - title: Other Changes
+      labels:
+        - "*"

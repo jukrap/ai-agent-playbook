@@ -1,0 +1,50 @@
+name: Release or install problem
+description: Report npm install, npx, GitHub Release, version, or migration problems.
+title: "release: "
+labels: ["release", "needs-triage"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: "0.5.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: problem_area
+    attributes:
+      label: Problem area
+      options:
+        - npm install
+        - npx command
+        - global aapb command
+        - GitHub Release
+        - migrate path
+        - Python engine setup
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: commands
+    attributes:
+      label: Commands run
+      description: Paste sanitized commands and output.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: |
+        OS:
+        Node:
+        npm:
+        Python:
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: What is blocked?
+    validations:
+      required: true

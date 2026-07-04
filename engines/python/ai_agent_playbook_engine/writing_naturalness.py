@@ -75,15 +75,16 @@ def analyze_writing_naturalness(payload: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(text, str):
         text = ""
     requested = payload.get("lang") if payload.get("lang") in {"auto", "ko", "en"} else "auto"
-    detected = detect_language(text)
+    analysis_text = normalize_prose_for_analysis(text)
+    detected = detect_language(analysis_text or text)
     language = detected if requested == "auto" else requested
     optional = optional_capabilities()
-    sentences = split_sentences(text, language, optional)
+    sentences = split_sentences(analysis_text, language, optional)
     findings: list[dict[str, Any]] = []
-    findings.extend(pattern_findings(text, language))
-    findings.extend(sentence_shape_findings(text, language, sentences))
+    findings.extend(pattern_findings(analysis_text, language))
+    findings.extend(sentence_shape_findings(analysis_text, language, sentences))
     if language == "ko":
-        findings.extend(korean_density_findings(text))
+        findings.extend(korean_density_findings(analysis_text))
 
     findings = findings[:MAX_FINDINGS]
     return {
@@ -133,6 +134,47 @@ def detect_language(text: str) -> str:
     if hangul >= 20 and hangul >= latin / 2:
         return "ko"
     return "en"
+
+
+def normalize_prose_for_analysis(text: str) -> str:
+    normalized: list[str] = []
+    fenced = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            fenced = not fenced
+            normalized.append("")
+            continue
+        if fenced or is_non_prose_line(stripped):
+            normalized.append("")
+            continue
+        line = re.sub(r"`[^`]*`", " ", line)
+        line = re.sub(r"!\[[^\]]*\]\([^)]+\)", " ", line)
+        line = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", line)
+        line = re.sub(r"https?://\S+", " ", line)
+        line = re.sub(r"<[^>]+>", " ", line)
+        normalized.append(line)
+    return "\n".join(normalized)
+
+
+def is_non_prose_line(stripped: str) -> bool:
+    if not stripped:
+        return True
+    if re.match(r"^</?[a-z][^>]*>$", stripped, re.I):
+        return True
+    if re.match(r"^<img\b", stripped, re.I):
+        return True
+    if re.match(r"^\[!\[[^\]]*\]\([^)]+\)\]\([^)]+\)$", stripped):
+        return True
+    if re.match(r"^!\[[^\]]*\]\([^)]+\)$", stripped):
+        return True
+    if re.match(r"^\|?[\s:|.-]+\|?$", stripped):
+        return True
+    if re.match(r"^(?:npm|pnpm|yarn|node|python|py|aapb|npx|git|rg|pwsh|powershell|curl)\s", stripped):
+        return True
+    if re.match(r"^[A-Za-z]:[\\/]", stripped) or re.match(r"^\.?[\\/]", stripped):
+        return True
+    return False
 
 
 def split_sentences(text: str, language: str, optional: dict[str, bool]) -> list[str]:

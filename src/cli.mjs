@@ -25,6 +25,7 @@ import {
   checkCanonFacts,
   checkRuntimeSchema,
   checkWritingNaturalness,
+  checkWritingNaturalnessReport,
   checkReferenceAdoptionLedger,
   checkReferenceSourceRegistry,
   catalogManagedManifest,
@@ -990,6 +991,29 @@ export async function runCli(argv, io = {}) {
       return result.ok ? 0 : 1;
     }
 
+    if (command === 'writing' && subcommand === 'naturalness-report') {
+      const result = await checkWritingNaturalnessReport({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        rootPath: typeof parsed.flags.root === 'string' ? parsed.flags.root : '.',
+        lang: typeof parsed.flags.lang === 'string' ? parsed.flags.lang : 'auto',
+        engine: typeof parsed.flags.engine === 'string' ? parsed.flags.engine : 'auto',
+        maxFiles: parsed.flags['max-files']
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Writing naturalness report: ${result.summary.files} file(s), ${result.summary.findings} finding(s)\n`);
+        for (const file of result.files) {
+          write(stdout, `[${file.summary.findings > 0 ? 'CHECK' : 'OK'}] ${file.path}: ${file.summary.findings} finding(s)\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
     if (command === 'index' && subcommand === 'build') {
       const result = await buildRuntimeIndex({
         target: resolveTarget(cwd, targetArg),
@@ -1730,7 +1754,9 @@ function needsValue(key) {
     'risk',
     'decision-date',
     'lang',
-    'engine'
+    'engine',
+    'root',
+    'max-files'
   ].includes(key);
 }
 
@@ -1848,6 +1874,7 @@ Usage:
   aapb runtime schema-check <target> --path <json> [--kind <kind>] [--json]
   aapb evidence locator-check <target> --path <json-or-md> [--json]
   aapb writing naturalness-check <target> --path <file> [--lang auto|ko|en] [--engine auto|js|python] [--json]
+  aapb writing naturalness-report <target> [--root <dir>] [--max-files N] [--lang auto|ko|en] [--engine auto|js|python] [--json]
   aapb index build <target> [--apply] [--json]
   aapb index status <target> [--json]
   aapb index search <target> --query <text> [--max-results N] [--json]

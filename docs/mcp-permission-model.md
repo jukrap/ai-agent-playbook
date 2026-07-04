@@ -15,7 +15,7 @@ The default MCP server exposes read-only tools, resources, and prompts. Tools ar
 
 Default prompts route review work through required evidence, optional evidence, stop conditions, and verification expectations. They do not grant write access or promote generated runtime hints into memory.
 
-Read-only tools may call optional local engines when their tool schema exposes that choice. For example, `writing_naturalness_check` accepts `engine: "auto" | "js" | "python"`; the Python path still reads one target-relative text file, returns JSON findings, and does not write files or call the network.
+Read-only tools may call optional local engines when their tool schema exposes that choice. For example, `writing_naturalness_check` and `writing_naturalness_report` accept `engine: "auto" | "js" | "python"`; the Python path still reads only target-relative prose files, returns JSON findings, and does not write files or call the network.
 
 Default resources expose compact structured context that AI apps can read before choosing tools:
 
@@ -60,6 +60,7 @@ Default read-only additions:
 - `runtime_schema_check`
 - `evidence_locator_check`
 - `writing_naturalness_check`
+- `writing_naturalness_report`
 - `index_search`
 - `symbol_outline`
 - `dependency_inventory`

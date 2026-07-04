@@ -79,7 +79,7 @@ Runtime artifact JSON must keep a stable evidence envelope: `schemaVersion`, `ki
 
 `graph preview` builds a read-only `runtime.repo-graph` report from current file inventory, symbol outline, dependency inventory, and route/API/data hints. It records compact nodes and source-backed edges for review, but it remains generated runtime evidence. Use canon or documentation promotion before moving stable facts into memory maps.
 
-`writing naturalness-check` is also read-only. It reads one target-relative text file and reports Korean or English prose signals such as translationese, AI-writing phrases, inflated tone, repeated sentence rhythm, and English-term density. `--engine auto` combines the built-in JavaScript fallback with the optional Python engine when available; the JSON result reports `engines.used` and `engines.unavailable`. It never rewrites files, calls a network service, judges authorship, or bypasses detectors. Use the result as an editing checklist before changing README text, docs, translations, PR bodies, release notes, or public summaries.
+`writing naturalness-check` is also read-only. It reads one target-relative text file and reports Korean or English prose signals such as translationese, AI-writing phrases, inflated tone, repeated sentence rhythm, and English-term density. `writing naturalness-report` applies the same checks to a bounded Markdown/MDX/text folder so translation or documentation batches can be triaged before opening individual files. Both commands ignore fenced code, inline code, shell commands, URLs, HTML-only badge lines, and path examples before scoring prose. `--engine auto` combines the built-in JavaScript fallback with the optional Python engine when available; the JSON result reports `engines.used` and `engines.unavailable`. They never rewrite files, call a network service, judge authorship, or bypass detectors. Use the result as an editing checklist before changing README text, docs, translations, PR bodies, release notes, or public summaries.
 
 ## Workflow run records
 
@@ -97,7 +97,7 @@ Start the local server with:
 npx ai-agent-playbook mcp
 ```
 
-An MCP-capable AI app can register that command and then call tools such as `runtime_schema_check`, `writing_naturalness_check`, `operator_search`, `operator_research`, `operator_analyze_deep`, `source_function_clones`, `ast_grep_search`, `lsp_symbols`, `contracts_check`, `managed_check`, and `qa_image_diff`. The writing tool accepts `engine: "auto" | "js" | "python"` and remains read-only even when it calls the optional local Python engine.
+An MCP-capable AI app can register that command and then call tools such as `runtime_schema_check`, `writing_naturalness_check`, `writing_naturalness_report`, `operator_search`, `operator_research`, `operator_analyze_deep`, `source_function_clones`, `ast_grep_search`, `lsp_symbols`, `contracts_check`, `managed_check`, and `qa_image_diff`. The writing tools accept `engine: "auto" | "js" | "python"` and remain read-only even when they call the optional local Python engine.
 
 The MCP server exposes only read-only tools. It does not expose bootstrap, skill install/update/uninstall, managed apply operations, contract snapshot apply, run record, AST rewrite/apply, LSP rename, automatic doctor execution, or blocking/continuation behavior.
 

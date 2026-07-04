@@ -44,6 +44,7 @@ test('harness facade keeps the public runtime exports', () => {
     'checkReferenceSourceRegistry',
     'checkRuntimeSchema',
     'checkWritingNaturalness',
+    'checkWritingNaturalnessReport',
     'contextStatus',
     'createPlan',
     'createWorklog',

@@ -57,6 +57,28 @@ After a global install, replace `npx ai-agent-playbook` with `ai-playbook` in th
 
 For the full command reference, see [Command guide](commands.md).
 
+## Optional Python Engine
+
+Node.js is enough for the CLI, skill lifecycle, project bootstrap, and MCP server. Python 3.11+ is recommended when you want stronger local language checks, especially Korean prose and translation cleanup. The Python engine is read-only and optional; if it is not available, supported commands keep their JavaScript fallback.
+
+For a source checkout, bootstrap a local environment with:
+
+```powershell
+.\scripts\bootstrap-python.ps1
+node .\bin\ai-playbook.mjs runtime python-status --json
+```
+
+For an npm or global install, create any Python 3.11+ virtual environment and point the harness at it:
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\python -m pip install -U pip kss kiwipiepy
+$env:AI_PLAYBOOK_PYTHON = ".\.venv\Scripts\python.exe"
+npx ai-agent-playbook runtime python-status --json
+```
+
+Use `writing naturalness-check --engine auto` for the normal path. Use `--engine js` when Python should be ignored, and `--engine python` when a missing Python environment should be reported explicitly.
+
 ## Reusable Skills Lifecycle
 
 Reusable skills are installed into user-level skill roots, not into a target repository:
@@ -151,13 +173,13 @@ This project does not edit your MCP settings automatically. `adapter config <tar
 | `skills install` / `skills update` | Yes unless `--dry-run` | User skill roots. |
 | `skills uninstall` | Yes unless `--dry-run` | Removes managed skills from user skill roots. |
 | `bootstrap <target>` | Yes unless `--dry-run` | Target project's root `AGENTS.md` and `.ai-playbook/`. |
-| `guides sync <target>` | Yes unless `--dry-run` or `--check` | Target project's `.ai-playbook/guides/`. |
-| `context init` | Yes unless `--dry-run` | Target project's `.ai-playbook/context/` and `.ai-playbook/maps/doc-map.md`. |
+| `guides sync <target>` | Yes unless `--dry-run` or `--check` | Target project's `.ai-playbook/knowledge/references/guides/`. |
+| `context init` | Yes unless `--dry-run` | Target project's `.ai-playbook/memory/context/` and `.ai-playbook/memory/maps/doc-map.md`. |
 | `context list/status` | No | Read-only path-scoped project memory inspection. |
-| `run start/summarize` | Yes unless `--dry-run` | Target project's `.ai-playbook/runs/`. |
+| `run start/summarize` | Yes unless `--dry-run` | Target project's `.ai-playbook/workflows/runs/`. |
 | `run record` | Yes | Appends one event to a selected run ledger. |
 | `run status` | No | Read-only run status inspection. |
-| `contracts init` | Yes unless `--dry-run` | Target project's `.ai-playbook/contracts/`. |
+| `contracts init` | Yes unless `--dry-run` | Target project's `.ai-playbook/memory/contracts/`. |
 | `contracts list/check` | No | Read-only contract inspection. |
 | `managed adopt/prune/uninstall` | No unless `--apply` | Target project's `.ai-playbook/` managed files. |
 | `operator check/search/research/context/analyze/map/audit` | No | Read-only target project diagnostics. |
@@ -309,7 +331,7 @@ Use `--profile <name>` only after the target stack is known. Use `--local-only` 
 
 Use `guides sync` for projects that already have `.ai-playbook/` and only need missing guide templates from a newer playbook checkout. `guides sync --check --json` also reports stale guides using source and target hashes, and `--diff` adds the first differing line without writing files. It does not modify root `AGENTS.md`, playbook policy files, or project-specific notes unless `--force` is explicitly used for guide files.
 
-During the path transition, these runtime commands also support an existing legacy `ai-playbook/` folder when `.ai-playbook/` is absent. New bootstrap output uses `.ai-playbook/`. Use `migrate path --json` to preview a legacy folder move and reference updates, then add `--apply` only after reviewing the preview.
+Runtime commands use `.ai-playbook/` as the active project playbook root. New bootstrap output uses `.ai-playbook/`, and legacy `ai-playbook/` folders are handled only through `migrate path`. Use `migrate path --json` to preview a legacy folder move and reference updates, then add `--apply` only after reviewing the preview.
 
 Bootstrap and guide sync maintain a project-level marker at `.ai-playbook/.ai-agent-playbook-install.json`. Use `managed check` to inspect it, `managed catalog` to review owned files by kind and status, `managed adopt --apply` to mark older matching installs, `managed prune --apply --path <managed-path>` to remove one selected unmodified managed file, and `managed uninstall --apply` to remove all unmodified managed files. The prune and uninstall commands preserve locally edited files and leave `.gitignore` cleanup to the operator.
 
@@ -346,7 +368,7 @@ Copy-Item .\templates\agents\global\AGENTS.md (Join-Path $projectRoot 'AGENTS.md
 Copy-Item .\templates\project-playbook (Join-Path $projectRoot '.ai-playbook') -Recurse
 ```
 
-`templates/agents/global/` is the project-root bootstrap template folder for `AGENTS.md`. Keep skill and Git policy in `.ai-playbook/SKILLS.md` and `.ai-playbook/GIT.md`, copied from `templates/project-playbook/`. Then merge the closest profile from `templates/agents/profiles/**` only when the stack is confirmed, and add any needed guides from `templates/project-playbook/guides/**`.
+`templates/agents/global/` is the project-root bootstrap template folder for `AGENTS.md`. Keep skill and Git policy in `.ai-playbook/policy/SKILLS.md` and `.ai-playbook/policy/GIT.md`, copied from `templates/project-playbook/`. Then merge the closest profile from `templates/agents/profiles/**` only when the stack is confirmed, and add any needed guides from `templates/project-playbook/knowledge/references/guides/**`.
 
 ## Codex skill installer note
 

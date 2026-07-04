@@ -7,7 +7,7 @@ import { INSTALL_MANIFEST_FILE, checkContracts, checkGuides, doctorProject, SCHE
 import { runDeepAnalysis } from '../deep-analysis.mjs';
 
 export const RULE_DIRECTORY_SOURCES = [
-  ['.ai-playbook/rules', '.ai-playbook/rules'],
+  ['.ai-playbook/policy/rules', '.ai-playbook/policy/rules'],
   ['.github/instructions', '.github/instructions'],
   ['.cursor/rules', '.cursor/rules'],
   ['.claude/rules', '.claude/rules']
@@ -32,11 +32,11 @@ export const PACKAGE_MANAGER_LOCKFILES = [
   ['bun', 'bun.lockb'],
   ['bun', 'bun.lock']
 ];
-export const CORE_CONTEXT_FILES = ['START_HERE.md', 'CURRENT.md', 'SKILLS.md', 'GIT.md'];
-export const PLAYBOOK_DIR_CANDIDATES = ['.ai-playbook', 'ai-playbook'];
-export const RELATED_CONTEXT_DIRS = ['maps', 'runbooks', 'decisions', 'guides'];
+export const CORE_CONTEXT_FILES = ['START_HERE.md', 'CURRENT.md', 'questions.md', 'policy/SKILLS.md', 'policy/GIT.md'];
+export const PLAYBOOK_DIR_CANDIDATES = ['.ai-playbook'];
+export const RELATED_CONTEXT_DIRS = ['memory/maps', 'workflows/runbooks', 'memory/decisions', 'memory/contracts', 'knowledge/references/guides', 'workflows/plans'];
 export const MARKDOWN_EXTENSIONS = new Set(['.md', '.mdc']);
-export const PLAYBOOK_AUDIT_DIRS = ['context', 'maps', 'runbooks', 'decisions', 'guides', 'plans', 'worklogs'];
+export const PLAYBOOK_AUDIT_DIRS = ['memory/context', 'memory/maps', 'workflows/runbooks', 'memory/decisions', 'memory/contracts', 'knowledge/references/guides', 'workflows/plans', 'workflows/worklogs', 'policy/rules'];
 export const SOURCE_EXTENSIONS = new Set([
   '.js', '.mjs', '.cjs', '.jsx', '.ts', '.tsx',
   '.py', '.go', '.rs', '.java', '.kt', '.kts',
@@ -131,7 +131,7 @@ export async function preflightContextSummary(options) {
   if (!playbook) {
     warnings.push({
       id: 'operator.context.playbook-missing',
-      message: 'No .ai-playbook/ or legacy ai-playbook/ folder found.',
+      message: 'No active .ai-playbook/ folder found. If this project still has ai-playbook/, run migrate path first.',
       paths: ['.ai-playbook/']
     });
   }
@@ -354,7 +354,6 @@ export function isIntentScopedChange(filePath, intentTerms, scopedPath) {
 
 export function isPlaybookPath(filePath) {
   return filePath.startsWith('.ai-playbook/') ||
-    filePath.startsWith('ai-playbook/') ||
     filePath.startsWith('.github/instructions/') ||
     filePath.startsWith('.cursor/rules/') ||
     filePath.startsWith('.claude/rules/');
@@ -771,7 +770,7 @@ export async function collectCoreContextSources(options) {
 
 export async function collectPathContextFiles(options) {
   const { target, playbook, relativePath, warnings } = options;
-  const contextRoot = path.join(playbook.absolutePath, 'context');
+  const contextRoot = path.join(playbook.absolutePath, 'memory', 'context');
   const files = await walkMarkdownFiles(contextRoot);
   const entries = [];
   for (const file of files) {
@@ -789,7 +788,7 @@ export async function collectPathContextFiles(options) {
     entries.push({
       id: parsed.frontmatter.id ?? path.basename(file, path.extname(file)),
       path: contextPath,
-      source: `${playbook.name}/context`,
+      source: `${playbook.name}/memory/context`,
       applies: match.applies,
       reason: match.reason,
       globs: parsed.frontmatter.globs,
@@ -805,7 +804,7 @@ export async function collectPathContextFiles(options) {
 
 export async function readOperatorDocMap(options) {
   const { target, playbook } = options;
-  const file = path.join(playbook.absolutePath, 'maps', 'doc-map.md');
+  const file = path.join(playbook.absolutePath, 'memory', 'maps', 'doc-map.md');
   const relative = toPortablePath(path.relative(target, file));
   if (!existsSync(file)) {
     return { path: relative, exists: false, bytes: 0 };
@@ -887,10 +886,21 @@ export async function scoreRelatedFile(options) {
   }
   return {
     path: toPortablePath(path.relative(target, file)),
-    category,
+    category: relatedCategoryLabel(category),
     score,
     snippets
   };
+}
+
+export function relatedCategoryLabel(category) {
+  return {
+    'memory/maps': 'maps',
+    'workflows/runbooks': 'runbooks',
+    'memory/decisions': 'decisions',
+    'memory/contracts': 'contracts',
+    'knowledge/references/guides': 'guides',
+    'workflows/plans': 'plans'
+  }[category] ?? category;
 }
 
 export async function readPackageInfo(target) {
@@ -1133,7 +1143,7 @@ export async function auditMarkdownLinks(options) {
 
 export async function auditContextGlobs(options) {
   const { target, playbook, projectFiles } = options;
-  const contextRoot = path.join(playbook.absolutePath, 'context');
+  const contextRoot = path.join(playbook.absolutePath, 'memory', 'context');
   const files = await walkMarkdownFiles(contextRoot);
   const findings = [];
   let orphaned = 0;
@@ -1169,7 +1179,7 @@ export async function auditContextGlobs(options) {
 
 export async function auditDocMapTargets(options) {
   const { target, playbook } = options;
-  const docMap = path.join(playbook.absolutePath, 'maps', 'doc-map.md');
+  const docMap = path.join(playbook.absolutePath, 'memory', 'maps', 'doc-map.md');
   if (!existsSync(docMap)) return [];
   const text = await readFile(docMap, 'utf8');
   const relativeSource = toPortablePath(path.relative(target, docMap));
@@ -1422,9 +1432,9 @@ export function trimSnippet(line) {
 }
 
 export function searchCategory(relativePath) {
-  if (relativePath.startsWith('.ai-playbook/rules/')) return 'rules';
-  if (relativePath.startsWith('.ai-playbook/worklogs/')) return 'worklogs';
-  if (relativePath.startsWith('.ai-playbook/plans/')) return 'plans';
+  if (relativePath.startsWith('.ai-playbook/policy/rules/')) return 'rules';
+  if (relativePath.startsWith('.ai-playbook/workflows/worklogs/')) return 'worklogs';
+  if (relativePath.startsWith('.ai-playbook/workflows/plans/')) return 'plans';
   if (relativePath.startsWith('.ai-playbook/')) return 'playbook';
   if (relativePath.startsWith('docs/') || relativePath.startsWith('translations/')) return 'docs';
   if (relativePath.startsWith('templates/')) return 'templates';
@@ -1787,7 +1797,7 @@ export function summarizeChecks(checks) {
 
 export function sourcePriority(source) {
   return [
-    '.ai-playbook/rules',
+    '.ai-playbook/policy/rules',
     '.github/instructions',
     '.github/copilot-instructions.md',
     '.cursor/rules',

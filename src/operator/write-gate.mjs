@@ -355,9 +355,7 @@ function isPlaybookRuntimePath(filePath) {
   const portablePath = normalizePortablePath(filePath);
   return (
     portablePath === '.ai-playbook/runtime' ||
-    portablePath.startsWith('.ai-playbook/runtime/') ||
-    portablePath === 'ai-playbook/runtime' ||
-    portablePath.startsWith('ai-playbook/runtime/')
+    portablePath.startsWith('.ai-playbook/runtime/')
   );
 }
 

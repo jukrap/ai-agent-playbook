@@ -1,6 +1,6 @@
 # Skill Catalog
 
-This document is the long-form skill index. The install and sync source of truth is `skills/**/SKILL.md`; read [Skill taxonomy v2](skill-taxonomy-v2.md) for category and compatibility wrapper policy.
+This document is the long-form skill index. The install and sync source of truth is `skills/**/SKILL.md`; read [Capability taxonomy](capability-taxonomy.md) for category and compatibility wrapper policy.
 
 Each `SKILL.md` stays short and trigger-focused. Longer procedures, examples, stack details, and reusable checklists belong in skill references.
 
@@ -14,6 +14,7 @@ Each `SKILL.md` stays short and trigger-focused. Longer procedures, examples, st
 - `issue-planning-triage`: use when converting specs, bugs, review findings, worklogs, and follow-ups into scoped issues and task batches.
 - `release-notes-changelog`: use when preparing release notes, internal changelogs, migration notes, rollback notes, and verified summaries.
 - `documentation-artifact-package`: use when bundling docs, runbooks, diagrams, screenshots, reports, references, and evidence for handoff.
+- `natural-writing-humanization`: use when editing Korean or English prose so it reads naturally while preserving facts, meaning, technical terms, and author intent.
 
 ## Delivery, Verification, And Git
 

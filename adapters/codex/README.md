@@ -11,7 +11,7 @@ Codex has two different `AGENTS.md` layers:
 - Codex home global: personal defaults in `~/.codex/AGENTS.md`, or another directory if `CODEX_HOME` is set.
 - Project root: a thin bootstrap in the target project's `AGENTS.md` that points to repository playbook docs.
 
-`templates/codex-home/AGENTS.md` is for the first layer. `templates/agents/global/AGENTS.md` is for the second layer and is what `ai-playbook bootstrap` writes into a target project. Skill and Git policy live under `.ai-playbook/SKILLS.md` and `.ai-playbook/GIT.md`.
+`templates/codex-home/AGENTS.md` is for the first layer. `templates/agents/global/AGENTS.md` is for the second layer and is what `ai-playbook bootstrap` writes into a target project. Skill and Git policy live under `.ai-playbook/policy/SKILLS.md` and `.ai-playbook/policy/GIT.md`.
 
 Recommended first setup:
 
@@ -194,4 +194,4 @@ Use `hooks.example.json` only as a manual reference when the renderer is not eno
 
 Do not rely on Codex account-level custom instructions being present on another computer. Put reusable working agreements in project `AGENTS.md` templates or `templates/project-playbook` docs, and keep machine-specific paths only in local setup notes.
 
-For root-level project policy, prefer `templates/agents/global/AGENTS.md`. Keep skill and Git policy in `templates/project-playbook/SKILLS.md` and `templates/project-playbook/GIT.md`. Treat hooks, slash commands, or runtime-specific instructions from external skills as ideas to translate, not Codex defaults.
+For root-level project policy, prefer `templates/agents/global/AGENTS.md`. Keep skill and Git policy in `templates/project-playbook/policy/SKILLS.md` and `templates/project-playbook/policy/GIT.md`. Treat hooks, slash commands, or runtime-specific instructions from external skills as ideas to translate, not Codex defaults.

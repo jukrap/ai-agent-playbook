@@ -48,7 +48,7 @@ export async function renderAdapterConfig(options) {
     warnings.push({
       id: 'config.playbook.missing',
       message: hasLegacyPlaybook
-        ? 'Missing .ai-playbook/; legacy ai-playbook/ remains compatible, but rendered config should be reviewed before manual setup.'
+        ? 'Missing .ai-playbook/; legacy ai-playbook/ exists and should be migrated with migrate path before adapter setup.'
         : 'Missing .ai-playbook/; rendered config is still available for manual setup.',
       paths: ['.ai-playbook/']
     });

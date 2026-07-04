@@ -1,6 +1,6 @@
 # 스킬 카탈로그
 
-이 문서는 한국어 독자를 위한 스킬 목록입니다. 실제 설치·동기화 기준은 영어 `skills/**/SKILL.md` 원본이며, 세부 분류 정책은 [Skill taxonomy v2](skill-taxonomy-v2.ko.md)를 함께 봅니다.
+이 문서는 한국어 독자를 위한 스킬 목록입니다. 실제 설치·동기화 기준은 영어 `skills/**/SKILL.md` 원본이며, 세부 분류 정책은 [능력 분류 체계](capability-taxonomy.ko.md)를 함께 봅니다.
 
 각 `SKILL.md`는 짧고 상황 중심으로 유지합니다. 긴 절차, 예시, 스택별 세부사항은 skill reference에 둡니다.
 
@@ -14,6 +14,7 @@
 - `issue-planning-triage`: spec, bug, review finding, worklog, follow-up을 scoped issue와 task batch로 바꿀 때.
 - `release-notes-changelog`: user-facing release note, internal changelog, migration note, rollback note를 준비할 때.
 - `documentation-artifact-package`: docs, runbook, diagram, screenshot, report, evidence를 stakeholder handoff나 knowledge artifact로 묶을 때.
+- `natural-writing-humanization`: 한국어 또는 영어 글을 사실, 의미, 기술 용어, 작성 의도를 보존하면서 자연스럽게 다듬을 때.
 
 ## 전달, 검증, Git
 

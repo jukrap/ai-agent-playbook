@@ -24,6 +24,7 @@ import {
   checkManagedManifest,
   checkCanonFacts,
   checkRuntimeSchema,
+  checkWritingNaturalness,
   checkReferenceAdoptionLedger,
   checkReferenceSourceRegistry,
   catalogManagedManifest,
@@ -50,6 +51,7 @@ import {
   previewRepoGraph,
   previewWorkflowRun,
   promoteCanonFacts,
+  pythonEngineStatus,
   previewWriteGate,
   adoptManagedManifest,
   pruneManagedManifest,
@@ -440,7 +442,7 @@ export async function runCli(argv, io = {}) {
           write(stdout, `[CONFLICT] ${conflict.message}\n`);
         }
         if (!parsed.flags.apply && result.operations.length > 0) {
-          write(stdout, 'Re-run with --apply to create the v2 playbook layout.\n');
+          write(stdout, 'Re-run with --apply to migrate to the structured playbook layout.\n');
         }
       }
       return result.ok ? 0 : 1;
@@ -891,7 +893,7 @@ export async function runCli(argv, io = {}) {
       if (parsed.flags.json) {
         writeJson(stdout, result);
       } else {
-        write(stdout, `Playbook layout: ${result.layout.version} (${result.layout.activeRoot})\n`);
+        write(stdout, `Playbook layout: ${result.layout.kind} (${result.layout.activeRoot})\n`);
         write(stdout, `Missing: ${result.summary.missingDirectories} directory item(s), ${result.summary.missingFiles} file(s)\n`);
       }
       return result.ok ? 0 : 1;
@@ -911,6 +913,19 @@ export async function runCli(argv, io = {}) {
         }
       }
       return result.ok ? 0 : 1;
+    }
+
+    if (command === 'runtime' && subcommand === 'python-status') {
+      const result = await pythonEngineStatus({ repoRoot: root });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Python engine: ${result.ok ? 'available' : 'unavailable'} (${result.summary.engineAvailable}/${result.summary.candidates} candidate(s))\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+      }
+      return 0;
     }
 
     if (command === 'runtime' && subcommand === 'schema-check') {
@@ -944,6 +959,29 @@ export async function runCli(argv, io = {}) {
         write(stdout, `Evidence locators: ${result.summary.locators} locator(s), ${result.summary.conflicts} conflict(s)\n`);
         for (const warning of result.warnings) {
           write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'writing' && subcommand === 'naturalness-check') {
+      const result = await checkWritingNaturalness({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : '',
+        lang: typeof parsed.flags.lang === 'string' ? parsed.flags.lang : 'auto',
+        engine: typeof parsed.flags.engine === 'string' ? parsed.flags.engine : 'auto'
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Writing naturalness: ${result.summary.findings} finding(s), ${result.language.analyzed}\n`);
+        for (const finding of result.findings) {
+          const first = finding.evidence[0];
+          write(stdout, `[${finding.severity.toUpperCase()}] ${finding.id}${first ? `:${first.line}` : ''} ${finding.message}\n`);
         }
         for (const conflict of result.conflicts) {
           write(stdout, `[CONFLICT] ${conflict.message}\n`);
@@ -1690,7 +1728,9 @@ function needsValue(key) {
     'pattern',
     'adoption',
     'risk',
-    'decision-date'
+    'decision-date',
+    'lang',
+    'engine'
   ].includes(key);
 }
 
@@ -1711,6 +1751,10 @@ function printOperations(stdout, operations) {
 
 function printScaffoldResult(result, stdout, stderr) {
   if (!result.ok) {
+    if (result.conflicts?.length) {
+      write(stderr, `Conflicts:\n${result.conflicts.map((item) => `- ${item}`).join('\n')}\n`);
+      return 2;
+    }
     write(stderr, `Refusing to overwrite existing file: ${result.file}\nUse --force to overwrite.\n`);
     return 2;
   }
@@ -1779,7 +1823,7 @@ Usage:
   ai-playbook skills update [--dry-run] [--json] [--force-managed] [--force-unmanaged] [--codex-root <path>] [--agents-root <path>]
   ai-playbook skills uninstall [--dry-run] [--json] [--force-managed] [--codex-root <path>] [--agents-root <path>]
   ai-playbook migrate path <target> [--apply] [--json]
-  ai-playbook migrate layout <target> [--to v2] [--apply] [--json]
+  ai-playbook migrate layout <target> [--to structured] [--apply] [--json]
   ai-playbook catalog list [--json]
   ai-playbook catalog check [--json]
   ai-playbook workflow list [--json]
@@ -1800,8 +1844,10 @@ Usage:
   ai-playbook reference ledger-check <target> [--path <ledger.md>] [--strict] [--json]
   ai-playbook layout status <target> [--json]
   ai-playbook runtime capability-history <target> [--json]
+  ai-playbook runtime python-status [--json]
   ai-playbook runtime schema-check <target> --path <json> [--kind <kind>] [--json]
   ai-playbook evidence locator-check <target> --path <json-or-md> [--json]
+  ai-playbook writing naturalness-check <target> --path <file> [--lang auto|ko|en] [--engine auto|js|python] [--json]
   ai-playbook index build <target> [--apply] [--json]
   ai-playbook index status <target> [--json]
   ai-playbook index search <target> --query <text> [--max-results N] [--json]

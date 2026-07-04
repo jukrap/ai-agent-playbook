@@ -2,6 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
+  CONTRACTS_DIR,
   SCHEMA_VERSION,
   addSnapshotEntry,
   assertDirectory,
@@ -28,7 +29,7 @@ export async function initContracts(options) {
   const playbook = resolvePlaybookLayout(resolvedTarget);
   const files = [
     {
-      path: `${playbook.dir}/contracts/README.md`,
+      path: `${playbook.dir}/${CONTRACTS_DIR}/README.md`,
       content: [
         '# Contracts',
         '',
@@ -42,7 +43,7 @@ export async function initContracts(options) {
     }
   ];
   const result = await writeMemoryFiles({ target: resolvedTarget, files, dryRun, command: 'contracts.init' });
-  for (const directory of [`${playbook.dir}/contracts/active/`, `${playbook.dir}/contracts/pending/`]) {
+  for (const directory of [`${playbook.dir}/${CONTRACTS_DIR}/active/`, `${playbook.dir}/${CONTRACTS_DIR}/pending/`]) {
     result.operations.push({
       id: 'contracts.mkdir',
       action: 'mkdir',
@@ -182,7 +183,7 @@ export async function snapshotContracts(options) {
     }
   }
 
-  const snapshotPath = `${playbook.dir}/contracts/.hashes.json`;
+  const snapshotPath = `${playbook.dir}/${CONTRACTS_DIR}/.hashes.json`;
   const snapshot = {
     schemaVersion: SCHEMA_VERSION,
     source: 'ai-agent-playbook',

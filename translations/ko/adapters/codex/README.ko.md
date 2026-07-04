@@ -11,7 +11,7 @@ Codex에는 서로 다른 두 `AGENTS.md` 계층이 있습니다.
 - Codex home 전역: `~/.codex/AGENTS.md`에 두는 개인 기본값. `CODEX_HOME`을 설정하면 다른 디렉터리를 사용합니다.
 - 프로젝트 루트: 대상 프로젝트의 `AGENTS.md`에 두는 얇은 부트스트랩. 저장소 플레이북 문서로 안내합니다.
 
-`templates/codex-home/AGENTS.md`는 첫 번째 계층용입니다. `templates/agents/global/AGENTS.md`는 두 번째 계층용이며 `ai-playbook bootstrap`이 대상 프로젝트에 쓰는 파일입니다. 스킬/Git 정책은 `.ai-playbook/SKILLS.md`와 `.ai-playbook/GIT.md` 아래에 둡니다.
+`templates/codex-home/AGENTS.md`는 첫 번째 계층용입니다. `templates/agents/global/AGENTS.md`는 두 번째 계층용이며 `ai-playbook bootstrap`이 대상 프로젝트에 쓰는 파일입니다. 스킬/Git 정책은 `.ai-playbook/policy/SKILLS.md`와 `.ai-playbook/policy/GIT.md` 아래에 둡니다.
 
 처음 설정할 때의 권장 흐름:
 
@@ -194,4 +194,4 @@ node .\bin\ai-playbook.mjs adapter check <target-repo> --adapter codex --setting
 
 다른 컴퓨터에 Codex 계정 수준 사용자 지침이 있다고 의존하지 않습니다. 재사용할 작업 합의는 project `AGENTS.md` template이나 `templates/project-playbook` 문서에 두고, 기기별 경로는 local setup notes에만 둡니다.
 
-루트 수준 project policy에는 `templates/agents/global/AGENTS.md`를 우선 사용합니다. skill/Git 정책은 `templates/project-playbook/SKILLS.md`와 `templates/project-playbook/GIT.md`에 둡니다. 외부 스킬의 hook, slash command, runtime-specific instruction은 Codex 기본값이 아니라 옮겨 해석할 아이디어로 다룹니다.
+루트 수준 project policy에는 `templates/agents/global/AGENTS.md`를 우선 사용합니다. skill/Git 정책은 `templates/project-playbook/policy/SKILLS.md`와 `templates/project-playbook/policy/GIT.md`에 둡니다. 외부 스킬의 hook, slash command, runtime-specific instruction은 Codex 기본값이 아니라 옮겨 해석할 아이디어로 다룹니다.

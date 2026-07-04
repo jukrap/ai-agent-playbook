@@ -57,6 +57,28 @@ ai-playbook skills check
 
 전체 명령어 설명은 [명령어 가이드](commands.ko.md)를 봅니다.
 
+## 선택형 Python 엔진
+
+CLI, 스킬 수명주기, 프로젝트 부트스트랩, MCP 서버에는 Node.js만 있어도 됩니다. 한국어 글과 번역 정리처럼 더 강한 로컬 언어 점검이 필요하면 Python 3.11 이상 설치를 권장합니다. Python 엔진은 읽기 전용이고 선택 사항입니다. 사용할 수 없으면 지원 명령은 JavaScript 대체 분석을 유지합니다.
+
+소스 체크아웃에서는 아래 명령으로 로컬 환경을 준비합니다.
+
+```powershell
+.\scripts\bootstrap-python.ps1
+node .\bin\ai-playbook.mjs runtime python-status --json
+```
+
+npm 또는 전역 설치를 사용하는 경우에는 Python 3.11 이상 가상 환경을 만들고 하네스가 그 Python을 보게 합니다.
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\python -m pip install -U pip kss kiwipiepy
+$env:AI_PLAYBOOK_PYTHON = ".\.venv\Scripts\python.exe"
+npx ai-agent-playbook runtime python-status --json
+```
+
+일반적인 글 점검은 `writing naturalness-check --engine auto`를 사용합니다. Python을 무시해야 하면 `--engine js`, Python 누락을 명시적으로 보고해야 하면 `--engine python`을 사용합니다.
+
 ## 재사용 스킬 수명주기
 
 재사용 스킬은 대상 저장소가 아니라 사용자 수준 스킬 루트에 설치됩니다.
@@ -151,13 +173,13 @@ npx ai-agent-playbook mcp
 | `skills install` / `skills update` | `--dry-run`이 없으면 예 | 사용자 스킬 루트를 변경합니다. |
 | `skills uninstall` | `--dry-run`이 없으면 예 | 사용자 스킬 루트에서 관리 대상 스킬을 제거합니다. |
 | `bootstrap <target>` | `--dry-run`이 없으면 예 | 대상 프로젝트의 루트 `AGENTS.md`와 `.ai-playbook/`을 변경합니다. |
-| `guides sync <target>` | `--dry-run` 또는 `--check`가 없으면 예 | 대상 프로젝트의 `.ai-playbook/guides/`를 변경합니다. |
-| `context init` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-playbook/context/`와 `.ai-playbook/maps/doc-map.md`를 변경합니다. |
+| `guides sync <target>` | `--dry-run` 또는 `--check`가 없으면 예 | 대상 프로젝트의 `.ai-playbook/knowledge/references/guides/`를 변경합니다. |
+| `context init` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-playbook/memory/context/`와 `.ai-playbook/memory/maps/doc-map.md`를 변경합니다. |
 | `context list/status` | 아니오 | 경로 범위 프로젝트 기억을 읽기 전용으로 점검합니다. |
-| `run start/summarize` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-playbook/runs/`를 변경합니다. |
+| `run start/summarize` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-playbook/workflows/runs/`를 변경합니다. |
 | `run record` | 예 | 선택한 실행 장부에 이벤트 하나를 추가합니다. |
 | `run status` | 아니오 | 실행 상태를 읽기 전용으로 점검합니다. |
-| `contracts init` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-playbook/contracts/`를 변경합니다. |
+| `contracts init` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-playbook/memory/contracts/`를 변경합니다. |
 | `contracts list/check` | 아니오 | 계약 문서를 읽기 전용으로 점검합니다. |
 | `managed adopt/prune/uninstall` | `--apply`가 없으면 아니오 | 대상 프로젝트의 `.ai-playbook/` 관리 파일을 변경합니다. |
 | `operator check/search/research/context/analyze/map/audit` | 아니오 | 대상 프로젝트를 읽기 전용으로 진단합니다. |
@@ -307,7 +329,7 @@ npx ai-agent-playbook operator check <target-project> --json
 
 이미 `.ai-playbook/`이 있는 프로젝트에서 새 플레이북 체크아웃의 누락된 가이드 템플릿만 가져오려면 `guides sync`를 사용합니다. `guides sync --check --json`은 원본과 대상 해시를 사용해 오래된 가이드도 보고하고, `--diff`를 추가하면 파일을 쓰지 않고 첫 차이 줄을 보여줍니다. 이 명령은 `--force`로 가이드 파일 덮어쓰기를 명시하지 않는 한 루트 `AGENTS.md`, 플레이북 정책 파일, 프로젝트별 메모를 수정하지 않습니다.
 
-경로 전환 기간에는 `.ai-playbook/`이 없고 기존 `ai-playbook/` 폴더만 있는 프로젝트도 런타임 명령이 지원합니다. 새 부트스트랩 결과는 `.ai-playbook/`을 사용합니다. 레거시 폴더 이동과 참조 갱신은 먼저 `migrate path --json`으로 미리 보고, 검토한 뒤에만 `--apply`를 추가합니다.
+런타임 명령은 `.ai-playbook/`을 활성 project playbook root로 사용합니다. 새 부트스트랩 결과는 `.ai-playbook/`을 사용하고, 기존 `ai-playbook/` 폴더는 `migrate path`에서만 다룹니다. 레거시 폴더 이동과 참조 갱신은 먼저 `migrate path --json`으로 미리 보고, 검토한 뒤에만 `--apply`를 추가합니다.
 
 `bootstrap`과 `guides sync`는 프로젝트 수준 표식인 `.ai-playbook/.ai-agent-playbook-install.json`을 관리합니다. `managed check`로 확인하고, `managed catalog`로 소유 파일을 종류와 상태별로 검토하고, 오래된 일치 설치본에는 `managed adopt --apply`를, 선택한 수정되지 않은 관리 파일 제거에는 `managed prune --apply --path <managed-path>`를, 전체 수정되지 않은 관리 파일 제거에는 `managed uninstall --apply`를 사용합니다. 정리와 제거 명령은 로컬에서 수정된 파일을 보존하고 `.gitignore` 정리는 작업자에게 맡깁니다.
 
@@ -342,7 +364,7 @@ Copy-Item .\templates\agents\global\AGENTS.md (Join-Path $projectRoot 'AGENTS.md
 Copy-Item .\templates\project-playbook (Join-Path $projectRoot '.ai-playbook') -Recurse
 ```
 
-`templates/agents/global/`은 `AGENTS.md`용 프로젝트 루트 부트스트랩 템플릿 폴더입니다. 스킬/Git 정책은 `templates/project-playbook/`에서 복사되는 `.ai-playbook/SKILLS.md`, `.ai-playbook/GIT.md`에 둡니다. 그 다음 스택이 확인된 경우에만 `templates/agents/profiles/**`에서 가장 가까운 프로필을 병합하고, 필요한 가이드는 `templates/project-playbook/guides/**`에서 고릅니다.
+`templates/agents/global/`은 `AGENTS.md`용 프로젝트 루트 부트스트랩 템플릿 폴더입니다. 스킬/Git 정책은 `templates/project-playbook/`에서 복사되는 `.ai-playbook/policy/SKILLS.md`, `.ai-playbook/policy/GIT.md`에 둡니다. 그 다음 스택이 확인된 경우에만 `templates/agents/profiles/**`에서 가장 가까운 프로필을 병합하고, 필요한 가이드는 `templates/project-playbook/knowledge/references/guides/**`에서 고릅니다.
 
 ## Codex 스킬 설치기 참고
 

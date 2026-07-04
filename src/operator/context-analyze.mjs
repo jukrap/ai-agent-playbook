@@ -31,7 +31,7 @@ export async function previewOperatorContext(options) {
   if (!playbook) {
     warnings.push({
       id: 'operator.context.playbook-missing',
-      message: 'No .ai-playbook/ or legacy ai-playbook/ folder found.',
+      message: 'No active .ai-playbook/ folder found. If this project still has ai-playbook/, run migrate path first.',
       paths: ['.ai-playbook/']
     });
   }

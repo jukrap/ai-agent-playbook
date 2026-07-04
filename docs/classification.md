@@ -21,7 +21,7 @@ The content is not agent-specific. Codex is one installation target. The source 
 - `skills/legacy`: maintenance workflows where runtime coupling and compatibility dominate.
 - `skills/meta`: skill-authoring and repository-maintenance skills.
 - `skills/mobile`: native release, permission, offline sync, hybrid, WebView, and device QA workflows.
-- `skills/project`: project bootstrap, onboarding, requirements, issue planning, release notes, documentation packages, and project-memory maintenance.
+- `skills/project`: project bootstrap, onboarding, requirements, issue planning, release notes, natural writing, documentation packages, and project-memory maintenance.
 - `skills/quality`: visual quality, cleanup, compatibility routes, and lightweight review workflows.
 - `skills/security`: authentication, authorization, dependency supply chain, license/notice evidence, security review, compliance gate, and risk workflows.
 
@@ -61,6 +61,7 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `issue-planning-triage`: converts specs, bugs, review findings, worklogs, and follow-ups into scoped issues, priorities, dependencies, and task batches.
 - `release-notes-changelog`: prepares reader-facing release notes, changelogs, migration notes, rollback notes, known issues, and verified change summaries.
 - `documentation-artifact-package`: packages docs, runbooks, diagrams, screenshots, reports, source references, and evidence into stakeholder packages, handoffs, or knowledge artifacts.
+- `natural-writing-humanization`: reviews and edits Korean or English prose for naturalness while preserving meaning, facts, technical terms, and author intent.
 
 ## AI harness map
 

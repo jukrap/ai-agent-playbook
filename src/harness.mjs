@@ -11,6 +11,7 @@ export {
   REQUIRED_PLAYBOOK_FILES,
   RUNS_DIR,
   SCHEMA_VERSION,
+  activePlaybookMissingResult,
   parseMaxChars,
   resolvePlaybookLayout,
   slugifyTitle,
@@ -30,7 +31,7 @@ export { buildReferenceSourceRegistryPreview, checkReferenceSourceRegistry, upda
 export { buildReferenceAdoptionStatus } from './catalog/reference-status.mjs';
 export { updateReferenceLedgerDecision } from './catalog/reference-ledger-decision.mjs';
 export { HARNESS_CONFIG_FILES, previewHarnessConfig } from './core/config.mjs';
-export { describePlaybookLayout, migratePlaybookLayout } from './layout/playbook-layout-v2.mjs';
+export { describePlaybookLayout, migratePlaybookLayout } from './layout/structured-playbook-layout.mjs';
 export { buildRuntimeIndex, runtimeIndexStatus, searchRuntimeIndex } from './runtime/indexes.mjs';
 export { previewCapabilityHistory } from './runtime/capability-history.mjs';
 export { buildDependencyInventoryIndex } from './runtime/dependency-inventory.mjs';
@@ -38,6 +39,8 @@ export { checkEvidenceLocators } from './runtime/evidence-locators.mjs';
 export { previewRepoGraph } from './runtime/repo-graph.mjs';
 export { buildRouteApiHintsIndex } from './runtime/route-api-hints.mjs';
 export { checkRuntimeSchema, validateRuntimeSchema } from './runtime/schemas.mjs';
+export { pythonEngineStatus } from './runtime/python-engine.mjs';
+export { checkWritingNaturalness } from './runtime/writing-naturalness.mjs';
 export { buildSymbolOutlineIndex } from './runtime/symbol-outline.mjs';
 export { previewWorkflowRun, startWorkflowRun } from './runtime/workflow-runs.mjs';
 export { checkCanonFacts, draftCanonFacts, promoteCanonFacts } from './memory/canon.mjs';

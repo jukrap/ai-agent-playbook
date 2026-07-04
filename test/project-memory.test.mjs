@@ -10,11 +10,11 @@ const repoRoot = path.resolve(import.meta.dirname, '..');
 
 test('context status parses frontmatter and matches Windows spaced non-ASCII paths without writing files', async () => {
   const target = await tempRepo('context status-공백-한글-');
-  await mkdir(path.join(target, '.ai-playbook', 'context'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'maps'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'memory', 'context'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'memory', 'maps'), { recursive: true });
   await mkdir(path.join(target, 'src', '기능 모듈'), { recursive: true });
   await writeFile(path.join(target, 'src', '기능 모듈', 'Payment Panel.tsx'), 'export function PaymentPanel() { return null; }\n');
-  await writeFile(path.join(target, '.ai-playbook', 'context', 'root.md'), [
+  await writeFile(path.join(target, '.ai-playbook', 'memory', 'context', 'root.md'), [
     '---',
     'id: root',
     'alwaysApply: true',
@@ -23,7 +23,7 @@ test('context status parses frontmatter and matches Windows spaced non-ASCII pat
     '---',
     '# Root Context'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'context', 'frontend.md'), [
+  await writeFile(path.join(target, '.ai-playbook', 'memory', 'context', 'frontend.md'), [
     '---',
     'id: frontend',
     'globs: ["src/**/*.tsx"]',
@@ -35,7 +35,7 @@ test('context status parses frontmatter and matches Windows spaced non-ASCII pat
     '## When to read',
     'Visible UI changes.'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'context', 'backend.md'), [
+  await writeFile(path.join(target, '.ai-playbook', 'memory', 'context', 'backend.md'), [
     '---',
     'id: backend',
     'globs:',
@@ -44,7 +44,7 @@ test('context status parses frontmatter and matches Windows spaced non-ASCII pat
     '---',
     '# Backend Context'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'maps', 'doc-map.md'), '# Documentation Map\n\nRead CURRENT.md before worklogs.\n');
+  await writeFile(path.join(target, '.ai-playbook', 'memory', 'maps', 'doc-map.md'), '# Documentation Map\n\nRead CURRENT.md before worklogs.\n');
   const before = await listRelativeFiles(target);
 
   const io = capture(target);
@@ -66,7 +66,7 @@ test('context status parses frontmatter and matches Windows spaced non-ASCII pat
   assert.equal(report.contexts.some((item) => item.id === 'root' && item.applies && item.reason === 'alwaysApply'), true);
   assert.equal(report.contexts.some((item) => item.id === 'frontend' && item.applies && item.reason === 'glob'), true);
   assert.equal(report.contexts.some((item) => item.id === 'backend' && !item.applies), true);
-  assert.equal(report.docMap.path, '.ai-playbook/maps/doc-map.md');
+  assert.equal(report.docMap.path, '.ai-playbook/memory/maps/doc-map.md');
   assert.deepEqual(await listRelativeFiles(target), before);
 
   const listed = capture(target);
@@ -89,16 +89,16 @@ test('context init previews and creates context root and doc-map templates', asy
   assert.equal(await runCli(['context', 'init', '.', '--dry-run', '--json'], preview), 0);
   const previewReport = JSON.parse(preview.out());
   assert.equal(previewReport.applied, false);
-  assert.equal(previewReport.operations.some((operation) => operation.path === '.ai-playbook/context/root.md'), true);
+  assert.equal(previewReport.operations.some((operation) => operation.path === '.ai-playbook/memory/context/root.md'), true);
   assert.deepEqual(await listRelativeFiles(target), before);
 
   const applied = capture(target);
   assert.equal(await runCli(['context', 'init', '.', '--json'], applied), 0);
   const appliedReport = JSON.parse(applied.out());
   assert.equal(appliedReport.applied, true);
-  assert.equal(existsSync(path.join(target, '.ai-playbook', 'context', 'root.md')), true);
-  assert.equal(existsSync(path.join(target, '.ai-playbook', 'context', '_registry.json')), true);
-  assert.equal(existsSync(path.join(target, '.ai-playbook', 'maps', 'doc-map.md')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'memory', 'context', 'root.md')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'memory', 'context', '_registry.json')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'memory', 'maps', 'doc-map.md')), true);
   await cleanup(target);
 });
 
@@ -119,7 +119,7 @@ test('run commands create append-only evidence ledger and summarize without unsa
   const startedReport = JSON.parse(started.out());
   assert.equal(startedReport.applied, true);
   assert.equal(startedReport.runId, 'auth-flow');
-  assert.equal(existsSync(path.join(target, '.ai-playbook', 'runs', 'auth-flow', 'ledger.jsonl')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'workflows', 'runs', 'auth-flow', 'ledger.jsonl')), true);
 
   const recorded = capture(target);
   assert.equal(await runCli([
@@ -135,10 +135,10 @@ test('run commands create append-only evidence ledger and summarize without unsa
     '--status',
     'pass',
     '--evidence',
-    '.ai-playbook/runs/auth-flow/evidence/auth.txt',
+    '.ai-playbook/workflows/runs/auth-flow/evidence/auth.txt',
     '--json'
   ], recorded), 0);
-  const ledger = await readFile(path.join(target, '.ai-playbook', 'runs', 'auth-flow', 'ledger.jsonl'), 'utf8');
+  const ledger = await readFile(path.join(target, '.ai-playbook', 'workflows', 'runs', 'auth-flow', 'ledger.jsonl'), 'utf8');
   const events = ledger.trim().split('\n').map((line) => JSON.parse(line));
   assert.equal(events.some((event) => event.type === 'evidence' && event.status === 'pass'), true);
 
@@ -185,24 +185,24 @@ test('run commands create append-only evidence ledger and summarize without unsa
   assert.equal(statusReport.criteria.some((item) => item.source === 'ledger' && item.message === 'Auth criterion passed'), true);
 
   const summarizePreview = capture(target);
-  const summaryBefore = await readFile(path.join(target, '.ai-playbook', 'runs', 'auth-flow', 'summary.md'), 'utf8');
+  const summaryBefore = await readFile(path.join(target, '.ai-playbook', 'workflows', 'runs', 'auth-flow', 'summary.md'), 'utf8');
   assert.equal(await runCli(['run', 'summarize', '.', '--run-id', 'auth-flow', '--dry-run', '--json'], summarizePreview), 0);
-  assert.equal(await readFile(path.join(target, '.ai-playbook', 'runs', 'auth-flow', 'summary.md'), 'utf8'), summaryBefore);
+  assert.equal(await readFile(path.join(target, '.ai-playbook', 'workflows', 'runs', 'auth-flow', 'summary.md'), 'utf8'), summaryBefore);
 
   const summarized = capture(target);
   assert.equal(await runCli(['run', 'summarize', '.', '--run-id', 'auth-flow', '--json'], summarized), 0);
-  assert.match(await readFile(path.join(target, '.ai-playbook', 'runs', 'auth-flow', 'summary.md'), 'utf8'), /Auth flow test passed/);
-  assert.match(await readFile(path.join(target, '.ai-playbook', 'runs', 'auth-flow', 'summary.md'), 'utf8'), /Auth criterion passed/);
+  assert.match(await readFile(path.join(target, '.ai-playbook', 'workflows', 'runs', 'auth-flow', 'summary.md'), 'utf8'), /Auth flow test passed/);
+  assert.match(await readFile(path.join(target, '.ai-playbook', 'workflows', 'runs', 'auth-flow', 'summary.md'), 'utf8'), /Auth criterion passed/);
   await cleanup(target);
 });
 
 test('contracts list and check report active pending stale and missing appliesTo without writing files', async () => {
   const target = await tempRepo('contracts-공백-한글-');
-  await mkdir(path.join(target, '.ai-playbook', 'contracts', 'active'), { recursive: true });
-  await mkdir(path.join(target, '.ai-playbook', 'contracts', 'pending'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'memory', 'contracts', 'active'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'memory', 'contracts', 'pending'), { recursive: true });
   await mkdir(path.join(target, 'src', 'payments'), { recursive: true });
   await writeFile(path.join(target, 'src', 'payments', 'cancel.ts'), 'export function cancelPayment() {}\n');
-  await writeFile(path.join(target, '.ai-playbook', 'contracts', 'active', 'payment-cancel.md'), [
+  await writeFile(path.join(target, '.ai-playbook', 'memory', 'contracts', 'active', 'payment-cancel.md'), [
     '---',
     'id: payment-cancel',
     'status: active',
@@ -220,7 +220,7 @@ test('contracts list and check report active pending stale and missing appliesTo
     '## Required evidence',
     ''
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'contracts', 'active', 'payment-glob.md'), [
+  await writeFile(path.join(target, '.ai-playbook', 'memory', 'contracts', 'active', 'payment-glob.md'), [
     '---',
     'id: payment-glob',
     'status: active',
@@ -235,7 +235,7 @@ test('contracts list and check report active pending stale and missing appliesTo
     '',
     '- Run payment contract tests.'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'contracts', 'pending', 'payment-refund.md'), [
+  await writeFile(path.join(target, '.ai-playbook', 'memory', 'contracts', 'pending', 'payment-refund.md'), [
     '---',
     'id: payment-refund',
     'status: pending',
@@ -269,12 +269,12 @@ test('contracts list and check report active pending stale and missing appliesTo
 
 test('contracts snapshot previews writes hashes and check reports freshness drift', async () => {
   const target = await tempRepo('contracts snapshot-공백-한글-');
-  await mkdir(path.join(target, '.ai-playbook', 'contracts', 'active'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'memory', 'contracts', 'active'), { recursive: true });
   await mkdir(path.join(target, 'src', 'payments'), { recursive: true });
   await mkdir(path.join(target, 'test', 'payments'), { recursive: true });
   await writeFile(path.join(target, 'src', 'payments', 'cancel.ts'), 'export function cancelPayment() { return "ok"; }\n');
   await writeFile(path.join(target, 'test', 'payments', 'cancel.test.ts'), 'test("cancel", () => {});\n');
-  await writeFile(path.join(target, '.ai-playbook', 'contracts', 'active', 'payment-cancel.md'), [
+  await writeFile(path.join(target, '.ai-playbook', 'memory', 'contracts', 'active', 'payment-cancel.md'), [
     '---',
     'id: payment-cancel',
     'status: active',
@@ -296,17 +296,17 @@ test('contracts snapshot previews writes hashes and check reports freshness drif
   assert.equal(previewReport.schemaVersion, '1');
   assert.equal(previewReport.ok, true);
   assert.equal(previewReport.applied, false);
-  assert.equal(previewReport.snapshotPath, '.ai-playbook/contracts/.hashes.json');
+  assert.equal(previewReport.snapshotPath, '.ai-playbook/memory/contracts/.hashes.json');
   assert.equal(previewReport.summary.entries >= 3, true);
-  assert.equal(existsSync(path.join(target, '.ai-playbook', 'contracts', '.hashes.json')), false);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'memory', 'contracts', '.hashes.json')), false);
   assert.deepEqual(await listRelativeFiles(target), beforePreview);
 
   const applied = capture(target);
   assert.equal(await runCli(['contracts', 'snapshot', '.', '--apply', '--json'], applied), 0);
   const appliedReport = JSON.parse(applied.out());
   assert.equal(appliedReport.applied, true);
-  assert.equal(appliedReport.operations.some((operation) => operation.path === '.ai-playbook/contracts/.hashes.json'), true);
-  const snapshot = JSON.parse(await readFile(path.join(target, '.ai-playbook', 'contracts', '.hashes.json'), 'utf8'));
+  assert.equal(appliedReport.operations.some((operation) => operation.path === '.ai-playbook/memory/contracts/.hashes.json'), true);
+  const snapshot = JSON.parse(await readFile(path.join(target, '.ai-playbook', 'memory', 'contracts', '.hashes.json'), 'utf8'));
   assert.equal(snapshot.schemaVersion, '1');
   assert.equal(snapshot.entries.every((entry) => !path.isAbsolute(entry.path)), true);
   assert.equal(snapshot.entries.some((entry) => entry.path === 'src/payments/cancel.ts'), true);
@@ -321,7 +321,7 @@ test('contracts snapshot previews writes hashes and check reports freshness drif
   const report = JSON.parse(checked.out());
   assert.equal(report.schemaVersion, '1');
   assert.equal(report.ok, true);
-  assert.equal(report.snapshot.path, '.ai-playbook/contracts/.hashes.json');
+  assert.equal(report.snapshot.path, '.ai-playbook/memory/contracts/.hashes.json');
   assert.equal(report.warnings.some((warning) => warning.id === 'contracts.snapshot.hash-mismatch' && warning.paths.includes('src/payments/cancel.ts')), true);
   assert.equal(report.warnings.some((warning) => warning.id === 'contracts.snapshot.evidence-missing' && warning.paths.includes('test/payments/cancel.test.ts')), true);
   assert.deepEqual(await listRelativeFiles(target), beforeCheck);
@@ -330,11 +330,11 @@ test('contracts snapshot previews writes hashes and check reports freshness drif
 
 test('contracts snapshot can limit to one contract and stays preview-first', async () => {
   const target = await tempRepo('contracts snapshot one-한글-');
-  await mkdir(path.join(target, '.ai-playbook', 'contracts', 'active'), { recursive: true });
+  await mkdir(path.join(target, '.ai-playbook', 'memory', 'contracts', 'active'), { recursive: true });
   await mkdir(path.join(target, 'src'), { recursive: true });
   await writeFile(path.join(target, 'src', 'a.ts'), 'export const a = 1;\n');
   await writeFile(path.join(target, 'src', 'b.ts'), 'export const b = 1;\n');
-  await writeFile(path.join(target, '.ai-playbook', 'contracts', 'active', 'a.md'), [
+  await writeFile(path.join(target, '.ai-playbook', 'memory', 'contracts', 'active', 'a.md'), [
     '---',
     'id: contract-a',
     'status: active',
@@ -346,7 +346,7 @@ test('contracts snapshot can limit to one contract and stays preview-first', asy
     '',
     '- src/a.ts'
   ].join('\n'));
-  await writeFile(path.join(target, '.ai-playbook', 'contracts', 'active', 'b.md'), [
+  await writeFile(path.join(target, '.ai-playbook', 'memory', 'contracts', 'active', 'b.md'), [
     '---',
     'id: contract-b',
     'status: active',
@@ -364,7 +364,7 @@ test('contracts snapshot can limit to one contract and stays preview-first', asy
   assert.equal(await runCli(['contracts', 'snapshot', '.', '--contract', 'contract-a', '--apply', '--json'], applied), 0);
   const report = JSON.parse(applied.out());
   assert.equal(report.summary.contracts, 1);
-  const snapshot = JSON.parse(await readFile(path.join(target, '.ai-playbook', 'contracts', '.hashes.json'), 'utf8'));
+  const snapshot = JSON.parse(await readFile(path.join(target, '.ai-playbook', 'memory', 'contracts', '.hashes.json'), 'utf8'));
   assert.equal(snapshot.contracts.includes('contract-a'), true);
   assert.equal(snapshot.contracts.includes('contract-b'), false);
   assert.equal(snapshot.entries.some((entry) => entry.path === 'src/a.ts'), true);
@@ -386,9 +386,9 @@ test('contracts init previews and creates contract folders without overwriting',
 
   const applied = capture(target);
   assert.equal(await runCli(['contracts', 'init', '.', '--json'], applied), 0);
-  assert.equal(existsSync(path.join(target, '.ai-playbook', 'contracts', 'README.md')), true);
-  assert.equal(existsSync(path.join(target, '.ai-playbook', 'contracts', 'active')), true);
-  assert.equal(existsSync(path.join(target, '.ai-playbook', 'contracts', 'pending')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'memory', 'contracts', 'README.md')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'memory', 'contracts', 'active')), true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook', 'memory', 'contracts', 'pending')), true);
   await cleanup(target);
 });
 

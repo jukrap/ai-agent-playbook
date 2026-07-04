@@ -253,7 +253,7 @@ function normalizeConfigObject(raw, options) {
     }
     for (const key of Object.keys(sectionValue)) {
       if (!KNOWN_KEYS[section].has(key)) {
-        warnings.push(configWarning('config.unknown-key', `${sourcePath}.${section}.${key} is not a known Harness OS config key.`, [sourcePath]));
+        warnings.push(configWarning('config.unknown-key', `${sourcePath}.${section}.${key} is not a known AI Agent Playbook config key.`, [sourcePath]));
         continue;
       }
       const value = normalizeKnownValue({

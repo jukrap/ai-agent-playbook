@@ -16,8 +16,8 @@
 ## 적용 방법
 
 1. 프로젝트의 실제 config, README, build files, existing docs를 먼저 확인합니다.
-2. `global/AGENTS.md`를 짧은 부트스트랩으로 사용하고, skill/Git 정책은 `.ai-playbook/SKILLS.md`와 `.ai-playbook/GIT.md` 아래에 둡니다.
+2. `global/AGENTS.md`를 짧은 부트스트랩으로 사용하고, skill/Git 정책은 `.ai-playbook/policy/SKILLS.md`와 `.ai-playbook/policy/GIT.md` 아래에 둡니다.
 3. 가장 가까운 스택 프로필을 고르고 적용되지 않는 규칙을 제거합니다.
 4. 오래 남길 에이전트 메모리가 필요하면 `templates/project-playbook/`을 `.ai-playbook/`로 복사합니다.
-5. 자세한 commit, push, PR, worklog 지침이 필요하면 `templates/project-playbook/GIT.md`와 `templates/project-playbook/guides/commit-push-worklog.md`를 조정합니다.
+5. 자세한 commit, push, PR, worklog 지침이 필요하면 `templates/project-playbook/policy/GIT.md`와 `templates/project-playbook/knowledge/references/guides/commit-push-worklog.md`를 조정합니다.
 6. 프로젝트 고유 제품 규칙은 별도 문서에 둡니다. `AGENTS.md`는 최소 진입점과 로컬 override 규칙에만 사용합니다.

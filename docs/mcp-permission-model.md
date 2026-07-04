@@ -1,6 +1,6 @@
 # MCP Permission Model
 
-Harness OS MCP defaults to read-only analysis and catalog access.
+The playbook MCP server defaults to read-only analysis and catalog access.
 
 ## Tiers
 
@@ -15,6 +15,8 @@ The default MCP server exposes read-only tools, resources, and prompts. Tools ar
 
 Default prompts route review work through required evidence, optional evidence, stop conditions, and verification expectations. They do not grant write access or promote generated runtime hints into memory.
 
+Read-only tools may call optional local engines when their tool schema exposes that choice. For example, `writing_naturalness_check` accepts `engine: "auto" | "js" | "python"`; the Python path still reads one target-relative text file, returns JSON findings, and does not write files or call the network.
+
 Default resources expose compact structured context that AI apps can read before choosing tools:
 
 - `ai-playbook://capabilities`: capability catalog and coverage summary.
@@ -22,7 +24,8 @@ Default resources expose compact structured context that AI apps can read before
 - `ai-playbook://workflows`: bundled workflow recipes.
 - `ai-playbook://adapters`: Codex, Codex App, Claude Code, and MCP setup summary.
 - `ai-playbook://adapter-readiness`: adapter check/config commands, readiness checks, and no-write boundaries.
-- `ai-playbook://playbook-layout-v2`: `.ai-playbook` v2 layout roles and recommended read order.
+- `ai-playbook://agent-usage-guide`: short routing guide for choosing resources, prompts, and read-only tools.
+- `ai-playbook://playbook-layout`: structured `.ai-playbook` layout roles and recommended read order.
 - `ai-playbook://reference-adoption`: reference registry, ledger, status, and promotion boundary summary.
 - `ai-playbook://mcp-permission-model`: this permission model as structured JSON.
 
@@ -56,6 +59,7 @@ Default read-only additions:
 - `index_status`
 - `runtime_schema_check`
 - `evidence_locator_check`
+- `writing_naturalness_check`
 - `index_search`
 - `symbol_outline`
 - `dependency_inventory`

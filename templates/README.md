@@ -32,18 +32,18 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 
 ## Recommended starting points
 
-- Unknown or mixed project: copy `agents/global/AGENTS.md` as the root bootstrap; keep skill and Git policy inside `project-playbook/` as `.ai-playbook/SKILLS.md` and `.ai-playbook/GIT.md`.
+- Unknown or mixed project: copy `agents/global/AGENTS.md` as the root bootstrap; keep skill and Git policy inside `project-playbook/` as `.ai-playbook/policy/SKILLS.md` and `.ai-playbook/policy/GIT.md`.
 - Personal Codex defaults: adapt `codex-home/AGENTS.md` into your Codex home directory, then keep repository rules in project `AGENTS.md` files.
 - Any project that needs durable agent memory: bootstrap or copy `project-playbook/` as `.ai-playbook/`.
 - React/Vite/FSD project: start with `agents/global/AGENTS.md` plus `agents/profiles/react-vite-fsd/AGENTS.md`.
 - Expo/React Native project: start with `agents/global/AGENTS.md` plus `agents/profiles/react-native-expo/AGENTS.md`.
-- Legacy project: start with `agents/global/AGENTS.md`, the closest `agents/profiles/legacy-*` file, and `project-playbook/guides/legacy-mode.md`.
-- Any project with careful Git or local-only docs: adapt `project-playbook/GIT.md` and `project-playbook/guides/commit-push-worklog.md`.
-- Any project that needs evidence-backed architecture cleanup: adapt `project-playbook/guides/structural-review.md`.
-- Any project that already has another agent-doc system or harness: start with `project-playbook/guides/harness-migration.md`.
+- Legacy project: start with `agents/global/AGENTS.md`, the closest `agents/profiles/legacy-*` file, and `project-playbook/knowledge/references/guides/legacy-mode.md`.
+- Any project with careful Git or local-only docs: adapt `project-playbook/policy/GIT.md` and `project-playbook/knowledge/references/guides/commit-push-worklog.md`.
+- Any project that needs evidence-backed architecture cleanup: adapt `project-playbook/knowledge/references/guides/structural-review.md`.
+- Any project that already has another agent-doc system or harness: start with `project-playbook/knowledge/references/guides/harness-migration.md`.
 
 ## Application rule
 
 Always reduce templates to the target repository. Remove stack, command, workflow, or policy rules that the project does not actually use.
 
-Do not hand-create random markdown files at the repository root when the content belongs in `.ai-playbook/maps/`, `.ai-playbook/runbooks/`, `.ai-playbook/decisions/`, `.ai-playbook/plans/`, or `.ai-playbook/worklogs/`.
+Do not hand-create random markdown files at the repository root when the content belongs in `.ai-playbook/memory/maps/`, `.ai-playbook/workflows/runbooks/`, `.ai-playbook/memory/decisions/`, `.ai-playbook/workflows/plans/`, or `.ai-playbook/workflows/worklogs/`.

@@ -32,18 +32,18 @@ node .\bin\ai-playbook.mjs doctor <target-repo>
 
 ## 추천 시작점
 
-- 불분명하거나 혼합된 프로젝트: `agents/global/AGENTS.md`를 루트 부트스트랩으로 복사하고, skill/Git 정책은 `project-playbook/` 안에서 `.ai-playbook/SKILLS.md`, `.ai-playbook/GIT.md`로 유지합니다.
+- 불분명하거나 혼합된 프로젝트: `agents/global/AGENTS.md`를 루트 부트스트랩으로 복사하고, skill/Git 정책은 `project-playbook/` 안에서 `.ai-playbook/policy/SKILLS.md`, `.ai-playbook/policy/GIT.md`로 유지합니다.
 - 개인 Codex 기본값: `codex-home/AGENTS.md`를 Codex home 디렉터리에 맞게 조정하고, 저장소 규칙은 프로젝트 `AGENTS.md` 파일에 둡니다.
 - 오래 남길 에이전트 메모리가 필요한 프로젝트: `project-playbook/`을 `.ai-playbook/`로 bootstrap하거나 복사합니다.
 - React/Vite/FSD 프로젝트: `agents/global/AGENTS.md`와 `agents/profiles/react-vite-fsd/AGENTS.md`로 시작합니다.
 - Expo/React Native 프로젝트: `agents/global/AGENTS.md`와 `agents/profiles/react-native-expo/AGENTS.md`로 시작합니다.
-- 레거시 프로젝트: `agents/global/AGENTS.md`, 가장 가까운 `agents/profiles/legacy-*`, `project-playbook/guides/legacy-mode.md`로 시작합니다.
-- Git 또는 로컬 전용 문서가 중요한 프로젝트: `project-playbook/GIT.md`와 `project-playbook/guides/commit-push-worklog.md`를 조정합니다.
-- 근거 기반 아키텍처 정리가 필요한 프로젝트: `project-playbook/guides/structural-review.md`를 조정합니다.
-- 이미 다른 에이전트 문서 체계나 하네스가 있는 프로젝트: `project-playbook/guides/harness-migration.md`로 시작합니다.
+- 레거시 프로젝트: `agents/global/AGENTS.md`, 가장 가까운 `agents/profiles/legacy-*`, `project-playbook/knowledge/references/guides/legacy-mode.md`로 시작합니다.
+- Git 또는 로컬 전용 문서가 중요한 프로젝트: `project-playbook/policy/GIT.md`와 `project-playbook/knowledge/references/guides/commit-push-worklog.md`를 조정합니다.
+- 근거 기반 아키텍처 정리가 필요한 프로젝트: `project-playbook/knowledge/references/guides/structural-review.md`를 조정합니다.
+- 이미 다른 에이전트 문서 체계나 하네스가 있는 프로젝트: `project-playbook/knowledge/references/guides/harness-migration.md`로 시작합니다.
 
 ## 적용 규칙
 
 템플릿은 항상 대상 저장소에 맞게 줄입니다. 프로젝트가 실제로 쓰지 않는 스택, 명령, 작업 흐름, 정책 규칙은 제거합니다.
 
-내용이 `.ai-playbook/maps/`, `.ai-playbook/runbooks/`, `.ai-playbook/decisions/`, `.ai-playbook/plans/`, `.ai-playbook/worklogs/`에 속한다면 프로젝트 루트에 느슨한 markdown 파일을 새로 만들지 않습니다.
+내용이 `.ai-playbook/memory/maps/`, `.ai-playbook/workflows/runbooks/`, `.ai-playbook/memory/decisions/`, `.ai-playbook/workflows/plans/`, `.ai-playbook/workflows/worklogs/`에 속한다면 프로젝트 루트에 느슨한 markdown 파일을 새로 만들지 않습니다.

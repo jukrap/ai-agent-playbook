@@ -39,11 +39,11 @@
 2. 구현은 `src/` 아래에 두고 template 내용은 중복하지 않습니다.
 3. 테스트는 `test/` 아래에 추가합니다.
 4. `docs/harness-runtime.md`, `README.md`, 사용 수명주기 문서, 한국어 번역을 함께 갱신합니다.
-5. 대상 프로젝트 파일을 덮어쓰는 동작은 기본적으로 막고, `--force`로만 허용합니다.
+5. Runtime 또는 engine bridge가 바뀌면 `npm run check`, `npm run typecheck`, `npm test`, Python 검증을 함께 실행합니다.
 
 ## Commit, PR, worklog 정책 갱신
 
-- `templates/project-playbook/guides/commit-push-worklog.md`와 `skills/git/commit-worklog-guardrails/references/git-worklog-checklist.md`를 함께 갱신합니다.
+- `templates/project-playbook/knowledge/references/guides/commit-push-worklog.md`와 `skills/git/commit-worklog-guardrails/references/git-worklog-checklist.md`를 함께 갱신합니다.
 - 프로젝트에 복사하는 안내는 template에 둡니다.
 - 스킬로 호출되는 절차 안내는 스킬 참고 자료에 둡니다.
 - 두 파일의 한국어 번역도 같은 변경에서 갱신합니다.
@@ -63,7 +63,9 @@
 
 ```powershell
 npm run check
+npm run typecheck
 npm test
+.\scripts\validate-python.ps1
 .\scripts\validate-skills.ps1
 .\scripts\validate-translations.ps1
 .\scripts\validate-mcp-docs.ps1

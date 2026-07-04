@@ -112,6 +112,14 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     '| reviewed | reference-pack | security | summarize source pattern | local validator | none | 2026-07-03 |',
     ''
   ].join('\n'));
+  await mkdir(path.join(target, 'docs'), { recursive: true });
+  await writeFile(path.join(target, 'docs', 'natural-writing.md'), [
+    '# Natural Writing Fixture',
+    '',
+    '이 문서는 중요한 역할을 합니다. 이를 통해 사용자는 더 강력한 결과를 얻을 수 있습니다.',
+    '또한 단순한 점검뿐만 아니라 종합적인 품질 개선에 기여합니다.',
+    ''
+  ].join('\n'));
   const before = await listRelativeFiles(target);
 
   const { client, transport } = await connectMcp();
@@ -139,6 +147,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'index_status',
       'runtime_schema_check',
       'evidence_locator_check',
+      'writing_naturalness_check',
       'index_search',
       'symbol_outline',
       'dependency_inventory',
@@ -188,7 +197,8 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://workflows'), true);
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://adapters'), true);
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://adapter-readiness'), true);
-    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://playbook-layout-v2'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://agent-usage-guide'), true);
+    assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://playbook-layout'), true);
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://reference-adoption'), true);
     assert.equal(resources.resources.some((resource) => resource.uri === 'ai-playbook://mcp-permission-model'), true);
 
@@ -215,6 +225,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'database_change_review',
       'adr_spec_handoff_review',
       'documentation_package_review',
+      'natural_writing_review',
       'workflow_run_review',
       'eval_harness_review',
       'capability_witness_review',
@@ -236,7 +247,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       arguments: {}
     });
     assert.equal(catalog.structuredContent.ok, true);
-    assert.equal(catalog.structuredContent.taxonomyVersion, '2');
+    assert.equal(catalog.structuredContent.taxonomyKind, 'capability');
 
     const resource = await client.readResource({ uri: 'ai-playbook://workflows' });
     assert.equal(JSON.parse(resource.contents[0].text).summary.workflows, 23);
@@ -253,9 +264,14 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(adapterReadinessPayload.commands.some((command) => command.command.includes('adapter check <target-project> --adapter codex')), true);
     assert.equal(adapterReadinessPayload.checks.includes('context.non-empty'), true);
 
-    const layoutResource = await client.readResource({ uri: 'ai-playbook://playbook-layout-v2' });
+    const usageResource = await client.readResource({ uri: 'ai-playbook://agent-usage-guide' });
+    const usagePayload = JSON.parse(usageResource.contents[0].text);
+    assert.equal(usagePayload.summary.defaultMode, 'read-only');
+    assert.equal(usagePayload.whenToUse.some((item) => item.firstSurfaces.includes('writing_naturalness_check')), true);
+
+    const layoutResource = await client.readResource({ uri: 'ai-playbook://playbook-layout' });
     const layoutPayload = JSON.parse(layoutResource.contents[0].text);
-    assert.equal(layoutPayload.summary.layoutVersion, '2');
+    assert.equal(layoutPayload.summary.layoutKind, 'structured');
     assert.equal(layoutPayload.readOrder.includes('.ai-playbook/START_HERE.md'), true);
     assert.equal(layoutPayload.usageRules.some((rule) => rule.includes('runtime artifacts as evidence candidates')), true);
 
@@ -274,6 +290,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(permissionPayload.summary.defaultMode, 'read-only');
     assert.equal(permissionPayload.defaultResources.includes('adapter_support'), true);
     assert.equal(permissionPayload.defaultResources.includes('adapter_readiness'), true);
+    assert.equal(permissionPayload.defaultResources.includes('agent_usage_guide'), true);
     assert.equal(permissionPayload.defaultResources.includes('reference_adoption'), true);
     assert.equal(permissionPayload.optInWriteTools.includes('reference_source_registry_update'), true);
     assert.equal(permissionPayload.optInWriteTools.includes('reference_ledger_decision'), true);
@@ -355,6 +372,22 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(badEvidenceLocator.structuredContent.ok, false);
     assert.equal(badEvidenceLocator.structuredContent.conflicts.some((conflict) => conflict.id === 'evidence-locator.credential-value'), true);
     assert.equal(badEvidenceLocator.structuredContent.conflicts.some((conflict) => conflict.id === 'evidence-locator.portable-path'), true);
+
+    const naturalness = await client.callTool({
+      name: 'writing_naturalness_check',
+      arguments: {
+        target,
+        path: 'docs/natural-writing.md',
+        lang: 'ko',
+        engine: 'auto'
+      }
+    });
+    assert.equal(naturalness.isError, undefined);
+    assert.equal(naturalness.structuredContent.ok, true);
+    assert.equal(naturalness.structuredContent.mode.writes, false);
+    assert.equal(naturalness.structuredContent.language.analyzed, 'ko');
+    assert.equal(naturalness.structuredContent.engines.used.includes('js'), true);
+    assert.equal(naturalness.structuredContent.summary.findings > 0, true);
 
     const symbolOutline = await client.callTool({
       name: 'symbol_outline',
@@ -440,8 +473,9 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       { name: 'data_integrity_review', toolName: 'workflow_run_preview', expectedText: 'data-integrity-review', arguments: { target, dataset: 'orders' } },
       { name: 'data_pipeline_review', toolName: 'operator_map', expectedText: 'data-integrity-review', arguments: { target, scope: 'orders events', intent: 'lineage and quality review' } },
       { name: 'database_change_review', toolName: 'workflow_run_preview', expectedText: 'database-migration', arguments: { target, schema: 'orders table' } },
-      { name: 'adr_spec_handoff_review', toolName: 'canon_check', expectedText: 'write_gate_preview', arguments: { target, source: '.ai-playbook/worklogs/example.md' } },
-      { name: 'documentation_package_review', toolName: 'workflow_run_preview', expectedText: 'documentation-package', arguments: { target, artifact: 'release notes', audience: 'support', source: '.ai-playbook/worklogs/example.md' } },
+      { name: 'adr_spec_handoff_review', toolName: 'canon_check', expectedText: 'write_gate_preview', arguments: { target, source: '.ai-playbook/workflows/worklogs/example.md' } },
+      { name: 'documentation_package_review', toolName: 'workflow_run_preview', expectedText: 'documentation-package', arguments: { target, artifact: 'release notes', audience: 'support', source: '.ai-playbook/workflows/worklogs/example.md' } },
+      { name: 'natural_writing_review', toolName: 'writing_naturalness_check', expectedText: 'Preserve meaning', arguments: { target, path: 'docs/natural-writing.md', lang: 'ko', audience: 'maintainer' } },
       { name: 'workflow_run_review', toolName: 'workflow_run_preview', arguments: { target, recipe: 'backend-contract-change' } },
       { name: 'eval_harness_review', toolName: 'workflow_run_preview', expectedText: 'eval-driven-change', arguments: { target, change: 'add grader prompt', evalId: 'prompt-regression' } },
       { name: 'capability_witness_review', toolName: 'capability_catalog', arguments: { target, capability: 'index search', source: '.ai-playbook/runtime/reports/eval.json' } },

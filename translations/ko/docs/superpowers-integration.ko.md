@@ -23,7 +23,7 @@
 - 레거시 변경: 디버깅 또는 planning 프로세스와 가장 가까운 `legacy-*` 스킬.
 - Commit, push, PR, handoff: 검증 또는 branch-finishing 프로세스와 `commit-worklog-guardrails`.
 - 재사용 스킬 작성/수정: planning 또는 리뷰 프로세스와 `agent-skill-authoring`.
-- 저장소 전체 구조 정리: 프로세스 planning과 `node .\bin\ai-playbook.mjs doctor <target>`, `templates/project-playbook/guides/structural-review.md`, 또는 프로젝트가 설치한 근거 도구.
+- 저장소 전체 구조 정리: 프로세스 planning과 `node .\bin\ai-playbook.mjs doctor <target>`, `templates/project-playbook/knowledge/references/guides/structural-review.md`, 또는 프로젝트가 설치한 근거 도구.
 
 ## 우선순위
 

@@ -1,39 +1,39 @@
 # 런타임 하네스
 
-`aapb`은 재사용 스킬을 설치하고 이 저장소를 대상 프로젝트에 적용하기 위한 실행 표면입니다. AI 모델을 호출하지 않습니다. 템플릿을 복사하고, 프로젝트 메모리 상태를 점검하고, 예측 가능한 context, run, contract, plan, worklog 파일을 만들어 에이전트가 임의의 markdown 경로를 계속 새로 만들지 않게 합니다.
+`aapb`는 재사용 스킬을 설치하고 이 저장소를 대상 프로젝트에 적용하기 위한 실행 명령입니다. AI 모델을 호출하지 않습니다. 템플릿을 복사하고, 프로젝트 기억 상태를 점검하고, 예측 가능한 문맥, 실행 기록, 계약, 계획, 작업 기록 파일을 만들어 에이전트가 임의의 마크다운 경로를 계속 새로 만들지 않게 합니다.
 
-MCP 서버는 AI 앱을 위한 read-only 도구 표면입니다. MCP를 지원하는 앱이 같은 로컬 진단과 분석 helper를 호출할 수 있게 하므로, 사용자가 모든 CLI 명령을 외울 필요가 줄어듭니다. 이 버전에서는 여전히 local stdio, no-network, no-write입니다.
+MCP 서버는 AI 앱을 위한 읽기 전용 도구 표면입니다. MCP를 지원하는 앱이 같은 로컬 진단과 분석 보조 도구를 호출할 수 있게 하므로, 사용자가 모든 CLI 명령을 외울 필요가 줄어듭니다. 기본 서버는 로컬 표준 입출력으로만 동작하고, 네트워크와 파일 쓰기를 하지 않습니다.
 
-이 CLI와 project playbook이 기본 하네스입니다. Runtime hook 또는 plugin은 선택 확장이며, 동작이 명시적이고 local이며 쉽게 끌 수 있기 전까지 기본 경로 밖에 둡니다. 단계적 설계는 `runtime-roadmap.ko.md`를 봅니다.
+이 CLI와 프로젝트 플레이북이 기본 하네스입니다. 런타임 훅이나 플러그인은 선택 확장이며, 동작이 명시적이고 로컬에서 쉽게 끌 수 있기 전까지 기본 경로 밖에 둡니다. 단계적 설계는 `runtime-roadmap.ko.md`를 봅니다.
 
 설치 범위는 구분해서 봅니다.
 
 - `npx ai-agent-playbook ...`은 현재 프로젝트에 패키지를 추가하지 않고 배포된 패키지를 실행합니다.
 - `npm install -g ai-agent-playbook`은 `aapb` 명령을 전역으로 설치합니다.
 - `npm install -D ai-agent-playbook`은 한 프로젝트에 CLI를 고정하지만 스킬을 복사하거나 `.ai-agent-playbook/`을 만들지 않습니다.
-- `aapb mcp`는 AI 앱용 로컬 stdio MCP 서버를 시작합니다. 그 자체로 project file을 쓰지는 않습니다.
+- `aapb mcp`는 AI 앱용 로컬 표준 입출력 MCP 서버를 시작합니다. 그 자체로 프로젝트 파일을 쓰지는 않습니다.
 - `skills install`과 `skills update`는 사용자 수준 스킬 복사본만 씁니다.
-- `bootstrap`, `guides sync`, `managed` 명령은 project-level playbook 작업입니다.
+- `bootstrap`, `guides sync`, `managed` 명령은 프로젝트 단위 플레이북 작업입니다.
 
 ## 명령
 
-자세한 명령어 reference는 [명령어 가이드](commands.ko.md)에 둡니다. 이 문서는 runtime 동작과 안전 규칙에 집중합니다.
+자세한 명령어 설명은 [명령어 가이드](commands.ko.md)에 둡니다. 이 문서는 런타임 동작과 안전 규칙에 집중합니다.
 
-배포 패키지는 `npx ai-agent-playbook ...`, 전역 설치 뒤에는 `aapb ...`, local checkout에서는 `node .\bin\aapb.mjs ...` 형태로 실행합니다.
+배포 패키지는 `npx ai-agent-playbook ...`, 전역 설치 뒤에는 `aapb ...`, 로컬 체크아웃에서는 `node .\bin\aapb.mjs ...` 형태로 실행합니다.
 
 역할을 짧게 나누면 아래와 같습니다.
 
-- CLI: 사람이 명시적으로 실행하는 operator 명령입니다. Preview-first write도 여기에 속합니다.
-- MCP: AI가 호출하는 read-only 도구입니다. Context, diagnostics, search, contracts, managed state, QA, AST search, 정확한 함수 본문 중복 단서, TypeScript/JavaScript analysis를 다룹니다.
+- CLI: 사람이 명시적으로 실행하는 운영자 명령입니다. 미리보기 후 쓰기도 여기에 속합니다.
+- MCP: AI가 호출하는 읽기 전용 도구입니다. 문맥, 진단, 검색, 계약, 관리 파일 상태, 품질 확인, AST 검색, 정확한 함수 본문 중복 단서, TypeScript/JavaScript 분석을 다룹니다.
 - Skills: 에이전트 환경이 읽는 재사용 작업 지침입니다.
-- `.ai-agent-playbook/`: 대상 프로젝트의 memory, runs, contracts, guides, plans, worklogs입니다.
-- Adapters: 환경별 선택적 hook/config 렌더링입니다. 기본 설치 경로가 아닙니다.
+- `.ai-agent-playbook/`: 대상 프로젝트의 기억, 실행 기록, 계약, 안내, 계획, 작업 기록입니다.
+- Adapters: 환경별 선택적 훅과 설정 렌더링입니다. 기본 설치 경로가 아닙니다.
 
-## 여러 언어를 쓰는 capability engine
+## 여러 언어를 쓰는 능력 엔진
 
-공개 실행 표면은 계속 Node 기반으로 유지합니다. `npx ai-agent-playbook`, 전역 `aapb` 명령, stdio MCP 서버는 같은 JavaScript 진입점을 사용합니다. Python은 그 뒤에서 동작하는 로컬 capability engine이며, 한국어/영어 글 점검과 이후 분석/색인 보조처럼 이득이 분명한 영역에 사용합니다.
+공개 실행 표면은 계속 Node 기반으로 유지합니다. `npx ai-agent-playbook`, 전역 `aapb` 명령, 표준 입출력 MCP 서버는 같은 JavaScript 진입점을 사용합니다. Python은 그 뒤에서 동작하는 로컬 능력 엔진이며, 한국어/영어 글 점검과 이후 분석/색인 보조처럼 이득이 분명한 영역에 사용합니다.
 
-Python은 권장 사항이지 필수 조건이 아닙니다. Bridge는 JSON 표준 입력/출력 계약만 사용하고, 장기 daemon을 띄우지 않고, 파일을 쓰지 않고, network를 호출하지 않습니다. 탐지 순서는 `AI_AGENT_PLAYBOOK_PYTHON`, 저장소 로컬 `.venv`, `python`, `python3`, Windows `py -3`입니다.
+Python은 권장 사항이지 필수 조건이 아닙니다. 연결부는 JSON 표준 입력/출력 계약만 사용하고, 장기 실행 프로세스를 띄우지 않고, 파일을 쓰지 않고, 네트워크를 호출하지 않습니다. 탐지 순서는 `AI_AGENT_PLAYBOOK_PYTHON`, 저장소 로컬 `.venv`, `python`, `python3`, Windows `py -3`입니다.
 
 선택된 인터프리터는 아래 명령으로 확인합니다.
 
@@ -43,21 +43,27 @@ npx ai-agent-playbook runtime python-status --json
 
 소스 체크아웃에서는 `.\scripts\bootstrap-python.ps1`로 `.venv`를 만들고 선택 한국어 분석 패키지를 설치할 수 있습니다. 패키지 사용자는 Python 3.11 이상 환경을 `AI_AGENT_PLAYBOOK_PYTHON`으로 지정하면 됩니다. `kss`, `kiwipiepy` 같은 선택 라이브러리는 설치되어 있으면 사용하고, 없으면 건너뜁니다. Python이 없으면 Python 기반 명령은 `engines.unavailable`을 반환하고 JavaScript 대체 분석을 유지합니다.
 
-## Repo-local config preview
+## 타입 검사
 
-`config preview`는 플레이북 기본값을 read-only로 해석하는 resolver입니다. 최종 값, source map, source file 상태, warning, conflict를 보고하지만 runtime behavior를 바꾸거나 파일을 쓰지 않습니다.
+`npm run typecheck`는 TypeScript를 JavaScript 검사 모드로 사용합니다. 검사 대상은 먼저 leaf 모듈로 제한합니다. 현재는 설정 해석, Python 연결부, 글 분석, 능력 이력, 의존성 목록, 라우트/API 단서, 심볼 개요처럼 입력이 좁고 공개 진입점을 흔들지 않는 모듈만 검사합니다.
+
+CLI, MCP 서버, 어댑터, bin 진입점은 당분간 `.mjs`로 둡니다. 이 파일들은 공개 `npx ai-agent-playbook`, 전역 `aapb`, MCP 표준 입출력 경로를 직접 담당하므로, 빌드 파이프라인이 같은 경로를 정확히 보존할 수 있을 때 옮깁니다. `schemas`, 근거 위치 점검, 저장소 그래프, 운영자 모듈은 옵션 객체 계약을 JSDoc으로 더 고정한 뒤 검사 대상에 넣습니다.
+
+## 저장소 로컬 설정 미리 보기
+
+`config preview`는 플레이북 기본값을 읽기 전용으로 해석하는 명령입니다. 최종 값, 값의 출처, 원본 파일 상태, 경고, 충돌을 보고하지만 런타임 동작을 바꾸거나 파일을 쓰지 않습니다.
 
 우선순위는 다음과 같습니다.
 
-1. Built-in default.
+1. 내장 기본값.
 2. 명시적인 `--user-config <path>` 파일.
 3. `.ai-agent-playbook/config.json`.
 4. `.ai-agent-playbook/config.local.json`.
-5. 좁은 environment override.
+5. 제한된 환경 변수 덮어쓰기.
 
-이 명령은 개인 home config를 자동으로 읽지 않습니다. Target-local config는 명시적 user config보다 우선합니다. Environment override는 `AI_AGENT_PLAYBOOK_CONTEXT_MAX_CHARS`, `AI_AGENT_PLAYBOOK_DEFAULT_RECIPE`, `AI_AGENT_PLAYBOOK_RUNTIME_CACHE_DIR`, `AI_AGENT_PLAYBOOK_INDEX_MAX_FILES`, `AI_AGENT_PLAYBOOK_ENABLE_WRITE_TOOLS`로 제한합니다.
+이 명령은 개인 홈 설정을 자동으로 읽지 않습니다. 대상 프로젝트 안의 설정은 명시적 사용자 설정보다 우선합니다. 환경 변수 덮어쓰기는 `AI_AGENT_PLAYBOOK_CONTEXT_MAX_CHARS`, `AI_AGENT_PLAYBOOK_DEFAULT_RECIPE`, `AI_AGENT_PLAYBOOK_RUNTIME_CACHE_DIR`, `AI_AGENT_PLAYBOOK_INDEX_MAX_FILES`, `AI_AGENT_PLAYBOOK_ENABLE_WRITE_TOOLS`로 제한합니다.
 
-신뢰하는 target config file은 target playbook root 아래의 일반 JSON 파일이어야 합니다. Malformed JSON, symlink된 config file, `.ai-agent-playbook/runtime/` 밖의 runtime path는 conflict로 보고합니다.
+신뢰하는 대상 설정 파일은 대상 플레이북 루트 아래의 일반 JSON 파일이어야 합니다. 잘못된 JSON, 심볼릭 링크 설정 파일, `.ai-agent-playbook/runtime/` 밖의 런타임 경로는 충돌로 보고합니다.
 
 ## Runtime index
 

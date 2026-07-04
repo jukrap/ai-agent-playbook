@@ -11,7 +11,12 @@
     "types": ["node"]
   },
   "include": [
+    "src/core/config.mjs",
+    "src/runtime/capability-history.mjs",
+    "src/runtime/dependency-inventory.mjs",
     "src/runtime/python-engine.mjs",
+    "src/runtime/route-api-hints.mjs",
+    "src/runtime/symbol-outline.mjs",
     "src/runtime/writing-naturalness.mjs"
   ]
 }

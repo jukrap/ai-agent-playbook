@@ -41,6 +41,14 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 4. Update `docs/harness-runtime.md`, `README.md`, lifecycle docs, and Korean translations.
 5. Run `npm run check`, `npm run typecheck`, `npm test`, and `npm run validate:python` when the runtime or engine bridge changes.
 
+## TypeScript transition
+
+- Expand `tsconfig.json` from leaf modules first.
+- Prefer modules with narrow input contracts and no package entrypoint responsibility.
+- Keep `bin/aapb.mjs`, `src/cli.mjs`, `src/mcp-server.mjs`, adapter facades, and package shell files as `.mjs` until a build step can preserve the public paths exactly.
+- Before adding a broad module to `typecheck`, add JSDoc option contracts for exported functions and fix the narrow errors revealed by `npx tsc --ignoreConfig ...`.
+- Do not convert runtime files to `.ts` without updating package files, tests, docs, and dry-run packaging checks in the same change.
+
 ## Updating commit, PR, or worklog policy
 
 - Update both `templates/project-playbook/knowledge/references/guides/commit-push-worklog.md` and `skills/git/commit-worklog-guardrails/references/git-worklog-checklist.md`.

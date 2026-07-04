@@ -3,6 +3,8 @@ import {
   SCHEMA_VERSION,
   assertDirectory,
   collectContextEntries,
+  CONTEXT_DIR,
+  MAPS_DIR,
   normalizeTargetRelativePath,
   readDocMap,
   resolvePlaybookLayout,
@@ -65,7 +67,7 @@ export async function initContext(options) {
   const playbook = resolvePlaybookLayout(resolvedTarget);
   const files = [
     {
-      path: `${playbook.dir}/context/root.md`,
+      path: `${playbook.dir}/${CONTEXT_DIR}/root.md`,
       content: [
         '---',
         'id: root',
@@ -94,7 +96,7 @@ export async function initContext(options) {
       ].join('\n')
     },
     {
-      path: `${playbook.dir}/context/_registry.json`,
+      path: `${playbook.dir}/${CONTEXT_DIR}/_registry.json`,
       content: `${JSON.stringify({
         schemaVersion: SCHEMA_VERSION,
         contexts: [
@@ -108,7 +110,7 @@ export async function initContext(options) {
       }, null, 2)}\n`
     },
     {
-      path: `${playbook.dir}/maps/doc-map.md`,
+      path: `${playbook.dir}/${MAPS_DIR}/doc-map.md`,
       content: [
         '# Documentation Map',
         '',
@@ -123,7 +125,7 @@ export async function initContext(options) {
         '## Commands and setup',
         '',
         '- docs/commands.md',
-        '- docs/installation.md',
+        '- docs/lifecycle.md',
         '',
         '## Runtime harness',
         '',
@@ -132,11 +134,11 @@ export async function initContext(options) {
         '',
         '## Project memory',
         '',
-        `- ${playbook.dir}/maps/`,
-        `- ${playbook.dir}/runbooks/`,
-        `- ${playbook.dir}/decisions/`,
-        `- ${playbook.dir}/plans/`,
-        `- ${playbook.dir}/worklogs/`,
+        `- ${playbook.dir}/memory/maps/`,
+        `- ${playbook.dir}/workflows/runbooks/`,
+        `- ${playbook.dir}/memory/decisions/`,
+        `- ${playbook.dir}/workflows/plans/`,
+        `- ${playbook.dir}/workflows/worklogs/`,
         ''
       ].join('\n')
     }

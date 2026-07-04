@@ -5,6 +5,8 @@ description: Use when maintaining browser pages built with jQuery, plugins, dire
 
 # Legacy jQuery Web
 
+Primary route: `frontend/browser-dom-change`.
+
 Preserve script order, selector contracts, and plugin lifecycle.
 
 ## Workflow
@@ -23,3 +25,7 @@ Preserve script order, selector contracts, and plugin lifecycle.
 - table/modal/date picker lifecycle
 - old browser syntax constraints
 - server-rendered values embedded into JavaScript
+
+## Reference
+
+Read `references/jquery-browser.md` for stack-specific checks.

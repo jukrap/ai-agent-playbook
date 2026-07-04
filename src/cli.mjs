@@ -5,31 +5,71 @@ import { analyzeOperator, auditOperator, checkDiagnostics, checkImageDiff, check
 import { lintSkills, runSkillsLifecycle } from './skills-lifecycle.mjs';
 import { runMcpServer } from './mcp-server.mjs';
 import {
+  buildDependencyInventoryIndex,
+  buildRouteApiHintsIndex,
+  buildRuntimeIndex,
+  buildSymbolOutlineIndex,
+  buildReferenceAdoptionPlan,
+  buildReferenceAdoptionQueue,
+  buildReferenceAdoptionStatus,
+  buildReferenceCapabilityMatrix,
+  buildReferenceSourceRegistryPreview,
   buildProjectContext,
   buildDoctorReminderSignal,
   bootstrapProject,
+  capabilityCatalog,
   checkContracts,
+  checkEvidenceLocators,
   checkGuides,
   checkManagedManifest,
+  checkCanonFacts,
+  checkRuntimeSchema,
+  checkWritingNaturalness,
+  checkWritingNaturalnessReport,
+  checkReferenceAdoptionLedger,
+  checkReferenceSourceRegistry,
   catalogManagedManifest,
   contextStatus,
+  createWriteGateAdvisory,
   createPlan,
   createWorklog,
   doctorProject,
+  draftCanonFacts,
   initContext,
   initContracts,
+  initReferenceAdoptionLedger,
+  inspectReferenceProject,
+  inventoryReferenceDirectory,
   listContexts,
   listContracts,
+  describePlaybookLayout,
+  migratePlaybookLayout,
   migratePlaybookPath,
   parseMaxChars,
+  postCheckWriteGate,
+  previewCapabilityHistory,
+  previewHarnessConfig,
+  previewRepoGraph,
+  previewWorkflowRun,
+  promoteCanonFacts,
+  pythonEngineStatus,
+  previewWriteGate,
   adoptManagedManifest,
   pruneManagedManifest,
   recordRun,
   runStatus,
+  runtimeIndexStatus,
+  searchRuntimeIndex,
+  skillCatalog,
   snapshotContracts,
   startRun,
+  startWorkflowRun,
   syncGuides,
   uninstallManagedManifest,
+  updateReferenceAdoptionLedger,
+  updateReferenceLedgerDecision,
+  updateReferenceSourceRegistry,
+  workflowCatalog,
   summarizeRun,
   summarizeWorklogs
 } from './harness.mjs';
@@ -51,7 +91,10 @@ export async function runCli(argv, io = {}) {
 
     const [command, subcommand, targetArg] = parsed.positionals;
     if (command === 'mcp') {
-      await runMcpServer({ repoRoot: root });
+      await runMcpServer({
+        repoRoot: root,
+        enableWriteTools: Boolean(parsed.flags['enable-write-tools'])
+      });
       return 0;
     }
 
@@ -94,6 +137,28 @@ export async function runCli(argv, io = {}) {
       } else {
         for (const check of result.checks) {
           write(stdout, `[${check.level.toUpperCase()}] ${check.name}: ${check.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'config' && subcommand === 'preview') {
+      const result = await previewHarnessConfig({
+        target: resolveTarget(cwd, targetArg),
+        userConfigPath: resolveOptionalPath(cwd, parsed.flags['user-config'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Harness config: ${result.ok ? 'ok' : 'needs attention'}\n`);
+        for (const [key, source] of Object.entries(result.sourceMap)) {
+          write(stdout, `- ${key}: ${source}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
         }
       }
       return result.ok ? 0 : 1;
@@ -359,12 +424,38 @@ export async function runCli(argv, io = {}) {
       return result.ok ? 0 : 1;
     }
 
+    if (command === 'migrate' && subcommand === 'layout') {
+      const result = await migratePlaybookLayout({
+        target: resolveTarget(cwd, targetArg),
+        to: parsed.flags.to,
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        for (const operation of result.operations) {
+          write(stdout, `[PLAN] ${operation.message}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+        if (!parsed.flags.apply && result.operations.length > 0) {
+          write(stdout, 'Re-run with --apply to migrate to the structured playbook layout.\n');
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
     if (command === 'skills' && subcommand === 'lint') {
       const result = await lintSkills({ repoRoot: root });
       if (parsed.flags.json) {
         writeJson(stdout, result);
       } else {
         write(stdout, `Skills lint: ${result.ok ? 'ok' : 'needs attention'}\n`);
+        write(stdout, `Depth: ${result.summary.depth.skillLines.average} avg skill lines, ${result.summary.depth.referenceFiles} reference file(s), ${result.summary.depth.referenceLines.average} avg reference lines, ${result.summary.depth.shallowReferences} shallow reference(s)\n`);
         for (const skill of result.skills) {
           write(stdout, `[${skill.status.toUpperCase()}] ${skill.path}\n`);
         }
@@ -395,6 +486,744 @@ export async function runCli(argv, io = {}) {
         for (const operation of result.operations) {
           write(stdout, `[${operation.action.toUpperCase()}] ${operation.message}\n`);
         }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'catalog' && subcommand === 'list') {
+      const result = await capabilityCatalog({ repoRoot: root });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Capability categories: ${result.summary.categories}, skills: ${result.summary.skills}, workflows: ${result.summary.workflows}\n`);
+        for (const category of result.categories) {
+          write(stdout, `[${category.id}] ${category.skills} skill(s), ${category.workflows} workflow(s) - ${category.description}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'catalog' && subcommand === 'check') {
+      const result = await skillCatalog({ repoRoot: root });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Skill taxonomy: ${result.summary.skills} skill(s), ${result.summary.wrappers} wrapper(s)\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'workflow' && subcommand === 'list') {
+      const result = workflowCatalog();
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Workflow recipes: ${result.summary.workflows}\n`);
+        for (const workflow of result.workflows) {
+          write(stdout, `[${workflow.category}] ${workflow.id}: ${workflow.title}\n`);
+        }
+      }
+      return 0;
+    }
+
+    if (command === 'workflow' && subcommand === 'run-preview') {
+      const result = await previewWorkflowRun({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        recipeId: parsed.flags.recipe
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else if (result.ok) {
+        write(stdout, `Workflow run preview: ${result.recipe.id} (${result.recipe.source}), ${result.summary.verification} verification item(s)\n`);
+      } else {
+        write(stdout, `Workflow run preview: ${result.recipe.id} has ${result.summary.conflicts} conflict(s)\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'workflow' && subcommand === 'run-start') {
+      const result = await startWorkflowRun({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        recipeId: parsed.flags.recipe,
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else if (result.ok) {
+        write(stdout, `Workflow run start: ${result.runId} (${result.applied ? 'applied' : 'dry-run'})\n`);
+        for (const operation of result.operations) {
+          write(stdout, `[${operation.action.toUpperCase()}] ${operation.message}\n`);
+        }
+        if (!parsed.flags.apply) {
+          write(stdout, 'Re-run with --apply to create workflow run files.\n');
+        }
+      } else {
+        write(stdout, `Workflow run start: ${result.recipe.id} has ${result.summary.conflicts} conflict(s)\n`);
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'inventory') {
+      const result = await inventoryReferenceDirectory({
+        target: resolveTarget(cwd, targetArg),
+        maxProjects: parseMaxResults(parsed.flags['max-results'], 100)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Reference inventory: ${result.summary.projects}/${result.summary.totalProjects} project(s), ${result.summary.files} file(s)\n`);
+        for (const project of result.projects) {
+          write(stdout, `[${project.id}] ${project.candidateCapabilities.join(', ') || 'unclassified'} (${project.files} file(s))\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'inspect') {
+      const result = await inspectReferenceProject({
+        target: resolveTarget(cwd, targetArg),
+        project: typeof parsed.flags.project === 'string' ? parsed.flags.project : undefined,
+        maxDepth: parseMaxDepth(parsed.flags['max-depth'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else if (result.ok) {
+        write(stdout, `Reference inspect: ${result.project} [${String(result.summary.priority).toUpperCase()}] ${result.summary.files} file(s)\n`);
+        for (const item of result.review.readOrder) {
+          write(stdout, `[READ] ${item.path} - ${item.reason}\n`);
+        }
+        for (const question of result.review.adoptionQuestions) {
+          write(stdout, `[QUESTION] ${question}\n`);
+        }
+      } else {
+        write(stdout, `Reference inspect: blocked (${result.summary.conflicts} conflict(s))\n`);
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'adoption-queue') {
+      const result = await buildReferenceAdoptionQueue({
+        target: resolveTarget(cwd, targetArg),
+        maxResults: parseMaxResults(parsed.flags['max-results']),
+        ledgerPath: resolveOptionalPath(cwd, parsed.flags.ledger)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Reference adoption queue: ${result.summary.queueItems} item(s)\n`);
+        for (const item of result.queue) {
+          const ledgerStatus = item.ledgerStatus ? ` ledger=${item.ledgerStatus}` : '';
+          write(stdout, `[${item.priority.toUpperCase()}] ${item.project} -> ${item.recommendedCapabilities.join(', ') || 'manual-review'} (${item.score})${ledgerStatus}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'capability-matrix') {
+      const result = await buildReferenceCapabilityMatrix({
+        target: resolveTarget(cwd, targetArg),
+        maxResults: parseMaxResults(parsed.flags['max-results'], 100),
+        ledgerPath: resolveOptionalPath(cwd, parsed.flags.ledger),
+        capability: typeof parsed.flags.capability === 'string' ? parsed.flags.capability : undefined
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Reference capability matrix: ${result.summary.capabilities} capability group(s), ${result.summary.queueItems} queued reference(s)\n`);
+        for (const group of Object.values(result.capabilities)) {
+          const priorities = `high=${group.priorities.high ?? 0} medium=${group.priorities.medium ?? 0} low=${group.priorities.low ?? 0}`;
+          const ledgerStatuses = Object.entries(group.ledgerStatuses)
+            .map(([status, count]) => `${status}=${count}`)
+            .join(' ');
+          const ledgerSuffix = ledgerStatuses ? ` ledger=${ledgerStatuses}` : '';
+          write(stdout, `[${group.capability}] ${group.projects} project(s), ${priorities}${ledgerSuffix}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'adoption-plan') {
+      const result = await buildReferenceAdoptionPlan({
+        target: resolveTarget(cwd, targetArg),
+        capability: typeof parsed.flags.capability === 'string' ? parsed.flags.capability : undefined,
+        maxResults: parseMaxResults(parsed.flags['max-results'], 5),
+        ledgerPath: resolveOptionalPath(cwd, parsed.flags.ledger)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else if (result.ok) {
+        write(stdout, `Reference adoption plan: ${result.plan.capability} (${result.summary.selectedReferences} selected reference(s))\n`);
+        for (const item of result.plan.references) {
+          const ledgerStatus = item.ledger?.status ? ` ledger=${item.ledger.status}` : '';
+          const surfaces = item.suggestedSurfaces.map((surface) => surface.surface).join(', ');
+          write(stdout, `[${item.priority.toUpperCase()}] ${item.project} (${item.score})${ledgerStatus}\n`);
+          write(stdout, `  surfaces: ${surfaces || 'manual-review'}\n`);
+          if (item.readOrder[0]) write(stdout, `  first-read: ${item.readOrder[0].path} - ${item.readOrder[0].reason}\n`);
+        }
+      } else {
+        write(stdout, `Reference adoption plan: blocked (${result.summary.conflicts} conflict(s))\n`);
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'adoption-status') {
+      const result = await buildReferenceAdoptionStatus({
+        target: resolveTarget(cwd, targetArg),
+        referenceDir: resolveOptionalPath(cwd, parsed.flags['reference-dir']),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        ledgerPath: typeof parsed.flags.ledger === 'string' ? parsed.flags.ledger : undefined,
+        capability: typeof parsed.flags.capability === 'string' ? parsed.flags.capability : undefined,
+        maxResults: parseMaxResults(parsed.flags['max-results'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Reference adoption status: ${result.summary.queueItems} item(s), sources ${result.summary.sourceRegistered}/${result.summary.queueItems}\n`);
+        for (const item of result.items) {
+          const sourceState = item.sourceRegistered ? `source=${item.sourceId}` : 'source=missing';
+          write(stdout, `[${item.ledgerStatus}] ${item.project} ${sourceState} priority=${item.priority}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'source-registry-preview') {
+      const result = await buildReferenceSourceRegistryPreview({
+        target: resolveTarget(cwd, targetArg),
+        maxResults: parseMaxResults(parsed.flags['max-results'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Reference source registry preview: ${result.summary.sources} source candidate(s)\n`);
+        for (const source of result.registry.sources) {
+          write(stdout, `[${source.priority.toUpperCase()}] ${source.id} -> ${source.recommendedCapabilities.join(', ') || 'manual-review'}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'source-registry-check') {
+      const result = await checkReferenceSourceRegistry({
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        referenceDir: typeof parsed.flags['reference-dir'] === 'string' ? parsed.flags['reference-dir'] : undefined
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Reference source registry: ${result.ok ? 'ok' : 'needs attention'} (${result.summary.entries} source(s))\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'source-registry-update') {
+      const result = await updateReferenceSourceRegistry({
+        target: resolveTarget(cwd, targetArg),
+        referenceDir: resolveOptionalPath(cwd, parsed.flags['reference-dir']),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        maxResults: parseMaxResults(parsed.flags['max-results']),
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        const state = result.ok
+          ? (result.applied ? 'written' : (result.summary.added > 0 ? 'preview' : 'up to date'))
+          : 'blocked';
+        write(stdout, `Reference source registry update: ${state} (${result.summary.added} new source${result.summary.added === 1 ? '' : 's'})\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+        if (result.ok && result.summary.added > 0 && !parsed.flags.apply) {
+          write(stdout, 'Re-run with --apply to append missing reference source registry entries.\n');
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'ledger-init') {
+      const result = await initReferenceAdoptionLedger({
+        target: resolveTarget(cwd, targetArg),
+        referenceDir: resolveOptionalPath(cwd, parsed.flags['reference-dir']),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        maxResults: parseMaxResults(parsed.flags['max-results']),
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Reference ledger init: ${result.ok ? (result.applied ? 'written' : 'preview') : 'blocked'} (${result.summary.entries} entr${result.summary.entries === 1 ? 'y' : 'ies'})\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+        if (result.ok && !parsed.flags.apply) {
+          write(stdout, 'Re-run with --apply to write the reference adoption ledger.\n');
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'ledger-update') {
+      const result = await updateReferenceAdoptionLedger({
+        target: resolveTarget(cwd, targetArg),
+        referenceDir: resolveOptionalPath(cwd, parsed.flags['reference-dir']),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        maxResults: parseMaxResults(parsed.flags['max-results']),
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        const state = result.ok
+          ? (result.applied ? 'written' : (result.summary.added > 0 ? 'preview' : 'up to date'))
+          : 'blocked';
+        write(stdout, `Reference ledger update: ${state} (${result.summary.added} new row${result.summary.added === 1 ? '' : 's'})\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+        if (result.ok && result.summary.added > 0 && !parsed.flags.apply) {
+          write(stdout, 'Re-run with --apply to append missing reference adoption ledger rows.\n');
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'ledger-decision') {
+      const result = await updateReferenceLedgerDecision({
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        referenceId: typeof parsed.flags.reference === 'string' ? parsed.flags.reference : undefined,
+        status: typeof parsed.flags.status === 'string' ? parsed.flags.status : undefined,
+        capability: typeof parsed.flags.capability === 'string' ? parsed.flags.capability : undefined,
+        pattern: typeof parsed.flags.pattern === 'string' ? parsed.flags.pattern : undefined,
+        adoption: typeof parsed.flags.adoption === 'string' ? parsed.flags.adoption : undefined,
+        risk: typeof parsed.flags.risk === 'string' ? parsed.flags.risk : undefined,
+        decisionDate: typeof parsed.flags['decision-date'] === 'string' ? parsed.flags['decision-date'] : undefined,
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        const state = result.ok
+          ? (result.applied ? 'written' : (result.summary.changed ? 'preview' : 'up to date'))
+          : 'blocked';
+        write(stdout, `Reference ledger decision: ${state}\n`);
+        if (result.decision) {
+          write(stdout, `${result.decision.before.status} -> ${result.decision.after.status}: ${result.decision.referenceId}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+        if (result.ok && result.summary.changed && !parsed.flags.apply) {
+          write(stdout, 'Re-run with --apply to update the reference adoption ledger row.\n');
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'reference' && subcommand === 'ledger-check') {
+      const result = await checkReferenceAdoptionLedger({
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        strict: Boolean(parsed.flags.strict)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Reference ledger: ${result.ok ? 'ok' : 'needs attention'} (${result.summary.entries} entr${result.summary.entries === 1 ? 'y' : 'ies'})\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'layout' && subcommand === 'status') {
+      const result = await describePlaybookLayout({ target: resolveTarget(cwd, targetArg) });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Playbook layout: ${result.layout.kind} (${result.layout.activeRoot})\n`);
+        write(stdout, `Missing: ${result.summary.missingDirectories} directory item(s), ${result.summary.missingFiles} file(s)\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'runtime' && subcommand === 'capability-history') {
+      const result = await previewCapabilityHistory({ target: resolveTarget(cwd, targetArg) });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Capability history: ${result.summary.entries} entr${result.summary.entries === 1 ? 'y' : 'ies'}, ${result.summary.capabilities} capability signal(s)\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'runtime' && subcommand === 'python-status') {
+      const result = await pythonEngineStatus({ repoRoot: root });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Python engine: ${result.ok ? 'available' : 'unavailable'} (${result.summary.engineAvailable}/${result.summary.candidates} candidate(s))\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+      }
+      return 0;
+    }
+
+    if (command === 'runtime' && subcommand === 'schema-check') {
+      const result = await checkRuntimeSchema({
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : '',
+        kind: typeof parsed.flags.kind === 'string' ? parsed.flags.kind : undefined
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Runtime schema: ${result.ok ? 'ok' : 'needs attention'} (${result.summary.conflicts} conflict(s))\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'evidence' && subcommand === 'locator-check') {
+      const result = await checkEvidenceLocators({
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : ''
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Evidence locators: ${result.summary.locators} locator(s), ${result.summary.conflicts} conflict(s)\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'writing' && subcommand === 'naturalness-check') {
+      const result = await checkWritingNaturalness({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : '',
+        lang: typeof parsed.flags.lang === 'string' ? parsed.flags.lang : 'auto',
+        engine: typeof parsed.flags.engine === 'string' ? parsed.flags.engine : 'auto'
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Writing naturalness: ${result.summary.findings} finding(s), ${result.language.analyzed}\n`);
+        for (const finding of result.findings) {
+          const first = finding.evidence[0];
+          write(stdout, `[${finding.severity.toUpperCase()}] ${finding.id}${first ? `:${first.line}` : ''} ${finding.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'writing' && subcommand === 'naturalness-report') {
+      const result = await checkWritingNaturalnessReport({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        rootPath: typeof parsed.flags.root === 'string' ? parsed.flags.root : '.',
+        lang: typeof parsed.flags.lang === 'string' ? parsed.flags.lang : 'auto',
+        engine: typeof parsed.flags.engine === 'string' ? parsed.flags.engine : 'auto',
+        maxFiles: parsed.flags['max-files']
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Writing naturalness report: ${result.summary.files} file(s), ${result.summary.findings} finding(s)\n`);
+        for (const file of result.files) {
+          write(stdout, `[${file.summary.findings > 0 ? 'CHECK' : 'OK'}] ${file.path}: ${file.summary.findings} finding(s)\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'index' && subcommand === 'build') {
+      const result = await buildRuntimeIndex({
+        target: resolveTarget(cwd, targetArg),
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Runtime index: ${result.summary.files} file(s), ${result.applied ? 'written' : 'preview'}\n`);
+        if (!parsed.flags.apply) {
+          write(stdout, 'Re-run with --apply to write the runtime index.\n');
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'index' && subcommand === 'status') {
+      const result = await runtimeIndexStatus({ target: resolveTarget(cwd, targetArg) });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Runtime index: ${result.exists ? 'present' : 'missing'} (${result.summary.files} file(s))\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'index' && subcommand === 'search') {
+      const result = await searchRuntimeIndex({
+        target: resolveTarget(cwd, targetArg),
+        query: parsed.flags.query,
+        maxResults: parseMaxResults(parsed.flags['max-results'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Runtime search: ${result.summary.matches} match(es)\n`);
+        for (const item of result.results) {
+          const first = item.snippets[0];
+          write(stdout, `[${item.category}] ${item.path}${first ? `:${first.line} ${first.text}` : ''}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'index' && subcommand === 'symbol-outline') {
+      const result = await buildSymbolOutlineIndex({
+        target: resolveTarget(cwd, targetArg),
+        maxEntries: parseMaxResults(parsed.flags['max-results'], 100)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Symbol outline: ${result.summary.entries} symbol(s), ${result.summary.filesScanned} file(s), preview\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'index' && subcommand === 'dependency-inventory') {
+      const result = await buildDependencyInventoryIndex({
+        target: resolveTarget(cwd, targetArg)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Dependency inventory: ${result.summary.manifests} manifest(s), ${result.summary.lockfiles} lockfile(s), preview\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'index' && subcommand === 'route-api-hints') {
+      const result = await buildRouteApiHintsIndex({
+        target: resolveTarget(cwd, targetArg),
+        maxHints: parseMaxResults(parsed.flags['max-results'], 100)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Route/API hints: ${result.summary.hints} hint(s), ${result.summary.filesScanned} file(s), preview\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'graph' && subcommand === 'preview') {
+      const maxResults = parseMaxResults(parsed.flags['max-results'], 100);
+      const result = await previewRepoGraph({
+        target: resolveTarget(cwd, targetArg),
+        maxNodes: maxResults,
+        maxEdges: maxResults * 2
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Repo graph: ${result.summary.nodes} node(s), ${result.summary.edges} edge(s), preview\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'canon' && subcommand === 'draft') {
+      const result = await draftCanonFacts({
+        target: resolveTarget(cwd, targetArg),
+        maxFacts: parseMaxResults(parsed.flags['max-results'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Canon draft: ${result.summary.facts} fact candidate(s)\n`);
+        for (const fact of result.facts) {
+          write(stdout, `[${fact.kind}] ${fact.id} <- ${fact.sourceReport}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'canon' && subcommand === 'check') {
+      const result = await checkCanonFacts({
+        target: resolveTarget(cwd, targetArg),
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Canon check: ${result.summary.verified} verified, ${result.summary.changed} changed, ${result.summary.missing} missing, ${result.summary.stale} stale, ${result.summary.unverified} unverified\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'canon' && subcommand === 'promote') {
+      const result = await promoteCanonFacts({
+        target: resolveTarget(cwd, targetArg),
+        sourcePath: typeof parsed.flags.source === 'string' ? parsed.flags.source : '',
+        toPath: typeof parsed.flags.to === 'string' ? parsed.flags.to : '',
+        apply: Boolean(parsed.flags.apply),
+        reviewed: Boolean(parsed.flags.reviewed)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Canon promote: ${result.summary.facts} fact(s), ${result.applied ? 'written' : 'preview'}\n`);
+        write(stdout, `Destination: ${result.destination}\n`);
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+        for (const conflict of result.conflicts) {
+          write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'write-gate' && subcommand === 'preview') {
+      const result = await previewWriteGate({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        intent: parsed.flags.intent,
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        maxResults: parseMaxResults(parsed.flags['max-results'])
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Write gate: ${result.ok ? 'ok' : 'blocked'} (${result.summary.candidates} candidate(s), ${result.summary.blockers} blocker(s))\n`);
+        for (const blocker of result.blockers) {
+          write(stdout, `[BLOCKER] ${blocker.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'write-gate' && subcommand === 'advisory') {
+      const result = await createWriteGateAdvisory({
+        repoRoot: root,
+        target: resolveTarget(cwd, targetArg),
+        intent: typeof parsed.flags.intent === 'string' ? parsed.flags.intent : '',
+        filePath: typeof parsed.flags.path === 'string' ? parsed.flags.path : undefined,
+        maxResults: parseMaxResults(parsed.flags['max-results']),
+        apply: Boolean(parsed.flags.apply)
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Write-gate advisory: ${result.ok ? 'ok' : 'blocked'} (${result.advisory.written ? 'written' : 'preview'})\n`);
+        write(stdout, `Advisory: ${result.advisory.path}\n`);
+        for (const blocker of result.blockers) {
+          write(stdout, `[BLOCKER] ${blocker.message}\n`);
+        }
+        for (const warning of result.warnings) {
+          write(stdout, `[WARN] ${warning.message}\n`);
+        }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'write-gate' && subcommand === 'post-check') {
+      const result = await postCheckWriteGate({
+        target: resolveTarget(cwd, targetArg),
+        advisoryPath: typeof parsed.flags.advisory === 'string' ? parsed.flags.advisory : ''
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Write-gate post-check: ${result.summary.status} (${result.summary.added} added, ${result.summary.modified} modified, ${result.summary.deleted} deleted)\n`);
         for (const warning of result.warnings) {
           write(stdout, `[WARN] ${warning.message}\n`);
         }
@@ -893,21 +1722,41 @@ function needsValue(key) {
     'max-chars',
     'adapter',
     'settings',
+    'to',
+    'source',
     'path',
     'cols',
     'query',
     'intent',
+    'advisory',
     'before',
     'contract',
     'threshold',
     'max-results',
+    'max-depth',
+    'project',
+    'capability',
+    'ledger',
     'codex-root',
     'agents-root',
+    'recipe',
+    'user-config',
     'run-id',
     'type',
     'message',
     'status',
-    'evidence'
+    'evidence',
+    'kind',
+    'reference-dir',
+    'reference',
+    'pattern',
+    'adoption',
+    'risk',
+    'decision-date',
+    'lang',
+    'engine',
+    'root',
+    'max-files'
   ].includes(key);
 }
 
@@ -928,6 +1777,10 @@ function printOperations(stdout, operations) {
 
 function printScaffoldResult(result, stdout, stderr) {
   if (!result.ok) {
+    if (result.conflicts?.length) {
+      write(stderr, `Conflicts:\n${result.conflicts.map((item) => `- ${item}`).join('\n')}\n`);
+      return 2;
+    }
     write(stderr, `Refusing to overwrite existing file: ${result.file}\nUse --force to overwrite.\n`);
     return 2;
   }
@@ -970,57 +1823,106 @@ function parseMaxResults(value, defaultValue = 20) {
   return parsed;
 }
 
+function parseMaxDepth(value, defaultValue = 6) {
+  if (value === undefined || value === false) return defaultValue;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 100) {
+    throw new Error('Invalid --max-depth; expected an integer from 1 to 100.');
+  }
+  return parsed;
+}
+
 function helpText() {
-  return `ai-playbook
+  return `aapb
 
 Usage:
-  ai-playbook bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]
-  ai-playbook mcp
-  ai-playbook doctor <target> [--strict] [--json]
-  ai-playbook doctor <target> --reminder [--json]
-  ai-playbook guides sync <target> [--dry-run] [--force]
-  ai-playbook guides sync <target> --check [--diff] [--json]
-  ai-playbook skills check [--json] [--codex-root <path>] [--agents-root <path>]
-  ai-playbook skills lint [--json]
-  ai-playbook skills install [--dry-run] [--json] [--force-managed] [--force-unmanaged] [--codex-root <path>] [--agents-root <path>]
-  ai-playbook skills update [--dry-run] [--json] [--force-managed] [--force-unmanaged] [--codex-root <path>] [--agents-root <path>]
-  ai-playbook skills uninstall [--dry-run] [--json] [--force-managed] [--codex-root <path>] [--agents-root <path>]
-  ai-playbook migrate path <target> [--apply] [--json]
-  ai-playbook managed check <target> [--json]
-  ai-playbook managed catalog <target> [--json]
-  ai-playbook managed adopt <target> [--apply] [--json]
-  ai-playbook managed prune <target> --path <managed-path> [--apply] [--json]
-  ai-playbook managed uninstall <target> [--apply] [--json]
-  ai-playbook context <target> [--json] [--max-chars N]
-  ai-playbook context list <target> [--json]
-  ai-playbook context status <target> --path <file> [--json]
-  ai-playbook context init <target> [--dry-run] [--json]
-  ai-playbook run start <target> --title <text> [--dry-run] [--json]
-  ai-playbook run status <target> [--run-id <id>] [--json]
-  ai-playbook run record <target> --run-id <id> --type note|criterion|evidence|blocker|cleanup --message <text> [--status pass|fail|blocked|info] [--evidence <path>] [--json]
-  ai-playbook run summarize <target> --run-id <id> [--dry-run] [--force] [--json]
-  ai-playbook contracts list <target> [--json]
-  ai-playbook contracts check <target> [--path <file>] [--json]
-  ai-playbook contracts snapshot <target> [--contract <id>] [--apply] [--json]
-  ai-playbook contracts init <target> [--dry-run] [--json]
-  ai-playbook operator check <target> [--path <file>] [--diff] [--json]
-  ai-playbook operator search <target> --query <text> [--path <file>] [--max-results N] [--json]
-  ai-playbook operator preflight <target> --intent <text> [--path <file>] [--max-results N] [--json]
-  ai-playbook operator delta <target> --before <preflight-json> [--json]
-  ai-playbook operator research <target> --query <text> [--path <file>] [--max-results N] [--json]
-  ai-playbook operator context <target> --path <file> [--json]
-  ai-playbook operator analyze <target> [--deep] [--path <file>] [--json]
-  ai-playbook operator map <target> [--json]
-  ai-playbook operator audit <target> [--json]
-  ai-playbook operator gc <target> [--apply] [--json]
-  ai-playbook rules check <target> [--path <file>] [--json]
-  ai-playbook diagnostics check <target> [--json]
-  ai-playbook qa tui-check <capture-file> [--cols N] [--json]
-  ai-playbook qa image-diff <reference.png> <actual.png> [--threshold N] [--json]
-  ai-playbook adapter config <target> --adapter codex|claude-code [--json]
-  ai-playbook adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]
-  ai-playbook plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
-  ai-playbook worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
-  ai-playbook worklog summarize <target> --month YYYY-MM [--dry-run] [--force]
+  aapb bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]
+  aapb mcp [--enable-write-tools]
+  aapb doctor <target> [--strict] [--json]
+  aapb doctor <target> --reminder [--json]
+  aapb config preview <target> [--user-config <path>] [--json]
+  aapb guides sync <target> [--dry-run] [--force]
+  aapb guides sync <target> --check [--diff] [--json]
+  aapb skills check [--json] [--codex-root <path>] [--agents-root <path>]
+  aapb skills lint [--json]
+  aapb skills install [--dry-run] [--json] [--force-managed] [--force-unmanaged] [--codex-root <path>] [--agents-root <path>]
+  aapb skills update [--dry-run] [--json] [--force-managed] [--force-unmanaged] [--codex-root <path>] [--agents-root <path>]
+  aapb skills uninstall [--dry-run] [--json] [--force-managed] [--codex-root <path>] [--agents-root <path>]
+  aapb migrate path <target> [--apply] [--json]
+  aapb migrate layout <target> [--to structured] [--apply] [--json]
+  aapb catalog list [--json]
+  aapb catalog check [--json]
+  aapb workflow list [--json]
+  aapb workflow run-preview <target> --recipe <recipe-id> [--json]
+  aapb workflow run-start <target> --recipe <recipe-id> [--apply] [--json]
+  aapb reference inventory <reference-dir> [--max-results N] [--json]
+  aapb reference inspect <reference-dir> --project <name> [--max-depth N] [--json]
+  aapb reference adoption-queue <reference-dir> [--max-results N] [--ledger <ledger.md>] [--json]
+  aapb reference capability-matrix <reference-dir> [--capability <id>] [--max-results N] [--ledger <ledger.md>] [--json]
+  aapb reference adoption-plan <reference-dir> --capability <id> [--max-results N] [--ledger <ledger.md>] [--json]
+  aapb reference adoption-status <target> --reference-dir <dir> [--path <sources.json>] [--ledger <ledger.md>] [--capability <id>] [--max-results N] [--json]
+  aapb reference source-registry-preview <reference-dir> [--max-results N] [--json]
+  aapb reference source-registry-check <target> [--path <sources.json>] [--reference-dir <dir>] [--json]
+  aapb reference source-registry-update <target> --reference-dir <dir> [--path <sources.json>] [--max-results N] [--apply] [--json]
+  aapb reference ledger-init <target> --reference-dir <dir> [--path <ledger.md>] [--max-results N] [--apply] [--json]
+  aapb reference ledger-update <target> --reference-dir <dir> [--path <ledger.md>] [--max-results N] [--apply] [--json]
+  aapb reference ledger-decision <target> --reference <id> --status reviewed|adopted|deferred|rejected [--capability <id>] [--pattern <text>] [--adoption <text>] [--risk <text>] [--decision-date YYYY-MM-DD] [--path <ledger.md>] [--apply] [--json]
+  aapb reference ledger-check <target> [--path <ledger.md>] [--strict] [--json]
+  aapb layout status <target> [--json]
+  aapb runtime capability-history <target> [--json]
+  aapb runtime python-status [--json]
+  aapb runtime schema-check <target> --path <json> [--kind <kind>] [--json]
+  aapb evidence locator-check <target> --path <json-or-md> [--json]
+  aapb writing naturalness-check <target> --path <file> [--lang auto|ko|en] [--engine auto|js|python] [--json]
+  aapb writing naturalness-report <target> [--root <dir>] [--max-files N] [--lang auto|ko|en] [--engine auto|js|python] [--json]
+  aapb index build <target> [--apply] [--json]
+  aapb index status <target> [--json]
+  aapb index search <target> --query <text> [--max-results N] [--json]
+  aapb index symbol-outline <target> [--max-results N] [--json]
+  aapb index dependency-inventory <target> [--json]
+  aapb index route-api-hints <target> [--max-results N] [--json]
+  aapb graph preview <target> [--max-results N] [--json]
+  aapb canon draft <target> [--max-results N] [--json]
+  aapb canon check <target> [--path <canon-json>] [--json]
+  aapb canon promote <target> --source <runtime-report> --to <memory-json> [--apply] [--reviewed] [--json]
+  aapb write-gate preview <target> --intent <text> [--path <file>] [--max-results N] [--json]
+  aapb write-gate advisory <target> --intent <text> [--path <file>] [--max-results N] [--apply] [--json]
+  aapb write-gate post-check <target> --advisory <advisory-json> [--json]
+  aapb managed check <target> [--json]
+  aapb managed catalog <target> [--json]
+  aapb managed adopt <target> [--apply] [--json]
+  aapb managed prune <target> --path <managed-path> [--apply] [--json]
+  aapb managed uninstall <target> [--apply] [--json]
+  aapb context <target> [--json] [--max-chars N]
+  aapb context list <target> [--json]
+  aapb context status <target> --path <file> [--json]
+  aapb context init <target> [--dry-run] [--json]
+  aapb run start <target> --title <text> [--dry-run] [--json]
+  aapb run status <target> [--run-id <id>] [--json]
+  aapb run record <target> --run-id <id> --type note|criterion|evidence|blocker|cleanup --message <text> [--status pass|fail|blocked|info] [--evidence <path>] [--json]
+  aapb run summarize <target> --run-id <id> [--dry-run] [--force] [--json]
+  aapb contracts list <target> [--json]
+  aapb contracts check <target> [--path <file>] [--json]
+  aapb contracts snapshot <target> [--contract <id>] [--apply] [--json]
+  aapb contracts init <target> [--dry-run] [--json]
+  aapb operator check <target> [--path <file>] [--diff] [--json]
+  aapb operator search <target> --query <text> [--path <file>] [--max-results N] [--json]
+  aapb operator preflight <target> --intent <text> [--path <file>] [--max-results N] [--json]
+  aapb operator delta <target> --before <preflight-json> [--json]
+  aapb operator research <target> --query <text> [--path <file>] [--max-results N] [--json]
+  aapb operator context <target> --path <file> [--json]
+  aapb operator analyze <target> [--deep] [--path <file>] [--json]
+  aapb operator map <target> [--json]
+  aapb operator audit <target> [--json]
+  aapb operator gc <target> [--apply] [--json]
+  aapb rules check <target> [--path <file>] [--json]
+  aapb diagnostics check <target> [--json]
+  aapb qa tui-check <capture-file> [--cols N] [--json]
+  aapb qa image-diff <reference.png> <actual.png> [--threshold N] [--json]
+  aapb adapter config <target> --adapter codex|claude-code [--json]
+  aapb adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]
+  aapb plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
+  aapb worklog new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]
+  aapb worklog summarize <target> --month YYYY-MM [--dry-run] [--force]
 `;
 }

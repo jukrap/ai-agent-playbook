@@ -23,3 +23,7 @@ Treat the running system as the source of truth and change less than feels tempt
 - Do not infer backend contracts or deployment paths from names alone.
 - Preserve unrelated user changes.
 - Prefer compatibility with current operations over architectural purity.
+
+## Reference
+
+Read `references/legacy-operating-model.md` when entrypoints, active files, operational ownership, or safe verification are unclear.

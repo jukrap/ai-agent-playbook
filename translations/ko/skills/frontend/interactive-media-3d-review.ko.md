@@ -1,0 +1,20 @@
+# Interactive Media 3D Review
+
+일반 DOM 테스트는 통과해도 화면이 비어 있거나 잘못 배치될 수 있는 인터랙티브 렌더링 화면을 점검할 때 쓰는 기본 프론트엔드 스킬입니다.
+
+## 작업 흐름
+
+1. 렌더러, 호스트 프레임워크, 자산 파이프라인, 장면 생명주기, 카메라와 프레이밍, 상호작용 모델, 대체 상태, 대상 기기를 확인합니다.
+2. 그래픽, 물리, 차트, 지도, 미디어 컨트롤, 애니메이션 엔진을 직접 만들기 전에 저장소의 기존 렌더러나 검증된 도메인 라이브러리를 우선합니다.
+3. 비어 있지 않은 출력, 올바른 경계, 크기 변경과 기기 픽셀 비율 대응, 자산 로딩, 정리와 해제, 접근성 대체 경로, 오류 상태를 렌더링 계약으로 확인합니다.
+4. 스크린샷이나 픽셀 검사, 브라우저 콘솔과 네트워크 확인, 상호작용 스모크 테스트, 성능 예산, 데스크톱과 모바일 뷰포트 증거로 검증합니다.
+
+## 참고 자료
+
+장면, 캔버스, 자산, 생명주기, 대체 상태, 성능 경계는 `references/rendering-scene-contract.md`를 읽습니다.
+
+스크린샷, 픽셀, 상호작용, 반응형 프레이밍, 비어 있지 않은 출력 검증은 `references/interactive-media-verification.md`를 읽습니다.
+
+Three.js/WebGL 렌더러 설정, 자산 예산, 저전력 모드, 컨텍스트 손실, 해제 점검은 `references/threejs-webgl-production.md`를 읽습니다.
+
+Loaded asset, camera choreography, controls, lighting, animation loop, performance-sensitive device가 얽힌 장면은 `references/threejs-scene-risk-checklist.md`를 읽습니다.

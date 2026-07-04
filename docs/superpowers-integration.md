@@ -12,10 +12,10 @@ Use process skills first when they apply, then use the smallest relevant playboo
 
 ## Recommended pairings
 
-- New repository or unclear codebase: process planning plus `project-bootstrap`, `repo-onboarding`, or `node .\bin\ai-playbook.mjs bootstrap <target> --dry-run`.
-- Feature planning: process planning plus `project-doc-system` when project docs or `.ai-playbook/` need structure.
+- New repository or unclear codebase: process planning plus `project-bootstrap`, `repo-onboarding`, or `node .\bin\aapb.mjs bootstrap <target> --dry-run`.
+- Feature planning: process planning plus `project-doc-system` when project docs or `.ai-agent-playbook/` need structure.
 - API integration: implementation process plus `api-contract-boundary`.
-- UI styling policy: implementation or review process plus `ui-style-policy`.
+- UI styling policy: implementation or review process plus `style-policy-selection`; use `ui-style-policy` only for older prompts.
 - UI styling review: review or verification process plus `style-quality-review`.
 - UI implementation polish: implementation or verification process plus `frontend-ui-polish`.
 - Behavior-preserving cleanup: refactoring or verification process plus `cleanup-ai-slop`.
@@ -23,7 +23,7 @@ Use process skills first when they apply, then use the smallest relevant playboo
 - Legacy change: debugging or planning process plus the closest `legacy-*` skill.
 - Commit, push, PR, or handoff: verification or branch-finishing process plus `commit-worklog-guardrails`.
 - Creating or revising reusable skills: planning or review process plus `agent-skill-authoring`.
-- Repository-wide structural cleanup: process planning plus `node .\bin\ai-playbook.mjs doctor <target>`, `templates/project-playbook/guides/structural-review.md`, or an installed evidence tool when the project has one.
+- Repository-wide structural cleanup: process planning plus `node .\bin\aapb.mjs doctor <target>`, `templates/project-playbook/knowledge/references/guides/structural-review.md`, or an installed evidence tool when the project has one.
 
 ## Priority
 
@@ -45,4 +45,4 @@ If a process rule and a project-local rule disagree, follow the higher-priority 
 - Do not copy machine-local custom instructions into public docs without removing paths, identities, and private workflow assumptions.
 - Do not assume another agent runtime's hooks, slash commands, or plugin environment variables are available.
 - Do not treat this repository's CLI as a replacement for planning, TDD, debugging, or verification process skills. It only scaffolds and checks project memory.
-- Do not make hook-based behavior mandatory when the same policy can live clearly in `AGENTS.md` or `.ai-playbook/`.
+- Do not make hook-based behavior mandatory when the same policy can live clearly in `AGENTS.md` or `.ai-agent-playbook/`.

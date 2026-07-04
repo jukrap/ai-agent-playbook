@@ -44,5 +44,5 @@ experiments. Remove it when the experiment is done.
 Put repository working rules in the project's root `AGENTS.md`. If you use this
 playbook's project templates, the root `AGENTS.md` comes from
 `templates/agents/global/`, while skill and Git policy live under
-`templates/project-playbook/` as `.ai-playbook/SKILLS.md` and
-`.ai-playbook/GIT.md`.
+`templates/project-playbook/` as `.ai-agent-playbook/policy/SKILLS.md` and
+`.ai-agent-playbook/policy/GIT.md`.

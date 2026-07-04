@@ -20,3 +20,7 @@ Compatibility is a runtime requirement, not a style preference.
 - Do not replace ActiveX/device flows with browser APIs unless the client environment supports them.
 - Do not rely on Chromium/modern browser tests for IE-mode claims.
 - Record compatibility assumptions explicitly in PR/worklog.
+
+## Reference
+
+Read `references/ie-activex-containment.md` for supported environment capture, compatibility boundaries, security prompts, and verification limits.

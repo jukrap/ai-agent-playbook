@@ -1,17 +1,21 @@
-# Legacy Reporting Printing
+# 레거시 보고서/출력
 
-Report generation, print preview, PDF/Excel export, barcode/label printing, invoices, templates, printer/device-specific output flow를 유지보수할 때 사용합니다.
+보고서 생성, 인쇄 미리보기, PDF/Excel 내보내기, 바코드/라벨 인쇄, 청구서, 템플릿, 프린터/장치별 출력 흐름을 유지보수할 때 사용합니다.
 
 ## 진행 절차
 
-1. template source, data query, formatting layer, export library, printer path, device assumptions를 식별합니다.
-2. page size, margins, DPI, fonts, barcode/QR readability, locale, timezone, number/date formatting을 확인합니다.
-3. product가 명시적으로 바꾸지 않는 한 기존 output fields와 layout을 보존합니다.
-4. representative data, long text, empty values, multi-page cases로 sample output을 검증합니다.
-5. 검증에 사용한 printer/browser/export environment를 기록합니다.
+1. 템플릿 원본, 데이터 조회, 서식 계층, 내보내기 라이브러리, 프린터 경로, 장치 가정을 식별합니다.
+2. 용지 크기, 여백, DPI, 글꼴, 바코드/QR 가독성, 로케일, 시간대, 숫자/날짜 서식을 확인합니다.
+3. 제품 요구가 명시적으로 바뀌지 않는 한 기존 출력 필드와 레이아웃을 보존합니다.
+4. 대표 데이터, 긴 텍스트, 빈 값, 여러 페이지 사례로 샘플 출력을 검증합니다.
+5. 검증에 사용한 프린터/브라우저/내보내기 환경을 기록합니다.
 
 ## Guardrails
 
-- screen preview만으로 physical print correctness를 증명했다고 보지 않습니다.
-- downstream consumer 확인 없이 Excel/PDF column order 또는 template fields를 바꾸지 않습니다.
-- client machines마다 fonts, printer drivers, paper sizes가 같다고 가정하지 않습니다.
+- 화면 미리보기만으로 실제 인쇄 정확성을 증명했다고 보지 않습니다.
+- downstream 소비자 확인 없이 Excel/PDF 컬럼 순서 또는 템플릿 필드를 바꾸지 않습니다.
+- 클라이언트 장비마다 글꼴, 프린터 드라이버, 용지 크기가 같다고 가정하지 않습니다.
+
+## 참고 자료
+
+보고서 필드, 페이지 나눔, 내보내기, 프린터, 장치, downstream 소비자 점검은 `references/report-print-contract.md`를 읽습니다.

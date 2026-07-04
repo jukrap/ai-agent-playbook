@@ -1,5 +1,7 @@
 # Legacy Android WebView Hybrid
 
+Primary route: `mobile/webview-bridge`.
+
 local 또는 remote web assets를 WebView로 load하고 JavaScript bridge, permissions, device APIs로 native behavior와 연결하는 Android app을 유지보수할 때 사용합니다.
 
 ## 진행 절차
@@ -16,3 +18,7 @@ local 또는 remote web assets를 WebView로 load하고 JavaScript bridge, permi
 - packaging/version check 없이 local asset 변경이 반영된다고 가정하지 않습니다.
 - WebView console success를 native integration success로 보지 않습니다.
 - Gradle/build, permission, deployment implication을 기록합니다.
+
+## Reference
+
+Stack-specific check는 `references/android-webview-hybrid.md`를 읽습니다.

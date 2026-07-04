@@ -1,6 +1,6 @@
 # AGENTS.md Template Guide
 
-`templates/agents` contains `AGENTS.md` examples that can be copied into project roots. A project usually keeps one thin root `AGENTS.md` that points agents to `.ai-playbook/`, then merges in the nearest matching profile only when the stack is confirmed.
+`templates/agents` contains `AGENTS.md` examples that can be copied into project roots. A project usually keeps one thin root `AGENTS.md` that points agents to `.ai-agent-playbook/`, then merges in the nearest matching profile only when the stack is confirmed.
 
 The `global/` name means "stack-neutral project-root base template" inside this repository. It is not Codex's personal global file in `~/.codex/AGENTS.md`. For Codex home-level defaults, use `../codex-home/`.
 
@@ -16,8 +16,8 @@ The `global/` name means "stack-neutral project-root base template" inside this 
 ## How to apply
 
 1. Inspect the project's real config, README, build files, and existing docs first.
-2. Start with `global/AGENTS.md` as a short bootstrap; keep skill and Git policy under `.ai-playbook/SKILLS.md` and `.ai-playbook/GIT.md`.
+2. Start with `global/AGENTS.md` as a short bootstrap; keep skill and Git policy under `.ai-agent-playbook/policy/SKILLS.md` and `.ai-agent-playbook/policy/GIT.md`.
 3. Pick the closest stack profile and remove rules that do not apply.
-4. If the project needs durable agent memory, copy `templates/project-playbook/` as `.ai-playbook/`.
-5. If the project needs detailed commit, push, PR, and worklog guidance, adapt `templates/project-playbook/GIT.md` and `templates/project-playbook/guides/commit-push-worklog.md`.
+4. If the project needs durable agent memory, copy `templates/project-playbook/` as `.ai-agent-playbook/`.
+5. If the project needs detailed commit, push, PR, and worklog guidance, adapt `templates/project-playbook/policy/GIT.md` and `templates/project-playbook/knowledge/references/guides/commit-push-worklog.md`.
 6. Keep project-specific product rules in separate docs. Use `AGENTS.md` only for the minimum entrypoint and local override rules.

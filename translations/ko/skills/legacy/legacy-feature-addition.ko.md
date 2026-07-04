@@ -1,18 +1,22 @@
-# Legacy Feature Addition
+# 레거시 기능 추가
 
-주변 architecture를 rewrite하지 않고 legacy system에 behavior, screen, field, business rule, integration을 추가할 때 사용합니다.
+주변 아키텍처를 다시 쓰지 않고 레거시 시스템에 동작, 화면, 필드, 업무 규칙, 연동을 추가할 때 사용합니다.
 
 ## 진행 절차
 
-1. UI, validation, state, API/server, persistence, deploy path까지 현재 flow를 end-to-end로 map합니다.
-2. 같은 종류의 feature에 대한 가장 가까운 existing pattern을 찾습니다.
-3. field name이나 server behavior를 추측하지 말고 data contract를 의도적으로 확장합니다.
-4. shared behavior가 실제로 필요하지 않으면 새 code를 feature 범위에 묶습니다.
-5. happy path, validation/failure path, 인접 existing flow 하나 이상을 검증합니다.
+1. UI, 검증, 상태, API/서버, 저장소, 배포 경로까지 현재 흐름을 끝까지 파악합니다.
+2. 같은 종류의 기능에 대한 가장 가까운 기존 패턴을 찾습니다.
+3. 필드 이름이나 서버 동작을 추측하지 말고 데이터 계약을 의도적으로 확장합니다.
+4. 공유 동작이 실제로 필요하지 않으면 새 코드를 기능 범위에 묶습니다.
+5. 정상 경로, 검증/실패 경로, 인접한 기존 흐름 하나 이상을 검증합니다.
 
 ## Guardrails
 
-- 한 feature 때문에 새 architecture style을 도입하지 않습니다.
-- remote/API feature에서 hidden mock fallback을 피합니다.
-- inline style preference가 local rule이면 포함해 legacy UI와 consistent하게 유지합니다.
-- 미완성 backend/product decision은 fake-complete behavior가 아니라 blocker로 문서화합니다.
+- 한 기능 때문에 새 아키텍처 양식을 도입하지 않습니다.
+- 원격/API 기능에서 숨어 있는 목 응답 대체 동작을 피합니다.
+- 인라인 스타일 선호가 로컬 규칙이면 그 규칙을 포함해 레거시 UI와 맞춥니다.
+- 미완성 백엔드/제품 결정은 완료된 척하는 동작이 아니라 막힌 지점으로 문서화합니다.
+
+## 참고 자료
+
+기존 레거시 흐름에 필드, 화면, 연동, 업무 규칙을 추가하기 전에는 `references/feature-slice-in-legacy.md`를 읽습니다.

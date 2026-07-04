@@ -2,7 +2,9 @@ import { rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
+  DEFAULT_PLAYBOOK_DIR,
   INSTALL_MANIFEST_FILE,
+  LEGACY_PLAYBOOK_DIRS,
   SCHEMA_VERSION
 } from '../harness.mjs';
 import {
@@ -35,16 +37,15 @@ export async function auditOperator(options) {
   const resolvedTarget = path.resolve(target);
   const findings = [];
   const playbook = await findPlaybookRoot(resolvedTarget);
-  const dotPlaybook = path.join(resolvedTarget, '.ai-playbook');
-  const legacyPlaybook = path.join(resolvedTarget, 'ai-playbook');
-  const bothPlaybookPathsExist = existsSync(dotPlaybook) && existsSync(legacyPlaybook);
+  const legacyPlaybooks = legacyPlaybookDirs(resolvedTarget);
+  const bothPlaybookPathsExist = playbook && legacyPlaybooks.length > 0;
   if (!playbook) {
     findings.push(operatorFinding(
       'fail',
       'operator.audit.playbook-missing',
       'playbook',
-      'No .ai-playbook/ or legacy ai-playbook/ folder found.',
-      ['.ai-playbook/']
+      `No active ${DEFAULT_PLAYBOOK_DIR}/ folder found. If this project still has a legacy playbook folder, run migrate path first.`,
+      [`${DEFAULT_PLAYBOOK_DIR}/`, ...legacyPlaybooks.map((directory) => `${directory}/`)]
     ));
   }
   if (bothPlaybookPathsExist) {
@@ -52,8 +53,8 @@ export async function auditOperator(options) {
       'warn',
       'operator.audit.legacy-playbook',
       'playbook',
-      'Both .ai-playbook/ and legacy ai-playbook/ exist; review legacy cleanup after migration.',
-      ['.ai-playbook/', 'ai-playbook/']
+      `${DEFAULT_PLAYBOOK_DIR}/ exists beside legacy playbook folder(s); runtime uses only ${DEFAULT_PLAYBOOK_DIR}/. Review legacy cleanup after migration.`,
+      [`${DEFAULT_PLAYBOOK_DIR}/`, ...legacyPlaybooks.map((directory) => `${directory}/`)]
     ));
   }
 
@@ -134,8 +135,8 @@ export async function gcOperator(options) {
   if (!playbook) {
     conflicts.push({
       id: 'operator.gc.playbook-missing',
-      message: 'No .ai-playbook/ or legacy ai-playbook/ folder found.',
-      paths: ['.ai-playbook/']
+      message: `No active ${DEFAULT_PLAYBOOK_DIR}/ folder found. If this project still has a legacy playbook folder, run migrate path first.`,
+      paths: [`${DEFAULT_PLAYBOOK_DIR}/`, ...legacyPlaybookDirs(resolvedTarget).map((directory) => `${directory}/`)]
     });
     return operatorGcResult({ target: resolvedTarget, apply, applied: false, operations, warnings, conflicts });
   }
@@ -214,4 +215,8 @@ export async function gcOperator(options) {
   }
 
   return operatorGcResult({ target: resolvedTarget, apply, applied, operations, warnings, conflicts });
+}
+
+function legacyPlaybookDirs(target) {
+  return LEGACY_PLAYBOOK_DIRS.filter((directory) => existsSync(path.join(target, directory)));
 }

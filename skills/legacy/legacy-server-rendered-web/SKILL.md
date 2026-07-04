@@ -21,3 +21,7 @@ Treat HTML as the output of server state, not an isolated static file.
 - Do not move markup out of a shared fragment without checking all consumers.
 - Do not assume AJAX response shape from template naming.
 - Record backend/template contract uncertainty in the worklog or PR.
+
+## Reference
+
+Read `references/server-rendered-legacy-flow.md` for route, controller, template, form, session, and enhancement compatibility checks.

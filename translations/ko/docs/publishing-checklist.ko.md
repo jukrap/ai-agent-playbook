@@ -25,14 +25,17 @@ rg -n --glob '!docs/publishing-checklist.md' "PERSONAL_NAME|COMPANY_NAME|CUSTOME
 
 ```powershell
 npm run check
+npm run typecheck
 npm test
 npm pack --dry-run --json
-.\scripts\validate-skills.ps1
-.\scripts\validate-translations.ps1
+npm run validate:python
+npm run validate:all
 .\scripts\sync-skills.ps1 -WhatIf
 .\install.ps1 -SkipValidation -WhatIf
 .\update.ps1 -SkipValidation -WhatIf
 ```
+
+PowerShell 검증 스크립트는 같은 Node 검증기를 부르는 Windows 체크아웃용 래퍼입니다. 운영체제 공통 공개 절차를 문서화할 때는 npm 명령을 기본으로 사용합니다.
 
 스킬 원본 파일이 바뀌었으면 검증 뒤 `.\scripts\sync-skills.ps1`를 실행합니다.
 

@@ -1,0 +1,40 @@
+name: Idea
+description: Discuss an early idea before it becomes a scoped issue.
+title: "[Idea] "
+labels: ["idea"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for early ideas that are not ready for an issue yet.
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What problem or workflow prompted this idea?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Idea
+      description: Describe the rough capability or direction.
+    validations:
+      required: true
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Tradeoffs
+      description: What might this complicate or replace?
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CLI
+        - MCP
+        - Skills
+        - Templates
+        - Runtime
+        - Documentation
+        - Other

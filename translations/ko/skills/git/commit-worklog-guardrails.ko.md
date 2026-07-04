@@ -1,5 +1,7 @@
 # Commit Worklog Guardrails
 
+Primary route: `delivery/git-worklog-guardrails`.
+
 관련 없는 변경, local-only files, verification integrity를 보호합니다.
 
 ## 진행 절차

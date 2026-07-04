@@ -1,6 +1,6 @@
 {
   "name": "ai-agent-playbook",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Reusable AI agent skills, project playbook templates, and a small operator-controlled runtime harness.",
   "type": "module",
   "license": "MIT",
@@ -10,27 +10,41 @@
   },
   "keywords": [
     "ai-agents",
-    "agent-playbook",
+    "ai-agent-playbook",
     "codex",
     "skills",
     "runtime-harness"
   ],
   "bin": {
-    "ai-playbook": "bin/ai-playbook.mjs"
+    "aapb": "bin/aapb.mjs"
   },
   "files": [
     "bin/",
     "src/",
+    "engines/python/**/*.py",
     "adapters/",
     "skills/",
     "templates/",
+    "scripts/bootstrap-python.ps1",
+    "scripts/validate-python.ps1",
+    "scripts/*.mjs",
+    "pyproject.toml",
     "docs/*.md",
+    "docs/changes/",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "check": "node --check bin/ai-playbook.mjs && node --check src/cli.mjs && node --check src/harness.mjs && node --check src/harness/core.mjs && node --check src/harness/bootstrap.mjs && node --check src/harness/doctor-guides.mjs && node --check src/harness/managed-manifest.mjs && node --check src/harness/plans-worklogs.mjs && node --check src/harness/context-memory.mjs && node --check src/harness/runs-ledger.mjs && node --check src/harness/contracts.mjs && node --check src/adapter-readiness.mjs && node --check src/operator-diagnostics.mjs && node --check src/operator/shared.mjs && node --check src/operator/check.mjs && node --check src/operator/search.mjs && node --check src/operator/preflight-delta.mjs && node --check src/operator/research.mjs && node --check src/operator/context-analyze.mjs && node --check src/operator/map.mjs && node --check src/operator/audit-gc.mjs && node --check src/operator/rules.mjs && node --check src/operator/diagnostics.mjs && node --check src/operator/qa-image-diff.mjs && node --check src/deep-analysis.mjs && node --check src/mcp-tools.mjs && node --check src/mcp-server.mjs && node --check src/skills-lifecycle.mjs && node --check adapters/shared/context-hook.mjs && node --check adapters/shared/package-shell.mjs && node --check adapters/codex/hook.mjs && node --check adapters/codex/package.mjs && node --check adapters/claude-code/hook.mjs && node --check adapters/claude-code/package.mjs",
-    "test": "node --test test/*.test.mjs"
+    "check": "node --check bin/aapb.mjs && node --check src/cli.mjs && node --check src/harness.mjs && node --check src/harness/core.mjs && node --check src/harness/bootstrap.mjs && node --check src/harness/doctor-guides.mjs && node --check src/harness/managed-manifest.mjs && node --check src/harness/plans-worklogs.mjs && node --check src/harness/context-memory.mjs && node --check src/harness/runs-ledger.mjs && node --check src/harness/contracts.mjs && node --check src/core/config.mjs && node --check src/catalog/taxonomy.mjs && node --check src/catalog/reference-adoption.mjs && node --check src/catalog/reference-source-registry.mjs && node --check src/catalog/reference-status.mjs && node --check src/catalog/reference-ledger-decision.mjs && node --check src/layout/structured-playbook-layout.mjs && node --check src/runtime/indexes.mjs && node --check src/runtime/schemas.mjs && node --check src/runtime/evidence-locators.mjs && node --check src/runtime/capability-history.mjs && node --check src/runtime/python-engine.mjs && node --check src/runtime/writing-naturalness.mjs && node --check src/runtime/symbol-outline.mjs && node --check src/runtime/dependency-inventory.mjs && node --check src/runtime/route-api-hints.mjs && node --check src/runtime/repo-graph.mjs && node --check src/runtime/workflow-runs.mjs && node --check src/memory/canon.mjs && node --check src/operator/write-gate.mjs && node --check src/adapter-readiness.mjs && node --check src/operator-diagnostics.mjs && node --check src/operator/shared.mjs && node --check src/operator/check.mjs && node --check src/operator/search.mjs && node --check src/operator/preflight-delta.mjs && node --check src/operator/research.mjs && node --check src/operator/context-analyze.mjs && node --check src/operator/map.mjs && node --check src/operator/audit-gc.mjs && node --check src/operator/rules.mjs && node --check src/operator/diagnostics.mjs && node --check src/operator/qa-image-diff.mjs && node --check src/deep-analysis.mjs && node --check src/mcp-tools.mjs && node --check src/mcp-server.mjs && node --check src/skills-lifecycle.mjs && node --check adapters/shared/context-hook.mjs && node --check adapters/shared/package-shell.mjs && node --check adapters/codex/hook.mjs && node --check adapters/codex/package.mjs && node --check adapters/claude-code/hook.mjs && node --check adapters/claude-code/package.mjs && node --check scripts/validate.mjs",
+    "test": "node --test test/*.test.mjs",
+    "validate:naming": "node ./scripts/validate.mjs naming",
+    "validate:skills": "node ./scripts/validate.mjs skills",
+    "validate:translations": "node ./scripts/validate.mjs translations",
+    "validate:mcp-docs": "node ./scripts/validate.mjs mcp-docs",
+    "validate:public-docs": "node ./scripts/validate.mjs public-docs",
+    "validate:python": "node ./scripts/validate.mjs python",
+    "validate:all": "npm run validate:naming && npm run validate:skills && npm run validate:translations && npm run validate:mcp-docs && npm run validate:public-docs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "engines": {
     "node": ">=18"
@@ -41,5 +55,8 @@
     "pngjs": "^7.0.0",
     "typescript": "^6.0.3",
     "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0"
   }
 }

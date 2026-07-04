@@ -8,9 +8,11 @@ export {
   INSTALL_MANIFEST_FILE,
   INSTALL_SOURCE,
   LEGACY_PLAYBOOK_DIR,
+  LEGACY_PLAYBOOK_DIRS,
   REQUIRED_PLAYBOOK_FILES,
   RUNS_DIR,
   SCHEMA_VERSION,
+  activePlaybookMissingResult,
   parseMaxChars,
   resolvePlaybookLayout,
   slugifyTitle,
@@ -24,3 +26,23 @@ export { createPlan, createWorklog, summarizeWorklogs } from './harness/plans-wo
 export { contextStatus, initContext, listContexts } from './harness/context-memory.mjs';
 export { recordRun, runStatus, startRun, summarizeRun } from './harness/runs-ledger.mjs';
 export { checkContracts, initContracts, listContracts, snapshotContracts } from './harness/contracts.mjs';
+export { capabilityCatalog, skillCatalog, workflowCatalog } from './catalog/taxonomy.mjs';
+export { buildReferenceAdoptionPlan, buildReferenceAdoptionQueue, buildReferenceCapabilityMatrix, checkReferenceAdoptionLedger, initReferenceAdoptionLedger, inspectReferenceProject, inventoryReferenceDirectory, updateReferenceAdoptionLedger } from './catalog/reference-adoption.mjs';
+export { buildReferenceSourceRegistryPreview, checkReferenceSourceRegistry, updateReferenceSourceRegistry } from './catalog/reference-source-registry.mjs';
+export { buildReferenceAdoptionStatus } from './catalog/reference-status.mjs';
+export { updateReferenceLedgerDecision } from './catalog/reference-ledger-decision.mjs';
+export { HARNESS_CONFIG_FILES, previewHarnessConfig } from './core/config.mjs';
+export { describePlaybookLayout, migratePlaybookLayout } from './layout/structured-playbook-layout.mjs';
+export { buildRuntimeIndex, runtimeIndexStatus, searchRuntimeIndex } from './runtime/indexes.mjs';
+export { previewCapabilityHistory } from './runtime/capability-history.mjs';
+export { buildDependencyInventoryIndex } from './runtime/dependency-inventory.mjs';
+export { checkEvidenceLocators } from './runtime/evidence-locators.mjs';
+export { previewRepoGraph } from './runtime/repo-graph.mjs';
+export { buildRouteApiHintsIndex } from './runtime/route-api-hints.mjs';
+export { checkRuntimeSchema, validateRuntimeSchema } from './runtime/schemas.mjs';
+export { pythonEngineStatus } from './runtime/python-engine.mjs';
+export { checkWritingNaturalness, checkWritingNaturalnessReport } from './runtime/writing-naturalness.mjs';
+export { buildSymbolOutlineIndex } from './runtime/symbol-outline.mjs';
+export { previewWorkflowRun, startWorkflowRun } from './runtime/workflow-runs.mjs';
+export { checkCanonFacts, draftCanonFacts, promoteCanonFacts } from './memory/canon.mjs';
+export { createWriteGateAdvisory, postCheckWriteGate, previewWriteGate } from './operator/write-gate.mjs';

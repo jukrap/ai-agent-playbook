@@ -1,13 +1,44 @@
 import { z } from 'zod';
 import {
+  buildReferenceAdoptionPlan,
+  buildReferenceAdoptionQueue,
+  buildReferenceAdoptionStatus,
+  buildReferenceCapabilityMatrix,
+  buildReferenceSourceRegistryPreview,
+  buildDependencyInventoryIndex,
   buildProjectContext,
+  buildRouteApiHintsIndex,
+  buildSymbolOutlineIndex,
+  capabilityCatalog,
   catalogManagedManifest,
+  checkCanonFacts,
   checkContracts,
+  checkEvidenceLocators,
   checkManagedManifest,
+  checkReferenceAdoptionLedger,
+  checkReferenceSourceRegistry,
+  checkRuntimeSchema,
+  checkWritingNaturalness,
+  checkWritingNaturalnessReport,
   contextStatus,
+  describePlaybookLayout,
   listContexts,
   listContracts,
+  previewWriteGate,
+  inventoryReferenceDirectory,
+  inspectReferenceProject,
   parseMaxChars,
+  previewRepoGraph,
+  previewWorkflowRun,
+  runtimeIndexStatus,
+  searchRuntimeIndex,
+  skillCatalog,
+  startWorkflowRun,
+  createWriteGateAdvisory,
+  updateReferenceAdoptionLedger,
+  updateReferenceLedgerDecision,
+  updateReferenceSourceRegistry,
+  workflowCatalog,
   SCHEMA_VERSION
 } from './harness.mjs';
 import {
@@ -23,6 +54,7 @@ import {
   researchOperator,
   searchOperator
 } from './operator-diagnostics.mjs';
+import { supportedAdapterNames } from './adapter-readiness.mjs';
 import {
   lspDefinition,
   lspDiagnostics,
@@ -40,13 +72,267 @@ const READ_ONLY = {
   openWorldHint: false
 };
 
+const WRITE_CAPABLE = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  idempotentHint: false,
+  openWorldHint: false
+};
+
 const targetSchema = z.string().min(1).describe('Target project directory.');
 const pathSchema = z.string().min(1).optional().describe('Path inside the target project.');
 const maxResultsSchema = z.number().int().min(1).max(100).optional();
 
 export function registerPlaybookMcpTools(server, options) {
-  const { repoRoot } = options;
+  const { repoRoot, enableWriteTools = false } = options;
   const tools = [
+    tool('capability_catalog', 'List AI Agent Playbook capability categories, skill counts, and workflow counts.', {}, () => capabilityCatalog({ repoRoot })),
+    tool('skill_catalog', 'List local skills with capability taxonomy and compatibility wrapper metadata.', {}, () => skillCatalog({ repoRoot })),
+    tool('workflow_list', 'List AI Agent Playbook workflow recipes.', {}, () => workflowCatalog()),
+    tool('workflow_run_preview', 'Preview a workflow run manifest from a target or bundled recipe without writing files.', {
+      target: targetSchema,
+      recipe: z.string().min(1).describe('Lowercase hyphenated workflow recipe id.')
+    }, (args) => previewWorkflowRun({
+      repoRoot,
+      target: args.target,
+      recipeId: args.recipe
+    })),
+    tool('reference_inventory', 'Summarize a local reference collection without reading large source contents.', {
+      target: targetSchema.describe('Reference directory to inventory.'),
+      maxResults: maxResultsSchema
+    }, (args) => inventoryReferenceDirectory({
+      target: args.target,
+      maxProjects: args.maxResults ?? 100
+    })),
+    tool('reference_inspect', 'Inspect one top-level local reference project as a compact no-content adoption review packet.', {
+      target: targetSchema.describe('Reference directory that contains top-level reference projects.'),
+      project: z.string().min(1).describe('Top-level reference project directory name.'),
+      maxDepth: maxResultsSchema.describe('Maximum scan depth inside the selected reference project.')
+    }, (args) => inspectReferenceProject({
+      target: args.target,
+      project: args.project,
+      maxDepth: args.maxDepth ?? 6
+    })),
+    tool('reference_adoption_queue', 'Score local reference collections into a read-only adoption queue.', {
+      target: targetSchema.describe('Reference directory to queue for adoption review.'),
+      maxResults: maxResultsSchema,
+      ledgerPath: z.string().min(1).optional().describe('Optional reference adoption ledger path used to annotate queue status.')
+    }, (args) => buildReferenceAdoptionQueue({
+      target: args.target,
+      maxResults: args.maxResults ?? 20,
+      ledgerPath: args.ledgerPath
+    })),
+    tool('reference_capability_matrix', 'Group local reference adoption candidates by AI Agent Playbook capability without writing files.', {
+      target: targetSchema.describe('Reference directory to group for adoption review.'),
+      maxResults: maxResultsSchema,
+      capability: z.string().min(1).optional().describe('Optional capability id filter.'),
+      ledgerPath: z.string().min(1).optional().describe('Optional reference adoption ledger path used to annotate matrix entries.')
+    }, (args) => buildReferenceCapabilityMatrix({
+      target: args.target,
+      maxResults: args.maxResults ?? 100,
+      capability: args.capability,
+      ledgerPath: args.ledgerPath
+    })),
+    tool('reference_adoption_plan', 'Create a bounded capability-focused reference adoption planning packet without writing files.', {
+      target: targetSchema.describe('Reference directory to plan from.'),
+      capability: z.string().min(1).describe('Capability id to plan for.'),
+      maxResults: maxResultsSchema,
+      ledgerPath: z.string().min(1).optional().describe('Optional reference adoption ledger path used to annotate selected references.')
+    }, (args) => buildReferenceAdoptionPlan({
+      target: args.target,
+      capability: args.capability,
+      maxResults: args.maxResults ?? 5,
+      ledgerPath: args.ledgerPath
+    })),
+    tool('reference_adoption_status', 'Join reference queue, source registry, and adoption ledger state into a read-only status board.', {
+      target: targetSchema,
+      referenceDir: z.string().min(1).describe('Local reference directory to reconcile with the target project.'),
+      path: pathSchema.describe('Optional source registry path inside the target project.'),
+      ledgerPath: z.string().min(1).optional().describe('Optional reference adoption ledger path inside the target project.'),
+      capability: z.string().min(1).optional().describe('Optional capability id filter.'),
+      maxResults: maxResultsSchema
+    }, (args) => buildReferenceAdoptionStatus({
+      target: args.target,
+      referenceDir: args.referenceDir,
+      filePath: args.path,
+      ledgerPath: args.ledgerPath,
+      capability: args.capability,
+      maxResults: args.maxResults ?? 20
+    })),
+    tool('reference_source_registry_preview', 'Preview knowledge/sources.json entries from a local reference adoption queue without writing files.', {
+      target: targetSchema.describe('Reference directory to convert into source registry candidates.'),
+      maxResults: maxResultsSchema
+    }, (args) => buildReferenceSourceRegistryPreview({
+      target: args.target,
+      maxResults: args.maxResults ?? 20
+    })),
+    tool('reference_source_registry_check', 'Validate a target knowledge/sources.json registry and optional local reference path drift without writing files.', {
+      target: targetSchema,
+      path: pathSchema.describe('Optional source registry path inside the target project.'),
+      referenceDir: z.string().min(1).optional().describe('Optional local reference directory used to check registered relative reference paths.')
+    }, (args) => checkReferenceSourceRegistry({
+      target: args.target,
+      filePath: args.path,
+      referenceDir: args.referenceDir
+    })),
+    tool('reference_source_registry_update_preview', 'Preview missing knowledge/sources.json reference entries without writing files.', {
+      target: targetSchema,
+      referenceDir: z.string().min(1).describe('Local reference directory to convert into source registry entries.'),
+      path: pathSchema.describe('Optional source registry path inside the target project.'),
+      maxResults: maxResultsSchema
+    }, (args) => updateReferenceSourceRegistry({
+      target: args.target,
+      referenceDir: args.referenceDir,
+      filePath: args.path,
+      maxResults: args.maxResults ?? 20,
+      apply: false
+    })),
+    tool('reference_ledger_check', 'Validate a project reference adoption ledger for statuses and local-only leaks.', {
+      target: targetSchema,
+      path: pathSchema.describe('Optional ledger path inside the target project.'),
+      strict: z.boolean().optional().describe('Treat oversized excerpts as conflicts instead of warnings.')
+    }, (args) => checkReferenceAdoptionLedger({
+      target: args.target,
+      filePath: args.path,
+      strict: Boolean(args.strict)
+    })),
+    tool('reference_ledger_update_preview', 'Preview missing reference adoption ledger rows without writing files.', {
+      target: targetSchema,
+      referenceDir: z.string().min(1).describe('Local reference directory to queue for adoption review.'),
+      path: pathSchema.describe('Optional ledger path inside the target project.'),
+      maxResults: maxResultsSchema
+    }, (args) => updateReferenceAdoptionLedger({
+      target: args.target,
+      referenceDir: args.referenceDir,
+      filePath: args.path,
+      maxResults: args.maxResults ?? 20,
+      apply: false
+    })),
+    tool('reference_ledger_decision_preview', 'Preview a single reference adoption ledger decision row update without writing files.', {
+      target: targetSchema,
+      reference: z.string().min(1).describe('Reference id or project id to update.'),
+      status: z.enum(['reviewed', 'adopted', 'deferred', 'rejected']).describe('Decision status to record.'),
+      path: pathSchema.describe('Optional ledger path inside the target project.'),
+      capability: z.string().min(1).optional(),
+      pattern: z.string().min(1).optional(),
+      adoption: z.string().min(1).optional(),
+      risk: z.string().min(1).optional(),
+      decisionDate: z.string().min(1).optional().describe('Optional YYYY-MM-DD decision date.')
+    }, (args) => updateReferenceLedgerDecision({
+      target: args.target,
+      filePath: args.path,
+      referenceId: args.reference,
+      status: args.status,
+      capability: args.capability,
+      pattern: args.pattern,
+      adoption: args.adoption,
+      risk: args.risk,
+      decisionDate: args.decisionDate,
+      apply: false
+    })),
+    tool('playbook_layout', 'Describe whether a target playbook has the structured layout.', {
+      target: targetSchema
+    }, (args) => describePlaybookLayout({ target: args.target })),
+    tool('index_status', 'Report the local runtime index status for a target project.', {
+      target: targetSchema
+    }, (args) => runtimeIndexStatus({ target: args.target })),
+    tool('runtime_schema_check', 'Validate a target-relative runtime, eval, witness, evidence, repo-graph, or source-registry JSON without writing files.', {
+      target: targetSchema,
+      path: z.string().min(1).describe('JSON path inside the target project.'),
+      kind: z.string().min(1).optional().describe('Optional runtime schema kind override.')
+    }, (args) => checkRuntimeSchema({
+      target: args.target,
+      filePath: args.path,
+      kind: args.kind
+    })),
+    tool('evidence_locator_check', 'Validate JSON or Markdown evidence locators, scan ranges, source boundaries, and safe values without writing files.', {
+      target: targetSchema,
+      path: z.string().min(1).describe('JSON or Markdown path inside the target project.')
+    }, (args) => checkEvidenceLocators({
+      target: args.target,
+      filePath: args.path
+    })),
+    tool('writing_naturalness_check', 'Check Korean or English writing naturalness without editing files.', {
+      target: targetSchema,
+      path: z.string().min(1).describe('Text or Markdown file path inside the target project.'),
+      lang: z.enum(['auto', 'ko', 'en']).optional().describe('Language to analyze. Defaults to auto.'),
+      engine: z.enum(['auto', 'js', 'python']).optional().describe('Analysis engine. Defaults to auto and uses Python when available.')
+    }, (args) => checkWritingNaturalness({
+      repoRoot,
+      target: args.target,
+      filePath: args.path,
+      lang: args.lang ?? 'auto',
+      engine: args.engine ?? 'auto'
+    })),
+    tool('writing_naturalness_report', 'Check a bounded directory of Korean or English prose files without editing files.', {
+      target: targetSchema,
+      root: z.string().min(1).optional().describe('Directory inside the target project to scan. Defaults to the target root.'),
+      lang: z.enum(['auto', 'ko', 'en']).optional().describe('Language to analyze. Defaults to auto.'),
+      engine: z.enum(['auto', 'js', 'python']).optional().describe('Analysis engine. Defaults to auto and uses Python when available.'),
+      maxFiles: z.number().int().min(1).max(50).optional().describe('Maximum prose files to inspect.')
+    }, (args) => checkWritingNaturalnessReport({
+      repoRoot,
+      target: args.target,
+      rootPath: args.root ?? '.',
+      lang: args.lang ?? 'auto',
+      engine: args.engine ?? 'auto',
+      maxFiles: args.maxFiles ?? 20
+    })),
+    tool('index_search', 'Search local project files without writing the runtime index.', {
+      target: targetSchema,
+      query: z.string().min(1),
+      maxResults: maxResultsSchema
+    }, (args) => searchRuntimeIndex({
+      target: args.target,
+      query: args.query,
+      maxResults: args.maxResults ?? 20
+    })),
+    tool('symbol_outline', 'Preview local source symbols without writing a runtime index artifact.', {
+      target: targetSchema,
+      maxResults: maxResultsSchema
+    }, (args) => buildSymbolOutlineIndex({
+      target: args.target,
+      maxEntries: args.maxResults ?? 100
+    })),
+    tool('dependency_inventory', 'Preview local dependency, lockfile, container, and CI inventory without executing package scripts.', {
+      target: targetSchema
+    }, (args) => buildDependencyInventoryIndex({
+      target: args.target
+    })),
+    tool('route_api_hints', 'Preview local route, client API, SQL, and data object hints without writing runtime artifacts.', {
+      target: targetSchema,
+      maxResults: maxResultsSchema
+    }, (args) => buildRouteApiHintsIndex({
+      target: args.target,
+      maxHints: args.maxResults ?? 100
+    })),
+    tool('repo_graph_preview', 'Preview a compact graph over local runtime file, symbol, route/API, and dependency signals without writing files.', {
+      target: targetSchema,
+      maxResults: maxResultsSchema
+    }, (args) => previewRepoGraph({
+      target: args.target,
+      maxNodes: args.maxResults ?? 100,
+      maxEdges: (args.maxResults ?? 100) * 2
+    })),
+    tool('write_gate_preview', 'Preview write risk for a target path and intent without modifying files.', {
+      target: targetSchema,
+      intent: z.string().min(1),
+      path: pathSchema,
+      maxResults: maxResultsSchema
+    }, (args) => previewWriteGate({
+      repoRoot,
+      target: args.target,
+      intent: args.intent,
+      filePath: args.path,
+      maxResults: args.maxResults ?? 20
+    })),
+    tool('canon_check', 'Check promoted canon facts against runtime evidence and current files without writing.', {
+      target: targetSchema,
+      path: pathSchema.describe('Optional canon facts JSON path inside the target project.')
+    }, (args) => checkCanonFacts({
+      target: args.target,
+      filePath: args.path
+    })),
     tool('playbook_context', 'Build local playbook context for a target project.', {
       target: targetSchema,
       maxChars: z.number().int().min(500).optional()
@@ -208,10 +494,1582 @@ export function registerPlaybookMcpTools(server, options) {
       }
     });
   }
+
+  const writeTools = enableWriteTools ? [
+    tool('workflow_run_start', 'Preview or create a bounded workflow run under .ai-agent-playbook/workflows/runs/. Requires apply=true to write.', {
+      target: targetSchema,
+      recipe: z.string().min(1).describe('Lowercase hyphenated workflow recipe id.'),
+      apply: z.boolean().describe('Must be true to write run files; false returns a dry-run preview.')
+    }, (args) => startWorkflowRun({
+      repoRoot,
+      target: args.target,
+      recipeId: args.recipe,
+      apply: Boolean(args.apply)
+    })),
+    tool('write_gate_advisory', 'Preview or save a pre-write advisory report under .ai-agent-playbook/runtime/reports/write-gate/. Requires apply=true to write.', {
+      target: targetSchema,
+      intent: z.string().min(1),
+      path: pathSchema,
+      maxResults: maxResultsSchema,
+      apply: z.boolean().describe('Must be true to write the advisory report; false returns a dry-run preview.')
+    }, (args) => createWriteGateAdvisory({
+      repoRoot,
+      target: args.target,
+      intent: args.intent,
+      filePath: args.path,
+      maxResults: args.maxResults ?? 20,
+      apply: Boolean(args.apply)
+    })),
+    tool('reference_ledger_update', 'Preview or append missing reference adoption ledger rows. Requires apply=true to write.', {
+      target: targetSchema,
+      referenceDir: z.string().min(1).describe('Local reference directory to queue for adoption review.'),
+      path: pathSchema.describe('Optional ledger path inside the target project.'),
+      maxResults: maxResultsSchema,
+      apply: z.boolean().describe('Must be true to append rows; false returns a dry-run preview.')
+    }, (args) => updateReferenceAdoptionLedger({
+      target: args.target,
+      referenceDir: args.referenceDir,
+      filePath: args.path,
+      maxResults: args.maxResults ?? 20,
+      apply: Boolean(args.apply)
+    })),
+    tool('reference_ledger_decision', 'Preview or update one reference adoption ledger decision row. Requires apply=true to write.', {
+      target: targetSchema,
+      reference: z.string().min(1).describe('Reference id or project id to update.'),
+      status: z.enum(['reviewed', 'adopted', 'deferred', 'rejected']).describe('Decision status to record.'),
+      path: pathSchema.describe('Optional ledger path inside the target project.'),
+      capability: z.string().min(1).optional(),
+      pattern: z.string().min(1).optional(),
+      adoption: z.string().min(1).optional(),
+      risk: z.string().min(1).optional(),
+      decisionDate: z.string().min(1).optional().describe('Optional YYYY-MM-DD decision date.'),
+      apply: z.boolean().describe('Must be true to update a ledger row; false returns a dry-run preview.')
+    }, (args) => updateReferenceLedgerDecision({
+      target: args.target,
+      filePath: args.path,
+      referenceId: args.reference,
+      status: args.status,
+      capability: args.capability,
+      pattern: args.pattern,
+      adoption: args.adoption,
+      risk: args.risk,
+      decisionDate: args.decisionDate,
+      apply: Boolean(args.apply)
+    })),
+    tool('reference_source_registry_update', 'Preview or append missing knowledge/sources.json reference entries. Requires apply=true to write.', {
+      target: targetSchema,
+      referenceDir: z.string().min(1).describe('Local reference directory to convert into source registry entries.'),
+      path: pathSchema.describe('Optional source registry path inside the target project.'),
+      maxResults: maxResultsSchema,
+      apply: z.boolean().describe('Must be true to append source entries; false returns a dry-run preview.')
+    }, (args) => updateReferenceSourceRegistry({
+      target: args.target,
+      referenceDir: args.referenceDir,
+      filePath: args.path,
+      maxResults: args.maxResults ?? 20,
+      apply: Boolean(args.apply)
+    }))
+  ] : [];
+
+  for (const item of writeTools) {
+    server.registerTool(item.name, {
+      title: item.name,
+      description: item.description,
+      inputSchema: item.schema,
+      annotations: WRITE_CAPABLE
+    }, async (args) => {
+      try {
+        const result = await item.handler(args);
+        return toolResult(item.name, result);
+      } catch (error) {
+        return errorToolResult(item.name, error);
+      }
+    });
+  }
+}
+
+export function registerPlaybookMcpResourcesAndPrompts(server, options) {
+  const { repoRoot } = options;
+  const resources = [
+    resource('capability_catalog', 'ai-agent-playbook://capabilities', 'AI Agent Playbook capability catalog.', () => capabilityCatalog({ repoRoot })),
+    resource('skill_catalog', 'ai-agent-playbook://skills', 'AI Agent Playbook skill taxonomy catalog.', () => skillCatalog({ repoRoot })),
+    resource('workflow_list', 'ai-agent-playbook://workflows', 'AI Agent Playbook workflow recipe catalog.', () => workflowCatalog()),
+    resource('adapter_support', 'ai-agent-playbook://adapters', 'Agent adapter support and MCP setup summary.', () => adapterSupportResource()),
+    resource('adapter_readiness', 'ai-agent-playbook://adapter-readiness', 'Adapter readiness commands, checks, and no-write boundaries.', () => adapterReadinessResource()),
+    resource('agent_usage_guide', 'ai-agent-playbook://agent-usage-guide', 'Short guide for choosing playbook resources, prompts, and read-only tools.', () => agentUsageGuideResource()),
+    resource('playbook_layout', 'ai-agent-playbook://playbook-layout', 'Project playbook layout roles and read order.', () => playbookLayoutResource()),
+    resource('reference_adoption', 'ai-agent-playbook://reference-adoption', 'Reference adoption status, registry, ledger, and promotion boundary summary.', () => referenceAdoptionResource()),
+    resource('mcp_permission_model', 'ai-agent-playbook://mcp-permission-model', 'MCP resource, prompt, tool, and permission-tier summary.', () => mcpPermissionModelResource())
+  ];
+
+  for (const item of resources) {
+    server.registerResource(item.name, item.uri, {
+      title: item.name,
+      description: item.description,
+      mimeType: 'application/json'
+    }, async (uri) => {
+      const result = await item.handler();
+      return {
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(result, null, 2)
+        }]
+      };
+    });
+  }
+
+  server.registerPrompt('repo_onboarding_runbook', {
+    title: 'Repo onboarding runbook',
+    description: 'Start a local-first onboarding pass with catalog, layout, index, and write-gate checks.',
+    argsSchema: {
+      target: z.string().optional()
+    }
+  }, (args) => ({
+    messages: [{
+      role: 'user',
+      content: {
+        type: 'text',
+        text: [
+          'Run an AI Agent Playbook repo onboarding pass.',
+          `Target: ${args.target ?? '<target repository>'}`,
+          '',
+          'Use read-only catalog, layout status, runtime index preview/search, and write-gate preview first.',
+          'Only write files when a command or runbook explicitly enables apply mode.'
+        ].join('\n')
+      }
+    }]
+  }));
+
+  server.registerPrompt('harness_extension_plan', {
+    title: 'Harness extension plan',
+    description: 'Plan a new skill, MCP tool, recipe, or playbook layout extension.',
+    argsSchema: {
+      capability: z.string().optional()
+    }
+  }, (args) => ({
+    messages: [{
+      role: 'user',
+      content: {
+        type: 'text',
+        text: [
+          'Plan an AI Agent Playbook extension.',
+          `Capability: ${args.capability ?? '<capability>'}`,
+          '',
+          'Check the capability catalog, skill taxonomy, workflow list, and permission tier before writing implementation files.',
+          'Keep skills trigger-focused and move reusable detail into references.'
+        ].join('\n')
+      }
+    }]
+  }));
+
+  server.registerPrompt('harness_governance_review', {
+    title: 'Harness governance review',
+    description: 'Review a proposed skill, recipe, MCP, context, memory, cache, or reference-adoption change before expanding the harness surface.',
+    argsSchema: {
+      target: z.string().optional(),
+      capability: z.string().optional(),
+      proposal: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook governance review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Capability: ${args.capability ?? '<capability or category>'}`,
+    `Proposal: ${args.proposal ?? '<skill, reference, recipe, runtime command, MCP surface, adapter, plugin, or docs change>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe harness-extension',
+    '- capability_catalog to confirm category fit and counts',
+    '- skill_catalog to check trigger names, wrappers, references, and duplicate names',
+    '- workflow_list to check whether a recipe already exists',
+    '- write_gate_preview before suggesting managed writes',
+    '',
+    'Optional evidence:',
+    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_capability_matrix, reference_adoption_plan, reference_adoption_status, reference_source_registry_preview, reference_source_registry_check, reference_source_registry_update_preview, reference_ledger_check, reference_ledger_update_preview, and reference_ledger_decision_preview when adopting external reference material',
+    '- index_status when runtime indexes, caches, generated evidence, or canon promotion are involved',
+    '- playbook_layout when `.ai-agent-playbook` layout changes are involved',
+    '',
+    'Stop conditions:',
+    '- Change belongs in a selected reference, recipe, or docs page rather than always-on context',
+    '- Proposed surface duplicates an existing skill, workflow, prompt, tool, or resource',
+    '- Write behavior lacks permission tier, dry-run contract, target validation, or audit trail',
+    '- Runtime evidence would be promoted into memory without review',
+    '- External reference material would leak raw source text, private paths, internal URLs, secrets, branch names, or PR numbers',
+    '',
+    'Verification expectations:',
+    '- State the chosen surface: skill, reference, recipe, runtime CLI, MCP resource, MCP prompt, MCP tool, adapter, plugin, docs, or no change.',
+    '- Verify catalog, tests, translations, public-doc hygiene, and install/sync dry-runs for implemented changes.',
+    '- Keep default context and default MCP tool surface narrow unless the broad benefit is explicit.'
+  ]));
+
+  server.registerPrompt('reference_adoption_review', {
+    title: 'Reference adoption review',
+    description: 'Review a local reference collection and update adoption decisions without copying noisy source text.',
+    argsSchema: {
+      target: z.string().optional(),
+      referenceDir: z.string().optional(),
+      capability: z.string().optional()
+    }
+  }, (args) => ({
+    messages: [{
+      role: 'user',
+      content: {
+        type: 'text',
+        text: [
+          'Run an AI Agent Playbook reference adoption review.',
+          `Target project: ${args.target ?? '<target repository>'}`,
+          `Reference directory: ${args.referenceDir ?? '<reference directory>'}`,
+          `Capability focus: ${args.capability ?? '<capability or broad sweep>'}`,
+          '',
+          'Start with read-only reference inventory, reference capability matrix, reference adoption plan, and reference ledger validation.',
+          'Adopt patterns, contracts, and capability gaps only after recording status in the ledger.',
+          'Do not copy large upstream excerpts, local absolute paths, internal URLs, secrets, or noisy upstream branding into public docs.'
+        ].join('\n')
+      }
+    }]
+  }));
+
+  server.registerPrompt('backend_change_review', {
+    title: 'Backend change review',
+    description: 'Review backend/API changes with runtime evidence, contracts, and stop conditions.',
+    argsSchema: {
+      target: z.string().optional(),
+      path: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook backend change review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Path: ${args.path ?? '<optional path>'}`,
+    `Intent: ${args.intent ?? '<change intent>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe backend-contract-change',
+    '- route_api_hints for route/API/data hints',
+    '- contracts_check for path-scoped active or pending contracts',
+    '- write_gate_preview before suggesting edits',
+    '',
+    'Optional evidence:',
+    '- symbol_outline for owners and nearby functions',
+    '- operator_search for callers, DTOs, payload examples, and errors',
+    '',
+    'Stop conditions:',
+    '- Unknown caller behavior',
+    '- Missing schema or contract owner',
+    '- Auth, authorization, migration, or rollout behavior is ambiguous',
+    '',
+    'Verification expectations:',
+    '- Name contract, integration, and caller compatibility checks actually available in the target.',
+    '- Treat generated hints as evidence candidates, not trusted memory.'
+  ]));
+
+  server.registerPrompt('architecture_boundary_review', {
+    title: 'Architecture boundary review',
+    description: 'Review feature slice, domain model, monorepo/package, dependency direction, and public API boundary evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      path: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook architecture boundary review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Path: ${args.path ?? '<optional module, package, or boundary path>'}`,
+    `Intent: ${args.intent ?? '<architecture review intent>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe architecture-boundary-review',
+    '- operator_map for stack, architecture, entrypoint, module boundary, and concern signals',
+    '- operator_search for architecture docs, imports, package exports, domain terms, and boundary rules',
+    '- write_gate_preview before suggesting module, package, or public API edits',
+    '',
+    'Optional evidence:',
+    '- symbol_outline for owners, exports, components, services, functions, and classes',
+    '- dependency_inventory for workspace/package/build graph and generated output context',
+    '',
+    'Stop conditions:',
+    '- Architecture style is assumed from folder names instead of observed code and docs',
+    '- Public API callers, domain invariant owner, dependency cycle impact, or package release impact is unknown',
+    '- Broad restructure is proposed without compatibility, migration, or verification plan',
+    '',
+    'Verification expectations:',
+    '- Name dependency direction, caller/import inventory, package build/typecheck/test, contract, and architecture decision/worklog checks actually available.',
+    '- Do not force FSD, DDD, clean architecture, or monorepo reshuffling unless project evidence and user intent support it.'
+  ]));
+
+  server.registerPrompt('auth_access_control_review', {
+    title: 'Auth access-control review',
+    description: 'Review authentication and authorization changes with explicit evidence and denial-path checks.',
+    argsSchema: {
+      target: z.string().optional(),
+      path: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook auth/access-control review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Path: ${args.path ?? '<optional path>'}`,
+    `Intent: ${args.intent ?? '<auth or authorization concern>'}`,
+    '',
+    'Required evidence:',
+    '- operator_search for auth, role, permission, session, token, and guard terms',
+    '- route_api_hints for protected route and API hints',
+    '- contracts_check for security-sensitive invariants',
+    '- write_gate_preview before suggesting edits',
+    '',
+    'Optional evidence:',
+    '- dependency_inventory for auth/security dependency context',
+    '- symbol_outline for middleware, guard, policy, and controller owners',
+    '',
+    'Stop conditions:',
+    '- Role matrix or denial behavior is unknown',
+    '- Token/session lifecycle is unclear',
+    '- Sensitive data exposure or authorization bypass risk cannot be bounded',
+    '',
+    'Verification expectations:',
+    '- Include positive, denial, expired/invalid credential, and cross-tenant or cross-role checks when applicable.',
+    '- Do not treat route hints as proof that authorization exists.'
+  ]));
+
+  server.registerPrompt('dependency_supply_chain_review', {
+    title: 'Dependency supply-chain review',
+    description: 'Review dependency, lockfile, container, and CI evidence without network vulnerability lookups by default.',
+    argsSchema: {
+      target: z.string().optional(),
+      ecosystem: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook dependency/supply-chain review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Ecosystem focus: ${args.ecosystem ?? '<all detected ecosystems>'}`,
+    '',
+    'Required evidence:',
+    '- dependency_inventory for manifests, lockfiles, containers, and CI actions',
+    '- diagnostics_check for local verification command candidates',
+    '- operator_search for package manager, SBOM, license, Docker, and workflow references',
+    '',
+    'Optional evidence:',
+    '- index_status to see available runtime evidence',
+    '- rules_check for project-specific dependency policy',
+    '',
+    'Stop conditions:',
+    '- Missing lockfile for a production dependency ecosystem',
+    '- Unclear package manager or release artifact owner',
+    '- Network CVE/license lookup is required but not explicitly authorized',
+    '',
+    'Verification expectations:',
+    '- Do not execute package scripts.',
+    '- Separate local inventory findings from external vulnerability or license claims.'
+  ]));
+
+  server.registerPrompt('package_release_readiness_review', {
+    title: 'Package release readiness review',
+    description: 'Review package publishing, artifact contents, metadata, dry-runs, license/notice evidence, and rollback constraints.',
+    argsSchema: {
+      target: z.string().optional(),
+      artifact: z.string().optional(),
+      channel: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook package release readiness review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Artifact: ${args.artifact ?? '<package, CLI, plugin, bundle, or binary>'}`,
+    `Channel: ${args.channel ?? '<registry, marketplace, release channel, or distribution path>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe package-release-readiness',
+    '- dependency_inventory for package manifests, lockfiles, scripts, containers, and CI signals',
+    '- diagnostics_check for local build, test, pack, and verification command candidates',
+    '- write_gate_preview before suggesting metadata, package, or release file edits',
+    '',
+    'Optional evidence:',
+    '- operator_search for package metadata, changelog, release notes, license, notice, provenance, and generated output references',
+    '- index_status for existing runtime reports and capability history',
+    '',
+    'Stop conditions:',
+    '- Version source, artifact owner, registry/channel, license/notice evidence, or rollback/unpublish path is unknown',
+    '- Registry credentials, publishing authority, or live network access is required but unavailable',
+    '- Generated output or package dry-run evidence is stale or missing',
+    '',
+    'Verification expectations:',
+    '- Name pack/dry-run file list, metadata, entrypoint, license/notice, provenance, lockfile, build, and affected runtime checks actually available.',
+    '- Do not publish, log into registries, move tags, or claim legal approval from local evidence alone.'
+  ]));
+
+  server.registerPrompt('deployment_release_review', {
+    title: 'Deployment release review',
+    description: 'Review release, deployment, rollback, container, CI, and post-deploy evidence with explicit gates.',
+    argsSchema: {
+      target: z.string().optional(),
+      environment: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook deployment/release review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Environment: ${args.environment ?? '<target environment>'}`,
+    `Intent: ${args.intent ?? '<release or deployment intent>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe deployment-release',
+    '- dependency_inventory for package, lockfile, container, and CI signals',
+    '- diagnostics_check for local verification command candidates',
+    '- write_gate_preview before suggesting edits',
+    '',
+    'Optional evidence:',
+    '- operator_search for deployment scripts, release notes, migration gates, feature flags, and rollback references',
+    '- index_status for existing runtime reports and capability history',
+    '',
+    'Stop conditions:',
+    '- Rollback path, artifact identity, migration gate, or production owner is unknown',
+    '- Deploy credentials or environment access is required but unavailable',
+    '- Post-deploy smoke checks or monitoring signals cannot be bounded',
+    '',
+    'Verification expectations:',
+    '- Name the CI, artifact/image, migration, smoke, logs, metrics, traces, and rollback checks actually available.',
+    '- Separate local evidence from external deployment status claims.'
+  ]));
+
+  server.registerPrompt('mobile_release_review', {
+    title: 'Mobile release review',
+    description: 'Review mobile release, signing, device permission, offline sync, WebView bridge, and rollback evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      platform: z.string().optional(),
+      artifact: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook mobile release review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Platform: ${args.platform ?? '<iOS, Android, Expo, React Native, Flutter, or hybrid target>'}`,
+    `Artifact: ${args.artifact ?? '<IPA, APK, AAB, internal build, OTA channel, or release artifact>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe mobile-release',
+    '- dependency_inventory for package, native project, build, CI, and distribution signals',
+    '- operator_search for signing, provisioning, build profile, permissions, offline sync, WebView bridge, and release cleanup references',
+    '- write_gate_preview before suggesting mobile release, config, permission, or bridge edits',
+    '',
+    'Optional evidence:',
+    '- route_api_hints for sync API, WebView routes, deep links, and backend contract hints',
+    '- diagnostics_check for build, test, install, launch, and release verification command candidates',
+    '',
+    'Stop conditions:',
+    '- Signing state, target device coverage, release artifact, rollback path, or store/distribution owner is unknown',
+    '- Release build may expose a debug bridge, local endpoint, dev menu, or broad inspection surface',
+    '- Permission expansion, offline/sync data path, or WebView bridge behavior lacks verification evidence',
+    '',
+    'Verification expectations:',
+    '- Name build, artifact, install/launch, permission grant/deny, offline/network transition, WebView bridge, smoke, and rollback checks actually available.',
+    '- Separate emulator/simulator evidence from real-device evidence and do not submit to stores or access credentials from prompt evidence alone.'
+  ]));
+
+  server.registerPrompt('connector_integration_review', {
+    title: 'Connector integration review',
+    description: 'Review connector, adapter, webhook, OAuth, registration, credential, retry, and integration contract evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      path: z.string().optional(),
+      integration: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook connector/integration review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Path: ${args.path ?? '<optional connector path>'}`,
+    `Integration: ${args.integration ?? '<connector, API, webhook, OAuth app, MCP adapter, or sync job>'}`,
+    '',
+    'Required evidence:',
+    '- route_api_hints for route, API, SQL, migration, data-object, and connector-adjacent hints',
+    '- operator_search for connector registration, credential, webhook, retry, timeout, pagination, and error handling references',
+    '- operator_preflight for related context, contracts, and nearby playbook guidance',
+    '- write_gate_preview before suggesting connector or credential-related edits',
+    '',
+    'Optional evidence:',
+    '- dependency_inventory for SDK, package, generated schema, or host-runtime package context',
+    '- symbol_outline for connector classes, node definitions, handlers, adapters, and job owners',
+    '',
+    'Stop conditions:',
+    '- Credential contract, API scope, webhook lifecycle, registration metadata, or saved-config compatibility is unknown',
+    '- Permission scope widens without review or sandbox verification is unavailable',
+    '- Connector depends on live external state without a repeatable verification path',
+    '',
+    'Verification expectations:',
+    '- Include happy path, auth failure, permission failure, retry/rate-limit, malformed payload, webhook lifecycle, and registration checks when applicable.',
+      '- Treat route/API hints as navigation evidence, not proof that connector contracts are correct.'
+    ]));
+
+  server.registerPrompt('design_reference_handoff_review', {
+    title: 'Design reference handoff review',
+    description: 'Review design direction, brand identity, visual references, image/Figma handoff, and evidence before implementation.',
+    argsSchema: {
+      target: z.string().optional(),
+      surface: z.string().optional(),
+      source: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook design reference handoff review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Surface: ${args.surface ?? '<product surface, screen, flow, brand asset, or component set>'}`,
+    `Source: ${args.source ?? '<reference screenshots, generated mockup, Figma frame, brand guide, or current UI>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe design-reference-handoff',
+    '- reference_adoption_plan with capability design when adopting local reference material',
+    '- operator_preflight for related project context, brand constraints, and existing UI guidance',
+    '- write_gate_preview before suggesting token, component, asset, or documentation edits',
+    '',
+    'Optional evidence:',
+    '- qa_image_diff or browser evidence when before/after or reference screenshots are available',
+    '- skill_catalog to check whether design, frontend, accessibility, and visual QA skills already cover the request',
+    '- index_search or operator_search for existing tokens, components, brand docs, screenshots, and Figma/design notes',
+    '',
+    'Stop conditions:',
+    '- Source authority, visual licensing, brand boundary, or allowed match level is unclear',
+    '- The requested direction would copy upstream branding, proprietary visuals, private paths, internal URLs, or client-only details',
+    '- Accessibility, responsive behavior, content-fit, or reduced-motion expectations are missing',
+    '',
+    'Verification expectations:',
+    '- Name the design brief, reference-analysis findings, image/Figma handoff contract, visual evidence package, token/component mapping, and accessibility checks that are actually available.',
+    '- Treat generated images, screenshots, and reference boards as evidence, not durable design-system truth, until reviewed.'
+  ]));
+
+  server.registerPrompt('frontend_quality_review', {
+    title: 'Frontend quality review',
+    description: 'Review frontend state/data, accessibility, responsive behavior, and visual regression evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      path: z.string().optional(),
+      screen: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook frontend quality review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Path: ${args.path ?? '<optional path>'}`,
+    `Screen or flow: ${args.screen ?? '<screen or user flow>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe frontend-quality-review',
+    '- operator_preflight for related context, contracts, and nearby playbook guidance',
+    '- operator_search or index_search for affected screens, components, state, and data flow',
+    '- write_gate_preview before suggesting edits',
+    '',
+    'Optional evidence:',
+    '- symbol_outline for component, hook, and handler owners',
+    '- qa_image_diff or browser evidence when screenshots are available',
+    '',
+    'Stop conditions:',
+    '- Runnable screen, fixture, credential, design baseline, or supported breakpoint is missing',
+    '- State ownership, cache invalidation, or accessibility target is unclear',
+    '- Visual evidence is too stale or low-confidence for the claim being made',
+    '',
+    'Verification expectations:',
+    '- Include desktop/mobile, keyboard/focus, loading/empty/error, stale data, overflow, and visual diff checks when applicable.',
+    '- Treat screenshots and generated hints as evidence, not as durable project memory.'
+  ]));
+
+  server.registerPrompt('interactive_experience_review', {
+    title: 'Interactive experience review',
+    description: 'Review 3D, WebGL, canvas, SVG, chart, map, animation, video, and design-system handoff evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      path: z.string().optional(),
+      surface: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook interactive experience review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Path: ${args.path ?? '<optional rendered surface path>'}`,
+    `Surface: ${args.surface ?? '<3D scene, canvas tool, chart, map, video, animation, or design-system surface>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe interactive-experience-delivery',
+    '- operator_preflight for related context, contracts, and nearby playbook guidance',
+    '- operator_search or index_search for renderer, asset, component, token, and interaction owners',
+    '- write_gate_preview before suggesting renderer, asset, token, or component edits',
+    '',
+    'Optional evidence:',
+    '- dependency_inventory for renderer, chart, map, media, design-system, or asset packages',
+    '- qa_image_diff or browser evidence when screenshots are available',
+    '- symbol_outline for scene, component, hook, loader, and event-handler owners',
+    '',
+    'Stop conditions:',
+    '- Rendered output is blank, unmeasurable, or missing a stable acceptance target',
+    '- Asset source/license, fallback behavior, accessibility target, camera/framing, or performance budget is unclear',
+    '- Interaction is pointer-only when keyboard, touch, reduced-motion, or accessible fallback behavior is required',
+    '',
+    'Verification expectations:',
+    '- Include nonblank screenshot or pixel evidence, desktop/mobile framing, primary interaction smoke test, console/network asset check, resize/device-pixel-ratio behavior, and cleanup/performance notes when applicable.',
+    '- Treat generated screenshots, graph hints, and reference visuals as review evidence, not as durable design-system truth.'
+  ]));
+
+  server.registerPrompt('data_integrity_review', {
+    title: 'Data integrity review',
+    description: 'Review analytics, reporting, migration, backfill, reconciliation, and data contract evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      dataset: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook data integrity review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Dataset or report: ${args.dataset ?? '<dataset, report, dashboard, or metric>'}`,
+    `Intent: ${args.intent ?? '<review intent>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe data-integrity-review',
+    '- route_api_hints for route, API, SQL, migration, and data-object hints',
+    '- operator_search for metric, query, migration, ETL, dashboard, and reconciliation references',
+    '- contracts_check when data contracts or durable invariants exist',
+    '',
+    'Optional evidence:',
+    '- dependency_inventory for warehouse, ETL, scheduler, or reporting package context',
+    '- canon_check before promoting data facts into trusted memory',
+    '',
+    'Stop conditions:',
+    '- Metric owner, grain, denominator, source freshness, or rollback/repair path is unknown',
+    '- Source data access is required but unavailable',
+    '- Destructive repair, migration, or backfill behavior cannot be bounded',
+    '',
+    'Verification expectations:',
+    '- Name source counts, sampled rows, reconciliation queries, report/dashboard checks, freshness, and caveats actually available.',
+    '- Separate source data issues from transformation, query, and presentation issues.'
+  ]));
+
+  server.registerPrompt('data_pipeline_review', {
+    title: 'Data pipeline review',
+    description: 'Route data contract, lineage, quality, reporting, instrumentation, retrieval, migration, and repair reviews through the right evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      scope: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook data pipeline review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Scope: ${args.scope ?? '<dataset, report, event, retrieval index, pipeline, or metric>'}`,
+    `Intent: ${args.intent ?? '<review intent>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe data-integrity-review',
+    '- operator_search for metric, query, event, ETL, dashboard, retrieval, and reconciliation references',
+    '- operator_map for lineage, producer, transformation, consumer, and ownership hints',
+    '- route_api_hints for route, API, SQL, migration, and data-object hints',
+    '- dependency_inventory for warehouse, ETL, scheduler, BI, document loader, or retrieval package context',
+    '- write_gate_preview before suggesting edits',
+    '',
+    'Optional evidence:',
+    '- index_status when generated indexes, retrieval artifacts, or runtime evidence are involved',
+    '- contracts_check when data contracts or durable invariants exist',
+    '- canon_check before promoting data facts into trusted memory',
+    '',
+    'Stop conditions:',
+    '- Review type is unclear: contract/lineage, quality observability, reporting, migration integrity, instrumentation, or retrieval ingestion',
+    '- Dataset grain, owner, source freshness, access model, denominator, or consumer impact is unknown',
+    '- Source data, sampled rows, event payloads, or retrieval evidence are required but unavailable',
+    '- Repair, backfill, or provider behavior cannot be bounded by dry-run, sample, or rollback evidence',
+    '',
+    'Verification expectations:',
+    '- State which review type applies and which data skills should be read.',
+    '- Name available source counts, sampled rows, reconciliation queries, lineage/contract evidence, quality checks, event payload samples, retrieval evaluation, freshness, and caveats.',
+    '- Keep generated evidence separate from durable memory until reviewed.'
+  ]));
+
+  server.registerPrompt('database_change_review', {
+    title: 'Database change review',
+    description: 'Review schema migration, query performance, data integrity, rollback, and database consumer evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      schema: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook database change review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Schema or object: ${args.schema ?? '<table, migration, query, report, procedure, or constraint>'}`,
+    `Intent: ${args.intent ?? '<database change intent>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe database-migration',
+    '- operator_search for schema, migration, query, index, constraint, trigger, procedure, report, export, and rollback references',
+    '- operator_map for stack, data, migration, reporting, and concern signals',
+    '- route_api_hints for route, API, SQL, migration, and data-object hints',
+    '- write_gate_preview before suggesting schema, query, migration, or data repair edits',
+    '',
+    'Optional evidence:',
+    '- contracts_check when database invariants or API/data contracts exist',
+    '- dependency_inventory for ORM, migration tool, scheduler, reporting, and database package context',
+    '- index_status for existing generated runtime evidence',
+    '',
+    'Stop conditions:',
+    '- Production data shape, lock impact, rollback path, backfill bound, or consumer impact is unknown',
+    '- Destructive cleanup, drop, delete, truncate, reindex, or irreversible migration lacks explicit confirmation and rollback evidence',
+    '- Credentials, secrets, private paths, or generated database output would be copied into reusable docs or trusted memory',
+    '',
+    'Verification expectations:',
+    '- Name migration dry run, explain/estimate, before/after query, duplicate/orphan/null reconciliation, application compatibility, rendered report/export/dashboard, and post-deploy checks actually available.',
+    '- Separate schema safety, query performance, data integrity, application contract, and reporting consumer evidence.'
+  ]));
+
+  server.registerPrompt('adr_spec_handoff_review', {
+    title: 'ADR/spec handoff review',
+    description: 'Review decisions, specs, worklogs, and runtime evidence before durable project-memory promotion.',
+    argsSchema: {
+      target: z.string().optional(),
+      source: z.string().optional(),
+      intent: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook ADR/spec handoff review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Source: ${args.source ?? '<plan, worklog, decision, or runtime artifact>'}`,
+    `Intent: ${args.intent ?? '<handoff or promotion intent>'}`,
+    '',
+    'Required evidence:',
+    '- canon_check for existing durable facts and conflicts',
+    '- index_status for available generated runtime evidence',
+    '- write_gate_preview if a future memory promotion write is being considered',
+    '- operator_search for existing ADR, spec, worklog, map, and runbook references',
+    '',
+    'Optional evidence:',
+    '- workflow_run_preview with recipe documentation-package when a documentation package is being prepared',
+    '- reference_ledger_check when external reference adoption is part of the handoff',
+    '',
+    'Stop conditions:',
+    '- Source evidence is noisy, private, unreviewed, or conflicts with current project memory',
+    '- Decision owner, status, consequence, or replacement path is unclear',
+    '- The handoff would store credentials, private paths, branch names, PR numbers, or raw chat transcripts',
+    '',
+    'Verification expectations:',
+    '- Separate current rules, decisions, open questions, historical worklogs, and generated evidence.',
+    '- Promote only reviewed stable facts; leave uncertain evidence in worklogs, plans, or runtime reports.'
+  ]));
+
+  server.registerPrompt('documentation_package_review', {
+    title: 'Documentation package review',
+    description: 'Review PRDs, issue plans, release notes, handoffs, knowledge packages, and documentation evidence before creating durable docs.',
+    argsSchema: {
+      target: z.string().optional(),
+      artifact: z.string().optional(),
+      audience: z.string().optional(),
+      source: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook documentation package review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Artifact: ${args.artifact ?? '<PRD, issue plan, release note, changelog, handoff, knowledge package, or documentation bundle>'}`,
+    `Audience: ${args.audience ?? '<reader or owner>'}`,
+    `Source: ${args.source ?? '<request, spec, worklog, runtime evidence, or docs source>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe documentation-package',
+    '- playbook_context for current project memory and local documentation policy',
+    '- operator_search for existing PRDs, issues, release notes, changelogs, runbooks, handoffs, maps, and docs',
+    '- canon_check for existing durable facts and promoted evidence',
+    '- write_gate_preview before suggesting documentation or memory writes',
+    '',
+    'Optional evidence:',
+    '- reference_ledger_check when external reference adoption is part of the package',
+    '- index_status when generated runtime reports, indexes, screenshots, or evidence are included',
+    '- diagnostics_check for available docs, link, translation, or example validation commands',
+    '',
+    'Stop conditions:',
+    '- Output type or audience is unclear',
+    '- Source evidence conflicts with code, current docs, or durable memory',
+    '- Raw transcripts, unreviewed generated summaries, or runtime reports would become trusted documentation',
+    '- Owner, freshness, translation need, maintenance path, or archive path is unknown',
+    '- Artifact would expose private paths, credentials, internal URLs, branch names, PR numbers, or raw reference excerpts',
+    '',
+    'Verification expectations:',
+    '- State the output type: PRD/spec, issue plan, release note/changelog, handoff, knowledge package, docs update, or no durable doc.',
+    '- List reviewed source evidence, open questions, caveats, owner, freshness, maintenance path, and archive path.',
+    '- Keep generated evidence separate from durable memory until reviewed and promoted.',
+    '- Validate public-doc hygiene, translations, links/paths, placeholders, setup commands, examples, and reader-specific handoff expectations when applicable.'
+  ]));
+
+  server.registerPrompt('natural_writing_review', {
+    title: 'Natural writing review',
+    description: 'Review Korean or English docs, READMEs, release notes, PR text, and translations for naturalness without rewriting automatically.',
+    argsSchema: {
+      target: z.string().optional(),
+      path: z.string().optional(),
+      lang: z.enum(['auto', 'ko', 'en']).optional(),
+      audience: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook natural writing review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Path: ${args.path ?? '<README, docs page, release note, PR body, translation, or prose file>'}`,
+    `Language: ${args.lang ?? 'auto'}`,
+    `Audience: ${args.audience ?? '<reader or maintainer>'}`,
+    '',
+    'Required evidence:',
+    '- writing_naturalness_check for the target prose file',
+    '- playbook_context or operator_search for local writing, translation, or documentation policy when available',
+    '',
+    'Stop conditions:',
+    '- The request is to bypass AI detectors, evaluations, moderation, authorship checks, or institutional policy',
+    '- Rewriting would change facts, numbers, names, legal meaning, security warnings, or release scope',
+    '- Source language, audience, or intended voice is unclear and the change would be more than light editing',
+    '',
+    'Verification expectations:',
+    '- Preserve meaning, facts, numbers, names, and technical terms.',
+    '- Separate Korean translationese issues from English AI-writing issues.',
+    '- Suggest focused edits or a reviewed replacement only after naming the detected patterns and residual caveats.',
+    '- Do not write files from this prompt; it is a read-only review surface.'
+  ]));
+
+  server.registerPrompt('workflow_run_review', {
+    title: 'Workflow run review',
+    description: 'Preview and review a workflow recipe run contract before starting long-running work.',
+    argsSchema: {
+      target: z.string().optional(),
+      recipe: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook workflow run review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Recipe: ${args.recipe ?? '<recipe id>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview for the selected recipe',
+    '- playbook_layout to confirm the workflow folders exist',
+    '- context_status or playbook_context when a path or project memory is relevant',
+    '',
+    'Optional evidence:',
+    '- index_status for available runtime evidence',
+    '- diagnostics_check for verification command candidates',
+    '',
+    'Stop conditions:',
+    '- Recipe is missing, target-specific, or stale',
+    '- Inputs, stop conditions, or verification expectations are incomplete',
+    '- Work would require write tools that are not explicitly enabled',
+    '',
+    'Verification expectations:',
+    '- Report the run contract without creating run files.',
+    '- Keep worklog or memory promotion separate from generated preview evidence.'
+  ]));
+
+  server.registerPrompt('eval_harness_review', {
+    title: 'Eval harness review',
+    description: 'Review capability, regression, grader, fixture, and release-gate eval evidence before changing harness behavior.',
+    argsSchema: {
+      target: z.string().optional(),
+      change: z.string().optional(),
+      evalId: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook eval harness review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Change: ${args.change ?? '<prompt, skill, workflow, MCP, write tier, or capability change>'}`,
+    `Eval: ${args.evalId ?? '<eval id or baseline>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe eval-driven-change',
+    '- diagnostics_check for available test, lint, build, and eval commands',
+    '- operator_search for existing evals, fixtures, graders, release gates, and regression notes',
+    '- index_status for generated runtime evidence and preview-only indexes',
+    '- write_gate_preview before suggesting harness, workflow, or memory writes',
+    '',
+    'Optional evidence:',
+    '- capability_catalog and skill_catalog to locate related capabilities and trigger surfaces',
+    '- canon_check when eval outcomes may become durable project memory',
+    '',
+    'Stop conditions:',
+    '- Target behavior, baseline, grader, fixture scope, success threshold, or retry policy is missing',
+    '- Generated evidence would hide failed attempts, cost, latency, or nondeterministic behavior',
+    '- The proposed change would alter write behavior without a dry-run and permission-tier review',
+    '',
+    'Verification expectations:',
+    '- State the eval type, fixture scope, grader type, pass/fail threshold, cost and latency caveats, and release-gate decision.',
+    '- Keep failed attempts and generated reports in runtime evidence until reviewed.'
+  ]));
+
+  server.registerPrompt('capability_witness_review', {
+    title: 'Capability witness review',
+    description: 'Review observable capability evidence, baseline history, deltas, and regressions before declaring a harness capability healthy.',
+    argsSchema: {
+      target: z.string().optional(),
+      capability: z.string().optional(),
+      source: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook capability witness review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Capability: ${args.capability ?? '<capability id or behavior>'}`,
+    `Source: ${args.source ?? '<runtime report, eval result, worklog, or manual evidence>'}`,
+    '',
+    'Required evidence:',
+    '- capability_catalog for the current capability surface',
+    '- index_status for available generated runtime evidence',
+    '- operator_search for baselines, regression reports, worklogs, run records, and known failure modes',
+    '- canon_check for existing durable facts and conflicts',
+    '',
+    'Optional evidence:',
+    '- workflow_run_preview with recipe eval-driven-change when new witness evidence needs an eval run contract',
+    '- diagnostics_check for commands that can reproduce the witness evidence',
+    '',
+    'Stop conditions:',
+    '- Capability owner, baseline, scan range, source locator, status, or regression policy is unknown',
+    '- Evidence cannot be reopened or distinguished from generated summaries',
+    '- A degraded capability would be described as healthy without residual risk and follow-up work',
+    '',
+    'Verification expectations:',
+    '- Record current status, baseline, delta, failed evidence, source locator, freshness, and reviewer decision.',
+    '- Treat witness history as append-only evidence; do not overwrite prior failures with a new summary.'
+  ]));
+
+  server.registerPrompt('pre_action_fact_gate_review', {
+    title: 'Pre-action fact gate review',
+    description: 'Check facts, locators, write risk, and destructive-action boundaries before taking irreversible or high-impact actions.',
+    argsSchema: {
+      target: z.string().optional(),
+      action: z.string().optional(),
+      evidence: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook pre-action fact gate review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Action: ${args.action ?? '<command, edit, migration, deletion, publish, deploy, or promotion>'}`,
+    `Evidence: ${args.evidence ?? '<fact, source locator, report, or claim>'}`,
+    '',
+    'Required evidence:',
+    '- operator_preflight for target, tool, dependency, and environment checks',
+    '- write_gate_preview for any file, memory, runtime, scaffold, deploy, publish, or destructive action',
+    '- operator_search for source files, docs, scripts, and local policy related to the action',
+    '- canon_check for durable facts and contradictions',
+    '- index_status for generated evidence scope and freshness',
+    '',
+    'Optional evidence:',
+    '- reference_ledger_check when the action depends on adopted external references',
+    '- diagnostics_check for project-defined verification commands',
+    '',
+    'Stop conditions:',
+    '- Critical fact, source locator, scan range, target path, owner, rollback path, or permission tier is missing',
+    '- The action touches credentials, private paths, deployment targets, production data, or package publishing without explicit project policy',
+    '- A generated hint would be treated as a verified fact without reopening the source',
+    '',
+    'Verification expectations:',
+    '- State known facts, unknowns, exact evidence locators, write surface, dry-run path, rollback path, and verification command.',
+    '- Do not proceed from this prompt alone; it is a review brief and keeps default MCP behavior read-only.'
+  ]));
+
+  server.registerPrompt('knowledge_source_review', {
+    title: 'Knowledge source review',
+    description: 'Review source registry entries, locator contracts, freshness, credentials, privacy tier, and promotion boundaries.',
+    argsSchema: {
+      target: z.string().optional(),
+      source: z.string().optional(),
+      useCase: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook knowledge source review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Source: ${args.source ?? '<source id, connector, dataset, repository, docs folder, or reference set>'}`,
+    `Use case: ${args.useCase ?? '<search, browse, retrieval, reporting, onboarding, or promotion>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe knowledge-source-onboarding',
+    '- reference_inventory, reference_inspect, reference_adoption_queue, reference_capability_matrix, reference_adoption_plan, reference_adoption_status, reference_source_registry_preview, reference_source_registry_check, and reference_source_registry_update_preview for available local reference and source material',
+    '- reference_ledger_check, reference_ledger_update_preview, and reference_ledger_decision_preview when external source adoption is in scope',
+    '- operator_research for bounded source scans and evidence envelopes',
+    '- index_status for generated source indexes and freshness',
+    '- canon_check before promoting source-derived facts into trusted memory',
+    '',
+    'Optional evidence:',
+    '- operator_search for local docs, source registry entries, adapters, hooks, and commands',
+    '- write_gate_preview before suggesting registry, reference, memory, or integration writes',
+    '',
+    'Stop conditions:',
+    '- Source owner, privacy tier, credential boundary, update cadence, freshness, browse path, or locator format is unknown',
+    '- Source range is unbounded or evidence cannot be reopened from a compact locator',
+    '- Private payloads, credentials, raw external excerpts, or generated summaries would be committed as trusted knowledge',
+    '',
+    'Verification expectations:',
+    '- State registry fields, status, freshness, credential boundary, locator format, sample reopened evidence, caveats, and promotion policy.',
+    '- Keep generated research and indexes under runtime until reviewed source facts are promoted explicitly.'
+  ]));
+
+  server.registerPrompt('canon_promotion_review', {
+    title: 'Canon promotion review',
+    description: 'Review generated runtime evidence before promoting durable canon facts.',
+    argsSchema: {
+      target: z.string().optional(),
+      source: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook canon promotion review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Runtime source: ${args.source ?? '<runtime report or index>'}`,
+    '',
+    'Required evidence:',
+    '- index_status to list available runtime artifacts',
+    '- canon_check to compare existing promoted facts',
+    '- write_gate_preview if a future promotion write is being considered',
+    '',
+    'Optional evidence:',
+    '- symbol_outline, dependency_inventory, and route_api_hints depending on the fact type',
+    '- operator_research for local supporting evidence',
+    '',
+    'Stop conditions:',
+    '- Runtime artifact is missing or malformed',
+    '- Source scan range is unknown',
+    '- Fact would mix generated evidence with trusted memory without review',
+    '',
+    'Verification expectations:',
+    '- State which generated facts are candidates and which remain unknown.',
+    '- Promotion requires explicit reviewed/apply behavior outside this prompt.'
+  ]));
+
+  server.registerPrompt('index_interpretation_review', {
+    title: 'Index interpretation review',
+    description: 'Interpret runtime indexes without converting generated hints into trusted project memory.',
+    argsSchema: {
+      target: z.string().optional(),
+      focus: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook index interpretation review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Focus: ${args.focus ?? '<symbols, dependencies, routes, data, or broad review>'}`,
+    '',
+    'Required evidence:',
+    '- index_status for available and preview-only indexes',
+    '- symbol_outline for source owners and exported shapes',
+    '- dependency_inventory for package, lockfile, container, and CI signals',
+    '- route_api_hints for route/API/data hints',
+    '',
+    'Optional evidence:',
+    '- index_search and operator_search for local supporting text',
+    '- canon_check when promoted facts already exist',
+    '',
+    'Stop conditions:',
+    '- Evidence is truncated or low-confidence for the claim being made',
+    '- Runtime hints conflict with trusted memory',
+    '- A conclusion requires executing project commands or using network data',
+    '',
+    'Verification expectations:',
+    '- Clearly label generated hints, low-confidence matches, and unknowns.',
+    '- Recommend canon promotion only after explicit human review.'
+  ]));
+
+  server.registerPrompt('agent_orchestration_review', {
+    title: 'Agent orchestration review',
+    description: 'Review worker contracts, context budgets, evidence ledgers, reconciliation gates, and handoff boundaries.',
+    argsSchema: {
+      target: z.string().optional(),
+      goal: z.string().optional(),
+      workers: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook agent orchestration review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Goal: ${args.goal ?? '<orchestration goal>'}`,
+    `Workers or review passes: ${args.workers ?? '<worker count, roles, or review stages>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe agent-orchestration-handoff',
+    '- skill_catalog to confirm agent-orchestration-handoff, context-engineering-memory-design, pre-action-fact-gate, and evidence-locator-integrity are available',
+    '- operator_preflight for intent terms, candidate files, rules, context, and portable file snapshot',
+    '- index_status for available runtime indexes and freshness',
+    '- evidence_locator_check for worker reports, ledgers, handoffs, and generated evidence envelopes',
+    '- write_gate_preview before assigning or accepting any write-capable worker',
+    '',
+    'Optional evidence:',
+    '- operator_search for prior handoffs, worklogs, contracts, reviewer notes, and ownership boundaries',
+    '- runtime_schema_check for generated witness, evidence-envelope, graph, or eval reports',
+    '- canon_check before promoting reconciled claims into durable memory',
+    '- capability_catalog when the orchestration changes harness capabilities or MCP surfaces',
+    '',
+    'Stop conditions:',
+    '- Worker goal, allowed paths, required reads, write tier, expected output, stop condition, or context budget is missing',
+    '- Two write workers target the same files without a reviewer or merge owner',
+    '- Evidence cannot be reopened or scan ranges are unknown',
+    '- Private paths, credentials, private URLs, raw traces, or noisy reference labels would enter shared output',
+    '- Generated worker summaries would be promoted into memory without reconciliation',
+    '',
+    'Verification expectations:',
+    '- State worker contracts, allowed read/write scope, ledger fields, reviewer role, and reconciliation result.',
+    '- Separate accepted, rejected, superseded, blocked, and advisory-only worker claims.',
+    '- Keep write execution and memory promotion behind explicit write-gate and reviewed promotion behavior.'
+  ]));
+
+  server.registerPrompt('repo_graph_review', {
+    title: 'Repo graph review',
+    description: 'Review repo graph evidence, edge confidence, source locators, and promotion boundaries without writing files.',
+    argsSchema: {
+      target: z.string().optional(),
+      focus: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook repo graph review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Focus: ${args.focus ?? '<files, symbols, routes, packages, contracts, docs, workflows, or evidence>'}`,
+    '',
+    'Required evidence:',
+    '- repo_graph_preview for compact file, symbol, route/API, package, contract, doc, workflow, and evidence relationships',
+    '- runtime_schema_check when a persisted graph artifact is being reviewed',
+    '- evidence_locator_check for cited reports, evidence envelopes, or graph-linked markdown notes',
+    '- index_status for available source indexes, preview-only indexes, and freshness',
+    '- canon_check before treating generated graph facts as durable memory',
+    '',
+    'Optional evidence:',
+    '- symbol_outline, dependency_inventory, and route_api_hints to reopen the source signals behind graph nodes and edges',
+    '- operator_search for docs, contracts, rules, tests, and worklogs that explain graph relationships',
+    '',
+    'Stop conditions:',
+    '- Edge confidence, source path, scan range, or source pattern is missing for the claim being made',
+    '- Graph output is truncated or stale for the review scope',
+    '- Generated graph facts would be promoted into memory without review',
+    '- A private path, credential-shaped value, private URL, or noisy reference label appears in shared output',
+    '',
+    'Verification expectations:',
+    '- Label graph findings as generated evidence, not truth.',
+    '- Name reopened source locators and unresolved low-confidence edges.',
+    '- Keep memory promotion behind explicit canon review and write-gate behavior.'
+  ]));
+
+  server.registerPrompt('ci_quality_gate_review', {
+    title: 'CI quality gate review',
+    description: 'Review required, optional, skipped, stale, and flaky checks before merge, release, or handoff.',
+    argsSchema: {
+      target: z.string().optional(),
+      branch: z.string().optional(),
+      change: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook CI quality gate review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Branch or revision: ${args.branch ?? '<branch, revision, or release candidate>'}`,
+    `Change: ${args.change ?? '<change scope>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe ci-quality-gate',
+    '- diagnostics_check for repository-defined lint, typecheck, test, build, package, docs, translation, and schema commands',
+    '- dependency_inventory for package managers, lockfiles, CI workflows, containers, and scripts',
+    '- evidence_locator_check for CI summaries, markdown gate notes, and runtime evidence references',
+    '- write_gate_preview before suggesting CI, workflow, package, or verification file edits',
+    '',
+    'Optional evidence:',
+    '- capability_witness or runtime capability-history evidence when available through index_status and operator_search',
+    '- runtime_schema_check for generated eval, witness, or evidence-envelope artifacts',
+    '- operator_search for flaky-test notes, skip policies, required check definitions, and owner metadata',
+    '',
+    'Stop conditions:',
+    '- Required checks, owners, retry policy, stale evidence, skip reason, or release blocker status is unknown',
+    '- A failed or skipped required check is treated as optional without owner acceptance',
+    '- CI-only behavior cannot be reproduced or bounded by local evidence',
+    '',
+    'Verification expectations:',
+    '- State pass, blocked, advisory-only, or accepted-risk gate status.',
+    '- Separate required checks, optional checks, skipped checks, flaky checks, and unavailable checks.',
+    '- Include the freshest command output or CI locator without copying private URLs, credentials, or long logs.'
+  ]));
+
+  server.registerPrompt('release_deployment_gate_review', {
+    title: 'Release deployment gate review',
+    description: 'Review artifact identity, deployment target, config diff, migration gate, rollback, and post-deploy evidence.',
+    argsSchema: {
+      target: z.string().optional(),
+      artifact: z.string().optional(),
+      environment: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook release/deployment gate review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Artifact: ${args.artifact ?? '<image, package, build, bundle, release candidate, or revision>'}`,
+    `Environment: ${args.environment ?? '<environment, channel, tenant, region, or rollout mode>'}`,
+    '',
+    'Required evidence:',
+    '- workflow_run_preview with recipe deployment-release',
+    '- dependency_inventory for package, image, lockfile, container, CI, and release automation signals',
+    '- route_api_hints for route/API/data/migration impact hints',
+    '- diagnostics_check for build, test, smoke, package, docs, and deploy verification candidates',
+    '- runtime_schema_check for generated release, witness, or evidence reports',
+    '- evidence_locator_check for release gate notes and artifact evidence',
+    '- canon_check before trusting promoted release facts',
+    '- write_gate_preview before suggesting release, config, migration, or documentation edits',
+    '',
+    'Optional evidence:',
+    '- operator_preflight for intent, context, and write-risk snapshot',
+    '- operator_search for feature flags, config/env changes, migrations, workers, queues, cron jobs, release notes, rollback, monitors, and runbooks',
+    '',
+    'Stop conditions:',
+    '- Artifact identity, deployment target, rollout owner, config diff, migration rollback, or post-deploy observation window is unknown',
+    '- Deployment credentials or private endpoints are required but unavailable',
+    '- Release notes or support handoff are required for a user-facing change but missing',
+    '- A generated artifact or runtime report contains private paths, credentials, private URLs, or unrelated local files',
+    '',
+    'Verification expectations:',
+    '- State pass, blocked, advisory-only, or accepted-risk release status.',
+    '- Name artifact identity, CI quality gate, config diff, migration gate, smoke, monitoring, release notes, and rollback evidence.',
+    '- Separate local source evidence from external deployment status claims.'
+  ]));
+
+  server.registerPrompt('security_compliance_gate_review', {
+    title: 'Security compliance gate review',
+    description: 'Review security and compliance gate evidence before merge, release, publication, or handoff.',
+    argsSchema: {
+      target: z.string().optional(),
+      artifact: z.string().optional(),
+      gate: z.string().optional()
+    }
+  }, (args) => promptMessage([
+    'Run an AI Agent Playbook security/compliance gate review.',
+    `Target: ${args.target ?? '<target repository>'}`,
+    `Artifact: ${args.artifact ?? '<source change, package, image, document package, generated bundle, or release candidate>'}`,
+    `Gate: ${args.gate ?? '<merge, release, publish, customer handoff, internal handoff, or documentation publication>'}`,
+    '',
+    'Required evidence:',
+    '- skill_catalog to confirm security-compliance-gate and adjacent security skills are available',
+    '- dependency_inventory for manifests, lockfiles, package scripts, containers, SBOM/provenance, and CI signals',
+    '- route_api_hints for authz-sensitive route, API, SQL, migration, and data exposure hints',
+    '- diagnostics_check for repository-defined security, public-doc, translation, schema, lint, test, and build checks',
+    '- runtime_schema_check for generated runtime, eval, witness, source registry, graph, or evidence artifacts',
+    '- evidence_locator_check for security findings, scanner summaries, release notes, handoffs, and evidence envelopes',
+    '- write_gate_preview before suggesting security, dependency, license, documentation, or artifact edits',
+    '',
+    'Optional evidence:',
+    '- operator_search for secrets, auth/access control, dependency, license, notice, generated artifact, scanner, and policy references',
+    '- canon_check before relying on promoted security or compliance facts',
+    '- reference_ledger_check when adopted reference material influenced the security/compliance rule',
+    '',
+    'Stop conditions:',
+    '- Secret-like value, credential boundary, private URL, personal path, license/notice evidence, dependency provenance, or auth/access-control behavior is unresolved',
+    '- Required scanner, public-doc hygiene, translation coverage, runtime schema, or locator check failed',
+    '- Accepted risk lacks owner, expiry, compensating evidence, and follow-up path',
+    '',
+    'Verification expectations:',
+    '- Classify findings as block, warn, document, or accepted-risk.',
+    '- Route implementation details to security-review, auth-access-control, dependency-supply-chain-review, or license-notice-review.',
+    '- Keep private scanner output bounded and cite reopenable locators instead of copying private URLs, credentials, long logs, or personal paths.'
+  ]));
 }
 
 function tool(name, description, schema, handler) {
   return { name, description, schema, handler };
+}
+
+function resource(name, uri, description, handler) {
+  return { name, uri, description, handler };
+}
+
+function adapterSupportResource() {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'mcp.resource.adapter-support',
+    ok: true,
+    summary: {
+      adapters: 2,
+      primary: 'codex-app',
+      defaultMcpCommand: 'npx ai-agent-playbook mcp',
+      globalMcpCommand: 'aapb mcp'
+    },
+    adapters: [
+      {
+        id: 'codex',
+        supports: ['Codex CLI', 'Codex App on Windows'],
+        docs: ['adapters/codex/README.md'],
+        mcp: {
+          command: 'npx',
+          args: ['ai-agent-playbook', 'mcp'],
+          globalCommand: 'aapb mcp'
+        },
+        notes: [
+          'Codex App is the primary interactive target for this repository.',
+          'Register MCP as a local stdio server when the app supports MCP tools.',
+          'Adapter hooks are optional reminders; durable rules still live in AGENTS.md and .ai-agent-playbook/.'
+        ]
+      },
+      {
+        id: 'claude-code',
+        supports: ['Claude Code'],
+        docs: ['adapters/claude-code/README.md'],
+        mcp: {
+          command: 'npx',
+          args: ['ai-agent-playbook', 'mcp'],
+          globalCommand: 'aapb mcp'
+        },
+        notes: [
+          'Use adapter config/check commands for reviewable local setup hints.',
+          'Do not assume another runtime hook or slash-command environment exists.',
+          'Translate reusable guidance into project-local rules before relying on it.'
+        ]
+      }
+    ],
+    boundaries: [
+      'The npm package does not automatically install hooks, slash commands, skills, or project playbooks.',
+      'MCP is read-only by default; write-capable tools require server opt-in and apply in the tool call.',
+      'Project source writes are not exposed through MCP.'
+    ]
+  };
+}
+
+function adapterReadinessResource() {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'mcp.resource.adapter-readiness',
+    ok: true,
+    summary: {
+      adapters: supportedAdapterNames().length,
+      writes: false,
+      primaryCheck: 'adapter check',
+      primaryConfig: 'adapter config'
+    },
+    supportedAdapters: supportedAdapterNames(),
+    commands: [
+      {
+        id: 'adapter.config.codex',
+        command: 'npx ai-agent-playbook adapter config <target-project> --adapter codex --json',
+        purpose: 'Render copy-paste-safe Codex hook and MCP setup without writing files.'
+      },
+      {
+        id: 'adapter.check.codex',
+        command: 'npx ai-agent-playbook adapter check <target-project> --adapter codex --json',
+        purpose: 'Check Codex adapter readiness, context build, hook quiet paths, and example files.'
+      },
+      {
+        id: 'adapter.config.claude-code',
+        command: 'npx ai-agent-playbook adapter config <target-project> --adapter claude-code --json',
+        purpose: 'Render copy-paste-safe Claude Code hook and MCP setup without writing files.'
+      },
+      {
+        id: 'adapter.check.claude-code',
+        command: 'npx ai-agent-playbook adapter check <target-project> --adapter claude-code --json',
+        purpose: 'Check Claude Code adapter readiness, context build, hook quiet paths, and example files.'
+      }
+    ],
+    checks: [
+      'target.directory',
+      'playbook.directory',
+      'context.non-empty',
+      'adapter.hook-file',
+      'adapter.example-config',
+      'hook SessionStart and PostCompact JSON output',
+      'unsupported-event, Stop, and missing-playbook quiet paths',
+      'optional settings JSON validation when --settings is provided'
+    ],
+    boundaries: [
+      'Adapter readiness is read-only and does not create local settings files.',
+      'Rendered config must be reviewed and copied manually by the operator.',
+      'Hooks are optional reminders; durable rules still live in AGENTS.md and .ai-agent-playbook/.'
+    ]
+  };
+}
+
+function agentUsageGuideResource() {
+  return {
+    schemaVersion: '1',
+    kind: 'mcp.agent-usage-guide',
+    summary: {
+      purpose: 'Choose the smallest useful playbook surface before reading broad docs or issuing write commands.',
+      defaultMode: 'read-only',
+      memoryBoundary: 'Use runtime outputs as evidence candidates; promote only reviewed facts into memory.'
+    },
+    whenToUse: [
+      {
+        situation: 'start work in a repository',
+        firstSurfaces: ['playbook_layout', 'playbook_context', 'operator_check', 'diagnostics_check'],
+        followUp: ['workflow_run_preview', 'operator_search', 'index_status']
+      },
+      {
+        situation: 'change code or project structure',
+        firstSurfaces: ['operator_preflight', 'write_gate_preview', 'rules_check'],
+        followUp: ['symbol_outline', 'dependency_inventory', 'route_api_hints', 'contracts_check']
+      },
+      {
+        situation: 'write or translate prose',
+        firstSurfaces: ['writing_naturalness_check', 'writing_naturalness_report', 'natural_writing_review'],
+        followUp: ['use engine:auto so Python-backed Korean checks run when available', 'documentation_package_review', 'operator_search']
+      },
+      {
+        situation: 'long or resumable work',
+        firstSurfaces: ['workflow_run_review', 'workflow_run_preview', 'playbook_context'],
+        followUp: ['run status', 'worklogs', 'canon_check']
+      },
+      {
+        situation: 'before handoff or claim of completion',
+        firstSurfaces: ['diagnostics_check', 'operator_audit', 'canon_check'],
+        followUp: ['documentation_package_review', 'release_deployment_gate_review']
+      }
+    ],
+    contextBudgetRules: [
+      'Read START_HERE.md and CURRENT.md first, then only the context/map/contract files that match the task path.',
+      'Prefer operator_search or index_search over opening entire documentation trees.',
+      'Keep runtime reports under .ai-agent-playbook/runtime unless a human-reviewed promotion is explicit.',
+      'Use prompts to collect evidence before deciding whether a skill reference or workflow recipe is needed.'
+    ]
+  };
+}
+
+function playbookLayoutResource() {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'mcp.resource.playbook-layout',
+    ok: true,
+    summary: {
+      layoutKind: 'structured',
+      memoryRequiresExplicitPromotion: true,
+      runtimeIsGeneratedEvidence: true,
+      defaultTemplate: 'templates/project-playbook'
+    },
+    requiredFiles: ['README.md', 'START_HERE.md', 'CURRENT.md', 'questions.md', 'manifest.json'],
+    readOrder: [
+      'root AGENTS.md and nearest local agent instructions',
+      '.ai-agent-playbook/START_HERE.md',
+      '.ai-agent-playbook/CURRENT.md',
+      '.ai-agent-playbook/questions.md',
+      '.ai-agent-playbook/policy/SKILLS.md when selecting optional skills',
+      '.ai-agent-playbook/policy/GIT.md before staging, committing, pushing, or PR text',
+      'relevant memory/context, memory/maps, memory/decisions, memory/contracts, and glossary entries',
+      'relevant workflow recipe or workflow runbook',
+      'runtime reports only as generated evidence'
+    ],
+    topLevelDirectories: [
+      { path: 'policy/', role: 'Project-local rules, safety notes, and skill-selection policy.' },
+      { path: 'memory/', role: 'Reviewed long-lived project knowledge.' },
+      { path: 'workflows/', role: 'Recipes, runbooks, plans, runs, worklogs, and handoffs.' },
+      { path: 'knowledge/', role: 'Source registries, reference ledgers, and reviewed research inputs.' },
+      { path: 'runtime/', role: 'Generated cache, indexes, graphs, reports, snapshots, and temporary files.' },
+      { path: 'integrations/', role: 'Optional MCP, adapter, hook, and command configuration.' },
+      { path: 'archive/', role: 'Historical material that should not steer current work by default.' }
+    ],
+    usageRules: [
+      'Read START_HERE.md before planning substantial work.',
+      'Use CURRENT.md and questions.md to avoid stale assumptions.',
+      'Use runtime artifacts as evidence candidates, not trusted memory.',
+      'Promote generated facts into memory only through an explicit reviewed process.',
+      'Keep private local paths, credentials, internal URLs, branch names, and PR numbers out of public docs.'
+    ]
+  };
+}
+
+function referenceAdoptionResource() {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'mcp.resource.reference-adoption',
+    ok: true,
+    summary: {
+      writes: false,
+      statusTool: 'reference_adoption_status',
+      sourceRegistry: '.ai-agent-playbook/knowledge/sources.json',
+      ledger: '.ai-agent-playbook/knowledge/reference-adoption-ledger.md'
+    },
+    readOnlyTools: [
+      'reference_inventory',
+      'reference_inspect',
+      'reference_adoption_queue',
+      'reference_capability_matrix',
+      'reference_adoption_plan',
+      'reference_adoption_status',
+      'reference_source_registry_preview',
+      'reference_source_registry_check',
+      'reference_source_registry_update_preview',
+      'reference_ledger_check',
+      'reference_ledger_update_preview',
+      'reference_ledger_decision_preview'
+    ],
+    optInWriteTools: [
+      'reference_ledger_update',
+      'reference_ledger_decision',
+      'reference_source_registry_update'
+    ],
+    commands: [
+      {
+        id: 'reference.status',
+        command: 'npx ai-agent-playbook reference adoption-status <target-project> --reference-dir <reference-dir> --json',
+        purpose: 'Join adoption queue, source registry, and ledger state without writing files.'
+      },
+      {
+        id: 'reference.matrix',
+        command: 'npx ai-agent-playbook reference capability-matrix <reference-dir> --capability <capability> --json',
+        purpose: 'Group local reference candidates by capability before adoption decisions.'
+      },
+      {
+        id: 'reference.plan',
+        command: 'npx ai-agent-playbook reference adoption-plan <reference-dir> --capability <capability> --json',
+        purpose: 'Create a bounded adoption planning packet without copying raw source text.'
+      }
+    ],
+    promotionRules: [
+      'Treat local references as evidence sources, not durable project memory.',
+      'Record adoption decisions in the ledger before moving reusable patterns into skills, workflows, docs, or MCP surfaces.',
+      'Keep generated reports under runtime until reviewed facts are promoted explicitly.',
+      'Do not copy raw upstream excerpts, private paths, internal URLs, credentials, branch names, or PR numbers into public docs.'
+    ]
+  };
+}
+
+function mcpPermissionModelResource() {
+    const readOnlyResources = [
+      'capability_catalog',
+      'skill_catalog',
+      'workflow_list',
+      'adapter_support',
+      'adapter_readiness',
+      'agent_usage_guide',
+      'playbook_layout',
+      'reference_adoption',
+      'mcp_permission_model'
+    ];
+  const optInWriteTools = [
+    'workflow_run_start',
+    'write_gate_advisory',
+    'reference_ledger_update',
+    'reference_ledger_decision',
+    'reference_source_registry_update'
+  ];
+
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'mcp.resource.permission-model',
+    ok: true,
+    summary: {
+      defaultMode: 'read-only',
+      resources: readOnlyResources.length,
+      optInWriteTools: optInWriteTools.length,
+      projectWriteTools: 0
+    },
+    tiers: [
+      { id: 'read', writes: false, purpose: 'Search, state, catalogs, layout status, resources, prompts, and analysis.' },
+      { id: 'scaffold', writes: true, purpose: 'Create bounded playbook records such as workflow runs.' },
+      { id: 'managed-write', writes: true, purpose: 'Update managed files inside .ai-agent-playbook.' },
+      { id: 'project-write', writes: false, purpose: 'Project source modification is not exposed by this MCP server.' }
+    ],
+    defaultResources: readOnlyResources,
+    optInWriteTools,
+    writeRequirements: [
+      'Start the server with --enable-write-tools.',
+      'Pass apply: true in the individual tool call.',
+      'Return a dry-run preview when apply is false.',
+      'Validate target paths before writing.',
+      'Write only bounded playbook, knowledge, or runtime artifacts.'
+    ],
+    nonExposedWrites: [
+      'bootstrap',
+      'install',
+      'update',
+      'uninstall',
+      'prune',
+      'snapshot apply',
+      'canon promotion',
+      'rename',
+      'rewrite',
+      'project source write'
+    ]
+  };
+}
+
+function promptMessage(lines) {
+  return {
+    messages: [{
+      role: 'user',
+      content: {
+        type: 'text',
+        text: lines.join('\n')
+      }
+    }]
+  };
 }
 
 function toolResult(name, result) {

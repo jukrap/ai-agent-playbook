@@ -14,12 +14,14 @@
 1. `skills/` 아래에서 가장 작은 적절한 분류를 고릅니다.
 2. `skills/<category>/<skill-name>/SKILL.md`를 만듭니다.
 3. `SKILL.md`는 트리거, 작업 흐름, 참고 자료를 읽을 시점에 집중합니다.
-4. 긴 규칙, 체크리스트, 예시, provider별 세부사항은 `references/*.md`로 옮깁니다.
-5. 스킬 UI metadata가 필요할 때만 `agents/openai.yaml`을 추가하거나 갱신합니다.
-6. 한국어 번역을 `translations/ko/skills/<category>/<skill-name>.ko.md`에 추가합니다.
-7. reference 파일은 `translations/ko/skills/**/references/`의 대응 경로에 번역합니다.
-8. 스킬이 공개 분류 지도를 바꾸면 `README.md`와 `docs/classification.md`를 갱신합니다.
-9. 검증하고 설치된 복사본을 동기화합니다.
+4. Frontmatter description은 lint warning threshold보다 짧은 trigger sentence로 유지하며, 보통 180자를 넘기지 않습니다.
+5. 긴 규칙, 체크리스트, 예시, provider별 세부사항은 `references/*.md`로 옮깁니다.
+6. Reference는 재사용 절차, evidence, 예시, stack/profile detail을 담을 만큼 충분히 실질적으로 유지하고 placeholder reference를 피합니다.
+7. 스킬 UI metadata가 필요할 때만 `agents/openai.yaml`을 추가하거나 갱신합니다.
+8. 한국어 번역을 `translations/ko/skills/<category>/<skill-name>.ko.md`에 추가합니다.
+9. reference 파일은 `translations/ko/skills/**/references/`의 대응 경로에 번역합니다.
+10. 스킬이 공개 분류 지도를 바꾸면 `README.md`와 `docs/classification.md`를 갱신합니다.
+11. 검증하고 설치된 복사본을 동기화합니다.
 
 ## 프로젝트 템플릿 추가
 
@@ -33,15 +35,23 @@
 
 ## 런타임 CLI 갱신
 
-1. CLI entrypoint는 `bin/ai-playbook.mjs`에 둡니다.
+1. CLI entrypoint는 `bin/aapb.mjs`에 둡니다.
 2. 구현은 `src/` 아래에 두고 template 내용은 중복하지 않습니다.
 3. 테스트는 `test/` 아래에 추가합니다.
-4. `docs/harness-runtime.md`, `README.md`, 설치 문서, 한국어 번역을 함께 갱신합니다.
-5. 대상 프로젝트 파일을 덮어쓰는 동작은 기본적으로 막고, `--force`로만 허용합니다.
+4. `docs/harness-runtime.md`, `README.md`, 사용 수명주기 문서, 한국어 번역을 함께 갱신합니다.
+5. 런타임 또는 엔진 연결부가 바뀌면 `npm run check`, `npm run typecheck`, `npm test`, `npm run validate:python`을 함께 실행합니다.
+
+## TypeScript 전환
+
+- `tsconfig.json`은 leaf 모듈부터 넓힙니다.
+- 입력 계약이 좁고 패키지 진입점을 직접 맡지 않는 모듈을 먼저 고릅니다.
+- `bin/aapb.mjs`, `src/cli.mjs`, `src/mcp-server.mjs`, 어댑터 진입점, 패키지 셸 파일은 빌드 단계가 공개 경로를 정확히 보존할 수 있을 때까지 `.mjs`로 둡니다.
+- 큰 모듈을 타입 검사에 넣기 전에는 export 함수의 옵션 객체 계약을 JSDoc으로 고정하고, `npx tsc --ignoreConfig ...`가 드러내는 좁은 오류부터 고칩니다.
+- 런타임 파일을 `.ts`로 바꿀 때는 패키지 포함 파일, 테스트, 문서, 패키징 미리보기 점검도 같은 변경에서 갱신합니다.
 
 ## Commit, PR, worklog 정책 갱신
 
-- `templates/project-playbook/guides/commit-push-worklog.md`와 `skills/git/commit-worklog-guardrails/references/git-worklog-checklist.md`를 함께 갱신합니다.
+- `templates/project-playbook/knowledge/references/guides/commit-push-worklog.md`와 `skills/git/commit-worklog-guardrails/references/git-worklog-checklist.md`를 함께 갱신합니다.
 - 프로젝트에 복사하는 안내는 template에 둡니다.
 - 스킬로 호출되는 절차 안내는 스킬 참고 자료에 둡니다.
 - 두 파일의 한국어 번역도 같은 변경에서 갱신합니다.
@@ -61,15 +71,16 @@
 
 ```powershell
 npm run check
+npm run typecheck
 npm test
-.\scripts\validate-skills.ps1
-.\scripts\validate-translations.ps1
+npm run validate:python
+npm run validate:all
 .\scripts\sync-skills.ps1 -WhatIf
 .\install.ps1 -SkipValidation -WhatIf
 .\update.ps1 -SkipValidation -WhatIf
 ```
 
-검증 스크립트가 바뀌면 같은 변경에서 `.github/workflows/validate.yml`도 갱신합니다.
+PowerShell 검증 스크립트는 같은 Node 검증기를 부르는 Windows용 래퍼로 유지합니다. macOS, Linux, CI, 패키지 사용자는 npm 명령을 기본 경로로 사용합니다. 검증 스크립트가 바뀌면 같은 변경에서 `.github/workflows/validate.yml`도 갱신합니다.
 
 스킬 원본 파일이 바뀌었으면 검증 뒤 설치된 복사본을 동기화합니다.
 

@@ -16,16 +16,9 @@
 - shared primitive bypasses
 - card nesting or unnecessary decoration
 
-## Style policy selection
+## Style Policy
 
-- Design system first: shared components, tokens, variants, slots, and reusable UI primitives exist.
-- CSS/class first: stylesheets, CSS modules, scoped CSS, or semantic class names are the project convention.
-- Utility class first: Tailwind-style utilities or atomic class composition are the project convention.
-- Inline style first: component-local inline style objects are explicitly preferred.
-
-When no explicit policy exists, keep the local pattern already used by the component and avoid introducing a new styling system.
-
-Use `ui-style-policy` when the style policy itself needs to be selected, documented, or reconciled.
+Before changing styling, use the project's established policy. If the policy itself is unclear, conflicting, or worth documenting, use `style-policy-selection` first. This skill should review rendered quality after the policy is known.
 
 ## Verification
 

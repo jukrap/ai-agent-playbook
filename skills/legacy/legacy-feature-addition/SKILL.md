@@ -21,3 +21,7 @@ Add the feature through the existing seams and leave the rest of the system reco
 - Avoid hidden mock fallback in remote/API features.
 - Keep styling consistent with the legacy UI, including inline style preference when that is the local rule.
 - Document unfinished backend or product decisions as blockers, not fake-complete behavior.
+
+## Reference
+
+Read `references/feature-slice-in-legacy.md` before adding fields, screens, integrations, or business rules to an existing legacy flow.

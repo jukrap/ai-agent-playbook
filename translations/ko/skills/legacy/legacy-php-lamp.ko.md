@@ -1,5 +1,9 @@
 # Legacy PHP LAMP
 
+Primary route: `backend/server-rendered-change`.
+
+Service, configuration, persistence, worker, integration 변경은 이 wrapper와 함께 `backend/backend-change-safety` 및 PHP stack profile을 사용합니다.
+
 include files, sessions, mixed HTML/PHP pages, direct SQL, globals, form posts, shared hosting constraints가 있는 legacy PHP/LAMP application을 유지보수할 때 사용합니다.
 
 ## 진행 절차
@@ -15,3 +19,9 @@ include files, sessions, mixed HTML/PHP pages, direct SQL, globals, form posts, 
 - Composer, autoloading, framework convention이 있다고 가정하지 않습니다.
 - 작은 legacy page 하나에 새 template architecture를 섞지 않습니다.
 - stored data와 모든 caller 확인 없이 SQL 또는 encoding을 바꾸지 않습니다.
+
+## Reference
+
+Stack-specific check는 `references/php-lamp.md`를 읽습니다.
+
+이 legacy wrapper만 충분한지 backend stack profile도 필요한지 결정할 때는 source repository의 backend stack profile selection reference를 확인합니다.

@@ -4,7 +4,7 @@ This page is the command reference for AI Agent Playbook. It explains what each 
 
 If you are trying the tool for the first time, read [First 10 minutes](quick-start.md) before using this full reference.
 
-For installation, update, uninstall, and npm details, see [Install, update, and uninstall](installation.md). For runtime design and JSON contract notes, see [Runtime harness](harness-runtime.md).
+For lifecycle details covering install, update, uninstall, and npm usage, see [Lifecycle guide](lifecycle.md). For runtime design and JSON contract notes, see [Runtime harness](harness-runtime.md).
 
 ## How to run commands
 
@@ -13,11 +13,11 @@ Use one of these forms:
 | Form | When to use it |
 | ---- | -------------- |
 | `npx ai-agent-playbook ...` | Best default for trying the latest published package without adding it to a project. |
-| `ai-playbook ...` | Use after `npm install -g ai-agent-playbook` when you want a short global command. |
-| `node .\bin\ai-playbook.mjs ...` | Use inside a local source checkout of this repository. |
-| `npx ai-agent-playbook mcp` | Register this as a local stdio MCP server command when an AI app should call read-only playbook tools for you. |
+| `aapb ...` | Use after `npm install -g ai-agent-playbook` when you want a short global command. |
+| `node .\bin\aapb.mjs ...` | Use inside a local source checkout of this repository. |
+| `npx ai-agent-playbook mcp` | Register this as a local stdio MCP server command when an AI app should call read-only playbook tools for you. Add `--enable-write-tools` only for explicit opt-in scaffold/managed-write tools. |
 
-In the examples below, replace `npx ai-agent-playbook` with `ai-playbook` or `node .\bin\ai-playbook.mjs` when that matches your setup.
+In the examples below, replace `npx ai-agent-playbook` with `aapb` or `node .\bin\aapb.mjs` when that matches your setup.
 
 `<target>` or `<target-project>` means the project folder you want to inspect, bootstrap, or clean up. It can be `.` when your terminal is already inside that project.
 
@@ -60,19 +60,22 @@ Command-specific options appear where they are needed:
 
 | Option | Used for |
 | ------ | -------- |
-| `--path <file>` | Limit rule, context, search, research, or operator checks to one file or area. |
+| `--path <file>` | Limit rule, context, search, research, ledger, or operator checks to one file or area. |
 | `--query <text>` | Search or research topic. |
 | `--intent <text>` | Planned work description for `operator preflight`. |
 | `--max-results N` | Limit search or research output. |
+| `--to structured` | Select the destination layout for `migrate layout`. |
 | `--max-chars N` | Limit generated context size. |
 | `--strict` | Treat doctor warnings as failures. |
 | `--reminder` | Return a small doctor reminder signal instead of the full report. |
 | `--profile <name>` | Add a stack-specific bootstrap profile after the target stack is known. |
-| `--local-only` | Add `.ai-playbook/` to the target project's `.gitignore` during bootstrap. |
+| `--local-only` | Add `.ai-agent-playbook/` to the target project's `.gitignore` during bootstrap. |
 | `--title <text>` | Title for a generated plan, worklog, or run. |
 | `--month YYYY-MM` | Month for a worklog summary. |
 | `--cols N` | Expected terminal width for `qa tui-check`. |
-| `--run-id <id>` | Select one run under `.ai-playbook/runs/`. |
+| `--run-id <id>` | Select one run under `.ai-agent-playbook/workflows/runs/`. |
+| `--recipe <id>` | Select a workflow recipe for `workflow run-preview`. |
+| `--user-config <path>` | Add an explicit user-level config file for `config preview`; target-local config still wins. |
 | `--type note|criterion|evidence|blocker|cleanup` | Event type for `run record`. |
 | `--status pass|fail|blocked|info` | Event status for `run record`. |
 | `--evidence <path>` | Portable relative evidence path for `run record`. |
@@ -80,6 +83,9 @@ Command-specific options appear where they are needed:
 | `--contract <id>` | Limit `contracts snapshot` to one contract id. |
 | `--threshold N` | Allowed image diff ratio from `0` to `1`; `0` means any changed pixel fails. |
 | `--deep` | Add AST-grep, exact function-body clone cues, and TypeScript/JavaScript language-analysis signals to `operator analyze`. |
+| `--engine auto\|js\|python` | Select the prose-analysis engine for `writing naturalness-check`; `auto` uses Python when available and keeps the JavaScript fallback. |
+| `--root <dir>` | Directory inside the target project for `writing naturalness-report`. |
+| `--max-files N` | Limit the number of prose files inspected by a bounded report command. |
 
 ## First-time setup
 
@@ -103,7 +109,7 @@ Skills are reusable user-level guidance. They are installed under common Codex a
 | Command | When to use it | Writes files? | Example |
 | ------- | -------------- | ------------- | ------- |
 | `skills check` | See whether this playbook's skills are installed, missing, modified, or blocked by same-name unmanaged copies. | No | `npx ai-agent-playbook skills check --json` |
-| `skills lint` | Review source `SKILL.md` files for trigger-focused descriptions, frontmatter shape, and missing reference links before publishing. | No | `npx ai-agent-playbook skills lint --json` |
+| `skills lint` | Review source `SKILL.md` files for trigger-focused descriptions, frontmatter shape, missing reference links, and shallow reference files before publishing. | No | `npx ai-agent-playbook skills lint --json` |
 | `skills install` | Install reusable skills for the first time. | Yes, unless `--dry-run` | `npx ai-agent-playbook skills install --dry-run` then `npx ai-agent-playbook skills install` |
 | `skills update` | Refresh installed managed skills after the package or checkout changes. | Yes, unless `--dry-run` | `npx ai-agent-playbook skills update --dry-run` then `npx ai-agent-playbook skills update` |
 | `skills uninstall` | Remove unmodified managed skills installed by this playbook. | Yes, unless `--dry-run` | `npx ai-agent-playbook skills uninstall --dry-run` then `npx ai-agent-playbook skills uninstall` |
@@ -112,35 +118,143 @@ The skills commands use `.ai-agent-playbook-install.json` markers and content ha
 
 ## Project playbook
 
-Project playbook commands manage `.ai-playbook/` in one target repository.
+Project playbook commands manage `.ai-agent-playbook/` in one target repository.
 
 | Command | When to use it | Writes files? | Example |
 | ------- | -------------- | ------------- | ------- |
-| `bootstrap <target>` | Create the root `AGENTS.md` and `.ai-playbook/` layout in a target project. | Yes, unless `--dry-run` | `npx ai-agent-playbook bootstrap <target-project> --dry-run` |
-| `guides sync <target>` | Copy missing guide templates into an existing `.ai-playbook/guides/`. | Yes, unless `--dry-run` or `--check` | `npx ai-agent-playbook guides sync <target-project> --check --diff --json` |
-| `migrate path <target>` | Preview or apply the legacy `ai-playbook/` to `.ai-playbook/` folder migration. | No unless `--apply` | `npx ai-agent-playbook migrate path <target-project> --json` |
+| `bootstrap <target>` | Create the root `AGENTS.md` and `.ai-agent-playbook/` layout in a target project. | Yes, unless `--dry-run` | `npx ai-agent-playbook bootstrap <target-project> --dry-run` |
+| `guides sync <target>` | Copy missing guide templates into an existing `.ai-agent-playbook/knowledge/references/guides/`. | Yes, unless `--dry-run` or `--check` | `npx ai-agent-playbook guides sync <target-project> --check --diff --json` |
+| `migrate path <target>` | Preview or apply the legacy `ai-playbook/` to `.ai-agent-playbook/` folder migration. | No unless `--apply` | `npx ai-agent-playbook migrate path <target-project> --json` |
+| `migrate layout <target>` | Preview or apply structured `.ai-agent-playbook` directories, legacy-layout moves, reference updates, and archive operations. | No unless `--apply` | `npx ai-agent-playbook migrate layout <target-project> --to structured --json` |
+| `layout status <target>` | Report whether the target playbook has the structured layout files and directories. | No | `npx ai-agent-playbook layout status <target-project> --json` |
 | `doctor <target>` | Check project playbook health, adaptation status, worklog summary freshness, and local-path risk. | No | `npx ai-agent-playbook doctor <target-project> --json` |
-| `context <target>` | Build compact project context from core `.ai-playbook/` files for optional hooks or inspection. | No | `npx ai-agent-playbook context <target-project> --json` |
-| `context list <target>` | List `.ai-playbook/context/**/*.md` files and their frontmatter. | No | `npx ai-agent-playbook context list <target-project> --json` |
-| `context status <target>` | Show which path-scoped context files apply to one file and whether `maps/doc-map.md` exists. | No | `npx ai-agent-playbook context status <target-project> --path src/example.ts --json` |
-| `context init <target>` | Create starter `context/root.md`, `_registry.json`, and `maps/doc-map.md`. | Yes, unless `--dry-run` | `npx ai-agent-playbook context init <target-project> --dry-run --json` |
+| `config preview <target>` | Resolve playbook defaults from built-in values, explicit user config, target config, target-local config, and narrow env overrides. | No | `npx ai-agent-playbook config preview <target-project> --json` |
+| `context <target>` | Build compact project context from core `.ai-agent-playbook/` files for optional hooks or inspection. | No | `npx ai-agent-playbook context <target-project> --json` |
+| `context list <target>` | List `.ai-agent-playbook/memory/context/**/*.md` files and their frontmatter. | No | `npx ai-agent-playbook context list <target-project> --json` |
+| `context status <target>` | Show which path-scoped context files apply to one file and whether `memory/maps/doc-map.md` exists. | No | `npx ai-agent-playbook context status <target-project> --path src/example.ts --json` |
+| `context init <target>` | Create starter `memory/context/root.md`, `_registry.json`, and `memory/maps/doc-map.md`. | Yes, unless `--dry-run` | `npx ai-agent-playbook context init <target-project> --dry-run --json` |
 
-Use `--local-only` with `bootstrap` when the target project's `.ai-playbook/` should be added to that project's `.gitignore`.
+Use `--local-only` with `bootstrap` when the target project's `.ai-agent-playbook/` should be added to that project's `.gitignore`.
+
+`config preview` reads `.ai-agent-playbook/config.json` and `.ai-agent-playbook/config.local.json` when they exist. It does not create either file. Precedence is built-in defaults, optional `--user-config`, target config, target-local config, then explicit environment overrides such as `AI_AGENT_PLAYBOOK_CONTEXT_MAX_CHARS`, `AI_AGENT_PLAYBOOK_DEFAULT_RECIPE`, `AI_AGENT_PLAYBOOK_RUNTIME_CACHE_DIR`, `AI_AGENT_PLAYBOOK_INDEX_MAX_FILES`, and `AI_AGENT_PLAYBOOK_ENABLE_WRITE_TOOLS`.
 
 Context files support markdown frontmatter: `id`, `globs`, `alwaysApply`, `freshness`, and `priority`. Use `context status` before loading more project memory for a path. It is read-only and safe to run often.
 
 Use `CURRENT.md` for current baseline facts, active risks, decisions, and project-specific working vocabulary. Put larger structural facts, scan ranges, and clone or duplicate-code cues in maps so they stay reviewable without turning `CURRENT.md` into a long report.
 
+When `.ai-agent-playbook/` feels too large, narrow the read set before loading more notes: run `operator context --path <file> --json`, then use `operator search` or `index search` for the specific concern. Read only the matching map, runbook, contract, guide, or worklog, and promote reviewed facts back into `memory/` or `knowledge/` instead of copying runtime reports wholesale.
+
+## Catalogs and runtime
+
+These commands expose the capability model and generated local runtime surface. They are safe to run before editing code.
+
+| Command | When to use it | Writes files? | Example |
+| ------- | -------------- | ------------- | ------- |
+| `catalog list` | List capability categories with skill and workflow counts. | No | `npx ai-agent-playbook catalog list --json` |
+| `catalog check` | Validate skill taxonomy, duplicate names, wrapper routes, and wrapper references. | No | `npx ai-agent-playbook catalog check --json` |
+| `workflow list` | List built-in workflow recipes. | No | `npx ai-agent-playbook workflow list --json` |
+| `workflow run-preview <target>` | Preview a workflow run manifest from a target or bundled recipe without creating run files. | No | `npx ai-agent-playbook workflow run-preview <target-project> --recipe backend-contract-change --json` |
+| `workflow run-start <target>` | Preview or create a bounded scaffold-tier run record under `.ai-agent-playbook/workflows/runs/`. | No unless `--apply` | `npx ai-agent-playbook workflow run-start <target-project> --recipe deployment-release --json` |
+| `reference inventory <reference-dir>` | Summarize a local reference collection before deciding what to adopt. | No | `npx ai-agent-playbook reference inventory _reference --json` |
+| `reference inspect <reference-dir>` | Inspect one top-level reference project as a compact adoption review packet without copying source contents. | No | `npx ai-agent-playbook reference inspect _reference --project hermes-agent-main --json` |
+| `reference adoption-queue <reference-dir>` | Score local reference collections into a compact adoption backlog, optionally annotated by ledger status. | No | `npx ai-agent-playbook reference adoption-queue _reference --ledger .ai-agent-playbook/knowledge/reference-adoption-ledger.md --json` |
+| `reference capability-matrix <reference-dir>` | Group scored reference candidates by capability, with optional capability filter and ledger status annotation. | No | `npx ai-agent-playbook reference capability-matrix _reference --capability ai-harness --json` |
+| `reference adoption-plan <reference-dir>` | Build a bounded capability-focused planning packet from the matrix and inspect packets. | No | `npx ai-agent-playbook reference adoption-plan _reference --capability runtime-index-canon --json` |
+| `reference adoption-status <target>` | Reconcile a local reference queue with target source registry and adoption ledger state. | No | `npx ai-agent-playbook reference adoption-status <target-project> --reference-dir _reference --json` |
+| `reference source-registry-preview <reference-dir>` | Convert adoption queue items into `knowledge/sources.json` candidates without writing them. | No | `npx ai-agent-playbook reference source-registry-preview _reference --json` |
+| `reference source-registry-check <target>` | Validate `knowledge/sources.json` schema, freshness, duplicates, and optional local reference path drift. | No | `npx ai-agent-playbook reference source-registry-check <target-project> --reference-dir _reference --json` |
+| `reference source-registry-update <target>` | Preview or append missing `knowledge/sources.json` reference entries from a local reference queue. | No unless `--apply` | `npx ai-agent-playbook reference source-registry-update <target-project> --reference-dir _reference --json` |
+| `reference ledger-init <target>` | Preview or create a missing reference adoption ledger from a local reference queue. | No unless `--apply` | `npx ai-agent-playbook reference ledger-init <target-project> --reference-dir _reference --json` |
+| `reference ledger-update <target>` | Preview or append missing reference adoption ledger rows from a local reference queue. | No unless `--apply` | `npx ai-agent-playbook reference ledger-update <target-project> --reference-dir _reference --json` |
+| `reference ledger-decision <target>` | Preview or update one existing reference adoption ledger row decision. | No unless `--apply` | `npx ai-agent-playbook reference ledger-decision <target-project> --reference reference-pack --status reviewed --json` |
+| `reference ledger-check <target>` | Validate a reference adoption ledger for status values and local-only leaks. | No | `npx ai-agent-playbook reference ledger-check <target-project> --json` |
+| `runtime python-status` | Report whether the optional local Python engine is available and which interpreter was selected. | No | `npx ai-agent-playbook runtime python-status --json` |
+| `runtime capability-history <target>` | Summarize local append-only capability history without running benchmarks or telemetry. | No | `npx ai-agent-playbook runtime capability-history <target-project> --json` |
+| `runtime schema-check <target>` | Validate runtime eval, witness, evidence-envelope, repo-graph, artifact, or source-registry JSON without writing files. | No | `npx ai-agent-playbook runtime schema-check <target-project> --path .ai-agent-playbook/runtime/reports/evals/example.json --json` |
+| `evidence locator-check <target>` | Check JSON or Markdown evidence locators for portable paths, scan ranges, source boundaries, freshness, and credential-looking values. | No | `npx ai-agent-playbook evidence locator-check <target-project> --path .ai-agent-playbook/runtime/reports/evidence/example.json --json` |
+| `index build <target>` | Preview or write `.ai-agent-playbook/runtime/indexes/file-inventory.json`. | No unless `--apply` | `npx ai-agent-playbook index build <target-project> --json` |
+| `index status <target>` | Check whether the runtime file inventory exists. | No | `npx ai-agent-playbook index status <target-project> --json` |
+| `index search <target>` | Search local project text without writing the runtime index. | No | `npx ai-agent-playbook index search <target-project> --query "auth flow" --json` |
+| `index symbol-outline <target>` | Preview function, class, component, method, and binding hints with file, line, confidence, and source pattern metadata. | No | `npx ai-agent-playbook index symbol-outline <target-project> --json` |
+| `index dependency-inventory <target>` | Preview dependency manifests, lockfiles, container base images, package scripts, and CI action usage without executing scripts or network scans. | No | `npx ai-agent-playbook index dependency-inventory <target-project> --json` |
+| `index route-api-hints <target>` | Preview route, client API, SQL query, migration, and data-object hints with source pattern metadata. | No | `npx ai-agent-playbook index route-api-hints <target-project> --json` |
+| `graph preview <target>` | Preview a compact generated graph over runtime file, symbol, route/API, and dependency signals. | No | `npx ai-agent-playbook graph preview <target-project> --json` |
+| `canon draft <target>` | Draft promotion-ready fact candidates from runtime index and reports. | No | `npx ai-agent-playbook canon draft <target-project> --json` |
+| `canon check <target>` | Check promoted canon facts in memory against runtime evidence and current files. | No | `npx ai-agent-playbook canon check <target-project> --json` |
+| `canon promote <target>` | Preview or write reviewed canon facts from a runtime report into memory or knowledge references. | No unless `--apply --reviewed` | `npx ai-agent-playbook canon promote <target-project> --source .ai-agent-playbook/runtime/reports/example.json --to .ai-agent-playbook/memory/maps/canon.json --json` |
+| `write-gate preview <target>` | Preview write risk for an intent and optional path before editing. | No | `npx ai-agent-playbook write-gate preview <target-project> --intent "change auth flow" --path src/example.ts --json` |
+| `write-gate advisory <target>` | Preview or save a pre-write advisory report under playbook runtime. | No unless `--apply` | `npx ai-agent-playbook write-gate advisory <target-project> --intent "change auth flow" --path src/example.ts --apply --json` |
+| `write-gate post-check <target>` | Compare a saved advisory snapshot with current files after editing. | No | `npx ai-agent-playbook write-gate post-check <target-project> --advisory .ai-agent-playbook/runtime/reports/write-gate/pre-write-advisory.<id>.json --json` |
+
+`reference inspect` opens one top-level project from a local reference directory and returns a no-content adoption packet: summary counts, signal highlights, capability hints, representative file read order, adoption questions, and next actions. It rejects traversal, absolute paths, and nested project paths so reference review stays scoped to one collection at a time.
+
+`reference adoption-queue` builds on `reference inventory`. It scores each top-level reference collection by local signals such as skills, agents, MCP, workflows, architecture, frontend, backend, database, DevOps, mobile, data, design, observability, memory, indexes, connectors, security, compliance, docs, tests, and package metadata. It returns recommended capability areas, representative file paths, and next adoption actions without copying raw reference contents. Add `--ledger <ledger.md>` to annotate queue items with `ledgerStatus`, `ledgerCapability`, and `ledgerDecisionDate` from a reference adoption ledger.
+
+`reference capability-matrix` builds on the adoption queue and groups candidates by recommended and candidate capability ids. Each group includes priority counts, optional ledger status counts, recommended/candidate match counts, and a bounded top-reference list with signal highlights, representative files, and next actions. Add `--capability <id>` to focus on one capability such as `ai-harness`, `devops`, `design`, `frontend`, `database`, `data`, `mobile`, or `security`; add `--ledger <ledger.md>` to include existing adoption decisions. The command is read-only and does not emit raw reference source contents.
+
+`reference adoption-plan` builds on the capability matrix and selected inspect packets. It requires `--capability <id>` and returns a bounded plan containing selected references, ledger status, suggested local surfaces, read order, adoption questions, stop conditions, verification, and follow-ups. The packet is triage evidence only; it does not mark anything adopted and does not write ledger rows, source registry entries, runtime reports, skills, workflows, or MCP files.
+
+`reference adoption-status` joins the adoption queue with a target project's source registry and optional adoption ledger. It reports source-registered versus source-missing queue rows, ledger status counts, and capability rollups so reference adoption work can be resumed without manually comparing `knowledge/sources.json`, ledger rows, and matrix output. Missing default registry or ledger files are warnings; explicit invalid paths are conflicts. The command is read-only and does not write or promote adoption decisions.
+
+`reference source-registry-preview` builds on the adoption queue and returns a `knowledge/sources.json` candidate object. Entries keep locators relative to the scanned reference root and include privacy tier, credential boundary, freshness, promotion policy, caveats, capability hints, and representative files. The command validates the generated registry shape but does not write files or promote sources into memory.
+
+`reference source-registry-check` reads `.ai-agent-playbook/knowledge/sources.json` by default and validates schema shape, duplicate ids, status/privacy/type summaries, and stale freshness values. Add `--path <sources.json>` to check a different registry inside the target project. Add `--reference-dir <dir>` to verify registered `referencePath` and representative files still exist under a local reference directory without reading their contents.
+
+`reference source-registry-update` appends only missing local reference source entries to an existing `.ai-agent-playbook/knowledge/sources.json`. It preserves existing source entries and top-level registry metadata, validates the merged registry before writing, and writes only with `--apply`.
+
+`reference ledger-init` seeds `.ai-agent-playbook/knowledge/reference-adoption-ledger.md` from a local reference adoption queue. It writes only with `--apply`, refuses to overwrite an existing ledger, and keeps generated rows compact: status, reference id, capability, useful pattern summary, local adoption note, risk/noise note, and decision date placeholder.
+
+`reference ledger-update` appends only missing `new` rows to an existing reference adoption ledger. It uses the current ledger to avoid duplicating reviewed, adopted, deferred, or rejected references, removes the starter blank template row when real rows are appended, and writes only with `--apply`.
+
+`reference ledger-decision` updates one existing reference adoption ledger row to `reviewed`, `adopted`, `deferred`, or `rejected`. It previews the exact row replacement by default and writes only with `--apply`. Optional `--capability`, `--pattern`, `--adoption`, `--risk`, and `--decision-date YYYY-MM-DD` flags update the selected row cells. Unsafe cell values such as local absolute paths, internal URLs, token-like secrets, table separators, newlines, or oversized raw excerpts are rejected before any write.
+
+`reference ledger-check` validates `.ai-agent-playbook/knowledge/reference-adoption-ledger.md` by default. It checks adoption statuses, local absolute paths, internal URLs, secret-like tokens, and oversized excerpts without writing files. Use `--path <ledger.md>` to check a different ledger inside the target project. JSON output includes `summary.capabilities` so adoption status can be reviewed by capability area. Add `--strict` when oversized fenced excerpts should fail the check instead of only warning.
+
+`runtime python-status` checks the optional Python capability engine. Detection order is `AI_AGENT_PLAYBOOK_PYTHON`, a repo-local `.venv`, `python`, `python3`, then Windows `py -3`. Missing Python is not a harness failure; commands that support `--engine auto` keep their JavaScript fallback and report the unavailable Python engine in JSON.
+
+`runtime capability-history` reads `.ai-agent-playbook/runtime/reports/capability-history.jsonl` when present. It groups entries by capability, reports the latest status, latest duration, baseline, and drift, and omits non-portable evidence paths from output instead of echoing machine-local paths. Missing history is a valid empty state.
+
+`runtime schema-check` reads a target-relative JSON file and validates compact local schemas such as `runtime.eval-definition`, `runtime.eval-run-report`, `runtime.capability-witness`, `runtime.evidence-envelope`, `runtime.repo-graph`, `runtime.source-registry`, or the generic runtime artifact envelope. It detects known `kind` values automatically; use `--kind <kind>` when checking ambiguous evidence envelopes. The command is read-only. Compact schema checks report local absolute paths, credential-looking values, non-portable graph paths, dangling graph edges, and oversized inline evidence as conflicts.
+
+`evidence locator-check` reads a target-relative JSON or Markdown file and recursively inspects locator-like objects, fenced evidence blocks, and locator tables. It reports missing scan ranges, missing or unknown source boundaries, non-portable locator paths, local absolute paths, and credential-looking strings without writing files. Markdown files without locator blocks return an advisory warning instead of a failure.
+
+`graph preview` combines existing read-only runtime signals into a compact `runtime.repo-graph` report. It includes file, doc, symbol, route, data, and package nodes plus source-backed edges such as `contains`, `defines-route`, `mentions`, and `uses-package`. The graph is generated evidence only; promote reviewed facts separately instead of treating the report as durable memory.
+
+`write-gate preview` returns a `transaction.invocationId` and planned `transaction.advisoryPath` under `.ai-agent-playbook/runtime/reports/write-gate/`. The preview stays read-only; the transaction fields are a stable handoff for later post-write or advisory-file work.
+
+`write-gate advisory` uses the same preview engine but can save a pre-write advisory JSON file when `--apply` is present. The file is written only inside `.ai-agent-playbook/runtime/reports/write-gate/`; without `--apply`, the command returns the planned advisory without writing it.
+
+`write-gate post-check` reads a saved advisory and compares its snapshot with current files. If the advisory is missing, invalid, or lacks a snapshot, the command reports `summary.status: "unknown"` instead of claiming the change is clean.
+
+`canon draft` proposes facts from `.ai-agent-playbook/runtime/indexes/file-inventory.json` and JSON reports under `.ai-agent-playbook/runtime/reports/`. `canon check` reads promoted JSON facts under `.ai-agent-playbook/memory/` or a specific `--path <canon-json>` and reports `verified`, `missing`, `stale`, `changed`, and `unverified` states without writing files.
+
+`canon promote` accepts `--source <runtime-index-or-report-json>` and `--to <memory-or-reference-json>`. The source must be a JSON file under `.ai-agent-playbook/runtime/indexes/` or `.ai-agent-playbook/runtime/reports/`. It writes only when both `--apply` and `--reviewed` are present, and only to JSON files under `.ai-agent-playbook/memory/` or `.ai-agent-playbook/knowledge/references/`.
+
+Promotion sources must be valid runtime artifacts with `schemaVersion`, `kind`, `target`, `mode`, `generatedAt`, `summary`, `warnings`, and `conflicts`. If a runtime report is malformed or uses an old shape, `canon promote` reports a conflict instead of drafting facts from it.
+
+Runtime output lives under `.ai-agent-playbook/runtime/`. Do not copy generated output into `.ai-agent-playbook/memory/` until it has been reviewed and promoted intentionally.
+
+## Writing review
+
+| Command | When to use it | Writes files? | Example |
+| ------- | -------------- | ------------- | ------- |
+| `writing naturalness-check <target>` | Check Korean or English prose for translationese, AI-writing signals, inflated tone, repetitive rhythm, and English-term density. | No | `npx ai-agent-playbook writing naturalness-check <target-project> --path README.md --lang auto --engine auto --json` |
+| `writing naturalness-report <target>` | Check a bounded folder of Markdown or text files and summarize which files need prose review. | No | `npx ai-agent-playbook writing naturalness-report <target-project> --root docs --lang ko --engine auto --json` |
+
+`writing naturalness-check` reads one target-relative text file and returns heuristic findings. `--engine auto` merges the built-in JavaScript checks with the optional Python engine when Python is available; `--engine js` forces the dependency-free fallback, and `--engine python` requests Python explicitly. It does not rewrite files, call a network service, judge authorship, or help bypass detectors. Use it before editing README text, translations, PR bodies, release notes, docs pages, and public summaries. Treat findings as review prompts; facts, command names, file paths, warnings, and release scope still need source comparison.
+
+`writing naturalness-report` recursively scans Markdown, MDX, and text files under `--root` and caps the scan at `--max-files` files, up to 50. It applies the same read-only checks as `naturalness-check` but ignores fenced code blocks, inline code, shell commands, URLs, HTML-only badge lines, and path examples before judging prose. Use it for a translation folder or documentation batch, then open the highest-signal files one by one.
+
 ## Managed files
 
-Managed commands inspect or maintain `.ai-playbook/.ai-agent-playbook-install.json`. They protect edited project memory by comparing hashes before removing or adopting files.
+Managed commands inspect or maintain `.ai-agent-playbook/.ai-agent-playbook-install.json`. They protect edited project memory by comparing hashes before removing or adopting files.
 
 | Command | When to use it | Writes files? | Example |
 | ------- | -------------- | ------------- | ------- |
 | `managed check <target>` | Verify the managed marker and report missing or modified managed files. | No | `npx ai-agent-playbook managed check <target-project> --json` |
 | `managed catalog <target>` | See managed files grouped by kind and status before cleanup. | No | `npx ai-agent-playbook managed catalog <target-project> --json` |
 | `managed adopt <target>` | Add a marker to older matching playbook files. | No unless `--apply` | `npx ai-agent-playbook managed adopt <target-project> --json` |
-| `managed prune <target>` | Remove one selected unmodified managed file. | No unless `--apply` | `npx ai-agent-playbook managed prune <target-project> --path .ai-playbook/guides/runtime-harness.md --json` |
+| `managed prune <target>` | Remove one selected unmodified managed file. | No unless `--apply` | `npx ai-agent-playbook managed prune <target-project> --path .ai-agent-playbook/knowledge/references/guides/runtime-harness.md --json` |
 | `managed uninstall <target>` | Remove all unmodified managed playbook files. | No unless `--apply` | `npx ai-agent-playbook managed uninstall <target-project> --json` |
 
 Preview cleanup first:
@@ -182,12 +296,14 @@ Runs track in-progress work. They are useful when a task is long enough that the
 
 | Command | When to use it | Writes files? | Example |
 | ------- | -------------- | ------------- | ------- |
-| `run start <target>` | Create `.ai-playbook/runs/<run-id>/` with a brief, criteria file, append-only ledger, evidence folder, and summary. | Yes, unless `--dry-run` | `npx ai-agent-playbook run start <target-project> --title "Auth flow" --dry-run --json` |
+| `run start <target>` | Create `.ai-agent-playbook/workflows/runs/<run-id>/` with a brief, criteria file, append-only ledger, evidence folder, and summary. | Yes, unless `--dry-run` | `npx ai-agent-playbook run start <target-project> --title "Auth flow" --dry-run --json` |
 | `run status <target>` | Read the latest run or one selected run and summarize events, criteria, blockers, evidence, and cleanup. | No | `npx ai-agent-playbook run status <target-project> --run-id auth-flow --json` |
-| `run record <target>` | Append a note, criterion, evidence, blocker, or cleanup event to `ledger.jsonl`. | Yes | `npx ai-agent-playbook run record <target-project> --run-id auth-flow --type evidence --status pass --message "Auth flow test passed" --evidence .ai-playbook/runs/auth-flow/evidence/auth.txt --json` |
+| `run record <target>` | Append a note, criterion, evidence, blocker, or cleanup event to `ledger.jsonl`. | Yes | `npx ai-agent-playbook run record <target-project> --run-id auth-flow --type evidence --status pass --message "Auth flow test passed" --evidence .ai-agent-playbook/workflows/runs/auth-flow/evidence/auth.txt --json` |
 | `run summarize <target>` | Render the append-only ledger into `summary.md`. | Yes, unless `--dry-run` | `npx ai-agent-playbook run summarize <target-project> --run-id auth-flow --dry-run --json` |
 
 `run record` rejects messages that look like local absolute paths or credential assignments. Evidence paths must be portable relative paths. Runs do not replace worklogs: use runs while executing, then promote durable facts to `CURRENT.md`, maps, runbooks, decisions, contracts, or worklogs.
+
+`workflow run-start` is separate from the older `run start` ledger. It uses workflow recipes and writes only new scaffold files under `.ai-agent-playbook/workflows/runs/` when `--apply` is present. Without `--apply`, it returns the planned files without writing.
 
 ## Contracts
 
@@ -195,10 +311,10 @@ Contracts capture important business rules and invariants. They are checked expl
 
 | Command | When to use it | Writes files? | Example |
 | ------- | -------------- | ------------- | ------- |
-| `contracts list <target>` | List active and pending contracts under `.ai-playbook/contracts/`. | No | `npx ai-agent-playbook contracts list <target-project> --json` |
+| `contracts list <target>` | List active and pending contracts under `.ai-agent-playbook/memory/contracts/`. | No | `npx ai-agent-playbook contracts list <target-project> --json` |
 | `contracts check <target>` | Show active or pending contracts that apply to a path and warn about stale or incomplete contract notes. | No | `npx ai-agent-playbook contracts check <target-project> --path src/example.ts --json` |
-| `contracts snapshot <target>` | Preview or write `.ai-playbook/contracts/.hashes.json` with relative path hashes for contract, appliesTo, and evidence files. | No unless `--apply` | `npx ai-agent-playbook contracts snapshot <target-project> --json` then `npx ai-agent-playbook contracts snapshot <target-project> --apply --json` |
-| `contracts init <target>` | Create starter `.ai-playbook/contracts/README.md` plus `active/` and `pending/` folders. | Yes, unless `--dry-run` | `npx ai-agent-playbook contracts init <target-project> --dry-run --json` |
+| `contracts snapshot <target>` | Preview or write `.ai-agent-playbook/memory/contracts/.hashes.json` with relative path hashes for contract, appliesTo, and evidence files. | No unless `--apply` | `npx ai-agent-playbook contracts snapshot <target-project> --json` then `npx ai-agent-playbook contracts snapshot <target-project> --apply --json` |
+| `contracts init <target>` | Create starter `.ai-agent-playbook/memory/contracts/README.md` plus `active/` and `pending/` folders. | Yes, unless `--dry-run` | `npx ai-agent-playbook contracts init <target-project> --dry-run --json` |
 
 Contract markdown supports frontmatter: `id`, `status`, `appliesTo`, `risk`, `approvedAt`, and `freshness`. `contracts check` warns when an `appliesTo` path is missing, a matching contract is pending, `freshness` is older than 90 days, or the `Required evidence` section is empty. If a contract hash snapshot exists, `contracts check` also warns when tracked contract, appliesTo, or evidence files changed or disappeared.
 
@@ -228,17 +344,22 @@ npx ai-agent-playbook mcp
 If you installed globally, this equivalent command is shorter:
 
 ```powershell
-ai-playbook mcp
+aapb mcp
 ```
+
+The server exposes read-only resources for `ai-agent-playbook://capabilities`, `ai-agent-playbook://skills`, `ai-agent-playbook://workflows`, `ai-agent-playbook://adapters`, `ai-agent-playbook://adapter-readiness`, `ai-agent-playbook://agent-usage-guide`, `ai-agent-playbook://playbook-layout`, `ai-agent-playbook://reference-adoption`, and `ai-agent-playbook://mcp-permission-model`. These resources help AI apps discover the capability catalog, skill taxonomy, workflow recipes, Codex/Claude adapter support, adapter readiness checks, usage order, `.ai-agent-playbook` reading order, reference adoption boundaries, and permission tier before picking tools.
 
 The server exposes read-only tools for:
 
 - playbook context: `playbook_context`, `context_status`, `context_list`
+- catalogs and layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_inspect`, `reference_adoption_queue`, `reference_capability_matrix`, `reference_adoption_plan`, `reference_adoption_status`, `reference_source_registry_preview`, `reference_source_registry_check`, `reference_source_registry_update_preview`, `reference_ledger_check`, `reference_ledger_update_preview`, `reference_ledger_decision_preview`, `playbook_layout`, `index_status`, `runtime_schema_check`, `evidence_locator_check`, `writing_naturalness_check`, `writing_naturalness_report`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `repo_graph_preview`, `write_gate_preview`, `canon_check`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules and project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA and deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`
 
-The MCP layer is read-only in this version. It does not expose bootstrap, install, update, uninstall, prune, snapshot apply, run record, rename, rewrite, or any command that writes files.
+The server also exposes prompts for `repo_onboarding_runbook`, `harness_extension_plan`, `harness_governance_review`, `reference_adoption_review`, `backend_change_review`, `architecture_boundary_review`, `auth_access_control_review`, `dependency_supply_chain_review`, `package_release_readiness_review`, `deployment_release_review`, `mobile_release_review`, `connector_integration_review`, `design_reference_handoff_review`, `frontend_quality_review`, `interactive_experience_review`, `data_integrity_review`, `data_pipeline_review`, `database_change_review`, `adr_spec_handoff_review`, `documentation_package_review`, `natural_writing_review`, `workflow_run_review`, `eval_harness_review`, `capability_witness_review`, `pre_action_fact_gate_review`, `knowledge_source_review`, `canon_promotion_review`, `index_interpretation_review`, `agent_orchestration_review`, `repo_graph_review`, `ci_quality_gate_review`, `release_deployment_gate_review`, and `security_compliance_gate_review`. Prompts are reusable task briefs; they do not grant write access by themselves.
+
+The MCP layer is read-only by default. With `mcp --enable-write-tools`, it also exposes `workflow_run_start`, `write_gate_advisory`, `reference_ledger_update`, `reference_ledger_decision`, and `reference_source_registry_update`; every write-capable tool requires a tool-call `apply` boolean and stays dry-run when `apply` is false. It still does not expose bootstrap, install, update, uninstall, prune, snapshot apply, run record, canon promotion, rename, rewrite, or any project source write command.
 
 ## Adapter setup
 
@@ -251,7 +372,7 @@ Adapters are optional. The default harness works without hooks or agent plugins.
 
 `adapter config` does not create a settings file. It prints the command and JSON that an operator can review and copy manually.
 
-`adapter config --json` also includes a reviewable MCP server example using `npx ai-agent-playbook mcp`, plus the global-install variant using `ai-playbook mcp`.
+`adapter config --json` also includes a reviewable MCP server example using `npx ai-agent-playbook mcp`, plus the global-install variant using `aapb mcp`.
 
 ## Plans and worklogs
 
@@ -259,8 +380,8 @@ Use these commands when you want predictable project-memory paths instead of ad 
 
 | Command | When to use it | Writes files? | Example |
 | ------- | -------------- | ------------- | ------- |
-| `plan new <target>` | Create a dated plan under `.ai-playbook/plans/`. | Yes, unless `--dry-run` | `npx ai-agent-playbook plan new <target-project> --title "Feature slice" --dry-run` |
-| `worklog new <target>` | Create a dated worklog under `.ai-playbook/worklogs/YYYY-MM/`. | Yes, unless `--dry-run` | `npx ai-agent-playbook worklog new <target-project> --title "Feature slice" --dry-run` |
+| `plan new <target>` | Create a dated plan under `.ai-agent-playbook/workflows/plans/`. | Yes, unless `--dry-run` | `npx ai-agent-playbook plan new <target-project> --title "Feature slice" --dry-run` |
+| `worklog new <target>` | Create a dated worklog under `.ai-agent-playbook/workflows/worklogs/YYYY-MM/`. | Yes, unless `--dry-run` | `npx ai-agent-playbook worklog new <target-project> --title "Feature slice" --dry-run` |
 | `worklog summarize <target>` | Create or refresh a monthly worklog summary. | Yes, unless `--dry-run` | `npx ai-agent-playbook worklog summarize <target-project> --month 2026-06 --dry-run` |
 
 Existing plan and worklog files are not overwritten unless `--force` is provided.

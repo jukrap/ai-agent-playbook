@@ -2,7 +2,7 @@
 
 Use this reference before staging files, writing a commit message, pushing, opening a PR, or recording a worklog.
 
-If the project uses `.ai-playbook/GIT.md`, keep the short policy and this detailed guide aligned. The playbook file is for standing rules; this reference is for the full procedural checklist.
+If the project uses `.ai-agent-playbook/policy/GIT.md`, keep the short policy and this detailed guide aligned. The playbook file is for standing rules; this reference is for the full procedural checklist.
 
 ## Before staging
 
@@ -157,8 +157,8 @@ Writing principles:
 - Explain the reason and result so another person can understand the work without separate materials.
 - Prefer actual criteria and judgment over naming a person or external reference.
 - Prioritize what was wrong and how it was organized over what was referenced.
-- Use `.ai-playbook/worklogs/YYYY-MM/` for detailed logs and `.ai-playbook/worklogs/summaries/YYYY-MM.md` for monthly summaries when the project uses the playbook layout.
-- Promote durable facts from worklogs into `.ai-playbook/CURRENT.md`, maps, runbooks, or decisions.
+- Use `.ai-agent-playbook/workflows/worklogs/YYYY-MM/` for detailed logs and `.ai-agent-playbook/workflows/worklogs/summaries/YYYY-MM.md` for monthly summaries when the project uses the playbook layout.
+- Promote durable facts from worklogs into `.ai-agent-playbook/CURRENT.md`, maps, runbooks, or decisions.
 
 Commit messages may preserve concise context for future readers. Use worklogs for deeper reasoning, blockers, decision history, confirmed causes, verification detail, and remaining risks.
 

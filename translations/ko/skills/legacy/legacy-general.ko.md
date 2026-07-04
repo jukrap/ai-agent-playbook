@@ -1,20 +1,24 @@
-# Legacy General
+# 레거시 일반
 
-runtime flow가 불명확하고 오래된 convention, hidden coupling, 약한 tests, 섞인 documentation이 있는 legacy codebase를 유지보수/확장할 때 사용합니다.
+실행 흐름이 불명확하고 오래된 규칙, 숨은 결합, 약한 테스트, 섞인 문서가 있는 레거시 코드베이스를 유지보수하거나 확장할 때 사용합니다.
 
 ## 진행 절차
 
-1. 실제 entrypoints, build/deploy flow, runtime files, active docs를 식별합니다.
-2. architecture 변경을 제안하기 전에 현재 behavior를 추적합니다.
-3. shared selectors, globals, templates, DTOs, config keys, side effects를 검색합니다.
+1. 실제 진입점, 빌드/배포 흐름, 실행 파일, 활성 문서를 식별합니다.
+2. 아키텍처 변경을 제안하기 전에 현재 동작을 추적합니다.
+3. 공유 선택자, 전역 값, 템플릿, DTO, 설정 키, 부수 효과를 검색합니다.
 4. 요청을 해결하는 가장 작고 좁은 변경을 만듭니다.
-5. project commands 또는 explicit manual scenarios로 검증합니다.
-6. blockers, hidden coupling, residual risk를 필요하면 worklog/PR에 기록합니다.
+5. 프로젝트 명령 또는 명시적인 수동 시나리오로 검증합니다.
+6. 막힌 지점, 숨은 결합, 남은 위험을 필요하면 작업 기록이나 PR에 기록합니다.
 
 ## Guardrails
 
-- 코드가 오래돼 보인다는 이유만으로 rewrite하지 않습니다.
-- runtime flow 밖이라는 증거 없이 "unused" code를 삭제하지 않습니다.
-- 이름만 보고 backend contract 또는 deployment path를 추론하지 않습니다.
+- 코드가 오래돼 보인다는 이유만으로 다시 쓰지 않습니다.
+- 실행 흐름 밖이라는 증거 없이 "미사용" 코드를 삭제하지 않습니다.
+- 이름만 보고 백엔드 계약 또는 배포 경로를 추론하지 않습니다.
 - 관련 없는 사용자 변경을 보존합니다.
-- architectural purity보다 현재 운영과의 호환성을 우선합니다.
+- 아키텍처 순수성보다 현재 운영과의 호환성을 우선합니다.
+
+## 참고 자료
+
+진입점, 활성 파일, 운영 소유권, 안전한 검증 방식이 불명확하면 `references/legacy-operating-model.md`를 읽습니다.

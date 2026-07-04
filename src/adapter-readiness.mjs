@@ -6,6 +6,8 @@ import { runCodexHook } from '../adapters/codex/hook.mjs';
 import {
   buildProjectContext,
   DEFAULT_CONTEXT_MAX_CHARS,
+  DEFAULT_PLAYBOOK_DIR,
+  LEGACY_PLAYBOOK_DIRS,
   resolvePlaybookLayout,
   SCHEMA_VERSION
 } from './harness.mjs';
@@ -41,16 +43,21 @@ export async function renderAdapterConfig(options) {
   }
 
   const warnings = [];
-  const preferredPlaybookRoot = path.join(resolvedTarget, '.ai-playbook');
+  const preferredPlaybookRoot = path.join(resolvedTarget, DEFAULT_PLAYBOOK_DIR);
   if (!existsSync(preferredPlaybookRoot) || !await isDirectory(preferredPlaybookRoot)) {
-    const hasLegacyPlaybook = existsSync(path.join(resolvedTarget, 'ai-playbook'))
-      && await isDirectory(path.join(resolvedTarget, 'ai-playbook'));
+    const legacyPlaybooks = [];
+    for (const directory of LEGACY_PLAYBOOK_DIRS) {
+      const candidate = path.join(resolvedTarget, directory);
+      if (existsSync(candidate) && await isDirectory(candidate)) {
+        legacyPlaybooks.push(directory);
+      }
+    }
     warnings.push({
       id: 'config.playbook.missing',
-      message: hasLegacyPlaybook
-        ? 'Missing .ai-playbook/; legacy ai-playbook/ remains compatible, but rendered config should be reviewed before manual setup.'
-        : 'Missing .ai-playbook/; rendered config is still available for manual setup.',
-      paths: ['.ai-playbook/']
+      message: legacyPlaybooks.length > 0
+        ? `Missing ${DEFAULT_PLAYBOOK_DIR}/; legacy playbook path(s) exist and should be migrated with migrate path before adapter setup.`
+        : `Missing ${DEFAULT_PLAYBOOK_DIR}/; rendered config is still available for manual setup.`,
+      paths: [`${DEFAULT_PLAYBOOK_DIR}/`, ...legacyPlaybooks.map((directory) => `${directory}/`)]
     });
   }
 
@@ -175,21 +182,21 @@ function renderMcpConfig() {
     args: ['ai-agent-playbook', 'mcp']
   };
   const globalCommand = {
-    command: 'ai-playbook',
+    command: 'aapb',
     args: ['mcp']
   };
   return {
     ...npxCommand,
     config: {
       mcpServers: {
-        'ai-playbook': npxCommand
+        'ai-agent-playbook': npxCommand
       }
     },
     globalCommand: {
       ...globalCommand,
       config: {
         mcpServers: {
-          'ai-playbook': globalCommand
+          'ai-agent-playbook': globalCommand
         }
       }
     }

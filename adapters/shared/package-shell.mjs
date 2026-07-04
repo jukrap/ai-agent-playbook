@@ -136,7 +136,7 @@ function writeJson(stream, value) {
 
 function helpText(adapter) {
   return [
-    `ai-playbook ${adapter} adapter shell`,
+    `ai-agent-playbook ${adapter} adapter shell`,
     '',
     'Usage:',
     `  node adapters/${adapter}/package.mjs hook [--max-chars N]`,

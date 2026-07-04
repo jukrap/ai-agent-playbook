@@ -6,12 +6,12 @@ AI Agent Playbook has four separate layers:
 
 | Layer | What it means | Installed where? |
 | ----- | ------------- | ---------------- |
-| CLI package | The `ai-playbook` command and bundled source files. | npm cache, global npm location, or one project `node_modules`. |
+| CLI package | The `aapb` command and bundled source files. | npm cache, global npm location, or one project `node_modules`. |
 | Skills | Reusable agent guidance such as onboarding, review, UI polish, and legacy maintenance. | User-level skill folders such as `.codex/skills` and `.agents/skills`. |
-| Project playbook | Local project memory under `.ai-playbook/`, including current facts, working vocabulary, maps, runs, contracts, and worklogs. | One target project repository. |
+| Project playbook | Local project memory under `.ai-agent-playbook/`, including current facts, working vocabulary, maps, runs, contracts, and worklogs. | One target project repository. |
 | MCP tools | Optional read-only tools an AI app can call for context, search, diagnostics, AST search, function-body clone cues, and TypeScript/JavaScript analysis. | Registered in the AI app as a local stdio server command. |
 
-Installing the npm package does not install skills, add `.ai-playbook/` to a project, or register MCP settings. Those steps stay explicit.
+Installing the npm package does not install skills, add `.ai-agent-playbook/` to a project, or register MCP settings. Those steps stay explicit.
 
 ## 1. Run the CLI without installing it globally
 
@@ -25,10 +25,10 @@ Use a global install later only if you want the shorter command from any directo
 
 ```powershell
 npm install -g ai-agent-playbook
-ai-playbook --help
+aapb --help
 ```
 
-From that point on, `ai-playbook ...` and `npx ai-agent-playbook ...` mean the same kind of command. The examples below use `npx` because it is the lowest-commitment path.
+From that point on, `aapb ...` and `npx ai-agent-playbook ...` mean the same kind of command. The examples below use `npx` because it is the lowest-commitment path.
 
 ## How to read the examples
 
@@ -70,13 +70,13 @@ This is read-only. It checks whether a project playbook exists, whether guides a
 
 ## 5. Preview project bootstrap
 
-Bootstrap creates project-level files such as root `AGENTS.md` and `.ai-playbook/`.
+Bootstrap creates project-level files such as root `AGENTS.md` and `.ai-agent-playbook/`.
 
 ```powershell
 npx ai-agent-playbook bootstrap <target-project> --dry-run
 ```
 
-Use `--local-only` when the target project should keep `.ai-playbook/` out of Git:
+Use `--local-only` when the target project should keep `.ai-agent-playbook/` out of Git:
 
 ```powershell
 npx ai-agent-playbook bootstrap <target-project> --local-only --dry-run
@@ -88,7 +88,7 @@ Only apply after the preview looks right:
 npx ai-agent-playbook bootstrap <target-project> --local-only
 ```
 
-Omit `--local-only` if the project should commit `.ai-playbook/`.
+Omit `--local-only` if the project should commit `.ai-agent-playbook/`.
 
 ## 6. Before and after a risky edit
 
@@ -147,8 +147,8 @@ Managed uninstall preserves edited project memory and does not edit `.gitignore`
 | Term | Meaning |
 | ---- | ------- |
 | `npx ai-agent-playbook` | Run the published package without a global install. Good default. |
-| `ai-playbook` | Short command after `npm install -g ai-agent-playbook`. |
-| `node .\bin\ai-playbook.mjs` | Run from a source checkout of this repository. |
+| `aapb` | Short command after `npm install -g ai-agent-playbook`. |
+| `node .\bin\aapb.mjs` | Run from a source checkout of this repository. |
 | `skills install` | Copy reusable skills to user-level skill folders. |
 | `bootstrap` | Copy project-memory files to one target project. |
 | `operator check` | Read-only project health checkpoint. |
@@ -166,4 +166,4 @@ Managed uninstall preserves edited project memory and does not edit `.gitignore`
 - It does not block commits.
 - It does not remove other people's skills by default.
 
-For the full command reference, continue with [Command guide](commands.md). For install/update/delete details, see [Install, update, and uninstall](installation.md).
+For the full command reference, continue with [Command guide](commands.md). For install, update, uninstall, and npm lifecycle details, see [Lifecycle guide](lifecycle.md).

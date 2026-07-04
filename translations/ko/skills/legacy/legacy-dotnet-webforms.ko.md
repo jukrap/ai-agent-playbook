@@ -1,5 +1,9 @@
 # Legacy Dotnet WebForms
 
+Primary route: `backend/server-rendered-change`.
+
+Service, configuration, persistence, worker, integration 변경은 이 wrapper와 함께 `backend/backend-change-safety` 및 .NET stack profile을 사용합니다.
+
 ASP.NET Web Forms, .NET Framework, code-behind pages, ViewState, postback events, Web.config, IIS, 오래된 enterprise .NET web app을 유지보수할 때 사용합니다.
 
 ## 진행 절차
@@ -15,3 +19,9 @@ ASP.NET Web Forms, .NET Framework, code-behind pages, ViewState, postback events
 - 프로젝트 convention이 아니면 generated designer files를 수동 수정하지 않습니다.
 - Web Forms lifecycle을 SPA assumptions로 대체하지 않습니다.
 - .NET Framework 프로젝트에서 modern .NET API가 가능하다고 가정하지 않습니다.
+
+## Reference
+
+Stack-specific check는 `references/dotnet-webforms.md`를 읽습니다.
+
+이 legacy wrapper만 충분한지 backend stack profile도 필요한지 결정할 때는 source repository의 backend stack profile selection reference를 확인합니다.

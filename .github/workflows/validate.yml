@@ -24,6 +24,14 @@ jobs:
         shell: pwsh
         run: npm run check
 
+      - name: Type-check runtime contracts
+        shell: pwsh
+        run: npm run typecheck
+
+      - name: Validate Python engine
+        shell: pwsh
+        run: ./scripts/validate-python.ps1
+
       - name: Test runtime CLI
         shell: pwsh
         run: npm test
@@ -35,6 +43,17 @@ jobs:
       - name: Validate translations
         shell: pwsh
         run: ./scripts/validate-translations.ps1
+
+      - name: Validate public and MCP docs
+        shell: pwsh
+        run: |
+          ./scripts/validate-naming.ps1
+          ./scripts/validate-public-docs.ps1
+          ./scripts/validate-mcp-docs.ps1
+
+      - name: Validate skill sync dry-run
+        shell: pwsh
+        run: ./scripts/sync-skills.ps1 -WhatIf
 
       - name: Validate installer
         shell: pwsh

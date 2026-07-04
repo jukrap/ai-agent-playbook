@@ -8,17 +8,28 @@ The content is not agent-specific. Codex is one installation target. The source 
 
 ## Skill categories
 
-- `skills/project`: project bootstrap, onboarding, and project-memory maintenance.
-- `skills/quality`: API boundary, UI style policy, visual quality, cleanup, and lightweight review workflows.
+- `skills/ai-harness`: MCP, skill, agent, context, fact gate, witness, cache, index, and harness design workflows.
+- `skills/architecture`: boundary, feature slice, domain model, monorepo/package ownership, dependency direction, and coupling review workflows.
+- `skills/backend`: API contract, backend change safety, request/error contract, job/worker, connector, server-rendered flow, and integration workflows.
+- `skills/data`: analytics pipeline, ETL, source registry, reporting, data contract, and quality workflows.
+- `skills/database`: schema, migration, SQL, reporting query, and data integrity workflows.
+- `skills/delivery`: planning, eval, verification, testing, Git, PR, release note, and worklog workflows.
+- `skills/devops`: CI/CD, container, package release, deployment, rollback, and operations triage workflows.
+- `skills/design`: design direction, brand identity, visual reference analysis, image/Figma handoff, and visual evidence workflows.
+- `skills/frontend`: UI, style policy, browser behavior, state/data, accessibility, visual QA, design-system handoff, and interactive media workflows.
 - `skills/git`: commit, PR, push, and worklog guardrails.
-- `skills/meta`: skill-authoring and repository-maintenance skills.
 - `skills/legacy`: maintenance workflows where runtime coupling and compatibility dominate.
+- `skills/meta`: skill-authoring and repository-maintenance skills.
+- `skills/mobile`: native release, permission, offline sync, hybrid, WebView, and device QA workflows.
+- `skills/project`: project bootstrap, onboarding, requirements, issue planning, release notes, natural writing, documentation packages, and project-memory maintenance.
+- `skills/quality`: visual quality, cleanup, compatibility routes, and lightweight review workflows.
+- `skills/security`: authentication, authorization, dependency supply chain, license/notice evidence, security review, compliance gate, and risk workflows.
 
 Add a new category only when the first real skill in that category exists. When a new category or skill changes this map, update `README.md`, this file, Korean translations, and installed skill copies through `docs/maintenance.md`.
 
 ## Runtime category
 
-- `bin/ai-playbook.mjs`: CLI entrypoint.
+- `bin/aapb.mjs`: CLI entrypoint.
 - `src/`: dependency-free Node runtime implementation.
 - `test/`: Node test coverage for bootstrap, doctor, context, guide checks, path migration, adapter hooks, adapter readiness, lifecycle reminders, plan, and worklog commands.
 
@@ -30,9 +41,9 @@ Optional hook or plugin experiments belong in a clearly separated adapter or exp
 
 - `templates/agents`: thin root `AGENTS.md` bootstrap files and stack-specific profiles.
 - `templates/codex-home`: optional personal Codex home guidance for `~/.codex/AGENTS.md`; it is not copied into target repositories by the runtime.
-- `templates/project-playbook`: copyable project-memory template that becomes `.ai-playbook/` in target repositories, including internal `SKILLS.md` and `GIT.md` policy files.
+- `templates/project-playbook`: copyable project-memory template that becomes `.ai-agent-playbook/` in target repositories, including internal `SKILLS.md` and `GIT.md` policy files.
 
-Keep the target project root small. The runtime writes only a thin root `AGENTS.md` bootstrap by default; skill and Git policy belong under `.ai-playbook/`.
+Keep the target project root small. The runtime writes only a thin root `AGENTS.md` bootstrap by default; skill and Git policy belong under `.ai-agent-playbook/`.
 
 ## Process skill compatibility
 
@@ -40,23 +51,121 @@ This repository does not replace external process skill packs. Use `docs/superpo
 
 Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should remain a local experiment, become an adapter, or be promoted into documented CLI behavior.
 
-## Project-memory map
+## Project and documentation map
 
-- `project-bootstrap`: sets up root policies and an `.ai-playbook/` layout after inspecting the repository.
-- `repo-onboarding`: reads repo state and existing `.ai-playbook/` context before planning or editing.
-- `project-doc-system`: organizes `.ai-playbook/`, maps, runbooks, decisions, plans, worklogs, and archived notes.
+- `project-bootstrap`: sets up root policies and an `.ai-agent-playbook/` layout after inspecting the repository.
+- `repo-onboarding`: reads repo state and existing `.ai-agent-playbook/` context before planning or editing.
+- `project-doc-system`: organizes `.ai-agent-playbook/`, maps, runbooks, decisions, plans, worklogs, and archived notes.
+- `adr-spec-handoff`: promotes reviewed decisions, specs, milestone outcomes, worklogs, and handoffs into durable project memory.
+- `requirements-prd-scope-review`: shapes vague requests, stakeholder notes, feature ideas, acceptance criteria, and open questions into reviewable PRDs or scope briefs.
+- `issue-planning-triage`: converts specs, bugs, review findings, worklogs, and follow-ups into scoped issues, priorities, dependencies, and task batches.
+- `release-notes-changelog`: prepares reader-facing release notes, changelogs, migration notes, rollback notes, known issues, and verified change summaries.
+- `documentation-artifact-package`: packages docs, runbooks, diagrams, screenshots, reports, source references, and evidence into stakeholder packages, handoffs, or knowledge artifacts.
+- `natural-writing-humanization`: reviews and edits Korean or English prose for naturalness while preserving meaning, facts, technical terms, and author intent.
+
+## AI harness map
+
+- `mcp-server-design`: designs MCP tools, resources, prompts, permission tiers, write gates, and cache/index surfaces.
+- `context-engineering-memory-design`: reviews agent instructions, context surfaces, prompt/cache budget, project memory, compaction, durable memory promotion, and stale fact handling.
+- `agent-orchestration-handoff`: reviews multi-agent worker contracts, context budgets, evidence ledgers, reconciliation gates, and handoffs.
+- `skill-pack-governance`: governs skill taxonomy growth, wrappers, reference routing, translations, install/sync behavior, and reusable skill-pack adoption.
+- `runtime-index-cache-design`: reviews runtime reports, indexes, graphs, caches, artifact schemas, invalidation, canon promotion, and generated evidence boundaries.
+- `capability-witness-history`: reviews append-only capability witnesses, baseline comparison, skipped/degraded status, and runtime reliability history.
+- `pre-action-fact-gate`: gathers concrete facts before broad, destructive, owner-creating, or high-blast-radius actions.
+- `evidence-locator-integrity`: checks reopenable evidence locators, scan ranges, freshness, confidence, source boundaries, and generated-evidence caveats.
+- `agent-skill-authoring`: reusable skill structure, trigger descriptions, references, and skill/template boundaries.
+
+## Delivery and verification map
+
+- `git-worklog-guardrails`: handles staging, commits, PR text, release notes, and worklogs.
+- `eval-harness-design`: defines agent, harness, workflow, MCP, prompt, capability, regression, grader, and release-gate evals.
+- `test-verification-strategy`: maps change risk to unit, integration, contract, E2E, visual, migration, smoke, manual, or monitor-based checks.
+- `ci-quality-gate`: reviews required checks, optional checks, skipped checks, stale evidence, and merge/release gate decisions.
+- `flaky-test-triage`: diagnoses nondeterministic, timing-dependent, order-dependent, environment-sensitive, or intermittent test failures.
+- `test-fixture-data-design`: designs fixtures, factories, mocks, seeds, snapshots, golden files, sample payloads, and test data boundaries.
+
+## Backend and integration map
+
+- `api-contract-boundary`: reviews frontend/backend contracts, DTOs, payloads, mocks, and adapters.
+- `backend-change-safety`: reviews services, modules, jobs, workers, queues, config, integrations, server-side business logic, and evidence-based stack profile selection.
+- `request-validation-error-contract`: reviews request parsing, validation, error envelopes, exception mapping, and client-visible failure contracts.
+- `job-worker-reliability`: reviews jobs, workers, queues, schedulers, retries, dead-letter paths, replay, and long-running tasks.
+- `connector-integration-change`: reviews API connectors, workflow nodes, MCP adapters, webhooks, OAuth apps, import/export bridges, sync jobs, registration metadata, and credential handling.
+- `server-rendered-change`: reviews controllers, templates, sessions, forms, redirects, and server-rendered view contracts.
+
+## Database map
+
+- `database-change-safety`: reviews broad schema, migration, SQL, reporting query, stored procedure, and data integrity changes.
+- `schema-migration-plan`: plans schema migrations, DDL, indexes, constraints, defaults, nullability, seeds, views, triggers, stored procedures, rollout order, and rollback evidence.
+- `query-performance-review`: reviews slow SQL, reporting/dashboard/API/export queries, joins, aggregates, sort/pagination, full scans, N+1 patterns, and index choices.
+- `data-integrity-constraints`: reviews uniqueness, foreign keys, checks, not-null rules, triggers, stored procedures, generated columns, repair scripts, reconciliation queries, and invariant boundaries.
+
+## Architecture map
+
+- `boundary-review`: reviews broad architecture boundaries, dependency direction, public APIs, ownership, and cross-module coupling.
+- `feature-slice-boundary`: reviews FSD, feature-sliced, vertical-slice, feature-first, route-level, module-level, and component-domain boundaries.
+- `domain-model-change`: reviews domain entities, aggregates, value objects, services, policies, use cases, repositories, adapters, invariants, and transaction boundaries.
+- `monorepo-package-boundary`: reviews monorepo packages, workspace dependencies, package exports, internal libraries, build graphs, generated types, and cross-package release impact.
 
 ## Quality map
 
-- `ui-style-policy`: selects or documents the repository styling method across design system, CSS/classes, utility classes, or inline styles.
+- `ui-style-policy`: compatibility route for older UI style policy prompts; primary route is `frontend/style-policy-selection`.
 - `style-quality-review`: reviews visible UI quality while preserving product intent.
 - `frontend-ui-polish`: implements or refines visible UI surfaces while preserving product intent and existing design conventions.
 - `cleanup-ai-slop`: removes low-trust code noise in a behavior-preserving, bounded cleanup.
 - `review-work-light`: reviews recent implementation work without turning review into an automatic blocking gate.
 
-## Skill authoring map
+## Design map
 
-- `agent-skill-authoring`: reusable skill structure, trigger descriptions, references, and skill/template boundaries.
+- `design-brief-direction`: turns vague product, page, brand, or UI requests into a design direction, visual language, constraints, and decision-ready brief.
+- `brand-identity-system`: defines or reviews brand identity, typography, color, logo direction, iconography, voice, and application rules.
+- `design-reference-analysis`: analyzes screenshots, competitor sites, reference apps, visual samples, and design boards without copying upstream visuals.
+- `image-to-code-handoff`: turns generated images, screenshots, mockups, reference boards, and Figma frames into implementation-ready UI contracts.
+
+## DevOps map
+
+- `ci-failure-triage`: diagnoses failing CI jobs, build pipelines, deployment checks, flaky tests, environment drift, and release automation failures.
+- `container-change-safety`: reviews Dockerfile, image, Compose/Kubernetes, runtime config, healthcheck, volume, network, and containerized deployment changes.
+- `deployment-release-check`: reviews release readiness, deploy gates, rollback paths, feature flags, artifacts, migrations, and post-deploy checks.
+- `package-publish-readiness`: reviews package metadata, included files, entrypoints, binaries, generated bundles, registry dry-runs, provenance, and artifact rollback constraints.
+- `observability-incident-triage`: triages active incidents, production alerts, logs, metrics, traces, latency, error rates, queues, jobs, and post-incident handoff.
+
+## Security and compliance map
+
+- `security-review`: reviews broad security risk, threat-model changes, sensitive data flow, input validation, and security regressions.
+- `auth-access-control`: reviews authentication, sessions, OAuth/OIDC, JWTs, RBAC, tenants, scopes, roles, and object-level access.
+- `dependency-supply-chain-review`: reviews dependencies, lockfiles, SBOMs, containers, provenance, vulnerable packages, package scripts, and CVE remediation.
+- `license-notice-review`: reviews first-party licenses, third-party notices, attribution, vendored code, generated artifacts, copied snippets, dual-license choices, redistribution scope, and compliance evidence.
+- `security-compliance-gate`: decides block, warn, document, or accepted-risk outcomes before merge, release, publication, or handoff.
+
+## Frontend map
+
+- `browser-dom-change`: changes DOM-first behavior, jQuery flows, event handlers, selectors, forms, plugins, and script-loaded UI.
+- `style-policy-selection`: selects or reconciles the repository styling method before visible UI edits or durable style policy docs.
+- `frontend-state-data-flow`: reviews state ownership, data fetching, server/client cache boundaries, optimistic updates, URL state, and stale UI behavior.
+- `frontend-accessibility-review`: reviews keyboard access, focus management, semantics, forms, dialogs, menus, announcements, contrast, and accessible interaction states.
+- `ui-polish`: refines visible UI, responsive layout, visual hierarchy, interaction feedback, and production polish.
+- `visual-regression-qa`: checks screenshots, responsive breakpoints, overflow, clipping, visual diffs, text fit, canvas/media rendering, and browser-rendered regressions.
+- `interactive-media-3d-review`: reviews Three.js, WebGL, canvas, SVG, chart, map, animation, video, and media-heavy interactive UI surfaces.
+- `design-system-handoff`: converts Figma, brand, token, component-library, theme, variant, and visual-spec guidance into repository-native UI implementation.
+
+## Mobile map
+
+- `native-release-readiness`: reviews mobile release artifacts, signing, provisioning, build channels, store distribution, and release-build cleanup.
+- `device-permission-qa`: reviews runtime permissions, device capabilities, manifests, privacy prompts, lifecycle behavior, and real-device versus simulator/emulator evidence.
+- `offline-sync-review`: reviews offline mode, local cache, durable queues, sync jobs, conflict handling, retries, idempotency, and network transition behavior.
+- `webview-bridge`: reviews WebView bridges, native-to-web messaging, deep links, embedded auth, uploads, downloads, and hybrid navigation.
+
+## Data map
+
+- `data-pipeline-review`: reviews analytics pipelines, ETL, batch jobs, data contracts, dashboard sources, quality checks, freshness, and lineage.
+- `analytics-reporting-review`: reviews metric definitions, KPI ownership, dashboard/report consistency, chart/table checks, segmentation, caveats, and reader handoff.
+- `data-migration-integrity`: reviews data migrations, backfills, transformations, reconciliation queries, idempotency, batching, rollback, and repair.
+- `data-contract-lineage-review`: reviews dataset contracts, source-of-truth ownership, grain/schema changes, lineage, freshness targets, and consumer impact.
+- `data-quality-observability`: reviews data quality checks, freshness alerts, anomaly detection, null/duplicate/orphan checks, quarantine, repair, and data incident handoff.
+- `analytics-instrumentation-review`: reviews tracking plans, event schemas, analytics instrumentation, funnels, cohorts, experiments, attribution, consent, and downstream metric impact.
+- `knowledge-retrieval-pipeline-review`: reviews document ingestion, chunking, metadata, embeddings/vector stores, retrieval quality, citations, access control, and stale RAG/search indexes.
+- `knowledge-source-registry`: registers project knowledge sources with owner, status, freshness, locator, credential boundary, and promotion rules.
 
 ## Legacy expansion map
 

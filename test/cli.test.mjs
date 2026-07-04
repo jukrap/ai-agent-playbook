@@ -6,6 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runCli } from '../src/cli.mjs';
+import { validateSourceRegistry } from '../src/runtime/schemas.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 
@@ -16,7 +17,7 @@ test('bootstrap dry-run does not write files', async () => {
 
   assert.equal(code, 0);
   assert.match(io.out(), /copy README\.md/);
-  assert.equal(existsSync(path.join(target, '.ai-playbook')), false);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook')), false);
   await cleanup(target);
 });
 
@@ -25,20 +26,1726 @@ test('bootstrap writes playbook and thin root agent bootstrap without overwritin
   const io = capture(target);
 
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], io), 0);
-  assert.equal(existsSync(path.join(target, '.ai-playbook', 'CURRENT.md')), true);
-  assert.equal(existsSync(path.join(target, '.ai-playbook', 'SKILLS.md')), true);
-  assert.equal(existsSync(path.join(target, '.ai-playbook', 'GIT.md')), true);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'CURRENT.md')), true);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'policy', 'SKILLS.md')), true);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'policy', 'GIT.md')), true);
   assert.equal(existsSync(path.join(target, 'AGENTS.md')), true);
   assert.equal(existsSync(path.join(target, 'SKILLS.md')), false);
   assert.equal(existsSync(path.join(target, 'GIT.md')), false);
-  assert.match(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), /\.ai-playbook\//);
+  assert.match(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), /\.ai-agent-playbook\//);
 
   const gitignore = await readFile(path.join(target, '.gitignore'), 'utf8');
-  assert.match(gitignore, /^\.ai-playbook\/$/m);
+  assert.match(gitignore, /^\.ai-agent-playbook\/$/m);
 
   const second = capture(target);
   assert.equal(await runCli(['bootstrap', '.'], second), 2);
   assert.match(second.err(), /Conflicts:/);
+  await cleanup(target);
+});
+
+test('bootstrap playbook template stays coherent for agent entry and read-only checks', async () => {
+  const target = await tempRepo('playbook smoke-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+
+  for (const file of [
+    '.ai-agent-playbook/README.md',
+    '.ai-agent-playbook/START_HERE.md',
+    '.ai-agent-playbook/CURRENT.md',
+    '.ai-agent-playbook/questions.md',
+    '.ai-agent-playbook/policy/SKILLS.md',
+    '.ai-agent-playbook/manifest.json',
+    '.ai-agent-playbook/knowledge/sources.json',
+    '.ai-agent-playbook/knowledge/reference-adoption-ledger.md',
+    '.ai-agent-playbook/runtime/README.md',
+    '.ai-agent-playbook/workflows/recipes/README.md',
+    '.ai-agent-playbook/workflows/recipes/feature-delivery.md'
+  ]) {
+    assert.equal(existsSync(path.join(target, ...file.split('/'))), true, `${file} should exist`);
+  }
+
+  const startHere = await readFile(path.join(target, '.ai-agent-playbook', 'START_HERE.md'), 'utf8');
+  assert.match(startHere, /Agent entry checklist/);
+  assert.match(startHere, /CURRENT\.md/);
+  assert.match(startHere, /questions\.md/);
+  assert.match(startHere, /runtime\/.*generated evidence/);
+
+  const skillsPolicy = await readFile(path.join(target, '.ai-agent-playbook', 'policy', 'SKILLS.md'), 'utf8');
+  assert.match(skillsPolicy, /Capability routing/);
+  assert.match(skillsPolicy, /ai-agent-playbook:\/\/capabilities/);
+  assert.match(skillsPolicy, /mcp --enable-write-tools/);
+  assert.match(skillsPolicy, /runtime reports, indexes, screenshots, or graph hints/);
+
+  const layout = capture(target);
+  assert.equal(await runCli(['layout', 'status', '.', '--json'], layout), 0);
+  const layoutReport = JSON.parse(layout.out());
+  assert.equal(layoutReport.ok, true);
+  assert.equal(layoutReport.layout.kind, 'structured');
+  assert.equal(layoutReport.layout.activeDir, '.ai-agent-playbook');
+
+  const workflowList = capture(target);
+  assert.equal(await runCli(['workflow', 'list', '--json'], workflowList), 0);
+  const workflowReport = JSON.parse(workflowList.out());
+  assert.equal(workflowReport.summary.workflows, 23);
+  assert.equal(workflowReport.workflows.some((workflow) => workflow.id === 'feature-delivery'), true);
+
+  const managedCheck = capture(target);
+  assert.equal(await runCli(['managed', 'check', '.', '--json'], managedCheck), 0);
+  const managedReport = JSON.parse(managedCheck.out());
+  assert.equal(managedReport.ok, true);
+  assert.equal(managedReport.files.some((file) => file.path === '.ai-agent-playbook/START_HERE.md'), true);
+  assert.equal(managedReport.files.some((file) => file.path === '.ai-agent-playbook/policy/SKILLS.md'), true);
+
+  const operatorCheck = capture(target);
+  assert.equal(await runCli(['operator', 'check', '.', '--json'], operatorCheck), 0);
+  const operatorReport = JSON.parse(operatorCheck.out());
+  assert.equal(operatorReport.schemaVersion, '1');
+  assert.equal(operatorReport.ok, true);
+  assert.equal(operatorReport.sections.doctor.checks.some((check) => check.id === 'playbook.directory' && check.level === 'pass'), true);
+  assert.equal(operatorReport.sections.guides.summary.missing, 0);
+
+  await cleanup(target);
+});
+
+test('writing naturalness-check reports prose signals without writing files', async () => {
+  const target = await tempRepo('writing naturalness-공백-');
+  await mkdir(path.join(target, 'docs'), { recursive: true });
+  await writeFile(path.join(target, 'docs', 'ko.md'), [
+    '# 한국어 샘플',
+    '',
+    '이 문서는 중요한 역할을 합니다. 이를 통해 사용자는 더 강력한 결과를 얻을 수 있습니다.',
+    '또한 기능을 종합적인 관점에서 제공할 수 있습니다. 뿐만 아니라 운영 품질에 기여합니다.',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(target, 'docs', 'en.md'), [
+    '# English sample',
+    '',
+    "In today's fast-paced landscape, this robust tool not only streamlines workflows but also unlocks powerful outcomes, ensuring teams can delve into the full potential of the platform.",
+    ''
+  ].join('\n'));
+  await writeFile(path.join(target, 'docs', 'code-heavy.md'), [
+    '# 코드가 많은 문서',
+    '',
+    '<p align="center">',
+    '<img alt="build status badge" src="https://example.invalid/badge.svg">',
+    '</p>',
+    '',
+    '```ts',
+    'const powerfulRuntime = "robust scalable seamless workflow";',
+    'export function runPreview() { return powerfulRuntime; }',
+    '```',
+    '',
+    '`npm run check`를 실행하고 `src/runtime/example.mjs` 경로를 확인합니다.',
+    '',
+    '이 문서는 로컬 점검 흐름을 설명합니다. 명령 예시와 코드 조각은 글의 어조 판단에서 제외되어야 합니다. 실제 설명 문장은 짧게 유지하고, 필요한 사실만 남깁니다.',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(target, 'docs', 'clean.md'), 'Use `npm test` before release. Record skipped checks with a reason.\n');
+  await writeFile(path.join(target, 'docs', 'binary.md'), 'ok\u0000bad');
+  const before = await listRelativeFiles(target);
+
+  const ko = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-check', '.', '--path', 'docs/ko.md', '--lang', 'ko', '--json'], ko), 0);
+  const koReport = JSON.parse(ko.out());
+  assert.equal(koReport.ok, true);
+  assert.equal(koReport.mode.writes, false);
+  assert.equal(koReport.language.analyzed, 'ko');
+  assert.equal(koReport.engines.requested, 'auto');
+  assert.equal(koReport.engines.used.includes('js'), true);
+  assert.equal(koReport.summary.findings > 0, true);
+
+  const koJs = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-check', '.', '--path', 'docs/ko.md', '--lang', 'ko', '--engine', 'js', '--json'], koJs), 0);
+  const koJsReport = JSON.parse(koJs.out());
+  assert.deepEqual(koJsReport.engines.used, ['js']);
+  assert.deepEqual(koJsReport.engines.unavailable, []);
+
+  const koPythonUnavailable = capture(target);
+  koPythonUnavailable.repoRoot = target;
+  assert.equal(await runCli(['writing', 'naturalness-check', '.', '--path', 'docs/ko.md', '--lang', 'ko', '--engine', 'python', '--json'], koPythonUnavailable), 0);
+  const koPythonUnavailableReport = JSON.parse(koPythonUnavailable.out());
+  assert.deepEqual(koPythonUnavailableReport.engines.used, ['js']);
+  assert.equal(koPythonUnavailableReport.engines.unavailable.length >= 1, true);
+
+  const en = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-check', '.', '--path', 'docs/en.md', '--lang', 'en', '--json'], en), 0);
+  const enReport = JSON.parse(en.out());
+  assert.equal(enReport.ok, true);
+  assert.equal(enReport.language.analyzed, 'en');
+  assert.equal(enReport.summary.findings > 0, true);
+
+  const clean = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-check', '.', '--path', 'docs/clean.md', '--json'], clean), 0);
+  const cleanReport = JSON.parse(clean.out());
+  assert.equal(cleanReport.ok, true);
+  assert.equal(cleanReport.summary.findings, 0);
+
+  const codeHeavy = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-check', '.', '--path', 'docs/code-heavy.md', '--lang', 'ko', '--engine', 'js', '--json'], codeHeavy), 0);
+  const codeHeavyReport = JSON.parse(codeHeavy.out());
+  assert.equal(codeHeavyReport.ok, true);
+  assert.equal(codeHeavyReport.findings.some((finding) => finding.id === 'writing.english-density.ko'), false);
+
+  const batch = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-report', '.', '--root', 'docs', '--lang', 'ko', '--engine', 'js', '--max-files', '10', '--json'], batch), 1);
+  const batchReport = JSON.parse(batch.out());
+  assert.equal(batchReport.ok, false);
+  assert.equal(batchReport.kind, 'runtime.writing-naturalness-report');
+  assert.equal(batchReport.mode.writes, false);
+  assert.equal(batchReport.summary.files, 5);
+  assert.equal(batchReport.files.some((file) => file.path === 'docs/ko.md' && file.summary.findings > 0), true);
+  assert.equal(batchReport.files.some((file) => file.path === 'docs/binary.md' && file.ok === false), true);
+  assert.equal(batchReport.conflicts.some((conflict) => conflict.id === 'writing-naturalness.binary-or-control'), true);
+
+  const batchTraversal = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-report', '.', '--root', '..', '--json'], batchTraversal), 1);
+  assert.equal(JSON.parse(batchTraversal.out()).conflicts.some((conflict) => conflict.id === 'writing-naturalness.path-boundary'), true);
+
+  const traversal = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-check', '.', '--path', '../outside.md', '--json'], traversal), 1);
+  assert.equal(JSON.parse(traversal.out()).conflicts.some((conflict) => conflict.id === 'writing-naturalness.path-boundary'), true);
+
+  const binary = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-check', '.', '--path', 'docs/binary.md', '--json'], binary), 1);
+  assert.equal(JSON.parse(binary.out()).conflicts.some((conflict) => conflict.id === 'writing-naturalness.binary-or-control'), true);
+
+  const invalidEngine = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-check', '.', '--path', 'docs/ko.md', '--engine', 'ruby', '--json'], invalidEngine), 1);
+  assert.equal(JSON.parse(invalidEngine.out()).conflicts.some((conflict) => conflict.id === 'writing-naturalness.invalid-engine'), true);
+
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('runtime python-status reports optional Python engine availability', async () => {
+  const target = await tempRepo('python status-한글-');
+  const io = capture(target);
+  assert.equal(await runCli(['runtime', 'python-status', '--json'], io), 0);
+  const report = JSON.parse(io.out());
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.kind, 'runtime.python-status');
+  assert.equal(typeof report.ok, 'boolean');
+  assert.equal(report.summary.candidates >= 1, true);
+  assert.equal(Array.isArray(report.candidates), true);
+  await cleanup(target);
+});
+
+test('all bundled workflow recipes preview with required manifest sections', async () => {
+  const target = await tempRepo('workflow all recipes-공백-');
+  const list = capture(target);
+  assert.equal(await runCli(['workflow', 'list', '--json'], list), 0);
+  const listed = JSON.parse(list.out());
+  assert.equal(listed.summary.workflows, 23);
+
+  const before = await listRelativeFiles(target);
+  for (const recipe of listed.workflows) {
+    const preview = capture(target);
+    assert.equal(await runCli(['workflow', 'run-preview', '.', '--recipe', recipe.id, '--json'], preview), 0);
+    const report = JSON.parse(preview.out());
+    assert.equal(report.ok, true, `${recipe.id} should preview successfully`);
+    assert.equal(report.mode.writes, false);
+    assert.equal(report.recipe.source, 'bundled');
+    assert.equal(report.conflicts.length, 0);
+    assert.ok(report.manifest.inputs.length > 0, `${recipe.id} should define inputs`);
+    assert.ok(report.manifest.outputs.length > 0, `${recipe.id} should define outputs`);
+    assert.ok(report.manifest.skills.length > 0, `${recipe.id} should define skills`);
+    assert.ok(report.manifest.tools.length > 0, `${recipe.id} should define tools`);
+    assert.ok(report.manifest.stopConditions.length > 0, `${recipe.id} should define stop conditions`);
+    assert.ok(report.manifest.verification.length > 0, `${recipe.id} should define verification`);
+  }
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('structured playbook commands expose layout, catalog, index, and write-gate flows', async () => {
+  const bareWorkflowTarget = await tempRepo('workflow preview bare-공백-');
+  const bareWorkflowPreview = capture(bareWorkflowTarget);
+  assert.equal(await runCli(['workflow', 'run-preview', '.', '--recipe', 'backend-contract-change', '--json'], bareWorkflowPreview), 0);
+  const bareWorkflowPreviewReport = JSON.parse(bareWorkflowPreview.out());
+  assert.equal(bareWorkflowPreviewReport.recipe.source, 'bundled');
+  assert.equal(bareWorkflowPreviewReport.mode.writes, false);
+  const missingPlaybookRunStart = capture(bareWorkflowTarget);
+  assert.equal(await runCli(['workflow', 'run-start', '.', '--recipe', 'backend-contract-change', '--apply', '--json'], missingPlaybookRunStart), 1);
+  const missingPlaybookRunStartReport = JSON.parse(missingPlaybookRunStart.out());
+  assert.equal(missingPlaybookRunStartReport.conflicts.some((conflict) => conflict.id === 'workflow-run-start.playbook-missing'), true);
+  await cleanup(bareWorkflowTarget);
+
+  const target = await tempRepo('structured playbook-공백-');
+  await mkdir(path.join(target, 'src'), { recursive: true });
+  await mkdir(path.join(target, 'src', 'runtime'), { recursive: true });
+  await mkdir(path.join(target, 'db', 'migrations'), { recursive: true });
+  await mkdir(path.join(target, '.github', 'workflows'), { recursive: true });
+  await mkdir(path.join(target, 'packages', 'cli'), { recursive: true });
+  await mkdir(path.join(target, 'packages', 'viewer', '.vite', 'deps'), { recursive: true });
+  await writeFile(path.join(target, 'src', 'feature.ts'), 'export const featureFlag = "structured-playbook";\nexport function calculateFeature() {\n  return featureFlag;\n}\nexport const DashboardPanel = () => null;\n');
+  await writeFile(path.join(target, 'src', 'runtime', 'index.ts'), 'export const runtimeSource = true;\n');
+  await writeFile(path.join(target, 'src', 'routes.ts'), 'router.get("/api/users", handler);\nfetch("/api/profile");\nconst message = "Update matching managed file";\n');
+  await writeFile(path.join(target, 'src', 'service.py'), 'def process_event(value):\n    return value\n');
+  await writeFile(path.join(target, 'src', 'App.java'), 'public class App {\n  public void handle() {}\n}\n');
+  await writeFile(path.join(target, 'db', 'migrations', '001_create_users.sql'), 'CREATE TABLE users (id int primary key);\nSELECT id FROM users;\n');
+  await writeFile(path.join(target, 'package.json'), `${JSON.stringify({
+    name: 'fixture-app',
+    packageManager: 'pnpm@10.0.0',
+    scripts: { build: 'vite build', test: 'vitest run' },
+    dependencies: { express: '^5.0.0' },
+    devDependencies: { vite: '^7.0.0' }
+  }, null, 2)}\n`);
+  await writeFile(path.join(target, 'pnpm-workspace.yaml'), 'packages:\n  - "packages/*"\n');
+  await writeFile(path.join(target, 'pnpm-lock.yaml'), 'lockfileVersion: 9.0\n');
+  await writeFile(path.join(target, 'packages', 'cli', 'package.json'), `${JSON.stringify({
+    name: '@fixture/cli',
+    scripts: { test: 'vitest run' },
+    dependencies: { commander: '^14.0.0' }
+  }, null, 2)}\n`);
+  await writeFile(path.join(target, 'packages', 'viewer', '.vite', 'deps', 'package.json'), `${JSON.stringify({
+    type: 'module'
+  }, null, 2)}\n`);
+  await writeFile(path.join(target, 'Dockerfile'), 'FROM node:22-alpine AS runtime\n');
+  await writeFile(path.join(target, '.github', 'workflows', 'ci.yml'), 'name: ci\njobs:\n  test:\n    steps:\n      - uses: actions/checkout@v4\n');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+
+  const beforeMissingHistory = await listRelativeFiles(target);
+  const missingHistory = capture(target);
+  assert.equal(await runCli(['runtime', 'capability-history', '.', '--json'], missingHistory), 0);
+  const missingHistoryReport = JSON.parse(missingHistory.out());
+  assert.equal(missingHistoryReport.kind, 'runtime.capability-history');
+  assert.equal(missingHistoryReport.exists, false);
+  assert.equal(missingHistoryReport.mode.writes, false);
+  assert.equal(missingHistoryReport.summary.entries, 0);
+  assert.deepEqual(await listRelativeFiles(target), beforeMissingHistory);
+
+  const catalog = capture(target);
+  assert.equal(await runCli(['catalog', 'list', '--json'], catalog), 0);
+  const catalogReport = JSON.parse(catalog.out());
+  assert.equal(catalogReport.taxonomyKind, 'capability');
+  assert.equal(catalogReport.summary.categories, 13);
+  assert.equal(catalogReport.summary.skills, 92);
+
+  const catalogCheck = capture(target);
+  assert.equal(await runCli(['catalog', 'check', '--json'], catalogCheck), 0);
+  const catalogCheckReport = JSON.parse(catalogCheck.out());
+  assert.equal(catalogCheckReport.summary.warnings, 0);
+  assert.equal(catalogCheckReport.summary.conflicts, 0);
+  for (const expectedSkill of [
+    'requirements-prd-scope-review',
+    'issue-planning-triage',
+    'release-notes-changelog',
+    'documentation-artifact-package',
+    'eval-harness-design',
+    'agent-orchestration-handoff',
+    'capability-witness-history',
+    'pre-action-fact-gate',
+    'knowledge-source-registry',
+    'security-compliance-gate',
+    'design-brief-direction',
+    'brand-identity-system',
+    'design-reference-analysis',
+    'image-to-code-handoff',
+    'interactive-media-3d-review',
+    'design-system-handoff'
+  ]) {
+    assert.equal(catalogCheckReport.skills.some((skill) => skill.name === expectedSkill), true);
+  }
+
+  const workflow = capture(target);
+  assert.equal(await runCli(['workflow', 'list', '--json'], workflow), 0);
+  const workflowReport = JSON.parse(workflow.out());
+  assert.equal(workflowReport.summary.workflows, 23);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'deployment-release'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'package-release-readiness'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'ci-quality-gate'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'architecture-boundary-review'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'frontend-quality-review'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'design-reference-handoff'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'data-integrity-review'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'eval-driven-change'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'knowledge-source-onboarding'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'agent-orchestration-handoff'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'interactive-experience-delivery'), true);
+  assert.equal(workflowReport.workflows.some((item) => item.id === 'reference-depth-adoption'), true);
+
+  const databaseWorkflowPreview = capture(target);
+  assert.equal(await runCli(['workflow', 'run-preview', '.', '--recipe', 'database-migration', '--json'], databaseWorkflowPreview), 0);
+  const databaseWorkflowPreviewReport = JSON.parse(databaseWorkflowPreview.out());
+  assert.equal(databaseWorkflowPreviewReport.manifest.skills.some((skill) => skill.includes('schema migration plan')), true);
+  assert.equal(databaseWorkflowPreviewReport.manifest.skills.some((skill) => skill.includes('query performance review')), true);
+  assert.equal(databaseWorkflowPreviewReport.manifest.skills.some((skill) => skill.includes('data integrity constraints')), true);
+  assert.equal(databaseWorkflowPreviewReport.manifest.verification.some((item) => item.includes('rendered report/export/dashboard')), true);
+
+  const interactiveWorkflowPreview = capture(target);
+  assert.equal(await runCli(['workflow', 'run-preview', '.', '--recipe', 'interactive-experience-delivery', '--json'], interactiveWorkflowPreview), 0);
+  const interactiveWorkflowPreviewReport = JSON.parse(interactiveWorkflowPreview.out());
+  assert.equal(interactiveWorkflowPreviewReport.manifest.skills.some((skill) => skill.includes('interactive media 3D review')), true);
+  assert.equal(interactiveWorkflowPreviewReport.manifest.verification.some((item) => item.includes('nonblank screenshot')), true);
+
+  const designWorkflowPreview = capture(target);
+  assert.equal(await runCli(['workflow', 'run-preview', '.', '--recipe', 'design-reference-handoff', '--json'], designWorkflowPreview), 0);
+  const designWorkflowPreviewReport = JSON.parse(designWorkflowPreview.out());
+  assert.equal(designWorkflowPreviewReport.manifest.skills.some((skill) => skill.includes('design brief direction')), true);
+  assert.equal(designWorkflowPreviewReport.manifest.skills.some((skill) => skill.includes('image-to-code handoff')), true);
+  assert.equal(designWorkflowPreviewReport.manifest.verification.some((item) => item.includes('visual evidence package')), true);
+
+  const beforeWorkflowPreview = await listRelativeFiles(target);
+  const workflowPreview = capture(target);
+  assert.equal(await runCli(['workflow', 'run-preview', '.', '--recipe', 'backend-contract-change', '--json'], workflowPreview), 0);
+  const workflowPreviewReport = JSON.parse(workflowPreview.out());
+  assert.equal(workflowPreviewReport.kind, 'runtime.workflow-run-preview');
+  assert.equal(workflowPreviewReport.mode.writes, false);
+  assert.equal(workflowPreviewReport.recipe.id, 'backend-contract-change');
+  assert.equal(workflowPreviewReport.recipe.source, 'target');
+  assert.equal(workflowPreviewReport.manifest.skills.some((skill) => skill.includes('API contract boundary')), true);
+  assert.equal(workflowPreviewReport.manifest.tools.includes('operator map'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeWorkflowPreview);
+
+  const beforeWorkflowStart = await listRelativeFiles(target);
+  const workflowStartDryRun = capture(target);
+  assert.equal(await runCli(['workflow', 'run-start', '.', '--recipe', 'deployment-release', '--json'], workflowStartDryRun), 0);
+  const workflowStartDryRunReport = JSON.parse(workflowStartDryRun.out());
+  assert.equal(workflowStartDryRunReport.kind, 'runtime.workflow-run-start');
+  assert.equal(workflowStartDryRunReport.applied, false);
+  assert.equal(workflowStartDryRunReport.mode.writes, false);
+  assert.equal(workflowStartDryRunReport.runPath.startsWith('.ai-agent-playbook/workflows/runs/'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeWorkflowStart);
+
+  const workflowStartApply = capture(target);
+  assert.equal(await runCli(['workflow', 'run-start', '.', '--recipe', 'deployment-release', '--apply', '--json'], workflowStartApply), 0);
+  const workflowStartApplyReport = JSON.parse(workflowStartApply.out());
+  assert.equal(workflowStartApplyReport.applied, true);
+  assert.equal(workflowStartApplyReport.mode.writes, true);
+  assert.equal(workflowStartApplyReport.runPath.startsWith('.ai-agent-playbook/workflows/runs/'), true);
+  assert.equal(existsSync(path.join(target, workflowStartApplyReport.runPath, 'manifest.json')), true);
+  assert.equal(existsSync(path.join(target, workflowStartApplyReport.runPath, 'criteria.md')), true);
+  assert.equal(existsSync(path.join(target, workflowStartApplyReport.runPath, 'evidence.md')), true);
+  assert.equal(existsSync(path.join(target, workflowStartApplyReport.runPath, 'handoff.md')), true);
+
+  await mkdir(path.join(target, '.ai-agent-playbook', 'workflows', 'recipes'), { recursive: true });
+  await writeFile(path.join(target, '.ai-agent-playbook', 'workflows', 'recipes', 'backend-contract-change.md'), '# Local Backend Contract Change\n\nInputs: local input\n\nOutputs: local output\n\nSkills: local skill\n\nTools: local tool\n\nStop conditions: local blocker\n\nVerification: local verification\n');
+  const beforeLocalWorkflowPreview = await listRelativeFiles(target);
+  const localWorkflowPreview = capture(target);
+  assert.equal(await runCli(['workflow', 'run-preview', '.', '--recipe', 'backend-contract-change', '--json'], localWorkflowPreview), 0);
+  const localWorkflowPreviewReport = JSON.parse(localWorkflowPreview.out());
+  assert.equal(localWorkflowPreviewReport.recipe.source, 'target');
+  assert.equal(localWorkflowPreviewReport.manifest.inputs.includes('local input'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeLocalWorkflowPreview);
+
+  const layout = capture(target);
+  assert.equal(await runCli(['layout', 'status', '.', '--json'], layout), 0);
+  const layoutReport = JSON.parse(layout.out());
+  assert.equal(layoutReport.layout.kind, 'structured');
+  assert.equal(layoutReport.summary.missingDirectories, 0);
+
+  const migration = capture(target);
+  assert.equal(await runCli(['migrate', 'layout', '.', '--to', 'structured', '--json'], migration), 0);
+  const migrationReport = JSON.parse(migration.out());
+  assert.equal(migrationReport.ok, true);
+
+  const preview = capture(target);
+  assert.equal(await runCli(['index', 'build', '.', '--json'], preview), 0);
+  const previewReport = JSON.parse(preview.out());
+  assert.equal(previewReport.applied, false);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'runtime', 'indexes', 'file-inventory.json')), false);
+
+  const applied = capture(target);
+  assert.equal(await runCli(['index', 'build', '.', '--apply', '--json'], applied), 0);
+  const appliedReport = JSON.parse(applied.out());
+  assert.equal(appliedReport.applied, true);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'runtime', 'indexes', 'file-inventory.json')), true);
+
+  const status = capture(target);
+  assert.equal(await runCli(['index', 'status', '.', '--json'], status), 0);
+  const statusReport = JSON.parse(status.out());
+  assert.equal(statusReport.exists, true);
+  assert.equal(statusReport.indexes.some((item) => item.kind === 'file-inventory' && item.exists === true), true);
+  assert.equal(statusReport.indexes.some((item) => item.kind === 'symbol-outline' && item.previewOnly === true), true);
+  assert.equal(statusReport.indexes.some((item) => item.kind === 'dependency-inventory' && item.previewOnly === true), true);
+  assert.equal(statusReport.indexes.some((item) => item.kind === 'route-api-hints' && item.previewOnly === true), true);
+
+  const search = capture(target);
+  assert.equal(await runCli(['index', 'search', '.', '--query', 'structured-playbook', '--json'], search), 0);
+  const searchReport = JSON.parse(search.out());
+  assert.equal(searchReport.summary.matches >= 1, true);
+
+  await mkdir(path.join(target, '.ai-agent-playbook', 'runtime', 'indexes'), { recursive: true });
+  await writeFile(path.join(target, '.ai-agent-playbook', 'runtime', 'indexes', 'generated.ts'), 'export const generatedIgnored = true;\n');
+  const symbolOutline = capture(target);
+  assert.equal(await runCli(['index', 'symbol-outline', '.', '--json'], symbolOutline), 0);
+  const symbolOutlineReport = JSON.parse(symbolOutline.out());
+  assert.equal(symbolOutlineReport.kind, 'runtime.symbol-outline');
+  assert.equal(symbolOutlineReport.mode.writes, false);
+  assert.equal(symbolOutlineReport.summary.entries >= 6, true);
+  assert.equal(symbolOutlineReport.summary.byLanguage.typescript >= 4, true);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'runtime', 'indexes', 'symbol-outline.json')), false);
+  assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/feature.ts' && entry.language === 'typescript' && entry.kind === 'constant' && entry.name === 'featureFlag'), true);
+  assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/feature.ts' && entry.kind === 'function' && entry.name === 'calculateFeature'), true);
+  assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/feature.ts' && entry.kind === 'component' && entry.name === 'DashboardPanel'), true);
+  assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/runtime/index.ts' && entry.name === 'runtimeSource'), true);
+  assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/service.py' && entry.kind === 'function' && entry.name === 'process_event'), true);
+  assert.equal(symbolOutlineReport.entries.some((entry) => entry.file === 'src/App.java' && entry.kind === 'class' && entry.name === 'App'), true);
+  assert.equal(symbolOutlineReport.entries.some((entry) => entry.name === 'generatedIgnored'), false);
+
+  const dependencyInventory = capture(target);
+  assert.equal(await runCli(['index', 'dependency-inventory', '.', '--json'], dependencyInventory), 0);
+  const dependencyInventoryReport = JSON.parse(dependencyInventory.out());
+  assert.equal(dependencyInventoryReport.kind, 'runtime.dependency-inventory');
+  assert.equal(dependencyInventoryReport.mode.writes, false);
+  assert.equal(dependencyInventoryReport.summary.manifests >= 1, true);
+  assert.equal(dependencyInventoryReport.manifests.some((manifest) => manifest.path === 'package.json' && manifest.scripts.includes('build')), true);
+  assert.equal(dependencyInventoryReport.manifests.some((manifest) => manifest.path === 'packages/cli/package.json' && manifest.lockfiles.includes('pnpm-lock.yaml')), true);
+  assert.equal(dependencyInventoryReport.manifests.some((manifest) => manifest.path === 'packages/viewer/.vite/deps/package.json'), false);
+  assert.equal(dependencyInventoryReport.warnings.some((warning) => warning.paths?.includes('packages/cli/package.json')), false);
+  assert.equal(dependencyInventoryReport.lockfiles.some((lockfile) => lockfile.path === 'pnpm-lock.yaml'), true);
+  assert.equal(dependencyInventoryReport.containers.some((container) => container.path === 'Dockerfile' && container.baseImages.some((image) => image.image === 'node:22-alpine')), true);
+  assert.equal(dependencyInventoryReport.ci.some((ci) => ci.path === '.github/workflows/ci.yml' && ci.uses.includes('actions/checkout@v4')), true);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'runtime', 'indexes', 'dependency-inventory.json')), false);
+
+  const routeApiHints = capture(target);
+  assert.equal(await runCli(['index', 'route-api-hints', '.', '--json'], routeApiHints), 0);
+  const routeApiHintsReport = JSON.parse(routeApiHints.out());
+  assert.equal(routeApiHintsReport.kind, 'runtime.route-api-hints');
+  assert.equal(routeApiHintsReport.mode.writes, false);
+  assert.equal(routeApiHintsReport.hints.some((hint) => hint.kind === 'route' && hint.framework === 'express' && hint.method === 'GET' && hint.path === '/api/users'), true);
+  assert.equal(routeApiHintsReport.hints.some((hint) => hint.kind === 'client-api' && hint.client === 'fetch' && hint.path === '/api/profile'), true);
+  assert.equal(routeApiHintsReport.hints.some((hint) => hint.kind === 'data' && hint.operation === 'create-table' && hint.name === 'users'), true);
+  assert.equal(routeApiHintsReport.hints.some((hint) => hint.kind === 'data' && hint.operation === 'update' && hint.name === 'matching'), false);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'runtime', 'indexes', 'route-api-hints.json')), false);
+
+  const beforeGraph = await listRelativeFiles(target);
+  const repoGraph = capture(target);
+  assert.equal(await runCli(['graph', 'preview', '.', '--max-results', '100', '--json'], repoGraph), 0);
+  const repoGraphReport = JSON.parse(repoGraph.out());
+  assert.equal(repoGraphReport.kind, 'runtime.repo-graph');
+  assert.equal(repoGraphReport.mode.writes, false);
+  assert.equal(repoGraphReport.summary.nodes > 0, true);
+  assert.equal(repoGraphReport.summary.edges > 0, true);
+  assert.equal(repoGraphReport.nodes.some((node) => node.kind === 'file' && node.path === 'src/feature.ts'), true);
+  assert.equal(repoGraphReport.nodes.some((node) => node.kind === 'symbol' && node.label === 'calculateFeature'), true);
+  assert.equal(repoGraphReport.nodes.some((node) => node.kind === 'route' && node.label === '/api/users'), true);
+  assert.equal(repoGraphReport.nodes.some((node) => node.kind === 'package' && node.path === 'package.json'), true);
+  assert.equal(repoGraphReport.edges.some((edge) => edge.kind === 'contains'), true);
+  assert.equal(repoGraphReport.edges.some((edge) => edge.kind === 'defines-route'), true);
+  assert.equal(repoGraphReport.nodes.some((node) => node.label === 'generatedIgnored'), false);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'runtime', 'graphs', 'repo-graph.json')), false);
+  assert.deepEqual(await listRelativeFiles(target), beforeGraph);
+
+  const gate = capture(target);
+  assert.equal(await runCli(['write-gate', 'preview', '.', '--intent', 'edit runtime report', '--path', '.ai-agent-playbook/runtime/indexes/file-inventory.json', '--json'], gate), 1);
+  const gateReport = JSON.parse(gate.out());
+  assert.equal(gateReport.ok, false);
+  assert.match(gateReport.transaction.invocationId, /^[0-9a-f-]{36}$/);
+  assert.equal(gateReport.transaction.lifecycle, 'pre-write-preview');
+  assert.match(gateReport.transaction.advisoryPath, /^\.ai-agent-playbook\/runtime\/reports\/write-gate\/pre-write-advisory\.[0-9a-f-]{36}\.json$/);
+  assert.equal(gateReport.transaction.applied, false);
+  assert.equal(gateReport.blockers.some((blocker) => blocker.id === 'write-gate.runtime-target'), true);
+
+  const sourceGate = capture(target);
+  assert.equal(await runCli(['write-gate', 'preview', '.', '--intent', 'edit runtime source module', '--path', 'src/runtime/index.ts', '--json'], sourceGate), 0);
+  const sourceGateReport = JSON.parse(sourceGate.out());
+  assert.equal(sourceGateReport.ok, true);
+  assert.equal(sourceGateReport.blockers.some((blocker) => blocker.id === 'write-gate.runtime-target'), false);
+
+  const beforeAdvisory = await listRelativeFiles(target);
+  const advisoryDryRun = capture(target);
+  assert.equal(await runCli(['write-gate', 'advisory', '.', '--intent', 'edit runtime source module', '--path', 'src/runtime/index.ts', '--json'], advisoryDryRun), 0);
+  const advisoryDryRunReport = JSON.parse(advisoryDryRun.out());
+  assert.equal(advisoryDryRunReport.ok, true);
+  assert.equal(advisoryDryRunReport.transaction.lifecycle, 'pre-write-advisory-preview');
+  assert.equal(advisoryDryRunReport.transaction.applied, false);
+  assert.equal(advisoryDryRunReport.advisory.written, false);
+  assert.match(advisoryDryRunReport.advisory.path, /^\.ai-agent-playbook\/runtime\/reports\/write-gate\/pre-write-advisory\.[0-9a-f-]{36}\.json$/);
+  assert.deepEqual(await listRelativeFiles(target), beforeAdvisory);
+
+  const advisoryApply = capture(target);
+  assert.equal(await runCli(['write-gate', 'advisory', '.', '--intent', 'edit runtime source module', '--path', 'src/runtime/index.ts', '--apply', '--json'], advisoryApply), 0);
+  const advisoryApplyReport = JSON.parse(advisoryApply.out());
+  assert.equal(advisoryApplyReport.ok, true);
+  assert.equal(advisoryApplyReport.transaction.lifecycle, 'pre-write-advisory');
+  assert.equal(advisoryApplyReport.transaction.applied, true);
+  assert.equal(advisoryApplyReport.advisory.written, true);
+  assert.equal(advisoryApplyReport.operations[0].applied, true);
+  const advisoryFile = path.join(target, ...advisoryApplyReport.advisory.path.split('/'));
+  assert.equal(existsSync(advisoryFile), true);
+  const advisoryJson = JSON.parse(await readFile(advisoryFile, 'utf8'));
+  assert.equal(advisoryJson.kind, 'write-gate.pre-write-advisory');
+  assert.equal(advisoryJson.manifest.kind, 'write-gate.pre-write-advisory');
+  assert.equal(advisoryJson.transaction.invocationId, advisoryApplyReport.transaction.invocationId);
+  assert.equal(advisoryJson.intent, 'edit runtime source module');
+  assert.equal(advisoryJson.snapshot.files.length > 0, true);
+
+  const cleanPostCheck = capture(target);
+  assert.equal(await runCli(['write-gate', 'post-check', '.', '--advisory', advisoryApplyReport.advisory.path, '--json'], cleanPostCheck), 0);
+  const cleanPostCheckReport = JSON.parse(cleanPostCheck.out());
+  assert.equal(cleanPostCheckReport.summary.added, 0);
+  assert.equal(cleanPostCheckReport.summary.modified, 0);
+  assert.equal(cleanPostCheckReport.summary.deleted, 0);
+  assert.equal(cleanPostCheckReport.warnings.some((warning) => warning.id === 'write-gate.post-check.playbook-change'), false);
+
+  await mkdir(path.join(target, 'src', 'runtime'), { recursive: true });
+  await writeFile(path.join(target, 'src', 'runtime', 'index.ts'), 'export const runtimeSource = "changed";\n');
+  await writeFile(path.join(target, 'src', 'outside.ts'), 'export const outside = true;\n');
+  const postCheck = capture(target);
+  assert.equal(await runCli(['write-gate', 'post-check', '.', '--advisory', advisoryApplyReport.advisory.path, '--json'], postCheck), 0);
+  const postCheckReport = JSON.parse(postCheck.out());
+  assert.equal(postCheckReport.ok, true);
+  assert.equal(postCheckReport.mode.writes, false);
+  assert.equal(postCheckReport.summary.status, 'checked');
+  assert.equal(postCheckReport.changes.modified.some((item) => item.path === 'src/runtime/index.ts'), true);
+  assert.equal(postCheckReport.changes.added.some((item) => item.path === 'src/outside.ts'), true);
+  assert.equal(postCheckReport.warnings.some((warning) => warning.id === 'write-gate.post-check.intent-outside-change'), true);
+
+  const missingPostCheck = capture(target);
+  assert.equal(await runCli(['write-gate', 'post-check', '.', '--advisory', '.ai-agent-playbook/runtime/reports/write-gate/missing.json', '--json'], missingPostCheck), 1);
+  const missingPostCheckReport = JSON.parse(missingPostCheck.out());
+  assert.equal(missingPostCheckReport.summary.status, 'unknown');
+
+  await cleanup(target);
+});
+
+test('canon draft and check keep runtime evidence read-only until promotion', async () => {
+  const target = await tempRepo('canon lifecycle-한글-');
+  await mkdir(path.join(target, 'src'), { recursive: true });
+  await writeFile(path.join(target, 'src', 'changed.ts'), 'export const changed = "before";\n');
+  await writeFile(path.join(target, 'src', 'stale.ts'), 'export const stale = true;\n');
+  await writeFile(path.join(target, 'src', 'ok.ts'), 'export const ok = true;\n');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+
+  const index = capture(target);
+  assert.equal(await runCli(['index', 'build', '.', '--apply', '--json'], index), 0);
+  const indexReport = JSON.parse(index.out());
+  assert.equal(indexReport.kind, 'runtime.file-inventory');
+  assert.equal(indexReport.mode.writes, true);
+
+  const advisory = capture(target);
+  assert.equal(await runCli([
+    'write-gate',
+    'advisory',
+    '.',
+    '--intent',
+    'edit changed source',
+    '--path',
+    'src/changed.ts',
+    '--apply',
+    '--json'
+  ], advisory), 0);
+  const advisoryReport = JSON.parse(advisory.out());
+  const advisoryPath = advisoryReport.advisory.path;
+  const advisoryJson = JSON.parse(await readFile(path.join(target, ...advisoryPath.split('/')), 'utf8'));
+  const beforeDraft = await listRelativeFiles(target);
+
+  const draft = capture(target);
+  assert.equal(await runCli(['canon', 'draft', '.', '--json'], draft), 0);
+  const draftReport = JSON.parse(draft.out());
+  assert.equal(draftReport.ok, true);
+  assert.equal(draftReport.mode.writes, false);
+  assert.equal(draftReport.facts.some((fact) => fact.kind === 'file-inventory'), true);
+  assert.equal(draftReport.facts.some((fact) => fact.kind === 'write-gate-advisory'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeDraft);
+
+  const promotedMemoryPath = '.ai-agent-playbook/memory/maps/promoted-canon.json';
+  const promotePreview = capture(target);
+  assert.equal(await runCli(['canon', 'promote', '.', '--source', advisoryPath, '--to', promotedMemoryPath, '--json'], promotePreview), 0);
+  const promotePreviewReport = JSON.parse(promotePreview.out());
+  assert.equal(promotePreviewReport.applied, false);
+  assert.equal(promotePreviewReport.mode.writes, false);
+  assert.equal(promotePreviewReport.summary.facts > 0, true);
+  assert.equal(existsSync(path.join(target, ...promotedMemoryPath.split('/'))), false);
+  assert.deepEqual(await listRelativeFiles(target), beforeDraft);
+
+  const blockedPromotion = capture(target);
+  assert.equal(await runCli(['canon', 'promote', '.', '--source', advisoryPath, '--to', 'docs/canon.json', '--json'], blockedPromotion), 1);
+  const blockedPromotionReport = JSON.parse(blockedPromotion.out());
+  assert.equal(blockedPromotionReport.conflicts.some((conflict) => conflict.id === 'canon.promote.destination-not-allowed'), true);
+
+  const blockedSource = capture(target);
+  assert.equal(await runCli(['canon', 'promote', '.', '--source', '.ai-agent-playbook/runtime/tmp/loose.json', '--to', promotedMemoryPath, '--json'], blockedSource), 1);
+  const blockedSourceReport = JSON.parse(blockedSource.out());
+  assert.equal(blockedSourceReport.conflicts.some((conflict) => conflict.id === 'canon.promote.source-not-runtime'), true);
+
+  const invalidArtifactPath = '.ai-agent-playbook/runtime/reports/invalid-artifact.json';
+  await mkdir(path.join(target, '.ai-agent-playbook', 'runtime', 'reports'), { recursive: true });
+  await writeFile(path.join(target, ...invalidArtifactPath.split('/')), `${JSON.stringify({
+    schemaVersion: '1',
+    target: path.resolve(target),
+    summary: {},
+    warnings: [],
+    conflicts: []
+  }, null, 2)}\n`);
+  const invalidArtifact = capture(target);
+  assert.equal(await runCli(['canon', 'promote', '.', '--source', invalidArtifactPath, '--to', promotedMemoryPath, '--json'], invalidArtifact), 1);
+  const invalidArtifactReport = JSON.parse(invalidArtifact.out());
+  assert.equal(invalidArtifactReport.conflicts.some((conflict) => conflict.id === 'canon.promote.source-invalid-artifact'), true);
+
+  const blockedDestinationType = capture(target);
+  assert.equal(await runCli(['canon', 'promote', '.', '--source', advisoryPath, '--to', '.ai-agent-playbook/memory/maps/promoted-canon.md', '--json'], blockedDestinationType), 1);
+  const blockedDestinationTypeReport = JSON.parse(blockedDestinationType.out());
+  assert.equal(blockedDestinationTypeReport.conflicts.some((conflict) => conflict.id === 'canon.promote.destination-not-json'), true);
+
+  const unreviewedPromotion = capture(target);
+  assert.equal(await runCli(['canon', 'promote', '.', '--source', advisoryPath, '--to', promotedMemoryPath, '--apply', '--json'], unreviewedPromotion), 1);
+  const unreviewedPromotionReport = JSON.parse(unreviewedPromotion.out());
+  assert.equal(unreviewedPromotionReport.conflicts.some((conflict) => conflict.id === 'canon.promote.review-required'), true);
+  assert.equal(existsSync(path.join(target, ...promotedMemoryPath.split('/'))), false);
+
+  const promotedReferencePath = '.ai-agent-playbook/knowledge/references/promoted-canon.json';
+  const appliedPromotion = capture(target);
+  assert.equal(await runCli(['canon', 'promote', '.', '--source', advisoryPath, '--to', promotedReferencePath, '--apply', '--reviewed', '--json'], appliedPromotion), 0);
+  const appliedPromotionReport = JSON.parse(appliedPromotion.out());
+  assert.equal(appliedPromotionReport.applied, true);
+  assert.equal(appliedPromotionReport.mode.writes, true);
+  assert.equal(existsSync(path.join(target, ...promotedReferencePath.split('/'))), true);
+  const promotedJson = JSON.parse(await readFile(path.join(target, ...promotedReferencePath.split('/')), 'utf8'));
+  assert.equal(promotedJson.kind, 'canon.fact-set');
+  assert.equal(promotedJson.audit.reviewed, true);
+  assert.equal(promotedJson.facts.length, appliedPromotionReport.summary.facts);
+
+  const promotedCheck = capture(target);
+  assert.equal(await runCli(['canon', 'check', '.', '--path', promotedReferencePath, '--json'], promotedCheck), 0);
+  const promotedCheckReport = JSON.parse(promotedCheck.out());
+  assert.equal(promotedCheckReport.summary.verified, promotedJson.facts.length);
+
+  await writeFile(path.join(target, 'src', 'changed.ts'), 'export const changed = "after";\n');
+  await mkdir(path.join(target, '.ai-agent-playbook', 'memory', 'maps'), { recursive: true });
+  await writeFile(path.join(target, '.ai-agent-playbook', 'memory', 'maps', 'canon.json'), `${JSON.stringify({
+    schemaVersion: '1',
+    facts: [
+      {
+        id: 'fact.changed',
+        kind: 'write-gate-advisory',
+        sourceReport: advisoryPath,
+        scanRange: ['src/changed.ts'],
+        confidence: 'medium',
+        observedAt: advisoryJson.generatedAt.slice(0, 10)
+      },
+      {
+        id: 'fact.stale',
+        kind: 'file-inventory',
+        sourceReport: indexReport.index,
+        scanRange: ['src/stale.ts'],
+        confidence: 'medium',
+        observedAt: '2000-01-01'
+      },
+      {
+        id: 'fact.missing',
+        kind: 'route-api-hint',
+        sourceReport: '.ai-agent-playbook/runtime/reports/missing.json',
+        scanRange: ['src/missing.ts'],
+        confidence: 'medium',
+        observedAt: '2026-07-03'
+      },
+      {
+        id: 'fact.unverified',
+        kind: 'manual-note',
+        scanRange: ['src/ok.ts'],
+        confidence: 'low',
+        observedAt: '2026-07-03'
+      }
+    ]
+  }, null, 2)}\n`);
+  const beforeCheck = await listRelativeFiles(target);
+
+  const checked = capture(target);
+  assert.equal(await runCli(['canon', 'check', '.', '--json'], checked), 1);
+  const checkReport = JSON.parse(checked.out());
+  assert.equal(checkReport.mode.writes, false);
+  assert.equal(checkReport.summary.facts, 4);
+  assert.equal(checkReport.summary.changed, 1);
+  assert.equal(checkReport.summary.stale, 1);
+  assert.equal(checkReport.summary.missing, 1);
+  assert.equal(checkReport.summary.unverified, 1);
+  assert.equal(checkReport.facts.find((fact) => fact.id === 'fact.changed').status, 'changed');
+  assert.equal(checkReport.facts.find((fact) => fact.id === 'fact.stale').status, 'stale');
+  assert.equal(checkReport.facts.find((fact) => fact.id === 'fact.missing').status, 'missing');
+  assert.equal(checkReport.facts.find((fact) => fact.id === 'fact.unverified').status, 'unverified');
+  assert.deepEqual(await listRelativeFiles(target), beforeCheck);
+  await cleanup(target);
+});
+
+test('index status reports invalid runtime artifacts without writing files', async () => {
+  const target = await tempRepo('runtime schema invalid-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await mkdir(path.join(target, '.ai-agent-playbook', 'runtime', 'indexes'), { recursive: true });
+  await writeFile(path.join(target, '.ai-agent-playbook', 'runtime', 'indexes', 'file-inventory.json'), `${JSON.stringify({
+    schemaVersion: '1',
+    target: path.resolve(target),
+    generatedAt: '2026-07-03T00:00:00.000Z',
+    summary: {},
+    warnings: [],
+    conflicts: []
+  }, null, 2)}\n`);
+  const before = await listRelativeFiles(target);
+  const status = capture(target);
+
+  assert.equal(await runCli(['index', 'status', '.', '--json'], status), 1);
+  const report = JSON.parse(status.out());
+  assert.equal(report.ok, false);
+  assert.equal(report.conflicts.some((conflict) => conflict.id === 'runtime.artifact.missing-field'), true);
+  assert.equal(report.indexes.some((index) => index.kind === 'file-inventory' && index.valid === false), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('index status reports malformed runtime artifact JSON without throwing', async () => {
+  const target = await tempRepo('runtime schema malformed-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await mkdir(path.join(target, '.ai-agent-playbook', 'runtime', 'indexes'), { recursive: true });
+  await writeFile(path.join(target, '.ai-agent-playbook', 'runtime', 'indexes', 'file-inventory.json'), '{not-json');
+  const before = await listRelativeFiles(target);
+  const status = capture(target);
+
+  assert.equal(await runCli(['index', 'status', '.', '--json'], status), 1);
+  const report = JSON.parse(status.out());
+  assert.equal(report.ok, false);
+  assert.equal(report.conflicts.some((conflict) => conflict.id === 'runtime.artifact.malformed-json'), true);
+  assert.equal(report.indexes.some((index) => index.kind === 'file-inventory' && index.valid === false), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('runtime schema-check validates known runtime and source schemas without writing files', async () => {
+  const target = await tempRepo('runtime schema check-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await mkdir(path.join(target, '.ai-agent-playbook', 'runtime', 'reports', 'evals'), { recursive: true });
+  await mkdir(path.join(target, '.ai-agent-playbook', 'runtime', 'reports', 'evidence'), { recursive: true });
+  await writeFile(path.join(target, '.ai-agent-playbook', 'runtime', 'reports', 'evals', 'prompt-regression.json'), `${JSON.stringify({
+    schemaVersion: '1',
+    kind: 'runtime.eval-definition',
+    id: 'prompt-regression',
+    target: 'mcp prompt behavior',
+    behavior: 'Prompt names required evidence before suggestions.',
+    riskClass: 'medium',
+    baseline: 'accepted prompt contract',
+    fixtures: ['fixtures/prompt-regression.json'],
+    graders: [{ type: 'rule', command: 'node test/prompt-contracts.test.mjs' }],
+    successCriteria: { requiredSections: ['Required evidence', 'Stop conditions'] },
+    budgets: { maxRuntimeMs: 30000, maxExternalCalls: 0 },
+    storage: { runtimePath: '.ai-agent-playbook/runtime/reports/evals/prompt-regression.json' }
+  }, null, 2)}\n`);
+  await writeFile(path.join(target, '.ai-agent-playbook', 'runtime', 'reports', 'evidence', 'bad.json'), `${JSON.stringify({
+    schemaVersion: '1',
+    kind: 'runtime.evidence-envelope',
+    sourceId: 'local-reference',
+    locator: { type: 'path-range', path: 'C:\\Users\\home\\secret.txt' },
+    query: 'schema-check',
+    scanRange: 'all docs',
+    freshness: '2026-07-03',
+    evidenceType: 'direct quote',
+    summary: 'sk-proj-this-is-not-a-valid-example-but-is-secret-shaped-1234567890',
+    caveats: [],
+    promotionStatus: 'trusted'
+  }, null, 2)}\n`);
+  const before = await listRelativeFiles(target);
+
+  const evalCheck = capture(target);
+  assert.equal(await runCli(['runtime', 'schema-check', '.', '--path', '.ai-agent-playbook/runtime/reports/evals/prompt-regression.json', '--json'], evalCheck), 0);
+  const evalReport = JSON.parse(evalCheck.out());
+  assert.equal(evalReport.kind, 'runtime.schema-check');
+  assert.equal(evalReport.mode.writes, false);
+  assert.equal(evalReport.expectedKind, 'runtime.eval-definition');
+  assert.equal(evalReport.summary.conflicts, 0);
+
+  const sourceCheck = capture(target);
+  assert.equal(await runCli(['runtime', 'schema-check', '.', '--path', '.ai-agent-playbook/knowledge/sources.json', '--json'], sourceCheck), 0);
+  const sourceReport = JSON.parse(sourceCheck.out());
+  assert.equal(sourceReport.expectedKind, 'runtime.source-registry');
+  assert.equal(sourceReport.summary.conflicts, 0);
+
+  const missingCheck = capture(target);
+  assert.equal(await runCli(['runtime', 'schema-check', '.', '--path', '.ai-agent-playbook/runtime/reports/evidence/missing.json', '--json'], missingCheck), 1);
+  const missingReport = JSON.parse(missingCheck.out());
+  assert.equal(missingReport.conflicts.some((conflict) => conflict.id === 'runtime.schema.file-unreadable'), true);
+  assert.equal(JSON.stringify(missingReport.conflicts).includes(target), false);
+
+  const badCheck = capture(target);
+  assert.equal(await runCli(['runtime', 'schema-check', '.', '--path', '.ai-agent-playbook/runtime/reports/evidence/bad.json', '--kind', 'runtime.evidence-envelope', '--json'], badCheck), 1);
+  const badReport = JSON.parse(badCheck.out());
+  assert.equal(badReport.conflicts.some((conflict) => conflict.id === 'runtime.schema.credential-value'), true);
+  assert.equal(badReport.conflicts.some((conflict) => conflict.id === 'runtime.schema.locator-path'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('evidence locator-check validates JSON and Markdown locators without writing files', async () => {
+  const target = await tempRepo('evidence locator check-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await mkdir(path.join(target, '.ai-agent-playbook', 'runtime', 'reports', 'evidence'), { recursive: true });
+  await mkdir(path.join(target, 'docs'), { recursive: true });
+  await writeFile(path.join(target, '.ai-agent-playbook', 'runtime', 'reports', 'evidence', 'ok.json'), `${JSON.stringify({
+    schemaVersion: '1',
+    kind: 'runtime.evidence-envelope',
+    sourceId: 'local-reference',
+    sourceBoundary: 'local-file',
+    locator: { type: 'path-range', path: 'src/app.ts#L1-L5' },
+    query: 'locator-check',
+    scanRange: 'src/**/*.ts',
+    freshness: '2026-07-03',
+    evidenceType: 'summary',
+    summary: 'The route is defined in src/app.ts.',
+    caveats: [],
+    promotionStatus: 'runtime-only'
+  }, null, 2)}\n`);
+  await writeFile(path.join(target, '.ai-agent-playbook', 'runtime', 'reports', 'evidence', 'bad.json'), `${JSON.stringify({
+    locator: { type: 'path-range', path: 'C:\\Users\\home\\secret.txt' },
+    sourceBoundary: 'unknown-boundary',
+    summary: 'sk-proj-this-is-not-a-valid-example-but-is-secret-shaped-1234567890'
+  }, null, 2)}\n`);
+  await writeFile(path.join(target, 'docs', 'notes.md'), '# Notes\n\nGeneral implementation notes without locator blocks.\n');
+  await writeFile(path.join(target, 'docs', 'locators.md'), [
+    '| locatorType | locator | scanRange | sourceBoundary | freshness |',
+    '| --- | --- | --- | --- | --- |',
+    '| path-range | src/app.ts#L1-L5 | src/**/*.ts | local-file | 2026-07-03 |',
+    ''
+  ].join('\n'));
+  const before = await listRelativeFiles(target);
+
+  const okCheck = capture(target);
+  assert.equal(await runCli(['evidence', 'locator-check', '.', '--path', '.ai-agent-playbook/runtime/reports/evidence/ok.json', '--json'], okCheck), 0);
+  const okReport = JSON.parse(okCheck.out());
+  assert.equal(okReport.kind, 'runtime.evidence-locator-check');
+  assert.equal(okReport.mode.writes, false);
+  assert.equal(okReport.summary.locators, 1);
+  assert.equal(okReport.summary.conflicts, 0);
+
+  const badCheck = capture(target);
+  assert.equal(await runCli(['evidence', 'locator-check', '.', '--path', '.ai-agent-playbook/runtime/reports/evidence/bad.json', '--json'], badCheck), 1);
+  const badReport = JSON.parse(badCheck.out());
+  assert.equal(badReport.conflicts.some((conflict) => conflict.id === 'evidence-locator.scan-range-missing'), true);
+  assert.equal(badReport.conflicts.some((conflict) => conflict.id === 'evidence-locator.source-boundary-unknown'), true);
+  assert.equal(badReport.conflicts.some((conflict) => conflict.id === 'evidence-locator.portable-path'), true);
+  assert.equal(badReport.conflicts.some((conflict) => conflict.id === 'evidence-locator.credential-value'), true);
+
+  const missingCheck = capture(target);
+  assert.equal(await runCli(['evidence', 'locator-check', '.', '--path', '.ai-agent-playbook/runtime/reports/evidence/missing.json', '--json'], missingCheck), 1);
+  const missingReport = JSON.parse(missingCheck.out());
+  assert.equal(missingReport.conflicts.some((conflict) => conflict.id === 'evidence-locator.file-unreadable'), true);
+  assert.equal(JSON.stringify(missingReport.conflicts).includes(target), false);
+
+  const notesCheck = capture(target);
+  assert.equal(await runCli(['evidence', 'locator-check', '.', '--path', 'docs/notes.md', '--json'], notesCheck), 0);
+  const notesReport = JSON.parse(notesCheck.out());
+  assert.equal(notesReport.warnings.some((warning) => warning.id === 'evidence-locator.markdown-none'), true);
+
+  const tableCheck = capture(target);
+  assert.equal(await runCli(['evidence', 'locator-check', '.', '--path', 'docs/locators.md', '--json'], tableCheck), 0);
+  const tableReport = JSON.parse(tableCheck.out());
+  assert.equal(tableReport.summary.locators, 1);
+  assert.equal(tableReport.summary.conflicts, 0);
+
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('runtime capability-history summarizes append-only JSONL without writing files', async () => {
+  const target = await tempRepo('capability history-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await mkdir(path.join(target, '.ai-agent-playbook', 'runtime', 'reports'), { recursive: true });
+  const absoluteEvidence = path.join(target, 'secret-evidence.log');
+  const entries = [
+    {
+      capability: 'runtime-index-canon',
+      status: 'pass',
+      generatedAt: '2026-07-03T00:00:00.000Z',
+      durationMs: 800,
+      baselineMs: 1000,
+      evidence: ['.ai-agent-playbook/runtime/indexes/file-inventory.json']
+    },
+    {
+      capability: 'runtime-index-canon',
+      status: 'fail',
+      generatedAt: '2026-07-03T01:00:00.000Z',
+      durationMs: 1200,
+      baselineMs: 1000,
+      evidence: [absoluteEvidence, 'docs/safe.md']
+    },
+    {
+      capability: 'security-review',
+      status: 'warn',
+      generatedAt: 'not-a-date',
+      durationMs: 50,
+      baselineMs: 100
+    }
+  ];
+  await writeFile(
+    path.join(target, '.ai-agent-playbook', 'runtime', 'reports', 'capability-history.jsonl'),
+    `${entries.map((entry) => JSON.stringify(entry)).join('\n')}\n`
+  );
+  const before = await listRelativeFiles(target);
+  const history = capture(target);
+
+  assert.equal(await runCli(['runtime', 'capability-history', '.', '--json'], history), 0);
+  assert.equal(history.out().includes('secret-evidence.log'), false);
+  const report = JSON.parse(history.out());
+  assert.equal(report.ok, true);
+  assert.equal(report.exists, true);
+  assert.equal(report.mode.writes, false);
+  assert.equal(report.summary.entries, 3);
+  assert.equal(report.summary.capabilities, 2);
+  assert.equal(report.summary.latestStatuses.fail, 1);
+  assert.equal(report.summary.latestStatuses.warn, 1);
+  assert.equal(report.warnings.some((warning) => warning.id === 'capability-history.non-portable-evidence'), true);
+  assert.equal(report.warnings.some((warning) => warning.id === 'capability-history.invalid-timestamp'), true);
+  const runtimeCapability = report.capabilities.find((item) => item.capability === 'runtime-index-canon');
+  assert.equal(runtimeCapability.latestStatus, 'fail');
+  assert.equal(runtimeCapability.latestDurationMs, 1200);
+  assert.equal(runtimeCapability.baselineMs, 1000);
+  assert.equal(runtimeCapability.driftMs, 200);
+  assert.equal(runtimeCapability.driftPercent, 20);
+  assert.deepEqual(runtimeCapability.evidence, ['docs/safe.md']);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('runtime capability-history reports malformed JSONL lines', async () => {
+  const target = await tempRepo('capability history malformed-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  await mkdir(path.join(target, '.ai-agent-playbook', 'runtime', 'reports'), { recursive: true });
+  await writeFile(
+    path.join(target, '.ai-agent-playbook', 'runtime', 'reports', 'capability-history.jsonl'),
+    '{"capability":"runtime-index-canon","status":"pass"}\n{bad-json\n'
+  );
+  const before = await listRelativeFiles(target);
+  const history = capture(target);
+
+  assert.equal(await runCli(['runtime', 'capability-history', '.', '--json'], history), 1);
+  const report = JSON.parse(history.out());
+  assert.equal(report.ok, false);
+  assert.equal(report.summary.entries, 1);
+  assert.equal(report.conflicts.some((conflict) => conflict.id === 'capability-history.malformed-line'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('reference inventory summarizes local reference collections without writing files', async () => {
+  const target = await tempRepo('reference inventory-한글-');
+  const referenceRoot = path.join(target, '_reference');
+  await mkdir(path.join(referenceRoot, 'repo-lens-like', 'skills', 'write-gate'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'repo-lens-like', 'src', 'mcp-server'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'connector-pack', 'reference', 'connectors'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'repo-lens-like', 'README.md'), '# Repo Lens\n');
+  await writeFile(path.join(referenceRoot, 'repo-lens-like', 'skills', 'write-gate', 'SKILL.md'), '---\nname: write-gate\n---\n# Write Gate\n');
+  await writeFile(path.join(referenceRoot, 'repo-lens-like', 'src', 'mcp-server', 'index.ts'), 'export const mcpServer = true;\n');
+  await writeFile(path.join(referenceRoot, 'connector-pack', 'package.json'), '{"name":"connector-pack"}\n');
+  await writeFile(path.join(referenceRoot, 'connector-pack', 'SECURITY.md'), '# Security\n');
+  await writeFile(path.join(referenceRoot, 'connector-pack', 'reference', 'connectors', 'postgres.md'), '# Postgres\n');
+  const before = await listRelativeFiles(target);
+
+  const inventory = capture(target);
+  assert.equal(await runCli(['reference', 'inventory', referenceRoot, '--json'], inventory), 0);
+  const report = JSON.parse(inventory.out());
+  assert.equal(report.ok, true);
+  assert.equal(report.mode.writes, false);
+  assert.equal(report.summary.projects, 2);
+  assert.equal(report.summary.files, 6);
+  assert.equal(report.summary.projectsWithSignals.skills, 1);
+  assert.equal(report.summary.projectsWithSignals.connectors, 1);
+
+  const repoLens = report.projects.find((project) => project.id === 'repo-lens-like');
+  assert.equal(repoLens.signals.skills, 1);
+  assert.equal(repoLens.signals.mcp, 1);
+  assert.equal(repoLens.candidateCapabilities.includes('skill-pack'), true);
+  assert.equal(repoLens.candidateCapabilities.includes('mcp-integration'), true);
+
+  const connectorPack = report.projects.find((project) => project.id === 'connector-pack');
+  assert.equal(connectorPack.candidateCapabilities.includes('connector-reference'), true);
+  assert.equal(connectorPack.candidateCapabilities.includes('security-validation'), true);
+
+  const queue = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-queue', referenceRoot, '--max-results', '1', '--json'], queue), 0);
+  const queueReport = JSON.parse(queue.out());
+  assert.equal(queueReport.ok, true);
+  assert.equal(queueReport.mode.writes, false);
+  assert.equal(queueReport.summary.queueItems, 1);
+  assert.equal('ledgerStatuses' in queueReport.summary, false);
+  assert.equal(queueReport.queue[0].project, 'repo-lens-like');
+  assert.equal(queueReport.queue[0].recommendedCapabilities.includes('ai-harness'), true);
+  assert.equal(queueReport.queue[0].signalHighlights.some((item) => item.signal === 'mcp'), true);
+  assert.equal(queueReport.queue[0].nextActions.some((item) => item.includes('MCP surfaces')), true);
+
+  const matrix = capture(target);
+  assert.equal(await runCli(['reference', 'capability-matrix', referenceRoot, '--max-results', '2', '--json'], matrix), 0);
+  const matrixReport = JSON.parse(matrix.out());
+  assert.equal(matrixReport.ok, true);
+  assert.equal(matrixReport.kind, 'reference.capability-matrix');
+  assert.equal(matrixReport.mode.writes, false);
+  assert.equal(matrixReport.summary.queueItems, 2);
+  assert.equal(matrixReport.capabilities['ai-harness'].projects, 1);
+  assert.equal(matrixReport.capabilities.security.projects, 1);
+  assert.equal(matrixReport.capabilities['ai-harness'].topReferences[0].project, 'repo-lens-like');
+  assert.equal(matrixReport.capabilities.security.topReferences[0].project, 'connector-pack');
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const filteredMatrix = capture(target);
+  assert.equal(await runCli(['reference', 'capability-matrix', referenceRoot, '--capability', 'security', '--max-results', '2', '--json'], filteredMatrix), 0);
+  const filteredMatrixReport = JSON.parse(filteredMatrix.out());
+  assert.deepEqual(Object.keys(filteredMatrixReport.capabilities), ['security']);
+  assert.equal(filteredMatrixReport.capabilities.security.projects, 1);
+  assert.equal(filteredMatrixReport.summary.capabilities, 1);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const missingPlanCapability = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-plan', referenceRoot, '--json'], missingPlanCapability), 1);
+  const missingPlanCapabilityReport = JSON.parse(missingPlanCapability.out());
+  assert.equal(missingPlanCapabilityReport.conflicts.some((conflict) => conflict.id === 'reference-adoption-plan.capability-required'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const adoptionPlan = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-plan', referenceRoot, '--capability', 'ai-harness', '--max-results', '2', '--json'], adoptionPlan), 0);
+  const adoptionPlanReport = JSON.parse(adoptionPlan.out());
+  assert.equal(adoptionPlanReport.ok, true);
+  assert.equal(adoptionPlanReport.kind, 'reference.adoption-plan');
+  assert.equal(adoptionPlanReport.mode.writes, false);
+  assert.equal(adoptionPlanReport.summary.selectedReferences, 1);
+  assert.equal(adoptionPlanReport.plan.capability, 'ai-harness');
+  assert.equal(adoptionPlanReport.plan.references[0].project, 'repo-lens-like');
+  assert.equal(adoptionPlanReport.plan.references[0].readOrder.some((entry) => entry.path === 'README.md'), true);
+  assert.equal(adoptionPlanReport.plan.references[0].suggestedSurfaces.some((surface) => surface.surface === 'skill-reference'), true);
+  assert.equal(adoptionPlanReport.plan.references[0].suggestedSurfaces.some((surface) => surface.surface === 'mcp-permission-tier'), true);
+  assert.equal(adoptionPlanReport.plan.stopConditions.length > 0, true);
+  assert.equal(adoptionPlanReport.plan.verification.some((item) => item.includes('npm run check')), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const missingStatusRegistry = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-status', '.', '--reference-dir', referenceRoot, '--max-results', '2', '--json'], missingStatusRegistry), 0);
+  const missingStatusRegistryReport = JSON.parse(missingStatusRegistry.out());
+  assert.equal(missingStatusRegistryReport.ok, true);
+  assert.equal(missingStatusRegistryReport.kind, 'reference.adoption-status');
+  assert.equal(missingStatusRegistryReport.mode.writes, false);
+  assert.equal(missingStatusRegistryReport.summary.queueItems, 2);
+  assert.equal(missingStatusRegistryReport.summary.sourceRegistered, 0);
+  assert.equal(missingStatusRegistryReport.summary.sourceMissing, 2);
+  assert.equal(missingStatusRegistryReport.summary.ledgerStatuses.untracked, 2);
+  assert.equal(missingStatusRegistryReport.warnings.some((warning) => warning.id === 'reference-adoption-status.source-registry-missing'), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const inspect = capture(target);
+  assert.equal(await runCli(['reference', 'inspect', referenceRoot, '--project', 'repo-lens-like', '--json'], inspect), 0);
+  const inspectReport = JSON.parse(inspect.out());
+  assert.equal(inspectReport.ok, true);
+  assert.equal(inspectReport.kind, 'reference.inspect');
+  assert.equal(inspectReport.mode.writes, false);
+  assert.equal(inspectReport.project, 'repo-lens-like');
+  assert.equal(inspectReport.summary.files, 3);
+  assert.equal(inspectReport.recommendedCapabilities.includes('ai-harness'), true);
+  assert.equal(inspectReport.review.readOrder.some((entry) => entry.path === 'README.md'), true);
+  assert.equal(inspectReport.review.adoptionQuestions.length >= 3, true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const unsafeInspect = capture(target);
+  assert.equal(await runCli(['reference', 'inspect', referenceRoot, '--project', '../outside', '--json'], unsafeInspect), 1);
+  const unsafeInspectReport = JSON.parse(unsafeInspect.out());
+  assert.equal(unsafeInspectReport.conflicts.some((conflict) => conflict.id === 'reference-inspect.project-path-invalid'), true);
+
+  const missingInspect = capture(target);
+  assert.equal(await runCli(['reference', 'inspect', referenceRoot, '--project', 'missing-pack', '--json'], missingInspect), 1);
+  const missingInspectReport = JSON.parse(missingInspect.out());
+  assert.equal(missingInspectReport.conflicts.some((conflict) => conflict.id === 'reference-inspect.project-missing'), true);
+
+  const sourcePreview = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-preview', referenceRoot, '--max-results', '2', '--json'], sourcePreview), 0);
+  const sourceReport = JSON.parse(sourcePreview.out());
+  assert.equal(sourceReport.ok, true);
+  assert.equal(sourceReport.mode.writes, false);
+  assert.equal(sourceReport.candidatePath, '.ai-agent-playbook/knowledge/sources.json');
+  assert.equal(sourceReport.summary.schemaValid, true);
+  assert.equal(sourceReport.registry.sources.length, 2);
+  assert.equal(sourceReport.registry.sources.every((source) => source.id.startsWith('reference-')), true);
+  assert.equal(sourceReport.registry.sources.some((source) => source.recommendedCapabilities.includes('ai-harness')), true);
+  assert.equal(validateSourceRegistry(sourceReport.registry, { path: 'knowledge/sources.json' }).ok, true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  await mkdir(path.join(target, '.ai-agent-playbook', 'knowledge'), { recursive: true });
+  const sourcesPath = path.join(target, '.ai-agent-playbook', 'knowledge', 'sources.json');
+  await writeFile(sourcesPath, `${JSON.stringify({ schemaVersion: '1', sources: [] }, null, 2)}\n`);
+  const beforeSourceUpdate = await listRelativeFiles(target);
+  const sourceUpdatePreview = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-update', '.', '--reference-dir', referenceRoot, '--max-results', '2', '--json'], sourceUpdatePreview), 0);
+  const sourceUpdatePreviewReport = JSON.parse(sourceUpdatePreview.out());
+  assert.equal(sourceUpdatePreviewReport.ok, true);
+  assert.equal(sourceUpdatePreviewReport.applied, false);
+  assert.equal(sourceUpdatePreviewReport.mode.writes, false);
+  assert.equal(sourceUpdatePreviewReport.summary.existing, 0);
+  assert.equal(sourceUpdatePreviewReport.summary.added, 2);
+  assert.equal(sourceUpdatePreviewReport.summary.operations, 1);
+  assert.equal(sourceUpdatePreviewReport.registry.sources.some((source) => source.id === 'reference-repo-lens-like'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeSourceUpdate);
+  assert.deepEqual(JSON.parse(await readFile(sourcesPath, 'utf8')).sources, []);
+
+  const sourceUpdateApply = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-update', '.', '--reference-dir', referenceRoot, '--max-results', '2', '--apply', '--json'], sourceUpdateApply), 0);
+  const sourceUpdateApplyReport = JSON.parse(sourceUpdateApply.out());
+  assert.equal(sourceUpdateApplyReport.ok, true);
+  assert.equal(sourceUpdateApplyReport.applied, true);
+  assert.equal(sourceUpdateApplyReport.mode.writes, true);
+  const writtenSources = JSON.parse(await readFile(sourcesPath, 'utf8'));
+  assert.equal(writtenSources.sources.length, 2);
+
+  const sourceUpdateSecondRun = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-update', '.', '--reference-dir', referenceRoot, '--max-results', '2', '--apply', '--json'], sourceUpdateSecondRun), 0);
+  const sourceUpdateSecondRunReport = JSON.parse(sourceUpdateSecondRun.out());
+  assert.equal(sourceUpdateSecondRunReport.summary.added, 0);
+  assert.equal(sourceUpdateSecondRunReport.summary.operations, 0);
+  assert.equal(sourceUpdateSecondRunReport.applied, false);
+  assert.deepEqual(JSON.parse(await readFile(sourcesPath, 'utf8')), writtenSources);
+
+  const unsafeSourceUpdatePath = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-update', '.', '--reference-dir', referenceRoot, '--path', '../outside.json', '--json'], unsafeSourceUpdatePath), 1);
+  const unsafeSourceUpdatePathReport = JSON.parse(unsafeSourceUpdatePath.out());
+  assert.equal(unsafeSourceUpdatePathReport.conflicts.some((conflict) => conflict.id === 'reference-source-registry-update.path-invalid'), true);
+
+  const fileReferenceDirPath = path.join(target, 'not-a-source-reference-dir.txt');
+  await writeFile(fileReferenceDirPath, 'not a directory\n');
+  const fileReferenceDir = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-update', '.', '--reference-dir', fileReferenceDirPath, '--json'], fileReferenceDir), 1);
+  const fileReferenceDirReport = JSON.parse(fileReferenceDir.out());
+  assert.equal(fileReferenceDirReport.conflicts.some((conflict) => conflict.id === 'reference-source-registry-update.reference-dir-missing'), true);
+
+  const ledgerPath = path.join(target, '.ai-agent-playbook', 'knowledge', 'reference-adoption-ledger.md');
+  await writeFile(ledgerPath, [
+    '# Reference Adoption Ledger',
+    '',
+    '| Status | Reference ID | Capability | Useful Pattern | Local Adoption | Risk/Noise | Decision Date |',
+    '| --- | --- | --- | --- | --- | --- | --- |',
+    '| adopted | repo-lens-like | ai-harness | MCP surface pattern | local queue annotation | none | 2026-07-03 |',
+    '| new | connector-pack | security | Connector safety pattern | review pending | none |  |',
+    ''
+  ].join('\n'));
+  const beforeLedgerQueue = await listRelativeFiles(target);
+  const ledgerQueue = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-queue', referenceRoot, '--max-results', '2', '--ledger', ledgerPath, '--json'], ledgerQueue), 0);
+  const ledgerQueueReport = JSON.parse(ledgerQueue.out());
+  assert.equal(ledgerQueueReport.ok, true);
+  assert.equal(ledgerQueueReport.summary.ledgerStatuses.adopted, 1);
+  assert.equal(ledgerQueueReport.summary.ledgerStatuses.new, 1);
+  const adoptedQueueItem = ledgerQueueReport.queue.find((item) => item.project === 'repo-lens-like');
+  assert.equal(adoptedQueueItem.ledgerStatus, 'adopted');
+  assert.equal(adoptedQueueItem.ledgerCapability, 'ai-harness');
+  assert.equal(adoptedQueueItem.ledgerDecisionDate, '2026-07-03');
+
+  const ledgerMatrix = capture(target);
+  assert.equal(await runCli(['reference', 'capability-matrix', referenceRoot, '--max-results', '2', '--ledger', ledgerPath, '--json'], ledgerMatrix), 0);
+  const ledgerMatrixReport = JSON.parse(ledgerMatrix.out());
+  assert.equal(ledgerMatrixReport.ok, true);
+  assert.equal(ledgerMatrixReport.mode.writes, false);
+  assert.equal(ledgerMatrixReport.capabilities['ai-harness'].ledgerStatuses.adopted, 1);
+  assert.equal(ledgerMatrixReport.capabilities.security.ledgerStatuses.new, 1);
+  const adoptedMatrixItem = ledgerMatrixReport.capabilities['ai-harness'].topReferences.find((item) => item.project === 'repo-lens-like');
+  assert.equal(adoptedMatrixItem.ledgerStatus, 'adopted');
+  assert.equal(adoptedMatrixItem.ledgerCapability, 'ai-harness');
+  assert.equal(adoptedMatrixItem.ledgerDecisionDate, '2026-07-03');
+
+  const filteredLedgerMatrix = capture(target);
+  assert.equal(await runCli(['reference', 'capability-matrix', referenceRoot, '--capability', 'ai-harness', '--max-results', '2', '--ledger', ledgerPath, '--json'], filteredLedgerMatrix), 0);
+  const filteredLedgerMatrixReport = JSON.parse(filteredLedgerMatrix.out());
+  assert.deepEqual(Object.keys(filteredLedgerMatrixReport.capabilities), ['ai-harness']);
+  assert.equal(filteredLedgerMatrixReport.capabilities['ai-harness'].ledgerStatuses.adopted, 1);
+
+  const ledgerPlan = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-plan', referenceRoot, '--capability', 'ai-harness', '--ledger', ledgerPath, '--json'], ledgerPlan), 0);
+  const ledgerPlanReport = JSON.parse(ledgerPlan.out());
+  assert.equal(ledgerPlanReport.ok, true);
+  assert.equal(ledgerPlanReport.plan.references[0].project, 'repo-lens-like');
+  assert.equal(ledgerPlanReport.plan.references[0].ledger.status, 'adopted');
+  assert.equal(ledgerPlanReport.plan.references[0].ledger.capability, 'ai-harness');
+  assert.equal(ledgerPlanReport.matrix.ledgerStatuses.adopted, 1);
+
+  const adoptionStatus = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-status', '.', '--reference-dir', referenceRoot, '--ledger', ledgerPath, '--max-results', '2', '--json'], adoptionStatus), 0);
+  const adoptionStatusReport = JSON.parse(adoptionStatus.out());
+  assert.equal(adoptionStatusReport.ok, true);
+  assert.equal(adoptionStatusReport.mode.writes, false);
+  assert.equal(adoptionStatusReport.summary.queueItems, 2);
+  assert.equal(adoptionStatusReport.summary.sourceRegistered, 2);
+  assert.equal(adoptionStatusReport.summary.sourceMissing, 0);
+  assert.equal(adoptionStatusReport.summary.ledgerStatuses.adopted, 1);
+  assert.equal(adoptionStatusReport.summary.ledgerStatuses.new, 1);
+  const adoptedStatusItem = adoptionStatusReport.items.find((item) => item.project === 'repo-lens-like');
+  assert.equal(adoptedStatusItem.ledgerStatus, 'adopted');
+  assert.equal(adoptedStatusItem.sourceRegistered, true);
+  assert.equal(adoptedStatusItem.sourceId, 'reference-repo-lens-like');
+  const securityStatusCapability = adoptionStatusReport.capabilities.find((item) => item.capability === 'security');
+  assert.equal(securityStatusCapability.sourceRegistered, 1);
+
+  const filteredAdoptionStatus = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-status', '.', '--reference-dir', referenceRoot, '--ledger', ledgerPath, '--capability', 'ai-harness', '--max-results', '2', '--json'], filteredAdoptionStatus), 0);
+  const filteredAdoptionStatusReport = JSON.parse(filteredAdoptionStatus.out());
+  assert.equal(filteredAdoptionStatusReport.summary.queueItems, 1);
+  assert.equal(filteredAdoptionStatusReport.items[0].project, 'repo-lens-like');
+  assert.equal(filteredAdoptionStatusReport.capabilities.some((item) => item.capability === 'ai-harness'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeLedgerQueue);
+
+  const ledgerDecisionPreview = capture(target);
+  assert.equal(await runCli([
+    'reference',
+    'ledger-decision',
+    '.',
+    '--reference',
+    'connector-pack',
+    '--status',
+    'rejected',
+    '--capability',
+    'security',
+    '--pattern',
+    'Connector pattern rejected',
+    '--adoption',
+    'Do not adopt',
+    '--risk',
+    'Too much reference noise',
+    '--decision-date',
+    '2026-07-03',
+    '--json'
+  ], ledgerDecisionPreview), 0);
+  const ledgerDecisionPreviewReport = JSON.parse(ledgerDecisionPreview.out());
+  assert.equal(ledgerDecisionPreviewReport.ok, true);
+  assert.equal(ledgerDecisionPreviewReport.applied, false);
+  assert.equal(ledgerDecisionPreviewReport.mode.writes, false);
+  assert.equal(ledgerDecisionPreviewReport.summary.changed, true);
+  assert.equal(ledgerDecisionPreviewReport.operations[0].action, 'preview');
+  assert.equal(ledgerDecisionPreviewReport.decision.before.status, 'new');
+  assert.equal(ledgerDecisionPreviewReport.decision.after.status, 'rejected');
+  assert.equal((await readFile(ledgerPath, 'utf8')).includes('| new | connector-pack | security | Connector safety pattern | review pending | none |  |'), true);
+
+  const ledgerDecisionApply = capture(target);
+  assert.equal(await runCli([
+    'reference',
+    'ledger-decision',
+    '.',
+    '--reference',
+    'connector-pack',
+    '--status',
+    'rejected',
+    '--capability',
+    'security',
+    '--pattern',
+    'Connector pattern rejected',
+    '--adoption',
+    'Do not adopt',
+    '--risk',
+    'Too much reference noise',
+    '--decision-date',
+    '2026-07-03',
+    '--apply',
+    '--json'
+  ], ledgerDecisionApply), 0);
+  const ledgerDecisionApplyReport = JSON.parse(ledgerDecisionApply.out());
+  assert.equal(ledgerDecisionApplyReport.ok, true);
+  assert.equal(ledgerDecisionApplyReport.applied, true);
+  assert.equal(ledgerDecisionApplyReport.mode.writes, true);
+  assert.equal((await readFile(ledgerPath, 'utf8')).includes('| rejected | connector-pack | security | Connector pattern rejected | Do not adopt | Too much reference noise | 2026-07-03 |'), true);
+
+  const ledgerDecisionNoop = capture(target);
+  assert.equal(await runCli([
+    'reference',
+    'ledger-decision',
+    '.',
+    '--reference',
+    'connector-pack',
+    '--status',
+    'rejected',
+    '--decision-date',
+    '2026-07-03',
+    '--apply',
+    '--json'
+  ], ledgerDecisionNoop), 0);
+  const ledgerDecisionNoopReport = JSON.parse(ledgerDecisionNoop.out());
+  assert.equal(ledgerDecisionNoopReport.applied, false);
+  assert.equal(ledgerDecisionNoopReport.summary.changed, false);
+  assert.equal(ledgerDecisionNoopReport.summary.operations, 0);
+
+  const invalidLedgerDecision = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-decision', '.', '--reference', 'connector-pack', '--status', 'done', '--json'], invalidLedgerDecision), 1);
+  const invalidLedgerDecisionReport = JSON.parse(invalidLedgerDecision.out());
+  assert.equal(invalidLedgerDecisionReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-decision.invalid-status'), true);
+
+  const missingLedgerDecision = capture(target);
+  assert.equal(await runCli([
+    'reference',
+    'ledger-decision',
+    '.',
+    '--reference',
+    'connector-pack',
+    '--status',
+    'reviewed',
+    '--path',
+    '.ai-agent-playbook/knowledge/missing-ledger.md',
+    '--json'
+  ], missingLedgerDecision), 1);
+  const missingLedgerDecisionReport = JSON.parse(missingLedgerDecision.out());
+  assert.equal(missingLedgerDecisionReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-decision.ledger-missing'), true);
+
+  const missingReferenceDecision = capture(target);
+  assert.equal(await runCli([
+    'reference',
+    'ledger-decision',
+    '.',
+    '--reference',
+    'unknown-pack',
+    '--status',
+    'reviewed',
+    '--json'
+  ], missingReferenceDecision), 1);
+  const missingReferenceDecisionReport = JSON.parse(missingReferenceDecision.out());
+  assert.equal(missingReferenceDecisionReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-decision.reference-missing'), true);
+
+  const escapedPathDecision = capture(target);
+  assert.equal(await runCli([
+    'reference',
+    'ledger-decision',
+    '.',
+    '--reference',
+    'connector-pack',
+    '--status',
+    'reviewed',
+    '--path',
+    '../outside-ledger.md',
+    '--json'
+  ], escapedPathDecision), 1);
+  const escapedPathDecisionReport = JSON.parse(escapedPathDecision.out());
+  assert.equal(escapedPathDecisionReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-decision.path-invalid'), true);
+
+  const unsafeCellDecision = capture(target);
+  assert.equal(await runCli([
+    'reference',
+    'ledger-decision',
+    '.',
+    '--reference',
+    'connector-pack',
+    '--status',
+    'reviewed',
+    '--adoption',
+    'Do not copy C:\\tmp\\private-notes into the ledger',
+    '--json'
+  ], unsafeCellDecision), 1);
+  const unsafeCellDecisionReport = JSON.parse(unsafeCellDecision.out());
+  assert.equal(unsafeCellDecisionReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-decision.local-absolute-path'), true);
+
+  assert.deepEqual(await listRelativeFiles(target), beforeLedgerQueue);
+
+  await writeFile(path.join(target, '.ai-agent-playbook', 'knowledge', 'sources.json'), `${JSON.stringify(sourceReport.registry, null, 2)}\n`);
+  const beforeSourceCheck = await listRelativeFiles(target);
+  const sourceCheck = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-check', '.', '--reference-dir', referenceRoot, '--json'], sourceCheck), 0);
+  const sourceCheckReport = JSON.parse(sourceCheck.out());
+  assert.equal(sourceCheckReport.ok, true);
+  assert.equal(sourceCheckReport.mode.writes, false);
+  assert.equal(sourceCheckReport.summary.entries, 2);
+  assert.equal(sourceCheckReport.summary.schemaValid, true);
+  assert.equal(sourceCheckReport.summary.missingReferencePaths, 0);
+  assert.equal(sourceCheckReport.summary.missingRepresentativeFiles, 0);
+  assert.deepEqual(await listRelativeFiles(target), beforeSourceCheck);
+
+  const driftRegistry = {
+    ...sourceReport.registry,
+    sources: [{
+      ...sourceReport.registry.sources[0],
+      referencePath: 'missing-reference-pack'
+    }]
+  };
+  await writeFile(path.join(target, '.ai-agent-playbook', 'knowledge', 'sources.json'), `${JSON.stringify(driftRegistry, null, 2)}\n`);
+  const beforeDriftCheck = await listRelativeFiles(target);
+  const driftCheck = capture(target);
+  assert.equal(await runCli(['reference', 'source-registry-check', '.', '--reference-dir', referenceRoot, '--json'], driftCheck), 1);
+  const driftReport = JSON.parse(driftCheck.out());
+  assert.equal(driftReport.ok, false);
+  assert.equal(driftReport.conflicts.some((conflict) => conflict.id === 'reference-source-registry.reference-path-missing'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeDriftCheck);
+  await cleanup(target);
+});
+
+test('reference capability matrix surfaces broad engineering capability signals', async () => {
+  const target = await tempRepo('reference capability breadth-한글-');
+  const referenceRoot = path.join(target, '_reference');
+
+  await mkdir(path.join(referenceRoot, 'devops-pack', '.github', 'workflows'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'devops-pack', 'k8s'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'devops-pack', '.github', 'workflows', 'ci.yml'), 'name: ci\n');
+  await writeFile(path.join(referenceRoot, 'devops-pack', 'Dockerfile'), 'FROM node:22\n');
+  await writeFile(path.join(referenceRoot, 'devops-pack', 'k8s', 'deployment.yaml'), 'apiVersion: apps/v1\n');
+
+  await mkdir(path.join(referenceRoot, 'frontend-pack', 'src', 'components'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'frontend-pack', 'src', 'tokens'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'frontend-pack', 'src', 'components', 'Button.tsx'), 'export function Button() { return null; }\n');
+  await writeFile(path.join(referenceRoot, 'frontend-pack', 'vite.config.ts'), 'export default {};\n');
+  await writeFile(path.join(referenceRoot, 'frontend-pack', 'src', 'tokens', 'theme.css'), ':root { --space-1: 4px; }\n');
+
+  await mkdir(path.join(referenceRoot, 'design-pack', 'brand'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'design-pack', 'figma'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'design-pack', 'brand', 'style-guide.md'), '# Brand Style Guide\n');
+  await writeFile(path.join(referenceRoot, 'design-pack', 'figma', 'mockup-reference.md'), '# Figma Mockup Reference\n');
+
+  await mkdir(path.join(referenceRoot, 'database-pack', 'migrations'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'database-pack', 'prisma'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'database-pack', 'migrations', '001_create_users.sql'), 'create table users(id int);\n');
+  await writeFile(path.join(referenceRoot, 'database-pack', 'prisma', 'schema.prisma'), 'model User { id Int @id }\n');
+
+  await mkdir(path.join(referenceRoot, 'data-pack', 'pipelines'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'data-pack', 'dashboards'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'data-pack', 'pipelines', 'orders-etl.py'), 'print("etl")\n');
+  await writeFile(path.join(referenceRoot, 'data-pack', 'dashboards', 'revenue.metric.yml'), 'metric: revenue\n');
+
+  await mkdir(path.join(referenceRoot, 'mobile-pack', 'ios', 'App.xcodeproj'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'mobile-pack', 'android', 'app'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'mobile-pack', 'ios', 'App.xcodeproj', 'project.pbxproj'), '// xcode project\n');
+  await writeFile(path.join(referenceRoot, 'mobile-pack', 'android', 'app', 'build.gradle'), 'plugins {}\n');
+  await writeFile(path.join(referenceRoot, 'mobile-pack', 'app.json'), '{"expo":{"name":"demo"}}\n');
+
+  const before = await listRelativeFiles(target);
+
+  const inventory = capture(target);
+  assert.equal(await runCli(['reference', 'inventory', referenceRoot, '--json'], inventory), 0);
+  const inventoryReport = JSON.parse(inventory.out());
+  assert.equal(inventoryReport.summary.projectsWithSignals.devops >= 1, true);
+  assert.equal(inventoryReport.summary.projectsWithSignals.frontend >= 1, true);
+  assert.equal(inventoryReport.summary.projectsWithSignals.design >= 1, true);
+  assert.equal(inventoryReport.summary.projectsWithSignals.database >= 1, true);
+  assert.equal(inventoryReport.summary.projectsWithSignals.data >= 1, true);
+  assert.equal(inventoryReport.summary.projectsWithSignals.mobile >= 1, true);
+
+  const matrix = capture(target);
+  assert.equal(await runCli(['reference', 'capability-matrix', referenceRoot, '--max-results', '10', '--json'], matrix), 0);
+  const matrixReport = JSON.parse(matrix.out());
+  assert.equal(matrixReport.capabilities.devops.projects >= 1, true);
+  assert.equal(matrixReport.capabilities.frontend.projects >= 1, true);
+  assert.equal(matrixReport.capabilities.design.projects >= 1, true);
+  assert.equal(matrixReport.capabilities.database.projects >= 1, true);
+  assert.equal(matrixReport.capabilities.data.projects >= 1, true);
+  assert.equal(matrixReport.capabilities.mobile.projects >= 1, true);
+  assert.equal(matrixReport.capabilities.devops.topReferences.some((item) => item.project === 'devops-pack'), true);
+
+  const filteredDevops = capture(target);
+  assert.equal(await runCli(['reference', 'capability-matrix', referenceRoot, '--capability', 'devops', '--max-results', '10', '--json'], filteredDevops), 0);
+  const filteredDevopsReport = JSON.parse(filteredDevops.out());
+  assert.deepEqual(Object.keys(filteredDevopsReport.capabilities), ['devops']);
+  assert.equal(filteredDevopsReport.capabilities.devops.projects >= 1, true);
+
+  const filteredDesign = capture(target);
+  assert.equal(await runCli(['reference', 'capability-matrix', referenceRoot, '--capability', 'design', '--max-results', '10', '--json'], filteredDesign), 0);
+  const filteredDesignReport = JSON.parse(filteredDesign.out());
+  assert.deepEqual(Object.keys(filteredDesignReport.capabilities), ['design']);
+  assert.equal(filteredDesignReport.capabilities.design.projects >= 1, true);
+
+  const devopsPlan = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-plan', referenceRoot, '--capability', 'devops', '--max-results', '2', '--json'], devopsPlan), 0);
+  const devopsPlanReport = JSON.parse(devopsPlan.out());
+  assert.equal(devopsPlanReport.summary.selectedReferences >= 1, true);
+  assert.equal(devopsPlanReport.plan.objective.includes('CI/CD'), true);
+  assert.equal(devopsPlanReport.plan.references.some((item) => item.suggestedSurfaces.some((surface) => surface.surface === 'devops-runbook')), true);
+
+  const designPlan = capture(target);
+  assert.equal(await runCli(['reference', 'adoption-plan', referenceRoot, '--capability', 'design', '--max-results', '2', '--json'], designPlan), 0);
+  const designPlanReport = JSON.parse(designPlan.out());
+  assert.equal(designPlanReport.summary.selectedReferences >= 1, true);
+  assert.equal(designPlanReport.plan.objective.includes('design direction'), true);
+  assert.equal(designPlanReport.plan.references.some((item) => item.suggestedSurfaces.some((surface) => surface.surface === 'design-reference-handoff')), true);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  await cleanup(target);
+});
+
+test('reference inventory default scans more than twenty top-level projects', async () => {
+  const target = await tempRepo('reference inventory many-한글-');
+  const referenceRoot = path.join(target, '_reference');
+  for (let index = 1; index <= 24; index += 1) {
+    const id = `reference-${String(index).padStart(2, '0')}`;
+    await mkdir(path.join(referenceRoot, id), { recursive: true });
+    await writeFile(path.join(referenceRoot, id, 'README.md'), `# ${id}\n`);
+  }
+  const before = await listRelativeFiles(target);
+
+  const inventory = capture(target);
+  assert.equal(await runCli(['reference', 'inventory', referenceRoot, '--json'], inventory), 0);
+  const report = JSON.parse(inventory.out());
+  assert.equal(report.summary.projects, 24);
+  assert.equal(report.summary.totalProjects, 24);
+  assert.equal(report.summary.warnings, 0);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('reference ledger init previews and writes queue ledger safely', async () => {
+  const target = await tempRepo('reference ledger init-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  const referenceRoot = path.join(target, '_reference');
+  await mkdir(path.join(referenceRoot, 'repo-lens-like', 'skills', 'write-gate'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'connector-pack', 'reference', 'connectors'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'repo-lens-like', 'README.md'), '# Repo Lens\n');
+  await writeFile(path.join(referenceRoot, 'repo-lens-like', 'skills', 'write-gate', 'SKILL.md'), '---\nname: write-gate\n---\n# Write Gate\n');
+  await writeFile(path.join(referenceRoot, 'connector-pack', 'package.json'), '{"name":"connector-pack"}\n');
+  await writeFile(path.join(referenceRoot, 'connector-pack', 'reference', 'connectors', 'postgres.md'), '# Postgres\n');
+
+  const before = await listRelativeFiles(target);
+  const defaultPathPreview = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-init', '.', '--reference-dir', referenceRoot, '--json'], defaultPathPreview), 1);
+  const defaultPathReport = JSON.parse(defaultPathPreview.out());
+  assert.equal(defaultPathReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-init.file-exists'), true);
+  assert.equal(defaultPathReport.summary.operations, 0);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const customPath = '.ai-agent-playbook/knowledge/generated-reference-ledger.md';
+  const preview = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-init', '.', '--reference-dir', referenceRoot, '--path', customPath, '--max-results', '2', '--json'], preview), 0);
+  const previewReport = JSON.parse(preview.out());
+  assert.equal(previewReport.ok, true);
+  assert.equal(previewReport.applied, false);
+  assert.equal(previewReport.mode.writes, false);
+  assert.equal(previewReport.summary.entries, 2);
+  assert.equal(previewReport.summary.operations, 1);
+  assert.equal(previewReport.path, customPath);
+  assert.equal(previewReport.ledger.content.includes('reference-repo-lens-like'), true);
+  assert.equal(previewReport.ledger.content.includes(target), false);
+  assert.deepEqual(await listRelativeFiles(target), before);
+
+  const applied = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-init', '.', '--reference-dir', referenceRoot, '--path', customPath, '--max-results', '2', '--apply', '--json'], applied), 0);
+  const appliedReport = JSON.parse(applied.out());
+  assert.equal(appliedReport.ok, true);
+  assert.equal(appliedReport.applied, true);
+  assert.equal(appliedReport.mode.writes, true);
+  const ledgerPath = path.join(target, ...customPath.split('/'));
+  const ledgerText = await readFile(ledgerPath, 'utf8');
+  assert.equal(ledgerText.includes('reference-connector-pack'), true);
+
+  const check = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-check', '.', '--path', customPath, '--json'], check), 0);
+  const checkReport = JSON.parse(check.out());
+  assert.equal(checkReport.ok, true);
+  assert.equal(checkReport.summary.statuses.new, 2);
+
+  const overwrite = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-init', '.', '--reference-dir', referenceRoot, '--path', customPath, '--apply', '--json'], overwrite), 1);
+  const overwriteReport = JSON.parse(overwrite.out());
+  assert.equal(overwriteReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-init.file-exists'), true);
+
+  const unsafePath = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-init', '.', '--reference-dir', referenceRoot, '--path', '../outside.md', '--json'], unsafePath), 1);
+  const unsafePathReport = JSON.parse(unsafePath.out());
+  assert.equal(unsafePathReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-init.path-invalid'), true);
+  await cleanup(target);
+});
+
+test('reference ledger update appends missing queue rows without overwriting decisions', async () => {
+  const target = await tempRepo('reference ledger update-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  const referenceRoot = path.join(target, '_reference');
+  await mkdir(path.join(referenceRoot, 'repo-lens-like', 'skills', 'write-gate'), { recursive: true });
+  await mkdir(path.join(referenceRoot, 'connector-pack', 'reference', 'connectors'), { recursive: true });
+  await writeFile(path.join(referenceRoot, 'repo-lens-like', 'README.md'), '# Repo Lens\n');
+  await writeFile(path.join(referenceRoot, 'repo-lens-like', 'skills', 'write-gate', 'SKILL.md'), '---\nname: write-gate\n---\n# Write Gate\n');
+  await writeFile(path.join(referenceRoot, 'connector-pack', 'package.json'), '{"name":"connector-pack"}\n');
+  await writeFile(path.join(referenceRoot, 'connector-pack', 'reference', 'connectors', 'postgres.md'), '# Postgres\n');
+  const ledgerPath = path.join(target, '.ai-agent-playbook', 'knowledge', 'reference-adoption-ledger.md');
+  const before = await listRelativeFiles(target);
+  const originalLedger = await readFile(ledgerPath, 'utf8');
+  assert.equal(originalLedger.includes('| new |  |  |  |  |  |  |'), true);
+
+  const preview = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-update', '.', '--reference-dir', referenceRoot, '--max-results', '2', '--json'], preview), 0);
+  const previewReport = JSON.parse(preview.out());
+  assert.equal(previewReport.ok, true);
+  assert.equal(previewReport.applied, false);
+  assert.equal(previewReport.mode.writes, false);
+  assert.equal(previewReport.summary.added, 2);
+  assert.equal(previewReport.summary.removedPlaceholder, true);
+  assert.equal(previewReport.summary.operations, 1);
+  assert.equal(previewReport.ledger.content.includes('reference-repo-lens-like'), true);
+  assert.equal(previewReport.ledger.content.includes('| new |  |  |  |  |  |  |'), false);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  assert.equal(await readFile(ledgerPath, 'utf8'), originalLedger);
+
+  const applied = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-update', '.', '--reference-dir', referenceRoot, '--max-results', '2', '--apply', '--json'], applied), 0);
+  const appliedReport = JSON.parse(applied.out());
+  assert.equal(appliedReport.ok, true);
+  assert.equal(appliedReport.applied, true);
+  assert.equal(appliedReport.mode.writes, true);
+  const ledgerText = await readFile(ledgerPath, 'utf8');
+  assert.equal(ledgerText.includes('reference-connector-pack'), true);
+  assert.equal(ledgerText.includes('| new |  |  |  |  |  |  |'), false);
+
+  const check = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-check', '.', '--json'], check), 0);
+  const checkReport = JSON.parse(check.out());
+  assert.equal(checkReport.ok, true);
+  assert.equal(checkReport.summary.statuses.new, 2);
+
+  const secondRun = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-update', '.', '--reference-dir', referenceRoot, '--max-results', '2', '--apply', '--json'], secondRun), 0);
+  const secondRunReport = JSON.parse(secondRun.out());
+  assert.equal(secondRunReport.summary.added, 0);
+  assert.equal(secondRunReport.summary.operations, 0);
+  assert.equal(secondRunReport.applied, false);
+  assert.equal(await readFile(ledgerPath, 'utf8'), ledgerText);
+
+  const unsafePath = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-update', '.', '--reference-dir', referenceRoot, '--path', '../outside.md', '--json'], unsafePath), 1);
+  const unsafePathReport = JSON.parse(unsafePath.out());
+  assert.equal(unsafePathReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-update.path-invalid'), true);
+
+  const fileReferenceDirPath = path.join(target, 'not-a-reference-dir.txt');
+  await writeFile(fileReferenceDirPath, 'not a directory\n');
+  const fileReferenceDir = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-update', '.', '--reference-dir', fileReferenceDirPath, '--json'], fileReferenceDir), 1);
+  const fileReferenceDirReport = JSON.parse(fileReferenceDir.out());
+  assert.equal(fileReferenceDirReport.conflicts.some((conflict) => conflict.id === 'reference-ledger-update.reference-dir-missing'), true);
+  await cleanup(target);
+});
+
+test('reference ledger check validates statuses and local-only leaks without writing files', async () => {
+  const target = await tempRepo('reference ledger-한글-');
+  assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
+  const customLedgerPath = path.join(target, '.ai-agent-playbook', 'knowledge', 'custom-reference-ledger.md');
+  await writeFile(customLedgerPath, [
+    '# Custom Reference Adoption Ledger',
+    '',
+    '| Status | Reference ID | Capability | Useful Pattern | Local Adoption | Risk/Noise | Decision Date |',
+    '| --- | --- | --- | --- | --- | --- | --- |',
+    '| reviewed | security-pack | security | summarize source pattern | local validator | none | 2026-07-03 |',
+    '```text',
+    ...Array.from({ length: 21 }, (_, index) => `example excerpt line ${index + 1}`),
+    '```',
+    ''
+  ].join('\n'));
+  const before = await listRelativeFiles(target);
+
+  const clean = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-check', '.', '--json'], clean), 0);
+  const cleanReport = JSON.parse(clean.out());
+  assert.equal(cleanReport.ok, true);
+  assert.equal(cleanReport.summary.statuses.new, 1);
+  assert.equal(cleanReport.summary.capabilities.uncategorized.statuses.new, 1);
+
+  const ledgerPath = path.join(target, '.ai-agent-playbook', 'knowledge', 'reference-adoption-ledger.md');
+  await writeFile(ledgerPath, [
+    '# Reference Adoption Ledger',
+    '',
+    '| Status | Reference ID | Capability | Useful Pattern | Local Adoption | Risk/Noise | Decision Date |',
+    '| :--- | ---: | :---: | --- | --- | --- | --- |',
+    '| adopted | safe-pack | runtime-index-canon | reviewed pattern | local command | none | 2026-07-03 |',
+    '| maybe | unsafe-pack | security | copied from C:\\secret\\repo | none | token sk-test-123456789012 | 2026-07-03 |',
+    ''
+  ].join('\n'));
+
+  const dirty = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-check', '.', '--json'], dirty), 1);
+  const dirtyReport = JSON.parse(dirty.out());
+  assert.equal(dirtyReport.ok, false);
+  assert.equal(dirtyReport.conflicts.some((conflict) => conflict.id === 'reference-ledger.invalid-status'), true);
+  assert.equal(dirtyReport.conflicts.some((conflict) => conflict.id === 'reference-ledger.local-absolute-path'), true);
+  assert.equal(dirtyReport.conflicts.some((conflict) => conflict.id === 'reference-ledger.secret-like-token'), true);
+  assert.equal(dirtyReport.summary.capabilities['runtime-index-canon'].statuses.adopted, 1);
+  assert.equal(existsSync(ledgerPath), true);
+
+  const loose = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-check', '.', '--path', '.ai-agent-playbook/knowledge/custom-reference-ledger.md', '--json'], loose), 0);
+  const looseReport = JSON.parse(loose.out());
+  assert.equal(looseReport.ok, true);
+  assert.equal(looseReport.path, '.ai-agent-playbook/knowledge/custom-reference-ledger.md');
+  assert.equal(looseReport.summary.capabilities.security.statuses.reviewed, 1);
+  assert.equal(looseReport.warnings.some((warning) => warning.id === 'reference-ledger.large-excerpt'), true);
+
+  const strict = capture(target);
+  assert.equal(await runCli(['reference', 'ledger-check', '.', '--path', '.ai-agent-playbook/knowledge/custom-reference-ledger.md', '--strict', '--json'], strict), 1);
+  const strictReport = JSON.parse(strict.out());
+  assert.equal(strictReport.ok, false);
+  assert.equal(strictReport.conflicts.some((conflict) => conflict.id === 'reference-ledger.large-excerpt'), true);
+
+  assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
 });
 
@@ -51,7 +1758,7 @@ test('bootstrap conflict preflight refuses existing AGENTS without partial write
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], checked), 2);
   assert.match(checked.err(), /Conflicts:/);
   assert.match(checked.err(), /AGENTS\.md/);
-  assert.equal(existsSync(path.join(target, '.ai-playbook')), false);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook')), false);
   assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
 });
@@ -60,65 +1767,65 @@ test('doctor reports missing and bootstrapped project state', async () => {
   const target = await tempRepo();
   const missing = capture(target);
   assert.equal(await runCli(['doctor', '.'], missing), 1);
-  assert.match(missing.out(), /\[FAIL\] \.ai-playbook directory/);
+  assert.match(missing.out(), /\[FAIL\] \.ai-agent-playbook directory/);
 
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
   const checked = capture(target);
   assert.equal(await runCli(['doctor', '.'], checked), 0);
-  assert.match(checked.out(), /\[PASS\] .ai-playbook\/CURRENT.md/);
+  assert.match(checked.out(), /\[PASS\] .ai-agent-playbook\/CURRENT.md/);
   assert.match(checked.out(), /\[PASS\] root AGENTS bootstrap/);
   assert.match(checked.out(), /\[PASS\] root AGENTS reading order/);
   assert.match(checked.out(), /\[WARN\] playbook adaptation/);
   await cleanup(target);
 });
 
-test('legacy ai-playbook layout remains readable when the dot playbook is absent', async () => {
+test('legacy ai-playbook layout requires explicit path migration when dot playbook is absent', async () => {
   const target = await tempRepo('legacy ai playbook-한글-');
   await writePlaybookFixture(target, 'ai-playbook', 'Legacy context signal');
   await writeFile(path.join(target, '.gitignore'), 'ai-playbook/\n');
   await writeFile(path.join(target, 'AGENTS.md'), [
     '# Root',
     '',
-    'Read ai-playbook/START_HERE.md, ai-playbook/CURRENT.md, ai-playbook/SKILLS.md, and ai-playbook/GIT.md.'
+    'Read ai-playbook/START_HERE.md, ai-playbook/CURRENT.md, ai-playbook/policy/SKILLS.md, and ai-playbook/policy/GIT.md.'
   ].join('\n'));
 
   const doctor = capture(target);
-  assert.equal(await runCli(['doctor', '.', '--json'], doctor), 0);
+  assert.equal(await runCli(['doctor', '.', '--json'], doctor), 1);
   const doctorReport = JSON.parse(doctor.out());
-  assert.equal(doctorReport.ok, true);
-  assert.equal(doctorReport.checks.some((check) => check.id === 'playbook.directory' && check.paths.includes('ai-playbook/')), true);
-  assert.equal(doctorReport.checks.some((check) => check.id === 'playbook.file.current.md' && check.paths.includes('ai-playbook/CURRENT.md')), true);
+  assert.equal(doctorReport.ok, false);
+  assert.equal(doctorReport.checks.some((check) => check.id === 'playbook.directory' && check.paths.includes('.ai-agent-playbook/')), true);
+  assert.equal(doctorReport.checks.some((check) => check.paths.includes('ai-playbook/CURRENT.md')), false);
 
   const context = capture(target);
-  assert.equal(await runCli(['context', '.', '--json', '--max-chars', '5000'], context), 0);
+  assert.equal(await runCli(['context', '.', '--json', '--max-chars', '5000'], context), 1);
   const contextReport = JSON.parse(context.out());
-  assert.equal(contextReport.ok, true);
-  assert.deepEqual(contextReport.sources.map((source) => source.path), [
-    'ai-playbook/START_HERE.md',
-    'ai-playbook/CURRENT.md',
-    'ai-playbook/SKILLS.md',
-    'ai-playbook/GIT.md'
-  ]);
-  assert.match(contextReport.additionalContext, /Legacy context signal/);
+  assert.equal(contextReport.ok, false);
+  assert.equal(contextReport.warnings.some((warning) => warning.id === 'context.missing-playbook'), true);
+  assert.equal(contextReport.additionalContext.includes('Legacy context signal'), false);
   await cleanup(target);
 });
 
-test('write commands keep using legacy ai-playbook when the dot playbook is absent', async () => {
+test('write commands refuse legacy ai-playbook without explicit path migration', async () => {
   const target = await tempRepo('legacy ai playbook-write-공백-');
   await writePlaybookFixture(target, 'ai-playbook', 'Legacy write signal');
 
-  assert.equal(await runCli(['guides', 'sync', '.'], capture(target)), 0);
-  assert.equal(existsSync(path.join(target, 'ai-playbook', 'guides', 'runtime-harness.md')), true);
-  assert.equal(existsSync(path.join(target, '.ai-playbook')), false);
+  const guideSync = capture(target);
+  assert.equal(await runCli(['guides', 'sync', '.'], guideSync), 2);
+  assert.match(guideSync.err(), /migrate path/);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook')), false);
 
-  assert.equal(await runCli(['plan', 'new', '.', '--title', 'Legacy Path', '--date', '2026-06-08'], capture(target)), 0);
-  assert.equal(await runCli(['worklog', 'new', '.', '--title', 'Legacy Path', '--date', '2026-06-08'], capture(target)), 0);
-  assert.equal(await runCli(['worklog', 'summarize', '.', '--month', '2026-06'], capture(target)), 0);
+  const plan = capture(target);
+  assert.equal(await runCli(['plan', 'new', '.', '--title', 'Legacy Path', '--date', '2026-06-08'], plan), 2);
+  assert.match(plan.err(), /migrate path/);
 
-  await stat(path.join(target, 'ai-playbook', 'plans', '2026-06-08-legacy-path.md'));
-  await stat(path.join(target, 'ai-playbook', 'worklogs', '2026-06', '2026-06-08-legacy-path.md'));
-  await stat(path.join(target, 'ai-playbook', 'worklogs', 'summaries', '2026-06.md'));
-  assert.equal(existsSync(path.join(target, '.ai-playbook')), false);
+  const worklog = capture(target);
+  assert.equal(await runCli(['worklog', 'new', '.', '--title', 'Legacy Path', '--date', '2026-06-08'], worklog), 2);
+  assert.match(worklog.err(), /migrate path/);
+
+  const summary = capture(target);
+  assert.equal(await runCli(['worklog', 'summarize', '.', '--month', '2026-06'], summary), 2);
+  assert.match(summary.err(), /migrate path/);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook')), false);
   await cleanup(target);
 });
 
@@ -163,8 +1870,8 @@ test('doctor --json warns when a worklog month has no summary without writing fi
   assert.equal(warning.level, 'warn');
   assert.equal(warning.category, 'freshness');
   assert.deepEqual(warning.paths, [
-    '.ai-playbook/worklogs/2026-05/',
-    '.ai-playbook/worklogs/summaries/2026-05.md'
+    '.ai-agent-playbook/workflows/worklogs/2026-05/',
+    '.ai-agent-playbook/workflows/worklogs/summaries/2026-05.md'
   ]);
   assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
@@ -176,8 +1883,8 @@ test('doctor --json warns when a worklog summary is older than an entry', async 
   assert.equal(await runCli(['worklog', 'new', '.', '--title', 'Freshness Check', '--date', '2026-06-04'], capture(target)), 0);
   assert.equal(await runCli(['worklog', 'summarize', '.', '--month', '2026-06'], capture(target)), 0);
 
-  const worklog = path.join(target, '.ai-playbook', 'worklogs', '2026-06', '2026-06-04-freshness-check.md');
-  const summary = path.join(target, '.ai-playbook', 'worklogs', 'summaries', '2026-06.md');
+  const worklog = path.join(target, '.ai-agent-playbook', 'workflows', 'worklogs', '2026-06', '2026-06-04-freshness-check.md');
+  const summary = path.join(target, '.ai-agent-playbook', 'workflows', 'worklogs', 'summaries', '2026-06.md');
   await utimes(summary, new Date('2026-06-04T00:00:00Z'), new Date('2026-06-04T00:00:00Z'));
   await utimes(worklog, new Date('2026-06-05T00:00:00Z'), new Date('2026-06-05T00:00:00Z'));
   const before = await listRelativeFiles(target);
@@ -189,8 +1896,8 @@ test('doctor --json warns when a worklog summary is older than an entry', async 
   assert.equal(warning.level, 'warn');
   assert.equal(warning.category, 'freshness');
   assert.deepEqual(warning.paths, [
-    '.ai-playbook/worklogs/2026-06/2026-06-04-freshness-check.md',
-    '.ai-playbook/worklogs/summaries/2026-06.md'
+    '.ai-agent-playbook/workflows/worklogs/2026-06/2026-06-04-freshness-check.md',
+    '.ai-agent-playbook/workflows/worklogs/summaries/2026-06.md'
   ]);
   assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
@@ -202,8 +1909,8 @@ test('doctor --json passes worklog summary freshness when the summary is newest'
   assert.equal(await runCli(['worklog', 'new', '.', '--title', 'Freshness Check', '--date', '2026-07-04'], capture(target)), 0);
   assert.equal(await runCli(['worklog', 'summarize', '.', '--month', '2026-07'], capture(target)), 0);
 
-  const worklog = path.join(target, '.ai-playbook', 'worklogs', '2026-07', '2026-07-04-freshness-check.md');
-  const summary = path.join(target, '.ai-playbook', 'worklogs', 'summaries', '2026-07.md');
+  const worklog = path.join(target, '.ai-agent-playbook', 'workflows', 'worklogs', '2026-07', '2026-07-04-freshness-check.md');
+  const summary = path.join(target, '.ai-agent-playbook', 'workflows', 'worklogs', 'summaries', '2026-07.md');
   await utimes(worklog, new Date('2026-07-04T00:00:00Z'), new Date('2026-07-04T00:00:00Z'));
   await utimes(summary, new Date('2026-07-05T00:00:00Z'), new Date('2026-07-05T00:00:00Z'));
 
@@ -227,7 +1934,7 @@ test('doctor --reminder --json reports a small no-write reminder signal', async 
   assert.equal(missingReport.reminders.length, 1);
   assert.equal(missingReport.reminders[0].id, 'reminder.playbook.missing');
   assert.equal(missingReport.reminders[0].level, 'warn');
-  assert.deepEqual(missingReport.reminders[0].paths, ['.ai-playbook/']);
+  assert.deepEqual(missingReport.reminders[0].paths, ['.ai-agent-playbook/']);
   assert.deepEqual(await listRelativeFiles(missing), missingBefore);
   await cleanup(missing);
 
@@ -247,7 +1954,7 @@ test('doctor --reminder --json reports a small no-write reminder signal', async 
 test('doctor --reminder --json includes stale guide and worklog freshness reminders', async () => {
   const target = await tempRepo('ai playbook-reminder-한글-');
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
-  await writeFile(path.join(target, '.ai-playbook', 'guides', 'runtime-harness.md'), '# Local guide edit\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'knowledge', 'references', 'guides', 'runtime-harness.md'), '# Local guide edit\n');
   assert.equal(await runCli(['worklog', 'new', '.', '--title', 'Freshness Check', '--date', '2026-08-04'], capture(target)), 0);
   const before = await listRelativeFiles(target);
 
@@ -266,8 +1973,8 @@ test('guides sync restores missing guides without overwriting local guide edits'
   const target = await tempRepo();
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
 
-  const customGuide = path.join(target, '.ai-playbook', 'guides', 'runtime-harness.md');
-  const missingGuide = path.join(target, '.ai-playbook', 'guides', 'harness-migration.md');
+  const customGuide = path.join(target, '.ai-agent-playbook', 'knowledge', 'references', 'guides', 'runtime-harness.md');
+  const missingGuide = path.join(target, '.ai-agent-playbook', 'knowledge', 'references', 'guides', 'harness-migration.md');
   await writeFile(customGuide, '# Local guide edit\n');
   await rm(missingGuide, { force: true });
 
@@ -284,7 +1991,7 @@ test('guides sync --check reports missing guides without writing files', async (
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
   const before = await listRelativeFiles(target);
 
-  const missingGuide = path.join(target, '.ai-playbook', 'guides', 'harness-migration.md');
+  const missingGuide = path.join(target, '.ai-agent-playbook', 'knowledge', 'references', 'guides', 'harness-migration.md');
   await rm(missingGuide, { force: true });
 
   const check = capture(target);
@@ -294,12 +2001,12 @@ test('guides sync --check reports missing guides without writing files', async (
   assert.equal(report.ok, false);
   assert.equal(report.summary.missing, 1);
   assert.equal(report.summary.stale, 0);
-  const guide = report.guides.find((item) => item.path === '.ai-playbook/guides/harness-migration.md');
+  const guide = report.guides.find((item) => item.path === '.ai-agent-playbook/knowledge/references/guides/harness-migration.md');
   assert.equal(guide.status, 'missing');
   assert.match(guide.sourceHash, /^[a-f0-9]{64}$/);
   assert.equal('targetHash' in guide, false);
   assert.equal(existsSync(missingGuide), false);
-  assert.deepEqual(await listRelativeFiles(target), before.filter((file) => file !== '.ai-playbook/guides/harness-migration.md'));
+  assert.deepEqual(await listRelativeFiles(target), before.filter((file) => file !== '.ai-agent-playbook/knowledge/references/guides/harness-migration.md'));
   await cleanup(target);
 });
 
@@ -307,7 +2014,7 @@ test('guides sync --check reports present and stale guides without overwriting l
   const target = await tempRepo('ai playbook-guides-한글-');
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
 
-  const localGuide = path.join(target, '.ai-playbook', 'guides', 'runtime-harness.md');
+  const localGuide = path.join(target, '.ai-agent-playbook', 'knowledge', 'references', 'guides', 'runtime-harness.md');
   await writeFile(localGuide, '# Local guide edit\n');
   const before = await listRelativeFiles(target);
 
@@ -320,7 +2027,7 @@ test('guides sync --check reports present and stale guides without overwriting l
   assert.equal(report.summary.stale, 1);
   assert.equal(report.guides.every((guide) => ['present', 'stale'].includes(guide.status)), true);
 
-  const stale = report.guides.find((guide) => guide.path === '.ai-playbook/guides/runtime-harness.md');
+  const stale = report.guides.find((guide) => guide.path === '.ai-agent-playbook/knowledge/references/guides/runtime-harness.md');
   assert.equal(stale.status, 'stale');
   assert.match(stale.sourceHash, /^[a-f0-9]{64}$/);
   assert.match(stale.targetHash, /^[a-f0-9]{64}$/);
@@ -340,7 +2047,7 @@ test('guides sync --check --diff explains stale guide differences without writin
   const target = await tempRepo('ai playbook-guides-diff-공백-');
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
 
-  const localGuide = path.join(target, '.ai-playbook', 'guides', 'runtime-harness.md');
+  const localGuide = path.join(target, '.ai-agent-playbook', 'knowledge', 'references', 'guides', 'runtime-harness.md');
   await writeFile(localGuide, '# Local guide edit\n\nTarget-only line\n');
   const before = await listRelativeFiles(target);
 
@@ -349,7 +2056,7 @@ test('guides sync --check --diff explains stale guide differences without writin
   const report = JSON.parse(check.out());
   assert.equal(report.schemaVersion, '1');
   assert.equal(report.summary.stale, 1);
-  const stale = report.guides.find((guide) => guide.path === '.ai-playbook/guides/runtime-harness.md');
+  const stale = report.guides.find((guide) => guide.path === '.ai-agent-playbook/knowledge/references/guides/runtime-harness.md');
   assert.equal(stale.status, 'stale');
   assert.equal(stale.diff.firstDifferenceLine, 1);
   assert.equal(typeof stale.diff.sourceLine, 'string');
@@ -364,10 +2071,10 @@ test('context --json builds compact hook context without root AGENTS', async () 
   const target = await tempRepo('ai playbook-테스트-');
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
 
-  await writeFile(path.join(target, '.ai-playbook', 'START_HERE.md'), '# Start\n\nStart signal\n');
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nCurrent signal\n');
-  await writeFile(path.join(target, '.ai-playbook', 'SKILLS.md'), '# Skills\n\nSkill signal\n');
-  await writeFile(path.join(target, '.ai-playbook', 'GIT.md'), '# Git\n\nGit signal\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'START_HERE.md'), '# Start\n\nStart signal\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nCurrent signal\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'policy', 'SKILLS.md'), '# Skills\n\nSkill signal\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'policy', 'GIT.md'), '# Git\n\nGit signal\n');
   await writeFile(path.join(target, 'AGENTS.md'), '# Root\n\nRoot agent marker\n');
 
   const context = capture(target);
@@ -376,10 +2083,11 @@ test('context --json builds compact hook context without root AGENTS', async () 
   assert.equal(report.schemaVersion, '1');
   assert.equal(report.ok, true);
   assert.deepEqual(report.sources.map((source) => source.path), [
-    '.ai-playbook/START_HERE.md',
-    '.ai-playbook/CURRENT.md',
-    '.ai-playbook/SKILLS.md',
-    '.ai-playbook/GIT.md'
+    '.ai-agent-playbook/START_HERE.md',
+    '.ai-agent-playbook/CURRENT.md',
+    '.ai-agent-playbook/questions.md',
+    '.ai-agent-playbook/policy/SKILLS.md',
+    '.ai-agent-playbook/policy/GIT.md'
   ]);
   assert.match(report.additionalContext, /Start signal/);
   assert.match(report.additionalContext, /Current signal/);
@@ -392,7 +2100,7 @@ test('context --json builds compact hook context without root AGENTS', async () 
 test('adapter check reports readiness for Codex and Claude Code without writing files', async () => {
   const target = await tempRepo('ai playbook-테스트-');
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nAdapter readiness signal\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nAdapter readiness signal\n');
   const before = await listRelativeFiles(target);
 
   for (const adapter of ['codex', 'claude-code']) {
@@ -435,9 +2143,9 @@ test('adapter config --json renders local hook config without writing files', as
     assert.equal(report.config.hooks.PostCompact[0].hooks[0].command, report.hookCommand);
     assert.equal(report.mcp.command, 'npx');
     assert.deepEqual(report.mcp.args, ['ai-agent-playbook', 'mcp']);
-    assert.equal(report.mcp.config.mcpServers['ai-playbook'].command, 'npx');
-    assert.deepEqual(report.mcp.config.mcpServers['ai-playbook'].args, ['ai-agent-playbook', 'mcp']);
-    assert.equal(report.mcp.globalCommand.command, 'ai-playbook');
+    assert.equal(report.mcp.config.mcpServers['ai-agent-playbook'].command, 'npx');
+    assert.deepEqual(report.mcp.config.mcpServers['ai-agent-playbook'].args, ['ai-agent-playbook', 'mcp']);
+    assert.equal(report.mcp.globalCommand.command, 'aapb');
     assert.deepEqual(report.mcp.globalCommand.args, ['mcp']);
     assert.doesNotMatch(JSON.stringify(report.mcp), /<path-to-ai-agent-playbook>/);
     assert.equal(report.warnings.some((warning) => warning.id === 'config.playbook.missing'), true);
@@ -464,7 +2172,7 @@ test('adapter config --json renders local hook config without writing files', as
 test('adapter check --settings validates rendered settings without writing files', async () => {
   const target = await tempRepo('adapter settings-공백-한글-');
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nAdapter settings signal\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nAdapter settings signal\n');
 
   const configIo = capture(target);
   assert.equal(await runCli(['adapter', 'config', '.', '--adapter', 'codex', '--json'], configIo), 0);
@@ -490,7 +2198,7 @@ test('adapter check --settings validates rendered settings without writing files
 test('adapter check --settings reports missing, malformed, and mismatched settings without writing files', async () => {
   const target = await tempRepo('adapter bad settings-한글-');
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nAdapter settings signal\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nAdapter settings signal\n');
 
   const missingPath = path.join(target, 'missing settings.json');
   const beforeMissing = await listRelativeFiles(target);
@@ -556,9 +2264,9 @@ test('plan and worklog scaffold commands create dated files', async () => {
   assert.equal(await runCli(['worklog', 'new', '.', '--title', 'Runtime Harness', '--date', '2026-06-07'], capture(target)), 0);
   assert.equal(await runCli(['worklog', 'summarize', '.', '--month', '2026-06'], capture(target)), 0);
 
-  await stat(path.join(target, '.ai-playbook', 'plans', '2026-06-07-runtime-harness.md'));
-  await stat(path.join(target, '.ai-playbook', 'worklogs', '2026-06', '2026-06-07-runtime-harness.md'));
-  await stat(path.join(target, '.ai-playbook', 'worklogs', 'summaries', '2026-06.md'));
+  await stat(path.join(target, '.ai-agent-playbook', 'workflows', 'plans', '2026-06-07-runtime-harness.md'));
+  await stat(path.join(target, '.ai-agent-playbook', 'workflows', 'worklogs', '2026-06', '2026-06-07-runtime-harness.md'));
+  await stat(path.join(target, '.ai-agent-playbook', 'workflows', 'worklogs', 'summaries', '2026-06.md'));
   await cleanup(target);
 });
 
@@ -581,22 +2289,29 @@ test('migrate path previews legacy ai-playbook migration without writing files',
   assert.equal(report.applied, false);
   assert.equal(report.summary.operations > 0, true);
   assert.equal(report.operations.some((operation) => operation.id === 'playbook.move'), true);
-  assert.equal(report.operations.some((operation) => operation.id === 'gitignore.add-dot-playbook'), true);
+  assert.equal(report.operations.some((operation) => operation.id === 'gitignore.add-active-playbook'), true);
   assert.equal(report.operations.some((operation) => operation.id === 'references.update'), true);
   assert.deepEqual(await listRelativeFiles(target), before);
   assert.equal(existsSync(path.join(target, 'ai-playbook')), true);
-  assert.equal(existsSync(path.join(target, '.ai-playbook')), false);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook')), false);
   await cleanup(target);
 });
 
 test('migrate path applies legacy ai-playbook migration and updates references', async () => {
   const target = await tempRepo('migrate path apply-공백-한글-');
   await writePlaybookFixture(target, 'ai-playbook', 'Legacy migration signal');
+  await mkdir(path.join(target, 'ai-playbook', 'guides'), { recursive: true });
+  await writeFile(path.join(target, 'ai-playbook', 'guides', 'api-contract-boundary.md'), [
+    '# Legacy guide',
+    '',
+    'Read ai-playbook/guides/commit-push-worklog.md and ai-playbook/SKILLS.md before changing API boundaries.',
+    ''
+  ].join('\n'));
   await writeFile(path.join(target, '.gitignore'), 'docs/plans/\nai-playbook/\n');
   await writeFile(path.join(target, 'AGENTS.md'), [
     '# Root',
     '',
-    'Read ai-playbook/START_HERE.md, ai-playbook/CURRENT.md, ai-playbook/SKILLS.md, and ai-playbook/GIT.md.'
+    'Read ai-playbook/START_HERE.md, ai-playbook/CURRENT.md, ai-playbook/policy/SKILLS.md, and ai-playbook/policy/GIT.md.'
   ].join('\n'));
 
   const applied = capture(target);
@@ -605,17 +2320,52 @@ test('migrate path applies legacy ai-playbook migration and updates references',
   assert.equal(report.ok, true);
   assert.equal(report.applied, true);
   assert.equal(existsSync(path.join(target, 'ai-playbook')), false);
-  assert.equal(existsSync(path.join(target, '.ai-playbook', 'CURRENT.md')), true);
-  assert.match(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), /\.ai-playbook\/START_HERE\.md/);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'CURRENT.md')), true);
+  assert.match(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), /\.ai-agent-playbook\/START_HERE\.md/);
   assert.doesNotMatch(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), /(?<!\.)ai-playbook\//);
   const gitignore = await readFile(path.join(target, '.gitignore'), 'utf8');
-  assert.match(gitignore, /^\.ai-playbook\/$/m);
+  assert.match(gitignore, /^\.ai-agent-playbook\/$/m);
   assert.match(gitignore, /^ai-playbook\/$/m);
+
+  const migratedLayout = capture(target);
+  assert.equal(await runCli(['migrate', 'layout', '.', '--to', 'structured', '--apply', '--json'], migratedLayout), 0);
+  const layoutReport = JSON.parse(migratedLayout.out());
+  assert.equal(layoutReport.ok, true);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'policy', 'SKILLS.md')), true);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'workflows', 'runbooks', 'README.md')), true);
+  const migratedGuide = await readFile(path.join(target, '.ai-agent-playbook', 'knowledge', 'references', 'guides', 'api-contract-boundary.md'), 'utf8');
+  assert.match(migratedGuide, /\.ai-agent-playbook\/knowledge\/references\/guides\/commit-push-worklog\.md/);
+  assert.match(migratedGuide, /\.ai-agent-playbook\/policy\/SKILLS\.md/);
 
   const doctor = capture(target);
   assert.equal(await runCli(['doctor', '.', '--json'], doctor), 0);
   const doctorReport = JSON.parse(doctor.out());
-  assert.equal(doctorReport.checks.some((check) => check.id === 'playbook.directory' && check.paths.includes('.ai-playbook/')), true);
+  assert.equal(doctorReport.checks.some((check) => check.id === 'playbook.directory' && check.paths.includes('.ai-agent-playbook/')), true);
+  await cleanup(target);
+});
+
+test('migrate path applies legacy dot ai-playbook migration and updates references', async () => {
+  const target = await tempRepo('migrate dot path apply-한글-');
+  await writePlaybookFixture(target, '.ai-playbook', 'Legacy dot migration signal');
+  await writeFile(path.join(target, '.gitignore'), '.ai-playbook/\n');
+  await writeFile(path.join(target, 'AGENTS.md'), [
+    '# Root',
+    '',
+    'Read .ai-playbook/START_HERE.md and .ai-playbook/CURRENT.md.'
+  ].join('\n'));
+
+  const applied = capture(target);
+  assert.equal(await runCli(['migrate', 'path', '.', '--apply', '--json'], applied), 0);
+  const report = JSON.parse(applied.out());
+  assert.equal(report.ok, true);
+  assert.equal(report.applied, true);
+  assert.equal(existsSync(path.join(target, '.ai-playbook')), false);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'CURRENT.md')), true);
+  assert.match(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), /\.ai-agent-playbook\/START_HERE\.md/);
+  assert.doesNotMatch(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), /\.ai-playbook\//);
+  const gitignore = await readFile(path.join(target, '.gitignore'), 'utf8');
+  assert.match(gitignore, /^\.ai-agent-playbook\/$/m);
+  assert.match(gitignore, /^\.ai-playbook\/$/m);
   await cleanup(target);
 });
 
@@ -627,19 +2377,19 @@ test('migrate path preserves committed playbook policy when legacy path is not i
   const preview = capture(target);
   assert.equal(await runCli(['migrate', 'path', '.', '--json'], preview), 0);
   const previewReport = JSON.parse(preview.out());
-  assert.equal(previewReport.operations.some((operation) => operation.id === 'gitignore.add-dot-playbook'), false);
+  assert.equal(previewReport.operations.some((operation) => operation.id === 'gitignore.add-active-playbook'), false);
 
   const applied = capture(target);
   assert.equal(await runCli(['migrate', 'path', '.', '--apply', '--json'], applied), 0);
   const gitignore = await readFile(path.join(target, '.gitignore'), 'utf8');
-  assert.doesNotMatch(gitignore, /^\.ai-playbook\/$/m);
-  assert.equal(existsSync(path.join(target, '.ai-playbook', 'CURRENT.md')), true);
+  assert.doesNotMatch(gitignore, /^\.ai-agent-playbook\/$/m);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'CURRENT.md')), true);
   await cleanup(target);
 });
 
 test('migrate path cleans legacy references when dot playbook already exists', async () => {
   const target = await tempRepo('migrate path dot cleanup-한글-');
-  await writePlaybookFixture(target, '.ai-playbook', 'Dot migration signal');
+  await writePlaybookFixture(target, '.ai-agent-playbook', 'Dot migration signal');
   await writeFile(path.join(target, 'AGENTS.md'), 'Read ai-playbook/START_HERE.md before work.\n');
 
   const applied = capture(target);
@@ -647,17 +2397,17 @@ test('migrate path cleans legacy references when dot playbook already exists', a
   const report = JSON.parse(applied.out());
   assert.equal(report.ok, true);
   assert.equal(report.applied, true);
-  assert.equal(report.warnings.some((warning) => warning.id === 'playbook.already-dot-path'), true);
-  assert.match(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), /\.ai-playbook\/START_HERE\.md/);
+  assert.equal(report.warnings.some((warning) => warning.id === 'playbook.already-active-path'), true);
+  assert.match(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), /\.ai-agent-playbook\/START_HERE\.md/);
   assert.equal(existsSync(path.join(target, 'ai-playbook')), false);
-  assert.equal(existsSync(path.join(target, '.ai-playbook')), true);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook')), true);
   await cleanup(target);
 });
 
 test('migrate path reports conflicts when both playbook paths exist without writing files', async () => {
   const target = await tempRepo('migrate path conflict-한글-');
   await writePlaybookFixture(target, 'ai-playbook', 'Legacy migration signal');
-  await writePlaybookFixture(target, '.ai-playbook', 'Dot migration signal');
+  await writePlaybookFixture(target, '.ai-agent-playbook', 'Dot migration signal');
   const before = await listRelativeFiles(target);
 
   const checked = capture(target);
@@ -672,21 +2422,21 @@ test('migrate path reports conflicts when both playbook paths exist without writ
 test('bootstrap writes a managed manifest and managed check validates it', async () => {
   const dryRunTarget = await tempRepo('managed dryrun-공백-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only', '--dry-run'], capture(dryRunTarget)), 0);
-  assert.equal(existsSync(path.join(dryRunTarget, '.ai-playbook', '.ai-agent-playbook-install.json')), false);
+  assert.equal(existsSync(path.join(dryRunTarget, '.ai-agent-playbook', '.ai-agent-playbook-install.json')), false);
   await cleanup(dryRunTarget);
 
   const target = await tempRepo('managed bootstrap-공백-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
-  const manifestPath = path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json');
+  const manifestPath = path.join(target, '.ai-agent-playbook', '.ai-agent-playbook-install.json');
   assert.equal(existsSync(manifestPath), true);
   const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
 
   assert.equal(manifest.schemaVersion, '1');
   assert.equal(manifest.source, 'ai-agent-playbook');
-  assert.equal(manifest.playbookDir, '.ai-playbook');
+  assert.equal(manifest.playbookDir, '.ai-agent-playbook');
   assert.equal(manifest.localOnly, true);
   assert.equal(manifest.files.some((file) => file.path === 'AGENTS.md'), true);
-  assert.equal(manifest.files.some((file) => file.path === '.ai-playbook/CURRENT.md'), true);
+  assert.equal(manifest.files.some((file) => file.path === '.ai-agent-playbook/CURRENT.md'), true);
   assert.equal(manifest.files.some((file) => file.path === '.gitignore'), false);
   assert.equal(manifest.files.every((file) => !path.isAbsolute(file.path)), true);
 
@@ -695,7 +2445,7 @@ test('bootstrap writes a managed manifest and managed check validates it', async
   const report = JSON.parse(checked.out());
   assert.equal(report.schemaVersion, '1');
   assert.equal(report.ok, true);
-  assert.equal(report.manifestPath, '.ai-playbook/.ai-agent-playbook-install.json');
+  assert.equal(report.manifestPath, '.ai-agent-playbook/.ai-agent-playbook-install.json');
   assert.equal(report.summary.present, manifest.files.length);
   assert.equal(report.summary.modified, 0);
   assert.equal(report.summary.missing, 0);
@@ -714,8 +2464,8 @@ test('managed check reports missing, modified, and malformed manifest states wit
   await cleanup(missing);
 
   const malformed = await tempRepo('managed malformed-공백-');
-  await mkdir(path.join(malformed, '.ai-playbook'), { recursive: true });
-  await writeFile(path.join(malformed, '.ai-playbook', '.ai-agent-playbook-install.json'), '{not-json');
+  await mkdir(path.join(malformed, '.ai-agent-playbook'), { recursive: true });
+  await writeFile(path.join(malformed, '.ai-agent-playbook', '.ai-agent-playbook-install.json'), '{not-json');
   const malformedBefore = await listRelativeFiles(malformed);
   const malformedCheck = capture(malformed);
   assert.equal(await runCli(['managed', 'check', '.', '--json'], malformedCheck), 1);
@@ -727,8 +2477,8 @@ test('managed check reports missing, modified, and malformed manifest states wit
 
   const modified = await tempRepo('managed modified-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(modified)), 0);
-  await writeFile(path.join(modified, '.ai-playbook', 'CURRENT.md'), '# Current\n\nEdited local project facts.\n');
-  await rm(path.join(modified, '.ai-playbook', 'GIT.md'));
+  await writeFile(path.join(modified, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nEdited local project facts.\n');
+  await rm(path.join(modified, '.ai-agent-playbook', 'policy', 'GIT.md'));
   const modifiedBefore = await listRelativeFiles(modified);
   const modifiedCheck = capture(modified);
   assert.equal(await runCli(['managed', 'check', '.', '--json'], modifiedCheck), 1);
@@ -736,8 +2486,8 @@ test('managed check reports missing, modified, and malformed manifest states wit
   assert.equal(modifiedReport.ok, false);
   assert.equal(modifiedReport.summary.modified, 1);
   assert.equal(modifiedReport.summary.missing, 1);
-  assert.equal(modifiedReport.files.some((file) => file.path === '.ai-playbook/CURRENT.md' && file.status === 'modified'), true);
-  assert.equal(modifiedReport.files.some((file) => file.path === '.ai-playbook/GIT.md' && file.status === 'missing'), true);
+  assert.equal(modifiedReport.files.some((file) => file.path === '.ai-agent-playbook/CURRENT.md' && file.status === 'modified'), true);
+  assert.equal(modifiedReport.files.some((file) => file.path === '.ai-agent-playbook/policy/GIT.md' && file.status === 'missing'), true);
   assert.deepEqual(await listRelativeFiles(modified), modifiedBefore);
   await cleanup(modified);
 });
@@ -745,7 +2495,7 @@ test('managed check reports missing, modified, and malformed manifest states wit
 test('guides sync updates managed manifest and check mode stays read-only', async () => {
   const target = await tempRepo('managed guides-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
-  await rm(path.join(target, '.ai-playbook', 'guides', 'harness-migration.md'));
+  await rm(path.join(target, '.ai-agent-playbook', 'knowledge', 'references', 'guides', 'harness-migration.md'));
   const beforeCheck = await listRelativeFiles(target);
 
   const checked = capture(target);
@@ -753,8 +2503,8 @@ test('guides sync updates managed manifest and check mode stays read-only', asyn
   assert.deepEqual(await listRelativeFiles(target), beforeCheck);
 
   assert.equal(await runCli(['guides', 'sync', '.'], capture(target)), 0);
-  const manifest = JSON.parse(await readFile(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
-  const guideEntry = manifest.files.find((file) => file.path === '.ai-playbook/guides/harness-migration.md');
+  const manifest = JSON.parse(await readFile(path.join(target, '.ai-agent-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
+  const guideEntry = manifest.files.find((file) => file.path === '.ai-agent-playbook/knowledge/references/guides/harness-migration.md');
   assert.equal(guideEntry.kind, 'guide');
   assert.match(guideEntry.sourceHash, /^[a-f0-9]{64}$/);
   assert.match(guideEntry.targetHash, /^[a-f0-9]{64}$/);
@@ -764,8 +2514,8 @@ test('guides sync updates managed manifest and check mode stays read-only', asyn
 test('managed adopt previews and records matching existing playbook files only when applied', async () => {
   const target = await tempRepo('managed adopt-공백-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
-  await rm(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json'));
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nAlready adapted.\n');
+  await rm(path.join(target, '.ai-agent-playbook', '.ai-agent-playbook-install.json'));
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nAlready adapted.\n');
   const before = await listRelativeFiles(target);
 
   const preview = capture(target);
@@ -780,17 +2530,17 @@ test('managed adopt previews and records matching existing playbook files only w
   const report = JSON.parse(applied.out());
   assert.equal(report.applied, true);
   assert.equal(report.summary.adopted > 0, true);
-  const manifest = JSON.parse(await readFile(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
-  assert.equal(manifest.files.some((file) => file.path === '.ai-playbook/SKILLS.md'), true);
-  assert.equal(manifest.files.some((file) => file.path === '.ai-playbook/CURRENT.md'), false);
-  assert.equal(existsSync(path.join(target, '.ai-playbook', 'CURRENT.md')), true);
+  const manifest = JSON.parse(await readFile(path.join(target, '.ai-agent-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
+  assert.equal(manifest.files.some((file) => file.path === '.ai-agent-playbook/policy/SKILLS.md'), true);
+  assert.equal(manifest.files.some((file) => file.path === '.ai-agent-playbook/CURRENT.md'), false);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'CURRENT.md')), true);
   await cleanup(target);
 });
 
 test('managed uninstall previews removals and preserves modified managed files when applied', async () => {
   const target = await tempRepo('managed uninstall-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nEdited facts to keep.\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nEdited facts to keep.\n');
   const before = await listRelativeFiles(target);
 
   const preview = capture(target);
@@ -805,8 +2555,8 @@ test('managed uninstall previews removals and preserves modified managed files w
   const report = JSON.parse(applied.out());
   assert.equal(report.applied, true);
   assert.equal(existsSync(path.join(target, 'AGENTS.md')), false);
-  assert.equal(existsSync(path.join(target, '.ai-playbook', 'CURRENT.md')), true);
-  assert.equal(existsSync(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json')), true);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', 'CURRENT.md')), true);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook', '.ai-agent-playbook-install.json')), true);
   assert.equal(report.warnings.some((warning) => warning.id === 'managed.gitignore.manual-cleanup'), true);
   await cleanup(target);
 });
@@ -814,8 +2564,8 @@ test('managed uninstall previews removals and preserves modified managed files w
 test('managed catalog reports kind and status summaries without writing files', async () => {
   const target = await tempRepo('managed catalog-공백-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nEdited facts to keep.\n');
-  await rm(path.join(target, '.ai-playbook', 'GIT.md'));
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nEdited facts to keep.\n');
+  await rm(path.join(target, '.ai-agent-playbook', 'policy', 'GIT.md'));
   const before = await listRelativeFiles(target);
 
   const catalog = capture(target);
@@ -825,16 +2575,16 @@ test('managed catalog reports kind and status summaries without writing files', 
   assert.equal(report.schemaVersion, '1');
   assert.equal(report.ok, false);
   assert.equal(report.target, target);
-  assert.equal(report.manifestPath, '.ai-playbook/.ai-agent-playbook-install.json');
-  assert.equal(report.manifest.playbookDir, '.ai-playbook');
+  assert.equal(report.manifestPath, '.ai-agent-playbook/.ai-agent-playbook-install.json');
+  assert.equal(report.manifest.playbookDir, '.ai-agent-playbook');
   assert.equal(report.summary.total > 0, true);
   assert.equal(report.summary.byKind.playbook > 0, true);
   assert.equal(report.summary.byKind.guide > 0, true);
   assert.equal(report.summary.byKind.bootstrap, 1);
   assert.equal(report.summary.byStatus.modified >= 1, true);
   assert.equal(report.summary.byStatus.missing >= 1, true);
-  assert.equal(report.files.some((file) => file.path === '.ai-playbook/CURRENT.md' && file.status === 'modified'), true);
-  assert.equal(report.files.some((file) => file.path === '.ai-playbook/GIT.md' && file.status === 'missing'), true);
+  assert.equal(report.files.some((file) => file.path === '.ai-agent-playbook/CURRENT.md' && file.status === 'modified'), true);
+  assert.equal(report.files.some((file) => file.path === '.ai-agent-playbook/policy/GIT.md' && file.status === 'missing'), true);
   assert.deepEqual(await listRelativeFiles(target), before);
   await cleanup(target);
 });
@@ -842,8 +2592,8 @@ test('managed catalog reports kind and status summaries without writing files', 
 test('managed prune previews and removes only a selected unchanged managed file', async () => {
   const target = await tempRepo('managed prune-공백-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
-  const selected = '.ai-playbook/guides/runtime-harness.md';
-  const windowsStyleSelected = '.ai-playbook\\guides\\runtime-harness.md';
+  const selected = '.ai-agent-playbook/knowledge/references/guides/runtime-harness.md';
+  const windowsStyleSelected = '.ai-agent-playbook\\knowledge\\references\\guides\\runtime-harness.md';
   const before = await listRelativeFiles(target);
 
   const preview = capture(target);
@@ -862,46 +2612,46 @@ test('managed prune previews and removes only a selected unchanged managed file'
   assert.equal(await runCli(['managed', 'prune', '.', '--path', selected, '--apply', '--json'], applied), 0);
   const appliedReport = JSON.parse(applied.out());
   const after = await listRelativeFiles(target);
-  const manifest = JSON.parse(await readFile(path.join(target, '.ai-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
+  const manifest = JSON.parse(await readFile(path.join(target, '.ai-agent-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
 
   assert.equal(appliedReport.applied, true);
   assert.equal(after.includes(selected), false);
-  assert.equal(after.includes('.ai-playbook/CURRENT.md'), true);
+  assert.equal(after.includes('.ai-agent-playbook/CURRENT.md'), true);
   assert.equal(manifest.files.some((file) => file.path === selected), false);
-  assert.equal(manifest.files.some((file) => file.path === '.ai-playbook/CURRENT.md'), true);
+  assert.equal(manifest.files.some((file) => file.path === '.ai-agent-playbook/CURRENT.md'), true);
   await cleanup(target);
 });
 
 test('managed prune refuses unmanaged modified missing and absolute paths without writing files', async () => {
   const target = await tempRepo('managed prune conflict-한글-');
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], capture(target)), 0);
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nEdited facts to keep.\n');
-  await rm(path.join(target, '.ai-playbook', 'GIT.md'));
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nEdited facts to keep.\n');
+  await rm(path.join(target, '.ai-agent-playbook', 'policy', 'GIT.md'));
 
   const modifiedBefore = await listRelativeFiles(target);
   const modified = capture(target);
-  assert.equal(await runCli(['managed', 'prune', '.', '--path', '.ai-playbook/CURRENT.md', '--json'], modified), 1);
+  assert.equal(await runCli(['managed', 'prune', '.', '--path', '.ai-agent-playbook/CURRENT.md', '--json'], modified), 1);
   const modifiedReport = JSON.parse(modified.out());
   assert.equal(modifiedReport.conflicts.some((conflict) => conflict.id === 'managed.prune.file-modified'), true);
   assert.deepEqual(await listRelativeFiles(target), modifiedBefore);
 
   const missingBefore = await listRelativeFiles(target);
   const missing = capture(target);
-  assert.equal(await runCli(['managed', 'prune', '.', '--path', '.ai-playbook/GIT.md', '--json'], missing), 1);
+  assert.equal(await runCli(['managed', 'prune', '.', '--path', '.ai-agent-playbook/policy/GIT.md', '--json'], missing), 1);
   const missingReport = JSON.parse(missing.out());
   assert.equal(missingReport.conflicts.some((conflict) => conflict.id === 'managed.prune.file-missing'), true);
   assert.deepEqual(await listRelativeFiles(target), missingBefore);
 
   const unmanagedBefore = await listRelativeFiles(target);
   const unmanaged = capture(target);
-  assert.equal(await runCli(['managed', 'prune', '.', '--path', '.ai-playbook/not-managed.md', '--json'], unmanaged), 1);
+  assert.equal(await runCli(['managed', 'prune', '.', '--path', '.ai-agent-playbook/not-managed.md', '--json'], unmanaged), 1);
   const unmanagedReport = JSON.parse(unmanaged.out());
   assert.equal(unmanagedReport.conflicts.some((conflict) => conflict.id === 'managed.prune.file-unmanaged'), true);
   assert.deepEqual(await listRelativeFiles(target), unmanagedBefore);
 
   const absoluteBefore = await listRelativeFiles(target);
   const absolute = capture(target);
-  assert.equal(await runCli(['managed', 'prune', '.', '--path', path.join(target, '.ai-playbook', 'README.md'), '--json'], absolute), 1);
+  assert.equal(await runCli(['managed', 'prune', '.', '--path', path.join(target, '.ai-agent-playbook', 'README.md'), '--json'], absolute), 1);
   const absoluteReport = JSON.parse(absolute.out());
   assert.equal(absoluteReport.conflicts.some((conflict) => conflict.id === 'managed.prune.path-invalid'), true);
   assert.deepEqual(await listRelativeFiles(target), absoluteBefore);
@@ -911,7 +2661,7 @@ test('managed prune refuses unmanaged modified missing and absolute paths withou
 test('managed manifest rejects parent traversal paths before removal', async () => {
   const root = await tempRepo('managed traversal-공백-한글-');
   const target = path.join(root, 'target');
-  const playbook = path.join(target, '.ai-playbook');
+  const playbook = path.join(target, '.ai-agent-playbook');
   await mkdir(playbook, { recursive: true });
   const victim = path.join(root, 'victim.txt');
   const victimContent = 'do not remove outside target\n';
@@ -919,7 +2669,7 @@ test('managed manifest rejects parent traversal paths before removal', async () 
   await writeFile(path.join(playbook, '.ai-agent-playbook-install.json'), JSON.stringify({
     schemaVersion: '1',
     source: 'ai-agent-playbook',
-    playbookDir: '.ai-playbook',
+    playbookDir: '.ai-agent-playbook',
     localOnly: true,
     installedAtUtc: '2026-06-13T00:00:00.000Z',
     updatedAtUtc: '2026-06-13T00:00:00.000Z',
@@ -960,7 +2710,7 @@ function capture(cwd) {
   };
 }
 
-async function tempRepo(prefix = '.ai-playbook-test-') {
+async function tempRepo(prefix = '.ai-agent-playbook-test-') {
   return mkdtemp(path.join(os.tmpdir(), prefix));
 }
 

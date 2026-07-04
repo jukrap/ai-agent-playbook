@@ -13,7 +13,18 @@
 - `CURRENT.md`
 - 관련 map 또는 runbook:
 - 관련 진행 중 계획:
+- 관련 contract 또는 decision:
 - 최신 worklog summary:
+
+## 에이전트 진입 체크리스트
+
+- 도구를 고르기 전에 루트 `AGENTS.md`와 더 가까운 하위 에이전트 지침을 확인합니다.
+- 계획하거나 수정하기 전에 `CURRENT.md`와 `questions.md`를 읽습니다.
+- 코드 작업이라면 관련 `memory/context/`, `memory/maps/`, `memory/contracts/`, workflow recipe를 확인합니다.
+- 오래되었거나 위험하거나 낯선 작업이라면 수정 전에 read-only operator 점검을 실행합니다.
+- 문맥이 너무 넓으면 `operator context`, `operator search`, `index search`로 관련 map, runbook, contract, guide만 고릅니다.
+- 긴 작업에서는 실행 중 `workflows/runs/`를 만들거나 갱신하고, milestone, blocker, 방향 변경, handoff 시점에는 `workflows/worklogs/`에 기록합니다.
+- `runtime/` 보고서는 검토된 사실이 `memory/` 또는 `knowledge/`로 승격되기 전까지 생성된 근거로만 다룹니다.
 
 ## 다음에 실행할 가능성이 큰 명령
 
@@ -31,4 +42,5 @@
 
 - 긴 이력을 덧붙이지 말고 낡은 bullet을 교체합니다.
 - 내용을 중복하지 말고 active plan, map, runbook, 최신 worklog로 링크합니다.
+- 오래된 run이나 worklog에서 계속 현재인 사실은 `CURRENT.md`, `memory/context/`, `memory/maps/`, `memory/contracts/`, `memory/decisions/`, `workflows/runbooks/`로 승격합니다.
 - 진행 중인 작업이 없으면 그 사실을 분명히 쓰고 `CURRENT.md`로 안내합니다.

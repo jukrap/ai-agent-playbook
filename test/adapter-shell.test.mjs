@@ -68,7 +68,7 @@ test('adapter shell rejects unknown commands', async () => {
 async function bootstrappedRepo(prefix) {
   const target = await tempRepo(prefix);
   assert.equal(await runCli(['bootstrap', '.'], capture(target)), 0);
-  await writeFile(path.join(target, '.ai-playbook', 'CURRENT.md'), '# Current\n\nAdapter shell signal\n');
+  await writeFile(path.join(target, '.ai-agent-playbook', 'CURRENT.md'), '# Current\n\nAdapter shell signal\n');
   return target;
 }
 

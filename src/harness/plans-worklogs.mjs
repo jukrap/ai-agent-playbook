@@ -2,17 +2,23 @@ import { readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
+  activePlaybookMissingResult,
   requireTitle,
   resolvePlaybookLayout,
   slugifyTitle,
   todayIso,
+  WORKLOGS_DIR,
   writeScaffold
 } from './core.mjs';
+
+const PLANS_DIR = 'workflows/plans';
 
 export async function createPlan(options) {
   const { target, title, date = todayIso(), dryRun = false, force = false } = options;
   requireTitle(title);
-  const file = path.join(resolvePlaybookLayout(target).root, 'plans', `${date}-${slugifyTitle(title)}.md`);
+  const missing = activePlaybookMissingResult(target);
+  if (missing) return missing;
+  const file = path.join(resolvePlaybookLayout(target).root, ...PLANS_DIR.split('/'), `${date}-${slugifyTitle(title)}.md`);
   const content = `# ${title}\n\nStatus: active\nDate: ${date}\n\n## Goal\n\nDescribe the outcome this plan should produce.\n\n## Approach\n\nRecord the chosen implementation path and important constraints.\n\n## Steps\n\n- [ ] First implementation slice.\n- [ ] Verification and cleanup.\n\n## Verification\n\n- Record commands or manual checks here after they are known.\n`;
   return writeScaffold(file, content, { dryRun, force });
 }
@@ -20,8 +26,10 @@ export async function createPlan(options) {
 export async function createWorklog(options) {
   const { target, title, date = todayIso(), dryRun = false, force = false } = options;
   requireTitle(title);
+  const missing = activePlaybookMissingResult(target);
+  if (missing) return missing;
   const month = date.slice(0, 7);
-  const file = path.join(resolvePlaybookLayout(target).root, 'worklogs', month, `${date}-${slugifyTitle(title)}.md`);
+  const file = path.join(resolvePlaybookLayout(target).root, ...WORKLOGS_DIR.split('/'), month, `${date}-${slugifyTitle(title)}.md`);
   const content = `# ${title}\n\nDate: ${date}\n\n## Context\n\nExplain what prompted the work.\n\n## Decision Path\n\nRecord the reasoning, alternatives considered, and evidence.\n\n## Changes\n\nSummarize the important changes without reducing this to a file list.\n\n## Verification\n\nRecord only checks that were actually run.\n\n## Remaining Risk\n\nCapture follow-up risk or note none after verification.\n`;
   return writeScaffold(file, content, { dryRun, force });
 }
@@ -31,15 +39,17 @@ export async function summarizeWorklogs(options) {
   if (!month || !/^\d{4}-\d{2}$/.test(month)) {
     throw new Error('Missing or invalid --month YYYY-MM.');
   }
+  const missing = activePlaybookMissingResult(target);
+  if (missing) return missing;
   const playbook = resolvePlaybookLayout(target);
-  const monthDir = path.join(playbook.root, 'worklogs', month);
+  const monthDir = path.join(playbook.root, ...WORKLOGS_DIR.split('/'), month);
   const files = existsSync(monthDir)
     ? (await readdir(monthDir, { withFileTypes: true }))
         .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
         .map((entry) => entry.name)
         .sort()
     : [];
-  const file = path.join(playbook.root, 'worklogs', 'summaries', `${month}.md`);
+  const file = path.join(playbook.root, ...WORKLOGS_DIR.split('/'), 'summaries', `${month}.md`);
   const lines = files.length
     ? files.map((name) => `- ${name}: summarize durable facts, decisions, verification, and follow-up risk.`)
     : ['- No worklog files found for this month yet.'];

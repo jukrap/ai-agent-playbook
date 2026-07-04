@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1",
+  "guides": [
+    {
+      "path": "README.md",
+      "sourceHash": "2d572e6b42ecabda0f7ac81d750b5a38fadc3d885dfa4f1ae16e75c5df246075"
+    },
+    {
+      "path": "api-contract-boundary.md",
+      "sourceHash": "9dfb001b87d37e8c7bc8b4c3462ea4202a38d95df861a765bf62216fd21e7477"
+    },
+    {
+      "path": "commit-push-worklog.md",
+      "sourceHash": "1b8e01311011966db59f667d1d3ef22cbfe1d30f69a1f7814ec6f9ceae27ca70"
+    },
+    {
+      "path": "docs-system.md",
+      "sourceHash": "da709af29f672478b5257d5113db2f0038153ae86f2c8d825d9fa2d3c6bd57e8"
+    },
+    {
+      "path": "harness-migration.md",
+      "sourceHash": "eb6ac66bf76ccb0ffd642cc12adecc45bea9b1aaa6bc77c7396ba72d1e9a97e0"
+    },
+    {
+      "path": "legacy-mode.md",
+      "sourceHash": "9d6a849c4521690ce55b35be351aa4ea1919158f8a47811b50704e916399b933"
+    },
+    {
+      "path": "pragmatic-fsd.md",
+      "sourceHash": "4d4011a5f1383b86b1280548950648afc38aa48a1352893409d0553f7eafabcb"
+    },
+    {
+      "path": "repo-onboarding.md",
+      "sourceHash": "33ffbdd769b8a9215ba174e786a366352478fd1da8fba59f80adcf54508aed46"
+    },
+    {
+      "path": "runtime-harness.md",
+      "sourceHash": "c0c16a70e93752e57e94571813f54e5b6e3d94831f1995f15332a9a8c708d601"
+    },
+    {
+      "path": "runtime-roadmap.md",
+      "sourceHash": "2d316c9f49a608aa1028690ecb556e507dfd4375979ad1f6ddf5d7c872a171f5"
+    },
+    {
+      "path": "structural-review.md",
+      "sourceHash": "6d352ebcfdc4733f69f78ab3136838222fbba051ab9d28a4487565773f541383"
+    },
+    {
+      "path": "ui-style-quality.md",
+      "sourceHash": "26cceb0ade50927c264e88864fe5314165e2f765baf073a0c45d66f579b5f711"
+    }
+  ]
+}

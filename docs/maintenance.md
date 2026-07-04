@@ -14,12 +14,14 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 1. Choose the smallest fitting category under `skills/`.
 2. Create `skills/<category>/<skill-name>/SKILL.md`.
 3. Keep `SKILL.md` focused on trigger, workflow, and when to read references.
-4. Move long rules, checklists, examples, and provider-specific details into `references/*.md`.
-5. Add or update `agents/openai.yaml` only if the skill UI metadata needs to be exposed.
-6. Add the Korean translation at `translations/ko/skills/<category>/<skill-name>.ko.md`.
-7. Translate any reference files under the matching `translations/ko/skills/**/references/` path.
-8. Update `README.md` and `docs/classification.md` if the skill changes the public category map.
-9. Run validation and sync installed copies.
+4. Keep the frontmatter description as a trigger sentence under the lint warning threshold, usually no more than 180 characters.
+5. Move long rules, checklists, examples, and provider-specific details into `references/*.md`.
+6. Keep references substantive enough to carry reusable procedure, evidence, examples, or stack/profile detail; avoid placeholder references.
+7. Add or update `agents/openai.yaml` only if the skill UI metadata needs to be exposed.
+8. Add the Korean translation at `translations/ko/skills/<category>/<skill-name>.ko.md`.
+9. Translate any reference files under the matching `translations/ko/skills/**/references/` path.
+10. Update `README.md` and `docs/classification.md` if the skill changes the public category map.
+11. Run validation and sync installed copies.
 
 ## Adding a project template
 
@@ -36,12 +38,20 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 1. Keep runtime code under `bin/`, `src/`, and `test/`.
 2. Keep the CLI dependency-free unless the feature needs a dependency.
 3. Add tests for every new command, overwrite rule, or path convention.
-4. Update `docs/harness-runtime.md`, `README.md`, installation docs, and Korean translations.
-5. Run `npm run check` and `npm test`.
+4. Update `docs/harness-runtime.md`, `README.md`, lifecycle docs, and Korean translations.
+5. Run `npm run check`, `npm run typecheck`, `npm test`, and `npm run validate:python` when the runtime or engine bridge changes.
+
+## TypeScript transition
+
+- Expand `tsconfig.json` from leaf modules first.
+- Prefer modules with narrow input contracts and no package entrypoint responsibility.
+- Keep `bin/aapb.mjs`, `src/cli.mjs`, `src/mcp-server.mjs`, adapter facades, and package shell files as `.mjs` until a build step can preserve the public paths exactly.
+- Before adding a broad module to `typecheck`, add JSDoc option contracts for exported functions and fix the narrow errors revealed by `npx tsc --ignoreConfig ...`.
+- Do not convert runtime files to `.ts` without updating package files, tests, docs, and dry-run packaging checks in the same change.
 
 ## Updating commit, PR, or worklog policy
 
-- Update both `templates/project-playbook/guides/commit-push-worklog.md` and `skills/git/commit-worklog-guardrails/references/git-worklog-checklist.md`.
+- Update both `templates/project-playbook/knowledge/references/guides/commit-push-worklog.md` and `skills/git/commit-worklog-guardrails/references/git-worklog-checklist.md`.
 - Keep project-copyable guidance in the template.
 - Keep skill-triggered procedural guidance in the skill reference.
 - Update Korean translations for both files in the same change.
@@ -61,15 +71,16 @@ Use this checklist whenever adding, renaming, removing, or substantially rewriti
 
 ```powershell
 npm run check
+npm run typecheck
 npm test
-.\scripts\validate-skills.ps1
-.\scripts\validate-translations.ps1
+npm run validate:python
+npm run validate:all
 .\scripts\sync-skills.ps1 -WhatIf
 .\install.ps1 -SkipValidation -WhatIf
 .\update.ps1 -SkipValidation -WhatIf
 ```
 
-If validation scripts change, update `.github/workflows/validate.yml` in the same change.
+The PowerShell validation scripts remain Windows-friendly wrappers around the same Node validators. Use the npm scripts as the cross-platform path for macOS, Linux, CI, and package consumers. If validation scripts change, update `.github/workflows/validate.yml` in the same change.
 
 When skill source files changed, sync installed copies after validation:
 

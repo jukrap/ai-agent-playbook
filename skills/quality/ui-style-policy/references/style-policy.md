@@ -1,4 +1,6 @@
-# UI Style Policy Reference
+# UI Style Policy Compatibility Reference
+
+Primary route: `frontend/style-policy-selection`.
 
 Use the narrowest policy supported by repository evidence.
 

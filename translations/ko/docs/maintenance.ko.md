@@ -41,6 +41,14 @@
 4. `docs/harness-runtime.md`, `README.md`, 사용 수명주기 문서, 한국어 번역을 함께 갱신합니다.
 5. 런타임 또는 엔진 연결부가 바뀌면 `npm run check`, `npm run typecheck`, `npm test`, `npm run validate:python`을 함께 실행합니다.
 
+## TypeScript 전환
+
+- `tsconfig.json`은 leaf 모듈부터 넓힙니다.
+- 입력 계약이 좁고 패키지 진입점을 직접 맡지 않는 모듈을 먼저 고릅니다.
+- `bin/aapb.mjs`, `src/cli.mjs`, `src/mcp-server.mjs`, 어댑터 진입점, 패키지 셸 파일은 빌드 단계가 공개 경로를 정확히 보존할 수 있을 때까지 `.mjs`로 둡니다.
+- 큰 모듈을 타입 검사에 넣기 전에는 export 함수의 옵션 객체 계약을 JSDoc으로 고정하고, `npx tsc --ignoreConfig ...`가 드러내는 좁은 오류부터 고칩니다.
+- 런타임 파일을 `.ts`로 바꿀 때는 패키지 포함 파일, 테스트, 문서, 패키징 미리보기 점검도 같은 변경에서 갱신합니다.
+
 ## Commit, PR, worklog 정책 갱신
 
 - `templates/project-playbook/knowledge/references/guides/commit-push-worklog.md`와 `skills/git/commit-worklog-guardrails/references/git-worklog-checklist.md`를 함께 갱신합니다.

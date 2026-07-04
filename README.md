@@ -70,7 +70,9 @@ npm install -g ai-agent-playbook
 aapb --help
 ```
 
-Python is optional but recommended for deeper local language checks. Node remains the stable CLI and MCP facade; when Python 3.11+ is available, commands such as `writing naturalness-check --engine auto` merge Python-backed Korean/English prose analysis with the built-in JavaScript fallback.
+`aapb` is short for AI Agent Playbook. It is the global command name provided by the `ai-agent-playbook` npm package.
+
+Python is optional but recommended for deeper local language checks. Node remains the stable CLI and MCP facade; when Python 3.11+ is available, commands such as `writing naturalness-check --engine auto` and `writing naturalness-report --engine auto` merge Python-backed Korean/English prose analysis with the built-in JavaScript fallback.
 
 ```powershell
 py -3.11 -m venv .venv
@@ -78,6 +80,7 @@ py -3.11 -m venv .venv
 $env:AI_AGENT_PLAYBOOK_PYTHON = ".\.venv\Scripts\python.exe"
 npx ai-agent-playbook runtime python-status --json
 npx ai-agent-playbook writing naturalness-check <target-project> --path README.md --lang auto --engine auto --json
+npx ai-agent-playbook writing naturalness-report <target-project> --root docs --lang ko --engine auto --json
 ```
 
 From a source checkout, `.\scripts\bootstrap-python.ps1` creates a local `.venv` and installs the optional Python extras for development. Without Python, the CLI and MCP server still work and return JavaScript fallback results with an `engines.unavailable` warning for Python-backed checks.

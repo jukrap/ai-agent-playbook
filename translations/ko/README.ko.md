@@ -70,7 +70,9 @@ npm install -g ai-agent-playbook
 aapb --help
 ```
 
-Python은 선택 사항이지만, 한국어와 영어 글 점검을 더 깊게 하려면 설치하는 편이 좋습니다. Node는 계속 안정적인 명령줄/MCP 표면을 맡고, Python 3.11 이상이 있으면 `writing naturalness-check --engine auto`가 Python 기반 분석과 기본 JavaScript 대체 분석을 함께 사용합니다.
+`aapb`는 AI Agent Playbook의 앞글자를 딴 짧은 전역 명령 이름입니다. npm 패키지 이름은 계속 `ai-agent-playbook`입니다.
+
+Python은 선택 사항이지만, 한국어와 영어 글 점검을 더 깊게 하려면 설치하는 편이 좋습니다. Node 쪽은 명령줄과 MCP 진입점을 안정적으로 맡고, Python 3.11 이상이 있으면 `writing naturalness-check --engine auto`와 `writing naturalness-report --engine auto`가 Python 기반 분석과 기본 JavaScript 대체 분석을 함께 사용합니다.
 
 ```powershell
 py -3.11 -m venv .venv
@@ -78,6 +80,7 @@ py -3.11 -m venv .venv
 $env:AI_AGENT_PLAYBOOK_PYTHON = ".\.venv\Scripts\python.exe"
 npx ai-agent-playbook runtime python-status --json
 npx ai-agent-playbook writing naturalness-check <target-project> --path README.md --lang auto --engine auto --json
+npx ai-agent-playbook writing naturalness-report <target-project> --root docs --lang ko --engine auto --json
 ```
 
 소스 체크아웃에서 개발할 때는 `.\scripts\bootstrap-python.ps1`이 로컬 `.venv`를 만들고 선택 Python 기능을 설치합니다. Python이 없어도 CLI와 MCP 서버는 동작하며, Python 기반 점검은 `engines.unavailable` 경고와 함께 JavaScript 대체 결과를 반환합니다.

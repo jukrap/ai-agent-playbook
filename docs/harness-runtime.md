@@ -43,6 +43,12 @@ npx ai-agent-playbook runtime python-status --json
 
 For a source checkout, run `.\scripts\bootstrap-python.ps1` to create `.venv` and install optional Korean analysis packages. For package users, any Python 3.11+ environment can be selected with `AI_AGENT_PLAYBOOK_PYTHON`; optional libraries such as `kss` or `kiwipiepy` are used when installed and skipped otherwise. When Python is missing, Python-backed commands return `engines.unavailable` and keep the JavaScript fallback.
 
+## Type checking
+
+`npm run typecheck` uses TypeScript in `allowJs`/`checkJs` mode. The checked set intentionally starts with leaf modules: config resolution, Python bridge, writing analysis, capability history, dependency inventory, route/API hints, and symbol outline. These modules have narrow inputs and are safe to type-check without changing the package entrypoint.
+
+CLI, MCP server, adapter, and bin facade files stay `.mjs` for now. They carry the public `npx ai-agent-playbook`, global `aapb`, and MCP stdio surfaces, so they should move only after a build pipeline can preserve those paths exactly. `schemas`, evidence-locator, repo-graph, and operator modules also need stronger JSDoc option contracts before they join the checked set.
+
 ## Repo-local config preview
 
 `config preview` is a read-only resolver for playbook defaults. It reports the final values, source map, source file status, warnings, and conflicts without changing runtime behavior or writing files.

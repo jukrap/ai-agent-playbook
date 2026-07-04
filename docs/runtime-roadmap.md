@@ -106,7 +106,6 @@ The first adapter proof of concept is intentionally read-only:
 
 These can be implemented before a full plugin exists:
 
-- For a concrete V4+ execution plan and next-session handoff, see `docs/plans/2026-06-11-runtime-harness-v4-plus.md`.
 - Verify in real projects whether rendered adapter settings reduce setup mistakes without adding noise.
 - Verify in real projects whether `migrate path --json` catches common legacy path references without touching unrelated files.
 - Verify whether the managed marker, managed catalog, selected managed prune, combined operator check, local search, preflight/delta evidence comparison, contract hash snapshots, path-scoped context preview, analysis signal aggregation, codebase map summary, playbook drift audit, preview-first managed cleanup, rule matching, diagnostics command discovery, skill linting, TUI layout checks, and PNG image comparison reduce review misses before promoting any hook-driven diagnostics.

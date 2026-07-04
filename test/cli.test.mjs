@@ -2273,7 +2273,7 @@ test('plan and worklog scaffold commands create dated files', async () => {
 test('migrate path previews legacy ai-playbook migration without writing files', async () => {
   const target = await tempRepo('migrate path preview-한글-');
   await writePlaybookFixture(target, 'ai-playbook', 'Legacy migration signal');
-  await writeFile(path.join(target, '.gitignore'), 'docs/plans/\nai-playbook/\n');
+  await writeFile(path.join(target, '.gitignore'), 'docs/worklog/\nai-playbook/\n');
   await writeFile(path.join(target, 'AGENTS.md'), [
     '# Root',
     '',
@@ -2307,7 +2307,7 @@ test('migrate path applies legacy ai-playbook migration and updates references',
     'Read ai-playbook/guides/commit-push-worklog.md and ai-playbook/SKILLS.md before changing API boundaries.',
     ''
   ].join('\n'));
-  await writeFile(path.join(target, '.gitignore'), 'docs/plans/\nai-playbook/\n');
+  await writeFile(path.join(target, '.gitignore'), 'docs/worklog/\nai-playbook/\n');
   await writeFile(path.join(target, 'AGENTS.md'), [
     '# Root',
     '',

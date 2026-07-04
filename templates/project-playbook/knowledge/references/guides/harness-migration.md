@@ -15,7 +15,7 @@ The goal is not to erase the old system. The goal is to preserve useful evidence
 ## First pass
 
 1. Inspect current root files: `AGENTS.md`, `CLAUDE.md`, `README.md`, and `.gitignore`; also inspect `.ai-agent-playbook/policy/SKILLS.md` and `.ai-agent-playbook/policy/GIT.md` when they exist.
-2. Find existing AI docs: `docs/**`, `docs/agents/**`, `docs/plans/**`, `docs/worklog/**`, `.cursor/**`, `.windsurf/**`, `.github/copilot-instructions.md`, and similarly named local folders.
+2. Find existing AI docs: `docs/**`, `docs/agents/**`, `docs/worklog/**`, `.cursor/**`, `.windsurf/**`, `.github/copilot-instructions.md`, and similarly named local folders.
 3. Identify what is committed, ignored, generated, or private.
 4. Record conflicts and uncertainty in `.ai-agent-playbook/questions.md`.
 5. Run `doctor` after the first copy to see missing layout pieces and stale references.

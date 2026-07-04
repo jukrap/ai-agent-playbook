@@ -15,7 +15,7 @@
 ## 첫 점검
 
 1. 루트 파일을 확인합니다: `AGENTS.md`, `CLAUDE.md`, `README.md`, `.gitignore`. `.ai-agent-playbook/policy/SKILLS.md`와 `.ai-agent-playbook/policy/GIT.md`가 있으면 함께 확인합니다.
-2. 기존 AI 문서를 찾습니다: `docs/**`, `docs/agents/**`, `docs/plans/**`, `docs/worklog/**`, `.cursor/**`, `.windsurf/**`, `.github/copilot-instructions.md`, 그 밖의 비슷한 이름의 로컬 폴더.
+2. 기존 AI 문서를 찾습니다: `docs/**`, `docs/agents/**`, `docs/worklog/**`, `.cursor/**`, `.windsurf/**`, `.github/copilot-instructions.md`, 그 밖의 비슷한 이름의 로컬 폴더.
 3. 어떤 문서가 커밋 대상인지, ignore 대상인지, 생성물인지, 비공개 자료인지 구분합니다.
 4. 충돌과 불확실한 점은 `.ai-agent-playbook/questions.md`에 기록합니다.
 5. 첫 복사 뒤 `doctor`를 실행해 빠진 구조와 낡은 참조를 확인합니다.

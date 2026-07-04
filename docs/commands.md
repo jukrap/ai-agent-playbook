@@ -84,6 +84,8 @@ Command-specific options appear where they are needed:
 | `--threshold N` | Allowed image diff ratio from `0` to `1`; `0` means any changed pixel fails. |
 | `--deep` | Add AST-grep, exact function-body clone cues, and TypeScript/JavaScript language-analysis signals to `operator analyze`. |
 | `--engine auto\|js\|python` | Select the prose-analysis engine for `writing naturalness-check`; `auto` uses Python when available and keeps the JavaScript fallback. |
+| `--root <dir>` | Directory inside the target project for `writing naturalness-report`. |
+| `--max-files N` | Limit the number of prose files inspected by a bounded report command. |
 
 ## First-time setup
 
@@ -237,8 +239,11 @@ Runtime output lives under `.ai-agent-playbook/runtime/`. Do not copy generated 
 | Command | When to use it | Writes files? | Example |
 | ------- | -------------- | ------------- | ------- |
 | `writing naturalness-check <target>` | Check Korean or English prose for translationese, AI-writing signals, inflated tone, repetitive rhythm, and English-term density. | No | `npx ai-agent-playbook writing naturalness-check <target-project> --path README.md --lang auto --engine auto --json` |
+| `writing naturalness-report <target>` | Check a bounded folder of Markdown or text files and summarize which files need prose review. | No | `npx ai-agent-playbook writing naturalness-report <target-project> --root docs --lang ko --engine auto --json` |
 
 `writing naturalness-check` reads one target-relative text file and returns heuristic findings. `--engine auto` merges the built-in JavaScript checks with the optional Python engine when Python is available; `--engine js` forces the dependency-free fallback, and `--engine python` requests Python explicitly. It does not rewrite files, call a network service, judge authorship, or help bypass detectors. Use it before editing README text, translations, PR bodies, release notes, docs pages, and public summaries. Treat findings as review prompts; facts, command names, file paths, warnings, and release scope still need source comparison.
+
+`writing naturalness-report` recursively scans Markdown, MDX, and text files under `--root` and caps the scan at `--max-files` files, up to 50. It applies the same read-only checks as `naturalness-check` but ignores fenced code blocks, inline code, shell commands, URLs, HTML-only badge lines, and path examples before judging prose. Use it for a translation folder or documentation batch, then open the highest-signal files one by one.
 
 ## Managed files
 
@@ -347,7 +352,7 @@ The server exposes read-only resources for `ai-agent-playbook://capabilities`, `
 The server exposes read-only tools for:
 
 - playbook context: `playbook_context`, `context_status`, `context_list`
-- catalogs and layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_inspect`, `reference_adoption_queue`, `reference_capability_matrix`, `reference_adoption_plan`, `reference_adoption_status`, `reference_source_registry_preview`, `reference_source_registry_check`, `reference_source_registry_update_preview`, `reference_ledger_check`, `reference_ledger_update_preview`, `reference_ledger_decision_preview`, `playbook_layout`, `index_status`, `runtime_schema_check`, `evidence_locator_check`, `writing_naturalness_check`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `repo_graph_preview`, `write_gate_preview`, `canon_check`
+- catalogs and layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_inspect`, `reference_adoption_queue`, `reference_capability_matrix`, `reference_adoption_plan`, `reference_adoption_status`, `reference_source_registry_preview`, `reference_source_registry_check`, `reference_source_registry_update_preview`, `reference_ledger_check`, `reference_ledger_update_preview`, `reference_ledger_decision_preview`, `playbook_layout`, `index_status`, `runtime_schema_check`, `evidence_locator_check`, `writing_naturalness_check`, `writing_naturalness_report`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `repo_graph_preview`, `write_gate_preview`, `canon_check`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules and project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA and deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`

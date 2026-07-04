@@ -19,6 +19,7 @@ import {
   checkReferenceSourceRegistry,
   checkRuntimeSchema,
   checkWritingNaturalness,
+  checkWritingNaturalnessReport,
   contextStatus,
   describePlaybookLayout,
   listContexts,
@@ -262,6 +263,20 @@ export function registerPlaybookMcpTools(server, options) {
       filePath: args.path,
       lang: args.lang ?? 'auto',
       engine: args.engine ?? 'auto'
+    })),
+    tool('writing_naturalness_report', 'Check a bounded directory of Korean or English prose files without editing files.', {
+      target: targetSchema,
+      root: z.string().min(1).optional().describe('Directory inside the target project to scan. Defaults to the target root.'),
+      lang: z.enum(['auto', 'ko', 'en']).optional().describe('Language to analyze. Defaults to auto.'),
+      engine: z.enum(['auto', 'js', 'python']).optional().describe('Analysis engine. Defaults to auto and uses Python when available.'),
+      maxFiles: z.number().int().min(1).max(50).optional().describe('Maximum prose files to inspect.')
+    }, (args) => checkWritingNaturalnessReport({
+      repoRoot,
+      target: args.target,
+      rootPath: args.root ?? '.',
+      lang: args.lang ?? 'auto',
+      engine: args.engine ?? 'auto',
+      maxFiles: args.maxFiles ?? 20
     })),
     tool('index_search', 'Search local project files without writing the runtime index.', {
       target: targetSchema,
@@ -1864,7 +1879,7 @@ function agentUsageGuideResource() {
       },
       {
         situation: 'write or translate prose',
-        firstSurfaces: ['writing_naturalness_check', 'natural_writing_review'],
+        firstSurfaces: ['writing_naturalness_check', 'writing_naturalness_report', 'natural_writing_review'],
         followUp: ['use engine:auto so Python-backed Korean checks run when available', 'documentation_package_review', 'operator_search']
       },
       {

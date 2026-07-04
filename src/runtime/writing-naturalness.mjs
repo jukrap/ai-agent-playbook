@@ -1,11 +1,28 @@
-import { readFile, stat } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { runPythonWritingNaturalness } from './python-engine.mjs';
 
 const MAX_FILE_BYTES = 200_000;
+const MAX_REPORT_FILES = 50;
 const VALID_LANGUAGES = new Set(['auto', 'ko', 'en']);
 const VALID_ENGINES = new Set(['auto', 'js', 'python']);
 const CONTROL_CHAR_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/;
+const REPORT_EXTENSIONS = new Set(['.md', '.mdx', '.txt']);
+const REPORT_EXCLUDED_DIRS = new Set([
+  '.git',
+  '.ai-agent-playbook',
+  '.ai-playbook',
+  'ai-playbook',
+  '.venv',
+  '.next',
+  '.turbo',
+  '_reference',
+  '_work',
+  'build',
+  'coverage',
+  'dist',
+  'node_modules'
+]);
 
 const COMMON_PATTERNS = [
   {
@@ -124,11 +141,12 @@ export async function checkWritingNaturalness(options) {
     return emptyReport({ target, filePath: resolved.relativePath, requestedLanguage, requestedEngine, conflicts, warnings });
   }
 
-  const detectedLanguage = detectLanguage(text);
+  const analysisText = normalizeProseForAnalysis(text);
+  const detectedLanguage = detectLanguage(analysisText || text);
   const analyzedLanguage = requestedLanguage === 'auto' ? detectedLanguage : requestedLanguage;
   const jsFindings = [
-    ...patternFindings(text, analyzedLanguage),
-    ...shapeFindings(text, analyzedLanguage)
+    ...patternFindings(analysisText, analyzedLanguage),
+    ...shapeFindings(analysisText, analyzedLanguage)
   ].map((finding) => ({ engine: 'js', ...finding }));
   const engineState = {
     requested: requestedEngine,
@@ -139,7 +157,7 @@ export async function checkWritingNaturalness(options) {
   if (requestedEngine !== 'js') {
     const python = await runPythonWritingNaturalness({
       repoRoot: options.repoRoot,
-      text,
+      text: analysisText,
       lang: analyzedLanguage,
       filePath: resolved.relativePath
     });
@@ -180,10 +198,128 @@ export async function checkWritingNaturalness(options) {
       localOnly: true
     },
     engines: engineState,
-    summary: summarize(text, findings),
+    summary: summarize(text, findings, analysisText),
     findings,
     warnings,
     conflicts
+  };
+}
+
+export async function checkWritingNaturalnessReport(options) {
+  const target = path.resolve(options.target ?? '.');
+  const requestedLanguage = options.lang ?? 'auto';
+  const requestedEngine = options.engine ?? 'auto';
+  const rootPath = options.rootPath ?? options.path ?? '.';
+  const maxFiles = normalizeMaxFiles(options.maxFiles);
+  const warnings = [];
+  const conflicts = [];
+
+  if (!VALID_LANGUAGES.has(requestedLanguage)) {
+    conflicts.push(conflict('writing-naturalness.invalid-language', `Invalid language: ${requestedLanguage}. Use auto, ko, or en.`));
+  }
+  if (!VALID_ENGINES.has(requestedEngine)) {
+    conflicts.push(conflict('writing-naturalness.invalid-engine', `Invalid engine: ${requestedEngine}. Use auto, js, or python.`));
+  }
+
+  const resolved = resolveReportRoot(target, rootPath);
+  if (!resolved.ok) {
+    conflicts.push(conflict('writing-naturalness.path-boundary', 'Report root must stay inside the target project.'));
+  }
+  if (conflicts.length) {
+    return emptyReportSet({ target, rootPath, requestedLanguage, requestedEngine, conflicts, warnings });
+  }
+
+  let info;
+  try {
+    info = await stat(resolved.path);
+  } catch {
+    conflicts.push(conflict('writing-naturalness.file-missing', `Report root does not exist: ${resolved.relativePath}`));
+    return emptyReportSet({ target, rootPath: resolved.relativePath, requestedLanguage, requestedEngine, conflicts, warnings });
+  }
+  if (!info.isDirectory()) {
+    conflicts.push(conflict('writing-naturalness.not-directory', `Report root is not a directory: ${resolved.relativePath}`));
+    return emptyReportSet({ target, rootPath: resolved.relativePath, requestedLanguage, requestedEngine, conflicts, warnings });
+  }
+
+  const files = await collectReportFiles(resolved.path, target, maxFiles + 1);
+  const truncated = files.length > maxFiles;
+  const selectedFiles = files.slice(0, maxFiles);
+  if (truncated) {
+    warnings.push({
+      id: 'writing-naturalness.report-truncated',
+      message: `Report limited to ${maxFiles} file(s). Narrow --root or raise --max-files.`
+    });
+  }
+
+  const reports = [];
+  for (const file of selectedFiles) {
+    const report = await checkWritingNaturalness({
+      repoRoot: options.repoRoot,
+      target,
+      filePath: file,
+      lang: requestedLanguage,
+      engine: requestedEngine
+    });
+    reports.push(report);
+  }
+
+  const enginesUsed = unique(reports.flatMap((report) => report.engines.used));
+  const engineUnavailable = uniqueById(reports.flatMap((report) => report.engines.unavailable));
+  const reportWarnings = reports.flatMap((report) => report.warnings ?? []);
+  const fileConflicts = reports.flatMap((report) => report.conflicts ?? []);
+  const severity = { high: 0, medium: 0, low: 0 };
+  const categories = {};
+  const languages = {};
+  for (const report of reports) {
+    for (const [level, count] of Object.entries(report.summary.severity)) {
+      severity[level] += count;
+    }
+    for (const [category, count] of Object.entries(report.summary.categories)) {
+      categories[category] = (categories[category] ?? 0) + count;
+    }
+    languages[report.language.analyzed] = (languages[report.language.analyzed] ?? 0) + 1;
+  }
+
+  return {
+    schemaVersion: '1',
+    kind: 'runtime.writing-naturalness-report',
+    ok: reports.every((report) => report.ok),
+    target,
+    root: resolved.relativePath,
+    language: {
+      requested: requestedLanguage,
+      analyzed: languages
+    },
+    mode: {
+      writes: false,
+      network: false,
+      localOnly: true
+    },
+    engines: {
+      requested: requestedEngine,
+      used: enginesUsed,
+      unavailable: engineUnavailable
+    },
+    summary: {
+      files: reports.length,
+      candidateFiles: files.length,
+      truncated,
+      findings: reports.reduce((sum, report) => sum + report.summary.findings, 0),
+      severity,
+      categories
+    },
+    files: reports.map((report) => ({
+      path: report.path,
+      ok: report.ok,
+      language: report.language,
+      engines: report.engines,
+      summary: report.summary,
+      topFindings: report.findings.slice(0, 5),
+      warnings: report.warnings,
+      conflicts: report.conflicts
+    })),
+    warnings: [...warnings, ...reportWarnings],
+    conflicts: [...conflicts, ...fileConflicts]
   };
 }
 
@@ -319,7 +455,7 @@ function splitSentences(text, language) {
     .filter((sentence) => sentence.length >= 20);
 }
 
-function summarize(text, findings) {
+function summarize(text, findings, analysisText = text) {
   const counts = { high: 0, medium: 0, low: 0 };
   const categories = {};
   for (const finding of findings) {
@@ -328,11 +464,50 @@ function summarize(text, findings) {
   }
   return {
     characters: text.length,
+    analyzedCharacters: analysisText.length,
     lines: text.split(/\r?\n/).length,
     findings: findings.length,
     severity: counts,
     categories
   };
+}
+
+function normalizeProseForAnalysis(text) {
+  const lines = text.split(/\r?\n/);
+  const normalized = [];
+  let fenced = false;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (/^(```|~~~)/.test(trimmed)) {
+      fenced = !fenced;
+      normalized.push('');
+      continue;
+    }
+    if (fenced || isNonProseLine(trimmed)) {
+      normalized.push('');
+      continue;
+    }
+    normalized.push(line
+      .replace(/`[^`]*`/g, ' ')
+      .replace(/!\[[^\]]*\]\([^)]+\)/g, ' ')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, (_, label) => label ?? ' ')
+      .replace(/https?:\/\/\S+/g, ' ')
+      .replace(/<[^>]+>/g, ' '));
+  }
+  return normalized.join('\n');
+}
+
+function isNonProseLine(trimmed) {
+  if (trimmed === '') return true;
+  if (/^<\/?[a-z][^>]*>$/i.test(trimmed)) return true;
+  if (/^<img\b/i.test(trimmed)) return true;
+  if (/^\[!\[[^\]]*\]\([^)]+\)\]\([^)]+\)$/.test(trimmed)) return true;
+  if (/^!\[[^\]]*\]\([^)]+\)$/.test(trimmed)) return true;
+  if (/^\|?[\s:|.-]+\|?$/.test(trimmed)) return true;
+  if (/^[-*+]\s+`[^`]+`\s*(?:-|:)/.test(trimmed)) return false;
+  if (/^(?:npm|pnpm|yarn|node|python|py|aapb|npx|git|rg|pwsh|powershell|curl)\s/.test(trimmed)) return true;
+  if (/^[A-Za-z]:[\\/]/.test(trimmed) || /^\.?[\\/]/.test(trimmed)) return true;
+  return false;
 }
 
 function normalizePythonFindings(findings) {
@@ -385,6 +560,91 @@ function emptyReport({ target, filePath, requestedLanguage, requestedEngine = 'a
   };
 }
 
+function emptyReportSet({ target, rootPath, requestedLanguage, requestedEngine = 'auto', conflicts, warnings }) {
+  return {
+    schemaVersion: '1',
+    kind: 'runtime.writing-naturalness-report',
+    ok: false,
+    target,
+    root: rootPath,
+    language: {
+      requested: requestedLanguage,
+      analyzed: {}
+    },
+    mode: {
+      writes: false,
+      network: false,
+      localOnly: true
+    },
+    engines: {
+      requested: requestedEngine,
+      used: [],
+      unavailable: []
+    },
+    summary: {
+      files: 0,
+      candidateFiles: 0,
+      truncated: false,
+      findings: 0,
+      severity: { high: 0, medium: 0, low: 0 },
+      categories: {}
+    },
+    files: [],
+    warnings,
+    conflicts
+  };
+}
+
+function resolveReportRoot(target, rootPath) {
+  if (typeof rootPath !== 'string' || rootPath.trim() === '') {
+    return { ok: false, path: target, relativePath: '' };
+  }
+  if (path.isAbsolute(rootPath)) return { ok: false, path: rootPath, relativePath: rootPath };
+  const normalized = rootPath.replaceAll('\\', '/');
+  const resolved = path.resolve(target, normalized);
+  const relativePath = path.relative(target, resolved);
+  const ok = !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
+  return {
+    ok,
+    path: resolved,
+    relativePath: relativePath === '' ? '.' : relativePath.replaceAll('\\', '/')
+  };
+}
+
+async function collectReportFiles(rootPath, target, limit) {
+  const files = [];
+  await walk(rootPath);
+  files.sort();
+  return files;
+
+  async function walk(current) {
+    if (files.length >= limit) return;
+    const entries = await readdir(current, { withFileTypes: true });
+    entries.sort((a, b) => a.name.localeCompare(b.name));
+    for (const entry of entries) {
+      if (files.length >= limit) return;
+      if (entry.name.startsWith('.') && entry.name !== '.ai-agent-playbook') {
+        continue;
+      }
+      const fullPath = path.join(current, entry.name);
+      const rel = path.relative(target, fullPath).replaceAll('\\', '/');
+      if (entry.isDirectory()) {
+        if (REPORT_EXCLUDED_DIRS.has(entry.name)) continue;
+        await walk(fullPath);
+      } else if (entry.isFile() && REPORT_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+        files.push(rel);
+      }
+    }
+  }
+}
+
+function normalizeMaxFiles(value) {
+  if (value === undefined || value === false) return 20;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) return 20;
+  return Math.min(parsed, MAX_REPORT_FILES);
+}
+
 function collectRegexEvidence(text, regex, limit) {
   const evidence = [];
   const lines = text.split(/\r?\n/);
@@ -416,4 +676,19 @@ function compactExcerpt(value) {
 
 function conflict(id, message) {
   return { id, message };
+}
+
+function unique(values) {
+  return [...new Set(values)];
+}
+
+function uniqueById(values) {
+  const seen = new Set();
+  const result = [];
+  for (const value of values) {
+    if (!value || typeof value.id !== 'string' || seen.has(value.id)) continue;
+    seen.add(value.id);
+    result.push(value);
+  }
+  return result;
 }

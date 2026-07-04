@@ -122,6 +122,23 @@ test('writing naturalness-check reports prose signals without writing files', as
     "In today's fast-paced landscape, this robust tool not only streamlines workflows but also unlocks powerful outcomes, ensuring teams can delve into the full potential of the platform.",
     ''
   ].join('\n'));
+  await writeFile(path.join(target, 'docs', 'code-heavy.md'), [
+    '# 코드가 많은 문서',
+    '',
+    '<p align="center">',
+    '<img alt="build status badge" src="https://example.invalid/badge.svg">',
+    '</p>',
+    '',
+    '```ts',
+    'const powerfulRuntime = "robust scalable seamless workflow";',
+    'export function runPreview() { return powerfulRuntime; }',
+    '```',
+    '',
+    '`npm run check`를 실행하고 `src/runtime/example.mjs` 경로를 확인합니다.',
+    '',
+    '이 문서는 로컬 점검 흐름을 설명합니다. 명령 예시와 코드 조각은 글의 어조 판단에서 제외되어야 합니다. 실제 설명 문장은 짧게 유지하고, 필요한 사실만 남깁니다.',
+    ''
+  ].join('\n'));
   await writeFile(path.join(target, 'docs', 'clean.md'), 'Use `npm test` before release. Record skipped checks with a reason.\n');
   await writeFile(path.join(target, 'docs', 'binary.md'), 'ok\u0000bad');
   const before = await listRelativeFiles(target);
@@ -161,6 +178,27 @@ test('writing naturalness-check reports prose signals without writing files', as
   const cleanReport = JSON.parse(clean.out());
   assert.equal(cleanReport.ok, true);
   assert.equal(cleanReport.summary.findings, 0);
+
+  const codeHeavy = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-check', '.', '--path', 'docs/code-heavy.md', '--lang', 'ko', '--engine', 'js', '--json'], codeHeavy), 0);
+  const codeHeavyReport = JSON.parse(codeHeavy.out());
+  assert.equal(codeHeavyReport.ok, true);
+  assert.equal(codeHeavyReport.findings.some((finding) => finding.id === 'writing.english-density.ko'), false);
+
+  const batch = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-report', '.', '--root', 'docs', '--lang', 'ko', '--engine', 'js', '--max-files', '10', '--json'], batch), 1);
+  const batchReport = JSON.parse(batch.out());
+  assert.equal(batchReport.ok, false);
+  assert.equal(batchReport.kind, 'runtime.writing-naturalness-report');
+  assert.equal(batchReport.mode.writes, false);
+  assert.equal(batchReport.summary.files, 5);
+  assert.equal(batchReport.files.some((file) => file.path === 'docs/ko.md' && file.summary.findings > 0), true);
+  assert.equal(batchReport.files.some((file) => file.path === 'docs/binary.md' && file.ok === false), true);
+  assert.equal(batchReport.conflicts.some((conflict) => conflict.id === 'writing-naturalness.binary-or-control'), true);
+
+  const batchTraversal = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-report', '.', '--root', '..', '--json'], batchTraversal), 1);
+  assert.equal(JSON.parse(batchTraversal.out()).conflicts.some((conflict) => conflict.id === 'writing-naturalness.path-boundary'), true);
 
   const traversal = capture(target);
   assert.equal(await runCli(['writing', 'naturalness-check', '.', '--path', '../outside.md', '--json'], traversal), 1);

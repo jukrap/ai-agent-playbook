@@ -41,7 +41,7 @@ export { previewRepoGraph } from './runtime/repo-graph.mjs';
 export { buildRouteApiHintsIndex } from './runtime/route-api-hints.mjs';
 export { checkRuntimeSchema, validateRuntimeSchema } from './runtime/schemas.mjs';
 export { pythonEngineStatus } from './runtime/python-engine.mjs';
-export { checkWritingNaturalness } from './runtime/writing-naturalness.mjs';
+export { checkWritingNaturalness, checkWritingNaturalnessReport } from './runtime/writing-naturalness.mjs';
 export { buildSymbolOutlineIndex } from './runtime/symbol-outline.mjs';
 export { previewWorkflowRun, startWorkflowRun } from './runtime/workflow-runs.mjs';
 export { checkCanonFacts, draftCanonFacts, promoteCanonFacts } from './memory/canon.mjs';

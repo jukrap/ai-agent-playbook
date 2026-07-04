@@ -43,6 +43,7 @@ test('npm pack dry-run includes runtime files and excludes local/test payloads',
   assert.equal(files.includes('engines/python/ai_agent_playbook_engine/__main__.py'), true);
   assert.equal(files.includes('scripts/bootstrap-python.ps1'), true);
   assert.equal(files.includes('scripts/validate-python.ps1'), true);
+  assert.equal(files.includes('scripts/validate.mjs'), true);
   assert.equal(files.includes('src/skills-lifecycle.mjs'), true);
   assert.equal(files.includes('skills/backend/server-rendered-change/SKILL.md'), true);
   assert.equal(files.includes('skills/project/project-bootstrap/SKILL.md'), true);

@@ -51,6 +51,7 @@ async function validateNaming() {
     'src/harness/bootstrap.mjs',
     'src/layout/structured-playbook-layout.mjs',
     'src/runtime/python-engine.mjs',
+    'src/runtime/writing-naturalness.mjs',
     'src/operator/shared.mjs',
     'adapters/shared/context-hook.mjs',
     'scripts/validate-translations.ps1',

@@ -148,6 +148,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'runtime_schema_check',
       'evidence_locator_check',
       'writing_naturalness_check',
+      'writing_naturalness_report',
       'index_search',
       'symbol_outline',
       'dependency_inventory',
@@ -268,6 +269,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     const usagePayload = JSON.parse(usageResource.contents[0].text);
     assert.equal(usagePayload.summary.defaultMode, 'read-only');
     assert.equal(usagePayload.whenToUse.some((item) => item.firstSurfaces.includes('writing_naturalness_check')), true);
+    assert.equal(usagePayload.whenToUse.some((item) => item.firstSurfaces.includes('writing_naturalness_report')), true);
 
     const layoutResource = await client.readResource({ uri: 'ai-agent-playbook://playbook-layout' });
     const layoutPayload = JSON.parse(layoutResource.contents[0].text);
@@ -388,6 +390,23 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(naturalness.structuredContent.language.analyzed, 'ko');
     assert.equal(naturalness.structuredContent.engines.used.includes('js'), true);
     assert.equal(naturalness.structuredContent.summary.findings > 0, true);
+
+    const naturalnessReport = await client.callTool({
+      name: 'writing_naturalness_report',
+      arguments: {
+        target,
+        root: 'docs',
+        lang: 'ko',
+        engine: 'js',
+        maxFiles: 5
+      }
+    });
+    assert.equal(naturalnessReport.isError, undefined);
+    assert.equal(naturalnessReport.structuredContent.ok, true);
+    assert.equal(naturalnessReport.structuredContent.mode.writes, false);
+    assert.equal(naturalnessReport.structuredContent.summary.files, 1);
+    assert.equal(naturalnessReport.structuredContent.files.some((file) => file.path === 'docs/natural-writing.md'), true);
+    assert.equal(naturalnessReport.structuredContent.summary.findings > 0, true);
 
     const symbolOutline = await client.callTool({
       name: 'symbol_outline',

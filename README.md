@@ -30,7 +30,7 @@ It helps coding agents stop guessing. The playbook nudges agents to inspect the 
 
 The repository is agent-agnostic. Codex, Claude Code, and other coding agents can use the same source material, while `adapters/` keeps agent-specific setup notes separate.
 
-It is not a slash-command pack, a Codex plugin, or an auto-running agent. The default model is operator-in-the-loop: a human or agent explicitly runs the CLI, reviews dry-run output, then chooses whether to write files. MCP is an optional local tool surface so an AI app can call read-only diagnostics by name when you ask in natural language.
+It is not a slash-command pack, a Codex plugin, or an always-on hosted agent service. Local operation remains available without a forge. Automation starts only from an approved plan or an explicitly applied schedule, and preview-first commands keep remote and operating-system changes reviewable. MCP remains an optional local tool surface whose default tools are read-only.
 
 ## What You Get
 
@@ -38,8 +38,8 @@ It is not a slash-command pack, a Codex plugin, or an auto-running agent. The de
 | ----------------- | --------------------------------------------------------------------------------------------------- | ------------------ |
 | Reusable skills   | Trigger-focused operating guides for project, delivery, architecture, frontend, backend, data, database, DevOps, design, mobile, security, harness, quality, and legacy work. | `skills/`          |
 | Project templates | Copyable root agent rules, stack profiles, and project-memory files for current facts, vocabulary, maps, decisions, and evidence. | `templates/`       |
-| Runtime harness   | A small CLI for bootstrapping `.ai-agent-playbook/`, health checks, context, runs, contracts, plans, and worklogs. | `bin/`, `src/`     |
-| MCP tools         | Local read-only tools, resources, and prompts for AI apps: catalogs, adapter support/readiness, usage guide, reference adoption, playbook layout, permission model, natural writing review, index search, write-gate preview, context, operator checks, research, contracts, image diff, AST search, clone cues, and TypeScript/JavaScript analysis. | `src/`             |
+| Runtime harness   | A CLI for bootstrapping `.ai-agent-playbook/`, health checks, context, runs, contracts, plans, worklogs, forge coordination, and resumable automation ticks. | `bin/`, `src/`     |
+| MCP tools         | Default read-only tools, resources, and prompts for AI apps, plus separately gated forge coordination writes. Push, task execution, merge, and release are not exposed through MCP. | `src/`             |
 | Human docs        | Lifecycle, command, classification, maintenance, publishing, and translation notes.                  | `docs/`            |
 | Translations      | Korean reading copies that mirror English source files.                                             | `translations/ko/` |
 | Agent adapters    | Setup notes for specific agent environments.                                                        | `adapters/`        |
@@ -94,6 +94,30 @@ The npm package installs the CLI. It does not automatically copy skills, create 
 
 For command-by-command usage, see [Command guide](docs/commands.md). For update, uninstall, local checkout, PowerShell compatibility, ownership markers, and cleanup details, see [Lifecycle guide](docs/lifecycle.md).
 
+## Forge Automation Compatibility
+
+Version 0.5.4 adds a resumable local execution loop with optional GitHub or Gitea coordination. The adapter selects features from detected API and authorization capabilities rather than assuming that every server supports the same surface.
+
+| Component | Supported version or integration target | Status |
+| --- | --- | --- |
+| Git | `2.39+` | Minimum supported Git version |
+| Node.js | `18+` | Runtime floor enforced by package metadata |
+| GitHub CLI (`gh`) | `2.80+` | Verified with `2.96.0` |
+| GitHub REST API | `2026-03-10` | API version target for adapter requests |
+| Gitea | `1.26.4` | Provider compatibility target |
+| Gitea CLI (`tea`) | `0.14.2` | Optional CLI reference; the stable API is the primary integration surface |
+| Gitea Actions runner | `2.0.0` | Workflow runner compatibility target |
+
+Only the row that explicitly says “verified” identifies a tool version exercised as a verification reference. API and provider target rows define the compatibility contract; they do not claim that a live remote write smoke test ran.
+
+- Without a usable remote—or when `--no-remote` or `--offline` narrows the request—the same run continues against the local ledger without calling the forge transport. Missing authentication or write permission disables mutations but can still allow anonymous capability probes or permitted remote reads.
+- `forge status` separates configured `policyWrites` from permission-checked `verifiedWrites` and reports server/API version, authentication without token material, repository permission, and probe evidence. Effective `writes` remains false until authentication and repository write permission are verified.
+- GitHub Projects and Views require the corresponding project scopes. When those scopes are missing, the adapter reports the limitation and keeps supported Issues and Milestones behavior; it does not expand authentication scopes automatically.
+- Gitea uses Issues, Labels, Milestones, pull requests, and Actions only where the server OpenAPI advertises the required methods. Draft review uses the public pull-request API with Gitea's documented `WIP:` title convention. A self-hosted hostname hint remains non-writable until `forge.provider: "gitea"` or a credential-free `forge.apiBaseUrl` ending in `/api/v1` is configured. Version and OpenAPI probes run without a token before authenticated permission checks. Project/View state falls back to labels and milestone filters, and a decision issue can replace Discussions.
+- `gh agent-task` is an explicit preview adapter, not an automatic executor choice. Forge bootstrap and scheduler installation are also preview-first and require an explicit apply step.
+
+See the [0.5.4 forge automation change note](docs/changes/forge-automation-0.5.4.md) for migration, disable, rollback, and remote-verification boundaries.
+
 ## Everyday Flow
 
 ```text
@@ -125,7 +149,7 @@ After bootstrapping `.ai-agent-playbook/`, agents should start from `START_HERE.
 bin/                  aapb CLI entrypoint
 src/                  CLI runtime implementation
 skills/
-  ai-harness/        MCP, skill, agent, context, fact gate, witness, cache, and index design skills
+  ai-harness/        MCP, forge automation, agent, context, fact gate, witness, cache, and index design skills
   architecture/      Boundary, feature slice, domain model, and monorepo/package architecture skills
   backend/           API, backend change safety, request/error contract, job/worker, connector, and server-rendered flow skills
   data/              Data pipeline, analytics, source registry, reporting, and migration integrity skills
@@ -161,7 +185,7 @@ Detailed triggers live in [Skill catalog](docs/skill-catalog.md). The README kee
 
 - Project and docs: bootstrap, repository onboarding, project memory, ADR/spec handoff, requirements, issue planning, release notes, natural writing review, and documentation packages.
 - Delivery and verification: Git/worklogs, verification strategy, CI gates, flaky test triage, test fixtures, and eval harnesses.
-- AI harness: MCP surface design, context and memory design, agent handoff, skill-pack governance, runtime indexes/caches, capability witnesses, and fact gates.
+- AI harness: MCP surface design, context and memory design, agent handoff, forge automation control, skill-pack governance, runtime indexes/caches, capability witnesses, and fact gates.
 - Architecture and backend: boundaries, feature slices, domain modeling, monorepos, API contracts, backend change safety, request/error contracts, job/worker reliability, connectors, and server-rendered flows.
 - Data and database: analytics, lineage, migrations, retrieval knowledge bases, source registries, schema changes, query performance, and data integrity.
 - DevOps and release: containers, deployment, package publishing, release readiness, and incident/observability triage.
@@ -193,6 +217,7 @@ Detailed triggers live in [Skill catalog](docs/skill-catalog.md). The README kee
 - [Translation policy](docs/translation-policy.md): English source and Korean translation rules.
 - [Publishing checklist](docs/publishing-checklist.md): pre-publish hygiene checks.
 - [Structured playbook cutover notes](docs/changes/structured-playbook-cutover.md): historical notes for the layout and runtime reorganization.
+- [0.5.4 forge automation change note](docs/changes/forge-automation-0.5.4.md): resumable execution, provider fallback, migration, and disable guidance.
 
 ## For Maintainers
 

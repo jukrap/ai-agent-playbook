@@ -9,6 +9,7 @@ Runbook에는 반복 가능한 command와 operational procedure를 둡니다.
 - `git.md`: branch, commit, PR, release, rollback workflow.
 - `deploy.md`: deployment, packaging, handoff steps.
 - `debugging.md`: known logs, traces, fixtures, reproduction loops.
+- `forge-automation.md`: forge preflight, 재개 가능한 run, scheduler opt-in, pause, reconcile, recovery, completion evidence.
 
 ## Rules
 

@@ -15,7 +15,7 @@
 | `npx ai-agent-playbook ...` | 현재 프로젝트에 의존성을 추가하지 않고 최신 배포 패키지를 실행할 때 기본으로 사용합니다. |
 | `aapb ...` | `npm install -g ai-agent-playbook` 뒤에 짧은 전역 명령을 쓰고 싶을 때 사용합니다. |
 | `node .\bin\aapb.mjs ...` | 이 저장소를 체크아웃한 폴더 안에서 직접 실행할 때 사용합니다. |
-| `npx ai-agent-playbook mcp` | AI 앱이 읽기 전용 플레이북 도구를 대신 호출하게 하려면 로컬 표준 입출력 MCP 서버 명령으로 등록합니다. 명시적으로 선택한 발판 생성/관리 파일 쓰기 도구가 필요할 때만 `--enable-write-tools`를 추가합니다. |
+| `npx ai-agent-playbook mcp` | AI 앱이 기본 읽기 전용 플레이북 도구를 호출하게 할 때 로컬 표준 입출력 MCP 서버 명령으로 등록합니다. `--enable-write-tools`와 `--enable-forge-write-tools`는 서로 독립적인 명시적 opt-in입니다. |
 
 아래 예시의 `npx ai-agent-playbook`은 설치 방식에 따라 `aapb` 또는 `node .\bin\aapb.mjs`로 바꿔 실행할 수 있습니다.
 
@@ -51,7 +51,7 @@ npx ai-agent-playbook bootstrap ".\example app" --dry-run
 | `--dry-run` | 파일을 쓰는 작업을 미리 보기만 합니다. install, update, bootstrap, guide sync 전에 먼저 사용합니다. |
 | `--check` | 파일을 쓰지 않고 상태를 확인합니다. guide sync에서 사용합니다. |
 | `--json` | 기계가 읽기 쉬운 출력을 냅니다. 에이전트, script, 자세한 점검에 유용합니다. |
-| `--apply` | preview-first 명령의 실제 적용을 수행합니다. path migration이나 uninstall에 사용합니다. |
+| `--apply` | Path migration, remote forge bootstrap/sync, scheduler 설치 같은 preview-first 명령을 실제로 적용합니다. |
 | `--force` | 기본적으로 거부되는 overwrite를 허용합니다. 출력 내용을 검토한 뒤에만 사용합니다. |
 | `--force-managed` | 로컬 hash가 바뀐 managed skill도 덮어쓰거나 삭제합니다. |
 | `--force-unmanaged` | 같은 이름의 unmanaged skill을 이 playbook이 소유하도록 전환합니다. 이 playbook에서 온 것이 확실할 때만 사용합니다. |
@@ -68,7 +68,7 @@ npx ai-agent-playbook bootstrap ".\example app" --dry-run
 | `--max-chars N` | 생성되는 context 크기를 제한합니다. |
 | `--strict` | doctor warning도 실패로 처리합니다. |
 | `--reminder` | 전체 doctor report 대신 작은 reminder signal을 반환합니다. |
-| `--profile <name>` | 대상 stack을 확인한 뒤 stack-specific bootstrap profile을 추가합니다. |
+| `--profile <name>` | Stack-specific bootstrap profile을 추가하거나 configured authority보다 넓지 않은 automation profile을 요청합니다. |
 | `--local-only` | bootstrap 중 대상 프로젝트 `.gitignore`에 `.ai-agent-playbook/`을 추가합니다. |
 | `--title <text>` | 생성할 plan, worklog, run 제목입니다. |
 | `--month YYYY-MM` | worklog summary 대상 월입니다. |
@@ -86,6 +86,18 @@ npx ai-agent-playbook bootstrap ".\example app" --dry-run
 | `--engine auto\|js\|python` | `writing naturalness-check`의 글 분석 엔진을 고릅니다. `auto`는 Python이 있으면 함께 쓰고 JavaScript 대체 분석도 유지합니다. |
 | `--root <dir>` | `writing naturalness-report`에서 검사할 대상 프로젝트 안의 폴더입니다. |
 | `--max-files N` | 제한된 보고 명령이 살펴볼 글 파일 개수를 제한합니다. |
+| `--provider auto\|github\|gitea` | Forge provider 탐지를 선택하거나 제한합니다. 확정할 수 없는 self-hosted provider에는 쓰기를 허용하지 않습니다. |
+| `--remote <name>` | `forge status`가 inspect할 Git remote를 선택합니다. 지속 설정에는 project config를 사용합니다. |
+| `--lang auto\|ko\|en` | `plan new --automation`이 기록하는 human-facing language를 선택합니다. |
+| `--no-remote` | 이번 호출의 forge API와 remote Git delivery를 끄고 허용된 local work는 유지합니다. |
+| `--remote-read-only` | Forge 조회는 허용하지만 forge mutation과 remote Git delivery를 끕니다. |
+| `--no-git` | 이번 호출의 branch, commit, tag, push를 끕니다. |
+| `--offline` | Network access를 끕니다. Harness가 process-level network isolation을 증명할 수 없으므로 `automation tick`과 `supervise`는 executor 실행 전에 fail-closed합니다. Agent network를 사용할 수 있는 local execution에는 `--no-remote`를 사용합니다. |
+| `--no-interactive` | Configured isolated workspace policy로 automation tick 또는 supervisor를 unattended mode에서 실행합니다. |
+| `--approve-review` | 검증 뒤 `review` 상태에서 기다리는 task에 explicit review gate를 제공합니다. |
+| `--enable-github-agent-task` | `github-agent-task` executor adapter의 explicit preview selection을 허용합니다. 자동 선택되지는 않습니다. |
+| `--instruction <text>` | 현재 요청의 restriction을 forge/automation policy resolver에 전달합니다. 명확한 remote opt-out은 권한을 줄일 수 있지만 확대하지 못합니다. |
+| `--platform <name>` | `automation schedule`에서 `github-actions`, `gitea-actions`, `windows-task`, `systemd-user` 중 하나를 선택합니다. |
 
 ## 처음 설정할 때
 
@@ -136,7 +148,13 @@ npx ai-agent-playbook operator check <target-project> --json
 
 대상 프로젝트의 `.ai-agent-playbook/`을 `.gitignore`에 추가해야 하면 `bootstrap`에 `--local-only`를 사용합니다.
 
-`config preview`는 존재하는 경우 `.ai-agent-playbook/config.json`과 `.ai-agent-playbook/config.local.json`을 읽습니다. 두 파일을 생성하지는 않습니다. 우선순위는 built-in default, optional `--user-config`, target config, target-local config, 그리고 `AI_AGENT_PLAYBOOK_CONTEXT_MAX_CHARS`, `AI_AGENT_PLAYBOOK_DEFAULT_RECIPE`, `AI_AGENT_PLAYBOOK_RUNTIME_CACHE_DIR`, `AI_AGENT_PLAYBOOK_INDEX_MAX_FILES`, `AI_AGENT_PLAYBOOK_ENABLE_WRITE_TOOLS` 같은 명시적 environment override입니다.
+`config preview`는 존재하는 경우 `.ai-agent-playbook/config.json`과 `.ai-agent-playbook/config.local.json`을 읽습니다. 두 파일을 생성하지는 않습니다. 우선순위는 built-in default, optional `--user-config`, target config, target-local config, 명시적 environment override입니다.
+
+0.5.4 기본값에는 `automation`, `forge`, `git`, `executor` section이 추가됩니다. `automation.profile: "deliver"`, `automation.killSwitch: false`, 한 번에 task 하나, 30분 tick, attempt 3회, stall 3회, 전체 8시간, `forge.provider: "auto"`, remote `origin`, `forge.apiBaseUrl: null`, hybrid sync, working language 자동 선택, 첫 sync bootstrap, branch delivery, isolated unattended checkout, executor 자동 선택을 사용합니다. Custom port 또는 subpath의 self-hosted Gitea에는 `https://code.example/gitea/api/v1` 같은 credential-free API base를 설정합니다. Embedded credential, query string, fragment, non-local HTTP URL은 거부합니다. 이 기본값만으로 run이 시작되거나 schedule이 설치되지는 않습니다. Copy 가능한 `forge.example.json`은 안전한 도입을 위해 kill switch를 의도적으로 `true`로 바꿉니다. `automation start`는 쓰기 명령이며 effective remote-write permission이 있으면 approved plan을 coordinate하고 누락된 managed asset을 자동 bootstrap할 수 있습니다. Local run만 만들려면 forge preview를 먼저 확인하고 `--no-remote`를 사용합니다.
+
+Automation 환경 변수는 기존 context/runtime/MCP 변수 외에 `AI_AGENT_PLAYBOOK_AUTOMATION_PROFILE`, `AI_AGENT_PLAYBOOK_AUTOMATION_KILL_SWITCH`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_PARALLEL`, `AI_AGENT_PLAYBOOK_AUTOMATION_TICK_MINUTES`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_ATTEMPTS`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_STALLED`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_WALL_MINUTES`, `AI_AGENT_PLAYBOOK_FORGE_PROVIDER`, `AI_AGENT_PLAYBOOK_FORGE_REMOTE`, `AI_AGENT_PLAYBOOK_FORGE_SYNC`, `AI_AGENT_PLAYBOOK_FORGE_LANGUAGE`, `AI_AGENT_PLAYBOOK_FORGE_AUTO_BOOTSTRAP`, `AI_AGENT_PLAYBOOK_GIT_AUTO_COMMIT`, `AI_AGENT_PLAYBOOK_GIT_AUTO_PUSH`, `AI_AGENT_PLAYBOOK_EXECUTOR_PROVIDER`로 제한합니다. Custom executor 설정은 interpolated shell command가 아니라 `["agent-cli", "--json"]` 같은 argv array입니다.
+
+현재 요청의 deny flag와 명확한 opt-out instruction은 config 뒤에 적용됩니다. 더 넓은 profile, remote write, Git delivery, network access를 활성화할 수는 없습니다.
 
 Context file은 `id`, `globs`, `alwaysApply`, `freshness`, `priority` frontmatter를 지원합니다. 특정 path 작업 전에 어떤 project memory를 읽어야 할지 보려면 `context status`를 사용합니다. 이 명령은 read-only라 자주 실행해도 안전합니다.
 
@@ -303,7 +321,7 @@ Runs는 진행 중 작업 상태를 추적합니다. 작업이 길어져 다음 
 
 `run record`는 로컬 절대경로나 credential assignment처럼 보이는 message를 거부합니다. Evidence path는 portable relative path만 허용합니다. Runs는 worklog를 대체하지 않습니다. 실행 중에는 runs를 쓰고, 오래 남길 사실은 `CURRENT.md`, maps, runbooks, decisions, contracts, worklogs로 승격합니다.
 
-`workflow run-start`는 기존 `run start` ledger와 별도입니다. Workflow recipe를 사용하고, `--apply`가 있을 때만 `.ai-agent-playbook/workflows/runs/` 아래 새 scaffold file을 씁니다. `--apply`가 없으면 파일을 쓰지 않고 planned file을 반환합니다.
+`run start`와 `workflow run-start`는 수동 note 및 recipe scaffold를 위한 schema v1 생성 표면으로 유지합니다. `run status`는 automation v2 디렉터리를 인식해 공통 reducer/store로 읽고, `run record`와 `run summarize`는 v2 run에 event를 추가하거나 summary를 덮어쓰지 않습니다. `workflow run-start`는 `--apply`가 있을 때만 `.ai-agent-playbook/workflows/runs/` 아래 새 scaffold file을 쓰며, `--apply`가 없으면 파일을 쓰지 않고 planned file을 반환합니다. Schema v1 입력은 automation 표면에서 계속 호환 읽기 전용이며 제자리 변환하지 않습니다.
 
 ## Contracts
 
@@ -356,10 +374,15 @@ aapb mcp
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules와 project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA와 deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`
+- Forge automation 읽기: `automation_status`, `automation_plan_validate`, `forge_status`, `forge_bootstrap_plan`, `forge_sync_plan`
+
+두 forge plan tool은 target project를 요구하고 apply counterpart와 같은 target-aware inspection에서 provider와 effective capability를 결정합니다. 따라서 review한 `auto`/static zero-operation preview가 apply 시 target-specific write로 조용히 확대되지 않습니다.
 
 서버는 `repo_onboarding_runbook`, `harness_extension_plan`, `harness_governance_review`, `reference_adoption_review`, `backend_change_review`, `architecture_boundary_review`, `auth_access_control_review`, `dependency_supply_chain_review`, `package_release_readiness_review`, `deployment_release_review`, `mobile_release_review`, `connector_integration_review`, `design_reference_handoff_review`, `frontend_quality_review`, `interactive_experience_review`, `data_integrity_review`, `data_pipeline_review`, `database_change_review`, `adr_spec_handoff_review`, `documentation_package_review`, `natural_writing_review`, `workflow_run_review`, `eval_harness_review`, `capability_witness_review`, `pre_action_fact_gate_review`, `knowledge_source_review`, `canon_promotion_review`, `index_interpretation_review`, `agent_orchestration_review`, `repo_graph_review`, `ci_quality_gate_review`, `release_deployment_gate_review`, `security_compliance_gate_review` prompt도 노출합니다. Prompt는 재사용 가능한 작업 brief이며, 그 자체로 쓰기 권한을 열지는 않습니다.
 
-MCP 계층은 기본적으로 read-only입니다. `mcp --enable-write-tools`를 쓰면 `workflow_run_start`, `write_gate_advisory`, `reference_ledger_update`, `reference_ledger_decision`, `reference_source_registry_update`도 노출합니다. 쓰기 가능한 모든 tool은 tool-call `apply` boolean을 요구하고, `apply`가 false이면 dry-run으로 남습니다. 그래도 bootstrap, install, update, uninstall, prune, snapshot apply, run record, canon promotion, rename, rewrite, project source write command는 노출하지 않습니다.
+MCP 계층은 기본적으로 read-only입니다. `mcp --enable-write-tools`를 쓰면 `workflow_run_start`, `write_gate_advisory`, `reference_ledger_update`, `reference_ledger_decision`, `reference_source_registry_update`도 노출합니다. 쓰기 가능한 모든 tool은 tool-call `apply` boolean을 요구하고, `apply`가 false이면 dry-run으로 남습니다.
+
+Forge write에는 별도 server gate를 사용합니다. `mcp --enable-forge-write-tools`는 `forge_bootstrap_apply`, `forge_sync_apply`만 노출하며 두 도구 모두 tool call의 `apply: true`가 필요합니다. Preview와 apply는 같은 target, provider, effective capability set, configured language를 사용합니다. 인증된 remote coordination write를 수행할 수 있으므로 provider status와 permission을 검토한 제한된 session에서만 켭니다. 이 MCP surface는 push, automation tick/supervisor, merge, release, delete, force-push, arbitrary project source write를 노출하지 않습니다.
 
 ## Adapter setup
 
@@ -381,10 +404,48 @@ Adapter는 선택 사항입니다. 기본 harness는 hook이나 agent plugin 없
 | 명령 | 언제 쓰나 | 파일을 쓰나 | 예시 |
 | ---- | --------- | ----------- | ---- |
 | `plan new <target>` | `.ai-agent-playbook/workflows/plans/` 아래 dated plan을 만듭니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook plan new <target-project> --title "Feature slice" --dry-run` |
+| `plan new <target> --automation` | Human-readable Markdown과 stable task field를 가진 `workflow.plan.v2` JSON sidecar를 만듭니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook plan new <target-project> --automation --title "Forge loop" --dry-run` |
+| `plan validate <target>` | Structured sidecar, dependency graph, criterion, argv verification, approval readiness를 검증합니다. | 아니오 | `npx ai-agent-playbook plan validate <target-project> --plan .ai-agent-playbook/workflows/plans/<plan>.plan.json --json` |
 | `worklog new <target>` | `.ai-agent-playbook/workflows/worklogs/YYYY-MM/` 아래 dated worklog를 만듭니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook worklog new <target-project> --title "Feature slice" --dry-run` |
 | `worklog summarize <target>` | monthly worklog summary를 만들거나 갱신합니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook worklog summarize <target-project> --month 2026-06 --dry-run` |
 
-기존 plan과 worklog file은 `--force`가 없으면 덮어쓰지 않습니다.
+기존 plan과 worklog file은 `--force`가 없으면 덮어쓰지 않습니다. Automation sidecar는 draft로 시작하며 모든 task에 acceptance criterion과 안전한 argv verification command가 있고 `approval.status`가 `approved`여야 실행 준비 상태가 됩니다.
+
+## Forge coordination과 재개 가능한 자동화
+
+Forge 명령은 capability 탐지와 effective permission profile을 사용합니다. GitHub와 Gitea는 issue, label, milestone, pull request, Actions core를 공유하며, 지원하지 않는 Project, View, Discussion, child-task 기능은 문서화된 fallback을 사용합니다. Remote access가 없어도 local ledger 동작은 유지됩니다.
+
+| 명령 | 사용할 때 | 파일 또는 remote state를 쓰는가 | 예시 |
+| --- | --- | --- | --- |
+| `forge status <target>` | Selected remote/provider, server/API version, tooling, auth, repository permission, capability evidence, policy/verified write mode를 확인할 때. | Mutation 없음. 허용된 read-only inspection은 수행할 수 있음 | `npx ai-agent-playbook forge status <target-project> --json` |
+| `forge bootstrap <target>` | 누락된 managed label, milestone, Project field, View, provider fallback을 preview하고 검토 뒤 `--apply`로 만들 때. | `--apply`가 없으면 아니요. Apply는 remote state를 씀 | `npx ai-agent-playbook forge bootstrap <target-project> --milestone 0.5.4 --json` |
+| `forge sync <target>` | Plan/run task synchronization을 preview하고 operation 검토 뒤 `--apply`할 때. Sidecar apply에는 complete approved plan이 필요합니다. | `--apply`가 없으면 아니요. Apply는 remote state를 씀 | `npx ai-agent-playbook forge sync <target-project> --run-id <run-id> --json` |
+| `forge reconcile <target>` | Reviewed JSON snapshot의 requirement drift를 preview하고, `--run-id --apply`로 유효한 pre-claim import 또는 reconciliation pause를 local run에 기록할 때. | `--apply`가 없으면 아니요. Apply는 schema v2 ledger/state를 씀 | `npx ai-agent-playbook forge reconcile <target-project> --local-task <local.json> --remote-issue <remote.json> --run-id <run-id> --apply --json` |
+| `automation doctor <target>` | 시작 전에 executor, effective policy, tool version, forge access, dirty-checkout safety, preview-first scheduler mode를 확인할 때. | Mutation 없음 | `npx ai-agent-playbook automation doctor <target-project> --json` |
+| `automation start <target>` | Approved `workflow.plan.v2` sidecar를 schema v2 run으로 바꾸고 policy가 허용하면 remote coordination을 시작할 때. | 예. Local run을 쓰고 remote coordination state도 쓸 수 있음 | `npx ai-agent-playbook automation start <target-project> --plan <plan.json> --no-remote --json` |
+| `automation tick <target>` | Dependency-ready task 하나 이하를 claim, 실행, controller 검증, 허용된 delivery, checkpoint까지 진행할 때. | 예. Code, ledger/evidence, Git, remote state를 쓸 수 있음 | `npx ai-agent-playbook automation tick <target-project> --run-id <run-id> --no-interactive --json` |
+| `automation supervise <target>` | Configured wall/stall budget 안에서 짧은 tick을 반복할 때. | 예. 반복 tick과 같은 bounded effect | `npx ai-agent-playbook automation supervise <target-project> --run-id <run-id> --no-interactive --json` |
+| `automation status <target>` | 최신 또는 선택한 schema v2 run, task/criterion progress, blocker, checkpoint를 읽을 때. | 아니요 | `npx ai-agent-playbook automation status <target-project> --run-id <run-id> --json` |
+| `automation pause\|resume\|stop <target>` | Operator control event를 지속할 때. Pause는 재개 가능하고 stop은 run을 cancel합니다. | 예. Local ledger와 derived state를 씀 | `npx ai-agent-playbook automation pause <target-project> --run-id <run-id> --reason "quota" --json` |
+| `automation schedule <target>` | Scheduler definition 네 종류 중 하나를 preview하고 `--apply`로 hosted workflow를 쓰거나 local schedule을 등록할 때. Hosted start/tick command와 local tick command는 effective deny flag를 유지합니다. Offline apply와 hosted `--no-git` apply는 안전하게 deliver할 수 없어 거부합니다. | `--apply`가 없으면 아니요 | `npx ai-agent-playbook automation schedule <target-project> --platform github-actions --json` |
+
+`automation start`는 dry-run 명령이 아니며 `--apply` gate가 없습니다. `--no-remote`는 forge와 remote Git effect를 막지만 local run은 생성합니다. Remote coordinated run을 시작하기 전에 structured plan을 preview/validate하고 `forge status`, `automation doctor`, 관련 `forge bootstrap`/`forge sync` preview를 실행합니다.
+
+`forge sync --plan ... --apply`는 forge inspection이나 transport 생성 전에 draft, invalid, incomplete sidecar를 거부합니다. Plan-only sync가 `updatedAt` baseline 없이 기존 marker-owned child issue를 찾으면 title과 구성한 body가 approved plan과 정확히 일치할 때만 issue를 재사용합니다. 불일치하면 `forge.issue.reconcile-required`를 반환하며 title, body, acceptance criterion, status update에는 명시적으로 검토한 snapshot과 CAS 일치가 필요합니다.
+
+Generated GitHub/Gitea workflow는 repository variable `AAPB_AUTOMATION_PLAN`이 commit된 approved plan sidecar를 가리킬 때 fresh runner를 초기화할 수 있습니다. Run cache 복원 뒤 해당 값을 인용된 environment expansion `"$AAPB_AUTOMATION_PLAN"`으로 멱등적인 `automation start`에 전달하고 tick 하나를 실행합니다. 변수가 없으면 checkout 또는 restored cache에 기존 run이 있어야 합니다. 같은 `planId`를 재사용하면 같은 기본 run을 재사용하며 변경된 plan 내용으로 다시 쓰지는 않습니다.
+
+Hosted cache에는 `.ai-agent-playbook/workflows/runs`와 external managed checkout이 들어가며 cache action의 post-job phase에서 저장됩니다. 실행 중 tick을 위한 durable storage가 아니라 완료된 마지막 job/tick checkpoint입니다. Timeout, cancellation, runner loss, cache eviction이 있으면 이전 saved checkpoint로 되돌아갈 수 있습니다. Gitea는 runner cache service가 설정되고 접근 가능해야 합니다. Unattended 사용 전에 두 경로의 save/restore 동작을 검증하고 replay 전에 모호한 forge/Git effect를 reconcile합니다.
+
+Windows Task Scheduler 등록은 project path 기반의 안정적인 suffix를 사용하고 `/F`를 전달하지 않습니다. 기존 task와 충돌하면 덮어쓰지 않고 보고합니다. Systemd user unit과 hosted workflow file도 내용이 다른 기존 파일을 보존합니다.
+
+Default executor selector가 같은 우선순위의 local agent를 여러 개 찾으면 ambiguity를 보고하므로 `executor.provider`를 명시합니다. `github-agent-task`는 preview-only이며 explicit preview enable flag가 필요합니다. `--no-git`을 포함한 unattended task는 dirty/untracked file을 제외하도록 committed Git baseline에서 만든 managed checkout을 사용합니다. Non-Git project는 interactive로 실행하거나 먼저 committed baseline을 만들어야 합니다.
+
+Remote read가 허용되면 `automation start`는 configured ready label이 있는 open issue를 조회해 eligible issue를 approved plan에 추가합니다. Pull request, closed issue, configured pause label이 있는 issue는 제외합니다. 이 discovery는 run을 처음 만들 때와 같은 non-terminal run을 재사용할 때마다 수행하므로, 나중에 label을 추가한 issue도 이후 start에서 멱등 append됩니다. Remote title, body, label, checklist는 untrusted data로 유지하고 remote verification command나 file path는 절대 실행하지 않으며, import한 issue는 검토한 local execution mapping이 제공될 때까지 pause합니다. `--no-remote`, `--offline`은 ready-issue discovery를 건너뜁니다.
+
+Linked forge-issue task는 remote read가 성공할 때 tick의 claim 전과 executor 완료 후 issue를 다시 읽습니다. Pause label, ready label 제거, closed issue는 task와 run을 pause합니다. Claim 전 requirement change는 아직 claim하지 않은 task에 import하고, execution 뒤 change는 verification/delivery를 계속하기 전에 run을 `needs-reconcile`로 pause합니다. Offline, no-remote, unavailable read transport에서는 이 guard를 제공할 수 없으므로 local checkpoint가 기준으로 남고 remote state는 나중에 reconcile해야 합니다.
+
+`automation doctor`는 effective policy에 Git이 필요할 때만 Git `2.39.0`을 최소 버전으로 적용합니다. Detected GitHub read path에서 설치된 `gh`가 `2.80.0`보다 낮으면 conflict이고, Projects scope 누락은 capability warning과 함께 Project/View operation을 제거하며 scope를 자동 refresh하지 않습니다. `policyWrites`는 configured authority이고, `verifiedWrites`와 effective `writes`에는 검증된 authentication과 repository write permission이 필요합니다. Self-hosted Gitea candidate는 explicit provider/API-base trust, public version/OpenAPI inspection, authenticated repository permission 확인이 모두 성공할 때까지 쓰기 불가입니다. 오래된 `tea`는 Gitea REST transport를 사용할 수 있으므로 warning입니다. Dirty user checkout은 `git.unattendedWorkspace`가 `isolated-checkout`일 때만 unattended work에 safe로 보고하며, dirty non-isolated unattended workspace는 conflict입니다. Scheduler mode status는 local executable 또는 detected provider/repository prerequisite만 뜻하며 registration 성공, Actions service 활성화, runner health, credential, remote smoke test 완료를 증명하지 않습니다.
 
 ## 안전한 기본 흐름
 

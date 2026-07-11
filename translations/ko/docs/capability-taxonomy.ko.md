@@ -31,6 +31,7 @@ AI harness skill은 MCP surface design을 context engineering, skill-pack govern
 - `ai-harness/mcp-server-design`: MCP tool, resource, prompt, permission tier, write gate, cache/index surface.
 - `ai-harness/context-engineering-memory-design`: agent instruction, context surface, prompt/cache budget, project memory, compaction behavior, durable memory promotion, stale fact handling.
 - `ai-harness/agent-orchestration-handoff`: multi-agent worker contract, bounded context, evidence ledger, reconciliation gate, handoff.
+- `ai-harness/forge-automation-control`: GitHub/Gitea capability 탐지, permission profile, 재개 가능한 tick, lease, scheduler recovery, branch delivery, local fallback.
 - `ai-harness/skill-pack-governance`: skill taxonomy growth, compatibility wrapper, reference routing, translation, install/sync behavior, reusable skill-pack adoption.
 - `ai-harness/runtime-index-cache-design`: runtime report, index, graph, cache, artifact schema, invalidation, canon promotion, generated evidence, local-only runtime storage.
 - `ai-harness/capability-witness-history`: append-only capability witness, baseline comparison, skipped/degraded status, runtime reliability history.

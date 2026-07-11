@@ -25,3 +25,4 @@ Recipe는 input, output, 읽을 skill, 유용한 MCP/CLI tool, stop condition, v
 - documentation package
 - harness extension
 - reference depth adoption
+- forge automation

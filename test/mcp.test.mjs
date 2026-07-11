@@ -11,6 +11,78 @@ import { runCli } from '../src/cli.mjs';
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const cliPath = path.join(repoRoot, 'bin', 'aapb.mjs');
 
+test('mcp exposes read-only forge automation surfaces and separately gates forge writes', async () => {
+  const readOnlyConnection = await connectMcp();
+  try {
+    const listed = await readOnlyConnection.client.listTools();
+    const names = listed.tools.map((tool) => tool.name);
+    for (const expected of ['automation_status', 'automation_plan_validate', 'forge_status', 'forge_bootstrap_plan', 'forge_sync_plan']) {
+      assert.equal(names.includes(expected), true, expected);
+      assert.equal(listed.tools.find((tool) => tool.name === expected).annotations?.readOnlyHint, true);
+    }
+    assert.equal(listed.tools.find((tool) => tool.name === 'forge_bootstrap_plan').inputSchema.required.includes('target'), true);
+    assert.equal(listed.tools.find((tool) => tool.name === 'forge_sync_plan').inputSchema.required.includes('target'), true);
+    assert.equal(names.includes('forge_bootstrap_apply'), false);
+    assert.equal(names.includes('forge_sync_apply'), false);
+    assert.equal(names.some((name) => name.includes('tick') || name.includes('push') || name.includes('merge') || name.includes('release')), false);
+  } finally {
+    await readOnlyConnection.client.close();
+    await readOnlyConnection.transport.close();
+  }
+
+  const writeConnection = await connectMcp(['--enable-forge-write-tools']);
+  try {
+    const listed = await writeConnection.client.listTools();
+    const bootstrap = listed.tools.find((tool) => tool.name === 'forge_bootstrap_apply');
+    const sync = listed.tools.find((tool) => tool.name === 'forge_sync_apply');
+    assert.equal(Boolean(bootstrap), true);
+    assert.equal(Boolean(sync), true);
+    assert.equal(bootstrap.annotations?.readOnlyHint, false);
+    assert.equal(sync.annotations?.readOnlyHint, false);
+    assert.equal(Boolean(sync.inputSchema.properties.tasks.items.properties.issueNumber), true);
+    assert.equal(Boolean(sync.inputSchema.properties.tasks.items.properties.expectedUpdatedAt), true);
+    assert.equal(listed.tools.some((tool) => tool.name === 'automation_tick'), false);
+  } finally {
+    await writeConnection.client.close();
+    await writeConnection.transport.close();
+  }
+});
+
+test('mcp forge preview and apply build from the same target-aware capability snapshot', async () => {
+  const target = await tempRepo('aapb-mcp-forge-parity-');
+  await mkdir(path.join(target, '.ai-agent-playbook'), { recursive: true });
+  const { client, transport } = await connectMcp(['--enable-forge-write-tools']);
+  try {
+    const preview = await client.callTool({
+      name: 'forge_bootstrap_plan',
+      arguments: {
+        target,
+        provider: 'github',
+        milestone: '0.5.4',
+        projectTitle: 'Forge parity'
+      }
+    });
+    const applied = await client.callTool({
+      name: 'forge_bootstrap_apply',
+      arguments: {
+        target,
+        provider: 'github',
+        milestone: '0.5.4',
+        projectTitle: 'Forge parity',
+        apply: true
+      }
+    });
+    assert.equal(preview.isError, undefined);
+    assert.equal(applied.isError, undefined);
+    assert.equal(applied.structuredContent.summary.planned, preview.structuredContent.operations.length);
+    assert.equal(applied.structuredContent.provider, preview.structuredContent.provider);
+  } finally {
+    await client.close();
+    await transport.close();
+    await rm(target, { recursive: true, force: true });
+  }
+});
+
 test('mcp server lists read-only playbook tools and calls operator search without writing files', async () => {
   const target = await tempRepo('mcp target-공백-');
   await mkdir(path.join(target, 'src', '기능 모듈'), { recursive: true });
@@ -296,6 +368,12 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(permissionPayload.defaultResources.includes('reference_adoption'), true);
     assert.equal(permissionPayload.optInWriteTools.includes('reference_source_registry_update'), true);
     assert.equal(permissionPayload.optInWriteTools.includes('reference_ledger_decision'), true);
+    assert.deepEqual(permissionPayload.forgeCoordinateWriteTools, ['forge_bootstrap_apply', 'forge_sync_apply']);
+    assert.equal(permissionPayload.summary.forgeCoordinateWriteTools, 2);
+    assert.equal(permissionPayload.tiers.some((tier) => tier.id === 'forge-coordinate'), true);
+    assert.equal(permissionPayload.writeRequirements.some((requirement) => requirement.includes('--enable-forge-write-tools')), true);
+    assert.equal(permissionPayload.nonExposedWrites.includes('agent tick or supervise'), true);
+    assert.equal(permissionPayload.nonExposedWrites.includes('push, merge, release, delete, or force-push'), true);
 
     const workflowRunPreview = await client.callTool({
       name: 'workflow_run_preview',

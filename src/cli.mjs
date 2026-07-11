@@ -1,9 +1,29 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readFile } from 'node:fs/promises';
 import { checkAdapterReadiness, renderAdapterConfig } from './adapter-readiness.mjs';
 import { analyzeOperator, auditOperator, checkDiagnostics, checkImageDiff, checkOperator, checkRules, checkTuiCapture, deltaOperator, gcOperator, mapOperator, preflightOperator, previewOperatorContext, researchOperator, searchOperator } from './operator-diagnostics.mjs';
 import { lintSkills, runSkillsLifecycle } from './skills-lifecycle.mjs';
 import { runMcpServer } from './mcp-server.mjs';
+import { createAutomationPlan, validateAutomationPlan } from './automation/plan-manifest.mjs';
+import { validateWorkflowPlan } from './automation/run-state.mjs';
+import {
+  applyAutomationReconcile,
+  automationStartNeedsCoordination,
+  automationStatus,
+  linkAutomationForgeTasks,
+  pauseAutomation,
+  resumeAutomation,
+  startAutomation,
+  stopAutomation,
+  superviseAutomation,
+  tickAutomation
+} from './automation/controller.mjs';
+import { automationDoctor } from './automation/doctor.mjs';
+import { scheduleAutomation } from './automation/scheduler.mjs';
+import { deriveAutomationPolicy } from './automation/policy.mjs';
+import { applyForgePlan, collectReadyForgeTasks, inspectForgeIssue, planForgeBootstrap, planForgeSync, reconcileForgeTask } from './forge/index.mjs';
+import { createDefaultForgeTransport } from './forge/http-transport.mjs';
 import {
   buildDependencyInventoryIndex,
   buildRouteApiHintsIndex,
@@ -84,6 +104,11 @@ export async function runCli(argv, io = {}) {
 
   try {
     const parsed = parseArgs(argv);
+    if (parsed.flags.version) {
+      const packageJson = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+      write(stdout, `${packageJson.version}\n`);
+      return 0;
+    }
     if (parsed.positionals.length === 0 || parsed.flags.help) {
       write(stdout, helpText());
       return 0;
@@ -93,7 +118,8 @@ export async function runCli(argv, io = {}) {
     if (command === 'mcp') {
       await runMcpServer({
         repoRoot: root,
-        enableWriteTools: Boolean(parsed.flags['enable-write-tools'])
+        enableWriteTools: Boolean(parsed.flags['enable-write-tools']),
+        enableForgeWriteTools: Boolean(parsed.flags['enable-forge-write-tools'])
       });
       return 0;
     }
@@ -1647,7 +1673,465 @@ export async function runCli(argv, io = {}) {
       return result.ok ? 0 : 1;
     }
 
+    if (command === 'plan' && subcommand === 'validate') {
+      const target = resolveTarget(cwd, targetArg);
+      const planPath = resolveRequiredPath(cwd, parsed.flags.plan, '--plan');
+      const result = await validateAutomationPlan(planPath);
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Automation plan: ${result.ok ? 'valid' : 'invalid'}; ${result.ready ? 'ready' : 'not ready'}\n`);
+        for (const warning of result.warnings) write(stdout, `[WARN] ${warning.message}\n`);
+        for (const conflict of result.conflicts) write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        write(stdout, `Target: ${target}\n`);
+      }
+      return result.ok && result.ready ? 0 : 1;
+    }
+
+    if (command === 'forge' && subcommand === 'status') {
+      const target = resolveTarget(cwd, targetArg);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      if (typeof parsed.flags.provider === 'string') config.forge.provider = parsed.flags.provider;
+      if (typeof parsed.flags.remote === 'string') config.forge.remote = parsed.flags.remote;
+      const doctor = await automationDoctor({
+        target,
+        config,
+        profile: parsed.flags.profile,
+        noRemote: Boolean(parsed.flags['no-remote']),
+        remoteReadOnly: Boolean(parsed.flags['remote-read-only']),
+        noGit: Boolean(parsed.flags['no-git']),
+        offline: Boolean(parsed.flags.offline),
+        instruction: typeof parsed.flags.instruction === 'string' ? parsed.flags.instruction : undefined
+      });
+      if (parsed.flags.json) writeJson(stdout, doctor.forge);
+      else printForgeStatus(stdout, doctor.forge);
+      return doctor.forge.ok ? 0 : 1;
+    }
+
+    if (command === 'forge' && subcommand === 'bootstrap') {
+      const target = resolveTarget(cwd, targetArg);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      const forgeContext = await resolveForgeContextForPlan({ target, config, flags: parsed.flags });
+      const provider = forgeContext.provider;
+      const plan = planForgeBootstrap({
+        provider,
+        capabilities: forgeContext.capabilities,
+        milestoneTitle: typeof parsed.flags.milestone === 'string' ? parsed.flags.milestone : null,
+        projectTitle: typeof parsed.flags['project-title'] === 'string' ? parsed.flags['project-title'] : null
+      });
+      const result = parsed.flags.apply
+        ? await applyForgeCliPlan({ plan, provider, target, config, flags: parsed.flags })
+        : plan;
+      if (parsed.flags.json) writeJson(stdout, result);
+      else printForgePlan(stdout, result, Boolean(parsed.flags.apply));
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'forge' && subcommand === 'sync') {
+      const target = resolveTarget(cwd, targetArg);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      let tasks = [];
+      let planId;
+      let planTitle;
+      let planMilestone;
+      if (typeof parsed.flags.plan === 'string') {
+        const planInput = JSON.parse(await readFile(resolveRequiredPath(cwd, parsed.flags.plan, '--plan'), 'utf8'));
+        const validation = validateWorkflowPlan(planInput, { requireApproved: Boolean(parsed.flags.apply) });
+        if (!validation.ok || (parsed.flags.apply && !validation.ready)) {
+          const conflicts = [...validation.conflicts];
+          if (parsed.flags.apply && validation.ok && !validation.ready) {
+            conflicts.push({
+              id: 'automation.plan.incomplete',
+              message: 'The approved plan must include acceptance criteria and safe verification argv before forge synchronization can be applied.',
+              paths: []
+            });
+          }
+          const rejected = {
+            schemaVersion: '2',
+            kind: 'forge.sync-plan-gate.v2',
+            ok: false,
+            applied: false,
+            operations: [],
+            warnings: validation.warnings,
+            conflicts
+          };
+          if (parsed.flags.json) writeJson(stdout, rejected);
+          else printForgePlan(stdout, rejected, Boolean(parsed.flags.apply));
+          return 1;
+        }
+        const validatedPlan = validation.plan;
+        planId = validatedPlan.planId;
+        planTitle = validatedPlan.title;
+        planMilestone = automationPlanMilestone(validatedPlan);
+        tasks = validatedPlan.tasks.map((task) => ({
+          id: task.id,
+          title: task.title,
+          status: 'planned',
+          priority: task.priority,
+          risk: task.risk,
+          progress: 0,
+          acceptanceCriteria: (task.acceptanceCriteria ?? []).map((criterion) => criterion.text)
+        }));
+      } else {
+        const status = await automationStatus({ target, runId: typeof parsed.flags['run-id'] === 'string' ? parsed.flags['run-id'] : undefined });
+        if (!status.ok) {
+          if (parsed.flags.json) writeJson(stdout, status);
+          else for (const conflict of status.conflicts) write(stdout, `[CONFLICT] ${conflict.message}\n`);
+          return 1;
+        }
+        planId = status.state.planId;
+        planTitle = status.state.planTitle;
+        tasks = status.state.tasks.map((task) => {
+          const remoteSnapshot = status.remote?.tasks?.[task.id] ?? task.source?.snapshot ?? {};
+          const issueNumber = Number(remoteSnapshot.issueNumber ?? task.source?.issueNumber);
+          return {
+            id: task.id,
+            title: task.title,
+            status: task.status,
+            priority: task.priority,
+            risk: task.risk,
+            progress: task.criteria.length > 0
+              ? Math.round((task.criteria.filter((criterion) => criterion.status === 'pass').length / task.criteria.length) * 100)
+              : task.status === 'completed' ? 100 : 0,
+            ...(Number.isInteger(issueNumber) && issueNumber > 0 ? { issueNumber } : {}),
+            ...(typeof remoteSnapshot.updatedAt === 'string' && remoteSnapshot.updatedAt ? { expectedUpdatedAt: remoteSnapshot.updatedAt } : {}),
+            acceptanceCriteria: task.criteria.map((criterion) => criterion.text)
+          };
+        });
+      }
+      const forgeContext = await resolveForgeContextForPlan({ target, config, flags: parsed.flags });
+      const provider = forgeContext.provider;
+      const plan = planForgeSync({
+        provider,
+        capabilities: forgeContext.capabilities,
+        language: config.forge.language,
+        milestoneTitle: typeof parsed.flags.milestone === 'string' ? parsed.flags.milestone : planMilestone,
+        planId,
+        planTitle,
+        projectTitle: planTitle,
+        tasks
+      });
+      const result = parsed.flags.apply
+        ? await applyForgeCliPlan({ plan, provider, target, config, flags: parsed.flags })
+        : plan;
+      if (parsed.flags.apply && result.ok && typeof parsed.flags['run-id'] === 'string') {
+        const checkpoint = await linkAutomationForgeTasks({
+          target,
+          runId: parsed.flags['run-id'],
+          provider,
+          repository: forgeContext.status.repository,
+          links: forgeLinksFromApplyResults(result, tasks)
+        });
+        result.checkpoint = checkpoint;
+        if (!checkpoint.ok) {
+          result.ok = false;
+          result.conflicts = [...(result.conflicts ?? []), ...(checkpoint.conflicts ?? [])];
+        } else if (checkpoint.warnings?.length) {
+          result.warnings = [...(result.warnings ?? []), ...checkpoint.warnings];
+        }
+      }
+      if (parsed.flags.json) writeJson(stdout, result);
+      else printForgePlan(stdout, result, Boolean(parsed.flags.apply));
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'forge' && subcommand === 'reconcile') {
+      const target = resolveTarget(cwd, targetArg);
+      const localTask = JSON.parse(await readFile(resolveRequiredPath(cwd, parsed.flags['local-task'], '--local-task'), 'utf8'));
+      const remoteIssue = JSON.parse(await readFile(resolveRequiredPath(cwd, parsed.flags['remote-issue'], '--remote-issue'), 'utf8'));
+      const preview = reconcileForgeTask({ localTask, remoteIssue });
+      const result = parsed.flags.apply
+        ? await applyAutomationReconcile({
+            target,
+            runId: typeof parsed.flags['run-id'] === 'string' ? parsed.flags['run-id'] : undefined,
+            taskId: localTask.id,
+            remoteIssue
+          })
+        : preview;
+      if (parsed.flags.apply) result.reconciliation = preview;
+      if (parsed.flags.json) writeJson(stdout, result);
+      else if (parsed.flags.apply) write(stdout, `Forge reconcile apply: ${result.reason} (${result.state?.runStatus ?? 'unknown'})\n`);
+      else write(stdout, `Forge reconcile: ${result.action} (${result.state})\n`);
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'automation' && subcommand === 'doctor') {
+      const target = resolveTarget(cwd, targetArg);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      const result = await automationDoctor({
+        target,
+        config,
+        profile: parsed.flags.profile,
+        noRemote: Boolean(parsed.flags['no-remote']),
+        remoteReadOnly: Boolean(parsed.flags['remote-read-only']),
+        noGit: Boolean(parsed.flags['no-git']),
+        offline: Boolean(parsed.flags.offline),
+        instruction: typeof parsed.flags.instruction === 'string' ? parsed.flags.instruction : undefined,
+        enableGithubAgentTask: Boolean(parsed.flags['enable-github-agent-task'])
+      });
+      if (parsed.flags.json) writeJson(stdout, result);
+      else printAutomationDoctor(stdout, result);
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'automation' && subcommand === 'start') {
+      const target = resolveTarget(cwd, targetArg);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      if (config.automation.killSwitch) {
+        const result = automationDisabledResult(target);
+        printAutomationResult(result, parsed.flags, stdout);
+        return 1;
+      }
+      const policy = commandAutomationPolicy(config, parsed.flags);
+      if (!policy.automation.coordinate) {
+        const result = automationProfileDeniedResult(target, policy.profile, 'start');
+        printAutomationResult(result, parsed.flags, stdout);
+        return 1;
+      }
+      const planPath = resolveRequiredPath(cwd, parsed.flags.plan, '--plan');
+      const planInput = JSON.parse(await readFile(planPath, 'utf8'));
+      const queue = await collectCliReadyQueue({ target, config, flags: parsed.flags, policy });
+      const forgeRuntime = await inspectCliRuntimeForge({ target, config, flags: parsed.flags, policy });
+      const result = await startAutomation({
+        target,
+        plan: planInput,
+        queueTasks: queue.tasks,
+        queueWarnings: [...queue.warnings, ...queue.conflicts],
+        runId: typeof parsed.flags['run-id'] === 'string' ? parsed.flags['run-id'] : undefined,
+        maxAttempts: config.automation.budget.maxAttempts,
+        noRemote: !policy.remote.read,
+        remoteReadOnly: !forgeRuntime.writes,
+        offline: Boolean(parsed.flags.offline)
+      });
+      const startStatus = result.ok
+        ? await automationStatus({ target, runId: result.runId })
+        : null;
+      if (
+        result.ok &&
+        automationStartNeedsCoordination(startStatus?.remote) &&
+        forgeRuntime.writes &&
+        policy.network
+      ) {
+        result.forge = await coordinateAutomationStart({
+          target,
+          config,
+          flags: parsed.flags,
+          planInput,
+          checkpoint: startStatus?.remote?.coordination
+        });
+        const links = mergeForgeLinks(
+          forgeLinksFromRunState(startStatus?.state, planInput),
+          forgeLinksFromCoordination(result.forge, planInput)
+        );
+        if (result.forge.repository && ['github', 'gitea'].includes(result.forge.provider)) {
+          const stages = {
+            bootstrap: result.forge.bootstrapComplete,
+            sync: result.forge.syncComplete,
+            links: false,
+            complete: false
+          };
+          let linked = await linkAutomationForgeTasks({
+            target,
+            runId: result.runId,
+            provider: result.forge.provider,
+            repository: result.forge.repository,
+            links,
+            coordination: stages
+          });
+          if (linked.ok) {
+            const linksComplete = forgePlanLinksComplete({
+              state: linked.state,
+              planInput,
+              provider: result.forge.provider,
+              repository: result.forge.repository
+            });
+            const coordination = {
+              ...stages,
+              sync: stages.sync && linksComplete,
+              links: linksComplete,
+              complete: stages.bootstrap && stages.sync && linksComplete
+            };
+            linked = await linkAutomationForgeTasks({
+              target,
+              runId: result.runId,
+              provider: result.forge.provider,
+              repository: result.forge.repository,
+              links: [],
+              coordination
+            });
+            result.forge.coordination = coordination;
+            result.forge.ok = coordination.complete && linked.ok;
+          } else {
+            result.forge.ok = false;
+          }
+          result.remote = linked;
+          if (linked.ok) result.state = linked.state;
+          else result.warnings.push({
+            id: 'automation.start.remote-link-degraded',
+            message: 'Forge issues were created, but their snapshots could not be linked into the local run ledger.',
+            details: linked.conflicts
+          });
+        } else {
+          result.forge.ok = false;
+        }
+        if (!result.forge.ok) {
+          result.warnings.push({
+            id: 'automation.start.forge-degraded',
+            message: 'The local run started, but forge coordination was unavailable; the next start with the same approved plan and run ID will resume incomplete stages.',
+            details: result.forge.conflicts
+          });
+        }
+      }
+      appendForgeDowngradeWarning(result, forgeRuntime, policy);
+      printAutomationResult(result, parsed.flags, stdout);
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'automation' && subcommand === 'tick') {
+      const target = resolveTarget(cwd, targetArg);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      if (config.automation.killSwitch) {
+        const result = automationDisabledResult(target);
+        printAutomationResult(result, parsed.flags, stdout);
+        return 1;
+      }
+      const policy = commandAutomationPolicy(config, parsed.flags);
+      if (!policy.automation.execute) {
+        const result = automationProfileDeniedResult(target, policy.profile, 'tick');
+        printAutomationResult(result, parsed.flags, stdout);
+        return 1;
+      }
+      const inspectRemoteTask = createCliForgeIssueInspector({ target, config, policy });
+      const forgeRuntime = await inspectCliRuntimeForge({ target, config, flags: parsed.flags, policy });
+      const result = await tickAutomation({
+        target,
+        runId: typeof parsed.flags['run-id'] === 'string' ? parsed.flags['run-id'] : undefined,
+        noRemote: !policy.remote.read,
+        remoteReadOnly: !forgeRuntime.writes,
+        offline: Boolean(parsed.flags.offline),
+        noGit: !policy.git.branch,
+        approveReview: Boolean(parsed.flags['approve-review']),
+        executorProvider: config.executor.provider,
+        executorCommand: config.executor.command,
+        gitConfig: {
+          ...config.git,
+          autoCommit: config.git.autoCommit && policy.git.commit,
+          autoPush: config.git.autoPush && policy.git.push
+        },
+        forgeConfig: config.forge,
+        forgeCapabilities: forgeRuntime.capabilities,
+        automationProfile: policy.profile,
+        hostedExecution: isHostedAutomationEnvironment(process.env),
+        inspectRemoteTask,
+        unattended: Boolean(parsed.flags['no-interactive']),
+        tickTimeoutMs: config.automation.budget.tickMinutes * 60_000,
+        enableGithubAgentTask: Boolean(parsed.flags['enable-github-agent-task'])
+      });
+      appendForgeDowngradeWarning(result, forgeRuntime, policy);
+      printAutomationResult(result, parsed.flags, stdout);
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'automation' && subcommand === 'supervise') {
+      const target = resolveTarget(cwd, targetArg);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      if (config.automation.killSwitch) {
+        const result = automationDisabledResult(target);
+        printAutomationResult(result, parsed.flags, stdout);
+        return 1;
+      }
+      const policy = commandAutomationPolicy(config, parsed.flags);
+      if (!policy.automation.execute) {
+        const result = automationProfileDeniedResult(target, policy.profile, 'supervise');
+        printAutomationResult(result, parsed.flags, stdout);
+        return 1;
+      }
+      const inspectRemoteTask = createCliForgeIssueInspector({ target, config, policy });
+      const forgeRuntime = await inspectCliRuntimeForge({ target, config, flags: parsed.flags, policy });
+      const result = await superviseAutomation({
+        target,
+        runId: typeof parsed.flags['run-id'] === 'string' ? parsed.flags['run-id'] : undefined,
+        noRemote: !policy.remote.read,
+        remoteReadOnly: !forgeRuntime.writes,
+        offline: Boolean(parsed.flags.offline),
+        noGit: !policy.git.branch,
+        executorProvider: config.executor.provider,
+        executorCommand: config.executor.command,
+        gitConfig: {
+          ...config.git,
+          autoCommit: config.git.autoCommit && policy.git.commit,
+          autoPush: config.git.autoPush && policy.git.push
+        },
+        forgeConfig: config.forge,
+        forgeCapabilities: forgeRuntime.capabilities,
+        automationProfile: policy.profile,
+        hostedExecution: isHostedAutomationEnvironment(process.env),
+        inspectRemoteTask,
+        unattended: Boolean(parsed.flags['no-interactive']),
+        tickTimeoutMs: config.automation.budget.tickMinutes * 60_000,
+        budget: {
+          maxWallMinutes: config.automation.budget.maxWallMinutes,
+          maxStalled: config.automation.budget.maxStalled
+        }
+      });
+      appendForgeDowngradeWarning(result, forgeRuntime, policy);
+      printAutomationResult(result, parsed.flags, stdout);
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'automation' && ['status', 'pause', 'resume', 'stop'].includes(subcommand)) {
+      const target = resolveTarget(cwd, targetArg);
+      const common = {
+        target,
+        runId: typeof parsed.flags['run-id'] === 'string' ? parsed.flags['run-id'] : undefined,
+        reason: typeof parsed.flags.reason === 'string' ? parsed.flags.reason : undefined,
+        resetAttempts: Boolean(parsed.flags['reset-attempts'])
+      };
+      const result = subcommand === 'status'
+        ? await automationStatus(common)
+        : subcommand === 'pause'
+          ? await pauseAutomation(common)
+          : subcommand === 'resume'
+            ? await resumeAutomation(common)
+            : await stopAutomation(common);
+      printAutomationResult(result, parsed.flags, stdout);
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'automation' && subcommand === 'schedule') {
+      const target = resolveTarget(cwd, targetArg);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      const policy = commandAutomationPolicy(config, parsed.flags);
+      if (parsed.flags.apply && (!policy.automation.execute || config.automation.killSwitch)) {
+        const result = config.automation.killSwitch
+          ? automationDisabledResult(target)
+          : automationProfileDeniedResult(target, policy.profile, 'schedule --apply');
+        printAutomationResult(result, parsed.flags, stdout);
+        return 1;
+      }
+      const result = await scheduleAutomation({
+        target,
+        platform: parsed.flags.platform,
+        apply: Boolean(parsed.flags.apply),
+        remoteAllowed: !parsed.flags.apply || policy.remote.write,
+        tickFlags: schedulerTickFlags(policy)
+      });
+      printAutomationResult(result, parsed.flags, stdout);
+      return result.ok ? 0 : 1;
+    }
+
     if (command === 'plan' && subcommand === 'new') {
+      if (parsed.flags.automation) {
+        const result = await createAutomationPlan({
+          target: resolveTarget(cwd, targetArg),
+          title: parsed.flags.title,
+          date: parsed.flags.date,
+          language: typeof parsed.flags.lang === 'string' ? parsed.flags.lang : 'auto',
+          dryRun: Boolean(parsed.flags['dry-run']),
+          force: Boolean(parsed.flags.force)
+        });
+        return printScaffoldResult(result, stdout, stderr);
+      }
       const result = await createPlan({
         target: resolveTarget(cwd, targetArg),
         title: parsed.flags.title,
@@ -1699,7 +2183,14 @@ export function parseArgs(argv) {
     const raw = arg.slice(2);
     const [key, inlineValue] = raw.split('=', 2);
     if (inlineValue !== undefined) {
-      flags[key] = inlineValue;
+      if (STRICT_BOOLEAN_FLAGS.has(key)) {
+        if (inlineValue !== 'true' && inlineValue !== 'false') {
+          throw new Error(`--${key} expects true or false when an inline value is provided.`);
+        }
+        flags[key] = inlineValue === 'true';
+      } else {
+        flags[key] = inlineValue;
+      }
       continue;
     }
     const next = argv[i + 1];
@@ -1756,9 +2247,40 @@ function needsValue(key) {
     'lang',
     'engine',
     'root',
-    'max-files'
+    'max-files',
+    'plan',
+    'platform',
+    'provider',
+    'remote',
+    'reason',
+    'instruction',
+    'milestone',
+    'project-title',
+    'local-task',
+    'remote-issue'
   ].includes(key);
 }
+
+const STRICT_BOOLEAN_FLAGS = new Set([
+  'apply',
+  'approve-review',
+  'automation',
+  'dry-run',
+  'enable-forge-write-tools',
+  'enable-github-agent-task',
+  'enable-write-tools',
+  'force',
+  'force-managed',
+  'force-unmanaged',
+  'json',
+  'local-only',
+  'no-git',
+  'no-interactive',
+  'no-remote',
+  'offline',
+  'remote-read-only',
+  'reset-attempts'
+]);
 
 function resolveTarget(cwd, value) {
   if (!value) throw new Error('Missing target path.');
@@ -1767,6 +2289,515 @@ function resolveTarget(cwd, value) {
 
 function resolveOptionalPath(cwd, value) {
   return typeof value === 'string' ? path.resolve(cwd, value) : undefined;
+}
+
+function resolveRequiredPath(cwd, value, optionName) {
+  if (typeof value !== 'string' || !value.trim()) throw new Error(`Missing ${optionName}.`);
+  return path.resolve(cwd, value);
+}
+
+async function loadAutomationConfig(target, cwd, userConfigPath) {
+  const preview = await previewHarnessConfig({
+    target,
+    userConfigPath: resolveOptionalPath(cwd, userConfigPath)
+  });
+  if (!preview.ok) {
+    throw new Error(`Harness config has conflicts: ${preview.conflicts.map((conflict) => conflict.message).join('; ')}`);
+  }
+  return structuredClone(preview.config);
+}
+
+function commandAutomationPolicy(config, flags) {
+  const policy = deriveAutomationPolicy({
+    configuredProfile: config.automation.profile,
+    requestedProfile: typeof flags.profile === 'string' ? flags.profile : undefined,
+    noRemote: Boolean(flags['no-remote']),
+    remoteReadOnly: Boolean(flags['remote-read-only']),
+    noGit: Boolean(flags['no-git']),
+    offline: Boolean(flags.offline),
+    instruction: typeof flags.instruction === 'string' ? flags.instruction : undefined
+  });
+  if (['off', 'observe', 'remote-to-local'].includes(config.forge.sync)) {
+    policy.remote.write = false;
+    policy.git.push = false;
+    policy.reasons.push({ id: 'policy.config.forge-sync', message: `forge.sync=${config.forge.sync} disables outbound remote mutations.` });
+  }
+  return policy;
+}
+
+function schedulerTickFlags(policy) {
+  const flags = [];
+  if (!policy.network) flags.push('--offline');
+  else if (!policy.remote.read) flags.push('--no-remote');
+  else if (!policy.remote.write) flags.push('--remote-read-only');
+  if (!policy.git.branch || !policy.git.commit) flags.push('--no-git');
+  return flags;
+}
+
+function isHostedAutomationEnvironment(env) {
+  return String(env.GITHUB_ACTIONS ?? '').toLowerCase() === 'true' ||
+    String(env.GITEA_ACTIONS ?? env.CI_ACTIONS ?? '').toLowerCase() === 'true';
+}
+
+async function inspectCliRuntimeForge({ target, config, flags, policy }) {
+  if (!policy.remote.read || !policy.network) {
+    return { writes: false, capabilities: null, status: null };
+  }
+  const doctor = await automationDoctor({
+    target,
+    config,
+    profile: typeof flags.profile === 'string' ? flags.profile : undefined,
+    noRemote: Boolean(flags['no-remote']),
+    remoteReadOnly: !policy.remote.write || Boolean(flags['remote-read-only']),
+    noGit: Boolean(flags['no-git']),
+    offline: Boolean(flags.offline),
+    instruction: typeof flags.instruction === 'string' ? flags.instruction : undefined,
+    enableGithubAgentTask: Boolean(flags['enable-github-agent-task'])
+  });
+  return {
+    writes: policy.remote.write && doctor.forge.mode.writes === true,
+    capabilities: doctor.forge.capabilities,
+    status: doctor.forge
+  };
+}
+
+function appendForgeDowngradeWarning(result, runtime, policy) {
+  if (!result || !policy.remote.write || runtime.writes || !runtime.status) return;
+  result.warnings ??= [];
+  if (result.warnings.some((warning) => warning.id === 'automation.forge.write-degraded')) return;
+  result.warnings.push({
+    id: 'automation.forge.write-degraded',
+    message: 'Forge or remote Git writes were disabled because current authentication and repository write permission were not verified.',
+    paths: [],
+    details: [...runtime.status.warnings, ...runtime.status.conflicts]
+  });
+}
+
+async function resolveForgeContextForPlan({ target, config, flags }) {
+  const effectiveConfig = structuredClone(config);
+  if (typeof flags.provider === 'string') effectiveConfig.forge.provider = flags.provider;
+  if (typeof flags.remote === 'string') effectiveConfig.forge.remote = flags.remote;
+  const doctor = await automationDoctor({
+    target,
+    config: effectiveConfig,
+    profile: 'observe',
+    noRemote: Boolean(flags['no-remote']),
+    remoteReadOnly: true,
+    offline: Boolean(flags.offline)
+  });
+  return {
+    provider: doctor.forge.provider,
+    capabilities: doctor.forge.capabilities,
+    status: doctor.forge
+  };
+}
+
+async function collectCliReadyQueue({ target, config, policy }) {
+  if (!policy.remote.read || !policy.network) {
+    return { tasks: [], warnings: [], conflicts: [] };
+  }
+  const context = await prepareCliForgeReadContext({ target, config });
+  if (!context.ok) {
+    return { tasks: [], warnings: context.warnings, conflicts: [] };
+  }
+  return collectReadyForgeTasks({
+    provider: context.provider,
+    repository: context.repository,
+    transport: context.transport,
+    readyLabel: config.automation.queue.readyLabel,
+    pauseLabels: ['aapb:paused', config.automation.queue.pauseLabel]
+  });
+}
+
+function createCliForgeIssueInspector({ target, config, policy }) {
+  if (!policy.remote.read || !policy.network) return undefined;
+  let contextPromise;
+  return async ({ task, signal }) => {
+    contextPromise ??= prepareCliForgeReadContext({ target, config });
+    const context = await contextPromise;
+    if (!context.ok) {
+      return { ok: true, skipped: true, reason: 'forge-read-unavailable', issue: null, warnings: context.warnings, conflicts: [] };
+    }
+    const currentRepository = `${context.repository.owner}/${context.repository.name}`;
+    if (
+      (task.source.provider && task.source.provider !== context.provider) ||
+      (task.source.repository && task.source.repository !== currentRepository)
+    ) {
+      return {
+        ok: true,
+        identityMismatch: true,
+        issue: null,
+        warnings: [],
+        conflicts: [{
+          id: 'forge.issue.repository-mismatch',
+          message: 'The linked issue belongs to a different forge provider or repository than the current remote.',
+          paths: []
+        }]
+      };
+    }
+    return inspectForgeIssue({
+      provider: context.provider,
+      repository: context.repository,
+      transport: context.transport,
+      issueNumber: task.source.issueNumber,
+      signal,
+      readyLabel: config.automation.queue.readyLabel,
+      pauseLabels: ['aapb:paused', config.automation.queue.pauseLabel]
+    });
+  };
+}
+
+async function prepareCliForgeReadContext({ target, config }) {
+  const doctor = await automationDoctor({
+    target,
+    config,
+    profile: 'observe',
+    remoteReadOnly: true,
+    noRemote: false,
+    offline: false
+  });
+  const forge = doctor.forge;
+  if (!forge.repository || !['github', 'gitea'].includes(forge.provider)) {
+    return {
+      ok: false,
+      warnings: [{
+        id: 'forge.queue.unavailable',
+        message: 'No identified forge repository is available for ready issue discovery.',
+        paths: []
+      }]
+    };
+  }
+  try {
+    const prepared = await createDefaultForgeTransport({
+      provider: forge.provider,
+      repository: forge.repository
+    });
+    return { ok: true, provider: forge.provider, repository: forge.repository, transport: prepared.transport, warnings: [] };
+  } catch (error) {
+    return {
+      ok: false,
+      warnings: [{ id: 'forge.queue.unavailable', message: `Forge issue reads were skipped: ${redactCliError(error)}`, paths: [] }]
+    };
+  }
+}
+
+function redactCliError(error) {
+  return String(error?.message ?? error)
+    .replace(/\b(Bearer|Basic)\s+[^\s,;]+/gi, '$1 [REDACTED]')
+    .replace(/\b(token|secret|password|api[_-]?key)\s*[:=]\s*([^\s,;]+)/gi, '$1=[REDACTED]')
+    .replace(/(https?:\/\/)[^/@\s]+@/gi, '$1[REDACTED]@');
+}
+
+function automationDisabledResult(target) {
+  return {
+    schemaVersion: '2',
+    kind: 'automation.controller.v2',
+    ok: false,
+    target,
+    state: null,
+    warnings: [],
+    conflicts: [{ id: 'automation.kill-switch.enabled', message: 'Automation is disabled by automation.killSwitch.', paths: [] }]
+  };
+}
+
+function automationProfileDeniedResult(target, profile, command) {
+  return {
+    schemaVersion: '2',
+    kind: 'automation.controller.v2',
+    ok: false,
+    target,
+    state: null,
+    warnings: [],
+    conflicts: [{
+      id: 'automation.profile.denied',
+      message: `automation ${command} is not allowed by the ${profile} profile.`,
+      paths: []
+    }]
+  };
+}
+
+async function applyForgeCliPlan(options) {
+  const { plan, target, config, flags } = options;
+  const doctor = await automationDoctor({
+    target,
+    config: {
+      ...config,
+      forge: {
+        ...config.forge,
+        provider: options.provider,
+        remote: typeof flags.remote === 'string' ? flags.remote : config.forge.remote
+      }
+    },
+    profile: typeof flags.profile === 'string' ? flags.profile : undefined,
+    noRemote: Boolean(flags['no-remote']),
+    remoteReadOnly: Boolean(flags['remote-read-only']),
+    offline: Boolean(flags.offline),
+    instruction: typeof flags.instruction === 'string' ? flags.instruction : undefined
+  });
+  const forge = doctor.forge;
+  if (!forge.ok || !forge.mode.writes || !forge.repository) {
+    return {
+      schemaVersion: '1',
+      kind: 'forge.apply-result',
+      ok: false,
+      provider: forge.provider,
+      mode: { apply: false, writes: false },
+      summary: { planned: plan.operations?.length ?? 0, applied: 0, reused: 0, fallback: 0, failed: 0 },
+      results: [],
+      warnings: forge.warnings,
+      conflicts: forge.conflicts.length
+        ? forge.conflicts
+        : [{ id: 'forge.apply.policy-denied', message: 'Effective policy or repository detection does not allow forge writes.', paths: [] }]
+    };
+  }
+  const prepared = await createDefaultForgeTransport({
+    provider: forge.provider,
+    repository: forge.repository
+  });
+  return applyForgePlan({
+    plan,
+    provider: forge.provider,
+    repository: forge.repository,
+    transport: prepared.transport,
+    profile: doctor.policy.profile,
+    apply: true
+  });
+}
+
+export function forgeCoordinationStages(checkpoint = {}, autoBootstrap = true) {
+  return {
+    bootstrap: autoBootstrap === true && checkpoint?.bootstrap !== true,
+    sync: checkpoint?.sync !== true || checkpoint?.links !== true
+  };
+}
+
+async function coordinateAutomationStart(options) {
+  const stages = forgeCoordinationStages(options.checkpoint, options.config.forge.autoBootstrap);
+  const doctor = await automationDoctor({ target: options.target, config: options.config });
+  const provider = doctor.forge.provider;
+  if (!doctor.forge.ok || !doctor.forge.mode.writes || !doctor.forge.repository || !['github', 'gitea'].includes(provider)) {
+    return {
+      ok: false,
+      provider,
+      bootstrap: null,
+      sync: null,
+      bootstrapComplete: !stages.bootstrap,
+      syncComplete: !stages.sync,
+      warnings: doctor.forge.warnings,
+      conflicts: doctor.forge.conflicts.length
+        ? doctor.forge.conflicts
+        : [{ id: 'forge.coordination.unavailable', message: 'Forge coordination is unavailable for this run.', paths: [] }]
+    };
+  }
+  const common = {
+    target: options.target,
+    config: options.config,
+    flags: options.flags,
+    provider
+  };
+  const milestoneTitle = automationPlanMilestone(options.planInput);
+  let bootstrap = null;
+  if (stages.bootstrap) {
+    try {
+      bootstrap = await applyForgeCliPlan({
+        ...common,
+        plan: planForgeBootstrap({
+          provider,
+          capabilities: doctor.forge.capabilities,
+          milestoneTitle,
+          projectTitle: options.planInput.title
+        })
+      });
+    } catch (error) {
+      bootstrap = forgeStartStageFailure('bootstrap', error, provider);
+    }
+  }
+  const bootstrapComplete = !stages.bootstrap || bootstrap?.ok === true;
+  let sync = null;
+  if (stages.sync) {
+    try {
+      sync = await applyForgeCliPlan({
+        ...common,
+        plan: planForgeSync({
+          provider,
+          capabilities: doctor.forge.capabilities,
+          language: options.config.forge.language,
+          milestoneTitle,
+          planId: options.planInput.planId,
+          planTitle: options.planInput.title,
+          projectTitle: options.planInput.title,
+          tasks: options.planInput.tasks.map((task) => ({
+            id: task.id,
+            title: task.title,
+            status: 'planned',
+            priority: task.priority,
+            risk: task.risk,
+            progress: 0,
+            acceptanceCriteria: task.acceptanceCriteria.map((criterion) => criterion.text)
+          }))
+        })
+      });
+    } catch (error) {
+      sync = forgeStartStageFailure('sync', error, provider);
+    }
+  }
+  const syncComplete = !stages.sync || sync?.ok === true;
+  return {
+    ok: bootstrapComplete && syncComplete,
+    provider,
+    repository: doctor.forge.repository,
+    bootstrap,
+    sync,
+    bootstrapComplete,
+    syncComplete,
+    warnings: [...(bootstrap?.warnings ?? []), ...(sync?.warnings ?? [])],
+    conflicts: [...(bootstrap?.conflicts ?? []), ...(sync?.conflicts ?? [])]
+  };
+}
+
+function forgeStartStageFailure(stage, error, provider) {
+  return {
+    schemaVersion: '1',
+    kind: 'forge.apply-result',
+    ok: false,
+    provider,
+    mode: { apply: true, writes: false },
+    summary: { planned: 0, applied: 0, reused: 0, fallback: 0, failed: 1 },
+    results: [],
+    warnings: [],
+    conflicts: [{
+      id: `automation.start.forge-${stage}-failed`,
+      message: `Forge ${stage} failed before its checkpoint: ${redactCliError(error)}`,
+      paths: []
+    }]
+  };
+}
+
+function automationPlanMilestone(planInput) {
+  if (typeof planInput?.milestoneTitle === 'string' && planInput.milestoneTitle.trim()) {
+    return planInput.milestoneTitle.trim().slice(0, 200);
+  }
+  return String(planInput?.title ?? '').match(/\b(?:v|release\s+)?(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)\b/i)?.[1] ?? null;
+}
+
+function forgeLinksFromCoordination(coordination, planInput) {
+  const tasks = new Map((planInput.tasks ?? []).map((task) => [task.id, task]));
+  return (coordination.sync?.results ?? []).flatMap((result) => {
+    const match = /^task:([a-z0-9][a-z0-9._-]{0,99}):issue$/.exec(result.operationId ?? '');
+    const task = match ? tasks.get(match[1]) : null;
+    const resource = result.resource;
+    const issueNumber = Number(resource?.number ?? resource?.index);
+    if (!task || !Number.isInteger(issueNumber) || issueNumber < 1 || !['created', 'updated', 'reused'].includes(result.status)) return [];
+    return [{
+      taskId: task.id,
+      issueNumber,
+      title: resource?.title ?? task.title,
+      body: resource?.body ?? '',
+      labels: resource?.labels ?? ['aapb:ready'],
+      acceptanceCriteria: (task.acceptanceCriteria ?? []).map((criterion) => criterion.text),
+      updatedAt: resource?.updated_at ?? resource?.updatedAt ?? null
+    }];
+  });
+}
+
+function forgeLinksFromRunState(state, planInput) {
+  const expected = new Set((planInput.tasks ?? []).map((task) => task.id));
+  return (state?.tasks ?? []).flatMap((task) => {
+    const source = task.source;
+    if (!expected.has(task.id) || source?.kind !== 'forge-issue' || !Number.isInteger(source.issueNumber)) return [];
+    return [{
+      taskId: task.id,
+      issueNumber: source.issueNumber,
+      title: source.snapshot?.title ?? task.title,
+      body: source.snapshot?.body ?? '',
+      labels: source.labels ?? ['aapb:ready'],
+      acceptanceCriteria: source.snapshot?.acceptanceCriteria ?? task.criteria.map((criterion) => criterion.text),
+      updatedAt: source.snapshot?.updatedAt ?? null
+    }];
+  });
+}
+
+function mergeForgeLinks(...collections) {
+  const links = new Map();
+  for (const collection of collections) {
+    for (const link of collection ?? []) links.set(link.taskId, link);
+  }
+  return [...links.values()].sort((left, right) => left.taskId.localeCompare(right.taskId));
+}
+
+function forgePlanLinksComplete({ state, planInput, provider, repository }) {
+  const repositorySlug = `${repository.owner}/${repository.name}`;
+  return (planInput.tasks ?? []).every((planned) => {
+    const task = state?.tasks?.find((candidate) => candidate.id === planned.id);
+    return task?.source?.kind === 'forge-issue' &&
+      task.source.provider === provider &&
+      task.source.repository === repositorySlug &&
+      Number.isInteger(task.source.issueNumber) &&
+      task.source.issueNumber > 0;
+  });
+}
+
+function forgeLinksFromApplyResults(result, tasks) {
+  const taskMap = new Map((tasks ?? []).map((task) => [task.id, task]));
+  return (result.results ?? []).flatMap((item) => {
+    const match = /^task:([a-z0-9][a-z0-9._-]{0,99}):issue$/.exec(item.operationId ?? '');
+    const task = match ? taskMap.get(match[1]) : null;
+    const resource = item.resource;
+    const issueNumber = Number(resource?.number ?? resource?.index);
+    if (!task || !Number.isInteger(issueNumber) || issueNumber < 1 || !['created', 'updated', 'reused'].includes(item.status)) return [];
+    return [{
+      taskId: task.id,
+      issueNumber,
+      title: resource?.title ?? task.title,
+      body: resource?.body ?? '',
+      labels: resource?.labels ?? [],
+      acceptanceCriteria: task.acceptanceCriteria ?? [],
+      updatedAt: resource?.updated_at ?? resource?.updatedAt ?? null
+    }];
+  });
+}
+
+function printAutomationResult(result, flags, stdout) {
+  if (flags.json) {
+    writeJson(stdout, result);
+    return;
+  }
+  const state = result.state?.runStatus ?? result.platform ?? result.reason ?? (result.ok ? 'ok' : 'failed');
+  write(stdout, `${result.kind ?? 'automation'}: ${state}\n`);
+  if (result.state?.progress) {
+    write(stdout, `Tasks: ${result.state.progress.tasks.completed}/${result.state.progress.tasks.total}; criteria: ${result.state.progress.criteria.passed}/${result.state.progress.criteria.total}\n`);
+  }
+  for (const warning of result.warnings ?? []) write(stdout, `[WARN] ${warning.message}\n`);
+  for (const conflict of result.conflicts ?? []) write(stdout, `[CONFLICT] ${conflict.message}\n`);
+}
+
+function printForgeStatus(stdout, result) {
+  write(stdout, `Forge: ${result.provider} (${result.mode.remote})\n`);
+  write(stdout, `Repository: ${result.repository?.slug ?? 'none'}\n`);
+  const serverVersion = result.server?.version ?? result.server?.apiVersion ?? 'unknown';
+  write(stdout, `Server: ${result.server?.product ?? 'none'} ${serverVersion} (${result.server?.status ?? 'not-checked'})\n`);
+  write(stdout, `Auth: ${result.auth?.status ?? 'not-checked'}${result.auth?.principal ? ` as ${result.auth.principal}` : ''}\n`);
+  write(stdout, `Repository permission: read=${String(result.permissions?.repositoryRead ?? 'unknown')}, write=${String(result.permissions?.repositoryWrite ?? 'unknown')}\n`);
+  write(stdout, `Writes: policy=${Boolean(result.mode?.policyWrites)}, verified=${Boolean(result.mode?.verifiedWrites)}\n`);
+  write(stdout, `Capabilities: ${Object.entries(result.capabilities ?? {}).map(([id, state]) => `${id}=${state}`).join(', ') || 'none'}\n`);
+  write(stdout, `Probe: ${result.probe?.status ?? 'not-run'} (${result.probe?.evidence?.length ?? 0} evidence item(s))\n`);
+  for (const warning of result.warnings) write(stdout, `[WARN] ${warning.message}\n`);
+  for (const conflict of result.conflicts) write(stdout, `[CONFLICT] ${conflict.message}\n`);
+}
+
+function printForgePlan(stdout, result, apply) {
+  write(stdout, `Forge ${apply ? 'apply' : 'plan'}: ${result.ok ? 'ok' : 'failed'}\n`);
+  for (const operation of result.operations ?? []) write(stdout, `[PLAN] ${operation.action} ${operation.resource}\n`);
+  for (const warning of result.warnings ?? []) write(stdout, `[WARN] ${warning.message}\n`);
+  for (const conflict of result.conflicts ?? []) write(stdout, `[CONFLICT] ${conflict.message}\n`);
+}
+
+function printAutomationDoctor(stdout, result) {
+  write(stdout, `Automation doctor: ${result.ok ? 'ready' : 'needs attention'}\n`);
+  write(stdout, `Forge: ${result.forge.provider} (${result.forge.mode.remote})\n`);
+  write(stdout, `Executor: ${result.executor.selection.provider ?? result.executor.selection.reason}\n`);
+  for (const warning of result.warnings) write(stdout, `[WARN] ${warning.message}\n`);
+  for (const conflict of result.conflicts) write(stdout, `[CONFLICT] ${conflict.message}\n`);
 }
 
 function printOperations(stdout, operations) {
@@ -1836,11 +2867,25 @@ function helpText() {
   return `aapb
 
 Usage:
+  aapb --version
   aapb bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]
-  aapb mcp [--enable-write-tools]
+  aapb mcp [--enable-write-tools] [--enable-forge-write-tools]
   aapb doctor <target> [--strict] [--json]
   aapb doctor <target> --reminder [--json]
   aapb config preview <target> [--user-config <path>] [--json]
+  aapb plan new <target> --automation --title <text> [--date YYYY-MM-DD] [--lang auto|ko|en] [--dry-run] [--force]
+  aapb plan validate <target> --plan <workflow.plan.v2.json> [--json]
+  aapb forge status <target> [--provider auto|github|gitea] [--remote <name>] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--offline] [--json]
+  aapb forge bootstrap <target> [--provider auto|github|gitea] [--milestone <title>] [--project-title <title>] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--offline] [--apply] [--json]
+  aapb forge sync <target> [--plan <path> | --run-id <id>] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--offline] [--apply] [--json]
+  aapb forge reconcile <target> --local-task <json> --remote-issue <json> [--run-id <id>] [--apply] [--json]
+  aapb automation doctor <target> [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--no-git] [--offline] [--enable-github-agent-task] [--json]
+  aapb automation start <target> --plan <path> [--run-id <id>] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--offline] [--json]
+  aapb automation tick <target> [--run-id <id>] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--no-git] [--offline] [--no-interactive] [--approve-review] [--enable-github-agent-task] [--json]
+  aapb automation supervise <target> [--run-id <id>] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--no-git] [--offline] [--no-interactive] [--json]
+  aapb automation status <target> [--run-id <id>] [--json]
+  aapb automation pause|resume|stop <target> [--run-id <id>] [--reason <text>] [--reset-attempts] [--json]
+  aapb automation schedule <target> --platform github-actions|gitea-actions|windows-task|systemd-user [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--no-git] [--offline] [--apply] [--json]
   aapb guides sync <target> [--dry-run] [--force]
   aapb guides sync <target> --check [--diff] [--json]
   aapb skills check [--json] [--codex-root <path>] [--agents-root <path>]

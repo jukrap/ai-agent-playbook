@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import {
   CONTEXT_SOURCE_FILES,
@@ -16,6 +17,7 @@ import {
   copyTree,
   findCoreTemplateFiles,
   guideDiff,
+  globToRegex,
   hashFile,
   loadGuideManifest,
   reminder,
@@ -126,7 +128,16 @@ export async function doctorProject(options) {
     checks.push(...await worklogSummaryFreshnessChecks(playbookRoot, playbook.dir));
   }
 
-  const markdownFiles = await walkFiles(target, (file) => file.endsWith('.md'));
+  const markdownCandidates = (await walkFiles(target, (file) => file.endsWith('.md')))
+    .filter((file) => isPublicSafetyCandidate({
+      target,
+      file,
+      playbook,
+      gitignoreText,
+      ignoresPlaybook
+    }));
+  const ignoredMarkdown = await gitIgnoredPaths(target, markdownCandidates, gitignoreText);
+  const markdownFiles = markdownCandidates.filter((file) => !ignoredMarkdown.has(toPortablePath(path.relative(target, file))));
   const privatePaths = [];
   const obsoleteSkillRefs = [];
   for (const file of markdownFiles) {
@@ -165,6 +176,84 @@ export async function doctorProject(options) {
     summary: summarizeChecks(checks),
     checks
   };
+}
+
+function isPublicSafetyCandidate(options) {
+  const relative = toPortablePath(path.relative(options.target, options.file));
+  const excludedPrefixes = [
+    '_reference/',
+    '_work/',
+    `${options.playbook.dir}/runtime/`,
+    'node_modules/',
+    'dist/',
+    'build/',
+    'coverage/',
+    'out/',
+    '.next/',
+    '.turbo/'
+  ];
+  if (excludedPrefixes.some((prefix) => relative.startsWith(prefix))) return false;
+  if (options.ignoresPlaybook && relative.startsWith(`${options.playbook.dir}/`)) return false;
+  return true;
+}
+
+async function gitIgnoredPaths(target, files, gitignoreText) {
+  const relativePaths = files.map((file) => toPortablePath(path.relative(target, file)));
+  if (!existsSync(path.join(target, '.git')) || relativePaths.length === 0) {
+    return new Set(relativePaths.filter((relative) => isGitignoredByRootPatterns(relative, gitignoreText)));
+  }
+  return new Promise((resolve) => {
+    const child = spawn('git', ['-C', target, 'check-ignore', '--no-index', '--stdin', '-z'], {
+      shell: false,
+      windowsHide: true,
+      stdio: ['pipe', 'pipe', 'ignore']
+    });
+    let output = '';
+    child.stdout.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => { output += chunk; });
+    child.on('error', () => resolve(new Set(relativePaths.filter((relative) => isGitignoredByRootPatterns(relative, gitignoreText)))));
+    child.on('close', (code) => {
+      if (code !== 0 && code !== 1) {
+        resolve(new Set(relativePaths.filter((relative) => isGitignoredByRootPatterns(relative, gitignoreText))));
+        return;
+      }
+      resolve(new Set(output.split('\0').filter(Boolean).map(toPortablePath)));
+    });
+    child.stdin.end(`${relativePaths.join('\0')}\0`);
+  });
+}
+
+function isGitignoredByRootPatterns(relative, text) {
+  let ignored = false;
+  for (const rawLine of String(text).split(/\r?\n/)) {
+    let pattern = rawLine.trim();
+    if (!pattern || pattern.startsWith('#')) continue;
+    const negated = pattern.startsWith('!');
+    if (negated) pattern = pattern.slice(1);
+    pattern = pattern.replace(/\\/g, '/').replace(/^\//, '');
+    if (!pattern) continue;
+    const directory = pattern.endsWith('/');
+    const clean = directory ? pattern.slice(0, -1) : pattern;
+    let matches;
+    if (!clean.includes('/')) {
+      try {
+        const segmentPattern = globToRegex(clean);
+        matches = relative.split('/').some((segment) => segmentPattern.test(segment)) || (directory && relative.startsWith(`${clean}/`));
+      } catch {
+        matches = relative.split('/').includes(clean) || (directory && relative.startsWith(`${clean}/`));
+      }
+    } else if (directory) {
+      matches = relative === clean || relative.startsWith(`${clean}/`);
+    } else {
+      try {
+        matches = globToRegex(clean).test(relative);
+      } catch {
+        matches = relative === clean;
+      }
+    }
+    if (matches) ignored = !negated;
+  }
+  return ignored;
 }
 
 export async function buildDoctorReminderSignal(options) {

@@ -11,6 +11,8 @@
     "types": ["node"]
   },
   "include": [
+    "src/automation/**/*.mjs",
+    "src/forge/**/*.mjs",
     "src/core/config.mjs",
     "src/runtime/capability-history.mjs",
     "src/runtime/dependency-inventory.mjs",

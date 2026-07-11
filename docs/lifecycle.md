@@ -27,7 +27,7 @@ Use this when Node.js is available. The public package is [`ai-agent-playbook`](
 | Use `aapb` from any directory | `npm install -g ai-agent-playbook` | Installs a global CLI command. Use `npm install -g ai-agent-playbook@latest` to update it. |
 | Pin the tool in one project | `npm install -D ai-agent-playbook` | Adds a dev dependency and `node_modules/ai-agent-playbook`; run it with `npx ai-agent-playbook ...`. |
 | Work from a source checkout | `node .\bin\aapb.mjs --help` | Runs the checked-out repository directly. |
-| Let an AI app call read-only tools | `npx ai-agent-playbook mcp` | Use this as the app's local stdio MCP server command. |
+| Let an AI app call default read-only tools | `npx ai-agent-playbook mcp` | Use this as the app's local stdio MCP server command. Write surfaces require separate explicit gates. |
 
 Avoid treating plain `npm install ai-agent-playbook` as the normal first step unless you intentionally want this package as a runtime dependency of the current project. It installs under the current project's `node_modules`, but it still does not install skills or bootstrap a project playbook.
 
@@ -159,7 +159,7 @@ After a global install, the shorter variant is:
 }
 ```
 
-This project does not edit your MCP settings automatically. `adapter config <target> --adapter codex --json` renders the same examples so you can review and copy them manually. The MCP tools exposed in this version are read-only.
+This project does not edit your MCP settings automatically. `adapter config <target> --adapter codex --json` renders the same examples so you can review and copy them manually. Default MCP tools are read-only. `--enable-write-tools` enables bounded playbook writes, while the independent `--enable-forge-write-tools` enables only forge bootstrap/sync apply tools; every write still requires the call argument `apply: true`. Do not add either flag to a persistent app configuration unless that write scope is intentionally available.
 
 ## What writes files
 
@@ -167,6 +167,7 @@ This project does not edit your MCP settings automatically. `adapter config <tar
 | ------- | ------------------ | ------ |
 | `npx ai-agent-playbook --help` | No | Prints CLI help. |
 | `npx ai-agent-playbook mcp` | No | Starts a local stdio MCP server for an AI app. |
+| MCP tool call with a write gate | Only with matching server opt-in and `apply: true` | Bounded playbook files or authenticated forge coordination; never task execution or Git delivery. |
 | `npm install -g ai-agent-playbook` | Yes | npm global package location only. |
 | `npm install -D ai-agent-playbook` | Yes | Current project's `package.json`, lockfile, and `node_modules`. |
 | `skills check` | No | Reports skill status. |
@@ -179,6 +180,12 @@ This project does not edit your MCP settings automatically. `adapter config <tar
 | `run start/summarize` | Yes unless `--dry-run` | Target project's `.ai-agent-playbook/workflows/runs/`. |
 | `run record` | Yes | Appends one event to a selected run ledger. |
 | `run status` | No | Read-only run status inspection. |
+| `plan new --automation` | Yes unless `--dry-run` | Human-readable plan and `workflow.plan.v2` sidecar. |
+| `plan validate` / `forge status` / `automation doctor/status` | No mutation | Structured plan, provider, executor, policy, and run-state inspection. |
+| `forge bootstrap/sync` | No unless `--apply` | Supported remote coordination assets and task state. |
+| `forge reconcile` | No unless `--apply` | Previews local/remote requirement differences; apply records an eligible import or reconciliation pause in a schema v2 run ledger. |
+| `automation start/tick/supervise/pause/resume/stop` | Yes | Schema v2 ledger/evidence and, according to effective policy, executor, Git, and forge effects. |
+| `automation schedule` | No unless `--apply` | Hosted workflow file or OS schedule registration. |
 | `contracts init` | Yes unless `--dry-run` | Target project's `.ai-agent-playbook/memory/contracts/`. |
 | `contracts list/check` | No | Read-only contract inspection. |
 | `managed adopt/prune/uninstall` | No unless `--apply` | Target project's `.ai-agent-playbook/` managed files. |

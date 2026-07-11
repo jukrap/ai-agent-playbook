@@ -10,6 +10,15 @@ import { validateSourceRegistry } from '../src/runtime/schemas.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 
+test('version flag prints only the package version', async () => {
+  const io = capture(repoRoot);
+  const packageJson = JSON.parse(await readFile(path.join(repoRoot, 'package.json'), 'utf8'));
+
+  assert.equal(await runCli(['--version'], io), 0);
+  assert.equal(io.out(), `${packageJson.version}\n`);
+  assert.equal(io.err(), '');
+});
+
 test('bootstrap dry-run does not write files', async () => {
   const target = await tempRepo();
   const io = capture(target);
@@ -318,7 +327,7 @@ test('structured playbook commands expose layout, catalog, index, and write-gate
   const catalogReport = JSON.parse(catalog.out());
   assert.equal(catalogReport.taxonomyKind, 'capability');
   assert.equal(catalogReport.summary.categories, 13);
-  assert.equal(catalogReport.summary.skills, 92);
+  assert.equal(catalogReport.summary.skills, 93);
 
   const catalogCheck = capture(target);
   assert.equal(await runCli(['catalog', 'check', '--json'], catalogCheck), 0);

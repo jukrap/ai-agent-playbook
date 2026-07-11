@@ -27,7 +27,7 @@ The structured `.ai-agent-playbook` layout separates durable project memory from
 - `workflows/`: recipes, runbooks, plans, runs, worklogs, and handoffs.
 - `knowledge/`: source registry, adopted references, and research notes.
 - `runtime/`: generated cache, indexes, graphs, reports, snapshots, and temporary files.
-- `integrations/`: MCP, adapters, hooks, and command configuration.
+- `integrations/`: MCP, adapters, hooks, forge configuration, and optional scheduler workflow examples.
 - `archive/`: superseded local notes.
 
 `config.json` and `config.local.json` are optional. `config preview` reads them when present; `config.local.json` is for machine-local overrides and should stay local-only unless the project deliberately chooses otherwise.
@@ -46,7 +46,9 @@ Runtime evidence can draft canon fact candidates, but it does not become trusted
 
 Recipes under `workflows/recipes/` describe repeatable procedures. `workflow run-preview` reads a target-local recipe first and falls back to the bundled template, then returns a read-only run manifest with inputs, outputs, skills, tools, stop conditions, and verification. It does not create files under `workflows/runs/`.
 
-Future run creation belongs to the scaffold tier. A run-start implementation may write only under `workflows/runs/`, should create new bounded run artifacts rather than editing source or memory, and must keep generated evidence separate from durable facts until explicit promotion.
+`workflow run-start --apply` is a scaffold-tier operation that writes only a new bounded record under `workflows/runs/`; it does not edit project source or trusted memory.
+
+Structured automation uses a Markdown plan plus a `workflow.plan.v2` JSON sidecar under `workflows/plans/`. `automation start` consumes an approved sidecar and creates a schema v2 directory under `workflows/runs/` with immutable plan/task inputs, an append-only ledger, derived state, remote sync state, lease state, summaries, handoff, and evidence. Legacy schema v1 runs remain readable but are not overwritten by the compatibility path.
 
 ## Migration
 

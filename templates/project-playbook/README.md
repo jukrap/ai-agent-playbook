@@ -32,7 +32,8 @@ For legacy `ai-playbook/` projects, keep `migrate path` in preview mode until th
 11. `workflows/plans/`: active implementation plans only.
 12. `workflows/runs/`: in-progress evidence ledger for one task.
 13. `workflows/worklogs/`: detailed history and monthly summaries.
-14. `knowledge/references/guides/`: reusable support guides, including `harness-migration.md` for projects that already have agent docs or another harness and `runtime-roadmap.md` for optional hook-layer decisions.
+14. `integrations/`: reviewed forge, MCP, adapter, hook, and scheduler configuration. Start from `forge.example.json` only when the project opts into automation.
+15. `knowledge/references/guides/`: reusable support guides, including `harness-migration.md` for projects that already have agent docs or another harness and `runtime-roadmap.md` for optional hook-layer decisions.
 
 When the relevant context is unclear, do not read the whole playbook. Start with `operator context --path <file> --json`, then use `operator search` or `index search` to locate only the map, runbook, contract, guide, or worklog that applies.
 

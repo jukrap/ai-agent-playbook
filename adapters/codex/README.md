@@ -115,7 +115,7 @@ npx ai-agent-playbook worklog new <target-repo> --title "short-worklog-title"
 
 Use the CLI when a project needs repeatable root `AGENTS.md` and `.ai-agent-playbook/` scaffolding. Use installed skills when the agent needs reusable working behavior during a coding session.
 
-Use MCP when Codex or another AI app can call local tools directly. Register `npx ai-agent-playbook mcp` or, after a global install, `aapb mcp` as the local stdio server command. The MCP surface is read-only in this version and is separate from Codex hook setup.
+Use MCP when Codex or another AI app can call local tools directly. Register `npx ai-agent-playbook mcp` or, after a global install, `aapb mcp` as the local stdio server command. The default MCP surface is read-only; bounded managed-file and forge-coordination writes have separate server opt-ins and still require `apply: true`. MCP is separate from Codex hook setup.
 
 Codex App does not need `aapb` to be installed as a global command. From a local checkout, the stable invocation remains:
 

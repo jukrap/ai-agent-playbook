@@ -25,3 +25,4 @@ Initial recipe set:
 - documentation package
 - harness extension
 - reference depth adoption
+- forge automation

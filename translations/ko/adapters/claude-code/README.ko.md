@@ -34,7 +34,7 @@ node .\adapters\claude-code\package.mjs hook
 
 이 shell은 자동 설치되지 않고 settings를 쓰지 않으며 packaging 편의 기능일 뿐입니다. 기본 문서 하네스에는 main CLI를 우선 사용합니다.
 
-Claude Code 또는 다른 AI 앱이 로컬 도구를 직접 호출할 수 있다면 MCP를 사용합니다. `npx ai-agent-playbook mcp` 또는 global install 뒤 `aapb mcp`를 local stdio server command로 등록합니다. 이 버전의 MCP 표면은 read-only이며 hook 설정과 별개입니다.
+Claude Code 또는 다른 AI 앱이 로컬 도구를 직접 호출할 수 있다면 MCP를 사용합니다. `npx ai-agent-playbook mcp` 또는 global install 뒤 `aapb mcp`를 local stdio server command로 등록합니다. 기본 MCP 표면은 read-only입니다. 제한된 managed-file write와 forge coordination write는 각각 별도 server opt-in이 필요하고 tool call에도 `apply: true`가 있어야 합니다. MCP는 hook 설정과 별개입니다.
 
 `doctor --reminder --json`은 wrapper나 script가 작은 read-only local signal만 필요할 때 사용합니다. Hook 예시는 doctor를 자동 실행하지 않습니다.
 

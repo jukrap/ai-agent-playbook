@@ -27,7 +27,7 @@ Node.js를 사용할 수 있을 때 사용합니다. 공개 패키지는 [`ai-ag
 | 어느 디렉터리에서든 `aapb` 사용 | `npm install -g ai-agent-playbook` | 전역 명령을 설치합니다. 업데이트는 `npm install -g ai-agent-playbook@latest`를 사용합니다. |
 | 한 프로젝트에 도구 고정 | `npm install -D ai-agent-playbook` | 개발 의존성과 `node_modules/ai-agent-playbook`을 추가합니다. 실행은 `npx ai-agent-playbook ...`을 사용합니다. |
 | 소스 체크아웃에서 작업 | `node .\bin\aapb.mjs --help` | 체크아웃된 저장소를 직접 실행합니다. |
-| AI 앱이 읽기 전용 도구를 호출하게 하기 | `npx ai-agent-playbook mcp` | AI 앱의 로컬 표준 입출력 MCP 서버 명령으로 등록합니다. |
+| AI 앱이 기본 read-only tool을 호출하게 하기 | `npx ai-agent-playbook mcp` | AI 앱의 local stdio MCP server 명령으로 등록합니다. Write surface에는 별도 explicit gate가 필요합니다. |
 
 그냥 `npm install ai-agent-playbook`을 일반적인 첫 단계처럼 쓰지는 않는 편이 좋습니다. 현재 프로젝트의 실행 의존성처럼 추가하고 싶을 때만 사용합니다. 이 명령은 현재 프로젝트의 `node_modules`에 설치하지만, 그래도 스킬 설치나 프로젝트 플레이북 부트스트랩은 하지 않습니다.
 
@@ -159,7 +159,7 @@ npx ai-agent-playbook mcp
 }
 ```
 
-이 프로젝트는 사용자의 MCP 설정을 자동으로 수정하지 않습니다. `adapter config <target> --adapter codex --json`도 같은 예시를 렌더링하므로 검토 후 수동으로 복사할 수 있습니다. 이 버전에서 노출하는 MCP 도구는 읽기 전용입니다.
+이 프로젝트는 사용자의 MCP 설정을 자동으로 수정하지 않습니다. `adapter config <target> --adapter codex --json`도 같은 예시를 렌더링하므로 검토 후 수동으로 복사할 수 있습니다. 기본 MCP tool은 read-only입니다. `--enable-write-tools`는 bounded playbook write를, 독립적인 `--enable-forge-write-tools`는 forge bootstrap/sync apply tool만 켭니다. 모든 write에는 call argument `apply: true`가 필요합니다. 해당 write scope를 계속 허용하려는 경우가 아니면 persistent app configuration에 두 flag를 추가하지 않습니다.
 
 ## 어떤 명령이 파일을 쓰는가
 
@@ -167,6 +167,7 @@ npx ai-agent-playbook mcp
 | ---- | ---------------- | ---- |
 | `npx ai-agent-playbook --help` | 아니오 | CLI 도움말을 출력합니다. |
 | `npx ai-agent-playbook mcp` | 아니오 | AI 앱용 로컬 표준 입출력 MCP 서버를 시작합니다. |
+| Write gate를 사용한 MCP tool call | Matching server opt-in과 `apply: true`일 때만 예 | Bounded playbook file 또는 authenticated forge coordination. Task execution과 Git delivery는 제외합니다. |
 | `npm install -g ai-agent-playbook` | 예 | npm 전역 패키지 위치만 변경합니다. |
 | `npm install -D ai-agent-playbook` | 예 | 현재 프로젝트의 `package.json`, lockfile, `node_modules`를 변경합니다. |
 | `skills check` | 아니오 | 스킬 상태를 보고합니다. |
@@ -179,6 +180,12 @@ npx ai-agent-playbook mcp
 | `run start/summarize` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-agent-playbook/workflows/runs/`를 변경합니다. |
 | `run record` | 예 | 선택한 실행 장부에 이벤트 하나를 추가합니다. |
 | `run status` | 아니오 | 실행 상태를 읽기 전용으로 점검합니다. |
+| `plan new --automation` | `--dry-run`이 없으면 예 | Human-readable plan과 `workflow.plan.v2` sidecar를 만듭니다. |
+| `plan validate` / `forge status` / `automation doctor/status` | Mutation 없음 | Structured plan, provider, executor, policy, run state를 점검합니다. |
+| `forge bootstrap/sync` | `--apply`가 없으면 아니오 | 지원되는 remote coordination asset과 task state를 변경합니다. |
+| `forge reconcile` | `--apply`가 없으면 아니오 | Local/remote requirement 차이를 preview하고, apply 시 eligible import 또는 reconciliation pause를 schema v2 run ledger에 기록합니다. |
+| `automation start/tick/supervise/pause/resume/stop` | 예 | Schema v2 ledger/evidence와 effective policy에 따른 executor, Git, forge effect가 있습니다. |
+| `automation schedule` | `--apply`가 없으면 아니오 | Hosted workflow file 또는 OS schedule을 등록합니다. |
 | `contracts init` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-agent-playbook/memory/contracts/`를 변경합니다. |
 | `contracts list/check` | 아니오 | 계약 문서를 읽기 전용으로 점검합니다. |
 | `managed adopt/prune/uninstall` | `--apply`가 없으면 아니오 | 대상 프로젝트의 `.ai-agent-playbook/` 관리 파일을 변경합니다. |

@@ -9,7 +9,7 @@ Use them when starting a new repository, cleaning up project agent docs, or maki
 - `agents/`: root instruction templates and stack profiles.
 - `agents/global/`: thin project-root `AGENTS.md` bootstrap. Despite the folder name, this is copied into target repositories; it is not Codex home-global guidance.
 - `codex-home/`: optional personal `~/.codex/AGENTS.md` starting point for Codex users.
-- `project-playbook/`: the canonical project-memory bundle to copy into a target project as `.ai-agent-playbook/`.
+- `project-playbook/`: the canonical project-memory bundle, including opt-in forge configuration, Actions examples, and an automation runbook, to copy into a target project as `.ai-agent-playbook/`.
 - Runtime CLI files live at the repository root under `bin/`, `src/`, and `test/`.
 
 ## How agents discover templates
@@ -41,6 +41,7 @@ node .\bin\aapb.mjs doctor <target-repo>
 - Any project with careful Git or local-only docs: adapt `project-playbook/policy/GIT.md` and `project-playbook/knowledge/references/guides/commit-push-worklog.md`.
 - Any project that needs evidence-backed architecture cleanup: adapt `project-playbook/knowledge/references/guides/structural-review.md`.
 - Any project that already has another agent-doc system or harness: start with `project-playbook/knowledge/references/guides/harness-migration.md`.
+- Any project opting into resumable GitHub/Gitea automation: review `project-playbook/integrations/forge.example.json`, `project-playbook/workflows/recipes/forge-automation.md`, and `project-playbook/workflows/runbooks/forge-automation.md` before enabling a schedule or remote write.
 
 ## Application rule
 

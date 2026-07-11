@@ -115,7 +115,7 @@ npx ai-agent-playbook worklog new <target-repo> --title "short-worklog-title"
 
 대상 프로젝트에 반복 가능한 루트 `AGENTS.md`와 `.ai-agent-playbook/` scaffold가 필요하면 CLI를 사용합니다. 코딩 세션 중 재사용할 작업 행동이 필요하면 설치된 skill을 사용합니다.
 
-Codex 또는 다른 AI 앱이 로컬 도구를 직접 호출할 수 있다면 MCP를 사용합니다. `npx ai-agent-playbook mcp` 또는 global install 뒤 `aapb mcp`를 local stdio server command로 등록합니다. 이 버전의 MCP 표면은 read-only이며 Codex hook 설정과 별개입니다.
+Codex 또는 다른 AI 앱이 로컬 도구를 직접 호출할 수 있다면 MCP를 사용합니다. `npx ai-agent-playbook mcp` 또는 global install 뒤 `aapb mcp`를 local stdio server command로 등록합니다. 기본 MCP 표면은 read-only입니다. 제한된 managed-file write와 forge coordination write는 각각 별도 server opt-in이 필요하고 tool call에도 `apply: true`가 있어야 합니다. MCP는 Codex hook 설정과 별개입니다.
 
 Codex App에서는 `aapb`을 global command로 설치할 필요가 없습니다. 로컬 checkout에서 안정적인 호출 방식은 아래입니다.
 

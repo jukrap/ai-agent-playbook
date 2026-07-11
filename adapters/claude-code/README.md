@@ -34,7 +34,7 @@ node .\adapters\claude-code\package.mjs hook
 
 This shell is not installed automatically, does not write settings, and is only a packaging convenience. Prefer the main CLI for the default document harness.
 
-Use MCP when Claude Code or another AI app can call local tools directly. Register `npx ai-agent-playbook mcp` or, after a global install, `aapb mcp` as the local stdio server command. The MCP surface is read-only in this version and is separate from hook setup.
+Use MCP when Claude Code or another AI app can call local tools directly. Register `npx ai-agent-playbook mcp` or, after a global install, `aapb mcp` as the local stdio server command. The default MCP surface is read-only; bounded managed-file and forge-coordination writes have separate server opt-ins and still require `apply: true`. MCP is separate from hook setup.
 
 Use `doctor --reminder --json` only as a small read-only local signal for wrappers or scripts. The hook example does not run doctor automatically.
 

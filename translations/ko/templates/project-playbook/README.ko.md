@@ -32,7 +32,8 @@ Legacy `ai-playbook/` 프로젝트에서는 폴더 이동, 참조 갱신, `.giti
 11. `workflows/plans/`: 진행 중인 구현 계획만 둡니다.
 12. `workflows/runs/`: 한 작업의 진행 중 근거 장부.
 13. `workflows/worklogs/`: 상세 이력과 월간 요약.
-14. `knowledge/references/guides/`: 재사용 지원 가이드. 이미 에이전트 문서나 다른 하네스가 있는 프로젝트는 `harness-migration.md`, 선택적 hook 계층을 판단할 때는 `runtime-roadmap.md`를 봅니다.
+14. `integrations/`: 검토된 forge, MCP, adapter, hook, scheduler 설정. 프로젝트가 자동화를 선택한 경우에만 `forge.example.json`에서 시작합니다.
+15. `knowledge/references/guides/`: 재사용 지원 가이드. 이미 에이전트 문서나 다른 하네스가 있는 프로젝트는 `harness-migration.md`, 선택적 hook 계층을 판단할 때는 `runtime-roadmap.md`를 봅니다.
 
 관련 문맥이 불분명할 때는 전체 플레이북을 읽지 않습니다. 먼저 `operator context --path <file> --json`을 사용하고, 필요하면 `operator search` 또는 `index search`로 적용되는 map, runbook, contract, guide, worklog만 찾습니다.
 

@@ -9,6 +9,7 @@ Useful runbooks:
 - `git.md`: branch, commit, PR, release, and rollback workflow.
 - `deploy.md`: deployment, packaging, or handoff steps.
 - `debugging.md`: known logs, traces, fixtures, and reproduction loops.
+- `forge-automation.md`: forge preflight, resumable runs, scheduler opt-in, pause, reconciliation, recovery, and completion evidence.
 
 ## Rules
 

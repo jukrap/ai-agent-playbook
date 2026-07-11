@@ -9,7 +9,7 @@
 - `agents/`: 루트 지침 템플릿과 스택 프로필.
 - `agents/global/`: 얇은 프로젝트 루트 `AGENTS.md` 부트스트랩. 폴더 이름이 `global`이지만 대상 저장소에 복사되는 파일이며, Codex home 전역 지침이 아닙니다.
 - `codex-home/`: Codex 사용자를 위한 선택적 개인 `~/.codex/AGENTS.md` 시작점.
-- `project-playbook/`: 대상 프로젝트에 `.ai-agent-playbook/`로 복사하는 표준 프로젝트 메모리 묶음.
+- `project-playbook/`: opt-in forge 설정, Actions 예시, automation runbook을 포함해 대상 프로젝트에 `.ai-agent-playbook/`로 복사하는 표준 project memory 묶음.
 - Runtime CLI 파일은 저장소 루트의 `bin/`, `src/`, `test/` 아래에 있습니다.
 
 ## 에이전트가 템플릿을 발견하는 방식
@@ -41,6 +41,7 @@ node .\bin\aapb.mjs doctor <target-repo>
 - Git 또는 로컬 전용 문서가 중요한 프로젝트: `project-playbook/policy/GIT.md`와 `project-playbook/knowledge/references/guides/commit-push-worklog.md`를 조정합니다.
 - 근거 기반 아키텍처 정리가 필요한 프로젝트: `project-playbook/knowledge/references/guides/structural-review.md`를 조정합니다.
 - 이미 다른 에이전트 문서 체계나 하네스가 있는 프로젝트: `project-playbook/knowledge/references/guides/harness-migration.md`로 시작합니다.
+- 재개 가능한 GitHub/Gitea automation을 선택한 프로젝트: schedule이나 remote write를 켜기 전에 `project-playbook/integrations/forge.example.json`, `project-playbook/workflows/recipes/forge-automation.md`, `project-playbook/workflows/runbooks/forge-automation.md`를 검토합니다.
 
 ## 적용 규칙
 

@@ -31,6 +31,7 @@ Each `SKILL.md` stays short and trigger-focused. Longer procedures, examples, st
 - `mcp-server-design`: use when designing MCP tools, resources, prompts, permission tiers, write gates, and cache/index surfaces.
 - `context-engineering-memory-design`: use when designing agent instructions, context surfaces, prompt/cache budgets, project memory, compaction, or stale fact handling.
 - `agent-orchestration-handoff`: use when coordinating agents, subagents, workers, review passes, or long-running handoffs with bounded contracts.
+- `forge-automation-control`: use when coordinating or automating resumable work through GitHub or Gitea issues, pull requests, Actions, scheduled ticks, or local fallback runs.
 - `skill-pack-governance`: use when managing skill packs, taxonomy categories, compatibility wrappers, reference routing, translations, and install/sync behavior.
 - `runtime-index-cache-design`: use when designing runtime reports, indexes, graphs, caches, artifact schemas, invalidation, and canon promotion.
 - `capability-witness-history`: use when managing capability witnesses, baseline comparisons, skipped/degraded status, and reliability history.

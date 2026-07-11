@@ -152,7 +152,7 @@ npx ai-agent-playbook managed uninstall <target-project> --apply --json
 | `skills install` | 재사용 스킬을 사용자 수준 스킬 폴더에 복사합니다. |
 | `bootstrap` | 프로젝트 기억 파일을 대상 프로젝트 하나에 복사합니다. |
 | `operator check` | 읽기 전용 프로젝트 상태 점검입니다. |
-| `mcp` | AI 앱용 로컬 읽기 전용 MCP 서버를 시작합니다. |
+| `mcp` | 기본 tool이 read-only인 local MCP server를 시작합니다. Write tool에는 명시적 server/call gate가 필요합니다. |
 | `--dry-run` | 파일을 바꾸는 명령을 미리 보기만 합니다. |
 | `--apply` | 미리보기 우선 관리 작업을 실제 적용합니다. |
 | `--json` | 에이전트와 스크립트가 읽기 쉬운 구조화된 출력을 냅니다. |
@@ -161,7 +161,7 @@ npx ai-agent-playbook managed uninstall <target-project> --apply --json
 
 - Slash command를 추가하지 않습니다.
 - Codex plugin을 설치하지 않습니다.
-- 백그라운드에서 자동 실행하지 않습니다.
+- 설치나 bootstrap만으로 background automation을 시작하지 않습니다. Schedule은 명시적 `automation schedule --apply`와 provider/OS opt-in 뒤에만 실행됩니다.
 - MCP 설정을 자동 등록하지 않습니다.
 - Commit을 차단하지 않습니다.
 - 다른 사람이 만든 스킬을 기본값으로 삭제하지 않습니다.

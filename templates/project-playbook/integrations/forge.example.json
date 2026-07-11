@@ -1,0 +1,37 @@
+{
+  "automation": {
+    "profile": "deliver",
+    "killSwitch": true,
+    "queue": {
+      "readyLabel": "aapb:ready",
+      "pauseLabel": "aapb:paused",
+      "maxParallel": 1
+    },
+    "budget": {
+      "tickMinutes": 30,
+      "maxAttempts": 3,
+      "maxStalled": 3,
+      "maxWallMinutes": 480
+    }
+  },
+  "forge": {
+    "provider": "auto",
+    "remote": "origin",
+    "apiBaseUrl": null,
+    "sync": "hybrid",
+    "language": "auto",
+    "autoBootstrap": true
+  },
+  "git": {
+    "strategy": "branch",
+    "unattendedWorkspace": "isolated-checkout",
+    "branchPrefix": "aapb/",
+    "autoCommit": true,
+    "autoPush": true,
+    "allowForcePush": false
+  },
+  "executor": {
+    "provider": "auto",
+    "command": null
+  }
+}

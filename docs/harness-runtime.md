@@ -1,8 +1,8 @@
 # Runtime Harness
 
-`aapb` is the executable surface for installing reusable skills and applying this repository to a target project. It does not call an AI model. It copies templates, checks project-memory health, and creates predictable context, run, contract, plan, and worklog files so agents stop inventing ad hoc markdown paths.
+`aapb` is the executable surface for installing reusable skills and applying this repository to a target project. Most inspection and scaffold commands do not call an AI model. An explicitly started automation tick can invoke the configured Codex, Claude, or argv-based executor, then the controller independently verifies and records the result.
 
-The MCP server is the AI-facing read-only tool surface. It lets an MCP-capable app call the same local diagnostics and analysis helpers without the user memorizing every CLI command. It is still local stdio, no-network, and no-write in this version.
+The MCP server is an AI-facing local stdio surface. Its default tools remain read-only, including automation status/plan validation and forge status/planning. Separately gated forge bootstrap/sync tools can perform authenticated coordination writes only when the server is started with `--enable-forge-write-tools` and the call supplies `apply: true`; task execution, push, merge, and release are never exposed through MCP.
 
 This CLI and the project playbook are the default harness. Runtime hooks or plugins are optional extensions and should stay outside the default path until their behavior is explicit, local, and easy to disable. See `docs/runtime-roadmap.md` for the staged design.
 
@@ -11,7 +11,7 @@ Keep the install scopes separate:
 - `npx ai-agent-playbook ...` runs the published package without adding it to the current project.
 - `npm install -g ai-agent-playbook` installs the `aapb` command globally.
 - `npm install -D ai-agent-playbook` pins the CLI in one project but does not copy skills or create `.ai-agent-playbook/`.
-- `aapb mcp` starts a local stdio MCP server for an AI app. It does not write project files by itself.
+- `aapb mcp` starts a local stdio MCP server for an AI app. Its default surface is read-only; write surfaces require explicit, separate server gates and per-call apply approval.
 - `skills install` and `skills update` write only user-level skill copies.
 - `bootstrap`, `guides sync`, and `managed` commands are the project-level playbook operations.
 
@@ -24,7 +24,7 @@ Use `npx ai-agent-playbook ...` for the published package, `aapb ...` after a gl
 The short role split is:
 
 - CLI: explicit human/operator commands, including preview-first writes.
-- MCP: read-only AI tool calls for context, diagnostics, search, contracts, managed state, QA, AST search, exact function-body clone cues, and TypeScript/JavaScript analysis.
+- MCP: default read-only AI tool calls plus separately gated, bounded playbook or forge coordination writes. It never runs automation tasks or Git delivery.
 - Skills: reusable working guidance loaded by agent environments.
 - `.ai-agent-playbook/`: target-project memory, runs, contracts, guides, plans, and worklogs.
 - Adapters: optional environment-specific hook/config rendering; never the default install path.
@@ -45,7 +45,7 @@ For a source checkout, run `.\scripts\bootstrap-python.ps1` to create `.venv` an
 
 ## Type checking
 
-`npm run typecheck` uses TypeScript in `allowJs`/`checkJs` mode. The checked set intentionally starts with leaf modules: config resolution, Python bridge, writing analysis, capability history, dependency inventory, route/API hints, and symbol outline. These modules have narrow inputs and are safe to type-check without changing the package entrypoint.
+`npm run typecheck` uses TypeScript in `allowJs`/`checkJs` mode. The checked set includes the automation and forge modules plus leaf modules for config resolution, Python bridging, writing analysis, capability history, dependency inventory, route/API hints, and symbol outline. The public CLI, MCP server, adapter, and package entrypoints remain JavaScript facades.
 
 CLI, MCP server, adapter, and bin facade files stay `.mjs` for now. They carry the public `npx ai-agent-playbook`, global `aapb`, and MCP stdio surfaces, so they should move only after a build pipeline can preserve those paths exactly. `schemas`, evidence-locator, repo-graph, and operator modules also need stronger JSDoc option contracts before they join the checked set.
 
@@ -61,9 +61,21 @@ Precedence is:
 4. `.ai-agent-playbook/config.local.json`.
 5. Narrow environment overrides.
 
-The command does not read personal home config automatically. Target-local config wins over an explicit user config. Environment overrides are limited to `AI_AGENT_PLAYBOOK_CONTEXT_MAX_CHARS`, `AI_AGENT_PLAYBOOK_DEFAULT_RECIPE`, `AI_AGENT_PLAYBOOK_RUNTIME_CACHE_DIR`, `AI_AGENT_PLAYBOOK_INDEX_MAX_FILES`, and `AI_AGENT_PLAYBOOK_ENABLE_WRITE_TOOLS`.
+The command does not read personal home config automatically. Target-local config wins over an explicit user config. The 0.5.4 schema adds `automation`, `forge`, `git`, and `executor` sections. Defaults are the `deliver` profile, a disabled kill switch, one concurrent task, 30-minute ticks, three attempts, three stalls, an eight-hour run budget, automatic provider detection on `origin`, hybrid synchronization, automatic working language, first-sync bootstrap, branch delivery, an isolated unattended checkout, and automatic executor selection. Defaults do not start a run or install a schedule by themselves. The copyable forge example enables the kill switch until adoption review is complete.
+
+Environment overrides remain an allowlist. In addition to the existing context/runtime/MCP variables, automation accepts `AI_AGENT_PLAYBOOK_AUTOMATION_PROFILE`, `AI_AGENT_PLAYBOOK_AUTOMATION_KILL_SWITCH`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_PARALLEL`, `AI_AGENT_PLAYBOOK_AUTOMATION_TICK_MINUTES`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_ATTEMPTS`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_STALLED`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_WALL_MINUTES`, `AI_AGENT_PLAYBOOK_FORGE_PROVIDER`, `AI_AGENT_PLAYBOOK_FORGE_REMOTE`, `AI_AGENT_PLAYBOOK_FORGE_SYNC`, `AI_AGENT_PLAYBOOK_FORGE_LANGUAGE`, `AI_AGENT_PLAYBOOK_FORGE_AUTO_BOOTSTRAP`, `AI_AGENT_PLAYBOOK_GIT_AUTO_COMMIT`, `AI_AGENT_PLAYBOOK_GIT_AUTO_PUSH`, and `AI_AGENT_PLAYBOOK_EXECUTOR_PROVIDER`. Current-request deny flags and clear opt-out instructions apply after configuration and can only narrow authority.
 
 Trusted target config files must be regular JSON files under the target playbook root. Malformed JSON, symlinked config files, and runtime paths outside `.ai-agent-playbook/runtime/` are reported as conflicts.
+
+## Automation readiness and forge queue boundaries
+
+`automation doctor` requires Git `2.39.0+` when the effective policy needs Git operations. On a detected GitHub read path, an installed GitHub CLI must be `2.80.0+`. Missing GitHub Projects scope is a warning and never triggers an authentication refresh. An installed Gitea `tea` below `0.14.2` is also a warning because the controller can use the documented REST fallback.
+
+Doctor reports the user checkout's dirty state and whether unattended execution is isolated. A dirty user checkout is acceptable only with `git.unattendedWorkspace: "isolated-checkout"`: unattended work, including `--no-git`, uses a separate checkout created from a committed Git baseline, so dirty and untracked user files are excluded. A non-Git unattended target is rejected. A dirty non-isolated checkout is a conflict. Scheduler readiness reports only local executable availability or hosted provider/repository compatibility; it does not prove that a schedule is registered, Actions is enabled, a runner is healthy, credentials work, or a live remote write succeeds.
+
+When remote reads are allowed, `automation start` discovers open non-pull-request issues with the configured ready label, excludes closed or paused issues, and merges them without replacing approved local tasks. Discovery runs both when a run is created and when the same non-terminal run is reused; newly eligible issues are appended idempotently under the run lease. Remote titles, bodies, and criteria are untrusted data; remote commands and paths are not adopted, and queued issues remain paused until a reviewed local execution mapping supplies trusted paths and verification argv. `--no-remote` and `--offline` skip this lookup entirely.
+
+For a linked issue, a tick inspects remote state before claim and after executor work when the forge transport is available. A configured pause label, removal of the ready label, or issue closure pauses the task or run. Requirement drift before claim can be imported into the still-unclaimed task; drift after executor work pauses as `needs-reconcile` before verification or delivery. If remote inspection is unavailable, this guard cannot make a remote-state claim and the local policy determines whether execution may continue. `forge reconcile` previews by default; `--run-id <id> --apply` can record an eligible pre-claim import or reconciliation pause in the schema v2 ledger, but it never silently approves or resumes a run.
 
 ## Runtime indexes
 
@@ -89,11 +101,23 @@ Runtime artifact JSON must keep a stable evidence envelope: `schemaVersion`, `ki
 
 ## Workflow run records
 
-`workflow run-preview` is the current implemented workflow command. It reads a target-local recipe first, falls back to the bundled recipe, parses the run contract, and returns generated evidence without writing files.
+`workflow run-preview` reads a target-local recipe first, falls back to the bundled recipe, parses the run contract, and returns generated evidence without writing files.
 
-Future `workflow run-start` behavior belongs to the scaffold tier, not project-write. It may write only under `.ai-agent-playbook/workflows/runs/`, and only after an explicit command plus apply flag. A valid run-start write must create a bounded run manifest, criteria checklist, evidence notes stub, and handoff stub. It must reject missing recipes, empty manifests, path traversal, project-source destinations, trusted memory destinations, and overwrites of existing run records unless a safe unique path is created.
+`workflow run-start` belongs to the scaffold tier, not project-write. It writes only under `.ai-agent-playbook/workflows/runs/` after an explicit `--apply`, creating a bounded run manifest, criteria checklist, evidence notes stub, and handoff stub. It rejects missing recipes, empty manifests, path traversal, project-source destinations, trusted memory destinations, and unsafe overwrites.
 
 Run records are operational logs, not durable project truth. Promote only reviewed, stable facts into `memory/`, `contracts/`, maps, decisions, or runbooks through the canon/documentation flow.
+
+## Resumable automation ledger
+
+`plan new --automation` pairs human-readable Markdown with a `workflow.plan.v2` JSON sidecar. The sidecar carries stable task IDs, dependencies, priority, risk, acceptance criteria, argv verification commands, delivery group, and remote eligibility. `plan validate` reports both structural validity and whether an explicitly approved plan is ready to run.
+
+`automation start` creates a schema v2 run directory with `manifest.json`, `tasks.json`, append-only `ledger.jsonl`, derived `state.json`, `remote.json`, `lease.json`, `summary.md`, `handoff.md`, and `evidence/`. Legacy schema v1 runs are read-compatible and remain read-only; the compatibility path does not overwrite or silently upgrade them.
+
+The task path is `planned -> ready -> claimed -> running -> verifying -> review -> completed`, with `paused`, `blocked`, and `cancelled` interruption states. Progress is completed tasks divided by total tasks and passed criteria divided by total criteria. Attempts, commits, generated code, executor claims, and elapsed time do not count as progress.
+
+One controller writes the ledger. A local lease uses a 30-second heartbeat, two-minute expiry, and monotonically increasing fencing token. A tick claims at most one dependency-ready task, invokes the selected executor with a scrubbed environment, has the controller rerun declared verification, records evidence, performs permitted Git/forge delivery, and checkpoints before releasing the lease. The supervisor repeats these short ticks within configured budgets.
+
+`automation start` is itself a write command and can coordinate remotely under the effective profile; it has no `--apply` preview gate. Use plan validation, forge previews, and `--no-remote` when a local-only run is intended. Hosted and OS schedules remain preview-first and require `automation schedule --apply`.
 
 ## MCP tool surface
 
@@ -103,9 +127,9 @@ Start the local server with:
 npx ai-agent-playbook mcp
 ```
 
-An MCP-capable AI app can register that command and then call tools such as `runtime_schema_check`, `writing_naturalness_check`, `writing_naturalness_report`, `operator_search`, `operator_research`, `operator_analyze_deep`, `source_function_clones`, `ast_grep_search`, `lsp_symbols`, `contracts_check`, `managed_check`, and `qa_image_diff`. The writing tools accept `engine: "auto" | "js" | "python"` and remain read-only even when they call the optional local Python engine.
+An MCP-capable AI app can register that command and then call tools such as `runtime_schema_check`, `operator_search`, `automation_status`, `automation_plan_validate`, `forge_status`, `forge_bootstrap_plan`, and `forge_sync_plan`. Forge plan tools require a target and use the same target-aware provider/capability inspection as their gated apply counterparts. These default tools do not execute a task or mutate remote state.
 
-The MCP server exposes only read-only tools. It does not expose bootstrap, skill install/update/uninstall, managed apply operations, contract snapshot apply, run record, AST rewrite/apply, LSP rename, automatic doctor execution, or blocking/continuation behavior.
+`--enable-write-tools` adds the existing bounded playbook write tools. The independent `--enable-forge-write-tools` gate adds only `forge_bootstrap_apply` and `forge_sync_apply`; both require a call argument `apply: true`. Even with both gates, MCP does not expose push, automation tick/supervisor, merge, release, delete, force-push, arbitrary project source writes, AST rewrite/apply, or LSP rename.
 
 ## Skills lifecycle
 
@@ -209,7 +233,7 @@ Path-scoped context lives under `.ai-agent-playbook/memory/context/`. Context ma
 
 ## Runs ledger
 
-`runs/` captures in-progress execution state and evidence. It is different from `worklogs/`:
+The original `run start/status/record/summarize` surface captures manually recorded in-progress state and evidence. It is different from the schema v2 automation controller and from `worklogs/`:
 
 - `runs/` is for the current task: criteria, evidence, blockers, cleanup, and resumable status.
 - `worklogs/` is for durable history after milestones, blockers, direction changes, or long debugging.

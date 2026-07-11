@@ -31,6 +31,7 @@
 - `mcp-server-design`: MCP tool, resource, prompt, 권한 단계, write gate, cache/index 표면을 설계할 때.
 - `context-engineering-memory-design`: agent instruction, context surface, prompt/cache budget, project memory, compaction, stale fact 처리를 설계하거나 검토할 때.
 - `agent-orchestration-handoff`: agent, subagent, worker, review pass, long-running handoff의 bounded contract와 evidence ledger를 다룰 때.
+- `forge-automation-control`: GitHub 또는 Gitea issue, pull request, Actions, scheduled tick, local fallback run으로 재개 가능한 작업을 조정하거나 자동화할 때.
 - `skill-pack-governance`: skill pack, taxonomy category, compatibility wrapper, reference routing, 번역, install/sync 동작을 다룰 때.
 - `runtime-index-cache-design`: runtime report, index, graph, cache, artifact schema, invalidation, canon promotion을 설계하거나 검토할 때.
 - `capability-witness-history`: capability witness, baseline comparison, skipped/degraded status, runtime reliability history를 다룰 때.

@@ -15,7 +15,7 @@ Use one of these forms:
 | `npx ai-agent-playbook ...` | Best default for trying the latest published package without adding it to a project. |
 | `aapb ...` | Use after `npm install -g ai-agent-playbook` when you want a short global command. |
 | `node .\bin\aapb.mjs ...` | Use inside a local source checkout of this repository. |
-| `npx ai-agent-playbook mcp` | Register this as a local stdio MCP server command when an AI app should call read-only playbook tools for you. Add `--enable-write-tools` only for explicit opt-in scaffold/managed-write tools. |
+| `npx ai-agent-playbook mcp` | Register this as a local stdio MCP server command when an AI app should call default read-only playbook tools. `--enable-write-tools` and `--enable-forge-write-tools` are independent explicit opt-ins. |
 
 In the examples below, replace `npx ai-agent-playbook` with `aapb` or `node .\bin\aapb.mjs` when that matches your setup.
 
@@ -51,7 +51,7 @@ npx ai-agent-playbook bootstrap ".\example app" --dry-run
 | `--dry-run` | Preview a write operation without changing files. Use this before install, update, bootstrap, or guide sync. |
 | `--check` | Check status without writing files. Used by guide sync. |
 | `--json` | Print machine-readable output. Useful for agents, scripts, and detailed inspection. |
-| `--apply` | Actually perform a preview-first managed operation such as path migration or uninstall. |
+| `--apply` | Actually perform a preview-first managed operation such as path migration, remote forge bootstrap/sync, or scheduler installation. |
 | `--force` | Allow an overwrite where the command normally refuses. Review output before using it. |
 | `--force-managed` | Overwrite or remove a managed skill even when its local hash changed. |
 | `--force-unmanaged` | Take over a same-name unmanaged skill. Use only when you know it belongs to this playbook. |
@@ -68,7 +68,7 @@ Command-specific options appear where they are needed:
 | `--max-chars N` | Limit generated context size. |
 | `--strict` | Treat doctor warnings as failures. |
 | `--reminder` | Return a small doctor reminder signal instead of the full report. |
-| `--profile <name>` | Add a stack-specific bootstrap profile after the target stack is known. |
+| `--profile <name>` | Add a stack-specific bootstrap profile, or request an automation profile that is no broader than configured authority. |
 | `--local-only` | Add `.ai-agent-playbook/` to the target project's `.gitignore` during bootstrap. |
 | `--title <text>` | Title for a generated plan, worklog, or run. |
 | `--month YYYY-MM` | Month for a worklog summary. |
@@ -86,6 +86,18 @@ Command-specific options appear where they are needed:
 | `--engine auto\|js\|python` | Select the prose-analysis engine for `writing naturalness-check`; `auto` uses Python when available and keeps the JavaScript fallback. |
 | `--root <dir>` | Directory inside the target project for `writing naturalness-report`. |
 | `--max-files N` | Limit the number of prose files inspected by a bounded report command. |
+| `--provider auto\|github\|gitea` | Select or constrain forge provider detection. An uncertain self-hosted provider remains non-writable. |
+| `--remote <name>` | Select the Git remote inspected by `forge status`; project config remains the normal persistent setting. |
+| `--lang auto\|ko\|en` | Select the human-facing language recorded by `plan new --automation`. |
+| `--no-remote` | Disable forge APIs and remote Git delivery for this invocation while retaining permitted local work. |
+| `--remote-read-only` | Allow forge inspection but disable forge mutation and remote Git delivery. |
+| `--no-git` | Disable branch, commit, tag, and push work for this invocation. |
+| `--offline` | Disable network access. `automation tick` and `supervise` fail closed before any executor because the harness cannot prove process-level network isolation; use `--no-remote` when local execution may still use an agent network. |
+| `--no-interactive` | Run an automation tick or supervisor in unattended mode, using the configured isolated workspace policy. |
+| `--approve-review` | Supply the explicit review gate for a task whose verified state is waiting in `review`. |
+| `--enable-github-agent-task` | Allow explicit preview selection of the `github-agent-task` executor adapter. It is never auto-selected. |
+| `--instruction <text>` | Pass a current-request restriction to forge/automation policy resolution. Clear remote opt-out language can narrow permission but never expand it. |
+| `--platform <name>` | Select `github-actions`, `gitea-actions`, `windows-task`, or `systemd-user` for `automation schedule`. |
 
 ## First-time setup
 
@@ -136,7 +148,13 @@ Project playbook commands manage `.ai-agent-playbook/` in one target repository.
 
 Use `--local-only` with `bootstrap` when the target project's `.ai-agent-playbook/` should be added to that project's `.gitignore`.
 
-`config preview` reads `.ai-agent-playbook/config.json` and `.ai-agent-playbook/config.local.json` when they exist. It does not create either file. Precedence is built-in defaults, optional `--user-config`, target config, target-local config, then explicit environment overrides such as `AI_AGENT_PLAYBOOK_CONTEXT_MAX_CHARS`, `AI_AGENT_PLAYBOOK_DEFAULT_RECIPE`, `AI_AGENT_PLAYBOOK_RUNTIME_CACHE_DIR`, `AI_AGENT_PLAYBOOK_INDEX_MAX_FILES`, and `AI_AGENT_PLAYBOOK_ENABLE_WRITE_TOOLS`.
+`config preview` reads `.ai-agent-playbook/config.json` and `.ai-agent-playbook/config.local.json` when they exist. It does not create either file. Precedence is built-in defaults, optional `--user-config`, target config, target-local config, then explicit environment overrides.
+
+The 0.5.4 defaults add `automation`, `forge`, `git`, and `executor` sections. They select `automation.profile: "deliver"`, `automation.killSwitch: false`, one task at a time, a 30-minute tick, three attempts, three stalled ticks, an eight-hour wall budget, `forge.provider: "auto"`, remote `origin`, `forge.apiBaseUrl: null`, hybrid synchronization, automatic working-language selection, first-sync bootstrap, branch delivery, an isolated unattended checkout, and automatic executor selection. For a self-hosted Gitea instance on a custom port or subpath, set a credential-free API base such as `https://code.example/gitea/api/v1`; embedded credentials, query strings, fragments, and non-local HTTP URLs are rejected. These defaults do not start a run or install a schedule by themselves. The copyable `forge.example.json` intentionally changes the kill switch to `true` for safer adoption. `automation start` is a write command and, under effective remote-write permission, can coordinate the approved plan and auto-bootstrap missing managed assets. Use forge previews first or pass `--no-remote` when only a local run is intended.
+
+Automation environment overrides are limited to `AI_AGENT_PLAYBOOK_AUTOMATION_PROFILE`, `AI_AGENT_PLAYBOOK_AUTOMATION_KILL_SWITCH`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_PARALLEL`, `AI_AGENT_PLAYBOOK_AUTOMATION_TICK_MINUTES`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_ATTEMPTS`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_STALLED`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_WALL_MINUTES`, `AI_AGENT_PLAYBOOK_FORGE_PROVIDER`, `AI_AGENT_PLAYBOOK_FORGE_REMOTE`, `AI_AGENT_PLAYBOOK_FORGE_SYNC`, `AI_AGENT_PLAYBOOK_FORGE_LANGUAGE`, `AI_AGENT_PLAYBOOK_FORGE_AUTO_BOOTSTRAP`, `AI_AGENT_PLAYBOOK_GIT_AUTO_COMMIT`, `AI_AGENT_PLAYBOOK_GIT_AUTO_PUSH`, and `AI_AGENT_PLAYBOOK_EXECUTOR_PROVIDER`, in addition to the existing context/runtime/MCP variables. Custom executor configuration is an argv array such as `["agent-cli", "--json"]`, not an interpolated shell command.
+
+Current-request deny flags and clear opt-out instructions are applied after configuration. They can narrow authority but cannot enable a broader profile, remote write, Git delivery, or network access.
 
 Context files support markdown frontmatter: `id`, `globs`, `alwaysApply`, `freshness`, and `priority`. Use `context status` before loading more project memory for a path. It is read-only and safe to run often.
 
@@ -303,7 +321,7 @@ Runs track in-progress work. They are useful when a task is long enough that the
 
 `run record` rejects messages that look like local absolute paths or credential assignments. Evidence paths must be portable relative paths. Runs do not replace worklogs: use runs while executing, then promote durable facts to `CURRENT.md`, maps, runbooks, decisions, contracts, or worklogs.
 
-`workflow run-start` is separate from the older `run start` ledger. It uses workflow recipes and writes only new scaffold files under `.ai-agent-playbook/workflows/runs/` when `--apply` is present. Without `--apply`, it returns the planned files without writing.
+`run start` and `workflow run-start` remain schema v1 creation surfaces for manual notes and recipe scaffolds. `run status` recognizes an automation v2 directory and reads it through the common reducer/store, while `run record` and `run summarize` refuse to append to or overwrite a v2 run. `workflow run-start` writes only new scaffold files under `.ai-agent-playbook/workflows/runs/` when `--apply` is present; without `--apply`, it returns the planned files without writing. Schema v1 inputs remain compatibility-read-only from the automation surface and are never converted in place.
 
 ## Contracts
 
@@ -356,10 +374,15 @@ The server exposes read-only tools for:
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules and project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
 - QA and deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`
+- forge automation reads: `automation_status`, `automation_plan_validate`, `forge_status`, `forge_bootstrap_plan`, `forge_sync_plan`
+
+The two forge plan tools require a target project and derive provider and effective capabilities from the same target-aware inspection used by their apply counterparts. A reviewed preview therefore cannot silently expand from an `auto`/static zero-operation plan into target-specific writes at apply time.
 
 The server also exposes prompts for `repo_onboarding_runbook`, `harness_extension_plan`, `harness_governance_review`, `reference_adoption_review`, `backend_change_review`, `architecture_boundary_review`, `auth_access_control_review`, `dependency_supply_chain_review`, `package_release_readiness_review`, `deployment_release_review`, `mobile_release_review`, `connector_integration_review`, `design_reference_handoff_review`, `frontend_quality_review`, `interactive_experience_review`, `data_integrity_review`, `data_pipeline_review`, `database_change_review`, `adr_spec_handoff_review`, `documentation_package_review`, `natural_writing_review`, `workflow_run_review`, `eval_harness_review`, `capability_witness_review`, `pre_action_fact_gate_review`, `knowledge_source_review`, `canon_promotion_review`, `index_interpretation_review`, `agent_orchestration_review`, `repo_graph_review`, `ci_quality_gate_review`, `release_deployment_gate_review`, and `security_compliance_gate_review`. Prompts are reusable task briefs; they do not grant write access by themselves.
 
-The MCP layer is read-only by default. With `mcp --enable-write-tools`, it also exposes `workflow_run_start`, `write_gate_advisory`, `reference_ledger_update`, `reference_ledger_decision`, and `reference_source_registry_update`; every write-capable tool requires a tool-call `apply` boolean and stays dry-run when `apply` is false. It still does not expose bootstrap, install, update, uninstall, prune, snapshot apply, run record, canon promotion, rename, rewrite, or any project source write command.
+The MCP layer is read-only by default. With `mcp --enable-write-tools`, it also exposes `workflow_run_start`, `write_gate_advisory`, `reference_ledger_update`, `reference_ledger_decision`, and `reference_source_registry_update`; every write-capable tool requires a tool-call `apply` boolean and stays dry-run when `apply` is false.
+
+Forge writes use a separate server gate. `mcp --enable-forge-write-tools` exposes only `forge_bootstrap_apply` and `forge_sync_apply`, and both still require a tool-call `apply: true`. Preview and apply resolve the same target, provider, effective capability set, and configured language. These tools can perform authenticated remote coordination writes, so enable them only for a bounded session after reviewing provider status and permissions. This MCP surface does not expose push, an automation tick or supervisor, merge, release, delete, force-push, or arbitrary project source writes.
 
 ## Adapter setup
 
@@ -381,10 +404,48 @@ Use these commands when you want predictable project-memory paths instead of ad 
 | Command | When to use it | Writes files? | Example |
 | ------- | -------------- | ------------- | ------- |
 | `plan new <target>` | Create a dated plan under `.ai-agent-playbook/workflows/plans/`. | Yes, unless `--dry-run` | `npx ai-agent-playbook plan new <target-project> --title "Feature slice" --dry-run` |
+| `plan new <target> --automation` | Create human-readable Markdown plus a `workflow.plan.v2` JSON sidecar with stable task fields. | Yes, unless `--dry-run` | `npx ai-agent-playbook plan new <target-project> --automation --title "Forge loop" --dry-run` |
+| `plan validate <target>` | Validate a structured sidecar, dependency graph, criteria, argv verification, and approval readiness. | No | `npx ai-agent-playbook plan validate <target-project> --plan .ai-agent-playbook/workflows/plans/<plan>.plan.json --json` |
 | `worklog new <target>` | Create a dated worklog under `.ai-agent-playbook/workflows/worklogs/YYYY-MM/`. | Yes, unless `--dry-run` | `npx ai-agent-playbook worklog new <target-project> --title "Feature slice" --dry-run` |
 | `worklog summarize <target>` | Create or refresh a monthly worklog summary. | Yes, unless `--dry-run` | `npx ai-agent-playbook worklog summarize <target-project> --month 2026-06 --dry-run` |
 
-Existing plan and worklog files are not overwritten unless `--force` is provided.
+Existing plan and worklog files are not overwritten unless `--force` is provided. An automation sidecar starts as a draft and is not runnable until every task has acceptance criteria and safe argv verification commands and `approval.status` is `approved`.
+
+## Forge coordination and resumable automation
+
+Forge commands use capability detection and the effective permission profile. GitHub and Gitea share the issue, label, milestone, pull-request, and Actions core; unsupported Project, View, Discussion, or child-task features use documented fallbacks. Missing remote access never prevents local ledger operation.
+
+| Command | When to use it | Writes files or remote state? | Example |
+| ------- | -------------- | ----------------------------- | ------- |
+| `forge status <target>` | Inspect selected remote/provider, server/API version, tooling, auth, repository permission, capability evidence, and policy-versus-verified write mode. | No mutation; may perform permitted read-only inspection | `npx ai-agent-playbook forge status <target-project> --json` |
+| `forge bootstrap <target>` | Preview missing managed labels, milestone, Project fields, Views, or provider fallbacks; add `--apply` to create supported missing assets. | No unless `--apply`; apply writes remote state | `npx ai-agent-playbook forge bootstrap <target-project> --milestone 0.5.4 --json` |
+| `forge sync <target>` | Preview plan/run task synchronization; add `--apply` after reviewing operations. A sidecar apply requires a complete approved plan. | No unless `--apply`; apply writes remote state | `npx ai-agent-playbook forge sync <target-project> --run-id <run-id> --json` |
+| `forge reconcile <target>` | Preview requirement drift from reviewed JSON snapshots; add `--run-id` and `--apply` to record a valid pre-claim import or reconciliation pause in the local run. | No unless `--apply`; apply writes the schema v2 ledger/state | `npx ai-agent-playbook forge reconcile <target-project> --local-task <local.json> --remote-issue <remote.json> --run-id <run-id> --apply --json` |
+| `automation doctor <target>` | Check executor, effective policy, tool versions, forge access, dirty-checkout safety, and preview-first scheduler modes before starting. | No mutation | `npx ai-agent-playbook automation doctor <target-project> --json` |
+| `automation start <target>` | Turn an approved `workflow.plan.v2` sidecar into a schema v2 run and coordinate it remotely when policy permits. | Yes; writes the local run and can write remote coordination state | `npx ai-agent-playbook automation start <target-project> --plan <plan.json> --no-remote --json` |
+| `automation tick <target>` | Claim and process at most one dependency-ready task, verify it in the controller, deliver when permitted, and checkpoint. | Yes; may write code, ledger/evidence, Git, and remote state | `npx ai-agent-playbook automation tick <target-project> --run-id <run-id> --no-interactive --json` |
+| `automation supervise <target>` | Repeat short ticks within the configured wall and stall budgets. | Yes; same bounded effects as repeated ticks | `npx ai-agent-playbook automation supervise <target-project> --run-id <run-id> --no-interactive --json` |
+| `automation status <target>` | Read the latest or selected schema v2 run, task/criterion progress, blockers, and checkpoints. | No | `npx ai-agent-playbook automation status <target-project> --run-id <run-id> --json` |
+| `automation pause\|resume\|stop <target>` | Persist an operator control event. Pause is resumable; stop cancels the run. | Yes; writes the local ledger and derived state | `npx ai-agent-playbook automation pause <target-project> --run-id <run-id> --reason "quota" --json` |
+| `automation schedule <target>` | Preview one of four scheduler definitions; add `--apply` to write a hosted workflow or register a local schedule. Hosted start/tick commands and local tick commands persist effective deny flags; offline apply and hosted `--no-git` apply are rejected because those jobs cannot deliver safely. | No unless `--apply` | `npx ai-agent-playbook automation schedule <target-project> --platform github-actions --json` |
+
+`automation start` is not a dry-run command and has no `--apply` gate. `--no-remote` prevents forge and remote Git effects but still creates the local run. Preview and validate the structured plan, run `forge status`, `automation doctor`, and the relevant `forge bootstrap`/`forge sync` preview before starting a remotely coordinated run.
+
+`forge sync --plan ... --apply` rejects draft, invalid, or incomplete sidecars before forge inspection or transport creation. When a plan-only sync finds an existing marker-owned child issue without an `updatedAt` baseline, it reuses the issue only if its title and composed body exactly match the approved plan. A mismatch raises `forge.issue.reconcile-required`; title, body, acceptance-criteria, and status updates require an explicit reviewed snapshot and CAS match.
+
+Generated GitHub/Gitea workflows can initialize a fresh runner when repository variable `AAPB_AUTOMATION_PLAN` names a committed, approved plan sidecar. After restoring the run cache, they pass that value as the quoted environment expansion `"$AAPB_AUTOMATION_PLAN"` to an idempotent `automation start`, then run one tick. If the variable is absent, an existing run must already be available from the checkout or restored cache. Reusing the same `planId` reuses the same default run and does not rewrite it with changed plan contents.
+
+The hosted cache contains `.ai-agent-playbook/workflows/runs` and the external managed checkout, and is saved by the cache action's post-job phase. It is a last-completed-job/tick checkpoint, not durable storage for an in-progress tick: timeout, cancellation, runner loss, or cache eviction can roll recovery back to the previous saved checkpoint. Gitea also requires its runner cache service to be configured and reachable. Verify save/restore behavior for both paths before unattended use and reconcile ambiguous forge/Git effects before replay.
+
+Windows Task Scheduler registrations use a deterministic project-path suffix and do not pass `/F`; an existing task conflict is reported instead of being overwritten. Systemd user units and hosted workflow files likewise preserve differing existing content.
+
+The default executor selector reports ambiguity when multiple local agents are equally eligible; set `executor.provider` explicitly. `github-agent-task` remains preview-only and requires the explicit preview enable flag. Unattended tasks, including `--no-git`, use a managed checkout created from a committed Git baseline so dirty and untracked files are excluded. A non-Git project must run interactively or establish a committed baseline first.
+
+When remote reads are permitted, `automation start` queries open issues carrying the configured ready label and appends eligible issues to the approved plan. It excludes pull requests, closed issues, and issues carrying the configured pause label. Discovery runs when a run is first created and whenever the same non-terminal run is reused, so an issue labeled later is appended idempotently on a later start. Remote titles, bodies, labels, and checklists remain untrusted data; remote verification commands and file paths are never executed, and an imported issue remains paused until a reviewed local execution mapping is supplied. `--no-remote` and `--offline` skip ready-issue discovery.
+
+For linked forge-issue tasks, a tick re-reads the issue before claim and after executor completion when remote reads succeed. A pause label, removed ready label, or closed issue pauses the task and run. Requirement changes found before claim are imported into the still-unclaimed task; changes found after execution pause the run as `needs-reconcile` before verification/delivery continues. Offline, no-remote, or unavailable read transport cannot provide this guard, so the local checkpoint remains authoritative and the remote state must be reconciled later.
+
+`automation doctor` treats Git `2.39.0` as the minimum only when the effective policy requires Git. On a detected GitHub read path, an installed `gh` below `2.80.0` is a conflict; missing Projects scope is a capability warning and removes Project/View operations without an automatic scope refresh. `policyWrites` records configured authority, while `verifiedWrites` and effective `writes` require verified authentication and repository write permission. A self-hosted Gitea candidate is non-writable until explicit provider/API-base trust, public version/OpenAPI inspection, and authenticated repository permission checks succeed. An older `tea` is a warning because the Gitea REST transport remains available. A dirty user checkout is reported as safe for unattended work only when `git.unattendedWorkspace` is `isolated-checkout`; a dirty non-isolated unattended workspace is a conflict. Scheduler mode status reports a local executable or detected provider/repository prerequisite, not successful registration, an enabled Actions service, runner health, credentials, or a completed remote smoke test.
 
 ## Safe default workflow
 

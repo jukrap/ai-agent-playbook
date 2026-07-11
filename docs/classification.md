@@ -8,7 +8,7 @@ The content is not agent-specific. Codex is one installation target. The source 
 
 ## Skill categories
 
-- `skills/ai-harness`: MCP, skill, agent, context, fact gate, witness, cache, index, and harness design workflows.
+- `skills/ai-harness`: MCP, forge automation, agent, context, fact gate, witness, cache, index, and harness design workflows.
 - `skills/architecture`: boundary, feature slice, domain model, monorepo/package ownership, dependency direction, and coupling review workflows.
 - `skills/backend`: API contract, backend change safety, request/error contract, job/worker, connector, server-rendered flow, and integration workflows.
 - `skills/data`: analytics pipeline, ETL, source registry, reporting, data contract, and quality workflows.
@@ -68,6 +68,7 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 - `mcp-server-design`: designs MCP tools, resources, prompts, permission tiers, write gates, and cache/index surfaces.
 - `context-engineering-memory-design`: reviews agent instructions, context surfaces, prompt/cache budget, project memory, compaction, durable memory promotion, and stale fact handling.
 - `agent-orchestration-handoff`: reviews multi-agent worker contracts, context budgets, evidence ledgers, reconciliation gates, and handoffs.
+- `forge-automation-control`: controls provider capability detection, permission profiles, resumable ticks, scheduler recovery, Git delivery, and local fallback.
 - `skill-pack-governance`: governs skill taxonomy growth, wrappers, reference routing, translations, install/sync behavior, and reusable skill-pack adoption.
 - `runtime-index-cache-design`: reviews runtime reports, indexes, graphs, caches, artifact schemas, invalidation, canon promotion, and generated evidence boundaries.
 - `capability-witness-history`: reviews append-only capability witnesses, baseline comparison, skipped/degraded status, and runtime reliability history.

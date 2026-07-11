@@ -1,0 +1,63 @@
+name: AAPB 자동화 tick
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: aapb-automation-${{ gitea.repository }}
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    if: ${{ vars.AAPB_AUTOMATION_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Credential을 저장하지 않고 repository checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          token: ${{ secrets.AAPB_FORGE_TOKEN }}
+
+      - name: 설정된 forge token 확인
+        env:
+          GITEA_TOKEN: ${{ secrets.AAPB_FORGE_TOKEN }}
+        run: test -n "$GITEA_TOKEN"
+
+      - name: Append-only 자동화 ledger 복원 및 checkpoint
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        with:
+          path: |
+            .ai-agent-playbook/workflows/runs
+            ~/.cache/ai-agent-playbook/checkouts
+          key: aapb-ledger-${{ gitea.run_id }}-${{ gitea.run_attempt }}
+          restore-keys: aapb-ledger-
+
+      - name: 설정된 자동화 run 초기화 또는 재사용
+        env:
+          AAPB_AUTOMATION_PLAN: ${{ vars.AAPB_AUTOMATION_PLAN }}
+          GITEA_TOKEN: ${{ secrets.AAPB_FORGE_TOKEN }}
+          NPM_CONFIG_IGNORE_SCRIPTS: "true"
+        run: |
+          if [ -n "$AAPB_AUTOMATION_PLAN" ]; then
+            npx --yes ai-agent-playbook@0.5.4 automation start . --plan "$AAPB_AUTOMATION_PLAN" --json
+          fi
+
+      - name: Controller tick 하나 실행
+        id: aapb-tick
+        env:
+          AAPB_AUTOMATION_ENABLED: ${{ vars.AAPB_AUTOMATION_ENABLED }}
+          GITEA_TOKEN: ${{ secrets.AAPB_FORGE_TOKEN }}
+          GIT_TERMINAL_PROMPT: "0"
+          NPM_CONFIG_AUDIT: "false"
+          NPM_CONFIG_FUND: "false"
+          NPM_CONFIG_IGNORE_SCRIPTS: "true"
+        run: npx --yes ai-agent-playbook@0.5.4 automation tick . --no-interactive --json

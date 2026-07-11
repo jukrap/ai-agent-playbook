@@ -9,6 +9,8 @@
   },
   "permissions": {
     "mcpDefaultTier": "read",
-    "writeToolsRequireOptIn": true
+    "writeToolsRequireOptIn": true,
+    "forgeWriteToolsRequireSeparateOptIn": true,
+    "automationTickExposedViaMcp": false
   }
 }

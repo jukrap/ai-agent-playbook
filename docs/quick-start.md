@@ -152,7 +152,7 @@ Managed uninstall preserves edited project memory and does not edit `.gitignore`
 | `skills install` | Copy reusable skills to user-level skill folders. |
 | `bootstrap` | Copy project-memory files to one target project. |
 | `operator check` | Read-only project health checkpoint. |
-| `mcp` | Start a local read-only MCP server for an AI app. |
+| `mcp` | Start a local MCP server whose default tools are read-only. Write tools require explicit server and call gates. |
 | `--dry-run` | Preview a write operation without changing files. |
 | `--apply` | Perform a preview-first managed operation. |
 | `--json` | Print machine-readable output for agents and scripts. |
@@ -161,7 +161,7 @@ Managed uninstall preserves edited project memory and does not edit `.gitignore`
 
 - It does not add slash commands.
 - It does not install a Codex plugin.
-- It does not run automatically in the background.
+- Installing or bootstrapping does not start background automation. A schedule runs only after an explicit `automation schedule --apply` and provider/OS opt-in.
 - It does not register MCP settings automatically.
 - It does not block commits.
 - It does not remove other people's skills by default.

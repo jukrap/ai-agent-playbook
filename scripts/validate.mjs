@@ -222,18 +222,38 @@ async function validateMcpDocs() {
   }
 
   const writeBlock = /const writeTools = enableWriteTools \? \[([\s\S]*?)\]\s*:\s*\[\];/.exec(mcpSource);
-  const writeToolNames = writeBlock
+  const managedWriteToolNames = writeBlock
     ? unique([...writeBlock[1].matchAll(/tool\('([^']+)'/g)].map((match) => match[1])).sort()
     : [];
   if (!writeBlock) {
     errors.push(`${mcpSourcePath}: Could not locate opt-in write tool registration block.`);
   }
+  const forgeWriteBlock = /const forgeWriteTools = enableForgeWriteTools \? \[([\s\S]*?)\]\s*:\s*\[\];/.exec(mcpSource);
+  const forgeWriteToolNames = forgeWriteBlock
+    ? unique([...forgeWriteBlock[1].matchAll(/tool\('([^']+)'/g)].map((match) => match[1])).sort()
+    : [];
+  if (!forgeWriteBlock) {
+    errors.push(`${mcpSourcePath}: Could not locate opt-in forge write tool registration block.`);
+  }
+  const writeToolNames = unique([...managedWriteToolNames, ...forgeWriteToolNames]).sort();
 
   const requiredPreviewTools = [
     'reference_source_registry_update_preview',
     'reference_ledger_update_preview',
     'reference_ledger_decision_preview'
   ];
+  const requiredAutomationReadTools = [
+    'automation_status',
+    'automation_plan_validate',
+    'forge_status',
+    'forge_bootstrap_plan',
+    'forge_sync_plan'
+  ];
+  for (const toolName of requiredAutomationReadTools) {
+    if (!mcpSource.includes(`tool('${toolName}'`)) {
+      errors.push(`${mcpSourcePath}: Missing required read-only forge/automation tool: ${toolName}`);
+    }
+  }
   const docsToCheck = [
     'docs/commands.md',
     'docs/mcp-permission-model.md',
@@ -249,6 +269,12 @@ async function validateMcpDocs() {
     for (const toolName of writeToolNames) {
       if (!content.includes(toolName)) errors.push(`${docPath}: Missing opt-in write tool: ${toolName}`);
     }
+    for (const toolName of requiredAutomationReadTools) {
+      if (!content.includes(toolName)) errors.push(`${docPath}: Missing read-only forge/automation tool: ${toolName}`);
+    }
+    if (!content.includes('--enable-forge-write-tools')) {
+      errors.push(`${docPath}: Missing separate forge write opt-in flag: --enable-forge-write-tools`);
+    }
     if (docPath.includes('mcp-permission-model')) {
       for (const toolName of requiredPreviewTools) {
         if (!content.includes(toolName)) errors.push(`${docPath}: Missing read-only preview tool: ${toolName}`);
@@ -257,7 +283,7 @@ async function validateMcpDocs() {
   }
 
   failIfFindings(errors, `MCP docs validation failed with ${errors.length} finding(s).`);
-  console.log(`Validated MCP docs for ${resourceUris.length} resources and ${writeToolNames.length} opt-in write tools.`);
+  console.log(`Validated MCP docs for ${resourceUris.length} resources, ${requiredAutomationReadTools.length} forge/automation read tools, and ${writeToolNames.length} opt-in write tools.`);
 }
 
 async function validatePublicDocs() {

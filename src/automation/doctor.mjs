@@ -282,7 +282,8 @@ export async function automationDoctor(options) {
     which,
     env: options.env ?? process.env,
     activeAdapter: options.activeAdapter ?? process.env.AI_AGENT_PLAYBOOK_ACTIVE_ADAPTER,
-    githubAgentTaskAvailable: Boolean(options.enableGithubAgentTask)
+    githubAgentTaskAvailable: Boolean(options.enableGithubAgentTask),
+    credentialStatus: options.credentialStatus
   });
   const selection = selectExecutor({
     provider: config.executor?.provider ?? 'auto',

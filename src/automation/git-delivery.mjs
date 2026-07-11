@@ -651,11 +651,12 @@ async function inspectChangedFilesForSecrets({ workspace, changedPaths, sensitiv
   const secrets = [...new Set((Array.isArray(sensitiveValues) ? sensitiveValues : [])
     .filter((value) => typeof value === 'string' && value.length >= 8 && !/[\0\r\n]/u.test(value)))];
   if (secrets.length === 0 || changedPaths.length === 0) return { ok: true };
-  const root = await realpath(path.resolve(workspace)).catch(() => path.resolve(workspace));
+  const workspaceRoot = path.resolve(workspace);
+  const root = await realpath(workspaceRoot).catch(() => workspaceRoot);
   let totalBytes = 0;
   for (const changedPath of changedPaths) {
-    const candidate = path.resolve(workspace, changedPath);
-    const relative = path.relative(root, candidate);
+    const candidate = path.resolve(workspaceRoot, changedPath);
+    const relative = path.relative(workspaceRoot, candidate);
     if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
       return gitFailure('git.secret-scan.path-unsafe', 'Secret egress scan encountered a path outside the task workspace.');
     }

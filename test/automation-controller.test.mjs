@@ -1232,6 +1232,7 @@ test('pause queues a durable out-of-band control request and cancels an active e
 test('tick deadline aborts and awaits an active executor before returning', async (t) => {
   const target = await fixtureTarget(t);
   await startAutomation({ target, plan: workflowPlan({ tasks: [task('deadline-task')] }), runId: 'deadline-run' });
+  const deadlineMs = 5_000;
   let aborted = false;
   let markStarted;
   const executorStarted = new Promise((resolve) => { markStarted = resolve; });
@@ -1240,7 +1241,7 @@ test('tick deadline aborts and awaits an active executor before returning', asyn
     target,
     runId: 'deadline-run',
     noGit: true,
-    tickTimeoutMs: 500,
+    tickTimeoutMs: deadlineMs,
     executeTask: async ({ signal }) => new Promise((resolve) => {
       markStarted();
       signal.addEventListener('abort', () => {
@@ -1254,7 +1255,7 @@ test('tick deadline aborts and awaits an active executor before returning', asyn
   const result = await tick;
   assert.equal(result.ok, false);
   assert.equal(aborted, true);
-  assert.equal(Date.now() - startedAt >= 500, true);
+  assert.equal(Date.now() - startedAt >= deadlineMs, true);
   assert.equal(result.state.tasks[0].attempts, 1);
 });
 

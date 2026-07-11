@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
@@ -849,8 +849,12 @@ test('interactive delivery preserves unrelated staged and unstaged user work and
 });
 
 test('controller blocks exact model credential egress before staging changed files', async (t) => {
-  const target = await mkdtemp(path.join(os.tmpdir(), 'aapb-secret-egress-'));
-  t.after(() => rm(target, { recursive: true, force: true }));
+  const root = await mkdtemp(path.join(os.tmpdir(), 'aapb-secret-egress-'));
+  const target = path.join(root, 'repository');
+  const workspace = path.join(root, 'workspace-link');
+  await mkdir(target);
+  await symlink(target, workspace, process.platform === 'win32' ? 'junction' : 'dir');
+  t.after(() => rm(root, { recursive: true, force: true }));
   const git = (args) => execFileSync('git', args, { cwd: target, encoding: 'utf8' }).trim();
   git(['init']);
   await writeFile(path.join(target, 'task.txt'), 'base\n');
@@ -861,7 +865,7 @@ test('controller blocks exact model credential egress before staging changed fil
   const secret = 'sk-proj-controller-only-123456789';
   await writeFile(path.join(target, 'task.txt'), `accidental ${secret}\n`);
   const delivered = await deliverGitChanges({
-    workspace: target,
+    workspace,
     branch: 'aapb/secret-egress',
     baselineHead,
     allowedPaths: ['task.txt'],

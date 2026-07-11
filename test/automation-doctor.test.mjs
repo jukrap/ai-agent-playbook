@@ -7,6 +7,7 @@ test('doctor reports GitHub capability degradation without refreshing auth scope
   const result = await automationDoctor({
     target: 'C:/repo',
     config: { automation: { profile: 'deliver' }, forge: { provider: 'auto', remote: 'origin' }, executor: { provider: 'codex' } },
+    credentialStatus: { codex: true, claude: false },
     which: async (name) => ({ git: 'git', gh: 'gh', codex: 'codex' })[name] ?? null,
     runCommand: async (call) => {
       calls.push(call);

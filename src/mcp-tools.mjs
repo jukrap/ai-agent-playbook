@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import path from 'node:path';
 import {
   buildReferenceAdoptionPlan,
   buildReferenceAdoptionQueue,
@@ -29,6 +30,7 @@ import {
   inspectReferenceProject,
   parseMaxChars,
   previewRepoGraph,
+  previewHarnessConfig,
   previewWorkflowRun,
   runtimeIndexStatus,
   searchRuntimeIndex,
@@ -64,6 +66,11 @@ import {
   runAstGrepSearch,
   sourceFunctionClones
 } from './deep-analysis.mjs';
+import { automationStatus } from './automation/controller.mjs';
+import { validateAutomationPlan } from './automation/plan-manifest.mjs';
+import { automationDoctor } from './automation/doctor.mjs';
+import { applyForgePlan, planForgeBootstrap, planForgeSync } from './forge/index.mjs';
+import { createDefaultForgeTransport } from './forge/http-transport.mjs';
 
 const READ_ONLY = {
   readOnlyHint: true,
@@ -82,9 +89,27 @@ const WRITE_CAPABLE = {
 const targetSchema = z.string().min(1).describe('Target project directory.');
 const pathSchema = z.string().min(1).optional().describe('Path inside the target project.');
 const maxResultsSchema = z.number().int().min(1).max(100).optional();
+const forgeProviderSchema = z.enum(['auto', 'github', 'gitea']).optional();
+const forgeTaskSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  status: z.string().min(1).optional(),
+  issueNumber: z.number().int().positive().optional(),
+  expectedUpdatedAt: z.string().min(1).optional(),
+  acceptanceCriteria: z.array(z.string()).optional()
+});
+const forgeApplyTaskSchema = forgeTaskSchema.superRefine((task, context) => {
+  if (task.issueNumber && !task.expectedUpdatedAt) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['expectedUpdatedAt'],
+      message: 'expectedUpdatedAt is required when forge_sync_apply updates an existing issue.'
+    });
+  }
+});
 
 export function registerPlaybookMcpTools(server, options) {
-  const { repoRoot, enableWriteTools = false } = options;
+  const { repoRoot, enableWriteTools = false, enableForgeWriteTools = false } = options;
   const tools = [
     tool('capability_catalog', 'List AI Agent Playbook capability categories, skill counts, and workflow counts.', {}, () => capabilityCatalog({ repoRoot })),
     tool('skill_catalog', 'List local skills with capability taxonomy and compatibility wrapper metadata.', {}, () => skillCatalog({ repoRoot })),
@@ -476,7 +501,70 @@ export function registerPlaybookMcpTools(server, options) {
       target: targetSchema,
       path: pathSchema,
       symbol: z.string().min(1)
-    }, (args) => lspDefinition({ target: args.target, path: args.path, symbol: args.symbol }))
+    }, (args) => lspDefinition({ target: args.target, path: args.path, symbol: args.symbol })),
+    tool('automation_status', 'Read the latest or selected local schema v2 automation run without executing a task.', {
+      target: targetSchema,
+      runId: z.string().min(1).optional()
+    }, (args) => automationStatus({ target: args.target, runId: args.runId })),
+    tool('automation_plan_validate', 'Validate a workflow.plan.v2 sidecar inside the target without writing files.', {
+      target: targetSchema,
+      plan: z.string().min(1).describe('Plan sidecar path inside the target project.')
+    }, (args) => validateAutomationPlan(resolveMcpTargetPath(args.target, args.plan))),
+    tool('forge_status', 'Inspect provider, repository, tooling, capabilities, auth, and effective read/write mode without remote mutation.', {
+      target: targetSchema,
+      provider: forgeProviderSchema,
+      noRemote: z.boolean().optional(),
+      remoteReadOnly: z.boolean().optional(),
+      offline: z.boolean().optional()
+    }, async (args) => {
+      const preview = await previewHarnessConfig({ target: args.target });
+      const config = structuredClone(preview.config);
+      if (args.provider) config.forge.provider = args.provider;
+      const doctor = await automationDoctor({
+        target: args.target,
+        config,
+        noRemote: Boolean(args.noRemote),
+        remoteReadOnly: Boolean(args.remoteReadOnly),
+        offline: Boolean(args.offline)
+      });
+      return doctor.forge;
+    }),
+    tool('forge_bootstrap_plan', 'Preview managed labels, milestone, project fields, and views without remote mutation.', {
+      target: targetSchema,
+      provider: forgeProviderSchema,
+      milestone: z.string().min(1).optional(),
+      projectTitle: z.string().min(1).optional()
+    }, (args) => previewMcpForgePlan({
+      target: args.target,
+      provider: args.provider,
+      planBuilder: (provider, capabilities) => planForgeBootstrap({
+        provider,
+        capabilities,
+        milestoneTitle: args.milestone,
+        projectTitle: args.projectTitle
+      })
+    })),
+    tool('forge_sync_plan', 'Preview idempotent task-to-issue synchronization without remote mutation.', {
+      target: targetSchema,
+      provider: forgeProviderSchema,
+      milestone: z.string().min(1).optional(),
+      planId: z.string().min(1).optional(),
+      planTitle: z.string().min(1).optional(),
+      language: z.enum(['auto', 'ko', 'en']).optional(),
+      tasks: z.array(forgeTaskSchema)
+    }, (args) => previewMcpForgePlan({
+      target: args.target,
+      provider: args.provider,
+      planBuilder: (provider, capabilities, configuredLanguage) => planForgeSync({
+        provider,
+        capabilities,
+        language: args.language ?? configuredLanguage,
+        milestoneTitle: args.milestone,
+        planId: args.planId,
+        planTitle: args.planTitle,
+        tasks: args.tasks
+      })
+    }))
   ];
 
   for (const item of tools) {
@@ -571,7 +659,52 @@ export function registerPlaybookMcpTools(server, options) {
     }))
   ] : [];
 
-  for (const item of writeTools) {
+  const forgeWriteTools = enableForgeWriteTools ? [
+    tool('forge_bootstrap_apply', 'Apply an idempotent forge bootstrap plan. Server opt-in and apply=true are both mandatory.', {
+      target: targetSchema,
+      provider: forgeProviderSchema,
+      milestone: z.string().min(1).optional(),
+      projectTitle: z.string().min(1).optional(),
+      apply: z.literal(true)
+    }, async (args) => {
+      return applyMcpForgePlan({
+        target: args.target,
+        provider: args.provider,
+        planBuilder: (provider, capabilities) => planForgeBootstrap({
+          provider,
+          capabilities,
+          milestoneTitle: args.milestone,
+          projectTitle: args.projectTitle
+        })
+      });
+    }),
+    tool('forge_sync_apply', 'Apply idempotent task-to-issue coordination. Push, task execution, merge, and release are not exposed.', {
+      target: targetSchema,
+      provider: forgeProviderSchema,
+      milestone: z.string().min(1).optional(),
+      planId: z.string().min(1).optional(),
+      planTitle: z.string().min(1).optional(),
+      language: z.enum(['auto', 'ko', 'en']).optional(),
+      tasks: z.array(forgeApplyTaskSchema),
+      apply: z.literal(true)
+    }, async (args) => {
+      return applyMcpForgePlan({
+        target: args.target,
+        provider: args.provider,
+        planBuilder: (provider, capabilities, configuredLanguage) => planForgeSync({
+          provider,
+          capabilities,
+          language: args.language ?? configuredLanguage,
+          milestoneTitle: args.milestone,
+          planId: args.planId,
+          planTitle: args.planTitle,
+          tasks: args.tasks
+        })
+      });
+    })
+  ] : [];
+
+  for (const item of [...writeTools, ...forgeWriteTools]) {
     server.registerTool(item.name, {
       title: item.name,
       description: item.description,
@@ -1746,6 +1879,64 @@ export function registerPlaybookMcpResourcesAndPrompts(server, options) {
   ]));
 }
 
+function resolveMcpTargetPath(target, filePath) {
+  const root = path.resolve(target);
+  const resolved = path.resolve(root, filePath);
+  const relative = path.relative(root, resolved);
+  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error('Plan path must resolve to a file inside the target project.');
+  }
+  return resolved;
+}
+
+async function applyMcpForgePlan(options) {
+  const preparedPlan = await prepareMcpForgePlan(options);
+  const { config, doctor, plan } = preparedPlan;
+  if (!doctor.forge.ok || !doctor.forge.mode.writes || !doctor.forge.repository) {
+    return {
+      schemaVersion: '1',
+      kind: 'forge.apply-result',
+      ok: false,
+      provider: doctor.forge.provider,
+      mode: { apply: false, writes: false },
+      summary: { planned: plan?.operations?.length ?? 0, applied: 0, reused: 0, fallback: 0, failed: 0 },
+      results: [],
+      warnings: doctor.forge.warnings,
+      conflicts: doctor.forge.conflicts.length
+        ? doctor.forge.conflicts
+        : [{ id: 'forge.apply.policy-denied', message: 'Effective policy does not allow forge writes.', paths: [] }]
+    };
+  }
+  const prepared = await createDefaultForgeTransport({
+    provider: doctor.forge.provider,
+    repository: doctor.forge.repository
+  });
+  return applyForgePlan({
+    plan,
+    provider: doctor.forge.provider,
+    repository: doctor.forge.repository,
+    transport: prepared.transport,
+    profile: config.automation.profile,
+    apply: true
+  });
+}
+
+async function previewMcpForgePlan(options) {
+  return (await prepareMcpForgePlan(options)).plan;
+}
+
+async function prepareMcpForgePlan(options) {
+  const preview = await previewHarnessConfig({ target: options.target });
+  if (!preview.ok) throw new Error('Harness config has conflicts; forge write tools are disabled.');
+  const config = structuredClone(preview.config);
+  if (options.provider) config.forge.provider = options.provider;
+  const doctor = await automationDoctor({ target: options.target, config });
+  const plan = typeof options.planBuilder === 'function'
+    ? options.planBuilder(doctor.forge.provider, doctor.forge.capabilities, config.forge.language)
+    : options.plan;
+  return { config, doctor, plan };
+}
+
 function tool(name, description, schema, handler) {
   return { name, description, schema, handler };
 }
@@ -2001,24 +2192,26 @@ function referenceAdoptionResource() {
 }
 
 function mcpPermissionModelResource() {
-    const readOnlyResources = [
-      'capability_catalog',
-      'skill_catalog',
-      'workflow_list',
-      'adapter_support',
-      'adapter_readiness',
-      'agent_usage_guide',
-      'playbook_layout',
-      'reference_adoption',
-      'mcp_permission_model'
-    ];
-  const optInWriteTools = [
+  const readOnlyResources = [
+    'capability_catalog',
+    'skill_catalog',
+    'workflow_list',
+    'adapter_support',
+    'adapter_readiness',
+    'agent_usage_guide',
+    'playbook_layout',
+    'reference_adoption',
+    'mcp_permission_model'
+  ];
+  const managedWriteTools = [
     'workflow_run_start',
     'write_gate_advisory',
     'reference_ledger_update',
     'reference_ledger_decision',
     'reference_source_registry_update'
   ];
+  const forgeCoordinateWriteTools = ['forge_bootstrap_apply', 'forge_sync_apply'];
+  const optInWriteTools = [...managedWriteTools, ...forgeCoordinateWriteTools];
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -2028,18 +2221,23 @@ function mcpPermissionModelResource() {
       defaultMode: 'read-only',
       resources: readOnlyResources.length,
       optInWriteTools: optInWriteTools.length,
+      forgeCoordinateWriteTools: forgeCoordinateWriteTools.length,
       projectWriteTools: 0
     },
     tiers: [
       { id: 'read', writes: false, purpose: 'Search, state, catalogs, layout status, resources, prompts, and analysis.' },
       { id: 'scaffold', writes: true, purpose: 'Create bounded playbook records such as workflow runs.' },
       { id: 'managed-write', writes: true, purpose: 'Update managed files inside .ai-agent-playbook.' },
+      { id: 'forge-coordinate', writes: true, purpose: 'Apply idempotent issue, label, milestone, project, and view coordination through a separate server gate.' },
       { id: 'project-write', writes: false, purpose: 'Project source modification is not exposed by this MCP server.' }
     ],
     defaultResources: readOnlyResources,
     optInWriteTools,
+    managedWriteTools,
+    forgeCoordinateWriteTools,
     writeRequirements: [
-      'Start the server with --enable-write-tools.',
+      'For managed playbook write tools only, start the server with --enable-write-tools.',
+      'For forge coordination tools only, independently start the server with --enable-forge-write-tools.',
       'Pass apply: true in the individual tool call.',
       'Return a dry-run preview when apply is false.',
       'Validate target paths before writing.',
@@ -2055,6 +2253,8 @@ function mcpPermissionModelResource() {
       'canon promotion',
       'rename',
       'rewrite',
+      'agent tick or supervise',
+      'push, merge, release, delete, or force-push',
       'project source write'
     ]
   };

@@ -1,6 +1,7 @@
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { createRunStore } from '../automation/run-store.mjs';
 import {
   RUN_SUMMARY_MARKER,
   RUNS_DIR,
@@ -107,8 +108,16 @@ export async function recordRun(options) {
   if (evidencePath === false) {
     conflicts.push(memoryConflict('run.record.unsafe-evidence', `Refusing non-portable evidence path: ${evidence}`, []));
   }
-  const ledgerPath = path.join(playbook.root, ...RUNS_DIR.split('/'), normalizedRunId, 'ledger.jsonl');
+  const absoluteRunRoot = path.join(playbook.root, ...RUNS_DIR.split('/'), normalizedRunId);
+  const ledgerPath = path.join(absoluteRunRoot, 'ledger.jsonl');
   const relativeLedgerPath = `${playbook.dir}/${RUNS_DIR}/${normalizedRunId}/ledger.jsonl`;
+  if (await isAutomationV2Run(absoluteRunRoot)) {
+    conflicts.push(memoryConflict(
+      'run.record.automation-v2',
+      'This run uses the automation v2 event reducer; use automation pause, resume, stop, tick, or reconcile instead of appending a legacy event.',
+      [relativeLedgerPath]
+    ));
+  }
   if (!existsSync(ledgerPath)) {
     conflicts.push(memoryConflict('run.record.missing-ledger', `Missing run ledger ${relativeLedgerPath}.`, [relativeLedgerPath]));
   }
@@ -158,6 +167,9 @@ export async function runStatus(options) {
     return runStatusResult({ target: resolvedTarget, runId: null, summary: emptyRunSummary(), criteria: [], events: [], warnings, conflicts });
   }
   const runRoot = path.join(playbook.root, ...RUNS_DIR.split('/'), selectedRunId);
+  if (await isAutomationV2Run(runRoot)) {
+    return readAutomationV2Status({ target: resolvedTarget, runId: selectedRunId, runRoot });
+  }
   const ledgerPath = path.join(runRoot, 'ledger.jsonl');
   const criteriaPath = path.join(runRoot, 'criteria.json');
   if (!existsSync(ledgerPath)) {
@@ -183,6 +195,25 @@ export async function summarizeRun(options) {
   const resolvedTarget = path.resolve(target);
   const playbook = resolvePlaybookLayout(resolvedTarget);
   const normalizedRunId = normalizeRunId(runId);
+  const absoluteRunRoot = path.join(playbook.root, ...RUNS_DIR.split('/'), normalizedRunId);
+  if (await isAutomationV2Run(absoluteRunRoot)) {
+    const relativeSummary = `${playbook.dir}/${RUNS_DIR}/${normalizedRunId}/summary.md`;
+    return {
+      schemaVersion: '2',
+      ok: false,
+      target: resolvedTarget,
+      runId: normalizedRunId,
+      applied: false,
+      summary: { operations: 0, warnings: 0, conflicts: 1 },
+      operations: [],
+      warnings: [],
+      conflicts: [memoryConflict(
+        'run.summarize.automation-v2',
+        'Automation v2 summaries are derived from the append-only ledger and cannot be overwritten by the legacy summarize command.',
+        [relativeSummary]
+      )]
+    };
+  }
   const status = await runStatus({ target: resolvedTarget, runId: normalizedRunId });
   const runRoot = `${playbook.dir}/${RUNS_DIR}/${normalizedRunId}`;
   const file = path.join(playbook.root, ...RUNS_DIR.split('/'), normalizedRunId, 'summary.md');
@@ -225,6 +256,56 @@ export async function summarizeRun(options) {
       conflicts: 0
     },
     operations,
+    warnings: [],
+    conflicts: []
+  };
+}
+
+async function isAutomationV2Run(runRoot) {
+  const manifestPath = path.join(runRoot, 'manifest.json');
+  if (!existsSync(manifestPath)) return false;
+  try {
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+    return manifest?.schemaVersion === '2' && manifest?.kind === 'automation.run-manifest';
+  } catch {
+    return false;
+  }
+}
+
+async function readAutomationV2Status({ target, runId, runRoot }) {
+  const store = createRunStore(runRoot);
+  const [state, events] = await Promise.all([store.readState(), store.readEvents()]);
+  const criteria = state.tasks.flatMap((task) => task.criteria.map((criterion) => ({
+    id: criterion.id,
+    taskId: task.id,
+    status: criterion.status,
+    message: criterion.text,
+    source: 'automation-v2',
+    evidence: structuredClone(criterion.evidence ?? [])
+  })));
+  const passed = criteria.filter((criterion) => criterion.status === 'pass').length;
+  const failed = criteria.filter((criterion) => criterion.status === 'fail').length;
+  return {
+    schemaVersion: '2',
+    kind: 'run.status',
+    ok: true,
+    target,
+    runId,
+    summary: {
+      events: events.length,
+      criteria: criteria.length,
+      openCriteria: criteria.length - passed,
+      evidence: criteria.filter((criterion) => criterion.evidence.length > 0).length,
+      pass: passed,
+      fail: failed,
+      blocked: state.tasks.filter((task) => task.status === 'blocked').length,
+      cleanup: 0,
+      warnings: 0,
+      conflicts: 0
+    },
+    criteria,
+    events,
+    automation: state,
     warnings: [],
     conflicts: []
   };

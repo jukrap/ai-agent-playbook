@@ -63,10 +63,123 @@ test('config preview falls back safely when config files are missing', async () 
   assert.equal(report.ok, true);
   assert.equal(report.config.context.maxChars, 12000);
   assert.equal(report.config.runtime.cacheDir, '.ai-agent-playbook/runtime/cache');
+  assert.deepEqual(report.config.automation, {
+    profile: 'deliver',
+    killSwitch: false,
+    queue: {
+      readyLabel: 'aapb:ready',
+      pauseLabel: 'aapb:paused',
+      maxParallel: 1
+    },
+    budget: {
+      tickMinutes: 30,
+      maxAttempts: 3,
+      maxStalled: 3,
+      maxWallMinutes: 480
+    }
+  });
+  assert.deepEqual(report.config.forge, {
+    provider: 'auto',
+    remote: 'origin',
+    apiBaseUrl: null,
+    sync: 'hybrid',
+    language: 'auto',
+    autoBootstrap: true
+  });
+  assert.deepEqual(report.config.git, {
+    strategy: 'branch',
+    unattendedWorkspace: 'isolated-checkout',
+    branchPrefix: 'aapb/',
+    autoCommit: true,
+    autoPush: true,
+    allowForcePush: false
+  });
+  assert.deepEqual(report.config.executor, {
+    provider: 'auto',
+    command: null
+  });
   assert.equal(report.mode.readsUserConfig, false);
   assert.equal(report.sources.some((source) => source.id === 'user' && source.status === 'skipped'), true);
   assert.equal(report.sources.some((source) => source.id === 'target' && source.status === 'missing'), true);
   await cleanup(target);
+});
+
+test('config preview accepts forge automation git and executor overrides', async () => {
+  const target = await tempRepo('config automation-한글-');
+  await mkdir(path.join(target, '.ai-agent-playbook'), { recursive: true });
+  await writeJson(path.join(target, '.ai-agent-playbook', 'config.json'), {
+    automation: {
+      profile: 'coordinate',
+      queue: { maxParallel: 2 },
+      budget: { maxWallMinutes: 120 }
+    },
+    forge: { provider: 'gitea', remote: 'upstream', autoBootstrap: false },
+    git: { autoPush: false },
+    executor: { provider: 'command', command: ['agent-cli', '--json'] }
+  });
+
+  const report = await previewHarnessConfig({ target, env: {} });
+
+  assert.equal(report.ok, true);
+  assert.equal(report.config.automation.profile, 'coordinate');
+  assert.equal(report.config.automation.queue.maxParallel, 2);
+  assert.equal(report.config.automation.queue.readyLabel, 'aapb:ready');
+  assert.equal(report.config.automation.budget.maxWallMinutes, 120);
+  assert.equal(report.config.forge.provider, 'gitea');
+  assert.equal(report.config.forge.remote, 'upstream');
+  assert.equal(report.config.forge.autoBootstrap, false);
+  assert.equal(report.config.git.autoPush, false);
+  assert.deepEqual(report.config.executor.command, ['agent-cli', '--json']);
+  await cleanup(target);
+});
+
+test('config preview accepts a credential-free Gitea API base and rejects unsafe API URLs', async () => {
+  const target = await tempRepo('config forge api base-한글-');
+  await mkdir(path.join(target, '.ai-agent-playbook'), { recursive: true });
+  await writeJson(path.join(target, '.ai-agent-playbook', 'config.json'), {
+    forge: { apiBaseUrl: 'https://code.example.test:3443/gitea/api/v1/' }
+  });
+
+  const valid = await previewHarnessConfig({ target, env: {} });
+  assert.equal(valid.ok, true);
+  assert.equal(valid.config.forge.apiBaseUrl, 'https://code.example.test:3443/gitea/api/v1');
+
+  await writeJson(path.join(target, '.ai-agent-playbook', 'config.json'), {
+    forge: { apiBaseUrl: 'https://token@code.example.test/api/v1' }
+  });
+  const unsafe = await previewHarnessConfig({ target, env: {} });
+  assert.equal(unsafe.ok, false);
+  assert.equal(unsafe.conflicts.some((conflict) => conflict.id === 'config.value.invalid'), true);
+  await cleanup(target);
+});
+
+test('config preview rejects command executor without argv and automatic force push', async () => {
+  const target = await mkdtemp(path.join(os.tmpdir(), 'aapb-config-unsafe-'));
+  await mkdir(path.join(target, '.ai-agent-playbook'), { recursive: true });
+  await writeFile(path.join(target, '.ai-agent-playbook', 'config.json'), JSON.stringify({
+    git: { allowForcePush: true },
+    executor: { provider: 'command', command: null }
+  }));
+  const result = await previewHarnessConfig({ target, env: {} });
+  assert.equal(result.ok, false);
+  assert.equal(result.conflicts.some((conflict) => conflict.id === 'config.git.force-push-forbidden'), true);
+  assert.equal(result.conflicts.some((conflict) => conflict.id === 'config.executor.command-missing'), true);
+  await rm(target, { recursive: true, force: true });
+});
+
+test('config preview rejects unsafe forge environment overrides', async () => {
+  const target = await mkdtemp(path.join(os.tmpdir(), 'aapb-config-env-'));
+  await mkdir(path.join(target, '.ai-agent-playbook'), { recursive: true });
+  const result = await previewHarnessConfig({
+    target,
+    env: {
+      AI_AGENT_PLAYBOOK_FORGE_REMOTE: '--upload-pack=malicious',
+      AI_AGENT_PLAYBOOK_FORGE_LANGUAGE: 'ko\nINJECTED=1'
+    }
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.conflicts.filter((conflict) => conflict.id === 'config.env.invalid').length, 2);
+  await rm(target, { recursive: true, force: true });
 });
 
 test('config preview reports malformed config and unsafe runtime paths', async () => {

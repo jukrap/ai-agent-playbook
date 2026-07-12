@@ -5,10 +5,26 @@ const SAFE_REPOSITORY_PART = /^[a-zA-Z0-9](?:[a-zA-Z0-9._-]{0,99})$/;
 const PROJECT_LAYOUTS = new Set(['table', 'board', 'roadmap']);
 const PROJECT_FIELD_TYPES = new Set(['text', 'number', 'date', 'single_select']);
 const PROJECT_FIELD_COLORS = new Set(['BLUE', 'GRAY', 'GREEN', 'ORANGE', 'PINK', 'PURPLE', 'RED', 'YELLOW']);
-const MANAGED_STATUS_LABELS = new Set(['aapb:ready', 'aapb:running', 'aapb:blocked', 'aapb:review', 'aapb:paused']);
+const MANAGED_STATUS_LABELS = new Set([
+  'status:ready', 'status:in-progress', 'status:blocked', 'status:review', 'status:paused',
+  'aapb:ready', 'aapb:running', 'aapb:blocked', 'aapb:review', 'aapb:paused'
+]);
 
 const MANAGED_PROJECT_FIELDS = Object.freeze([
+  {
+    name: 'AAPB Status',
+    data_type: 'single_select',
+    single_select_options: [
+      { name: 'Planned', color: 'GRAY', description: 'Approved but not yet executable' },
+      { name: 'Ready', color: 'GREEN', description: 'Eligible for execution' },
+      { name: 'In Progress', color: 'BLUE', description: 'Currently being implemented or verified' },
+      { name: 'In Review', color: 'PURPLE', description: 'Awaiting review' },
+      { name: 'Blocked', color: 'RED', description: 'Cannot currently progress' },
+      { name: 'Done', color: 'GREEN', description: 'Completed with required evidence' }
+    ]
+  },
   { name: 'AAPB Task ID', data_type: 'text' },
+  { name: 'AAPB Phase', data_type: 'text' },
   {
     name: 'AAPB Priority',
     data_type: 'single_select',
@@ -28,7 +44,8 @@ const MANAGED_PROJECT_FIELDS = Object.freeze([
       { name: 'high', color: 'RED', description: 'High delivery risk' }
     ]
   },
-  { name: 'AAPB Progress', data_type: 'number' }
+  { name: 'AAPB Progress', data_type: 'number' },
+  { name: 'AAPB Area', data_type: 'text' }
 ]);
 
 const PROJECT_CONTEXT_QUERY = `
@@ -112,6 +129,7 @@ query AapbProjectItems($id: ID!, $after: String) {
           content {
             __typename
             ... on Issue { id number }
+            ... on PullRequest { id number }
           }
           fieldValues(first: 100) {
             nodes {
@@ -385,13 +403,21 @@ export function createRestProvider(options) {
     const title = requiredText(payload.title, 'Milestone title');
     const milestones = await listAll(`${repositoryPath}/milestones`, { state: 'all' });
     const existing = milestones.find((milestone) => normalizedText(milestone?.title) === title);
-    if (existing) return resourceResult('reused', 'milestone', existing);
-
     const body = { title };
     const description = normalizedOptionalText(payload.description);
     const dueOn = normalizedText(payload.dueOn ?? payload.due_on);
     if (description !== undefined) body.description = description;
     if (dueOn) body.due_on = dueOn;
+    if (existing) {
+      const desiredDescription = description ?? normalizedOptionalText(existing.description) ?? '';
+      const existingDueOn = normalizedText(existing.due_on ?? existing.dueOn);
+      if ((normalizedOptionalText(existing.description) ?? '') === desiredDescription && (!dueOn || existingDueOn === dueOn)) {
+        return resourceResult('reused', 'milestone', existing);
+      }
+      const milestoneId = positiveInteger(milestoneIdentity(existing), 'Milestone identity');
+      const response = await apiRequest('PATCH', `${repositoryPath}/milestones/${milestoneId}`, { body });
+      return resourceResult('updated', 'milestone', response.data);
+    }
     const response = await apiRequest('POST', `${repositoryPath}/milestones`, { body });
     return resourceResult('created', 'milestone', response.data);
   }
@@ -461,15 +487,24 @@ export function createRestProvider(options) {
     }
     const currentResponse = await apiRequest('GET', `${repositoryPath}/issues/${issueNumber}`);
     const current = currentResponse.data ?? {};
-    const issuePayload = payload.preserveNonManagedLabels === true && Array.isArray(payload.labels)
+    let issuePayload = payload.preserveNonManagedLabels === true && Array.isArray(payload.labels)
       ? {
           ...payload,
           labels: uniqueStrings([
-            ...currentIssueLabelNames(current).filter((name) => !MANAGED_STATUS_LABELS.has(name.toLowerCase())),
+            ...currentIssueLabelNames(current).filter((name) => (
+              !MANAGED_STATUS_LABELS.has(name.toLowerCase()) &&
+              !(payload.removeClassificationLabels === true && isClassificationLabel(name))
+            )),
             ...payload.labels
           ])
         }
       : payload;
+    if (payload.preserveManagedBody === true && payload.body !== undefined) {
+      issuePayload = {
+        ...issuePayload,
+        body: mergeManagedIssueBody(current.body, payload.body)
+      };
+    }
     const desired = await buildIssueBody(issuePayload);
     if (issueMatches(current, desired, labelsAsIds)) {
       return resourceResult('reused', 'issue', current);
@@ -772,14 +807,15 @@ export function createRestProvider(options) {
     });
   }
 
-  async function resolveProjectIssue(payload) {
+  async function resolveProjectContent(payload) {
+    if (Number.isInteger(payload.pullRequestNumber) && payload.pullRequestNumber > 0) {
+      const response = await apiRequest('GET', `${repositoryPath}/pulls/${payload.pullRequestNumber}`);
+      return response.data ?? {};
+    }
     if (Number.isInteger(payload.issueNumber) && payload.issueNumber > 0) {
       const response = await apiRequest('GET', `${repositoryPath}/issues/${payload.issueNumber}`);
       if (response.data?.pull_request) {
-        throw forgeError('forge.project-item.issue-required', 'Project task synchronization requires an issue, not a pull request.', {
-          provider,
-          issueNumber: payload.issueNumber
-        });
+        throw forgeError('forge.project-item.issue-required', 'The requested issue number resolved to a pull request; use pullRequestNumber explicitly.', { provider, issueNumber: payload.issueNumber });
       }
       return response.data ?? {};
     }
@@ -798,30 +834,31 @@ export function createRestProvider(options) {
   async function ensureProjectItem(payload = {}) {
     if (provider !== 'github') return fallbackResult('project-item', provider);
     const projectTitle = requiredText(payload.projectTitle, 'Project title');
-    const taskId = validateTaskId(payload.taskId);
+    const taskId = validateTaskId(payload.taskId ?? payload.groupId);
     await ensureProject({ title: projectTitle });
     const context = projectCache.get(projectTitle);
     const projectId = requiredGraphQlId(context?.project?.id, 'Project node ID');
-    const issue = await resolveProjectIssue(payload);
-    const issueNumber = positiveInteger(issue.number ?? issue.index, 'Issue number');
-    const issueNodeId = requiredGraphQlId(issue.node_id ?? issue.nodeId, 'Issue node ID');
+    const content = await resolveProjectContent(payload);
+    const contentNumber = positiveInteger(content.number ?? content.index, 'Project content number');
+    const contentNodeId = requiredGraphQlId(content.node_id ?? content.nodeId, 'Project content node ID');
     const fields = await listProjectFields(projectId);
     // Validate all managed fields/options before the first item mutation so a
     // pre-existing incompatible Project cannot receive a partial task item.
     const desiredValues = managedProjectItemFieldValues(fields, {
       taskId,
+      phase: payload.phase,
       status: payload.status,
       priority: payload.priority,
       risk: payload.risk,
       progress: payload.progress
     });
     const items = await listProjectItems(projectId);
-    let item = items.find((candidate) => candidate?.content?.id === issueNodeId);
+    let item = items.find((candidate) => candidate?.content?.id === contentNodeId);
     let created = false;
     if (!item) {
       const data = await graphqlRequest('AapbAddProjectItem', ADD_PROJECT_ITEM_MUTATION, {
         projectId,
-        contentId: issueNodeId,
+        contentId: contentNodeId,
         clientMutationId: mutationId('project-item-add', repository, `${projectTitle}:${taskId}`)
       });
       item = data.addProjectV2ItemById?.item;
@@ -848,7 +885,8 @@ export function createRestProvider(options) {
     }
     return resourceResult(created ? 'created' : updated > 0 ? 'updated' : 'reused', 'project-item', {
       id: itemId,
-      issueNumber,
+      contentNumber,
+      ...(payload.pullRequestNumber ? { pullRequestNumber: contentNumber } : { issueNumber: contentNumber }),
       project: { id: projectId, number: context.project.number, title: context.project.title },
       fieldsUpdated: updated
     });
@@ -944,18 +982,45 @@ export function createRestProvider(options) {
     const body = normalizedOptionalText(payload.body) ?? '';
     const marker = validateMarker(payload.marker ?? /^<!-- aapb:[^\r\n]+ -->/.exec(body)?.[0]);
     if (!hasOwnedMarker(body, marker)) throw new TypeError('Pull request body must begin with its AAPB ownership marker.');
-    const pulls = await listAll(`${repositoryPath}/pulls`, { state: 'open' });
-    const existing = pulls.find((pull) => (
-      normalizedText(pull?.head?.ref ?? pull?.head) === head &&
-      normalizedText(pull?.base?.ref ?? pull?.base) === base
-    ));
+    const explicitNumber = Number.isInteger(payload.pullRequestNumber) && payload.pullRequestNumber > 0
+      ? payload.pullRequestNumber
+      : null;
+    const existing = explicitNumber
+      ? (await apiRequest('GET', `${repositoryPath}/pulls/${explicitNumber}`)).data
+      : (await listAll(`${repositoryPath}/pulls`, { state: 'open' })).find((pull) => (
+          normalizedText(pull?.head?.ref ?? pull?.head) === head &&
+          normalizedText(pull?.base?.ref ?? pull?.base) === base
+        ));
     if (existing) {
-      if (!hasOwnedMarker(existing.body ?? '', marker)) {
+      const existingHead = normalizedText(existing?.head?.ref ?? existing?.head);
+      const existingBase = normalizedText(existing?.base?.ref ?? existing?.base);
+      if (existingHead !== head || existingBase !== base) {
+        throw forgeError('forge.pull-request.branch-conflict', 'The reviewed pull request head or base changed after the local plan was approved.', {
+          provider, pullNumber: existing.number, expectedHead: head, actualHead: existingHead, expectedBase: base, actualBase: existingBase
+        });
+      }
+      const owned = hasOwnedMarker(existing.body ?? '', marker);
+      if (!owned && !(explicitNumber && payload.adoptExisting === true)) {
         throw forgeError(
           'forge.pull-request.ownership-conflict',
           'An existing pull request for this branch is not owned by the current automation plan.',
           { provider, pullNumber: existing.number, head, base }
         );
+      }
+      if (explicitNumber) {
+        const expectedUpdatedAt = normalizedText(payload.expectedUpdatedAt);
+        const expectedTitle = normalizedText(payload.expectedTitle);
+        if (!expectedUpdatedAt || !expectedTitle) {
+          throw forgeError('forge.pull-request.cas-required', 'Adopting or updating a numbered pull request requires expectedUpdatedAt and expectedTitle snapshots.', {
+            provider, pullNumber: explicitNumber
+          });
+        }
+        const actualUpdatedAt = normalizedText(existing.updated_at ?? existing.updatedAt);
+        if (expectedUpdatedAt !== actualUpdatedAt || expectedTitle !== normalizedText(existing.title)) {
+          throw forgeError('forge.pull-request.updated-at-conflict', 'The reviewed pull request changed after the local snapshot was recorded.', {
+            provider, pullNumber: explicitNumber, expectedUpdatedAt, actualUpdatedAt
+          });
+        }
       }
       const draftLike = provider === 'gitea'
         ? /^(?:WIP:|\[WIP\])/i.test(existing.title ?? '')
@@ -1016,6 +1081,27 @@ export function createRestProvider(options) {
     return resourceResult('created', 'sub-issue', response.data ?? child);
   }
 
+  async function removeSubIssue(payload = {}) {
+    if (provider !== 'github') return fallbackResult('sub-issue', provider);
+    const parentIssueNumber = positiveInteger(payload.parentIssueNumber, 'Parent issue number');
+    const childIssueId = positiveInteger(payload.childIssueId, 'Child issue id');
+    const path = `${repositoryPath}/issues/${parentIssueNumber}/sub_issues`;
+    const existing = await listAll(path);
+    if (!existing.some((issue) => Number(issue?.id) === childIssueId)) {
+      return resourceResult('reused', 'sub-issue', {
+        id: childIssueId,
+        number: Number.isInteger(payload.childIssueNumber) ? payload.childIssueNumber : undefined
+      });
+    }
+    const response = await apiRequest('DELETE', `${repositoryPath}/issues/${parentIssueNumber}/sub_issue`, {
+      body: { sub_issue_id: childIssueId }
+    });
+    return resourceResult('removed', 'sub-issue', response.data ?? {
+      id: childIssueId,
+      number: Number.isInteger(payload.childIssueNumber) ? payload.childIssueNumber : undefined
+    });
+  }
+
   async function applyOperation(operation = {}) {
     if (operation.mode === 'fallback' || operation.action === 'use') {
       return {
@@ -1068,7 +1154,9 @@ export function createRestProvider(options) {
       case 'draft-pull-request':
         return ensureDraftPullRequest(operation.payload);
       case 'sub-issue':
-        return ensureSubIssue(operation.payload);
+        return operation.action === 'remove'
+          ? removeSubIssue(operation.payload)
+          : ensureSubIssue(operation.payload);
       default:
         throw forgeError('forge.operation.unsupported', `Unsupported ${provider} forge operation resource: ${String(operation.resource)}.`, {
           provider,
@@ -1093,6 +1181,34 @@ export function createRestProvider(options) {
     ensureSubIssue,
     applyOperation
   });
+}
+
+function mergeManagedIssueBody(currentValue, desiredValue) {
+  const current = String(currentValue ?? '');
+  const desired = String(desiredValue ?? '');
+  const startMarker = '<!-- aapb:managed:start -->';
+  const endMarker = '<!-- aapb:managed:end -->';
+  const currentStart = current.indexOf(startMarker);
+  const currentEndStart = current.indexOf(endMarker, currentStart + startMarker.length);
+  const desiredStart = desired.indexOf(startMarker);
+  const desiredEndStart = desired.indexOf(endMarker, desiredStart + startMarker.length);
+  if (desiredStart < 0 || desiredEndStart < 0) {
+    throw new TypeError('Managed issue body updates require start and end markers.');
+  }
+  if (currentStart < 0 || currentEndStart < 0) {
+    const desiredPrefix = desired.slice(0, desiredStart).trimEnd();
+    const currentWithoutOwnedIdentity = current
+      .replace(/<!--\s*aapb:(?:plan|task|group):[a-z0-9][a-z0-9._-]{0,99}\s*-->/gi, '')
+      .trim();
+    const managed = desired.slice(desiredStart, desiredEndStart + endMarker.length).trim();
+    return [desiredPrefix, currentWithoutOwnedIdentity, managed].filter(Boolean).join('\n\n');
+  }
+  const currentEnd = currentEndStart + endMarker.length;
+  const desiredEnd = desiredEndStart + endMarker.length;
+  const prefix = current.slice(0, currentStart).trimEnd();
+  const managed = desired.slice(desiredStart, desiredEnd).trim();
+  const suffix = current.slice(currentEnd).trimStart();
+  return [prefix, managed, suffix].filter(Boolean).join('\n\n');
 }
 
 export function forgeError(code, message, details = {}) {
@@ -1128,6 +1244,11 @@ function currentIssueLabelNames(issue) {
     .map((label) => typeof label === 'string' ? label : label?.name)
     .filter((label) => typeof label === 'string' && label.trim())
     .map((label) => label.trim());
+}
+
+function isClassificationLabel(value) {
+  const label = String(value ?? '').trim().toLowerCase();
+  return /^(?:priority|risk|area):/.test(label) || /^aapb:(?:priority|risk|area):/.test(label);
 }
 
 function hasNextPage(response, itemCount, page) {
@@ -1279,11 +1400,13 @@ function managedProjectItemFieldValues(fields, payload) {
     : 'medium';
   const progress = normalizedProjectProgress(payload.progress, status);
   const specifications = [
-    { name: 'Status', type: 'single_select', options: projectStatusOptions(status) },
+    { name: 'AAPB Status', type: 'single_select', options: [projectStatusOption(status)] },
     { name: 'AAPB Task ID', type: 'text', value: { text: payload.taskId } },
+    { name: 'AAPB Phase', type: 'text', value: { text: normalizedText(payload.phase) ?? '' } },
     { name: 'AAPB Priority', type: 'single_select', options: [projectPriorityOption(priority)] },
     { name: 'AAPB Risk', type: 'single_select', options: [risk] },
-    { name: 'AAPB Progress', type: 'number', value: { number: progress } }
+    { name: 'AAPB Progress', type: 'number', value: { number: progress } },
+    { name: 'AAPB Area', type: 'text', value: { text: normalizedText(payload.area) ?? '' } }
   ];
   return specifications.map((specification) => {
     const field = normalizedFields.find((candidate) => (
@@ -1357,13 +1480,13 @@ function projectFieldValueMatches(current, desired) {
   return false;
 }
 
-function projectStatusOptions(status) {
-  if (status === 'completed' || status === 'cancelled') return ['Done'];
-  if (status === 'review') return ['In Review', 'In Progress'];
-  if (status === 'claimed' || status === 'running' || status === 'verifying') return ['In Progress'];
-  if (status === 'blocked') return ['Blocked', 'Todo'];
-  if (status === 'paused') return ['Paused', 'Todo'];
-  return ['Todo'];
+function projectStatusOption(status) {
+  if (status === 'completed' || status === 'cancelled') return 'Done';
+  if (status === 'review') return 'In Review';
+  if (status === 'claimed' || status === 'running' || status === 'verifying') return 'In Progress';
+  if (status === 'ready') return 'Ready';
+  if (status === 'blocked' || status === 'paused') return 'Blocked';
+  return 'Planned';
 }
 
 function projectPriorityOption(priority) {

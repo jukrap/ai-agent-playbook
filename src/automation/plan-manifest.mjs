@@ -14,6 +14,10 @@ const PLAN_SCHEMA_VERSION = '2';
 const PLANS_DIR = ['workflows', 'plans'];
 const RISKS = new Set(['low', 'medium', 'high']);
 const APPROVAL_STATES = new Set(['draft', 'approved', 'rejected', 'superseded']);
+const COORDINATION_ISSUE_MODES = new Set(['delivery-group', 'parent-only', 'task']);
+const COORDINATION_PROJECT_MODES = new Set(['preferred', 'milestone', 'off']);
+const COORDINATION_TITLE_STYLES = new Set(['auto', 'noun-phrase', 'sentence']);
+const DEFAULT_MAX_CHILD_ISSUES = 6;
 
 export async function createAutomationPlan(options) {
   const {
@@ -137,6 +141,11 @@ function validateAutomationPlanObject(manifest) {
       if (!isRecord(command) || !isSafeId(command.id) || !isSafeArgv(command.argv)) {
         conflicts.push(problem('plan.verification.unsafe-argv', `Task ${task.id ?? '<unknown>'} has an unsafe verification argv.`, [task.id]));
       }
+      if (isRecord(command) && command.evidencePaths !== undefined && (
+        !Array.isArray(command.evidencePaths) || command.evidencePaths.some((item) => !isSafePlanPath(item))
+      )) {
+        conflicts.push(problem('plan.verification.unsafe-evidence-path', `Task ${task.id ?? '<unknown>'} has an unsafe verification evidence path.`, [task.id]));
+      }
     }
   }
 
@@ -153,14 +162,268 @@ function validateAutomationPlanObject(manifest) {
     Array.isArray(task?.acceptanceCriteria) && task.acceptanceCriteria.length > 0 &&
     Array.isArray(task?.verificationCommands) && task.verificationCommands.length > 0
   ));
+  const automationReady = conflicts.length === 0 && manifest.approval?.status === 'approved' && complete;
+  const presentationFindings = validateCoordination(manifest.coordination, tasks, manifest.language);
   return validationResult({
     conflicts,
     warnings,
     tasks,
     criteria,
     verificationCommands,
-    ready: conflicts.length === 0 && manifest.approval?.status === 'approved' && complete
+    ready: automationReady,
+    automationReady,
+    forgeReady: automationReady && presentationFindings.length === 0,
+    presentationFindings
   });
+}
+
+function validateCoordination(coordination, tasks, language) {
+  if (coordination === undefined) {
+    return [presentationProblem(
+      'plan.coordination.missing',
+      'coordination is required before this plan can be synchronized to a forge.',
+      ['coordination']
+    )];
+  }
+  if (!isRecord(coordination)) {
+    return [presentationProblem(
+      'plan.coordination.invalid-shape',
+      'coordination must be an object.',
+      ['coordination']
+    )];
+  }
+
+  const findings = [];
+  if (!COORDINATION_ISSUE_MODES.has(coordination.issueMode)) {
+    findings.push(presentationProblem(
+      'plan.coordination.issue-mode',
+      'coordination.issueMode must be delivery-group, parent-only, or task.',
+      ['coordination.issueMode']
+    ));
+  }
+  if (!COORDINATION_PROJECT_MODES.has(coordination.projectMode)) {
+    findings.push(presentationProblem(
+      'plan.coordination.project-mode',
+      'coordination.projectMode must be preferred, milestone, or off.',
+      ['coordination.projectMode']
+    ));
+  }
+  if (!COORDINATION_TITLE_STYLES.has(coordination.titleStyle)) {
+    findings.push(presentationProblem(
+      'plan.coordination.title-style',
+      'coordination.titleStyle must be auto, noun-phrase, or sentence.',
+      ['coordination.titleStyle']
+    ));
+  }
+
+  const maxChildIssues = coordination.maxChildIssues === undefined
+    ? DEFAULT_MAX_CHILD_ISSUES
+    : coordination.maxChildIssues;
+  if (!Number.isInteger(maxChildIssues) || maxChildIssues < 1 || maxChildIssues > 50) {
+    findings.push(presentationProblem(
+      'plan.coordination.max-child-issues',
+      'coordination.maxChildIssues must be an integer from 1 to 50.',
+      ['coordination.maxChildIssues']
+    ));
+  }
+
+  const program = coordination.program;
+  if (
+    !isRecord(program) ||
+    !hasText(program.title) ||
+    !hasText(program.summary) ||
+    !isNonEmptyTextArray(program.scope) ||
+    !isNonEmptyTextArray(program.nonGoals) ||
+    !isNonEmptyTextArray(program.successCriteria)
+  ) {
+    findings.push(presentationProblem(
+      'plan.coordination.program-incomplete',
+      'coordination.program requires a title, summary, and non-empty scope, nonGoals, and successCriteria arrays.',
+      ['coordination.program']
+    ));
+  }
+
+  const groups = Array.isArray(coordination.groups) ? coordination.groups : [];
+  if (!Array.isArray(coordination.groups)) {
+    findings.push(presentationProblem(
+      'plan.coordination.groups-invalid',
+      'coordination.groups must be an array.',
+      ['coordination.groups']
+    ));
+  }
+  if (coordination.issueMode === 'delivery-group' && groups.length === 0) {
+    findings.push(presentationProblem(
+      'plan.coordination.groups-missing',
+      'delivery-group issue mode requires at least one coordination group.',
+      ['coordination.groups']
+    ));
+  }
+  if (
+    groups.length > (Number.isInteger(maxChildIssues) && maxChildIssues >= 1 && maxChildIssues <= 50
+      ? maxChildIssues
+      : DEFAULT_MAX_CHILD_ISSUES)
+  ) {
+    findings.push(presentationProblem(
+      'plan.coordination.groups-limit',
+      `coordination.groups exceeds the ${maxChildIssues || DEFAULT_MAX_CHILD_ISSUES} child issue limit.`,
+      ['coordination.groups']
+    ));
+  }
+
+  const mappedTaskIds = new Set();
+  const knownTaskIds = new Set(tasks.filter(isRecord).map((task) => task.id));
+  const taskById = new Map(tasks.filter(isRecord).map((task) => [task.id, task]));
+  const groupIds = new Set();
+  for (const [index, group] of groups.entries()) {
+    const location = `coordination.groups[${index}]`;
+    if (
+      !isRecord(group) ||
+      !isSafeId(group.id) ||
+      !hasText(group.title) ||
+      !hasText(group.summary) ||
+      !Array.isArray(group.taskIds) ||
+      group.taskIds.length === 0 ||
+      !group.taskIds.every(isSafeId) ||
+      !hasText(group.rollback)
+    ) {
+      findings.push(presentationProblem(
+        'plan.coordination.group-invalid',
+        `${location} requires a safe id, title, summary, non-empty taskIds, and rollback.`,
+        [location]
+      ));
+    }
+
+    if (!isRecord(group) || !Array.isArray(group.taskIds)) continue;
+    if (groupIds.has(group.id)) {
+      findings.push(presentationProblem('plan.coordination.group-duplicate', `Coordination group id is duplicated: ${group.id}.`, [location]));
+    }
+    groupIds.add(group.id);
+    for (const taskId of group.taskIds) {
+      if (!knownTaskIds.has(taskId)) {
+        findings.push(presentationProblem(
+          'plan.coordination.task-unknown',
+          `${location} maps unknown task ${taskId}.`,
+          [location, String(taskId)]
+        ));
+      }
+      if (coordination.issueMode === 'delivery-group' && mappedTaskIds.has(taskId)) {
+        findings.push(presentationProblem(
+          'plan.coordination.task-duplicate',
+          `Task ${taskId} is mapped to more than one coordination group.`,
+          [location, String(taskId)]
+        ));
+      }
+      mappedTaskIds.add(taskId);
+      if (coordination.issueMode === 'delivery-group' && taskById.get(taskId)?.deliveryGroup !== group.id) {
+        findings.push(presentationProblem(
+          'plan.coordination.delivery-group-mismatch',
+          `Task ${taskId} deliveryGroup must match coordination group ${group.id}.`,
+          [location, String(taskId)]
+        ));
+      }
+    }
+  }
+
+  if (coordination.issueMode === 'delivery-group') {
+    const missingTaskIds = [...knownTaskIds].filter((taskId) => !mappedTaskIds.has(taskId));
+    if (missingTaskIds.length > 0) {
+      findings.push(presentationProblem(
+        'plan.coordination.task-missing',
+        `Every task must map to exactly one coordination group; missing: ${missingTaskIds.join(', ')}.`,
+        ['coordination.groups', ...missingTaskIds]
+      ));
+    }
+  }
+
+  const nounPhraseTitles = coordination.titleStyle === 'noun-phrase' || (
+    coordination.titleStyle === 'auto' && isKoreanLanguage(language, program?.title, ...groups.map((group) => group?.title))
+  );
+  if (nounPhraseTitles) {
+    const titles = [
+      ['coordination.program.title', program?.title],
+      ...groups.map((group, index) => [`coordination.groups[${index}].title`, group?.title]),
+      ...(Array.isArray(coordination.reconcile?.supportingIssues)
+        ? coordination.reconcile.supportingIssues.map((issue, index) => [`coordination.reconcile.supportingIssues[${index}].title`, issue?.title])
+        : [])
+    ];
+    for (const [location, title] of titles) {
+      if (isKoreanSentenceTitle(title)) {
+        findings.push(presentationProblem(
+          'plan.coordination.title-sentence',
+          `${location} must use a Korean noun-phrase title instead of ending with 한다, 된다, or 이다.`,
+          [location]
+        ));
+      }
+    }
+  }
+
+  findings.push(...validatePresentationReconcile(coordination.reconcile));
+
+  return findings;
+}
+
+function validatePresentationReconcile(reconcile) {
+  if (reconcile === undefined) return [];
+  if (!isRecord(reconcile)) {
+    return [presentationProblem(
+      'plan.coordination.reconcile-invalid',
+      'coordination.reconcile must be an object when existing forge artifacts are adopted or rewritten.',
+      ['coordination.reconcile']
+    )];
+  }
+  const findings = [];
+  const supportingIssues = Array.isArray(reconcile.supportingIssues) ? reconcile.supportingIssues : [];
+  const pullRequests = Array.isArray(reconcile.pullRequests) ? reconcile.pullRequests : [];
+  if (reconcile.supportingIssues !== undefined && !Array.isArray(reconcile.supportingIssues)) {
+    findings.push(presentationProblem('plan.coordination.reconcile-issues-invalid', 'coordination.reconcile.supportingIssues must be an array.', ['coordination.reconcile.supportingIssues']));
+  }
+  if (reconcile.pullRequests !== undefined && !Array.isArray(reconcile.pullRequests)) {
+    findings.push(presentationProblem('plan.coordination.reconcile-prs-invalid', 'coordination.reconcile.pullRequests must be an array.', ['coordination.reconcile.pullRequests']));
+  }
+  const issueIds = new Set();
+  const issueNumbers = new Set();
+  for (const [index, issue] of supportingIssues.entries()) {
+    const location = `coordination.reconcile.supportingIssues[${index}]`;
+    if (
+      !isRecord(issue) || !isSafeId(issue.id) || !isPositiveInteger(issue.number) ||
+      !hasText(issue.title) || !hasText(issue.summary) ||
+      !isNonEmptyTextArray(issue.completedScope) || !isNonEmptyTextArray(issue.remainingGates)
+    ) {
+      findings.push(presentationProblem(
+        'plan.coordination.reconcile-issue-invalid',
+        `${location} requires a safe id, positive issue number, title, summary, completedScope, and remainingGates.`,
+        [location]
+      ));
+      continue;
+    }
+    if (issueIds.has(issue.id) || issueNumbers.has(issue.number)) {
+      findings.push(presentationProblem('plan.coordination.reconcile-issue-duplicate', `${location} duplicates a supporting issue id or number.`, [location]));
+    }
+    issueIds.add(issue.id);
+    issueNumbers.add(issue.number);
+  }
+  const pullNumbers = new Set();
+  for (const [index, pull] of pullRequests.entries()) {
+    const location = `coordination.reconcile.pullRequests[${index}]`;
+    if (
+      !isRecord(pull) || !isPositiveInteger(pull.number) || !hasText(pull.title) || !hasText(pull.summary) ||
+      !isNonEmptyTextArray(pull.actualChanges) || !isNonEmptyTextArray(pull.verification) ||
+      !isNonEmptyTextArray(pull.evidenceGaps) || !isNonEmptyTextArray(pull.risks) ||
+      !isNonEmptyTextArray(pull.rollback) || !isNonEmptyTextArray(pull.remainingWork)
+    ) {
+      findings.push(presentationProblem(
+        'plan.coordination.reconcile-pr-invalid',
+        `${location} requires a positive PR number and reviewable title, summary, changes, verification, evidence gaps, risks, rollback, and remaining work.`,
+        [location]
+      ));
+      continue;
+    }
+    if (pullNumbers.has(pull.number)) {
+      findings.push(presentationProblem('plan.coordination.reconcile-pr-duplicate', `${location} duplicates pull request #${pull.number}.`, [location]));
+    }
+    pullNumbers.add(pull.number);
+  }
+  return findings;
 }
 
 function createDraftManifest({ title, slug, language }) {
@@ -174,6 +437,35 @@ function createDraftManifest({ title, slug, language }) {
     title,
     language,
     approval: { status: 'draft', approvedAt: null },
+    coordination: {
+      issueMode: 'delivery-group',
+      projectMode: 'preferred',
+      titleStyle: 'auto',
+      maxChildIssues: DEFAULT_MAX_CHILD_ISSUES,
+      program: {
+        title,
+        summary: korean ? '승인할 프로그램 목표와 배경을 작성합니다.' : 'Describe the reviewed program outcome and context.',
+        scope: [korean ? '승인할 범위를 작성합니다.' : 'Describe the approved scope.'],
+        nonGoals: [korean ? '이번 프로그램에서 제외할 범위를 작성합니다.' : 'Describe what this program will not change.'],
+        successCriteria: [korean ? '프로그램 완료 조건을 작성합니다.' : 'Describe the program completion criteria.']
+      },
+      groups: [
+        {
+          id: 'implementation',
+          title: korean ? '핵심 구현' : 'Core implementation',
+          summary: korean ? '사람이 검토할 수 있는 핵심 결과물을 설명합니다.' : 'Describe the reviewable implementation outcome.',
+          taskIds: [implementationId],
+          rollback: korean ? '핵심 구현 변경을 되돌리고 이전 동작으로 복구합니다.' : 'Revert the implementation changes and restore the prior behavior.'
+        },
+        {
+          id: 'verification',
+          title: korean ? '검증 및 마무리' : 'Verification and completion',
+          summary: korean ? '검증 결과와 릴리스 준비 상태를 설명합니다.' : 'Describe the verification evidence and release readiness.',
+          taskIds: [verificationId],
+          rollback: korean ? '검증 실패 시 완료 상태를 취소하고 구현 그룹으로 되돌립니다.' : 'Reopen implementation work when verification fails.'
+        }
+      ]
+    },
     tasks: [
       {
         id: implementationId,
@@ -205,9 +497,9 @@ function createDraftManifest({ title, slug, language }) {
 
 function renderAutomationPlanMarkdown(manifest, sidecar, date) {
   if (manifest.language === 'ko') {
-    return `# ${manifest.title}\n\n상태: 초안\n날짜: ${date}\n구조화 계획: ${sidecar} (${PLAN_KIND})\n\n## 목표\n\n승인할 결과를 설명합니다.\n\n## 작업\n\n${manifest.tasks.map((task) => `- [ ] ${task.id}: ${task.title}`).join('\n')}\n\n## 승인\n\n범위, 수용 기준, 검증 argv를 모두 작성한 뒤에만 sidecar의 \`approval.status\`를 \`approved\`로 설정합니다.\n\n## 검증\n\ncontroller는 각 argv를 shell 없이 실행하고 새 증거를 실행 원장에 기록합니다.\n`;
+    return `# ${manifest.title}\n\n상태: 초안\n날짜: ${date}\n구조화 계획: ${sidecar} (${PLAN_KIND})\n\n## 목표\n\n승인할 결과를 설명합니다.\n\n## 협업 단위\n\n${manifest.coordination.groups.map((group) => `- ${group.title}: ${group.taskIds.join(', ')}`).join('\n')}\n\n## 작업\n\n${manifest.tasks.map((task) => `- [ ] ${task.id}: ${task.title}`).join('\n')}\n\n## 승인\n\n프로그램 범위, 사람용 delivery group, 수용 기준, 검증 argv를 모두 작성한 뒤에만 sidecar의 \`approval.status\`를 \`approved\`로 설정합니다.\n\n## 검증\n\ncontroller는 각 argv를 shell 없이 실행하고 새 증거를 실행 원장에 기록합니다.\n`;
   }
-  return `# ${manifest.title}\n\nStatus: draft\nDate: ${date}\nStructured plan: ${sidecar} (${PLAN_KIND})\n\n## Goal\n\nDescribe the approved outcome.\n\n## Tasks\n\n${manifest.tasks.map((task) => `- [ ] ${task.id}: ${task.title}`).join('\n')}\n\n## Approval\n\nSet \`approval.status\` to \`approved\` in the sidecar only after scope, acceptance criteria, and verification argv are complete.\n\n## Verification\n\nThe controller runs each argv without a shell and records fresh evidence in the execution ledger.\n`;
+  return `# ${manifest.title}\n\nStatus: draft\nDate: ${date}\nStructured plan: ${sidecar} (${PLAN_KIND})\n\n## Goal\n\nDescribe the approved outcome.\n\n## Coordination groups\n\n${manifest.coordination.groups.map((group) => `- ${group.title}: ${group.taskIds.join(', ')}`).join('\n')}\n\n## Tasks\n\n${manifest.tasks.map((task) => `- [ ] ${task.id}: ${task.title}`).join('\n')}\n\n## Approval\n\nSet \`approval.status\` to \`approved\` in the sidecar only after program scope, reviewable delivery groups, acceptance criteria, and verification argv are complete.\n\n## Verification\n\nThe controller runs each argv without a shell and records fresh evidence in the execution ledger.\n`;
 }
 
 function resolvePlanLanguage(language, title) {
@@ -258,23 +550,63 @@ function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
+function isPositiveInteger(value) {
+  return Number.isInteger(value) && value > 0;
+}
+
+function hasText(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isNonEmptyTextArray(value) {
+  return Array.isArray(value) && value.length > 0 && value.every(hasText);
+}
+
+function isKoreanLanguage(language, ...values) {
+  return String(language ?? '').toLowerCase().startsWith('ko') || values.some((value) => (
+    typeof value === 'string' && /[\u3131-\u318e\uac00-\ud7a3]/u.test(value)
+  ));
+}
+
+function isKoreanSentenceTitle(value) {
+  return typeof value === 'string' && /(?:한다|된다|이다)\s*[.!?]?\s*$/u.test(value);
+}
+
 function problem(id, message, paths = []) {
   return { id, message, paths };
 }
 
+function presentationProblem(id, message, paths = []) {
+  return { id, level: 'fail', message, paths };
+}
+
 function validationResult(options) {
-  const { conflicts, warnings, tasks, criteria = 0, verificationCommands = 0, ready = false } = options;
+  const {
+    conflicts,
+    warnings,
+    tasks,
+    criteria = 0,
+    verificationCommands = 0,
+    ready = false,
+    automationReady = ready,
+    forgeReady = false,
+    presentationFindings = []
+  } = options;
   return {
     schemaVersion: PLAN_SCHEMA_VERSION,
     kind: 'workflow.plan-validation.v2',
     ok: conflicts.length === 0,
     ready,
+    automationReady,
+    forgeReady,
+    presentationFindings,
     summary: {
       tasks: tasks.length,
       criteria,
       verificationCommands,
       warnings: warnings.length,
-      conflicts: conflicts.length
+      conflicts: conflicts.length,
+      presentationFindings: presentationFindings.length
     },
     warnings,
     conflicts

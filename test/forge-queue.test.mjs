@@ -5,10 +5,79 @@ import {
   collectReadyForgeTasks,
   inspectForgeIssue,
   mergeForgeQueueIntoPlan,
-  queryReadyForgeIssues
+  queryManagedForgeIssues,
+  queryReadyForgeIssues,
+  queryReviewedForgePullRequests
 } from '../src/forge/queue.mjs';
 
 const repository = { owner: 'example', name: 'playbook' };
+
+test('managed issue inspection returns marker-owned plan and task issues for presentation reconcile', async () => {
+  const transport = transportFrom(() => ({
+    status: 200,
+    data: [
+      { id: 101, number: 1, title: 'Program', body: '<!-- aapb:plan:program -->\nBody', state: 'open', updated_at: '2026-07-11T00:00:00Z' },
+      { id: 102, number: 2, title: 'Task', body: '<!-- aapb:task:task-1 -->\nBody', state: 'open', updated_at: '2026-07-11T00:01:00Z' },
+      { id: 103, number: 3, title: 'User issue', body: 'ordinary body', state: 'open', updated_at: '2026-07-11T00:02:00Z' },
+      { id: 104, number: 4, title: 'PR', body: '<!-- aapb:task:not-an-issue -->', pull_request: { url: 'https://example' } }
+    ],
+    headers: {}
+  }));
+
+  const result = await queryManagedForgeIssues({ provider: 'github', repository, transport });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.issues.map((issue) => issue.number), [1, 2]);
+  assert.equal(result.issues[0].updatedAt, '2026-07-11T00:00:00Z');
+  assert.equal(transport.calls[0].query.state, 'all');
+});
+
+test('managed issue inspection fails closed when GitHub parent ownership cannot be verified', async () => {
+  const transport = transportFrom((_request, call) => call === 1
+    ? {
+        status: 200,
+        data: [
+          { id: 101, number: 1, title: 'Program', body: '<!-- aapb:plan:program -->', state: 'open', updated_at: '2026-07-11T00:00:00Z' },
+          { id: 102, number: 2, title: 'Task', body: '<!-- aapb:task:task-1 -->', state: 'open', updated_at: '2026-07-11T00:01:00Z' }
+        ],
+        headers: {}
+      }
+    : { status: 403, data: { message: 'forbidden' }, headers: {} });
+
+  const result = await queryManagedForgeIssues({ provider: 'github', repository, transport });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.conflicts.some((conflict) => conflict.id === 'forge.managed-issues.parent-annotation-failed'), true);
+});
+
+test('reviewed pull request inspection reads only explicitly approved numbers and preserves CAS fields', async () => {
+  const paths = [];
+  const result = await queryReviewedForgePullRequests({
+    provider: 'github',
+    repository,
+    pullRequestNumbers: [16],
+    transport: {
+      async request(request) {
+        paths.push(request.path);
+        return {
+          status: 200,
+          data: {
+            number: 16, title: '기준선', body: '기존 본문', state: 'open', draft: true,
+            updated_at: '2026-07-11T14:29:21Z', node_id: 'PR_16',
+            head: { ref: 'aapb/baseline' }, base: { ref: 'main' }
+          }
+        };
+      }
+    }
+  });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(paths, ['/repos/example/playbook/pulls/16']);
+  assert.deepEqual(result.pullRequests[0], {
+    number: 16, title: '기준선', body: '기존 본문', state: 'open', draft: true,
+    updatedAt: '2026-07-11T14:29:21Z', nodeId: 'PR_16', head: 'aapb/baseline', base: 'main'
+  });
+});
 
 function transportFrom(handler) {
   const calls = [];
@@ -42,7 +111,8 @@ test('GitHub queue paginates ready issues, excludes paused issues and treats pay
           issueOne,
           { number: 2, title: 'Paused', body: '', labels: ['aapb:ready', 'aapb:paused'] },
           { number: 3, title: 'Not actually ready', body: '', labels: [{ name: 'bug' }] },
-          { number: 4, title: 'PR', body: '', labels: [{ name: 'aapb:ready' }], pull_request: { url: 'https://example' } }
+          { number: 4, title: 'PR', body: '', labels: [{ name: 'aapb:ready' }], pull_request: { url: 'https://example' } },
+          { number: 7, title: 'Managed group', body: '<!-- aapb:group:delivery -->', labels: [{ name: 'aapb:ready' }] }
         ],
         headers: { link: '<https://api.github.test/issues?page=2>; rel="next"' }
       };
@@ -97,6 +167,27 @@ test('GitHub queue paginates ready issues, excludes paused issues and treats pay
   });
   assert.equal(validation.ok, true);
   assert.equal(validation.ready, true);
+});
+
+test('ready queue reads the status label and the 0.5.4 compatibility alias without duplicates', async () => {
+  const transport = transportFrom((request) => ({
+    status: 200,
+    data: request.query.labels === 'status:ready'
+      ? [{ number: 9, title: 'Grouped work', body: '', labels: ['status:ready'] }]
+      : [
+          { number: 9, title: 'Grouped work', body: '', labels: ['status:ready', 'aapb:ready'] },
+          { number: 10, title: 'Legacy work', body: '', labels: ['aapb:ready'] }
+        ],
+    headers: {}
+  }));
+
+  const result = await queryReadyForgeIssues({
+    provider: 'github', repository, transport, readyLabel: 'status:ready', readyAliases: ['aapb:ready']
+  });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.issues.map((issue) => issue.number), [9, 10]);
+  assert.deepEqual(transport.calls.map((call) => call.query.labels), ['status:ready', 'aapb:ready']);
 });
 
 test('Gitea queue uses limit pagination and excludes configured automation pause label', async () => {

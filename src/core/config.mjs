@@ -34,6 +34,13 @@ const KNOWN_PATHS = new Set([
   'forge.sync',
   'forge.language',
   'forge.autoBootstrap',
+  'forge.presentation.issueMode',
+  'forge.presentation.maxChildIssues',
+  'forge.presentation.titleStyle',
+  'forge.presentation.bodyDetail',
+  'forge.presentation.labelStrategy',
+  'forge.projectMode',
+  'forge.onMissingCapability',
   'git.strategy',
   'git.unattendedWorkspace',
   'git.branchPrefix',
@@ -177,8 +184,8 @@ function defaultConfig(playbook) {
       profile: 'deliver',
       killSwitch: false,
       queue: {
-        readyLabel: 'aapb:ready',
-        pauseLabel: 'aapb:paused',
+        readyLabel: 'status:ready',
+        pauseLabel: 'status:paused',
         maxParallel: 1
       },
       budget: {
@@ -194,7 +201,16 @@ function defaultConfig(playbook) {
       apiBaseUrl: null,
       sync: 'hybrid',
       language: 'auto',
-      autoBootstrap: true
+      autoBootstrap: true,
+      presentation: {
+        issueMode: 'delivery-group',
+        maxChildIssues: 6,
+        titleStyle: 'auto',
+        bodyDetail: 'reviewable',
+        labelStrategy: 'minimal'
+      },
+      projectMode: 'preferred',
+      onMissingCapability: 'pause'
     },
     git: {
       strategy: 'branch',
@@ -408,10 +424,24 @@ function normalizeKnownValue(options) {
     return { valid: true, value };
   }
 
+  if (fullKey === 'forge.presentation.maxChildIssues') {
+    if (!Number.isInteger(value) || value < 1 || value > 50) {
+      conflicts.push(configConflict('config.value.invalid', `${sourcePath}.${fullKey} must be an integer from 1 to 50.`, [sourcePath]));
+      return { valid: false };
+    }
+    return { valid: true, value };
+  }
+
   const enumValues = {
     'automation.profile': ['off', 'observe', 'coordinate', 'deliver', 'release'],
     'forge.provider': ['auto', 'github', 'gitea'],
     'forge.sync': ['off', 'observe', 'hybrid', 'local-to-remote', 'remote-to-local'],
+    'forge.presentation.issueMode': ['delivery-group', 'parent-only', 'task'],
+    'forge.presentation.titleStyle': ['auto', 'noun-phrase', 'sentence'],
+    'forge.presentation.bodyDetail': ['reviewable', 'compact'],
+    'forge.presentation.labelStrategy': ['minimal', 'legacy'],
+    'forge.projectMode': ['preferred', 'milestone', 'off'],
+    'forge.onMissingCapability': ['pause', 'fallback'],
     'git.strategy': ['branch'],
     'git.unattendedWorkspace': ['isolated-checkout'],
     'executor.provider': ['auto', 'codex', 'claude', 'command', 'github-agent-task']

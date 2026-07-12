@@ -5,6 +5,7 @@ const SAFE_REPOSITORY_PART = /^[a-zA-Z0-9](?:[a-zA-Z0-9._-]{0,99})$/;
 const STABLE_ID = /^[a-z0-9][a-z0-9._-]{0,99}$/;
 const OWNED_TASK_MARKER = /^<!-- aapb:task:([a-z0-9][a-z0-9._-]{0,99}) -->(?:\r?\n|$)/;
 const OWNED_PLAN_MARKER = /^<!-- aapb:plan:[A-Za-z0-9][A-Za-z0-9._-]{0,99} -->(?:\r?\n|$)/;
+const OWNED_GROUP_MARKER = /^<!-- aapb:group:[A-Za-z0-9][A-Za-z0-9._-]{0,99} -->(?:\r?\n|$)/;
 const DEFAULT_PAUSE_LABELS = Object.freeze(['aapb:paused', 'aapb:automation-paused']);
 
 /**
@@ -42,10 +43,13 @@ export async function queryReadyForgeIssues(options = {}) {
     return queueResult({ provider, issues: [], warnings, conflicts });
   }
 
-  let readyLabel;
+  let readyLabels;
   let pauseLabels;
   try {
-    readyLabel = requiredLabel(options.readyLabel ?? 'aapb:ready');
+    readyLabels = [...new Set([
+      requiredLabel(options.readyLabel ?? 'aapb:ready'),
+      ...(Array.isArray(options.readyAliases) ? options.readyAliases.map(requiredLabel) : [])
+    ])];
     pauseLabels = new Set(
       (Array.isArray(options.pauseLabels) ? options.pauseLabels : DEFAULT_PAUSE_LABELS)
         .map(requiredLabel)
@@ -57,6 +61,77 @@ export async function queryReadyForgeIssues(options = {}) {
   }
   const path = `/repos/${encodeURIComponent(repository.owner)}/${encodeURIComponent(repository.name)}/issues`;
   const byNumber = new Map();
+  for (const readyLabel of readyLabels) {
+    let exhausted = false;
+    for (let page = 1; page <= MAX_PAGES; page += 1) {
+      let response;
+      try {
+        response = normalizeResponse(await options.transport.request({
+          method: 'GET',
+          path,
+          headers: provider === 'github'
+            ? { accept: 'application/vnd.github+json', 'x-github-api-version': '2026-03-10' }
+            : { accept: 'application/json' },
+          query: {
+            state: 'open',
+            labels: readyLabel,
+            page,
+            [provider === 'gitea' ? 'limit' : 'per_page']: PAGE_SIZE
+          }
+        }));
+      } catch (error) {
+        conflicts.push(problem('forge.queue.request-failed', `Ready issue query failed: ${redact(error?.message ?? 'remote request error')}`));
+        return queueResult({ provider, repository, issues: [], warnings, conflicts });
+      }
+      if (response.status >= 400) {
+        conflicts.push(problem('forge.queue.request-failed', `Ready issue query failed with HTTP ${response.status}.`));
+        return queueResult({ provider, repository, issues: [], warnings, conflicts });
+      }
+      const pageItems = Array.isArray(response.data) ? response.data : [];
+      for (const remote of pageItems) {
+        const normalized = normalizeRemoteIssue(remote, provider, repository, readyLabel, pauseLabels);
+        if (normalized.issue && !byNumber.has(normalized.issue.number)) byNumber.set(normalized.issue.number, normalized.issue);
+        if (normalized.warning) warnings.push(normalized.warning);
+      }
+      if (!hasNextPage(response.headers, pageItems.length, page)) {
+        exhausted = true;
+        break;
+      }
+    }
+    if (!exhausted) {
+      conflicts.push(problem('forge.queue.pagination-limit', 'Ready issue pagination exceeded the 100 page safety limit.'));
+      return queueResult({ provider, repository, issues: [], warnings, conflicts });
+    }
+  }
+  const issues = [...byNumber.values()].sort((left, right) => left.number - right.number);
+  return queueResult({ provider, repository, issues, warnings, conflicts });
+}
+
+export async function queryManagedForgeIssues(options = {}) {
+  const provider = normalizeProvider(options.provider);
+  const warnings = [];
+  const conflicts = [];
+  if (options.noRemote || options.offline) {
+    return managedIssueResult({ provider, issues: [], warnings, conflicts, skipped: true, reason: options.offline ? 'offline' : 'no-remote' });
+  }
+  if (provider !== 'github' && provider !== 'gitea') {
+    conflicts.push(problem('forge.managed-issues.provider-unsafe', 'Managed issue inspection requires an identified GitHub or Gitea provider.'));
+    return managedIssueResult({ provider, issues: [], warnings, conflicts });
+  }
+  let repository;
+  try {
+    repository = validateRepository(options.repository);
+  } catch (error) {
+    conflicts.push(problem('forge.managed-issues.repository-invalid', error.message));
+    return managedIssueResult({ provider, issues: [], warnings, conflicts });
+  }
+  if (!options.transport || typeof options.transport.request !== 'function') {
+    conflicts.push(problem('forge.managed-issues.transport-missing', 'Managed issue inspection requires a request transport.'));
+    return managedIssueResult({ provider, repository, issues: [], warnings, conflicts });
+  }
+
+  const path = `/repos/${encodeURIComponent(repository.owner)}/${encodeURIComponent(repository.name)}/issues`;
+  const issues = [];
   for (let page = 1; page <= MAX_PAGES; page += 1) {
     let response;
     try {
@@ -66,34 +141,137 @@ export async function queryReadyForgeIssues(options = {}) {
         headers: provider === 'github'
           ? { accept: 'application/vnd.github+json', 'x-github-api-version': '2026-03-10' }
           : { accept: 'application/json' },
-        query: {
-          state: 'open',
-          labels: readyLabel,
-          page,
-          [provider === 'gitea' ? 'limit' : 'per_page']: PAGE_SIZE
-        }
+        query: { state: 'all', page, [provider === 'gitea' ? 'limit' : 'per_page']: PAGE_SIZE }
       }));
     } catch (error) {
-      conflicts.push(problem('forge.queue.request-failed', `Ready issue query failed: ${redact(error?.message ?? 'remote request error')}`));
-      return queueResult({ provider, repository, issues: [], warnings, conflicts });
+      conflicts.push(problem('forge.managed-issues.request-failed', `Managed issue inspection failed: ${error?.message ?? 'remote request error'}`));
+      return managedIssueResult({ provider, repository, issues: [], warnings, conflicts });
     }
     if (response.status >= 400) {
-      conflicts.push(problem('forge.queue.request-failed', `Ready issue query failed with HTTP ${response.status}.`));
-      return queueResult({ provider, repository, issues: [], warnings, conflicts });
+      conflicts.push(problem('forge.managed-issues.request-failed', `Managed issue inspection failed with HTTP ${response.status}.`));
+      return managedIssueResult({ provider, repository, issues: [], warnings, conflicts });
     }
     const pageItems = Array.isArray(response.data) ? response.data : [];
     for (const remote of pageItems) {
-      const normalized = normalizeRemoteIssue(remote, provider, repository, readyLabel, pauseLabels);
-      if (normalized.issue && !byNumber.has(normalized.issue.number)) byNumber.set(normalized.issue.number, normalized.issue);
-      if (normalized.warning) warnings.push(normalized.warning);
+      if (remote?.pull_request || remote?.pullRequest) continue;
+      const body = sanitizeMultiline(remote?.body, 200_000);
+      if (!/^<!-- aapb:(?:plan|task|group):[A-Za-z0-9][A-Za-z0-9._-]{0,99} -->(?:\r?\n|$)/.test(body)) continue;
+      const number = Number(remote?.number ?? remote?.index);
+      const id = Number(remote?.id);
+      const observedAt = typeof (remote?.updated_at ?? remote?.updatedAt) === 'string'
+        ? String(remote.updated_at ?? remote.updatedAt).trim()
+        : '';
+      if (!Number.isInteger(number) || number < 1 || !Number.isInteger(id) || id < 1 || !Number.isFinite(Date.parse(observedAt))) continue;
+      issues.push({
+        id,
+        number,
+        title: sanitizeMultiline(remote?.title, 1000),
+        body,
+        state: String(remote?.state ?? '').toLowerCase() === 'closed' ? 'closed' : 'open',
+        labels: normalizeLabels(remote?.labels),
+        updatedAt: observedAt
+      });
     }
     if (!hasNextPage(response.headers, pageItems.length, page)) {
-      const issues = [...byNumber.values()].sort((left, right) => left.number - right.number);
-      return queueResult({ provider, repository, issues, warnings, conflicts });
+      issues.sort((left, right) => left.number - right.number);
+      if (provider === 'github') {
+        const annotation = await annotateManagedSubIssueParents({ issues, repository, transport: options.transport });
+        conflicts.push(...annotation.conflicts);
+      }
+      return managedIssueResult({ provider, repository, issues, warnings, conflicts });
     }
   }
-  conflicts.push(problem('forge.queue.pagination-limit', 'Ready issue pagination exceeded the 100 page safety limit.'));
-  return queueResult({ provider, repository, issues: [], warnings, conflicts });
+  conflicts.push(problem('forge.managed-issues.pagination-limit', 'Managed issue inspection exceeded the 100 page safety limit.'));
+  return managedIssueResult({ provider, repository, issues: [], warnings, conflicts });
+}
+
+export async function queryReviewedForgePullRequests(options = {}) {
+  const provider = normalizeProvider(options.provider);
+  const warnings = [];
+  const conflicts = [];
+  if (provider !== 'github' && provider !== 'gitea') {
+    conflicts.push(problem('forge.reviewed-pulls.provider-unsafe', 'Reviewed pull request inspection requires an identified GitHub or Gitea provider.'));
+    return reviewedPullResult({ provider, pullRequests: [], warnings, conflicts });
+  }
+  let repository;
+  try {
+    repository = validateRepository(options.repository);
+  } catch (error) {
+    conflicts.push(problem('forge.reviewed-pulls.repository-invalid', error.message));
+    return reviewedPullResult({ provider, pullRequests: [], warnings, conflicts });
+  }
+  if (!options.transport || typeof options.transport.request !== 'function') {
+    conflicts.push(problem('forge.reviewed-pulls.transport-missing', 'Reviewed pull request inspection requires a request transport.'));
+    return reviewedPullResult({ provider, repository, pullRequests: [], warnings, conflicts });
+  }
+  const numbers = [...new Set(Array.isArray(options.pullRequestNumbers) ? options.pullRequestNumbers : [])];
+  if (numbers.length > 20 || numbers.some((number) => !Number.isInteger(number) || number < 1)) {
+    conflicts.push(problem('forge.reviewed-pulls.numbers-invalid', 'Reviewed pull request numbers must contain at most 20 unique positive integers.'));
+    return reviewedPullResult({ provider, repository, pullRequests: [], warnings, conflicts });
+  }
+  const pullRequests = [];
+  for (const number of numbers.sort((left, right) => left - right)) {
+    let response;
+    try {
+      response = normalizeResponse(await options.transport.request({
+        method: 'GET',
+        path: `/repos/${encodeURIComponent(repository.owner)}/${encodeURIComponent(repository.name)}/pulls/${number}`,
+        headers: provider === 'github'
+          ? { accept: 'application/vnd.github+json', 'x-github-api-version': '2026-03-10' }
+          : { accept: 'application/json' }
+      }));
+    } catch (error) {
+      conflicts.push(problem('forge.reviewed-pulls.request-failed', `Pull request #${number} inspection failed: ${error?.message ?? 'remote request error'}`));
+      continue;
+    }
+    if (response.status >= 400 || !response.data || typeof response.data !== 'object') {
+      conflicts.push(problem('forge.reviewed-pulls.request-failed', `Pull request #${number} inspection failed with HTTP ${response.status}.`));
+      continue;
+    }
+    const remote = response.data;
+    const updatedAt = typeof (remote.updated_at ?? remote.updatedAt) === 'string' ? String(remote.updated_at ?? remote.updatedAt).trim() : '';
+    if (!Number.isFinite(Date.parse(updatedAt))) {
+      conflicts.push(problem('forge.reviewed-pulls.snapshot-invalid', `Pull request #${number} did not provide a valid updatedAt snapshot.`));
+      continue;
+    }
+    pullRequests.push({
+      number,
+      title: sanitizeMultiline(remote.title, 1000),
+      body: sanitizeMultiline(remote.body, 200_000),
+      state: String(remote.state ?? '').toLowerCase() === 'closed' ? 'closed' : 'open',
+      draft: remote.draft === true || (provider === 'gitea' && /^(?:WIP:|\[WIP\])/i.test(String(remote.title ?? ''))),
+      updatedAt,
+      nodeId: sanitizeInline(remote.node_id ?? remote.nodeId, 512),
+      head: sanitizeInline(remote.head?.ref ?? remote.head, 256),
+      base: sanitizeInline(remote.base?.ref ?? remote.base, 256)
+    });
+  }
+  return reviewedPullResult({ provider, repository, pullRequests, warnings, conflicts });
+}
+
+async function annotateManagedSubIssueParents({ issues, repository, transport }) {
+  const parents = issues.filter((issue) => OWNED_PLAN_MARKER.test(issue.body));
+  const conflicts = [];
+  for (const parent of parents) {
+    const response = normalizeResponse(await transport.request({
+      method: 'GET',
+      path: `/repos/${encodeURIComponent(repository.owner)}/${encodeURIComponent(repository.name)}/issues/${parent.number}/sub_issues`,
+      headers: { accept: 'application/vnd.github+json', 'x-github-api-version': '2026-03-10' },
+      query: { per_page: PAGE_SIZE, page: 1 }
+    }));
+    if (response.status >= 400) {
+      conflicts.push(problem(
+        'forge.managed-issues.parent-annotation-failed',
+        `Could not verify sub-issue ownership for parent issue #${parent.number}; presentation reconcile is blocked.`
+      ));
+      continue;
+    }
+    const childIds = new Set((Array.isArray(response.data) ? response.data : []).map((child) => Number(child?.id)).filter(Number.isInteger));
+    for (const issue of issues) {
+      if (childIds.has(issue.id)) issue.parentIssueNumbers = [...new Set([...(issue.parentIssueNumbers ?? []), parent.number])];
+    }
+  }
+  return { conflicts };
 }
 
 /**
@@ -328,7 +506,7 @@ function normalizeRemoteIssue(remote, provider, repository, readyLabel, pauseLab
   if (!normalizedLabels.has(readyLabel.toLowerCase())) return {};
   if ([...pauseLabels].some((label) => normalizedLabels.has(label))) return {};
   const body = sanitizeMultiline(remote.body, 16_000);
-  if (OWNED_PLAN_MARKER.test(body)) return {};
+  if (OWNED_PLAN_MARKER.test(body) || OWNED_GROUP_MARKER.test(body)) return {};
   return {
     issue: {
       provider,
@@ -478,6 +656,34 @@ function queueResult({ provider, repository = null, issues, warnings, conflicts,
     skipped,
     reason,
     issues,
+    warnings,
+    conflicts
+  };
+}
+
+function managedIssueResult({ provider, repository = null, issues, warnings, conflicts, skipped = false, reason = null }) {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'forge.managed-issue-query',
+    ok: conflicts.length === 0,
+    provider,
+    repository: repository ? `${repository.owner}/${repository.name}` : null,
+    skipped,
+    reason,
+    issues,
+    warnings,
+    conflicts
+  };
+}
+
+function reviewedPullResult({ provider, repository = null, pullRequests, warnings, conflicts }) {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'forge.reviewed-pull-query',
+    ok: conflicts.length === 0,
+    provider,
+    repository: repository ? `${repository.owner}/${repository.name}` : null,
+    pullRequests,
     warnings,
     conflicts
   };

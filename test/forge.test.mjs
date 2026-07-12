@@ -382,8 +382,8 @@ test('forge bootstrap plan is deterministic and idempotently declares managed la
 
   const options = {
     provider: 'github',
-    milestoneTitle: '0.5.4',
-    projectTitle: 'AI Agent Playbook 0.5.4'
+    milestoneTitle: '0.5.5',
+    projectTitle: 'AI Agent Playbook 0.5.5'
   };
   const first = planForgeBootstrap(options);
   const second = planForgeBootstrap({ ...options });
@@ -396,18 +396,36 @@ test('forge bootstrap plan is deterministic and idempotently declares managed la
   assert.deepEqual(first.operations
     .filter((operation) => operation.resource === 'label')
     .map((operation) => operation.payload.name), [
-    'aapb:ready',
-    'aapb:running',
-    'aapb:paused',
-    'aapb:blocked',
-    'aapb:review'
+    'status:ready'
   ]);
   assert.equal(first.operations.some((operation) => operation.resource === 'milestone'), true);
+  assert.match(first.operations.find((operation) => operation.resource === 'milestone').payload.description, /Completion definition/);
   assert.equal(first.operations.some((operation) => operation.resource === 'project'), true);
   assert.deepEqual(first.operations
     .filter((operation) => operation.resource === 'view')
     .map((operation) => operation.payload.name), ['Queue', 'Board', 'Roadmap', 'Blocked']);
+  assert.deepEqual(first.operations
+    .filter((operation) => operation.resource === 'view')
+    .map((operation) => operation.payload.filter), ['aapb-status:Ready', '-is:closed', '-is:closed', 'aapb-status:Blocked']);
   assert.equal(new Set(first.operations.map((operation) => operation.idempotencyKey)).size, first.operations.length);
+});
+
+test('GitHub bootstrap localizes human-facing Project view names for Korean repositories', async () => {
+  const { planForgeBootstrap } = await loadPlans();
+  const plan = planForgeBootstrap({
+    provider: 'github',
+    projectTitle: '제품 개선',
+    language: 'ko'
+  });
+
+  assert.deepEqual(
+    plan.operations.filter((operation) => operation.resource === 'view').map((operation) => operation.payload.name),
+    ['전체', '보드', '로드맵', '주의 필요']
+  );
+  assert.deepEqual(
+    plan.operations.filter((operation) => operation.resource === 'view').map((operation) => operation.payload.filter),
+    ['-is:closed', '-is:closed', '-is:closed', 'aapb-status:Blocked']
+  );
 });
 
 test('Gitea bootstrap plan degrades project and view automation to milestone-label filters', async () => {
@@ -423,6 +441,15 @@ test('Gitea bootstrap plan degrades project and view automation to milestone-lab
   assert.equal(plan.ok, true);
   assert.equal(plan.operations.some((operation) => operation.resource === 'project'), false);
   assert.equal(plan.operations.some((operation) => operation.resource === 'view'), false);
+  assert.deepEqual(plan.operations
+    .filter((operation) => operation.resource === 'label')
+    .map((operation) => operation.payload.name), [
+    'status:ready',
+    'status:in-progress',
+    'status:paused',
+    'status:blocked',
+    'status:review'
+  ]);
   assert.equal(plan.operations.some((operation) => (
     operation.resource === 'milestone-label-filter' &&
     operation.mode === 'fallback'
@@ -439,6 +466,21 @@ test('Gitea bootstrap plan degrades project and view automation to milestone-lab
   )), true);
 });
 
+test('GitHub bootstrap creates fallback status labels only after milestone fallback is explicit', async () => {
+  const { planForgeBootstrap } = await loadPlans();
+  const { getForgeCapabilities } = await loadCapabilities();
+  const capabilities = { ...getForgeCapabilities('github'), projects: 'unavailable', views: 'unavailable' };
+
+  const paused = planForgeBootstrap({ provider: 'github', capabilities, projectMode: 'preferred', projectTitle: 'Product' });
+  const fallback = planForgeBootstrap({ provider: 'github', capabilities, projectMode: 'milestone', projectTitle: 'Product' });
+
+  assert.deepEqual(paused.operations.filter((operation) => operation.resource === 'label').map((operation) => operation.payload.name), ['status:ready']);
+  assert.deepEqual(fallback.operations.filter((operation) => operation.resource === 'label').map((operation) => operation.payload.name), [
+    'status:ready', 'status:in-progress', 'status:paused', 'status:blocked', 'status:review'
+  ]);
+  assert.equal(fallback.operations.some((operation) => operation.resource === 'milestone-label-filter'), true);
+});
+
 test('forge sync plan is deterministic, task-scoped, and keeps untrusted text as structured payload', async () => {
   const { planForgeSync } = await loadPlans();
   assert.equal(typeof planForgeSync, 'function');
@@ -447,8 +489,9 @@ test('forge sync plan is deterministic, task-scoped, and keeps untrusted text as
     { id: 'task-2', title: 'Review; gh api --method DELETE', status: 'review' },
     { id: 'task-1', title: 'Build forge adapter', status: 'ready', issueNumber: 42 }
   ];
-  const first = planForgeSync({ provider: 'github', milestoneTitle: '0.5.4', tasks });
-  const second = planForgeSync({ provider: 'github', milestoneTitle: '0.5.4', tasks: [...tasks].reverse() });
+  const coordination = { issueMode: 'task' };
+  const first = planForgeSync({ provider: 'github', milestoneTitle: '0.5.4', coordination, tasks });
+  const second = planForgeSync({ provider: 'github', milestoneTitle: '0.5.4', coordination, tasks: [...tasks].reverse() });
 
   assert.deepEqual(first, second);
   assert.equal(first.schemaVersion, '1');
@@ -456,8 +499,8 @@ test('forge sync plan is deterministic, task-scoped, and keeps untrusted text as
   assert.equal(first.ok, true);
   assert.deepEqual(first.operations.map((operation) => operation.taskId), ['task-1', 'task-2']);
   assert.deepEqual(first.operations.map((operation) => operation.payload.labels), [
-    ['aapb:ready'],
-    ['aapb:review']
+    ['status:ready'],
+    []
   ]);
   assert.equal(first.operations[0].action, 'update');
   assert.equal(first.operations[1].action, 'ensure');

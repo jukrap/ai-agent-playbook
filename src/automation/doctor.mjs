@@ -76,6 +76,7 @@ export async function automationDoctor(options) {
       status: 'not-checked'
     },
     probe: { status: 'not-run', checkedAt: null, evidence: [] },
+    remediations: [],
     warnings: [],
     conflicts: []
   };
@@ -139,11 +140,38 @@ export async function automationDoctor(options) {
     }
     if (tooling.gh.scopes.includes('project')) {
       forgeInspection.permissions.projects = 'read-write';
-    } else if (tooling.gh.scopes.includes('read:project')) {
-      forgeInspection.permissions.projects = 'read-only';
     } else {
-      forgeInspection.permissions.projects = 'unavailable';
-      forgeInspection.warnings.push(issue('forge.scope.projects-missing', 'GitHub Projects access is unavailable; Issues and Milestones remain usable without changing auth scopes.'));
+      forgeInspection.permissions.projects = tooling.gh.scopes.includes('read:project') ? 'read-only' : 'unavailable';
+      forgeInspection.warnings.push(issue('forge.scope.projects-missing', 'GitHub Projects write access is unavailable; Issues and Milestones remain usable without changing auth scopes.'));
+      forgeInspection.remediations.push(
+        {
+          id: 'forge.scope.projects-missing',
+          kind: 'command',
+          reason: 'GitHub Projects write access requires the project scope.',
+          argv: ['gh', 'auth', 'refresh', '-s', 'project'],
+          interactive: true
+        },
+        {
+          id: 'forge.scope.projects-recheck',
+          kind: 'command',
+          reason: 'Recheck forge capabilities after authentication.',
+          argv: ['aapb', 'forge', 'status', '.'],
+          interactive: false
+        }
+      );
+      const projectMode = config.forge?.projectMode ?? 'preferred';
+      const onMissingCapability = config.forge?.onMissingCapability ?? 'pause';
+      if (
+        tooling.gh.authenticated === true &&
+        policy.remote.write &&
+        projectMode === 'preferred' &&
+        onMissingCapability === 'pause'
+      ) {
+        forgeInspection.conflicts.push(issue(
+          'forge.scope.projects-missing',
+          'GitHub Projects access is required by the preferred project mode; remote coordination is paused until the capability is restored or an explicit fallback is configured.'
+        ));
+      }
     }
     if (tooling.gh.version && versionLessThan(tooling.gh.version, '2.80.0')) {
       forgeInspection.conflicts.push(issue('forge.tool.gh-version-unsupported', `GitHub CLI ${tooling.gh.version} is below the supported minimum 2.80.0.`));
@@ -275,6 +303,7 @@ export async function automationDoctor(options) {
     warnings: forgeInspection.warnings,
     conflicts: forgeInspection.conflicts
   });
+  forge.remediations = forgeInspection.remediations;
   warnings.push(...forge.warnings);
   conflicts.push(...forge.conflicts);
 

@@ -30,11 +30,14 @@ When GitHub Projects is preferred, a missing project scope blocks the whole coor
 ## Bootstrap And Synchronization
 
 - Preview all bootstrap operations before applying them.
+- Run reconcile previews through the provider adapter behind a mutation-blocking transport. Remove only provider-confirmed reusable operations from the executable set, report them as no-ops, and keep the original intent count separately.
 - Create only missing managed labels, milestones, project fields, or views. Never rename, overwrite, or delete an existing asset to make it match.
+- GitHub creates a system `View 1` for a new Project and the stable public View API does not rename or delete it. Reuse that table view as the managed all-view role instead of creating a duplicate; do not claim its visible name changed.
 - Give every managed artifact an idempotency marker that is stable across retries but contains no credential or private payload.
 - Queue only issues with the configured ready label. A label discovered on an unrelated issue is not approval to broaden its scope.
 - Use one updatable marker comment for progress. Add a new comment only for a meaningful blocker, recovery, reconciliation decision, or final verification result.
 - Compare the remote update timestamp and the recorded requirement digest before any issue update. A plan-only marker match reuses an existing issue only when its title and composed body exactly match the approved plan; otherwise raise `forge.issue.reconcile-required`. Title, body, acceptance, and status updates require a reviewed `updatedAt` baseline and CAS. If requirements changed during execution, pause for reconciliation.
+- A reviewed presentation migration may remove a strict legacy generated objective/acceptance preamble immediately before the managed block. Preserve user text outside that recognized shape and require the same CAS boundary as other body changes.
 - Keep user-facing issue, pull request, and comment text in the user's working language. Keep machine labels, state values, and markers stable and language-neutral.
 
 ## Transport Rules

@@ -41,7 +41,7 @@ const PROJECT_VIEWS = [
 ];
 
 const KOREAN_PROJECT_VIEWS = [
-  { name: '전체', layout: 'table', filter: '-is:closed' },
+  { name: '전체', role: 'all', layout: 'table', filter: '-is:closed' },
   { name: '보드', layout: 'board', filter: '-is:closed' },
   { name: '로드맵', layout: 'roadmap', filter: '-is:closed' },
   { name: '주의 필요', layout: 'table', filter: 'delivery-status:Blocked' }

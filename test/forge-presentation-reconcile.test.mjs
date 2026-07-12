@@ -230,6 +230,7 @@ test('presentation reconcile previews milestone, Project views, supporting issue
   assert.equal(plan.ok, true);
   assert.equal(plan.operations.some((operation) => operation.resource === 'milestone'), true);
   assert.equal(plan.operations.filter((operation) => operation.resource === 'view').length, 4);
+  assert.equal(plan.operations.find((operation) => operation.id === 'view:전체').payload.role, 'all');
   assert.equal(plan.operations.some((operation) => operation.id === 'supporting:automation-baseline:issue'), true);
   assert.equal(plan.operations.some((operation) => operation.id === 'pull-request:16'), true);
   assert.equal(plan.operations.filter((operation) => operation.resource === 'project-item' && operation.action === 'ensure').length, 7);

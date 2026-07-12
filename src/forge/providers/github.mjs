@@ -101,7 +101,7 @@ query AapbProjectViews($id: ID!, $after: String) {
   node(id: $id) {
     ... on ProjectV2 {
       views(first: 100, after: $after) {
-        nodes { id number name layout }
+        nodes { id number name layout filter }
         pageInfo { hasNextPage endCursor }
       }
     }
@@ -522,7 +522,9 @@ export function createRestProvider(options) {
     if (payload.preserveManagedBody === true && payload.body !== undefined) {
       issuePayload = {
         ...issuePayload,
-        body: mergeManagedIssueBody(current.body, payload.body)
+        body: mergeManagedIssueBody(current.body, payload.body, {
+          replaceLegacyManagedPreamble: payload.replaceLegacyManagedPreamble === true
+        })
       };
     }
     const desired = await buildIssueBody(issuePayload);
@@ -737,7 +739,7 @@ export function createRestProvider(options) {
         owner: discovered.owner,
         repositoryId: discovered.repositoryId,
         project,
-        views: projectStatus === 'created' ? [] : await listProjectViews(project.id),
+        views: await listProjectViews(project.id),
         managedFields: null
       };
       projectCache.set(title, context);
@@ -766,6 +768,16 @@ export function createRestProvider(options) {
     const context = projectCache.get(projectTitle);
     const existing = context.views.find((view) => normalizedText(view?.name) === name);
     if (existing) return resourceResult('reused', 'view', existing);
+    const defaultView = payload.role === 'all'
+      ? context.views.find(isSystemDefaultProjectView)
+      : null;
+    if (defaultView) {
+      return resourceResult('reused', 'view', {
+        ...defaultView,
+        managedRole: 'all',
+        requestedName: name
+      });
+    }
 
     const body = { name, layout };
     const filter = managedProjectViewFilter(payload.filter, context.managedFields);
@@ -1247,7 +1259,7 @@ export function createRestProvider(options) {
   });
 }
 
-function mergeManagedIssueBody(currentValue, desiredValue) {
+function mergeManagedIssueBody(currentValue, desiredValue, options = {}) {
   const current = String(currentValue ?? '');
   const desired = String(desiredValue ?? '');
   const startMarker = '<!-- aapb:managed:start -->';
@@ -1269,10 +1281,21 @@ function mergeManagedIssueBody(currentValue, desiredValue) {
   }
   const currentEnd = currentEndStart + endMarker.length;
   const desiredEnd = desiredEndStart + endMarker.length;
-  const prefix = current.slice(0, currentStart).trimEnd();
+  const currentPrefix = current.slice(0, currentStart).trimEnd();
+  const desiredPrefix = desired.slice(0, desiredStart).trimEnd();
+  const prefix = options.replaceLegacyManagedPreamble === true && isStrictLegacyManagedPreamble(currentPrefix)
+    ? desiredPrefix
+    : currentPrefix;
   const managed = desired.slice(desiredStart, desiredEnd).trim();
   const suffix = current.slice(currentEnd).trimStart();
   return [prefix, managed, suffix].filter(Boolean).join('\n\n');
+}
+
+function isStrictLegacyManagedPreamble(value) {
+  const withoutOwnership = String(value ?? '')
+    .replace(/^\s*(?:(?:<!--\s*aapb:(?:plan|task|group):[a-z0-9][a-z0-9._-]{0,99}\s*-->|<!--\s*aapb:plan-owner:[a-z0-9][a-z0-9._-]{0,99}\s*-->)\s*)+/i, '')
+    .trim();
+  return /^##\s+(?:목표|Goal|Purpose)\s+[\s\S]+?<!--\s*aapb:acceptance:start\s*-->[\s\S]*?<!--\s*aapb:acceptance:end\s*-->\s*$/i.test(withoutOwnership);
 }
 
 export function forgeError(code, message, details = {}) {
@@ -1620,11 +1643,20 @@ function projectItemFieldValues(item) {
 }
 
 function projectFieldValueMatches(current, desired) {
+  if (!current && desired && 'text' in desired && desired.text === '') return true;
   if (!current || !desired) return false;
   if ('text' in desired) return current.text === desired.text;
   if ('number' in desired) return Number.isFinite(current.number) && current.number === desired.number;
   if ('singleSelectOptionId' in desired) return current.singleSelectOptionId === desired.singleSelectOptionId;
   return false;
+}
+
+function isSystemDefaultProjectView(view) {
+  const name = normalizedText(view?.name);
+  const layout = normalizedText(view?.layout)?.toLowerCase();
+  const filter = normalizedOptionalText(view?.filter);
+  return Number(view?.number) === 1 && name === 'View 1' &&
+    (layout === 'table' || layout === 'table_layout') && !filter;
 }
 
 function projectStatusOption(status) {

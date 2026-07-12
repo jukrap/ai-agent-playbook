@@ -10,9 +10,19 @@ const MANAGED_STATUS_LABELS = new Set([
   'aapb:ready', 'aapb:running', 'aapb:blocked', 'aapb:review', 'aapb:paused'
 ]);
 
+const MANAGED_PROJECT_FIELD_ALIASES = Object.freeze({
+  'Delivery Status': Object.freeze(['AAPB Status']),
+  'Task ID': Object.freeze(['AAPB Task ID']),
+  Phase: Object.freeze(['AAPB Phase']),
+  Priority: Object.freeze(['AAPB Priority']),
+  Risk: Object.freeze(['AAPB Risk']),
+  Progress: Object.freeze(['AAPB Progress']),
+  Area: Object.freeze(['AAPB Area'])
+});
+
 const MANAGED_PROJECT_FIELDS = Object.freeze([
   {
-    name: 'AAPB Status',
+    name: 'Delivery Status',
     data_type: 'single_select',
     single_select_options: [
       { name: 'Planned', color: 'GRAY', description: 'Approved but not yet executable' },
@@ -23,10 +33,10 @@ const MANAGED_PROJECT_FIELDS = Object.freeze([
       { name: 'Done', color: 'GREEN', description: 'Completed with required evidence' }
     ]
   },
-  { name: 'AAPB Task ID', data_type: 'text' },
-  { name: 'AAPB Phase', data_type: 'text' },
+  { name: 'Task ID', data_type: 'text' },
+  { name: 'Phase', data_type: 'text' },
   {
-    name: 'AAPB Priority',
+    name: 'Priority',
     data_type: 'single_select',
     single_select_options: [
       { name: 'P0', color: 'RED', description: 'Critical priority' },
@@ -36,7 +46,7 @@ const MANAGED_PROJECT_FIELDS = Object.freeze([
     ]
   },
   {
-    name: 'AAPB Risk',
+    name: 'Risk',
     data_type: 'single_select',
     single_select_options: [
       { name: 'low', color: 'GREEN', description: 'Low delivery risk' },
@@ -44,8 +54,8 @@ const MANAGED_PROJECT_FIELDS = Object.freeze([
       { name: 'high', color: 'RED', description: 'High delivery risk' }
     ]
   },
-  { name: 'AAPB Progress', data_type: 'number' },
-  { name: 'AAPB Area', data_type: 'text' }
+  { name: 'Progress', data_type: 'number' },
+  { name: 'Area', data_type: 'text' }
 ]);
 
 const PROJECT_CONTEXT_QUERY = `
@@ -65,7 +75,6 @@ query AapbProjectContext($owner: String!, $name: String!, $after: String) {
       ... on User {
         id
         login
-        databaseId
         projectsV2(first: 100, after: $after) {
           nodes { id number title }
           pageInfo { hasNextPage endCursor }
@@ -610,8 +619,7 @@ export function createRestProvider(options) {
       ownerContext = {
         type: ownerType,
         id: requiredGraphQlId(owner.id, 'Project owner node ID'),
-        login: repository.owner,
-        databaseId: Number.isInteger(owner.databaseId) && owner.databaseId > 0 ? owner.databaseId : null
+        login: requiredText(owner.login, 'Project owner login')
       };
       const connection = owner.projectsV2;
       const projects = Array.isArray(connection?.nodes) ? connection.nodes : [];
@@ -666,10 +674,16 @@ export function createRestProvider(options) {
     const fields = normalizeManagedProjectFields(requestedFields);
     const path = projectFieldsPath(context);
     const existingFields = await listCursorAll(path);
+    const matches = fields.map((field) => ({
+      field,
+      existing: findManagedProjectField(existingFields, field.name)
+    }));
+    for (const { field, existing } of matches) {
+      if (existing) assertManagedProjectFieldCompatible(existing, field);
+    }
     const managed = [];
     let created = 0;
-    for (const field of fields) {
-      const existing = existingFields.find((candidate) => normalizedText(candidate?.name) === field.name);
+    for (const { field, existing } of matches) {
       if (existing) {
         managed.push(existing);
         continue;
@@ -743,7 +757,7 @@ export function createRestProvider(options) {
     if (existing) return resourceResult('reused', 'view', existing);
 
     const body = { name, layout };
-    const filter = normalizedOptionalText(payload.filter);
+    const filter = managedProjectViewFilter(payload.filter, context.managedFields);
     if (filter !== undefined && filter !== '') body.filter = filter;
     if (layout !== 'roadmap') {
       const visibleFields = context.managedFields
@@ -1391,6 +1405,91 @@ function normalizeManagedProjectFields(requested) {
   });
 }
 
+function managedProjectFieldNames(value) {
+  const requested = requiredText(value, 'Project field name');
+  const requestedKey = requested.toLowerCase();
+  for (const [canonical, aliases] of Object.entries(MANAGED_PROJECT_FIELD_ALIASES)) {
+    const names = [canonical, ...aliases];
+    if (names.some((name) => name.toLowerCase() === requestedKey)) return names;
+  }
+  return [requested];
+}
+
+function findManagedProjectField(fields, requestedName) {
+  const requested = requiredText(requestedName, 'Project field name');
+  const normalizedFields = Array.isArray(fields) ? fields : [];
+  const exact = normalizedFields.find((field) => (
+    normalizedText(field?.name)?.toLowerCase() === requested.toLowerCase()
+  ));
+  if (exact) return exact;
+  const aliases = new Set(managedProjectFieldNames(requested)
+    .filter((name) => name.toLowerCase() !== requested.toLowerCase())
+    .map((name) => name.toLowerCase()));
+  return normalizedFields.find((field) => aliases.has(normalizedText(field?.name)?.toLowerCase()));
+}
+
+function assertManagedProjectFieldCompatible(existing, requested) {
+  const expectedType = requiredText(requested?.data_type ?? requested?.dataType, 'Project field data type').toLowerCase();
+  const actualType = normalizedText(existing?.data_type ?? existing?.dataType)
+    ?.toLowerCase()
+    .replace(/[\s-]+/g, '_') ?? null;
+  if (actualType !== expectedType) {
+    throw forgeError(
+      'forge.project.field-type-mismatch',
+      `GitHub Project field has an incompatible type: ${requested.name}.`,
+      {
+        field: requested.name,
+        actualName: normalizedText(existing?.name),
+        expectedType,
+        actualType
+      }
+    );
+  }
+  const existingOptions = Array.isArray(existing?.options)
+    ? existing.options
+    : Array.isArray(existing?.single_select_options) ? existing.single_select_options : null;
+  if (expectedType !== 'single_select' || existingOptions === null) return;
+  const optionNames = new Set(existingOptions
+    .map((option) => projectFieldOptionName(option)?.toLowerCase())
+    .filter(Boolean));
+  const requiredOptions = Array.isArray(requested?.single_select_options)
+    ? requested.single_select_options.map((option) => requiredText(option?.name, 'Project field option name'))
+    : [];
+  const missingOptions = requiredOptions.filter((name) => !optionNames.has(name.toLowerCase()));
+  if (missingOptions.length === 0) return;
+  throw forgeError(
+    'forge.project.field-option-mismatch',
+    `GitHub Project field has incompatible single-select options: ${requested.name}.`,
+    {
+      field: requested.name,
+      actualName: normalizedText(existing?.name),
+      missingOptions
+    }
+  );
+}
+
+function projectFieldOptionName(option) {
+  if (typeof option?.name === 'string') return normalizedText(option.name);
+  return normalizedText(option?.name?.raw ?? option?.name?.html);
+}
+
+function managedProjectViewFilter(value, fields) {
+  const filter = normalizedOptionalText(value);
+  if (!filter || !/(^|\s)delivery-status:/i.test(filter)) return filter;
+  const statusField = findManagedProjectField(fields, 'Delivery Status');
+  const actualKey = projectFieldFilterKey(statusField?.name);
+  return actualKey
+    ? filter.replace(/(^|\s)delivery-status:/gi, `$1${actualKey}:`)
+    : filter;
+}
+
+function projectFieldFilterKey(value) {
+  return normalizedText(value)
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') ?? null;
+}
+
 function managedProjectItemFieldValues(fields, payload) {
   const normalizedFields = Array.isArray(fields) ? fields : [];
   const status = normalizedText(payload.status)?.toLowerCase() ?? 'planned';
@@ -1400,18 +1499,16 @@ function managedProjectItemFieldValues(fields, payload) {
     : 'medium';
   const progress = normalizedProjectProgress(payload.progress, status);
   const specifications = [
-    { name: 'AAPB Status', type: 'single_select', options: [projectStatusOption(status)] },
-    { name: 'AAPB Task ID', type: 'text', value: { text: payload.taskId } },
-    { name: 'AAPB Phase', type: 'text', value: { text: normalizedText(payload.phase) ?? '' } },
-    { name: 'AAPB Priority', type: 'single_select', options: [projectPriorityOption(priority)] },
-    { name: 'AAPB Risk', type: 'single_select', options: [risk] },
-    { name: 'AAPB Progress', type: 'number', value: { number: progress } },
-    { name: 'AAPB Area', type: 'text', value: { text: normalizedText(payload.area) ?? '' } }
+    { name: 'Delivery Status', type: 'single_select', options: [projectStatusOption(status)] },
+    { name: 'Task ID', type: 'text', value: { text: payload.taskId } },
+    { name: 'Phase', type: 'text', value: { text: normalizedText(payload.phase) ?? '' } },
+    { name: 'Priority', type: 'single_select', options: [projectPriorityOption(priority)] },
+    { name: 'Risk', type: 'single_select', options: [risk] },
+    { name: 'Progress', type: 'number', value: { number: progress } },
+    { name: 'Area', type: 'text', value: { text: normalizedText(payload.area) ?? '' } }
   ];
   return specifications.map((specification) => {
-    const field = normalizedFields.find((candidate) => (
-      normalizedText(candidate?.name)?.toLowerCase() === specification.name.toLowerCase()
-    ));
+    const field = findManagedProjectField(normalizedFields, specification.name);
     if (!field) {
       throw forgeError('forge.project.field-missing', `GitHub Project field is missing: ${specification.name}.`, {
         field: specification.name
@@ -1522,12 +1619,9 @@ function projectFieldsPath(context) {
 
 function projectViewsPath(context) {
   const projectNumber = positiveInteger(context?.project?.number, 'Project number');
-  if (context?.owner?.type === 'Organization') {
-    const owner = encodeURIComponent(requiredText(context.owner.login, 'Project owner login'));
-    return `/orgs/${owner}/projectsV2/${projectNumber}/views`;
-  }
-  const userId = positiveInteger(context?.owner?.databaseId, 'Project owner user ID');
-  return `/users/${userId}/projectsV2/${projectNumber}/views`;
+  const owner = encodeURIComponent(requiredText(context?.owner?.login, 'Project owner login'));
+  const prefix = context?.owner?.type === 'Organization' ? `/orgs/${owner}` : `/users/${owner}`;
+  return `${prefix}/projectsV2/${projectNumber}/views`;
 }
 
 function mutationId(kind, repository, value) {

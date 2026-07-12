@@ -58,4 +58,7 @@ test('npm pack dry-run includes runtime files and excludes local/test payloads',
   assert.equal(files.some((file) => file.startsWith('translations/')), false);
   assert.equal(files.some((file) => file.startsWith('docs/assets/')), false);
   assert.equal(files.some((file) => file.startsWith('_reference/')), false);
+  assert.equal(files.includes('docs/maintenance.md'), false);
+  assert.equal(files.includes('docs/publishing-checklist.md'), false);
+  assert.equal(files.includes('docs/translation-policy.md'), false);
 });

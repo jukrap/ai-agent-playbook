@@ -406,7 +406,7 @@ test('forge bootstrap plan is deterministic and idempotently declares managed la
     .map((operation) => operation.payload.name), ['Queue', 'Board', 'Roadmap', 'Blocked']);
   assert.deepEqual(first.operations
     .filter((operation) => operation.resource === 'view')
-    .map((operation) => operation.payload.filter), ['aapb-status:Ready', '-is:closed', '-is:closed', 'aapb-status:Blocked']);
+    .map((operation) => operation.payload.filter), ['delivery-status:Ready', '-is:closed', '-is:closed', 'delivery-status:Blocked']);
   assert.equal(new Set(first.operations.map((operation) => operation.idempotencyKey)).size, first.operations.length);
 });
 
@@ -424,7 +424,7 @@ test('GitHub bootstrap localizes human-facing Project view names for Korean repo
   );
   assert.deepEqual(
     plan.operations.filter((operation) => operation.resource === 'view').map((operation) => operation.payload.filter),
-    ['-is:closed', '-is:closed', '-is:closed', 'aapb-status:Blocked']
+    ['-is:closed', '-is:closed', '-is:closed', 'delivery-status:Blocked']
   );
 });
 
@@ -474,7 +474,23 @@ test('GitHub bootstrap creates fallback status labels only after milestone fallb
   const paused = planForgeBootstrap({ provider: 'github', capabilities, projectMode: 'preferred', projectTitle: 'Product' });
   const fallback = planForgeBootstrap({ provider: 'github', capabilities, projectMode: 'milestone', projectTitle: 'Product' });
 
-  assert.deepEqual(paused.operations.filter((operation) => operation.resource === 'label').map((operation) => operation.payload.name), ['status:ready']);
+  assert.equal(paused.ok, false);
+  assert.deepEqual(paused.operations, []);
+  assert.equal(paused.summary.operations, 0);
+  assert.equal(paused.summary.plannedOperations, 6);
+  assert.equal(paused.summary.artifacts.labels, 1);
+  assert.equal(paused.summary.artifacts.projects, 1);
+  assert.equal(paused.summary.artifacts.views, 4);
+  assert.deepEqual(paused.conflicts.find((conflict) => conflict.id === 'forge.scope.projects-missing')?.unavailableFeatures, [
+    'projects', 'views'
+  ]);
+  assert.deepEqual(
+    paused.conflicts.find((conflict) => conflict.id === 'forge.scope.projects-missing')?.remediations.map((item) => item.argv),
+    [
+      ['gh', 'auth', 'refresh', '-s', 'project'],
+      ['aapb', 'forge', 'status', '.']
+    ]
+  );
   assert.deepEqual(fallback.operations.filter((operation) => operation.resource === 'label').map((operation) => operation.payload.name), [
     'status:ready', 'status:in-progress', 'status:paused', 'status:blocked', 'status:review'
   ]);

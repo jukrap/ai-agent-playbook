@@ -7,7 +7,9 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import * as cliModule from '../src/cli.mjs';
 import { automationStartPresentationGate, effectiveForgeCoordination, forgeCoordinationStages, forgeLinksFromCoordination, forgePresentationFromRunRemote, forgeProgramFromCoordination, forgeSyncStageEligible, forgeTasksFromApprovedPlan, parseArgs, runCli } from '../src/cli.mjs';
+import { planForgeBootstrap } from '../src/forge/plan.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const execFileAsync = promisify(execFile);
@@ -171,13 +173,65 @@ test('forge status human output includes server auth permission and verified-wri
   assert.match(status.out(), /Capabilities:/);
 });
 
+test('forge status human output prints actionable remediation commands', () => {
+  assert.equal(typeof cliModule.printForgeStatus, 'function');
+  const output = capture(repoRoot);
+  cliModule.printForgeStatus(output.stdout, {
+    provider: 'github',
+    mode: { remote: 'read-only', policyWrites: false, verifiedWrites: false },
+    repository: { slug: 'owner/repo' },
+    server: { product: 'github', apiVersion: '2026-03-10', status: 'reachable' },
+    auth: { status: 'authenticated' },
+    permissions: { repositoryRead: true, repositoryWrite: true },
+    capabilities: { issues: 'supported', projects: 'unavailable', views: 'unavailable' },
+    probe: { status: 'verified', evidence: [] },
+    warnings: [{ id: 'forge.scope.projects-missing', message: 'GitHub Projects write access is unavailable.' }],
+    conflicts: [{ id: 'forge.scope.projects-missing', message: 'Preferred Projects coordination is paused.' }],
+    remediations: [
+      { id: 'forge.scope.projects-missing', argv: ['gh', 'auth', 'refresh', '-s', 'project'], interactive: true },
+      { id: 'forge.scope.projects-recheck', argv: ['aapb', 'forge', 'status', '.'], interactive: false }
+    ]
+  });
+
+  assert.match(output.out(), /\[NEXT\] gh auth refresh -s project/);
+  assert.match(output.out(), /\[NEXT\] aapb forge status \./);
+});
+
+test('blocked forge bootstrap output separates planned artifacts from executable operations', () => {
+  assert.equal(typeof cliModule.printForgePlan, 'function');
+  const output = capture(repoRoot);
+  const plan = planForgeBootstrap({
+    provider: 'github',
+    projectMode: 'preferred',
+    projectTitle: 'Product delivery',
+    capabilities: {
+      issues: 'supported',
+      labels: 'supported',
+      milestones: 'supported',
+      projects: 'unavailable',
+      views: 'unavailable'
+    }
+  });
+
+  cliModule.printForgePlan(output.stdout, plan, false);
+
+  assert.match(output.out(), /Forge plan: failed/);
+  assert.match(output.out(), /projects=1; views=4; labels=1/);
+  assert.doesNotMatch(output.out(), /\[PLAN\]/);
+  assert.match(output.out(), /\[NEXT\] gh auth refresh -s project/);
+  assert.match(output.out(), /\[NEXT\] aapb forge status \./);
+});
+
 test('forge bootstrap preview resolves an auto provider from the configured Git remote', async (t) => {
   const target = await fixture(t);
   await execFileAsync('git', ['init'], { cwd: target, windowsHide: true });
   await execFileAsync('git', ['remote', 'add', 'origin', 'https://github.com/example/aapb-preview.git'], { cwd: target, windowsHide: true });
 
   const bootstrap = capture(target);
-  assert.equal(await runCli(['forge', 'bootstrap', '.', '--milestone', '0.5.4', '--json'], bootstrap), 0);
+  assert.equal(await runCli([
+    'forge', 'bootstrap', '.', '--milestone', '0.5.4',
+    '--allow-capability-fallback', 'projects,views', '--json'
+  ], bootstrap), 0);
   const plan = JSON.parse(bootstrap.out());
   assert.equal(plan.provider, 'github');
   assert.equal(plan.operations.some((operation) => operation.resource === 'label'), true);

@@ -3082,7 +3082,7 @@ function printAutomationResult(result, flags, stdout) {
   for (const conflict of result.conflicts ?? []) write(stdout, `[CONFLICT] ${conflict.message}\n`);
 }
 
-function printForgeStatus(stdout, result) {
+export function printForgeStatus(stdout, result) {
   write(stdout, `Forge: ${result.provider} (${result.mode.remote})\n`);
   write(stdout, `Repository: ${result.repository?.slug ?? 'none'}\n`);
   const serverVersion = result.server?.version ?? result.server?.apiVersion ?? 'unknown';
@@ -3094,9 +3094,10 @@ function printForgeStatus(stdout, result) {
   write(stdout, `Probe: ${result.probe?.status ?? 'not-run'} (${result.probe?.evidence?.length ?? 0} evidence item(s))\n`);
   for (const warning of result.warnings) write(stdout, `[WARN] ${warning.message}\n`);
   for (const conflict of result.conflicts) write(stdout, `[CONFLICT] ${conflict.message}\n`);
+  printForgeRemediations(stdout, result.remediations ?? []);
 }
 
-function printForgePlan(stdout, result, apply) {
+export function printForgePlan(stdout, result, apply) {
   write(stdout, `Forge ${apply ? 'apply' : 'plan'}: ${result.ok ? 'ok' : 'failed'}\n`);
   if (result.summary?.artifacts) {
     const artifacts = result.summary.artifacts;
@@ -3108,9 +3109,20 @@ function printForgePlan(stdout, result, apply) {
   for (const title of result.summary?.publicTitles ?? []) write(stdout, `[TITLE] ${title}\n`);
   for (const operation of result.operations ?? []) write(stdout, `[PLAN] ${operation.action} ${operation.resource}\n`);
   for (const warning of result.warnings ?? []) write(stdout, `[WARN] ${warning.message}\n`);
+  const printedRemediations = new Set();
   for (const conflict of result.conflicts ?? []) {
     write(stdout, `[CONFLICT] ${conflict.message}\n`);
-    for (const remediation of conflict.remediations ?? []) write(stdout, `[NEXT] ${redactPublicArgv(remediation.argv ?? []).join(' ')}\n`);
+    printForgeRemediations(stdout, conflict.remediations ?? [], printedRemediations);
+  }
+  printForgeRemediations(stdout, result.remediations ?? [], printedRemediations);
+}
+
+function printForgeRemediations(stdout, remediations, printed = new Set()) {
+  for (const remediation of remediations) {
+    const command = redactPublicArgv(remediation.argv ?? []).join(' ');
+    if (!command || printed.has(command)) continue;
+    printed.add(command);
+    write(stdout, `[NEXT] ${command}\n`);
   }
 }
 

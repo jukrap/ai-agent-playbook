@@ -2321,10 +2321,17 @@ export function buildTaskForgeSyncPlan(task, options = {}) {
     ));
     planned.summary.operations = planned.operations.length;
     planned.summary.artifacts = {
+      issuesUpdated: planned.operations.filter((operation) => operation.resource === 'issue' && operation.action === 'update').length,
+      issuesClosed: planned.operations.filter((operation) => operation.resource === 'issue' && operation.action === 'close').length,
       parentIssues: planned.operations.filter((operation) => operation.id === parentOperationId).length,
-      groupIssues: planned.operations.filter((operation) => operation.resource === 'issue').length,
+      groupIssues: planned.operations.filter((operation) => operation.id === `group:${group.id}:issue`).length,
       taskIssues: 0,
       subIssueLinks: 0,
+      projects: planned.operations.filter((operation) => operation.resource === 'project').length,
+      views: planned.operations.filter((operation) => operation.resource === 'view').length,
+      labels: planned.operations.filter((operation) => operation.resource === 'label').length,
+      milestones: planned.operations.filter((operation) => operation.resource === 'milestone').length,
+      pullRequests: planned.operations.filter((operation) => operation.resource === 'draft-pull-request').length,
       projectItems: planned.operations.filter((operation) => operation.resource === 'project-item').length
     };
   }

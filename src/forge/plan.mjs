@@ -34,17 +34,17 @@ const FALLBACK_STATUS_LABELS = [
 ];
 
 const PROJECT_VIEWS = [
-  { name: 'Queue', layout: 'table', filter: 'aapb-status:Ready' },
+  { name: 'Queue', layout: 'table', filter: 'delivery-status:Ready' },
   { name: 'Board', layout: 'board', filter: '-is:closed' },
   { name: 'Roadmap', layout: 'roadmap', filter: '-is:closed' },
-  { name: 'Blocked', layout: 'table', filter: 'aapb-status:Blocked' }
+  { name: 'Blocked', layout: 'table', filter: 'delivery-status:Blocked' }
 ];
 
 const KOREAN_PROJECT_VIEWS = [
   { name: '전체', layout: 'table', filter: '-is:closed' },
   { name: '보드', layout: 'board', filter: '-is:closed' },
   { name: '로드맵', layout: 'roadmap', filter: '-is:closed' },
-  { name: '주의 필요', layout: 'table', filter: 'aapb-status:Blocked' }
+  { name: '주의 필요', layout: 'table', filter: 'delivery-status:Blocked' }
 ];
 
 const FALLBACK_STATUS_BY_TASK = {
@@ -90,12 +90,20 @@ export function planForgeBootstrap(options = {}) {
     : PROJECT_VIEWS;
   const operations = [];
   const warnings = capabilityWarnings(capabilities, ['labels', 'milestones', 'projects', 'views']);
-  const conflicts = [];
+  const missingProjectCapabilities = provider === 'github' && projectMode === 'preferred'
+    ? ['projects', 'views'].filter((capability) => capabilities[capability] !== 'supported')
+    : [];
+  const planningCapabilities = missingProjectCapabilities.length > 0
+    ? { ...capabilities, projects: 'supported', views: 'supported' }
+    : capabilities;
+  const conflicts = missingProjectCapabilities.length > 0
+    ? [missingProjectsCapabilityConflict(missingProjectCapabilities)]
+    : [];
   const managedLabels = provider === 'github' && projectMode === 'preferred'
     ? [READY_LABEL]
     : FALLBACK_STATUS_LABELS;
 
-  if (capabilities.labels === 'supported') {
+  if (planningCapabilities.labels === 'supported') {
     for (const label of managedLabels) {
       operations.push(operation({
         id: `label:${label.name}`,
@@ -108,7 +116,7 @@ export function planForgeBootstrap(options = {}) {
     }
   }
 
-  if (milestoneTitle && capabilities.milestones === 'supported') {
+  if (milestoneTitle && planningCapabilities.milestones === 'supported') {
     const milestoneDescription = normalizedText(options.milestoneDescription) ?? [
       `${bootstrapLanguage === 'ko' ? '프로그램' : 'Program'}: ${milestoneTitle}`,
       '',
@@ -126,7 +134,7 @@ export function planForgeBootstrap(options = {}) {
     }));
   }
 
-  if (projectMode === 'preferred' && projectTitle && capabilities.projects === 'supported') {
+  if (projectMode === 'preferred' && projectTitle && planningCapabilities.projects === 'supported') {
     operations.push(operation({
       id: `project:${projectTitle}`,
       idempotencyKey: `forge.bootstrap.project.${stableKey(projectTitle)}`,
@@ -137,7 +145,7 @@ export function planForgeBootstrap(options = {}) {
     }));
   }
 
-  if (projectMode === 'preferred' && projectTitle && capabilities.projects === 'supported' && capabilities.views === 'supported') {
+  if (projectMode === 'preferred' && projectTitle && planningCapabilities.projects === 'supported' && planningCapabilities.views === 'supported') {
     for (const view of projectViews) {
       operations.push(operation({
         id: `view:${view.name}`,
@@ -156,8 +164,8 @@ export function planForgeBootstrap(options = {}) {
   if (
     projectTitle &&
     projectMode !== 'preferred' &&
-    capabilities.issues === 'supported' &&
-    capabilities.labels === 'supported'
+    planningCapabilities.issues === 'supported' &&
+    planningCapabilities.labels === 'supported'
   ) {
     operations.push(operation({
       id: 'fallback:milestone-label-filter',
@@ -177,7 +185,8 @@ export function planForgeBootstrap(options = {}) {
   return planResult({
     kind: 'forge.bootstrap-plan',
     provider,
-    operations,
+    operations: conflicts.length > 0 ? [] : operations,
+    plannedOperations: operations,
     warnings,
     conflicts
   });
@@ -372,17 +381,9 @@ export function planForgeSync(options = {}) {
   const reviewableBodyCount = issueMode === 'delivery-group'
     ? (publicPlanTitle(coordination, planTitle) ? 1 : 0) + sortedGroups(coordination).length
     : issueMode === 'parent-only' && publicPlanTitle(coordination, planTitle) ? 1 : 0;
-  const capabilityConflicts = missingProjectCapabilities.length > 0 ? [{
-    id: 'forge.scope.projects-missing',
-    message: 'GitHub Projects is preferred but required Project or View capabilities are unavailable. No remote writes are allowed; run `gh auth refresh -s project`, then `aapb forge status .`, or explicitly allow the projects,views fallback.',
-    status: 'blocked',
-    unavailableFeatures: missingProjectCapabilities,
-    fallback: 'milestone',
-    remediations: [
-      { argv: ['gh', 'auth', 'refresh', '-s', 'project'], interactive: true },
-      { argv: ['aapb', 'forge', 'status', '.'], interactive: false }
-    ]
-  }] : [];
+  const capabilityConflicts = missingProjectCapabilities.length > 0
+    ? [missingProjectsCapabilityConflict(missingProjectCapabilities)]
+    : [];
   return planResult({
     kind: 'forge.sync-plan',
     provider,
@@ -987,6 +988,20 @@ function capabilityMessage(capability, state) {
   return `${capability} is unsupported by this provider; no remote operation is planned for it.`;
 }
 
+function missingProjectsCapabilityConflict(unavailableFeatures) {
+  return {
+    id: 'forge.scope.projects-missing',
+    message: 'GitHub Projects is preferred but required Project or View capabilities are unavailable. No remote writes are allowed; run `gh auth refresh -s project`, then `aapb forge status .`, or explicitly allow the projects,views fallback.',
+    status: 'blocked',
+    unavailableFeatures: [...unavailableFeatures],
+    fallback: 'milestone',
+    remediations: [
+      { argv: ['gh', 'auth', 'refresh', '-s', 'project'], interactive: true },
+      { argv: ['aapb', 'forge', 'status', '.'], interactive: false }
+    ]
+  };
+}
+
 function deduplicateWarnings(warnings) {
   const byKey = new Map();
   for (const warning of warnings) {
@@ -1027,10 +1042,17 @@ function planResult({ kind, provider, operations, plannedOperations = operations
 function artifactCounts(operations) {
   const issues = operations.filter((item) => item.resource === 'issue');
   return {
+    issuesUpdated: issues.filter((item) => item.action === 'update').length,
+    issuesClosed: issues.filter((item) => item.action === 'close').length,
     parentIssues: issues.filter((item) => item.id.startsWith('plan:')).length,
     groupIssues: issues.filter((item) => item.id.startsWith('group:')).length,
     taskIssues: issues.filter((item) => item.id.startsWith('task:')).length,
     subIssueLinks: operations.filter((item) => item.resource === 'sub-issue').length,
+    projects: operations.filter((item) => item.resource === 'project').length,
+    views: operations.filter((item) => item.resource === 'view').length,
+    labels: operations.filter((item) => item.resource === 'label').length,
+    milestones: operations.filter((item) => item.resource === 'milestone').length,
+    pullRequests: operations.filter((item) => item.resource === 'draft-pull-request').length,
     projectItems: operations.filter((item) => item.resource === 'project-item').length
   };
 }

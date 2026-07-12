@@ -757,7 +757,7 @@ export async function tickAutomation(options) {
         type: 'task.attempt-failed',
         taskId: activeTask.id,
         reason: acquired.reclaimed ? 'controller-lease-reclaimed' : 'interrupted-attempt-recovered',
-        eventId: `${runId}:${activeTask.id}:recovery:${activeTask.attempts + 1}`
+        eventId: `${runId}:${activeTask.id}:recovery:${activeTask.attemptSerial}`
       }, credentials)).state;
       await synchronizeForgeState({
         store,
@@ -851,7 +851,7 @@ export async function tickAutomation(options) {
     if (beforeClaim.result) return beforeClaim.result;
     state = beforeClaim.state;
     selected = taskFromState(state, selected.id);
-    const attemptNumber = selected.attempts + 1;
+    const attemptNumber = selected.attemptSerial + 1;
     state = (await store.appendEvent({
       type: 'task.claimed',
       taskId: selected.id,

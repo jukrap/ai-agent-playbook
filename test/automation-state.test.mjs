@@ -269,6 +269,7 @@ test('attempt failures retry without progress and block at the configured maximu
 
   const task = state.tasks[0];
   assert.equal(task.attempts, 2);
+  assert.equal(task.attemptSerial, 2);
   assert.equal(task.status, 'blocked');
   assert.equal(task.blocker, 'attempt-limit');
   assert.equal(state.runStatus, 'blocked');
@@ -386,6 +387,7 @@ test('blocked tasks can be explicitly recovered and the run can finish', () => {
   assert.equal(state.runStatus, 'completed');
   assert.equal(state.tasks[0].status, 'completed');
   assert.equal(state.tasks[0].attempts, 0);
+  assert.equal(state.tasks[0].attemptSerial, 2);
   assert.deepEqual(state.progress.tasks, { completed: 1, total: 1, percent: 100 });
   assert.deepEqual(state.progress.criteria, { passed: 1, total: 1, percent: 100 });
 });

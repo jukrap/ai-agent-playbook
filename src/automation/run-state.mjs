@@ -174,6 +174,7 @@ export function reduceRunEvent(inputState, inputEvent) {
       break;
     case 'task.claimed':
       transitionTask(task, ['ready'], 'claimed', event);
+      task.attemptSerial += 1;
       task.claimedBy = hasText(event.ownerId) ? event.ownerId.trim() : null;
       break;
     case 'task.added': {
@@ -342,6 +343,7 @@ function runtimeTaskFromPlan(task, order, maxAttempts, createdAt) {
       evidence: []
     })),
     attempts: 0,
+    attemptSerial: 0,
     maxAttempts,
     order,
     claimedBy: null,

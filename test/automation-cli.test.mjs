@@ -228,7 +228,10 @@ test('forge bootstrap preview resolves an auto provider from the configured Git 
   await execFileAsync('git', ['remote', 'add', 'origin', 'https://github.com/example/aapb-preview.git'], { cwd: target, windowsHide: true });
 
   const bootstrap = capture(target);
-  assert.equal(await runCli(['forge', 'bootstrap', '.', '--milestone', '0.5.4', '--json'], bootstrap), 0);
+  assert.equal(await runCli([
+    'forge', 'bootstrap', '.', '--milestone', '0.5.4',
+    '--allow-capability-fallback', 'projects,views', '--json'
+  ], bootstrap), 0);
   const plan = JSON.parse(bootstrap.out());
   assert.equal(plan.provider, 'github');
   assert.equal(plan.operations.some((operation) => operation.resource === 'label'), true);

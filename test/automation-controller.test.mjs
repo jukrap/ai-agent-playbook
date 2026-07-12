@@ -1859,7 +1859,11 @@ test('remote pause polling aborts a long executor at a bounded safe boundary', a
         }
       };
     },
-    executeTask: async ({ signal }) => new Promise((resolve) => signal.addEventListener('abort', () => resolve({ ok: false }), { once: true })),
+    executeTask: async ({ signal }) => new Promise((resolve) => {
+      const acknowledgeAbort = () => resolve({ ok: false });
+      if (signal.aborted) acknowledgeAbort();
+      else signal.addEventListener('abort', acknowledgeAbort, { once: true });
+    }),
     syncForgeState: async () => ({ ok: true, results: [] })
   });
   assert.equal(result.ok, true);

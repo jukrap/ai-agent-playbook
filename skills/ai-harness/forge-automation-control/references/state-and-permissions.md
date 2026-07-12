@@ -79,7 +79,7 @@ When multiple controls apply, use the most restrictive result and record why.
 - Never infer legacy task-per-issue mode when coordination metadata is absent. A remote start stops before bootstrap, and task-time synchronization skips remote writes while the local ledger remains usable.
 - Write Korean public titles as explicit noun phrases. Reject generated declarative sentence endings before apply instead of applying a mechanical rewrite.
 - Keep issue bodies reviewable: outcome, scope, acceptance, dependencies, validation, risk, rollback, current gate, next action, and related pull requests. Put paths and argv in a collapsed technical section.
-- Supersede obsolete managed issues only with explicit approval. Preserve their history, unlink native sub-issue relationships where supported, link the survivor, and close them without deletion.
+- Supersede obsolete managed issues only with explicit approval. Close an attached reviewed issue before marker-comment mutation, remove its obsolete Project card before the final native hierarchy unlink, and block later group mutations after a failure. Recover an already-unlinked open issue only from the exact approved-plan supersede marker and remove its Project card before closing it.
 - When Projects are active, move managed priority, risk, and area classification into Project fields and remove those labels from issue items. Preserve unrelated user labels and never delete label definitions.
 
 ## Credential And Language Boundaries

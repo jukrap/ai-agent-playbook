@@ -700,7 +700,7 @@ test('start preserves an unknown partial run instead of deleting it', async (t) 
 
 test('failed attempts add no progress and block after the configured limit', async (t) => {
   const target = await fixtureTarget(t);
-  await startAutomation({ target, plan: workflowPlan({ tasks: [task('retry-task')] }), runId: 'retry-run', maxAttempts: 2 });
+  await startAutomation({ target, plan: workflowPlan({ tasks: [task('retry-task')] }), runId: 'retry-run', maxAttempts: 3 });
   const options = {
     target,
     runId: 'retry-run',
@@ -715,9 +715,13 @@ test('failed attempts add no progress and block after the configured limit', asy
   assert.doesNotMatch(JSON.stringify(first), /super-secret-value|abc123|user:pass/);
   const second = await tickAutomation(options);
   assert.equal(second.ok, false);
-  assert.equal(second.state.tasks[0].status, 'blocked');
-  assert.equal(second.state.runStatus, 'blocked');
+  assert.equal(second.state.tasks[0].status, 'ready');
   assert.equal(second.state.tasks[0].attempts, 2);
+  const third = await tickAutomation(options);
+  assert.equal(third.ok, false);
+  assert.equal(third.state.tasks[0].status, 'blocked');
+  assert.equal(third.state.runStatus, 'blocked');
+  assert.equal(third.state.tasks[0].attempts, 3);
   const refused = await resumeAutomation({ target, runId: 'retry-run' });
   assert.equal(refused.ok, false);
   assert.equal(refused.conflicts[0].id, 'automation.resume.blocked-tasks');
@@ -726,6 +730,21 @@ test('failed attempts add no progress and block after the configured limit', asy
   assert.equal(recovered.state.runStatus, 'running');
   assert.equal(recovered.state.tasks[0].status, 'ready');
   assert.equal(recovered.state.tasks[0].attempts, 0);
+
+  const retried = await tickAutomation(options);
+  assert.equal(retried.ok, false);
+  assert.equal(retried.conflicts[0].id, 'automation.task.attempt-failed');
+  assert.equal(retried.state.tasks[0].attempts, 1);
+  assert.equal(retried.state.tasks[0].attemptSerial, 4);
+
+  const events = await createRunStore(path.join(
+    target,
+    '.ai-agent-playbook',
+    'workflows',
+    'runs',
+    'retry-run'
+  )).readEvents();
+  assert.equal(events.filter((event) => event.type === 'task.claimed').at(-1).eventId, 'retry-run:retry-task:attempt:4:claimed');
 });
 
 test('delivery failure stays retryable and cannot leave a review task that skips delivery', async (t) => {

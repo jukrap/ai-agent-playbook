@@ -60,6 +60,7 @@ Budgets are ceilings, not targets. Stop earlier when evidence, permissions, or s
 - **Expired lease:** verify no live controller heartbeat, acquire a higher fencing token, replay the append-only ledger, and resume from the last complete checkpoint.
 - **Executor crash:** record the failed attempt, inspect partial files in the managed checkout, discard nothing automatically, and retry only after the controller can bound the remaining diff.
 - **Verification failure:** preserve output and logs as evidence, return the task to a retryable state while budget remains, then block it.
+- **Attempt budget reset:** treat `--reset-attempts` as an explicit operator decision. Reset only retry-budget usage; preserve the append-only failure history and continue event IDs from the next monotonic attempt serial.
 - **Remote unavailable:** checkpoint locally, mark remote sync pending, and continue only if remote state is not required for approval or requirements.
 - **Remote requirements changed:** an eligible pre-claim drift may be imported into the unclaimed task. Drift detected after executor work pauses as `needs-reconcile`; do not verify, push, or post a completion comment.
 - **Rate limit or quota:** honor the provider retry time, checkpoint, and let a later tick continue. Do not busy-wait.

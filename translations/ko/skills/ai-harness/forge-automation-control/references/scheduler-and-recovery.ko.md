@@ -60,6 +60,7 @@ Budget은 목표가 아니라 상한입니다. Evidence, permission, safety boun
 - **Expired lease:** live controller heartbeat가 없음을 확인하고 더 높은 fencing token을 획득한 뒤 append-only ledger를 replay하고 마지막 complete checkpoint부터 재개합니다.
 - **Executor crash:** failed attempt를 기록하고 managed checkout의 partial file을 확인하며 아무것도 자동으로 폐기하지 않습니다. Controller가 remaining diff를 제한할 수 있을 때만 retry합니다.
 - **Verification failure:** output과 log를 evidence로 보존하고 budget이 남아 있으면 task를 retryable state로 돌린 뒤, 소진되면 block합니다.
+- **Attempt budget reset:** `--reset-attempts`를 명시적인 operator 결정으로 취급합니다. Retry budget 사용량만 reset하고 append-only 실패 이력은 보존하며 다음 단조 증가 attempt serial부터 event ID를 계속합니다.
 - **Remote unavailable:** local checkpoint를 남기고 remote sync pending으로 표시합니다. Remote state가 approval 또는 requirement에 필요하지 않은 경우에만 계속합니다.
 - **Remote requirements changed:** eligible pre-claim drift는 unclaimed task에 import할 수 있습니다. Executor 작업 후 탐지한 drift는 `needs-reconcile`로 pause하고 verify, push, completion comment를 수행하지 않습니다.
 - **Rate limit or quota:** provider retry time을 따르고 checkpoint한 뒤 이후 tick이 계속하게 합니다. Busy-wait하지 않습니다.

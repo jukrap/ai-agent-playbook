@@ -162,6 +162,7 @@ Recovery rule:
 - Expired lease: live heartbeat가 없음을 확인하고 더 높은 fencing token을 획득한 뒤 ledger를 replay하고 마지막 complete checkpoint부터 재개합니다.
 - Executor crash: partial file과 failed-attempt evidence를 보존합니다. Remaining diff가 제한된 뒤에만 retry합니다.
 - Verification failure: result를 보존하고 budget 안에서 retry한 뒤, completion을 주장하지 말고 block합니다.
+- Attempt budget 소진: `automation resume --reset-attempts`를 사용하기 전에 failure evidence를 확인합니다. Budget 사용량만 reset하고 기존 append-only run에서 다음 단조 증가 attempt serial로 계속합니다.
 - Remote outage 또는 missing credential: remote state가 approval prerequisite가 아니면 local checkpoint를 남기고 delivery를 pending으로 둡니다.
 - Rate limit: provider retry time을 따르고 이후 tick이 계속하게 합니다. Busy-wait하지 않습니다.
 - Diverged branch: pause하고 reviewed update strategy를 요청합니다. Force-push하지 않습니다.

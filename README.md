@@ -96,7 +96,7 @@ For command-by-command usage, see [Command guide](docs/commands.md). For update,
 
 ## Forge Automation Compatibility
 
-Version 0.5.8 keeps the resumable local execution loop and the human-facing Forge coordination model introduced in 0.5.5. Fine-grained tasks stay in the local ledger, while roadmap and delivery-group issues, Projects, Views, milestones, and reviewable PRs present the shared work. Reconcile previews now remove provider-confirmed no-op operations, empty Project text values converge without repeat writes, and strict legacy managed preambles can be replaced without deleting user notes. Interrupted supersede recovery and Projects authorization gates remain in place.
+Version 0.5.9 keeps the resumable local execution loop and the human-facing Forge coordination model introduced in 0.5.5. Fine-grained tasks stay in the local ledger, while roadmap and delivery-group issues, Projects, Views, milestones, and reviewable PRs present the shared work. Attempt recovery now separates the resettable retry budget from a monotonic ledger serial, so `automation resume --reset-attempts` continues an existing run without reusing prior event IDs. The 0.5.8 idempotent Forge reconciliation, interrupted supersede recovery, and Projects authorization gates remain in place.
 
 | Component | Supported version or integration target | Status |
 | --- | --- | --- |
@@ -120,7 +120,7 @@ Only the row that explicitly says “verified” identifies a tool version exerc
 - Gitea uses Issues, Labels, Milestones, pull requests, and Actions only where the server OpenAPI advertises the required methods. Draft review uses the public pull-request API with Gitea's documented `WIP:` title convention. A self-hosted hostname hint remains non-writable until `forge.provider: "gitea"` or a credential-free `forge.apiBaseUrl` ending in `/api/v1` is configured. Version and OpenAPI probes run without a token before authenticated permission checks. Project/View state falls back to labels and milestone filters, and a decision issue can replace Discussions.
 - `gh agent-task` is an explicit preview adapter, not an automatic executor choice. Forge bootstrap and scheduler installation are also preview-first and require an explicit apply step.
 
-See the [0.5.8 Forge idempotent reconcile change note](docs/changes/forge-idempotent-reconcile-0.5.8.md) for provider-confirmed no-op filtering, Project convergence, and legacy body migration. The [0.5.7 Forge reconcile recovery change note](docs/changes/forge-reconcile-recovery-0.5.7.md) remains the interrupted supersede recovery reference.
+See the [0.5.9 attempt reset recovery change note](docs/changes/automation-attempt-reset-0.5.9.md) for append-only retry recovery. The [0.5.8 Forge idempotent reconcile change note](docs/changes/forge-idempotent-reconcile-0.5.8.md) remains the reference for provider-confirmed no-op filtering, Project convergence, and legacy body migration.
 
 ## Everyday Flow
 
@@ -220,6 +220,7 @@ Detailed triggers live in [Skill catalog](docs/skill-catalog.md). The README kee
 - [0.5.4 forge automation change note](docs/changes/forge-automation-0.5.4.md): resumable execution, provider fallback, migration, and disable guidance.
 - [0.5.5 human-centered Forge coordination change note](docs/changes/forge-human-coordination-0.5.5.md): roadmap and delivery-group presentation, Projects capability gates, and reviewed reconcile migration.
 - [0.5.6 Forge permission guidance change note](docs/changes/forge-permission-guidance-0.5.6.md): pre-write Projects authorization recovery, neutral Project fields, and legacy alias compatibility.
+- [0.5.9 attempt reset recovery change note](docs/changes/automation-attempt-reset-0.5.9.md): monotonic attempt event IDs across explicit retry-budget resets.
 - [0.5.8 Forge idempotent reconcile change note](docs/changes/forge-idempotent-reconcile-0.5.8.md): provider-confirmed no-op filtering, Project convergence, and strict legacy body migration.
 - [0.5.7 Forge reconcile recovery change note](docs/changes/forge-reconcile-recovery-0.5.7.md): interrupted supersede recovery, CAS-safe ordering, and obsolete Project item cleanup.
 

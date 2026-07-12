@@ -117,6 +117,8 @@ Version suffixes in `schemaVersion`, persisted artifact kinds, `workflow.plan.v2
 
 The task path is `planned -> ready -> claimed -> running -> verifying -> review -> completed`, with `paused`, `blocked`, and `cancelled` interruption states. Progress is completed tasks divided by total tasks and passed criteria divided by total criteria. Attempts, commits, generated code, executor claims, and elapsed time do not count as progress.
 
+Each task keeps two attempt counters with different authority. `attempts` is the resettable retry-budget usage; `attemptSerial` is the monotonic count of claims reconstructed from the append-only ledger. `automation resume --reset-attempts` clears only the budget usage and last failure. It does not rewrite history or reduce `attemptSerial`, so later attempt, evidence, workspace, delivery, and recovery event IDs remain unique.
+
 One controller writes the ledger. A local lease uses a 30-second heartbeat, two-minute expiry, and monotonically increasing fencing token. A tick claims at most one dependency-ready task, invokes the selected executor with a scrubbed environment, has the controller rerun declared verification, records evidence, performs permitted Git/forge delivery, and checkpoints before releasing the lease. The supervisor repeats these short ticks within configured budgets.
 
 `automation start` is itself a write command and can coordinate remotely under the effective profile; it has no `--apply` preview gate. Use plan validation, forge previews, and `--no-remote` when a local-only run is intended. Hosted and OS schedules remain preview-first and require `automation schedule --apply`.

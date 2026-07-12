@@ -162,6 +162,7 @@ Recovery rules:
 - Expired lease: confirm no live heartbeat, acquire a higher fencing token, replay the ledger, and resume from the last complete checkpoint.
 - Executor crash: preserve partial files and failed-attempt evidence; retry only after the remaining diff is bounded.
 - Verification failure: preserve results, retry within budget, then block instead of claiming completion.
+- Exhausted attempt budget: inspect the failure evidence before using `automation resume --reset-attempts`; reset only budget usage and continue the existing append-only run with the next monotonic attempt serial.
 - Remote outage or missing credential: checkpoint locally and leave delivery pending when remote state is not an approval prerequisite.
 - Rate limit: honor the provider retry time and let a later tick continue; do not busy-wait.
 - Diverged branch: pause and request a reviewed update strategy; never force-push.

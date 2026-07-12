@@ -117,6 +117,8 @@ Run record는 운영 로그이지 durable project truth가 아닙니다. Reviewe
 
 Task state는 `planned -> ready -> claimed -> running -> verifying -> review -> completed`이고 interruption state는 `paused`, `blocked`, `cancelled`입니다. Progress는 completed task/전체 task와 passed criterion/전체 criterion으로 계산합니다. Attempt, commit, generated code, executor claim, elapsed time은 progress가 아닙니다.
 
+각 task는 권위가 다른 attempt counter 두 개를 유지합니다. `attempts`는 reset 가능한 retry budget 사용량이고, `attemptSerial`은 append-only ledger의 claim을 재생해 복원하는 단조 증가 횟수입니다. `automation resume --reset-attempts`는 budget 사용량과 마지막 실패만 지웁니다. 과거 기록을 다시 쓰거나 `attemptSerial`을 줄이지 않으므로 이후 attempt, evidence, workspace, delivery, recovery event ID는 고유하게 유지됩니다.
+
 Controller 하나만 ledger를 씁니다. Local lease는 30초 heartbeat, 2분 expiry, 단조 증가 fencing token을 사용합니다. Tick은 dependency-ready task 하나 이하를 claim하고 scrubbed environment에서 executor를 호출하며, controller가 declared verification을 다시 실행하고 evidence를 기록한 뒤 허용된 Git/forge delivery와 checkpoint를 완료하고 lease를 해제합니다. Supervisor는 configured budget 안에서 이 짧은 tick을 반복합니다.
 
 `automation start` 자체가 쓰기 명령이며 effective profile에서 remote coordination도 할 수 있습니다. `--apply` preview gate는 없습니다. Local-only run을 원하면 plan validation, forge preview, `--no-remote`를 사용합니다. Hosted/OS schedule은 preview-first이며 `automation schedule --apply`가 필요합니다.

@@ -18,14 +18,14 @@ Do not infer write support from a product name or version alone. Capability chec
 | Capability | GitHub behavior | Gitea behavior | Fallback |
 |---|---|---|---|
 | Issues, labels, milestones | Use repository APIs when authenticated. | Use repository APIs when advertised. | Keep tasks and state in the local ledger. |
-| Child tasks | Prefer sub-issues when available. | Do not assume a stable sub-issue API. | Keep separate child issues with stable plan/task markers; no native parent relation is claimed. |
+| Delivery groups | Prefer sub-issues for the small reviewed group set when available. | Do not assume a stable sub-issue API. | Keep delivery-group issues with stable plan/group markers; no native parent relation is claimed. Fine-grained execution tasks stay in the local ledger. |
 | Pull requests | Reuse one native draft pull request per delivery group. | Reuse a public-API pull request whose title uses Gitea's documented `WIP:` convention. | If the pull-request methods are not advertised, keep the pushed/local branch for explicit review and produce a handoff. |
 | Actions | Use a repository workflow with concurrency control. | Use an Actions-compatible workflow only when enabled by the server. | Use the local supervisor or an OS scheduler. |
 | Projects and views | Use the supported Projects and Views APIs when scopes permit. | Do not assume a stable project or view API. | Represent queue and board state with managed labels and milestone filters. |
 | Discussions | Use only when the repository enables them and the token can access them. | Do not assume discussion support. | Create a marker-owned decision issue; add cross-links only through an explicitly reviewed follow-up. |
 | Remote coding agents | Treat `gh agent-task` as preview-only, require explicit configuration, and never auto-select it. | Treat as unsupported unless a project adapter defines a contract. | Use a local executor. |
 
-Lack of a project scope must not block issue and milestone coordination. Report the reduced capability and continue with the safe subset.
+When GitHub Projects is preferred, a missing project scope blocks the whole coordination write before the first mutation. Report the unavailable Project/View surface and the browser-auth remediation. Continue with issue and milestone coordination only when the operator explicitly selects the milestone fallback; Gitea uses that documented fallback by default.
 
 ## Bootstrap And Synchronization
 

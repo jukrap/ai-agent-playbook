@@ -28,7 +28,7 @@ Forge 연계 작업을 재개 가능하고 review 가능하게 유지하면서, 
 
 ## Related Skills
 
-- Approved plan을 independently reviewable child issue로 나누고 기존 ready-label work를 분류할 때 `issue-planning-triage`를 사용합니다.
+- Approved roadmap을 소수의 independently reviewable delivery-group issue로 구성하고 기존 ready-label work를 분류할 때 `issue-planning-triage`를 사용합니다. 더 세밀한 실행 task는 local ledger에 둡니다.
 - Executor 또는 review worker에 bounded contract, evidence ownership, reconciliation handoff가 필요하면 `agent-orchestration-handoff`를 사용합니다.
 - Controller staging, commit, push, draft pull request, durable worklog update 전에는 `git-worklog-guardrails`를 사용합니다.
 

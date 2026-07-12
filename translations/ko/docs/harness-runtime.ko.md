@@ -127,7 +127,7 @@ Controller 하나만 ledger를 씁니다. Local lease는 30초 heartbeat, 2분 e
 npx ai-agent-playbook mcp
 ```
 
-MCP를 지원하는 AI 앱은 이 명령을 등록한 뒤 `runtime_schema_check`, `operator_search`, `automation_status`, `automation_plan_validate`, `forge_status`, `forge_bootstrap_plan`, `forge_sync_plan` 같은 tool을 호출할 수 있습니다. Forge plan tool은 target을 요구하고 gated apply counterpart와 같은 target-aware provider/capability inspection을 사용합니다. 이 기본 tool은 task를 실행하거나 remote state를 바꾸지 않습니다.
+MCP를 지원하는 AI 앱은 이 명령을 등록한 뒤 `runtime_schema_check`, `operator_search`, `automation_status`, `automation_plan_validate`, `forge_status`, `forge_bootstrap_plan`, `forge_sync_plan` 같은 tool을 호출할 수 있습니다. Forge plan tool은 target을 요구하고 gated apply counterpart와 같은 target-aware provider/capability inspection을 사용합니다. Forge sync는 reviewed roadmap/delivery-group coordination도 요구하며 task별 issue mode를 추론하지 않습니다. 이 기본 tool은 task를 실행하거나 remote state를 바꾸지 않습니다.
 
 `--enable-write-tools`는 기존 bounded playbook write tool을 추가합니다. 독립적인 `--enable-forge-write-tools` gate는 `forge_bootstrap_apply`, `forge_sync_apply`만 추가하며 둘 다 call argument `apply: true`가 필요합니다. 두 gate를 모두 켜도 MCP는 push, automation tick/supervisor, merge, release, delete, force-push, arbitrary project source write, AST rewrite/apply, LSP rename을 노출하지 않습니다.
 

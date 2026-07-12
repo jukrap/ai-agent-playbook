@@ -107,6 +107,50 @@ const forgeApplyTaskSchema = forgeTaskSchema.superRefine((task, context) => {
     });
   }
 });
+const forgeCoordinationProgramSchema = z.object({
+  title: z.string().min(3),
+  summary: z.string().min(8),
+  scope: z.array(z.string().min(2)).min(1),
+  nonGoals: z.array(z.string().min(2)).min(1),
+  successCriteria: z.array(z.string().min(2)).min(1),
+  issueNumber: z.number().int().positive().optional(),
+  expectedUpdatedAt: z.string().min(1).optional()
+});
+const forgeCoordinationGroupSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(3),
+  summary: z.string().min(8),
+  taskIds: z.array(z.string().min(1)).min(1),
+  rollback: z.string().min(5),
+  issueNumber: z.number().int().positive().optional(),
+  expectedUpdatedAt: z.string().min(1).optional()
+});
+const forgeCoordinationSchema = z.object({
+  issueMode: z.enum(['delivery-group', 'parent-only', 'task']),
+  projectMode: z.enum(['preferred', 'milestone', 'off']).optional(),
+  titleStyle: z.enum(['auto', 'noun-phrase', 'sentence']).optional(),
+  maxChildIssues: z.number().int().min(1).max(50).optional(),
+  program: forgeCoordinationProgramSchema,
+  groups: z.array(forgeCoordinationGroupSchema).optional()
+}).describe('Reviewed human-facing coordination. Detailed tasks remain in the local execution ledger; task mode must be selected explicitly.');
+const forgeApplyCoordinationSchema = forgeCoordinationSchema.superRefine((coordination, context) => {
+  if (coordination.program.issueNumber && !coordination.program.expectedUpdatedAt) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['program', 'expectedUpdatedAt'],
+      message: 'expectedUpdatedAt is required when forge_sync_apply updates an existing roadmap issue.'
+    });
+  }
+  for (const [index, group] of (coordination.groups ?? []).entries()) {
+    if (group.issueNumber && !group.expectedUpdatedAt) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['groups', index, 'expectedUpdatedAt'],
+        message: 'expectedUpdatedAt is required when forge_sync_apply updates an existing delivery-group issue.'
+      });
+    }
+  }
+});
 
 export function registerPlaybookMcpTools(server, options) {
   const { repoRoot, enableWriteTools = false, enableForgeWriteTools = false } = options;
@@ -544,13 +588,14 @@ export function registerPlaybookMcpTools(server, options) {
         projectTitle: args.projectTitle
       })
     })),
-    tool('forge_sync_plan', 'Preview idempotent task-to-issue synchronization without remote mutation.', {
+    tool('forge_sync_plan', 'Preview human-facing roadmap and delivery-group issue synchronization while detailed tasks remain in the local ledger.', {
       target: targetSchema,
       provider: forgeProviderSchema,
       milestone: z.string().min(1).optional(),
       planId: z.string().min(1).optional(),
       planTitle: z.string().min(1).optional(),
       language: z.enum(['auto', 'ko', 'en']).optional(),
+      coordination: forgeCoordinationSchema,
       tasks: z.array(forgeTaskSchema)
     }, (args) => previewMcpForgePlan({
       target: args.target,
@@ -562,6 +607,7 @@ export function registerPlaybookMcpTools(server, options) {
         milestoneTitle: args.milestone,
         planId: args.planId,
         planTitle: args.planTitle,
+        coordination: args.coordination,
         tasks: args.tasks
       })
     }))
@@ -678,13 +724,14 @@ export function registerPlaybookMcpTools(server, options) {
         })
       });
     }),
-    tool('forge_sync_apply', 'Apply idempotent task-to-issue coordination. Push, task execution, merge, and release are not exposed.', {
+    tool('forge_sync_apply', 'Apply idempotent roadmap and delivery-group issue coordination. Detailed tasks stay local; push, task execution, merge, and release are not exposed.', {
       target: targetSchema,
       provider: forgeProviderSchema,
       milestone: z.string().min(1).optional(),
       planId: z.string().min(1).optional(),
       planTitle: z.string().min(1).optional(),
       language: z.enum(['auto', 'ko', 'en']).optional(),
+      coordination: forgeApplyCoordinationSchema,
       tasks: z.array(forgeApplyTaskSchema),
       apply: z.literal(true)
     }, async (args) => {
@@ -698,6 +745,7 @@ export function registerPlaybookMcpTools(server, options) {
           milestoneTitle: args.milestone,
           planId: args.planId,
           planTitle: args.planTitle,
+          coordination: args.coordination,
           tasks: args.tasks
         })
       });

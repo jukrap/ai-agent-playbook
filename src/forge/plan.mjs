@@ -82,7 +82,8 @@ export function planForgeBootstrap(options = {}) {
   const capabilities = options.capabilities ?? getForgeCapabilities(provider);
   const milestoneTitle = normalizedText(options.milestoneTitle);
   const projectTitle = normalizedText(options.projectTitle);
-  const projectMode = normalizedText(options.projectMode)?.toLowerCase() ?? (provider === 'gitea' ? 'milestone' : 'preferred');
+  const requestedProjectMode = normalizedText(options.projectMode)?.toLowerCase() ?? (provider === 'gitea' ? 'milestone' : 'preferred');
+  const projectMode = provider === 'gitea' && requestedProjectMode === 'preferred' ? 'milestone' : requestedProjectMode;
   const bootstrapLanguage = workingLanguage(options.language, `${projectTitle ?? ''} ${milestoneTitle ?? ''}`);
   const projectViews = bootstrapLanguage === 'ko'
     ? KOREAN_PROJECT_VIEWS
@@ -90,7 +91,7 @@ export function planForgeBootstrap(options = {}) {
   const operations = [];
   const warnings = capabilityWarnings(capabilities, ['labels', 'milestones', 'projects', 'views']);
   const conflicts = [];
-  const managedLabels = provider === 'github' && projectMode !== 'milestone'
+  const managedLabels = provider === 'github' && projectMode === 'preferred'
     ? [READY_LABEL]
     : FALLBACK_STATUS_LABELS;
 
@@ -125,7 +126,7 @@ export function planForgeBootstrap(options = {}) {
     }));
   }
 
-  if (projectMode !== 'milestone' && projectTitle && capabilities.projects === 'supported') {
+  if (projectMode === 'preferred' && projectTitle && capabilities.projects === 'supported') {
     operations.push(operation({
       id: `project:${projectTitle}`,
       idempotencyKey: `forge.bootstrap.project.${stableKey(projectTitle)}`,
@@ -136,7 +137,7 @@ export function planForgeBootstrap(options = {}) {
     }));
   }
 
-  if (projectMode !== 'milestone' && projectTitle && capabilities.projects === 'supported' && capabilities.views === 'supported') {
+  if (projectMode === 'preferred' && projectTitle && capabilities.projects === 'supported' && capabilities.views === 'supported') {
     for (const view of projectViews) {
       operations.push(operation({
         id: `view:${view.name}`,
@@ -154,7 +155,7 @@ export function planForgeBootstrap(options = {}) {
 
   if (
     projectTitle &&
-    projectMode === 'milestone' &&
+    projectMode !== 'preferred' &&
     capabilities.issues === 'supported' &&
     capabilities.labels === 'supported'
   ) {
@@ -218,7 +219,14 @@ export function planForgeSync(options = {}) {
   const issueMode = coordination
     ? normalizedText(coordination.issueMode)?.toLowerCase() ?? 'delivery-group'
     : null;
-  const projectMode = normalizedText(coordination?.projectMode)?.toLowerCase() ?? 'preferred';
+  const requestedProjectMode = normalizedText(coordination?.projectMode)?.toLowerCase() ?? (provider === 'gitea' ? 'milestone' : 'preferred');
+  const projectMode = provider === 'gitea' && requestedProjectMode === 'preferred' ? 'milestone' : requestedProjectMode;
+  const missingProjectCapabilities = provider === 'github' && projectMode === 'preferred'
+    ? ['projects', 'views'].filter((capability) => capabilities[capability] !== 'supported')
+    : [];
+  const planningCapabilities = missingProjectCapabilities.length > 0
+    ? { ...capabilities, projects: 'supported', views: 'supported' }
+    : capabilities;
 
   if (tasks.length > 0 && !coordination) {
     conflicts.push({
@@ -291,12 +299,16 @@ export function planForgeSync(options = {}) {
       conflicts.push({ id: 'forge.plan.invalid-id', message: `Forge plan identifier is not portable: ${planId}.`, taskId: planId, status: 'invalid' });
       return planResult({ kind: 'forge.sync-plan', provider, operations: [], warnings, conflicts, presentationFindings });
     }
+    const programIssueNumber = Number.isInteger(coordination?.program?.issueNumber) && coordination.program.issueNumber > 0
+      ? coordination.program.issueNumber
+      : null;
     operations.push(operation({
       id: `plan:${planId}:issue`,
       idempotencyKey: `forge.sync.plan.${stableKey(planId)}.issue`,
-      action: 'ensure',
+      action: programIssueNumber ? 'update' : 'ensure',
       resource: 'issue',
       capability: 'issues',
+      critical: issueMode !== 'task',
       payload: {
         marker: `<!-- aapb:plan:${planId} -->`,
         title: publicPlanTitle(coordination, planTitle),
@@ -305,6 +317,12 @@ export function planForgeSync(options = {}) {
         milestoneTitle,
         acceptanceHeading,
         acceptanceCriteria: issueMode === 'task' ? [] : normalizedStringValues(coordination.program?.successCriteria),
+        ...(programIssueNumber ? {
+          issueNumber: programIssueNumber,
+          expectedUpdatedAt: normalizedText(coordination.program?.expectedUpdatedAt),
+          preserveNonManagedLabels: true,
+          preserveManagedBody: true
+        } : {}),
         ...(issueMode === 'task' ? {} : {
           body: renderParentIssueBody({ coordination, tasks, language })
         })
@@ -315,8 +333,8 @@ export function planForgeSync(options = {}) {
   if (issueMode === 'task') {
     operations.push(...[...tasks]
       .sort((left, right) => String(left.id).localeCompare(String(right.id)))
-      .map((task) => taskSyncOperation(task, milestoneTitle, acceptanceHeading, provider, capabilities)));
-    if (projectMode !== 'milestone' && projectTitle && provider === 'github' && capabilities.projects === 'supported') {
+      .map((task) => taskSyncOperation(task, milestoneTitle, acceptanceHeading, provider, capabilities, projectMode)));
+    if (projectMode === 'preferred' && projectTitle && provider === 'github' && planningCapabilities.projects === 'supported') {
       for (const task of [...tasks].sort((left, right) => String(left.id).localeCompare(String(right.id)))) {
         operations.push(projectItemSyncOperation(task, projectTitle));
       }
@@ -326,9 +344,9 @@ export function planForgeSync(options = {}) {
     const groups = sortedGroups(coordination);
     for (const group of groups) {
       const groupTasks = tasksForGroup(group, tasks);
-      operations.push(groupIssueOperation({ group, tasks: groupTasks, provider, capabilities, milestoneTitle, acceptanceHeading, language, planId }));
+      operations.push(groupIssueOperation({ group, tasks: groupTasks, provider, capabilities, projectMode, milestoneTitle, acceptanceHeading, language, planId }));
     }
-    if (projectMode !== 'milestone' && projectTitle && provider === 'github' && capabilities.projects === 'supported') {
+    if (projectMode === 'preferred' && projectTitle && provider === 'github' && planningCapabilities.projects === 'supported') {
       for (const group of groups) {
         operations.push(groupProjectItemSyncOperation(group, tasksForGroup(group, tasks), projectTitle));
       }
@@ -345,13 +363,36 @@ export function planForgeSync(options = {}) {
     }
   }
 
+  const publicTitles = issueMode === 'task'
+    ? [
+        publicPlanTitle(coordination, planTitle),
+        ...[...tasks].sort((left, right) => String(left.id).localeCompare(String(right.id))).map((task) => normalizedText(task.title))
+      ].filter(Boolean)
+    : [publicPlanTitle(coordination, planTitle), ...sortedGroups(coordination).map((group) => normalizedText(group.title))].filter(Boolean);
+  const reviewableBodyCount = issueMode === 'delivery-group'
+    ? (publicPlanTitle(coordination, planTitle) ? 1 : 0) + sortedGroups(coordination).length
+    : issueMode === 'parent-only' && publicPlanTitle(coordination, planTitle) ? 1 : 0;
+  const capabilityConflicts = missingProjectCapabilities.length > 0 ? [{
+    id: 'forge.scope.projects-missing',
+    message: 'GitHub Projects is preferred but required Project or View capabilities are unavailable. No remote writes are allowed; run `gh auth refresh -s project`, then `aapb forge status .`, or explicitly allow the projects,views fallback.',
+    status: 'blocked',
+    unavailableFeatures: missingProjectCapabilities,
+    fallback: 'milestone',
+    remediations: [
+      { argv: ['gh', 'auth', 'refresh', '-s', 'project'], interactive: true },
+      { argv: ['aapb', 'forge', 'status', '.'], interactive: false }
+    ]
+  }] : [];
   return planResult({
     kind: 'forge.sync-plan',
     provider,
-    operations,
+    operations: capabilityConflicts.length > 0 ? [] : operations,
+    plannedOperations: operations,
     warnings,
-    conflicts,
-    presentationFindings
+    conflicts: [...conflicts, ...capabilityConflicts],
+    presentationFindings,
+    publicTitles,
+    bodyCompleteness: { complete: reviewableBodyCount, total: reviewableBodyCount }
   });
 }
 
@@ -457,9 +498,9 @@ function normalizedTaskProgress(value, status) {
   }[status] ?? 0;
 }
 
-function taskSyncOperation(task, milestoneTitle, acceptanceHeading, provider, capabilities) {
+function taskSyncOperation(task, milestoneTitle, acceptanceHeading, provider, capabilities, projectMode) {
   const status = normalizedText(task.status)?.toLowerCase() ?? 'planned';
-  const labels = statusLabels(status, provider, capabilities);
+  const labels = statusLabels(status, provider, capabilities, projectMode);
   const issueNumber = Number.isInteger(task.issueNumber) && task.issueNumber > 0
     ? task.issueNumber
     : null;
@@ -498,7 +539,7 @@ function taskSyncOperation(task, milestoneTitle, acceptanceHeading, provider, ca
   });
 }
 
-function groupIssueOperation({ group, tasks, provider, capabilities, milestoneTitle, acceptanceHeading, language, planId }) {
+function groupIssueOperation({ group, tasks, provider, capabilities, projectMode, milestoneTitle, acceptanceHeading, language, planId }) {
   const status = aggregateGroupStatus(tasks);
   const issueNumber = Number.isInteger(group.issueNumber) && group.issueNumber > 0
     ? group.issueNumber
@@ -510,7 +551,7 @@ function groupIssueOperation({ group, tasks, provider, capabilities, milestoneTi
     title: normalizedText(group.title) ?? group.id,
     body: renderGroupIssueBody({ group, tasks, status, language, planId }),
     state: ['completed', 'cancelled'].includes(status) ? 'closed' : 'open',
-    labels: statusLabels(status, provider, capabilities),
+    labels: statusLabels(status, provider, capabilities, projectMode),
     milestoneTitle,
     acceptanceHeading,
     acceptanceCriteria: tasks.flatMap(acceptanceCriteriaFor)
@@ -532,9 +573,9 @@ function groupIssueOperation({ group, tasks, provider, capabilities, milestoneTi
   });
 }
 
-function statusLabels(status, provider, capabilities) {
+function statusLabels(status, provider, capabilities, projectMode) {
   if (status === 'ready') return ['status:ready'];
-  if (provider === 'github' && capabilities?.projects === 'supported') return [];
+  if (provider === 'github' && projectMode === 'preferred' && capabilities?.projects === 'supported') return [];
   const fallback = FALLBACK_STATUS_BY_TASK[status];
   return fallback ? [fallback] : [];
 }
@@ -634,18 +675,22 @@ function coordinationConflicts({ coordination, issueMode, planId, planTitle, tas
   if (!planId || !/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(planId)) {
     conflicts.push({ id: 'forge.coordination.plan-id-required', message: 'Grouped forge coordination requires a portable planId.', status: 'invalid' });
   }
-  if (!normalizedText(program.title) && !planTitle) {
+  if (!reviewableText(program.title ?? planTitle, 3)) {
     conflicts.push({ id: 'forge.coordination.program-title-required', message: 'Grouped forge coordination requires a public program title.', status: 'invalid' });
   }
-  if (!normalizedText(program.summary)) {
+  if (!reviewableText(program.summary, 8)) {
     conflicts.push({ id: 'forge.coordination.program-summary-required', message: 'Grouped forge coordination requires a reviewable program summary.', status: 'invalid' });
+  }
+  if (Number.isInteger(program.issueNumber) && program.issueNumber > 0 && !normalizedText(program.expectedUpdatedAt)) {
+    conflicts.push({ id: 'forge.coordination.program-cas-required', message: 'Updating an existing roadmap issue requires program.expectedUpdatedAt.', status: 'invalid' });
   }
   for (const [field, id] of [
     ['scope', 'scope-required'],
     ['nonGoals', 'non-goals-required'],
     ['successCriteria', 'success-criteria-required']
   ]) {
-    if (normalizedStringValues(program[field]).length === 0) {
+    const entries = normalizedStringValues(program[field]);
+    if (entries.length === 0 || entries.some((entry) => entry.length < 2)) {
       conflicts.push({ id: `forge.coordination.${id}`, message: `Grouped forge coordination requires at least one program ${field} entry.`, status: 'invalid' });
     }
   }
@@ -678,9 +723,12 @@ function coordinationConflicts({ coordination, issueMode, planId, planTitle, tas
     }
     if (groupIds.has(id)) conflicts.push({ id: 'forge.coordination.group-id-duplicate', message: `Delivery group identifier is duplicated: ${id}.`, groupId: id, status: 'invalid' });
     groupIds.add(id);
-    if (!normalizedText(group.title)) conflicts.push({ id: 'forge.coordination.group-title-required', message: `Delivery group ${id} requires a public title.`, groupId: id, status: 'invalid' });
-    if (!normalizedText(group.summary)) conflicts.push({ id: 'forge.coordination.group-summary-required', message: `Delivery group ${id} requires a reviewable summary.`, groupId: id, status: 'invalid' });
-    if (!normalizedText(group.rollback)) conflicts.push({ id: 'forge.coordination.group-rollback-required', message: `Delivery group ${id} requires rollback guidance.`, groupId: id, status: 'invalid' });
+    if (!reviewableText(group.title, 3)) conflicts.push({ id: 'forge.coordination.group-title-required', message: `Delivery group ${id} requires a public title.`, groupId: id, status: 'invalid' });
+    if (!reviewableText(group.summary, 8)) conflicts.push({ id: 'forge.coordination.group-summary-required', message: `Delivery group ${id} requires a reviewable summary.`, groupId: id, status: 'invalid' });
+    if (!reviewableText(group.rollback, 5)) conflicts.push({ id: 'forge.coordination.group-rollback-required', message: `Delivery group ${id} requires rollback guidance.`, groupId: id, status: 'invalid' });
+    if (Number.isInteger(group.issueNumber) && group.issueNumber > 0 && !normalizedText(group.expectedUpdatedAt)) {
+      conflicts.push({ id: 'forge.coordination.group-cas-required', message: `Updating delivery group ${id} requires expectedUpdatedAt.`, groupId: id, status: 'invalid' });
+    }
     const ids = Array.isArray(group.taskIds) ? group.taskIds : [];
     if (ids.length === 0) conflicts.push({ id: 'forge.coordination.group-tasks-required', message: `Delivery group ${id} must contain at least one task.`, groupId: id, status: 'invalid' });
     for (const taskId of ids) {
@@ -947,8 +995,8 @@ function deduplicateWarnings(warnings) {
   return [...byKey.values()];
 }
 
-function planResult({ kind, provider, operations, warnings, conflicts, presentationFindings = [] }) {
-  const artifacts = artifactCounts(operations);
+function planResult({ kind, provider, operations, plannedOperations = operations, warnings, conflicts, presentationFindings = [], publicTitles = [], bodyCompleteness = { complete: 0, total: 0 } }) {
+  const artifacts = artifactCounts(plannedOperations);
   return {
     schemaVersion: SCHEMA_VERSION,
     kind,
@@ -960,11 +1008,14 @@ function planResult({ kind, provider, operations, warnings, conflicts, presentat
     provider,
     summary: {
       operations: operations.length,
+      plannedOperations: plannedOperations.length,
       fallback: operations.filter((item) => item.mode === 'fallback').length,
       warnings: warnings.length,
       conflicts: conflicts.length,
       artifacts,
-      presentationFindings: presentationFindings.length
+      presentationFindings: presentationFindings.length,
+      publicTitles,
+      bodyCompleteness
     },
     operations,
     presentationFindings,
@@ -1001,4 +1052,8 @@ function normalizedProvider(value) {
 
 function normalizedText(value) {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function reviewableText(value, minimumLength) {
+  return (normalizedText(value)?.length ?? 0) >= minimumLength;
 }

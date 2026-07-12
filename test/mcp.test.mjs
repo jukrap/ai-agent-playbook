@@ -21,7 +21,13 @@ test('mcp exposes read-only forge automation surfaces and separately gates forge
       assert.equal(listed.tools.find((tool) => tool.name === expected).annotations?.readOnlyHint, true);
     }
     assert.equal(listed.tools.find((tool) => tool.name === 'forge_bootstrap_plan').inputSchema.required.includes('target'), true);
-    assert.equal(listed.tools.find((tool) => tool.name === 'forge_sync_plan').inputSchema.required.includes('target'), true);
+    const syncPlan = listed.tools.find((tool) => tool.name === 'forge_sync_plan');
+    assert.equal(syncPlan.inputSchema.required.includes('target'), true);
+    assert.equal(syncPlan.inputSchema.required.includes('coordination'), true);
+    assert.match(syncPlan.description, /delivery-group/i);
+    assert.deepEqual(syncPlan.inputSchema.properties.coordination.properties.issueMode.enum, ['delivery-group', 'parent-only', 'task']);
+    assert.equal(Boolean(syncPlan.inputSchema.properties.coordination.properties.program), true);
+    assert.equal(Boolean(syncPlan.inputSchema.properties.coordination.properties.groups), true);
     assert.equal(names.includes('forge_bootstrap_apply'), false);
     assert.equal(names.includes('forge_sync_apply'), false);
     assert.equal(names.some((name) => name.includes('tick') || name.includes('push') || name.includes('merge') || name.includes('release')), false);
@@ -41,10 +47,121 @@ test('mcp exposes read-only forge automation surfaces and separately gates forge
     assert.equal(sync.annotations?.readOnlyHint, false);
     assert.equal(Boolean(sync.inputSchema.properties.tasks.items.properties.issueNumber), true);
     assert.equal(Boolean(sync.inputSchema.properties.tasks.items.properties.expectedUpdatedAt), true);
+    assert.equal(sync.inputSchema.required.includes('coordination'), true);
+    assert.match(sync.description, /delivery-group/i);
+    assert.equal(Boolean(sync.inputSchema.properties.coordination.properties.groups.items.properties.issueNumber), true);
+    assert.equal(Boolean(sync.inputSchema.properties.coordination.properties.groups.items.properties.expectedUpdatedAt), true);
     assert.equal(listed.tools.some((tool) => tool.name === 'automation_tick'), false);
   } finally {
     await writeConnection.client.close();
     await writeConnection.transport.close();
+  }
+});
+
+test('mcp forge sync preview keeps detailed tasks local while planning a roadmap and delivery-group issue', async () => {
+  const target = await tempRepo('aapb-mcp-forge-groups-');
+  await mkdir(path.join(target, '.ai-agent-playbook'), { recursive: true });
+  const { client, transport } = await connectMcp();
+  try {
+    const preview = await client.callTool({
+      name: 'forge_sync_plan',
+      arguments: {
+        target,
+        provider: 'github',
+        planId: 'desktop-program',
+        planTitle: 'Electron 전환',
+        language: 'ko',
+        coordination: {
+          issueMode: 'delivery-group',
+          projectMode: 'preferred',
+          titleStyle: 'noun-phrase',
+          maxChildIssues: 6,
+          program: {
+            title: 'Electron 전환',
+            summary: '웹 기반 편집기를 안전한 데스크톱 제품으로 전환합니다.',
+            scope: ['데스크톱 실행 기반'],
+            nonGoals: ['자동 배포'],
+            successCriteria: ['기반 검증 완료']
+          },
+          groups: [{
+            id: 'desktop-foundation',
+            title: 'Electron 데스크톱 기반 구축',
+            summary: '보안 셸과 저장 기반을 구성합니다.',
+            taskIds: ['shell', 'storage'],
+            rollback: '기존 웹 실행 경로를 유지합니다.'
+          }]
+        },
+        tasks: [
+          { id: 'shell', title: '보안 셸 구현', status: 'ready', acceptanceCriteria: ['격리된 preload만 노출'] },
+          { id: 'storage', title: '저장 복구 구현', status: 'planned', acceptanceCriteria: ['중단된 저장 복구'] }
+        ]
+      }
+    });
+
+    assert.equal(preview.isError, undefined);
+    assert.equal(preview.structuredContent.ok, true);
+    const issues = preview.structuredContent.operations.filter((operation) => operation.resource === 'issue');
+    assert.deepEqual(issues.map((operation) => operation.id), [
+      'plan:desktop-program:issue',
+      'group:desktop-foundation:issue'
+    ]);
+    assert.equal(issues.some((operation) => operation.id.startsWith('task:')), false);
+    assert.deepEqual(preview.structuredContent.summary.artifacts, {
+      parentIssues: 1,
+      groupIssues: 1,
+      taskIssues: 0,
+      subIssueLinks: 1,
+      projectItems: 1
+    });
+  } finally {
+    await client.close();
+    await transport.close();
+    await rm(target, { recursive: true, force: true });
+  }
+});
+
+test('mcp forge sync apply rejects an existing delivery-group issue without a CAS timestamp', async () => {
+  const target = await tempRepo('aapb-mcp-forge-group-cas-');
+  await mkdir(path.join(target, '.ai-agent-playbook'), { recursive: true });
+  const { client, transport } = await connectMcp(['--enable-forge-write-tools']);
+  try {
+    const rejected = await client.callTool({
+      name: 'forge_sync_apply',
+      arguments: {
+        target,
+        provider: 'github',
+        planId: 'desktop-program',
+        coordination: {
+          issueMode: 'delivery-group',
+          projectMode: 'preferred',
+          titleStyle: 'noun-phrase',
+          maxChildIssues: 6,
+          program: {
+            title: 'Electron 전환',
+            summary: '웹 기반 편집기를 안전한 데스크톱 제품으로 전환합니다.',
+            scope: ['데스크톱 실행 기반'],
+            nonGoals: ['자동 배포'],
+            successCriteria: ['기반 검증 완료']
+          },
+          groups: [{
+            id: 'desktop-foundation',
+            title: 'Electron 데스크톱 기반 구축',
+            summary: '보안 셸과 저장 기반을 구성합니다.',
+            taskIds: ['shell'],
+            rollback: '기존 웹 실행 경로를 유지합니다.',
+            issueNumber: 12
+          }]
+        },
+        tasks: [{ id: 'shell', title: '보안 셸 구현', status: 'ready' }],
+        apply: true
+      }
+    });
+    assert.equal(rejected.isError, true);
+    assert.match(rejected.content[0].text, /expectedUpdatedAt/);
+  } finally {
+    await client.close();
+    await transport.close();
+    await rm(target, { recursive: true, force: true });
   }
 });
 

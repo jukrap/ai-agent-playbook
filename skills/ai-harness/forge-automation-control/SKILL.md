@@ -28,7 +28,7 @@ Use this skill to make forge-backed work resumable, reviewable, and safe when no
 
 ## Related Skills
 
-- Use `issue-planning-triage` to split an approved plan into independently reviewable child issues and to classify pre-existing ready-label work.
+- Use `issue-planning-triage` to shape a roadmap into a small set of independently reviewable delivery-group issues and to classify pre-existing ready-label work. Keep finer execution tasks in the local ledger.
 - Use `agent-orchestration-handoff` when executor or review workers need bounded contracts, evidence ownership, and reconciliation handoff.
 - Use `git-worklog-guardrails` before controller staging, commit, push, draft pull request, or durable worklog updates.
 

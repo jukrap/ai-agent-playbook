@@ -249,6 +249,19 @@ test('Korean noun-phrase public titles reject declarative sentence endings', () 
   );
 });
 
+test('forge presentation rejects placeholder-length program and group content', () => {
+  const manifest = validManifest();
+  manifest.coordination = validCoordination();
+  manifest.coordination.program.summary = 'x';
+  manifest.coordination.program.scope = ['x'];
+  manifest.coordination.groups[0].summary = 'x';
+  manifest.coordination.groups[0].rollback = 'x';
+  const result = validateAutomationPlan(manifest);
+  assert.equal(result.forgeReady, false);
+  assert.ok(result.presentationFindings.some((finding) => finding.id === 'plan.coordination.program-incomplete'));
+  assert.ok(result.presentationFindings.some((finding) => finding.id === 'plan.coordination.group-invalid'));
+});
+
 function validManifest() {
   return {
     schemaVersion: '2',

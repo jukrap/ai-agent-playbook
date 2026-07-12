@@ -1798,7 +1798,7 @@ export async function runCli(argv, io = {}) {
         }
         planId = status.state.planId;
         planTitle = status.state.planTitle;
-        coordination = status.remote?.presentation ?? null;
+        coordination = forgePresentationFromRunRemote(status.remote);
         tasks = status.state.tasks.map((task) => {
           const remoteSnapshot = status.remote?.tasks?.[task.id] ?? task.source?.snapshot ?? {};
           const issueNumber = Number(remoteSnapshot.issueNumber ?? task.source?.issueNumber);
@@ -1819,6 +1819,7 @@ export async function runCli(argv, io = {}) {
       }
       const forgeContext = await resolveForgeContextForPlan({ target, config, flags: parsed.flags });
       const provider = forgeContext.provider;
+      coordination = effectiveForgeCoordination(coordination, config, provider);
       const plan = planForgeSync({
         provider,
         capabilities: forgeContext.capabilities,
@@ -2000,6 +2001,11 @@ export async function runCli(argv, io = {}) {
           remediations: forgeRuntime.status.remediations ?? []
         };
         printAutomationResult(blocked, parsed.flags, stdout);
+        return 1;
+      }
+      const presentationGate = automationStartPresentationGate(planInput, forgeRuntime.writes);
+      if (presentationGate) {
+        printAutomationResult(presentationGate, parsed.flags, stdout);
         return 1;
       }
       const result = await startAutomation({
@@ -2236,13 +2242,19 @@ export async function runCli(argv, io = {}) {
 
     if (command === 'plan' && subcommand === 'new') {
       if (parsed.flags.automation) {
+        const target = resolveTarget(cwd, targetArg);
+        const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config'], parsed.flags);
         const result = await createAutomationPlan({
-          target: resolveTarget(cwd, targetArg),
+          target,
           title: parsed.flags.title,
           date: parsed.flags.date,
           language: typeof parsed.flags.lang === 'string' ? parsed.flags.lang : 'auto',
           dryRun: Boolean(parsed.flags['dry-run']),
-          force: Boolean(parsed.flags.force)
+          force: Boolean(parsed.flags.force),
+          presentation: {
+            ...config.forge.presentation,
+            projectMode: config.forge.provider === 'gitea' ? 'milestone' : config.forge.projectMode
+          }
         });
         return printScaffoldResult(result, stdout, stderr);
       }
@@ -2714,6 +2726,10 @@ export function forgeCoordinationStages(checkpoint = {}, autoBootstrap = true) {
   };
 }
 
+export function forgeSyncStageEligible(stages, bootstrapComplete) {
+  return stages?.sync === true && bootstrapComplete === true;
+}
+
 async function coordinateAutomationStart(options) {
   const stages = forgeCoordinationStages(options.checkpoint, options.config.forge.autoBootstrap);
   const doctor = await automationDoctor({ target: options.target, config: options.config });
@@ -2760,7 +2776,7 @@ async function coordinateAutomationStart(options) {
   }
   const bootstrapComplete = !stages.bootstrap || bootstrap?.ok === true;
   let sync = null;
-  if (stages.sync) {
+  if (forgeSyncStageEligible(stages, bootstrapComplete)) {
     try {
       sync = await applyForgeCliPlan({
         ...common,
@@ -2772,7 +2788,7 @@ async function coordinateAutomationStart(options) {
           planId: options.planInput.planId,
           planTitle: options.planInput.title,
           projectTitle: options.planInput.title,
-          coordination: options.planInput.coordination,
+          coordination: effectiveForgeCoordination(options.planInput.coordination, options.config, provider),
           tasks: forgeTasksFromApprovedPlan(options.planInput, options.state)
         })
       });
@@ -2817,6 +2833,26 @@ function automationPlanMilestone(planInput) {
     return planInput.milestoneTitle.trim().slice(0, 200);
   }
   return String(planInput?.title ?? '').match(/\b(?:v|release\s+)?(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)\b/i)?.[1] ?? null;
+}
+
+export function automationStartPresentationGate(planInput, forgeWrites) {
+  if (!forgeWrites) return null;
+  const presentation = validateAutomationPlan(planInput);
+  if (presentation.forgeReady) return null;
+  return {
+    schemaVersion: '2',
+    kind: 'automation.controller.v2',
+    ok: false,
+    state: null,
+    warnings: presentation.warnings ?? [],
+    conflicts: presentation.presentationFindings.length > 0
+      ? presentation.presentationFindings
+      : [{
+          id: 'forge.coordination.required',
+          message: 'Remote automation start requires a reviewed forge coordination presentation before any coordination write.',
+          paths: ['coordination']
+        }]
+  };
 }
 
 function automationMilestoneDescription(planInput, configuredLanguage) {
@@ -2916,6 +2952,42 @@ export function forgeProgramFromCoordination(coordination, planInput) {
     body: resource?.body ?? '',
     updatedAt: resource?.updated_at ?? resource?.updatedAt ?? null
   };
+}
+
+export function forgePresentationFromRunRemote(remote) {
+  const presentation = remote?.presentation;
+  if (!presentation || typeof presentation !== 'object' || Array.isArray(presentation)) return null;
+  const programSnapshot = remote?.program;
+  return {
+    ...structuredClone(presentation),
+    program: {
+      ...structuredClone(presentation.program ?? {}),
+      ...(Number.isInteger(programSnapshot?.issueNumber) ? { issueNumber: programSnapshot.issueNumber } : {}),
+      ...(typeof programSnapshot?.updatedAt === 'string' && programSnapshot.updatedAt
+        ? { expectedUpdatedAt: programSnapshot.updatedAt }
+        : {})
+    },
+    groups: (presentation.groups ?? []).map((group) => ({
+      ...structuredClone(group),
+      ...(Number.isInteger(remote?.groups?.[group.id]?.issueNumber)
+        ? { issueNumber: remote.groups[group.id].issueNumber }
+        : {}),
+      ...(typeof remote?.groups?.[group.id]?.updatedAt === 'string' && remote.groups[group.id].updatedAt
+        ? { expectedUpdatedAt: remote.groups[group.id].updatedAt }
+        : {})
+    }))
+  };
+}
+
+export function effectiveForgeCoordination(coordination, config, provider) {
+  if (!coordination || typeof coordination !== 'object' || Array.isArray(coordination)) return coordination ?? null;
+  if (coordination.projectMode === 'off' || config?.forge?.projectMode === 'off') {
+    return { ...structuredClone(coordination), projectMode: 'off' };
+  }
+  const useMilestone = config?.forge?.projectMode === 'milestone' || (
+    provider === 'gitea' && (!coordination.projectMode || coordination.projectMode === 'preferred')
+  );
+  return useMilestone ? { ...structuredClone(coordination), projectMode: 'milestone' } : structuredClone(coordination);
 }
 
 function forgeLinksFromRunState(state, planInput) {
@@ -3130,7 +3202,7 @@ Usage:
   aapb forge sync <target> [--plan <path> | --run-id <id>] [--allow-capability-fallback projects,views] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--offline] [--apply] [--json]
   aapb forge reconcile <target> (--plan <workflow.plan.v2.json> | --local-task <json> --remote-issue <json>) [--run-id <id>] [--allow-capability-fallback projects,views] [--allow-supersede] [--apply] [--json]
   aapb automation doctor <target> [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--no-git] [--offline] [--enable-github-agent-task] [--json]
-  aapb automation start <target> --plan <path> [--run-id <id>] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--offline] [--json]
+  aapb automation start <target> --plan <path> [--run-id <id>] [--allow-capability-fallback projects,views] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--offline] [--json]
   aapb automation tick <target> [--run-id <id>] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--no-git] [--offline] [--no-interactive] [--approve-review] [--enable-github-agent-task] [--json]
   aapb automation supervise <target> [--run-id <id>] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--no-git] [--offline] [--no-interactive] [--json]
   aapb automation status <target> [--run-id <id>] [--json]

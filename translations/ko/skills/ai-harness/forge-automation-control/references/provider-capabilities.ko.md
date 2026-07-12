@@ -18,14 +18,14 @@ Product name이나 version만 보고 write support를 추론하지 않습니다.
 | Capability | GitHub behavior | Gitea behavior | Fallback |
 |---|---|---|---|
 | Issues, labels, milestones | 인증되었으면 repository API를 사용합니다. | Server가 광고한 repository API를 사용합니다. | Task와 state를 local ledger에 유지합니다. |
-| Child tasks | 가능하면 sub-issue를 사용합니다. | Stable sub-issue API를 가정하지 않습니다. | Stable plan/task marker를 가진 별도 child issue를 유지하며 native parent relation이 있다고 주장하지 않습니다. |
+| Delivery groups | 사용할 수 있으면 검토된 소수 group에 sub-issue를 사용합니다. | Stable sub-issue API를 가정하지 않습니다. | Stable plan/group marker가 있는 delivery-group issue를 유지하며 native parent relation이 있다고 주장하지 않습니다. 세밀한 실행 task는 local ledger에 둡니다. |
 | Pull requests | Delivery group당 native draft pull request 하나를 재사용합니다. | Gitea의 documented `WIP:` convention을 제목에 사용한 public-API pull request를 재사용합니다. | Pull-request method가 advertise되지 않으면 pushed/local branch를 explicit review 대상으로 남기고 handoff를 만듭니다. |
 | Actions | Concurrency control이 있는 repository workflow를 사용합니다. | Server에서 활성화된 경우에만 Actions-compatible workflow를 사용합니다. | Local supervisor 또는 OS scheduler를 사용합니다. |
 | Projects and views | Scope가 허용할 때 지원되는 Projects와 Views API를 사용합니다. | Stable project 또는 view API를 가정하지 않습니다. | Managed label과 milestone filter로 queue와 board state를 표현합니다. |
 | Discussions | Repository에서 활성화되고 token으로 접근 가능한 경우에만 사용합니다. | Discussion support를 가정하지 않습니다. | Marker-owned decision issue를 만들고, 명시적으로 검토한 후속 작업에서만 cross-link를 추가합니다. |
 | Remote coding agents | `gh agent-task`를 preview-only로 취급하고 explicit configuration을 요구하며 auto-select하지 않습니다. | Project adapter가 contract를 정의하지 않으면 unsupported로 취급합니다. | Local executor를 사용합니다. |
 
-Project scope가 없더라도 issue와 milestone coordination을 막지 않습니다. 축소된 capability를 보고하고 안전한 subset으로 계속합니다.
+GitHub Projects를 우선 사용하도록 설정한 경우 project scope가 없으면 첫 mutation 전에 coordination write 전체를 차단합니다. 사용할 수 없는 Project/View 범위와 browser-auth 해결 명령을 함께 보고합니다. 운영자가 milestone fallback을 명시적으로 선택한 경우에만 issue와 milestone coordination을 계속하며, Gitea는 문서화된 이 fallback을 기본으로 사용합니다.
 
 ## Bootstrap And Synchronization
 

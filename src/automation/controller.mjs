@@ -1936,6 +1936,17 @@ async function defaultSyncForge({ task, options, delivery }) {
   if (!options.forgeConfig || !options.remoteUrl) {
     return { ok: true, skipped: true, reason: 'forge-not-configured' };
   }
+  if (!validCoordinationPresentation(options.coordinationPresentation) && !validCoordinationGroup(options.coordinationGroup)) {
+    return {
+      ok: true,
+      skipped: true,
+      reason: 'forge-coordination-required',
+      warnings: [{
+        id: 'forge.coordination.required',
+        message: 'Task-time forge writes were skipped because the approved run has no reviewed coordination presentation.'
+      }]
+    };
+  }
   const detection = detectForgeProvider({
     remoteUrl: options.remoteUrl,
     provider: options.forgeConfig.provider ?? 'auto',
@@ -2249,10 +2260,17 @@ export function buildTaskForgeSyncPlan(task, options = {}) {
         expectedUpdatedAt: options.remoteSnapshot?.updatedAt ?? options.coordinationGroup.expectedUpdatedAt
       }
     : null;
-  const fullPresentation = options.coordinationPresentation && typeof options.coordinationPresentation === 'object' &&
-    !Array.isArray(options.coordinationPresentation) && options.coordinationPresentation.program &&
-    Array.isArray(options.coordinationPresentation.groups)
-    ? structuredClone(options.coordinationPresentation)
+  const fullPresentation = validCoordinationPresentation(options.coordinationPresentation)
+    ? {
+        ...structuredClone(options.coordinationPresentation),
+        ...(options.coordinationPresentation.projectMode === 'off' || options.forgeConfig?.projectMode === 'off'
+          ? { projectMode: 'off' }
+          : options.forgeConfig?.projectMode === 'milestone' || (
+              options.provider === 'gitea' && (!options.coordinationPresentation.projectMode || options.coordinationPresentation.projectMode === 'preferred')
+            )
+            ? { projectMode: 'milestone' }
+            : {})
+      }
     : null;
   const coordination = fullPresentation ?? (group
     ? {
@@ -2269,7 +2287,7 @@ export function buildTaskForgeSyncPlan(task, options = {}) {
         },
         groups: [group]
       }
-    : { issueMode: 'task' });
+    : null);
   const plannedTasks = fullPresentation ? programTasks : group ? tasks : tasks;
   const planned = planForgeSync({
     provider: options.provider,
@@ -2311,6 +2329,12 @@ export function buildTaskForgeSyncPlan(task, options = {}) {
     };
   }
   return planned;
+}
+
+function validCoordinationPresentation(value) {
+  return Boolean(
+    value && typeof value === 'object' && !Array.isArray(value) && value.program && Array.isArray(value.groups)
+  );
 }
 
 function renderCoordinatedDeliveryPullRequest(task, tasks, group, options) {

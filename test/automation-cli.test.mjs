@@ -7,10 +7,46 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { forgeCoordinationStages, forgeLinksFromCoordination, forgeProgramFromCoordination, forgeTasksFromApprovedPlan, parseArgs, runCli } from '../src/cli.mjs';
+import { automationStartPresentationGate, effectiveForgeCoordination, forgeCoordinationStages, forgeLinksFromCoordination, forgePresentationFromRunRemote, forgeProgramFromCoordination, forgeSyncStageEligible, forgeTasksFromApprovedPlan, parseArgs, runCli } from '../src/cli.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const execFileAsync = promisify(execFile);
+
+test('automation start help exposes the explicit Projects capability fallback', async () => {
+  const output = capture(repoRoot);
+  assert.equal(await runCli(['--help'], output), 0);
+  assert.match(
+    output.out(),
+    /automation start <target> --plan <path>.*--allow-capability-fallback projects,views/
+  );
+});
+
+test('remote automation start blocks missing coordination before bootstrap while local start remains compatible', () => {
+  const plan = validPlan();
+  assert.equal(automationStartPresentationGate(plan, false), null);
+  const blocked = automationStartPresentationGate(plan, true);
+  assert.equal(blocked.ok, false);
+  assert.equal(blocked.state, null);
+  assert.ok(blocked.conflicts.some((conflict) => conflict.id === 'plan.coordination.missing'));
+});
+
+test('explicit capability fallback narrows preferred Projects coordination to milestone mode', () => {
+  const coordination = coordinationPresentation({ taskIds: ['cli-task'] });
+  const fallback = effectiveForgeCoordination(coordination, {
+    forge: { projectMode: 'milestone', onMissingCapability: 'fallback' }
+  }, 'github');
+  assert.equal(fallback.projectMode, 'milestone');
+  assert.equal(coordination.projectMode, 'preferred');
+  assert.equal(effectiveForgeCoordination(coordination, { forge: {} }, 'gitea').projectMode, 'milestone');
+  assert.equal(effectiveForgeCoordination({ ...coordination, projectMode: 'off' }, { forge: {} }, 'gitea').projectMode, 'off');
+  assert.equal(effectiveForgeCoordination({ ...coordination, projectMode: 'off' }, {
+    forge: { projectMode: 'milestone', onMissingCapability: 'fallback' }
+  }, 'github').projectMode, 'off');
+  assert.equal(effectiveForgeCoordination(coordination, {
+    forge: { projectMode: 'milestone', onMissingCapability: 'pause' }
+  }, 'github').projectMode, 'milestone');
+  assert.equal(effectiveForgeCoordination(coordination, { forge: { projectMode: 'off' } }, 'github').projectMode, 'off');
+});
 
 test('plan new automation creates and validates the workflow.plan.v2 sidecar', async (t) => {
   const target = await fixture(t);
@@ -180,6 +216,23 @@ test('forge sync apply rejects a draft plan before any forge transport call', as
   assert.equal(result.operations.length, 0);
   assert.equal(result.conflicts.some((conflict) => conflict.id === 'automation.plan.not-approved'), true);
   assert.equal(requests, 0);
+});
+
+test('plan new uses configured forge presentation defaults', async (t) => {
+  const target = await fixture(t);
+  await writeFile(path.join(target, '.ai-agent-playbook', 'config.json'), `${JSON.stringify({
+    forge: {
+      projectMode: 'off',
+      presentation: { issueMode: 'parent-only', maxChildIssues: 4, titleStyle: 'sentence' }
+    }
+  }, null, 2)}\n`);
+  const output = capture(target);
+  assert.equal(await runCli(['plan', 'new', '.', '--automation', '--title', 'Configured plan', '--date', '2026-07-12'], output), 0);
+  const manifest = JSON.parse(await readFile(path.join(target, '.ai-agent-playbook', 'workflows', 'plans', '2026-07-12-configured-plan.plan.json'), 'utf8'));
+  assert.equal(manifest.coordination.issueMode, 'parent-only');
+  assert.equal(manifest.coordination.projectMode, 'off');
+  assert.equal(manifest.coordination.maxChildIssues, 4);
+  assert.equal(manifest.coordination.titleStyle, 'sentence');
 });
 
 test('forge bootstrap preview uses configured Korean language for Project view names', async (t) => {
@@ -455,6 +508,12 @@ test('automation start resumes only incomplete forge coordination stages', () =>
   });
 });
 
+test('automation start never syncs issues after bootstrap fails', () => {
+  assert.equal(forgeSyncStageEligible({ sync: true }, false), false);
+  assert.equal(forgeSyncStageEligible({ sync: true }, true), true);
+  assert.equal(forgeSyncStageEligible({ sync: false }, true), false);
+});
+
 test('group issue coordination links every local task to the shared remote issue', () => {
   const plan = validPlan();
   plan.tasks.push({ ...structuredClone(plan.tasks[0]), id: 'cli-task-two', acceptanceCriteria: [{ id: 'cli-two', text: 'Two works.' }] });
@@ -502,6 +561,20 @@ test('automation start derives initial forge group readiness from reducer state'
   assert.deepEqual(tasks.map((task) => task.status), ['ready']);
 });
 
+test('run-id forge sync restores roadmap and group CAS snapshots', () => {
+  const plan = validPlan();
+  plan.coordination = coordinationPresentation({ taskIds: ['cli-task'] });
+  const presentation = forgePresentationFromRunRemote({
+    presentation: plan.coordination,
+    program: { issueNumber: 1, updatedAt: '2026-07-12T00:00:00Z' },
+    groups: { cli: { issueNumber: 2, updatedAt: '2026-07-12T00:01:00Z' } }
+  });
+  assert.equal(presentation.program.issueNumber, 1);
+  assert.equal(presentation.program.expectedUpdatedAt, '2026-07-12T00:00:00Z');
+  assert.equal(presentation.groups[0].issueNumber, 2);
+  assert.equal(presentation.groups[0].expectedUpdatedAt, '2026-07-12T00:01:00Z');
+});
+
 test('space-separated false cannot authorize supersede operations', () => {
   const parsed = parseArgs(['forge', 'reconcile', '.', '--allow-supersede', 'false']);
   assert.equal(parsed.flags['allow-supersede'], false);
@@ -533,6 +606,29 @@ function validPlan() {
       paths: ['src/cli-task.mjs'],
       deliveryGroup: 'cli',
       remoteEligible: false
+    }]
+  };
+}
+
+function coordinationPresentation({ taskIds }) {
+  return {
+    issueMode: 'delivery-group',
+    projectMode: 'preferred',
+    titleStyle: 'noun-phrase',
+    maxChildIssues: 6,
+    program: {
+      title: 'CLI coordination',
+      summary: 'Coordinate the reviewed CLI delivery group.',
+      scope: ['CLI delivery'],
+      nonGoals: ['Merge automation'],
+      successCriteria: ['The reviewed delivery group is verified.']
+    },
+    groups: [{
+      id: 'cli',
+      title: 'CLI delivery',
+      summary: 'Coordinate the CLI delivery outcome.',
+      taskIds,
+      rollback: 'Revert the CLI delivery branch.'
     }]
   };
 }

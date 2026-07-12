@@ -76,6 +76,7 @@ Current-request restriction은 모든 configuration과 provider detection 이후
 
 - 세밀한 task, argv, evidence, attempt와 resume 상태는 local ledger에 둡니다.
 - 기본은 roadmap issue 하나와 최대 여섯 개 delivery-group issue입니다. 상태·우선순위·위험도·단계·진행률과 View는 Projects에, release 진척은 milestone에 둡니다.
+- Coordination metadata가 없을 때 legacy task별 issue mode를 추론하지 않습니다. Remote start는 bootstrap 전에 중단하고 task-time sync는 remote write를 건너뛰되 local ledger는 계속 사용할 수 있습니다.
 - 한국어 public title은 plan에 자연스러운 명사형으로 명시합니다. `한다`, `된다`, `이다`로 끝나는 생성 title은 기계적으로 고치지 않고 apply 전에 차단합니다.
 - Issue body에는 결과물, 범위, acceptance criteria, dependency, verification, 위험, 복구, 현재 gate, 다음 행동과 관련 PR을 담습니다. Path와 argv는 접을 수 있는 technical detail에 둡니다.
 - 오래된 managed issue는 명시적 승인 때만 supersede합니다. 기록을 보존하고 가능한 경우 sub-issue 관계를 해제하며 통합 issue를 연결한 뒤 삭제 없이 종료합니다.

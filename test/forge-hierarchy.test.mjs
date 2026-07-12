@@ -85,7 +85,14 @@ test('approved plan sync represents detailed tasks as one rich delivery-group is
     groupIssues: 1,
     taskIssues: 0,
     subIssueLinks: 1,
-    projectItems: 1
+    projectItems: 1,
+    issuesUpdated: 0,
+    issuesClosed: 0,
+    projects: 0,
+    views: 0,
+    labels: 0,
+    milestones: 1,
+    pullRequests: 0
   });
   assert.equal(plan.summary.presentationFindings, 0);
 });

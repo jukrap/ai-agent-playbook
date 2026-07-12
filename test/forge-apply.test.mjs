@@ -592,6 +592,7 @@ test('GitHub project item sync adds one child issue and idempotently updates man
     { id: 101, name: 'AAPB Task ID', data_type: 'text' },
     { id: 105, name: 'AAPB Phase', data_type: 'text' },
     { id: 102, name: 'AAPB Priority', data_type: 'single_select' },
+    { id: 107, name: 'Priority', data_type: 'single_select' },
     { id: 103, name: 'AAPB Risk', data_type: 'single_select' },
     { id: 104, name: 'AAPB Progress', data_type: 'number' },
     { id: 106, name: 'AAPB Area', data_type: 'text' }
@@ -625,6 +626,17 @@ test('GitHub project item sync adds one child issue and idempotently updates man
     },
     {
       __typename: 'ProjectV2SingleSelectField',
+      id: 'F_priority_neutral',
+      name: 'Priority',
+      options: [
+        { id: 'N_p0', name: 'P0' },
+        { id: 'N_p1', name: 'P1' },
+        { id: 'N_p2', name: 'P2' },
+        { id: 'N_p3', name: 'P3' }
+      ]
+    },
+    {
+      __typename: 'ProjectV2SingleSelectField',
       id: 'F_risk',
       name: 'AAPB Risk',
       options: [
@@ -636,7 +648,7 @@ test('GitHub project item sync adds one child issue and idempotently updates man
     { __typename: 'ProjectV2Field', id: 'F_progress', name: 'AAPB Progress', dataType: 'NUMBER' },
     { __typename: 'ProjectV2Field', id: 'F_area', name: 'AAPB Area', dataType: 'TEXT' }
   ];
-  const state = { items: [], values: new Map() };
+  const state = { items: [], values: new Map(), views: [] };
   const calls = [];
   const fieldById = new Map(graphFields.map((field) => [field.id, field]));
   const transport = {
@@ -679,7 +691,7 @@ test('GitHub project item sync adds one child issue and idempotently updates man
         if (operation === 'AapbProjectViews') {
           return {
             status: 200,
-            data: { data: { node: { views: { nodes: [], pageInfo: { hasNextPage: false, endCursor: null } } } } }
+            data: { data: { node: { views: { nodes: state.views, pageInfo: { hasNextPage: false, endCursor: null } } } } }
           };
         }
         if (operation === 'AapbProjectFields') {
@@ -736,6 +748,11 @@ test('GitHub project item sync adds one child issue and idempotently updates man
           };
         }
       }
+      if (request.path === '/orgs/example/projectsV2/7/views' && request.method === 'POST') {
+        const view = { id: 501, ...request.body };
+        state.views.push(view);
+        return { status: 201, data: { value: view }, headers: {} };
+      }
       throw new Error(`Unexpected ${request.method} ${request.path} ${request.body?.operationName ?? ''}`);
     }
   };
@@ -743,6 +760,16 @@ test('GitHub project item sync adds one child issue and idempotently updates man
     ok: true,
     provider: 'github',
     operations: [{
+      id: 'view:blocked',
+      action: 'ensure',
+      resource: 'view',
+      payload: {
+        projectTitle,
+        name: 'Blocked',
+        layout: 'table',
+        filter: 'delivery-status:Blocked'
+      }
+    }, {
       id: 'group:group-1:project-item',
       action: 'ensure',
       resource: 'project-item',
@@ -768,10 +795,13 @@ test('GitHub project item sync adds one child issue and idempotently updates man
   assert.equal(second.results[0].status, 'reused');
   assert.equal(calls.filter((call) => call.body?.operationName === 'AapbAddProjectItem').length, 1);
   assert.equal(calls.filter((call) => call.body?.operationName === 'AapbUpdateProjectItemFieldValue').length, 7);
+  assert.equal(calls.filter((call) => call.method === 'POST' && call.path.endsWith('/fields')).length, 0);
+  assert.equal(calls.find((call) => call.method === 'POST' && call.path.endsWith('/views')).body.filter, 'aapb-status:Blocked');
   assert.equal(state.values.get('F_status').singleSelectOptionId, 'O_progress');
   assert.equal(state.values.get('F_task').text, 'group-1');
   assert.equal(state.values.get('F_phase').text, 'desktop-foundation');
-  assert.equal(state.values.get('F_priority').singleSelectOptionId, 'O_p1');
+  assert.equal(state.values.has('F_priority'), false);
+  assert.equal(state.values.get('F_priority_neutral').singleSelectOptionId, 'N_p1');
   assert.equal(state.values.get('F_risk').singleSelectOptionId, 'O_high');
   assert.equal(state.values.get('F_progress').number, 25);
   assert.equal(state.values.get('F_area').text, '');
@@ -915,19 +945,19 @@ test('GitHub project bootstrap ensures managed fields and four views idempotentl
   assert.equal(first.ok, true);
   assert.equal(second.ok, true);
   assert.deepEqual(state.fields.map((field) => field.name), [
-    'AAPB Status',
-    'AAPB Task ID',
-    'AAPB Phase',
-    'AAPB Priority',
-    'AAPB Risk',
-    'AAPB Progress',
-    'AAPB Area'
+    'Delivery Status',
+    'Task ID',
+    'Phase',
+    'Priority',
+    'Risk',
+    'Progress',
+    'Area'
   ]);
   assert.deepEqual(state.views.map((view) => view.name), ['Queue', 'Board', 'Roadmap', 'Blocked']);
   assert.equal(calls.filter((call) => call.body?.operationName === 'AapbCreateProject').length, 1);
   assert.equal(calls.filter((call) => call.method === 'POST' && call.path.endsWith('/fields')).length, 7);
   assert.deepEqual(
-    state.fields.find((field) => field.name === 'AAPB Status').single_select_options.map((option) => option.name),
+    state.fields.find((field) => field.name === 'Delivery Status').single_select_options.map((option) => option.name),
     ['Planned', 'Ready', 'In Progress', 'In Review', 'Blocked', 'Done']
   );
   assert.equal(calls.filter((call) => call.method === 'POST' && call.path.endsWith('/views')).length, 4);
@@ -935,6 +965,182 @@ test('GitHub project bootstrap ensures managed fields and four views idempotentl
   assert.equal(graphQlCalls.every((call) => !call.body.query.includes(projectTitle)), true);
   assert.equal(graphQlCalls.some((call) => call.body.variables.title === projectTitle), true);
   assert.equal(second.results.every((result) => result.status === 'reused'), true);
+});
+
+test('GitHub project field compatibility reuses a neutral field for a legacy serialized request', async () => {
+  const { applyForgePlan } = await loadApply();
+  const project = { id: 'P_legacy_resume', number: 7, title: 'Legacy resume' };
+  const transport = scriptedTransport([
+    {
+      status: 200,
+      data: {
+        data: {
+          repository: {
+            id: 'R_repo',
+            owner: {
+              __typename: 'Organization',
+              id: 'O_owner',
+              login: 'example',
+              databaseId: 41,
+              projectsV2: { nodes: [project], pageInfo: { hasNextPage: false, endCursor: null } }
+            }
+          }
+        }
+      }
+    },
+    {
+      status: 200,
+      data: { data: { node: { views: { nodes: [], pageInfo: { hasNextPage: false, endCursor: null } } } } }
+    },
+    {
+      status: 200,
+      data: [{ id: 100, name: 'Delivery Status', data_type: 'single_select' }],
+      headers: {}
+    }
+  ]);
+
+  const result = await applyForgePlan({
+    apply: true,
+    profile: 'deliver',
+    provider: 'github',
+    repository,
+    transport,
+    plan: {
+      ok: true,
+      operations: [{
+        id: 'legacy-status-field',
+        action: 'ensure',
+        resource: 'project-field',
+        payload: {
+          projectTitle: project.title,
+          name: 'AAPB Status',
+          data_type: 'single_select',
+          single_select_options: [{ name: 'Ready', color: 'GREEN', description: 'Ready' }]
+        }
+      }]
+    }
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.results[0].status, 'reused');
+  assert.equal(transport.calls.some((call) => call.method === 'POST' && call.path.endsWith('/fields')), false);
+});
+
+test('GitHub project bootstrap fails before field creation when a neutral field has an incompatible type', async () => {
+  const { applyForgePlan } = await loadApply();
+  const project = { id: 'P_schema_conflict', number: 7, title: 'Schema conflict' };
+  const transport = scriptedTransport([
+    {
+      status: 200,
+      data: {
+        data: {
+          repository: {
+            id: 'R_repo',
+            owner: {
+              __typename: 'Organization',
+              id: 'O_owner',
+              login: 'example',
+              databaseId: 41,
+              projectsV2: { nodes: [project], pageInfo: { hasNextPage: false, endCursor: null } }
+            }
+          }
+        }
+      }
+    },
+    {
+      status: 200,
+      data: { data: { node: { views: { nodes: [], pageInfo: { hasNextPage: false, endCursor: null } } } } }
+    },
+    {
+      status: 200,
+      data: [{ id: 107, name: 'Priority', data_type: 'text' }],
+      headers: {}
+    }
+  ]);
+
+  const result = await applyForgePlan({
+    apply: true,
+    profile: 'deliver',
+    provider: 'github',
+    repository,
+    transport,
+    plan: {
+      ok: true,
+      operations: [{ id: 'project', action: 'ensure', resource: 'project', critical: true, payload: { title: project.title } }]
+    }
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.results[0].error.code, 'forge.project.field-type-mismatch');
+  assert.deepEqual(result.results[0].error.details, {
+    field: 'Priority',
+    actualName: 'Priority',
+    expectedType: 'single_select',
+    actualType: 'text'
+  });
+  assert.equal(transport.calls.some((call) => call.method === 'POST' && call.path.endsWith('/fields')), false);
+});
+
+test('GitHub project bootstrap fails before field creation when a neutral single-select field lacks managed options', async () => {
+  const { applyForgePlan } = await loadApply();
+  const project = { id: 'P_option_conflict', number: 7, title: 'Option conflict' };
+  const transport = scriptedTransport([
+    {
+      status: 200,
+      data: {
+        data: {
+          repository: {
+            id: 'R_repo',
+            owner: {
+              __typename: 'Organization',
+              id: 'O_owner',
+              login: 'example',
+              databaseId: 41,
+              projectsV2: { nodes: [project], pageInfo: { hasNextPage: false, endCursor: null } }
+            }
+          }
+        }
+      }
+    },
+    {
+      status: 200,
+      data: { data: { node: { views: { nodes: [], pageInfo: { hasNextPage: false, endCursor: null } } } } }
+    },
+    {
+      status: 200,
+      data: [{
+        id: 107,
+        name: 'Priority',
+        data_type: 'single_select',
+        options: [
+          { id: 'low', name: { raw: 'Low', html: 'Low' } },
+          { id: 'high', name: { raw: 'High', html: 'High' } }
+        ]
+      }],
+      headers: {}
+    }
+  ]);
+
+  const result = await applyForgePlan({
+    apply: true,
+    profile: 'deliver',
+    provider: 'github',
+    repository,
+    transport,
+    plan: {
+      ok: true,
+      operations: [{ id: 'project', action: 'ensure', resource: 'project', critical: true, payload: { title: project.title } }]
+    }
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.results[0].error.code, 'forge.project.field-option-mismatch');
+  assert.deepEqual(result.results[0].error.details, {
+    field: 'Priority',
+    actualName: 'Priority',
+    missingOptions: ['P0', 'P1', 'P2', 'P3']
+  });
+  assert.equal(transport.calls.some((call) => call.method === 'POST' && call.path.endsWith('/fields')), false);
 });
 
 test('GitHub discussion ensure uses a category and marker without interpolating remote text into GraphQL', async () => {

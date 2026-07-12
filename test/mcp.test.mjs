@@ -111,7 +111,14 @@ test('mcp forge sync preview keeps detailed tasks local while planning a roadmap
       groupIssues: 1,
       taskIssues: 0,
       subIssueLinks: 1,
-      projectItems: 1
+      projectItems: 1,
+      issuesUpdated: 0,
+      issuesClosed: 0,
+      projects: 0,
+      views: 0,
+      labels: 0,
+      milestones: 0,
+      pullRequests: 0
     });
   } finally {
     await client.close();

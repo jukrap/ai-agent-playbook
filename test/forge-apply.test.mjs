@@ -837,6 +837,110 @@ test('GitHub project item sync adds one child issue and idempotently updates man
   assert.equal(calls.filter((call) => call.path === '/graphql').every((call) => !call.body.query.includes('group-1')), true);
 });
 
+test('forge apply infers supersede approval for Project and hierarchy removals when planner metadata is missing', async () => {
+  const { applyForgePlan } = await loadApply();
+  for (const operation of [
+    { id: 'unsafe-project-remove', action: 'remove', resource: 'project-item', payload: { projectTitle: 'Program', issueNumber: 3 } },
+    { id: 'unsafe-sub-issue-remove', action: 'remove', resource: 'sub-issue', payload: { parentIssueNumber: 1, childIssueId: 103 } }
+  ]) {
+    let requests = 0;
+    const result = await applyForgePlan({
+      apply: true,
+      profile: 'deliver',
+      provider: 'github',
+      repository,
+      transport: { async request() { requests += 1; return { status: 500, data: {} }; } },
+      plan: { ok: true, operations: [operation] }
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.conflicts.some((conflict) => conflict.id === 'forge.apply.supersede-approval-required'), true);
+    assert.equal(requests, 0);
+  }
+});
+
+test('GitHub supersede cleanup removes only the current repository Project item and is idempotent', async () => {
+  const { applyForgePlan } = await loadApply();
+  const projectTitle = 'Forge delivery';
+  const project = { id: 'P_delivery', number: 7, title: projectTitle };
+  const state = {
+    items: [
+      { id: 'PVTI_other_repo_3', content: { __typename: 'Issue', id: 'I_other_repo_3', number: 3 } },
+      { id: 'PVTI_obsolete_3', content: { __typename: 'Issue', id: 'I_obsolete_3', number: 3 } }
+    ]
+  };
+  const calls = [];
+  const transport = {
+    calls,
+    async request(request) {
+      calls.push(structuredClone(request));
+      if (request.path === '/repos/example/playbook/issues/3') {
+        return { status: 200, data: { number: 3, node_id: 'I_obsolete_3' }, headers: {} };
+      }
+      if (request.path !== '/graphql') throw new Error(`Unexpected ${request.method} ${request.path}`);
+      const operation = request.body.operationName;
+      if (operation === 'AapbProjectContext') {
+        return {
+          status: 200,
+          data: {
+            data: {
+              repository: {
+                id: 'R_repo',
+                owner: {
+                  __typename: 'Organization',
+                  id: 'O_owner',
+                  login: 'example',
+                  databaseId: 41,
+                  projectsV2: { nodes: [project], pageInfo: { hasNextPage: false, endCursor: null } }
+                }
+              }
+            }
+          }
+        };
+      }
+      if (operation === 'AapbProjectItems') {
+        return {
+          status: 200,
+          data: { data: { node: { items: { nodes: structuredClone(state.items), pageInfo: { hasNextPage: false, endCursor: null } } } } }
+        };
+      }
+      if (operation === 'AapbDeleteProjectItem') {
+        const deletedItemId = request.body.variables.itemId;
+        state.items = state.items.filter((item) => item.id !== deletedItemId);
+        return { status: 200, data: { data: { deleteProjectV2Item: { deletedItemId } } } };
+      }
+      throw new Error(`Unexpected GraphQL operation ${operation}`);
+    }
+  };
+  const plan = {
+    ok: true,
+    provider: 'github',
+    operations: [{
+      id: 'group:desktop-foundation:project-item-remove:3',
+      action: 'remove',
+      resource: 'project-item',
+      requiresApproval: 'supersede',
+      payload: { projectTitle, issueNumber: 3 }
+    }]
+  };
+
+  const first = await applyForgePlan({
+    apply: true, profile: 'deliver', provider: 'github', repository, transport, plan, allowSupersede: true
+  });
+  const second = await applyForgePlan({
+    apply: true, profile: 'deliver', provider: 'github', repository, transport, plan, allowSupersede: true
+  });
+
+  assert.equal(first.ok, true);
+  assert.equal(first.results[0].status, 'removed');
+  assert.equal(first.summary.applied, 1);
+  assert.equal(second.ok, true);
+  assert.equal(second.results[0].status, 'reused');
+  assert.equal(calls.filter((call) => call.body?.operationName === 'AapbDeleteProjectItem').length, 1);
+  assert.equal(state.items.some((item) => item.id === 'PVTI_other_repo_3'), true);
+  assert.equal(state.items.some((item) => item.id === 'PVTI_obsolete_3'), false);
+});
+
 test('GitHub project bootstrap ensures managed fields and four views idempotently through public APIs', async () => {
   const { applyForgePlan } = await loadApply();
   assert.equal(typeof applyForgePlan, 'function');
@@ -1538,13 +1642,13 @@ test('group survivor CAS failure skips supersede close unlink and comment operat
     { id: 'group:desktop:unlink:3', groupId: 'desktop', action: 'remove', resource: 'sub-issue', payload: { parentIssueNumber: 1, childIssueId: 3 } },
     { id: 'group:desktop:comment:3', groupId: 'desktop', action: 'ensure', resource: 'marker-comment', payload: { issueNumber: 3, marker: '<!-- aapb:superseded:desktop:3 -->', body: 'Moved' } }
   ];
-  const result = await applyForgePlan({ apply: true, profile: 'deliver', provider: 'github', repository, transport, plan: { ok: true, operations } });
+  const result = await applyForgePlan({ apply: true, allowSupersede: true, profile: 'deliver', provider: 'github', repository, transport, plan: { ok: true, operations } });
   assert.equal(result.results[0].status, 'failed');
   assert.equal(result.results.slice(1).every((item) => item.status === 'skipped'), true);
   assert.equal(transport.calls.length, 1);
 });
 
-test('supersede unlink failure skips the comment and close for safe retry', async () => {
+test('supersede close failure skips comment hierarchy and Project cleanup for safe retry', async () => {
   const { applyForgePlan } = await loadApply();
   const transport = scriptedTransport([{ status: 503, data: { message: 'temporary failure' } }]);
   const result = await applyForgePlan({
@@ -1557,14 +1661,17 @@ test('supersede unlink failure skips the comment and close for safe retry', asyn
     plan: {
       ok: true,
       operations: [{
-        id: 'group:desktop:unlink:3', action: 'remove', resource: 'sub-issue', requiresApproval: 'supersede',
-        payload: { parentIssueNumber: 1, childIssueId: 103, childIssueNumber: 3 }
+        id: 'group:desktop:supersede:3', action: 'update', resource: 'issue', requiresApproval: 'supersede',
+        payload: { issueNumber: 3, expectedUpdatedAt: '2026-07-11T00:00:00Z', state: 'closed' }
       }, {
         id: 'group:desktop:comment:3', action: 'ensure', resource: 'marker-comment', requiresApproval: 'supersede',
         payload: { issueNumber: 3, marker: '<!-- aapb:superseded:desktop:3 -->', body: 'Moved' }
       }, {
-        id: 'group:desktop:supersede:3', action: 'update', resource: 'issue', requiresApproval: 'supersede',
-        payload: { issueNumber: 3, expectedUpdatedAt: '2026-07-11T00:00:00Z', state: 'closed' }
+        id: 'group:desktop:unlink:3', action: 'remove', resource: 'sub-issue', requiresApproval: 'supersede',
+        payload: { parentIssueNumber: 1, childIssueId: 103, childIssueNumber: 3 }
+      }, {
+        id: 'group:desktop:project-item-remove:3', action: 'remove', resource: 'project-item', requiresApproval: 'supersede',
+        payload: { projectTitle: 'Desktop', issueNumber: 3 }
       }]
     }
   });
@@ -1572,6 +1679,7 @@ test('supersede unlink failure skips the comment and close for safe retry', asyn
   assert.equal(result.results[0].status, 'failed');
   assert.equal(result.results[1].status, 'skipped');
   assert.equal(result.results[2].status, 'skipped');
+  assert.equal(result.results[3].status, 'skipped');
   assert.equal(transport.calls.length, 1);
 });
 
@@ -1647,6 +1755,7 @@ test('GitHub reconcile can unlink a superseded sub-issue without deleting either
 
   const result = await applyForgePlan({
     apply: true,
+    allowSupersede: true,
     profile: 'deliver',
     provider: 'github',
     repository,

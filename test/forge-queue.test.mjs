@@ -50,6 +50,123 @@ test('managed issue inspection fails closed when GitHub parent ownership cannot 
   assert.equal(result.conflicts.some((conflict) => conflict.id === 'forge.managed-issues.parent-annotation-failed'), true);
 });
 
+test('managed issue inspection recovers an open unlinked superseded issue from its exact marker comment', async () => {
+  const transport = transportFrom((request) => {
+    if (request.path === '/repos/example/playbook/issues') {
+      return {
+        status: 200,
+        data: [
+          { id: 101, number: 1, title: 'Program', body: '<!-- aapb:plan:program -->', state: 'open', updated_at: '2026-07-11T00:00:00Z' },
+          { id: 102, number: 2, title: 'Desktop', body: '<!-- aapb:group:desktop -->', state: 'open', updated_at: '2026-07-11T00:01:00Z' },
+          { id: 103, number: 3, title: 'Legacy task', body: '<!-- aapb:task:task-2 -->', state: 'open', updated_at: '2026-07-11T00:02:00Z' }
+        ],
+        headers: {}
+      };
+    }
+    if (request.path === '/repos/example/playbook/issues/1/sub_issues') {
+      return { status: 200, data: [{ id: 102, number: 2 }], headers: {} };
+    }
+    if (request.path === '/repos/example/playbook/issues/3/comments') {
+      return {
+        status: 200,
+        data: [{ id: 900, body: '<!-- aapb:superseded:program:desktop:3 -->\nMoved to #2' }],
+        headers: {}
+      };
+    }
+    throw new Error(`Unexpected request: ${request.method} ${request.path}`);
+  });
+
+  const result = await queryManagedForgeIssues({
+    provider: 'github',
+    repository,
+    transport,
+    supersedeRecovery: {
+      planId: 'program',
+      groups: [{ id: 'desktop', taskIds: ['task-1', 'task-2'] }]
+    }
+  });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.issues.find((issue) => issue.number === 3).supersedeRecovery, {
+    planId: 'program',
+    groupId: 'desktop',
+    marker: '<!-- aapb:superseded:program:desktop:3 -->'
+  });
+  assert.equal(transport.calls.some((call) => call.path === '/repos/example/playbook/issues/3/comments'), true);
+});
+
+test('managed issue inspection does not keep completed closed unlinked issues in the reconcile queue', async () => {
+  const transport = transportFrom((request) => {
+    if (request.path === '/repos/example/playbook/issues') {
+      return {
+        status: 200,
+        data: [
+          { id: 101, number: 1, title: 'Program', body: '<!-- aapb:plan:program -->', state: 'open', updated_at: '2026-07-11T00:00:00Z' },
+          { id: 102, number: 2, title: 'Desktop', body: '<!-- aapb:group:desktop -->', state: 'open', updated_at: '2026-07-11T00:01:00Z' },
+          { id: 103, number: 3, title: 'Legacy task', body: '<!-- aapb:task:task-2 -->', state: 'closed', updated_at: '2026-07-11T00:02:00Z' }
+        ],
+        headers: {}
+      };
+    }
+    if (request.path === '/repos/example/playbook/issues/1/sub_issues') {
+      return { status: 200, data: [{ id: 102, number: 2 }], headers: {} };
+    }
+    if (request.path === '/repos/example/playbook/issues/3/comments') {
+      return {
+        status: 200,
+        data: [{ id: 900, body: '<!-- aapb:superseded:program:desktop:3 -->\nMoved to #2' }],
+        headers: {}
+      };
+    }
+    throw new Error(`Unexpected request: ${request.method} ${request.path}`);
+  });
+
+  const result = await queryManagedForgeIssues({
+    provider: 'github',
+    repository,
+    transport,
+    supersedeRecovery: {
+      planId: 'program',
+      groups: [{ id: 'desktop', taskIds: ['task-1', 'task-2'] }]
+    }
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.issues.find((issue) => issue.number === 3).supersedeRecovery, undefined);
+});
+
+test('managed issue inspection fails closed when a recovery marker comment is duplicated', async () => {
+  const transport = transportFrom((request) => {
+    if (request.path === '/repos/example/playbook/issues') {
+      return {
+        status: 200,
+        data: [
+          { id: 101, number: 1, title: 'Program', body: '<!-- aapb:plan:program -->', state: 'open', updated_at: '2026-07-11T00:00:00Z' },
+          { id: 102, number: 2, title: 'Desktop', body: '<!-- aapb:group:desktop -->', state: 'open', updated_at: '2026-07-11T00:01:00Z' },
+          { id: 103, number: 3, title: 'Legacy task', body: '<!-- aapb:task:task-2 -->', state: 'open', updated_at: '2026-07-11T00:02:00Z' }
+        ],
+        headers: {}
+      };
+    }
+    if (request.path === '/repos/example/playbook/issues/1/sub_issues') {
+      return { status: 200, data: [{ id: 102, number: 2 }], headers: {} };
+    }
+    if (request.path === '/repos/example/playbook/issues/3/comments') {
+      const marker = '<!-- aapb:superseded:program:desktop:3 -->';
+      return { status: 200, data: [{ id: 900, body: marker }, { id: 901, body: `${marker}\nDuplicate` }], headers: {} };
+    }
+    throw new Error(`Unexpected request: ${request.method} ${request.path}`);
+  });
+
+  const result = await queryManagedForgeIssues({
+    provider: 'github', repository, transport,
+    supersedeRecovery: { planId: 'program', groups: [{ id: 'desktop', taskIds: ['task-1', 'task-2'] }] }
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.conflicts.some((conflict) => conflict.id === 'forge.managed-issues.supersede-recovery-ambiguous'), true);
+});
+
 test('reviewed pull request inspection reads only explicitly approved numbers and preserves CAS fields', async () => {
   const paths = [];
   const result = await queryReviewedForgePullRequests({

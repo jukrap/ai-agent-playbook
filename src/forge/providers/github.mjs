@@ -176,6 +176,17 @@ mutation AapbAddProjectItem($projectId: ID!, $contentId: ID!, $clientMutationId:
   }
 }`;
 
+const DELETE_PROJECT_ITEM_MUTATION = `
+mutation AapbDeleteProjectItem($projectId: ID!, $itemId: ID!, $clientMutationId: String!) {
+  deleteProjectV2Item(input: {
+    projectId: $projectId,
+    itemId: $itemId,
+    clientMutationId: $clientMutationId
+  }) {
+    deletedItemId
+  }
+}`;
+
 const UPDATE_PROJECT_ITEM_FIELD_VALUE_MUTATION = `
 mutation AapbUpdateProjectItemFieldValue(
   $projectId: ID!,
@@ -906,6 +917,42 @@ export function createRestProvider(options) {
     });
   }
 
+  async function removeProjectItem(payload = {}) {
+    if (provider !== 'github') return fallbackResult('project-item', provider);
+    const projectTitle = requiredText(payload.projectTitle, 'Project title');
+    const issueNumber = positiveInteger(payload.issueNumber, 'Project issue number');
+    const discovered = await discoverProject(projectTitle);
+    const project = discovered.project;
+    if (!project) {
+      return resourceResult('reused', 'project-item', { issueNumber, project: null, removed: false });
+    }
+    const projectId = requiredGraphQlId(project.id, 'Project node ID');
+    const content = await resolveProjectContent({ issueNumber });
+    const contentNodeId = requiredGraphQlId(content.node_id ?? content.nodeId, 'Project issue node ID');
+    const items = await listProjectItems(projectId);
+    const item = items.find((candidate) => candidate?.content?.__typename === 'Issue' && candidate.content.id === contentNodeId);
+    if (!item) {
+      return resourceResult('reused', 'project-item', {
+        issueNumber,
+        project: { id: projectId, number: project.number, title: project.title },
+        removed: false
+      });
+    }
+    const itemId = requiredGraphQlId(item.id, 'Project item node ID');
+    const data = await graphqlRequest('AapbDeleteProjectItem', DELETE_PROJECT_ITEM_MUTATION, {
+      projectId,
+      itemId,
+      clientMutationId: mutationId('project-item-remove', repository, `${projectTitle}:${issueNumber}`)
+    });
+    const deletedItemId = requiredGraphQlId(data.deleteProjectV2Item?.deletedItemId, 'Deleted Project item node ID');
+    return resourceResult('removed', 'project-item', {
+      id: deletedItemId,
+      issueNumber,
+      project: { id: projectId, number: project.number, title: project.title },
+      removed: true
+    });
+  }
+
   async function ensureDiscussion(payload = {}) {
     if (provider !== 'github') return fallbackResult('discussion', provider);
     const marker = validateMarker(payload.marker);
@@ -1148,7 +1195,9 @@ export function createRestProvider(options) {
           ? fallbackResult('view', provider)
           : ensureProjectView(operation.payload);
       case 'project-item':
-        return ensureProjectItem(operation.payload);
+        return operation.action === 'remove'
+          ? removeProjectItem(operation.payload)
+          : ensureProjectItem(operation.payload);
       case 'discussion':
         if (provider === 'gitea') {
           return ensureIssue({
@@ -1190,6 +1239,7 @@ export function createRestProvider(options) {
     ensureProject,
     ensureProjectView,
     ensureProjectItem,
+    removeProjectItem,
     ensureDiscussion,
     ensureDraftPullRequest,
     ensureSubIssue,

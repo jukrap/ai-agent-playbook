@@ -5,7 +5,7 @@ Use this runbook to start, monitor, pause, recover, and stop a resumable automat
 ## Safety Defaults
 
 - The example configuration uses the `deliver` profile but starts with `automation.killSwitch` enabled.
-- Only approved plan tasks and existing issues labeled `aapb:ready` may enter the queue.
+- Only approved plan tasks and existing issues labeled `status:ready` may enter the queue. `aapb:ready` remains a read-only compatibility alias for 0.5.4 repositories.
 - Merge, release, delete, force-push, and protected-branch writes always require explicit approval.
 - Unattended work uses a managed isolated checkout and an `aapb/` branch. It does not switch or clean the user's checkout.
 - `--no-remote` disables forge APIs and remote Git delivery while keeping local execution available.
@@ -39,7 +39,7 @@ Confirm the selected remote and provider, server/API version, authentication wit
 
 Executor readiness is credential-aware. Codex can use `OPENAI_API_KEY` or an `auth.json` copied into a disposable `CODEX_HOME`; Claude unattended execution requires `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN` and runs with `--bare`, edit-only tools, and Bash disabled. Subscription/keychain-only Claude login is deliberately not inherited by a worker. Command executors receive no user HOME/config tree. Exact projected model credentials are redacted from evidence and scanned out of changed files before delivery.
 
-Doctor treats Git below `2.39.0` as a conflict only when the effective policy requires Git. On a detected GitHub read path, an installed `gh` below `2.80.0` is a conflict; an installed Gitea `tea` below `0.14.2` is a warning because documented REST remains available. Missing GitHub Projects scope is also a warning and does not trigger `gh auth refresh`.
+Doctor treats Git below `2.39.0` as a conflict only when the effective policy requires Git. On a detected GitHub read path, an installed `gh` below `2.80.0` is a conflict; an installed Gitea `tea` below `0.14.2` is a warning because documented REST remains available. When `projectMode` is `preferred`, missing GitHub Projects scope blocks the first coordination write and prints `gh auth refresh -s project` followed by `aapb forge status .`. The harness never runs the browser authentication refresh. Operators who deliberately decline Projects may pass `--allow-capability-fallback projects,views` or persist milestone fallback in configuration.
 
 A dirty user checkout is safe for unattended work only when the configured mode is `isolated-checkout`. The controller uses a separate managed Git checkout created from a committed baseline, including for `--no-git`, and must not clean, switch, or use the user's dirty or untracked files as its base. Non-Git unattended execution is rejected; run it interactively or establish a committed Git baseline first. Interactive mode rejects pre-existing changes under task-owned paths; it fingerprints unchanged unrelated dirty/staged paths and commits only controller-owned paths. The original path set and fingerprints remain fixed across retries; any drift requires operator reconciliation instead of becoming a new baseline. Doctor's scheduler mode status checks only executable availability or provider/repository compatibility; verify schedule registration, Actions enablement, runner health, credentials, and live remote access separately.
 
@@ -55,6 +55,10 @@ aapb forge bootstrap . --apply --json
 ```
 
 Review every planned label, milestone, project field, view, and fallback before applying. The operation may create missing managed assets but must not rename, overwrite, or delete existing assets.
+
+The structured plan keeps fine-grained execution tasks local and publishes one roadmap issue plus reviewable delivery-group issues. The default maximum is six child groups. Public Korean titles must be explicit noun phrases, and the preview blocks declarative sentence endings. Projects own status, priority, risk, phase, progress, and views; milestones own release progress; labels remain a minimal search and execution-approval surface.
+
+For UI verification, add project-relative `evidencePaths` to the verification command that creates screenshots or videos. Evidence must exist inside the controller workspace and have a recognized media signature. Named PNG dimensions in acceptance criteria are mandatory, and review approval does not waive missing UI evidence.
 
 Applying `forge sync` from a sidecar requires a structurally complete approved plan. A plan-only retry may create a missing marker-owned child issue and reuses an existing issue only when its title and composed body exactly match the approved plan. A mismatch raises `forge.issue.reconcile-required`; any update requires an explicitly reviewed `updatedAt` snapshot that passes CAS.
 
@@ -125,6 +129,19 @@ Use pause for temporary policy, quota, requirement, or verification problems. Pa
 For linked issues, a tick inspects remote state before claim, at a rate-bounded interval during long executor work, and before delivery when forge inspection succeeds. The configured pause label, removal of the ready label, or issue closure pauses the task or run. Requirement drift before claim can be imported into the still-unclaimed task. Active drift must produce `paused:needs-reconcile` before verification, push, or a completion comment. If the remote is unavailable, the guard cannot confirm those changes; continue only when local policy does not require remote state for approval or requirements.
 
 ## Reconcile And Recover
+
+To consolidate a legacy task-per-issue presentation, preview the managed survivor, close, unlink, and marker-comment operations from the reviewed plan:
+
+```text
+aapb forge reconcile . --plan <plan-file> --json
+aapb forge reconcile . --plan <plan-file> --apply --allow-supersede --json
+```
+
+For a reviewed migration of an existing supporting issue or draft PR, declare the exact number and complete public presentation under `coordination.reconcile.supportingIssues` or `coordination.reconcile.pullRequests`. The preview must show the expected title, body-completeness score, artifact counts, and a fresh CAS snapshot. Do not apply when the remote title, draft state, head/base, or `updatedAt` changed after review.
+
+If preferred GitHub Projects are blocked by authentication, run `gh auth refresh -s project` yourself and then `aapb forge status .`. The harness must not expand scopes automatically. Use `--allow-capability-fallback projects,views` only after explicitly choosing the milestone fallback.
+
+The second command requires both flags, preserves issue history, and never deletes issues or labels. Review the preview before apply.
 
 Export or save reviewed local-task and remote-issue JSON snapshots, then compare them before accepting changed remote requirements:
 

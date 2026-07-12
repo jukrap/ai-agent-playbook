@@ -60,6 +60,8 @@ Current-request restriction은 모든 configuration과 provider detection 이후
 ## Queue And Reconciliation
 
 - Plan-created task는 plan approval 후에만 queue에 들어갑니다.
+- 명시적 실행 승인 기본 label은 `status:ready`입니다. `aapb:ready`는 0.5.4 compatibility alias로 읽되 신규 repository에는 만들지 않습니다.
+- Delivery group 상태는 소속 task에서 파생합니다. `planned`는 `ready`가 아니며 dependency, plan approval, pause·kill switch와 현재 gate를 모두 통과해 실행 가능한 task가 있어야 ready가 됩니다.
 - 기존 issue 탐색은 새 run 생성 또는 non-terminal run 재사용 때 수행합니다. Eligible issue는 open 상태이고 pull request가 아니며 configured ready label이 있고 configured pause label은 없어야 하며, 추가 task는 run lease 아래 멱등 append합니다.
 - Remote issue text와 criterion은 untrusted data로 유지합니다. Remote payload의 verification command나 file path를 채택하지 않고, ID가 충돌해도 approved local task를 덮어쓰지 않습니다.
 - Approved local task mapping이 없는 discovered ready issue는 reviewed path와 verification argv를 local에서 제공할 때까지 `local-execution-mapping-required`에서 멈춥니다.
@@ -67,6 +69,17 @@ Current-request restriction은 모든 configuration과 provider detection 이후
 - Configured parallel limit까지만 claim합니다. 안전한 기본값은 하나입니다.
 - 실행 전 requirement digest를 기록합니다. Claim 전 발견한 eligible drift는 아직 claim되지 않은 task에 import할 수 있고, executor 작업 후 발견한 drift는 verification이나 delivery 전에 `paused:needs-reconcile`로 전환합니다.
 - Reconciliation은 reviewed local/remote snapshot을 비교하고 기본으로 preview합니다. Explicit apply는 eligible pre-claim import 또는 reconciliation pause를 기록할 수 있지만 approval과 resume는 별도의 explicit decision으로 남습니다.
+- 기존 지원 이슈나 draft PR은 승인된 `coordination.reconcile` 항목이 정확한 번호와 충분한 공개 계약을 제공할 때만 도입합니다. 제목, draft 상태, head/base, `updatedAt`을 다시 읽고 drift가 있으면 중단하며 대체 PR을 만들지 않습니다.
+- 우선 사용하는 GitHub Projects에 `project` scope가 없으면 mutation 전에 전체 coordination write를 차단합니다. 요청된 산출물 수와 `gh auth refresh -s project` 해결 명령을 표시하고, 운영자가 명시적으로 선택한 경우에만 milestone fallback을 사용합니다.
+
+## Human Coordination Surface
+
+- 세밀한 task, argv, evidence, attempt와 resume 상태는 local ledger에 둡니다.
+- 기본은 roadmap issue 하나와 최대 여섯 개 delivery-group issue입니다. 상태·우선순위·위험도·단계·진행률과 View는 Projects에, release 진척은 milestone에 둡니다.
+- 한국어 public title은 plan에 자연스러운 명사형으로 명시합니다. `한다`, `된다`, `이다`로 끝나는 생성 title은 기계적으로 고치지 않고 apply 전에 차단합니다.
+- Issue body에는 결과물, 범위, acceptance criteria, dependency, verification, 위험, 복구, 현재 gate, 다음 행동과 관련 PR을 담습니다. Path와 argv는 접을 수 있는 technical detail에 둡니다.
+- 오래된 managed issue는 명시적 승인 때만 supersede합니다. 기록을 보존하고 가능한 경우 sub-issue 관계를 해제하며 통합 issue를 연결한 뒤 삭제 없이 종료합니다.
+- Projects를 사용하면 관리되는 priority, risk, area 분류를 Project field로 옮기고 issue item에서는 해당 label을 제거합니다. 관련 없는 사용자 label은 보존하고 label 정의는 삭제하지 않습니다.
 
 ## Credential And Language Boundaries
 

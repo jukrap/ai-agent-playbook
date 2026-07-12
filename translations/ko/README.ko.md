@@ -96,7 +96,7 @@ npm 패키지는 명령줄 도구만 설치합니다. 스킬 복사, `.ai-agent-
 
 ## Forge 자동화 호환성
 
-0.5.4는 선택적인 GitHub 또는 Gitea 협업 계층과 함께 재개 가능한 로컬 실행 루프를 추가합니다. 어댑터는 모든 서버가 같은 기능을 제공한다고 가정하지 않고, 감지한 API와 인증 권한에 따라 사용할 기능을 선택합니다.
+0.5.5는 재개 가능한 로컬 실행 루프를 유지하면서 Forge 협업 화면을 사람이 검토하기 좋은 구조로 바꿉니다. 세밀한 task는 로컬 원장에 두고 roadmap과 delivery-group issue, Projects, Views, milestone, 검토 가능한 PR로 공유 작업을 보여줍니다. 어댑터는 모든 서버가 같은 기능을 제공한다고 가정하지 않고, 감지한 API와 인증 권한에 따라 사용할 기능을 선택합니다.
 
 | 구성 요소 | 지원 버전 또는 연동 기준 | 상태 |
 | --- | --- | --- |
@@ -112,11 +112,12 @@ npm 패키지는 명령줄 도구만 설치합니다. 스킬 복사, `.ai-agent-
 
 - 사용할 수 있는 remote가 없거나 `--no-remote`, `--offline`으로 현재 요청의 범위를 줄이면 forge transport를 호출하지 않고 같은 실행을 로컬 원장에서 계속합니다. 인증 또는 write permission이 없으면 mutation은 비활성화하지만 anonymous capability probe나 허용된 remote read는 수행할 수 있습니다.
 - `forge status`는 설정상 허용된 `policyWrites`와 권한 확인을 마친 `verifiedWrites`를 구분하고, token material 없이 server/API version, authentication, repository permission, probe evidence를 보고합니다. 인증과 repository write permission이 확인될 때까지 effective `writes`는 false입니다.
-- GitHub Projects와 Views에는 해당 project scope가 필요합니다. scope가 없으면 제한을 보고하고 지원 가능한 Issues와 Milestones 기능을 유지하며, 인증 scope를 자동으로 확대하지 않습니다.
+- GitHub Projects와 Views에는 해당 project scope가 필요합니다. Project 협업을 우선하는 설정에서는 둘 중 하나라도 사용할 수 없으면 모든 원격 쓰기 전에 중단합니다. Preview는 예정 산출물과 브라우저 인증 해결 명령을 보여주며, milestone 방식은 `projects,views` fallback을 명시했을 때만 사용합니다. 하네스는 인증 scope를 자동으로 확대하지 않습니다.
+- Managed Project는 Planned, Ready, In Progress, In Review, Blocked, Done 옵션을 가진 `AAPB Status`와 priority, risk, phase, progress, area, task identifier field를 만듭니다. 표시 구조 reconcile은 관리되는 분류 label을 Project로 먼저 옮기며, 이관에 실패하면 뒤의 원격 변경을 중단합니다.
 - Gitea는 server OpenAPI가 필요한 method를 광고한 Issues, Labels, Milestones, pull request, Actions만 사용합니다. Draft review는 public pull-request API와 Gitea의 documented `WIP:` title convention을 사용합니다. Self-hosted hostname 단서는 `forge.provider: "gitea"` 또는 `/api/v1`으로 끝나는 credential-free `forge.apiBaseUrl`을 설정할 때까지 쓰기 불가 상태로 둡니다. Version과 OpenAPI probe는 token 없이 먼저 실행하고 그 뒤에 인증된 permission을 확인합니다. Project/View 상태는 라벨과 milestone 필터로, Discussions는 decision issue로 대체할 수 있습니다.
 - `gh agent-task`는 명시적으로 선택하는 preview 어댑터이며 자동 executor 후보가 아닙니다. forge 부트스트랩과 스케줄러 설치도 먼저 미리보기를 만들고 명시적인 적용 단계를 요구합니다.
 
-마이그레이션, 비활성화, 롤백, 원격 검증 경계는 [0.5.4 forge 자동화 변경 기록](docs/changes/forge-automation-0.5.4.ko.md)을 봅니다.
+표시 구조 마이그레이션, capability gate, 롤백, 원격 검증 경계는 [0.5.5 사람 중심 Forge 협업 변경 기록](docs/changes/forge-human-coordination-0.5.5.ko.md)을 봅니다. [0.5.4 자동화 변경 기록](docs/changes/forge-automation-0.5.4.ko.md)은 실행 루프 마이그레이션 기준으로 유지합니다.
 
 ## 평소 작업 흐름
 
@@ -257,6 +258,7 @@ test/                 Node.js 테스트
 - [공개 체크리스트](docs/publishing-checklist.ko.md): 공개 전 위생 점검.
 - [구조화 플레이북 전환 기록](docs/changes/structured-playbook-cutover.ko.md): 레이아웃과 런타임 재정렬의 변경 내역.
 - [0.5.4 forge 자동화 변경 기록](docs/changes/forge-automation-0.5.4.ko.md): 재개 가능한 실행, provider 대체 동작, 마이그레이션, 비활성화 지침.
+- [0.5.5 사람 중심 Forge 협업 변경 기록](docs/changes/forge-human-coordination-0.5.5.ko.md): roadmap과 delivery-group 표시, Projects capability gate, 검토된 reconcile 마이그레이션.
 
 ## 유지보수 담당자용
 

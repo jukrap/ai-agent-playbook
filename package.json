@@ -30,6 +30,9 @@
     "scripts/*.mjs",
     "pyproject.toml",
     "docs/*.md",
+    "!docs/maintenance.md",
+    "!docs/publishing-checklist.md",
+    "!docs/translation-policy.md",
     "docs/changes/",
     "README.md",
     "LICENSE"

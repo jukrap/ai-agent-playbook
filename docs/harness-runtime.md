@@ -111,6 +111,8 @@ Run records are operational logs, not durable project truth. Promote only review
 
 `plan new --automation` pairs human-readable Markdown with a `workflow.plan.v2` JSON sidecar. The sidecar carries stable task IDs, dependencies, priority, risk, acceptance criteria, argv verification commands, delivery group, and remote eligibility. `plan validate` reports both structural validity and whether an explicitly approved plan is ready to run.
 
+Version suffixes in `schemaVersion`, persisted artifact kinds, `workflow.plan.v2`, and provider API names identify serialized compatibility contracts. They do not divide the implementation into parallel v1, v2, or v3 feature trees; source modules continue to be organized by responsibility. Older persisted contracts remain readable only where an explicit compatibility path is tested.
+
 `automation start` creates a schema v2 run directory with `manifest.json`, `tasks.json`, append-only `ledger.jsonl`, derived `state.json`, `remote.json`, `lease.json`, `summary.md`, `handoff.md`, and `evidence/`. Legacy schema v1 runs are read-compatible and remain read-only; the compatibility path does not overwrite or silently upgrade them.
 
 The task path is `planned -> ready -> claimed -> running -> verifying -> review -> completed`, with `paused`, `blocked`, and `cancelled` interruption states. Progress is completed tasks divided by total tasks and passed criteria divided by total criteria. Attempts, commits, generated code, executor claims, and elapsed time do not count as progress.

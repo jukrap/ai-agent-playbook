@@ -40,7 +40,7 @@ It is not a slash-command pack, a Codex plugin, or an always-on hosted agent ser
 | Project templates | Copyable root agent rules, stack profiles, and project-memory files for current facts, vocabulary, maps, decisions, and evidence. | `templates/`       |
 | Runtime harness   | A CLI for bootstrapping `.ai-agent-playbook/`, health checks, context, runs, contracts, plans, worklogs, forge coordination, and resumable automation ticks. | `bin/`, `src/`     |
 | MCP tools         | Default read-only tools, resources, and prompts for AI apps, plus separately gated forge coordination writes. Push, task execution, merge, and release are not exposed through MCP. | `src/`             |
-| Human docs        | Lifecycle, command, classification, maintenance, publishing, and translation notes.                  | `docs/`            |
+| Human docs        | Quick start, lifecycle, command, architecture, and capability references.                            | `docs/`            |
 | Translations      | Korean reading copies that mirror English source files.                                             | `translations/ko/` |
 | Agent adapters    | Setup notes for specific agent environments.                                                        | `adapters/`        |
 
@@ -173,7 +173,7 @@ templates/
 examples/             Worklog, prompt, and handoff examples
 translations/         Human translations; never install these as skills
 adapters/             Agent-specific install notes and optional hook PoCs
-docs/                 Lifecycle, classification, publishing, and maintenance notes
+docs/                 Quick start, lifecycle, command, architecture, and capability references
 docs/assets/          README and documentation images
 scripts/              Validation and local sync helpers
 test/                 Node CLI and adapter tests
@@ -197,7 +197,6 @@ Detailed triggers live in [Skill catalog](docs/skill-catalog.md). The README kee
 
 ## Documentation
 
-- [Repository working rules](AGENTS.md): maintenance rules for agents editing this repository.
 - [Repository context](CONTEXT.md): core terms and design intent for the playbook.
 - [First 10 minutes](docs/quick-start.md): beginner-friendly first run, glossary, and safe command order.
 - [Command guide](docs/commands.md): what each CLI command does, when to use it, and whether it writes files.
@@ -214,19 +213,10 @@ Detailed triggers live in [Skill catalog](docs/skill-catalog.md). The README kee
 - [Templates](templates/README.md): what to copy into project repositories and what to leave as installable skills.
 - [Classification](docs/classification.md): why skills, templates, examples, docs, and adapters are separated.
 - [Superpowers integration](docs/superpowers-integration.md): how to use this playbook alongside external process skills.
-- [Maintenance workflow](docs/maintenance.md): what to update together when adding or changing content.
-- [Translation policy](docs/translation-policy.md): English source and Korean translation rules.
-- [Publishing checklist](docs/publishing-checklist.md): pre-publish hygiene checks.
 - [Structured playbook cutover notes](docs/changes/structured-playbook-cutover.md): historical notes for the layout and runtime reorganization.
 - [0.5.4 forge automation change note](docs/changes/forge-automation-0.5.4.md): resumable execution, provider fallback, migration, and disable guidance.
 - [0.5.5 human-centered Forge coordination change note](docs/changes/forge-human-coordination-0.5.5.md): roadmap and delivery-group presentation, Projects capability gates, and reviewed reconcile migration.
 - [0.5.6 Forge permission guidance change note](docs/changes/forge-permission-guidance-0.5.6.md): pre-write Projects authorization recovery, neutral Project fields, and legacy alias compatibility.
-
-## For Maintainers
-
-This README is the public entry point for users. If you are editing this source repository, read [Repository working rules](AGENTS.md) and [Maintenance workflow](docs/maintenance.md) first. Release hygiene lives in [Publishing checklist](docs/publishing-checklist.md).
-
-Keep English source files canonical, update Korean translations with English source edits, and do not commit personal paths, credentials, internal URLs, branch names, PR numbers, or installed local skill copies.
 
 ## License
 

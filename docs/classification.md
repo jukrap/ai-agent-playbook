@@ -25,7 +25,7 @@ The content is not agent-specific. Codex is one installation target. The source 
 - `skills/quality`: visual quality, cleanup, compatibility routes, and lightweight review workflows.
 - `skills/security`: authentication, authorization, dependency supply chain, license/notice evidence, security review, compliance gate, and risk workflows.
 
-Add a new category only when the first real skill in that category exists. When a new category or skill changes this map, update `README.md`, this file, Korean translations, and installed skill copies through `docs/maintenance.md`.
+Categories are added only when the first real skill for that capability exists. This keeps the catalog organized by useful work rather than speculative structure.
 
 ## Runtime category
 

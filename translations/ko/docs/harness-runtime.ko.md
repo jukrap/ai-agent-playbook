@@ -111,6 +111,8 @@ Run record는 운영 로그이지 durable project truth가 아닙니다. Reviewe
 
 `plan new --automation`은 human-readable Markdown과 `workflow.plan.v2` JSON sidecar를 함께 만듭니다. Sidecar에는 stable task ID, dependency, priority, risk, acceptance criterion, argv verification command, delivery group, remote eligibility를 기록합니다. `plan validate`는 구조 유효성과 명시적으로 승인된 plan의 실행 준비 상태를 함께 보고합니다.
 
+`schemaVersion`, 저장된 산출물의 `kind`, `workflow.plan.v2`, provider API 이름에 붙는 버전 표시는 직렬화된 호환 계약을 식별합니다. 구현을 v1, v2, v3 기능 트리로 나누는 표기가 아니며, 소스 모듈은 계속 책임 기준으로 구성합니다. 이전에 저장된 계약은 명시적인 호환 경로와 테스트가 있는 경우에만 읽기 지원합니다.
+
 `automation start`는 `manifest.json`, `tasks.json`, append-only `ledger.jsonl`, derived `state.json`, `remote.json`, `lease.json`, `summary.md`, `handoff.md`, `evidence/`를 가진 schema v2 run directory를 만듭니다. Legacy schema v1 run은 read-compatible이며 compatibility path가 덮어쓰거나 자동 upgrade하지 않습니다.
 
 Task state는 `planned -> ready -> claimed -> running -> verifying -> review -> completed`이고 interruption state는 `paused`, `blocked`, `cancelled`입니다. Progress는 completed task/전체 task와 passed criterion/전체 criterion으로 계산합니다. Attempt, commit, generated code, executor claim, elapsed time은 progress가 아닙니다.

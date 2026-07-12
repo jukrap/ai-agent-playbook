@@ -25,7 +25,7 @@
 - `skills/quality`: 시각 품질, 정리, 호환 라우트, 가벼운 리뷰 작업 흐름.
 - `skills/security`: authentication, authorization, dependency supply chain, license/notice evidence, security review, compliance gate, risk 작업 흐름.
 
-새 분류는 그 분류에 들어갈 실제 스킬이 생겼을 때만 추가합니다. 새 분류나 스킬이 이 지도를 바꾸면 `README.md`, 이 파일, 한국어 번역, 설치된 스킬 복사본을 `docs/maintenance.md`에 따라 함께 갱신합니다.
+새 분류는 그 능력에 해당하는 실제 스킬이 생겼을 때만 추가합니다. 추측으로 구조를 먼저 만들지 않고 실제 작업 능력을 기준으로 카탈로그를 구성합니다.
 
 ## 런타임 CLI 분류
 

@@ -67,8 +67,8 @@ test('config preview falls back safely when config files are missing', async () 
     profile: 'deliver',
     killSwitch: false,
     queue: {
-      readyLabel: 'aapb:ready',
-      pauseLabel: 'aapb:paused',
+      readyLabel: 'status:ready',
+      pauseLabel: 'status:paused',
       maxParallel: 1
     },
     budget: {
@@ -84,7 +84,16 @@ test('config preview falls back safely when config files are missing', async () 
     apiBaseUrl: null,
     sync: 'hybrid',
     language: 'auto',
-    autoBootstrap: true
+    autoBootstrap: true,
+    presentation: {
+      issueMode: 'delivery-group',
+      maxChildIssues: 6,
+      titleStyle: 'auto',
+      bodyDetail: 'reviewable',
+      labelStrategy: 'minimal'
+    },
+    projectMode: 'preferred',
+    onMissingCapability: 'pause'
   });
   assert.deepEqual(report.config.git, {
     strategy: 'branch',
@@ -123,13 +132,63 @@ test('config preview accepts forge automation git and executor overrides', async
   assert.equal(report.ok, true);
   assert.equal(report.config.automation.profile, 'coordinate');
   assert.equal(report.config.automation.queue.maxParallel, 2);
-  assert.equal(report.config.automation.queue.readyLabel, 'aapb:ready');
+  assert.equal(report.config.automation.queue.readyLabel, 'status:ready');
+  assert.equal(report.config.automation.queue.pauseLabel, 'status:paused');
   assert.equal(report.config.automation.budget.maxWallMinutes, 120);
   assert.equal(report.config.forge.provider, 'gitea');
   assert.equal(report.config.forge.remote, 'upstream');
   assert.equal(report.config.forge.autoBootstrap, false);
   assert.equal(report.config.git.autoPush, false);
   assert.deepEqual(report.config.executor.command, ['agent-cli', '--json']);
+  await cleanup(target);
+});
+
+test('config preview validates forge presentation and missing-capability policy overrides', async () => {
+  const target = await tempRepo('config forge presentation-한글-');
+  await mkdir(path.join(target, '.ai-agent-playbook'), { recursive: true });
+  await writeJson(path.join(target, '.ai-agent-playbook', 'config.json'), {
+    forge: {
+      presentation: {
+        issueMode: 'parent-only',
+        maxChildIssues: 50,
+        titleStyle: 'noun-phrase',
+        bodyDetail: 'compact',
+        labelStrategy: 'legacy'
+      },
+      projectMode: 'milestone',
+      onMissingCapability: 'fallback'
+    }
+  });
+
+  const valid = await previewHarnessConfig({ target, env: {} });
+  assert.equal(valid.ok, true);
+  assert.deepEqual(valid.config.forge.presentation, {
+    issueMode: 'parent-only',
+    maxChildIssues: 50,
+    titleStyle: 'noun-phrase',
+    bodyDetail: 'compact',
+    labelStrategy: 'legacy'
+  });
+  assert.equal(valid.config.forge.projectMode, 'milestone');
+  assert.equal(valid.config.forge.onMissingCapability, 'fallback');
+
+  await writeJson(path.join(target, '.ai-agent-playbook', 'config.json'), {
+    forge: {
+      presentation: {
+        issueMode: 'everything',
+        maxChildIssues: 51,
+        titleStyle: 'headline',
+        bodyDetail: 'verbose',
+        labelStrategy: 'all'
+      },
+      projectMode: 'required',
+      onMissingCapability: 'continue'
+    }
+  });
+
+  const invalid = await previewHarnessConfig({ target, env: {} });
+  assert.equal(invalid.ok, false);
+  assert.equal(invalid.conflicts.filter((conflict) => conflict.id === 'config.value.invalid').length, 7);
   await cleanup(target);
 });
 

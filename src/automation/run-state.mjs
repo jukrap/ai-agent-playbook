@@ -477,6 +477,11 @@ function normalizeTask(input, index, conflicts, warnings) {
   } else {
     const commandIds = new Set();
     for (const command of task.verificationCommands) {
+      if (isRecord(command) && command.evidencePaths !== undefined && (
+        !Array.isArray(command.evidencePaths) || command.evidencePaths.some((item) => !isSafeRelativePath(item))
+      )) {
+        conflicts.push(conflict('automation.plan.verification-evidence-invalid', `${location}.verificationCommands evidencePaths must contain safe project-relative paths.`, [location]));
+      }
       if (!isRecord(command) || !isStableId(command.id) || !isSafeArgv(command.argv)) {
         conflicts.push(conflict('automation.plan.verification-invalid', `${location}.verificationCommands must contain safe { id, argv } objects.`, [location]));
         continue;
@@ -539,6 +544,7 @@ function normalizeTaskSource(value, location, conflicts) {
     provider: ['github', 'gitea'].includes(value.provider) ? value.provider : null,
     repository: hasText(value.repository) ? String(value.repository).slice(0, 240) : null,
     issueNumber: value.issueNumber,
+    groupId: isStableId(value.groupId) ? value.groupId : null,
     remoteTaskId: isStableId(value.remoteTaskId) ? value.remoteTaskId : null,
     requiresLocalExecutionMapping: value.requiresLocalExecutionMapping === true,
     criteriaSource: hasText(value.criteriaSource) ? String(value.criteriaSource).slice(0, 80) : null,
@@ -643,6 +649,13 @@ function normalizeDeliveryCheckpoint(value, event) {
   if (!Array.isArray(value.operations) || !value.operations.every((item) => typeof item === 'string' && /^[a-z0-9-]{1,80}$/.test(item))) {
     throw new Error('task.delivery-recorded contains invalid delivery operations.');
   }
+  const normalizeEvidencePaths = (items, name) => {
+    if (items === undefined || items === null) return [];
+    if (!Array.isArray(items) || items.length > 500 || !items.every((item) => typeof item === 'string' && isSafeRelativePath(item))) {
+      throw new Error(`task.delivery-recorded contains invalid ${name}.`);
+    }
+    return [...new Set(items.map(normalizePortablePath))];
+  };
   const baselineHead = normalizeCheckpointOid(value.baselineHead);
   const commitHead = normalizeCheckpointOid(value.commitHead);
   if (value.status === 'committed' && (!baselineHead || !commitHead)) {
@@ -660,9 +673,27 @@ function normalizeDeliveryCheckpoint(value, event) {
     preexistingChanges: normalizePreexistingChanges(value.preexistingChanges),
     skipped: value.skipped === true,
     reason: bounded(value.reason, 240),
+    attemptStartedAt: Number.isFinite(value.attemptStartedAt) && value.attemptStartedAt > 0 ? value.attemptStartedAt : null,
+    changedPaths: normalizeEvidencePaths(value.changedPaths, 'changed paths'),
+    verificationEvidence: normalizeEvidencePaths(value.verificationEvidence, 'verification evidence'),
+    verificationResults: normalizeVerificationResults(value.verificationResults),
     operations: [...new Set(value.operations)],
     recordedAt: hasText(event.timeUtc) ? event.timeUtc : null
   };
+}
+
+function normalizeVerificationResults(value) {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > 100) throw new Error('task.delivery-recorded contains invalid verification results.');
+  return value.map((result) => {
+    if (
+      !isRecord(result) || !isStableId(result.id) || typeof result.ok !== 'boolean' ||
+      !Number.isInteger(result.testCount) || result.testCount < 0 || result.testCount > 1_000_000
+    ) {
+      throw new Error('task.delivery-recorded contains an invalid verification result.');
+    }
+    return { id: result.id, ok: result.ok, testCount: result.testCount };
+  });
 }
 
 function normalizeWorkspaceCheckpoint(value, event) {

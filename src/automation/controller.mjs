@@ -1,10 +1,12 @@
 import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, realpath, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { inflateSync } from 'node:zlib';
 import path from 'node:path';
 import { resolvePlaybookLayout } from '../harness/core.mjs';
 import { applyForgePlan, detectForgeProvider, getEffectiveForgeCapabilities, inspectForgeIssue, mergeForgeQueueIntoPlan, planForgeSync, reconcileForgeTask } from '../forge/index.mjs';
 import { createDefaultForgeTransport } from '../forge/http-transport.mjs';
+import { redactPublicArgv } from '../forge/public-redaction.mjs';
 import { collectWorkerCredentialSecrets, executeWorker, inspectExecutors, selectExecutor } from './executors.mjs';
 import { buildDeliveryBranch, deliverGitChanges, detectBaseBranch, prepareCurrentCheckout, prepareManagedCheckout, selectControllerGitCredential } from './git-delivery.mjs';
 import { createRunStore, DEFAULT_LEASE_HEARTBEAT_MS } from './run-store.mjs';
@@ -105,6 +107,7 @@ export async function startAutomation(options) {
   }
   let initialized;
   try {
+    const presentation = coordinationPresentationFromPlan(validation.plan);
     initialized = await store.initialize({
       plan: validation.plan,
       runId,
@@ -113,7 +116,8 @@ export async function startAutomation(options) {
       approvedPlanDigest,
       remote: {
         mode: noRemote || offline ? 'disabled' : remoteReadOnly ? 'read-only' : 'pending',
-        disabledBy: offline ? 'offline' : noRemote ? 'no-remote' : remoteReadOnly ? 'remote-read-only' : null
+        disabledBy: offline ? 'offline' : noRemote ? 'no-remote' : remoteReadOnly ? 'remote-read-only' : null,
+        ...(presentation ? { presentation } : {})
       }
     });
     if (partialRecovery?.quarantine) await rm(partialRecovery.quarantine, { recursive: true, force: true });
@@ -318,6 +322,8 @@ export async function linkAutomationForgeTasks(options) {
   try {
     let state = existingState;
     const remoteTasks = {};
+    const remoteGroups = {};
+    const remoteProgram = normalizeRemoteProgramLink(options.program);
     const coordination = normalizeForgeCoordinationCheckpoint(options.coordination, options.coordinationComplete);
     for (const link of Array.isArray(options.links) ? options.links : []) {
       const task = state.tasks.find((candidate) => candidate.id === link?.taskId);
@@ -353,11 +359,24 @@ export async function linkAutomationForgeTasks(options) {
       }
       remoteTasks[task.id] = {
         issueNumber: link.issueNumber,
+        ...(hasBoundedText(link.groupId, 100) ? { groupId: link.groupId } : {}),
         title: source.snapshot.title,
         body: source.snapshot.body,
         acceptanceCriteria: source.snapshot.acceptanceCriteria,
         updatedAt: source.snapshot.updatedAt
       };
+      if (hasBoundedText(link.groupId, 100)) {
+        const prior = remoteGroups[link.groupId];
+        if (prior && prior.issueNumber !== link.issueNumber) {
+          warnings.push({ id: 'automation.remote.group-identity-mismatch', message: `Forge checkpoint ignored conflicting issue ${link.issueNumber} for group ${link.groupId}.`, paths: [task.id] });
+        } else {
+          remoteGroups[link.groupId] = {
+            issueNumber: link.issueNumber,
+            title: source.snapshot.title,
+            updatedAt: source.snapshot.updatedAt
+          };
+        }
+      }
     }
     if (Object.keys(remoteTasks).length > 0 || coordination) {
       await store.updateRemote({
@@ -365,6 +384,8 @@ export async function linkAutomationForgeTasks(options) {
         provider: options.provider,
         repository,
         tasks: remoteTasks,
+        ...(Object.keys(remoteGroups).length > 0 ? { groups: remoteGroups } : {}),
+        ...(remoteProgram ? { program: remoteProgram } : {}),
         ...(coordination ? { coordination } : {})
       }, credentials);
     }
@@ -482,6 +503,7 @@ export async function tickAutomation(options) {
   const tickTimeoutMs = positiveInteger(options.tickTimeoutMs, 30 * 60 * 1000);
   options = {
     ...options,
+    tickStartedAt: Number.isFinite(options.tickStartedAt) ? Number(options.tickStartedAt) : Date.now(),
     tickTimeoutMs,
     tickDeadlineAt: Number.isFinite(options.tickDeadlineAt)
       ? Math.min(Number(options.tickDeadlineAt), Date.now() + tickTimeoutMs)
@@ -624,7 +646,17 @@ export async function tickAutomation(options) {
       });
       if (reviewBoundary.result) return reviewBoundary.result;
       state = reviewBoundary.state;
-      if (reviewTask.risk === 'high' && options.approveReview !== true) {
+      if (options.approveReview !== true) {
+        return controllerResult({ target: options.target, runId, state, task: reviewTask, skipped: true, reason: 'review-required' });
+      }
+      const reviewOptions = optionsFromDeliveryCheckpoint(options, reviewTask, state);
+      const unresolvedReviewReasons = await deliveryReviewReasons(
+        reviewTask,
+        { evidence: reviewTask.delivery?.verificationEvidence ?? [] },
+        reviewTask.delivery ?? {},
+        reviewOptions
+      );
+      if (unresolvedReviewReasons.includes('ui-evidence-missing')) {
         return controllerResult({ target: options.target, runId, state, task: reviewTask, skipped: true, reason: 'review-required' });
       }
       const reviewSync = await synchronizeForgeState({
@@ -634,7 +666,7 @@ export async function tickAutomation(options) {
         status: 'completed',
         target: options.target,
         runId,
-        options: optionsFromDeliveryCheckpoint(options, reviewTask, state),
+        options: reviewOptions,
         phase: 'final-review'
       });
       if (!reviewSync.ok) {
@@ -867,6 +899,7 @@ export async function tickAutomation(options) {
       deliveryGroupTasks: state.tasks
         .filter((candidate) => candidate.deliveryGroup === task.deliveryGroup)
         .map((candidate) => structuredClone(candidate)),
+      programTasks: state.tasks.map((candidate) => structuredClone(candidate)),
       recordDeliveryCommit: async (commitDelivery) => {
         state = (await store.appendEvent({
           type: 'task.delivery-recorded',
@@ -897,7 +930,8 @@ export async function tickAutomation(options) {
           .map((label) => typeof label === 'string' ? label : label?.name)
           .filter(Boolean)
           .map((label) => String(label).toLowerCase()));
-        const managed = labels.has('aapb:running') || labels.has('aapb:review');
+        const groupedInFlight = Boolean(task.source?.groupId) && ['claimed', 'running', 'verifying', 'review'].includes(taskFromState(state, task.id)?.status);
+        const managed = managedInFlightLabels(labels) || groupedInFlight;
         if (issue.paused || issue.state === 'closed' || (issue.ready === false && !managed)) {
           return { action: 'pause', reason: issue.paused ? 'remote-paused' : 'remote-approval-revoked' };
         }
@@ -1001,6 +1035,16 @@ export async function tickAutomation(options) {
     });
     if (beforeDelivery.result) return beforeDelivery.result;
     state = beforeDelivery.state;
+    taskOptions.verificationEvidence = Array.isArray(verification?.evidence)
+      ? verification.evidence
+      : [];
+    taskOptions.verificationResults = Array.isArray(verification?.results)
+      ? verification.results.map((result) => ({
+          id: result?.id,
+          ok: result?.ok === true,
+          testCount: observedTestCount(result)
+        }))
+      : [];
     const delivery = await runWithinTickDeadline(taskOptions, 'Git delivery', (signal) => (
       (options.deliverTask ?? defaultDeliverTask)({ task: taskFromState(state, task.id), target: options.target, runId, options: { ...taskOptions, tickSignal: signal }, signal, execution, verification })
     )).catch(operationFailureOrThrow);
@@ -1039,7 +1083,8 @@ export async function tickAutomation(options) {
       runId,
       attemptNumber,
       options: taskOptions,
-      delivery
+      delivery,
+      verification
     });
   } catch (error) {
     if (error?.code === 'automation.control.requested') {
@@ -1315,8 +1360,19 @@ async function applyControlRequest({ store, credentials, state: inputState, runI
   return state;
 }
 
-async function finalizeDeliveredTask({ store, credentials, state, task, target, runId, attemptNumber, options, delivery }) {
-  const finalStatus = task.risk === 'high' && options.approveReview !== true ? 'review' : 'completed';
+async function finalizeDeliveredTask({ store, credentials, state, task, target, runId, attemptNumber, options, delivery, verification = null }) {
+  const checkpointVerification = verification ?? {
+    evidence: Array.isArray(task.delivery?.verificationEvidence) ? task.delivery.verificationEvidence : [],
+    results: Array.isArray(task.delivery?.verificationResults) ? task.delivery.verificationResults : []
+  };
+  const checkpointDelivery = {
+    ...delivery,
+    changedPaths: Array.isArray(delivery?.changedPaths) ? delivery.changedPaths : task.delivery?.changedPaths ?? []
+  };
+  const reviewReasons = await deliveryReviewReasons(task, checkpointVerification, checkpointDelivery, options);
+  const reviewRequired = task.risk === 'high' || reviewReasons.length > 0;
+  const unwaivableReview = reviewReasons.includes('ui-evidence-missing');
+  const finalStatus = unwaivableReview || (reviewRequired && options.approveReview !== true) ? 'review' : 'completed';
   const finalSync = await synchronizeForgeState({
     store,
     credentials,
@@ -1325,7 +1381,7 @@ async function finalizeDeliveredTask({ store, credentials, state, task, target, 
     target,
     runId,
     options,
-    delivery,
+    delivery: checkpointDelivery,
     phase: 'final-verification'
   });
   if (!finalSync.ok) {
@@ -1346,9 +1402,10 @@ async function finalizeDeliveredTask({ store, credentials, state, task, target, 
   state = (await store.appendEvent({
     type: 'task.review-requested',
     taskId: task.id,
+    reasons: reviewReasons,
     eventId: `${runId}:${task.id}:attempt:${attemptNumber}:review`
   }, credentials)).state;
-  if (task.risk === 'high' && options.approveReview !== true) {
+  if (unwaivableReview || (reviewRequired && options.approveReview !== true)) {
     return controllerResult({ target, runId, state, task: taskFromState(state, task.id), applied: true, reason: 'review-required' });
   }
   state = (await store.appendEvent({
@@ -1372,6 +1429,18 @@ function deliveryCheckpoint(delivery, options, attemptNumber, status = 'succeede
     preexistingChanges: Array.isArray(options.preexistingChanges) ? structuredClone(options.preexistingChanges) : [],
     skipped: delivery.skipped === true,
     reason: typeof delivery.reason === 'string' ? delivery.reason.replace(/[\r\n]+/g, ' ').slice(0, 240) : null,
+    attemptStartedAt: Number.isFinite(options.attemptStartedAt)
+      ? Number(options.attemptStartedAt)
+      : Number.isFinite(options.tickStartedAt) ? Number(options.tickStartedAt) : Date.now(),
+    changedPaths: Array.isArray(delivery.changedPaths ?? options.changedPaths)
+      ? [...new Set((delivery.changedPaths ?? options.changedPaths).filter((item) => typeof item === 'string').map((item) => item.replace(/\\/g, '/')))]
+      : [],
+    verificationEvidence: Array.isArray(options.verificationEvidence)
+      ? [...new Set(options.verificationEvidence.filter((item) => typeof item === 'string').map((item) => item.replace(/\\/g, '/')))]
+      : [],
+    verificationResults: Array.isArray(options.verificationResults)
+      ? options.verificationResults.map((result) => ({ id: result.id, ok: result.ok === true, testCount: result.testCount }))
+      : [],
     operations: Array.isArray(delivery.operations)
       ? [...new Set(delivery.operations.filter((item) => typeof item === 'string' && /^[a-z0-9-]{1,80}$/.test(item)))]
       : []
@@ -1387,12 +1456,17 @@ function optionsFromDeliveryCheckpoint(options, task, state) {
     baseBranch: checkpoint.baseBranch ?? options.baseBranch,
     baselineHead: checkpoint.baselineHead ?? options.baselineHead,
     resumeCommitHead: checkpoint.commitHead ?? options.resumeCommitHead,
+    attemptStartedAt: checkpoint.attemptStartedAt ?? options.attemptStartedAt,
+    verificationResults: checkpoint.verificationResults ?? options.verificationResults ?? [],
+    verificationEvidence: checkpoint.verificationEvidence ?? options.verificationEvidence ?? [],
+    changedPaths: checkpoint.changedPaths ?? options.changedPaths ?? [],
     remoteUrl: checkpoint.remoteUrl ?? options.remoteUrl,
     preexistingChanges: checkpoint.preexistingChanges ?? task.workspace?.preexistingChanges ?? options.preexistingChanges ?? [],
     projectTitle: options.projectTitle ?? state.planTitle ?? null,
     deliveryGroupTasks: state.tasks
       .filter((candidate) => candidate.deliveryGroup === task.deliveryGroup)
-      .map((candidate) => structuredClone(candidate))
+      .map((candidate) => structuredClone(candidate)),
+    programTasks: state.tasks.map((candidate) => structuredClone(candidate))
   };
 }
 
@@ -1488,7 +1562,8 @@ async function enforceRemoteBoundary({ store, credentials, state, task, runId, t
     .map((label) => typeof label === 'string' ? label : label?.name)
     .filter(Boolean)
     .map((label) => String(label).toLowerCase()));
-  const managedInFlight = remoteLabels.has('aapb:running') || remoteLabels.has('aapb:review');
+  const groupedInFlight = Boolean(task.source?.groupId) && ['claimed', 'running', 'verifying', 'review'].includes(task.status);
+  const managedInFlight = managedInFlightLabels(remoteLabels) || groupedInFlight;
   const approvalRevoked = issue.ready === false && !managedInFlight;
   if (issue.paused || approvalRevoked || issue.state === 'closed') {
     const reason = issue.paused ? 'remote-paused' : 'remote-approval-revoked';
@@ -1615,7 +1690,11 @@ async function synchronizeForgeState({ store, credentials, task, status, target,
   const syncOptions = {
     ...options,
     remoteUrl: options.remoteUrl ?? remoteState?.remoteUrl ?? null,
-    remoteSnapshot: structuredClone(remoteSnapshot)
+    remoteSnapshot: structuredClone(remoteSnapshot),
+    coordinationGroup: options.coordinationGroup ?? coordinationGroupForTask(remoteState?.presentation, task.id, task.deliveryGroup),
+    coordinationPresentation: options.coordinationPresentation ?? presentationWithRemoteGroups(remoteState?.presentation, remoteState?.groups),
+    programSnapshot: options.programSnapshot ?? remoteState?.program ?? null,
+    presentationLanguage: options.presentationLanguage ?? remoteState?.presentation?.language ?? null
   };
   let result;
   try {
@@ -1626,9 +1705,9 @@ async function synchronizeForgeState({ store, credentials, task, status, target,
     if (['automation.tick.deadline-exceeded', 'automation.control.requested'].includes(error?.code)) throw error;
     return { ok: false, error: redactError(error) };
   }
-  if (!result?.ok) return { ok: false, error: redactError(result?.error ?? result?.conflicts?.[0]?.message ?? 'forge-sync-failed') };
   const remotePatch = remotePatchFromSync(result, taskForSync, syncOptions);
   if (remotePatch) await store.updateRemote(remotePatch, credentials);
+  if (!result?.ok) return { ok: false, error: redactError(result?.error ?? result?.conflicts?.[0]?.message ?? 'forge-sync-failed') };
   return result;
 }
 
@@ -1678,10 +1757,21 @@ async function defaultVerifyTask({ task, target, options }) {
       signal: options.tickSignal,
       redactValues: options.sensitiveValues
     });
-    results.push({ id: verification.id, ...result });
+    results.push({
+      id: verification.id,
+      ...result,
+      evidence: [
+        ...(Array.isArray(result.evidence) ? result.evidence : []),
+        ...(Array.isArray(verification.evidencePaths) ? verification.evidencePaths : [])
+      ]
+    });
     if (!result.ok) return { ok: false, error: `Verification ${verification.id} failed.`, results };
   }
-  return { ok: true, results };
+  return {
+    ok: true,
+    results,
+    evidence: [...new Set(results.flatMap((result) => result.evidence).filter((item) => typeof item === 'string'))]
+  };
 }
 
 async function prepareTaskWorkspace({ task, target, options, runId }) {
@@ -1878,32 +1968,17 @@ async function defaultSyncForge({ task, options, delivery }) {
     if (['automation.tick.deadline-exceeded', 'automation.control.requested'].includes(error?.code)) throw error;
     return { ok: true, skipped: true, reason: 'forge-auth-unavailable', warning: redactError(error) };
   }
-  const plan = planForgeSync({
-    provider: detection.provider,
-    capabilities: options.forgeCapabilities ?? getEffectiveForgeCapabilities(detection.provider, {
+  const capabilities = options.forgeCapabilities ?? getEffectiveForgeCapabilities(detection.provider, {
       probe: prepared.probe,
       requireProbe: detection.provider === 'gitea'
-    }),
-    language: options.forgeConfig?.language ?? 'auto',
-    milestoneTitle: options.milestoneTitle ?? null,
-    planTitle: options.planTitle ?? null,
-    projectTitle: options.projectTitle ?? options.planTitle ?? null,
-    tasks: [{
-      id: task.id,
-      title: task.title,
-      status: task.status,
-      priority: task.priority,
-      risk: task.risk,
-      progress: task.criteria.length > 0
-        ? Math.round((task.criteria.filter((criterion) => criterion.status === 'pass').length / task.criteria.length) * 100)
-        : task.status === 'completed' ? 100 : 0,
-      issueNumber: task.remoteIssueNumber,
-      expectedUpdatedAt: options.remoteSnapshot?.updatedAt ?? null,
-      acceptanceCriteria: task.criteria.map((criterion) => criterion.text)
-    }]
+  });
+  const plan = buildTaskForgeSyncPlan(task, {
+    ...options,
+    provider: detection.provider,
+    capabilities
   });
   if (options.taskBranch && delivery?.operations?.includes('push')) {
-    const pullRequest = renderDeliveryPullRequest(task, options);
+    const pullRequest = renderDeliveryPullRequest(task, { ...options, delivery });
     plan.operations.push({
       id: `task:${task.id}:draft-pr`,
       idempotencyKey: `forge.sync.task.${task.id}.draft-pr`,
@@ -1930,25 +2005,16 @@ async function defaultSyncForge({ task, options, delivery }) {
     signal: options.tickSignal
   });
   if (!applied.ok) return applied;
-  const issueResult = applied.results.find((item) => item.operationId === `task:${task.id}:issue` && ['created', 'updated', 'reused'].includes(item.status));
+  const issueOperationId = options.coordinationGroup?.id
+    ? `group:${options.coordinationGroup.id}:issue`
+    : `task:${task.id}:issue`;
+  const issueResult = applied.results.find((item) => item.operationId === issueOperationId && ['created', 'updated', 'reused'].includes(item.status));
   const issueNumber = issueResult?.resource?.number ?? issueResult?.resource?.index;
   if (!Number.isInteger(issueNumber) || issueNumber <= 0) return applied;
   const commentPlan = {
     ok: true,
     provider: detection.provider,
-    operations: [{
-      id: `task:${task.id}:status-comment`,
-      idempotencyKey: `forge.sync.task.${task.id}.status-comment`,
-      action: 'ensure',
-      resource: 'marker-comment',
-      capability: 'issues',
-      mode: 'native',
-      payload: {
-        issueNumber,
-        marker: `<!-- aapb:task:${task.id}:status -->`,
-        body: renderForgeStatusComment(task, task.status, options)
-      }
-    }],
+    operations: [buildForgeStatusCommentOperation(task, issueNumber, options)],
     warnings: [],
     conflicts: []
   };
@@ -1980,11 +2046,13 @@ async function defaultSyncForge({ task, options, delivery }) {
   };
 }
 
-function renderDeliveryPullRequest(task, options) {
+export function renderDeliveryPullRequest(task, options) {
   const configured = Array.isArray(options.deliveryGroupTasks) && options.deliveryGroupTasks.length > 0
     ? options.deliveryGroupTasks
     : [task];
   const tasks = configured.map((candidate) => candidate.id === task.id ? task : candidate);
+  const group = validCoordinationGroup(options.coordinationGroup) ? options.coordinationGroup : null;
+  if (group) return renderCoordinatedDeliveryPullRequest(task, tasks, group, options);
   const title = tasks.map((candidate) => candidate.title).join(' · ').slice(0, 240) || task.title;
   const ownershipScope = options.planId ?? options.runId ?? 'plan';
   const markerId = String(`${ownershipScope}-${task.deliveryGroup ?? task.id}`)
@@ -2000,6 +2068,403 @@ function renderDeliveryPullRequest(task, options) {
     marker: `<!-- aapb:delivery:${markerId}:pr -->`,
     body: [`<!-- aapb:delivery:${markerId}:pr -->`, '', ...sections].join('\n').trimEnd()
   };
+}
+
+function normalizeRemoteProgramLink(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || !Number.isInteger(value.issueNumber) || value.issueNumber < 1) return null;
+  return {
+    issueNumber: value.issueNumber,
+    title: hasBoundedText(value.title, 1000) ? value.title : '',
+    body: typeof value.body === 'string' ? value.body.slice(0, 16_000) : '',
+    updatedAt: hasBoundedText(value.updatedAt, 80) ? value.updatedAt : null
+  };
+}
+
+async function deliveryReviewReasons(task, verification, delivery, options) {
+  const reasons = [];
+  const changedPaths = Array.isArray(delivery?.changedPaths) ? delivery.changedPaths : [];
+  const threshold = Number.isInteger(options.reviewFileThreshold) && options.reviewFileThreshold > 0
+    ? options.reviewFileThreshold
+    : 50;
+  if (changedPaths.length > threshold) reasons.push('change-volume');
+  const commands = Array.isArray(task.verificationCommands) ? task.verificationCommands : [];
+  const testCommandIds = new Set(commands
+    .filter((command) => Array.isArray(command.argv) && command.argv.some((part) => /(?:^|:)(?:test(?:$|:)|pytest$|vitest$|jest$)/i.test(String(part))))
+    .map((command) => command.id));
+  const passedTest = Array.isArray(verification?.results) && verification.results.some((result) => (
+    result?.ok === true && testCommandIds.has(result.id) && observedTestCount(result) > 0
+  ));
+  if (changedPaths.length > 0 && !passedTest) reasons.push('zero-test');
+  const uiChange = task.paths.some((item) => /(?:^|\/)(?:apps\/(?:writer|desktop)|src\/(?:components|ui)|[^/]+\.(?:tsx|jsx|css|scss|html))$/i.test(String(item).replace(/\\/g, '/')));
+  const visualEvidence = uiChange && await hasValidVisualEvidence(task, verification?.evidence, options);
+  if (uiChange && !visualEvidence) reasons.push('ui-evidence-missing');
+  return reasons;
+}
+
+async function hasValidVisualEvidence(task, evidence, options) {
+  const root = path.resolve(options.workspace ?? options.target ?? '.');
+  const requiredSizes = [...new Set((task.criteria ?? [])
+    .flatMap((criterion) => String(criterion?.text ?? '').match(/\b\d{3,4}x\d{3,4}\b/gi) ?? [])
+    .map((size) => size.toLowerCase()))];
+  const observedSizes = new Set();
+  const attemptStartedAt = Number(task.delivery?.attemptStartedAt ?? options.attemptStartedAt ?? options.tickStartedAt ?? 0);
+  let validMedia = false;
+  for (const item of Array.isArray(evidence) ? evidence : []) {
+    if (typeof item !== 'string' || path.isAbsolute(item) || item.includes('\0')) continue;
+    const candidate = path.resolve(root, item);
+    const relative = path.relative(root, candidate);
+    if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) continue;
+    try {
+      const [resolvedRoot, resolvedCandidate, metadata] = await Promise.all([realpath(root), realpath(candidate), stat(candidate)]);
+      const resolvedRelative = path.relative(resolvedRoot, resolvedCandidate);
+      if (
+        !metadata.isFile() || metadata.size < 12 || metadata.size > 25 * 1024 * 1024 ||
+        resolvedRelative.startsWith('..') || path.isAbsolute(resolvedRelative) ||
+        (attemptStartedAt > 0 && metadata.mtimeMs < attemptStartedAt - 1000) || metadata.mtimeMs > Date.now() + 2000
+      ) continue;
+      const bytes = await readFile(resolvedCandidate);
+      const header = bytes.subarray(0, 32);
+      const png = header.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+      const pngInfo = png ? inspectPng(bytes) : null;
+      const jpeg = header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff && bytes.at(-2) === 0xff && bytes.at(-1) === 0xd9;
+      const gif = (header.subarray(0, 6).toString('ascii') === 'GIF87a' || header.subarray(0, 6).toString('ascii') === 'GIF89a') && bytes.at(-1) === 0x3b;
+      const webp = header.subarray(0, 4).toString('ascii') === 'RIFF' && header.subarray(8, 12).toString('ascii') === 'WEBP' && header.readUInt32LE(4) + 8 === bytes.length;
+      const mp4 = header.subarray(4, 8).toString('ascii') === 'ftyp';
+      const webm = header.readUInt32BE(0) === 0x1a45dfa3;
+      if (!(pngInfo || jpeg || gif || webp || mp4 || webm)) continue;
+      validMedia = true;
+      if (pngInfo) observedSizes.add(`${pngInfo.width}x${pngInfo.height}`);
+    } catch {
+      // Missing, invalid, or escaped evidence is not completion evidence.
+    }
+  }
+  return validMedia && requiredSizes.every((size) => observedSizes.has(size));
+}
+
+function observedTestCount(result) {
+  for (const value of [result?.testCount, result?.tests, result?.summary?.tests, result?.summary?.total]) {
+    if (Number.isInteger(value) && value >= 0) return value;
+  }
+  const output = `${result?.stdout ?? ''}\n${result?.stderr ?? ''}`;
+  const patterns = [
+    /(?:^|\n)1\.\.(\d+)\b/m,
+    /# tests\s+(\d+)\b/i,
+    /Tests\s+(\d+)\s+passed\b/i,
+    /Tests:\s+(?:\d+\s+failed,\s+)?(\d+)\s+passed\b/i,
+    /(?:^|\s)(\d+)\s+passed(?:,|\s|$)/i
+  ];
+  for (const pattern of patterns) {
+    const match = output.match(pattern);
+    if (match) return Number(match[1]);
+  }
+  return 0;
+}
+
+function inspectPng(bytes) {
+  if (bytes.length < 57 || !bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) return null;
+  let offset = 8;
+  let width = 0;
+  let height = 0;
+  let bitDepth = 0;
+  let colorType = -1;
+  let interlace = -1;
+  const idat = [];
+  let sawIhdr = false;
+  let sawIend = false;
+  while (offset + 12 <= bytes.length) {
+    const length = bytes.readUInt32BE(offset);
+    const end = offset + 12 + length;
+    if (length > 25 * 1024 * 1024 || end > bytes.length) return null;
+    const type = bytes.subarray(offset + 4, offset + 8).toString('ascii');
+    const data = bytes.subarray(offset + 8, offset + 8 + length);
+    if (crc32(bytes.subarray(offset + 4, offset + 8 + length)) !== bytes.readUInt32BE(offset + 8 + length)) return null;
+    if (!sawIhdr) {
+      if (type !== 'IHDR' || length !== 13) return null;
+      width = data.readUInt32BE(0);
+      height = data.readUInt32BE(4);
+      bitDepth = data[8];
+      colorType = data[9];
+      interlace = data[12];
+      if (width < 1 || height < 1 || data[10] !== 0 || data[11] !== 0 || interlace !== 0) return null;
+      sawIhdr = true;
+    } else if (type === 'IDAT') {
+      idat.push(data);
+    } else if (type === 'IEND') {
+      if (length !== 0 || end !== bytes.length) return null;
+      sawIend = true;
+      break;
+    }
+    offset = end;
+  }
+  const channels = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 }[colorType];
+  if (!sawIhdr || !sawIend || !channels || idat.length === 0 || ![1, 2, 4, 8, 16].includes(bitDepth)) return null;
+  try {
+    const pixels = inflateSync(Buffer.concat(idat), { maxOutputLength: 100 * 1024 * 1024 });
+    const rowBytes = Math.ceil((width * channels * bitDepth) / 8);
+    if (pixels.length !== (rowBytes + 1) * height) return null;
+  } catch {
+    return null;
+  }
+  return { width, height };
+}
+
+function crc32(bytes) {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+export function buildTaskForgeSyncPlan(task, options = {}) {
+  const configured = Array.isArray(options.deliveryGroupTasks) && options.deliveryGroupTasks.length > 0
+    ? options.deliveryGroupTasks
+    : [task];
+  const toForgeTask = (candidate) => ({
+    id: candidate.id,
+    title: candidate.title,
+    status: candidate.status,
+    priority: candidate.priority,
+    risk: candidate.risk,
+    progress: candidate.criteria?.length > 0
+      ? Math.round((candidate.criteria.filter((criterion) => criterion.status === 'pass').length / candidate.criteria.length) * 100)
+      : candidate.status === 'completed' ? 100 : 0,
+    acceptanceCriteria: (candidate.criteria ?? []).map((criterion) => ({ id: criterion.id, text: criterion.text })),
+    dependsOn: [...(candidate.dependsOn ?? [])],
+    verificationCommands: structuredClone(candidate.verificationCommands ?? []),
+    paths: [...(candidate.paths ?? [])],
+    deliveryGroup: candidate.deliveryGroup,
+    remoteEligible: candidate.remoteEligible
+  });
+  const tasks = configured.map((candidate) => candidate.id === task.id ? task : candidate).map(toForgeTask);
+  const programTasks = (Array.isArray(options.programTasks) && options.programTasks.length > 0 ? options.programTasks : configured)
+    .map((candidate) => candidate.id === task.id ? task : candidate)
+    .map(toForgeTask);
+  const group = validCoordinationGroup(options.coordinationGroup)
+    ? {
+        ...structuredClone(options.coordinationGroup),
+        taskIds: tasks.map((candidate) => candidate.id),
+        issueNumber: task.remoteIssueNumber ?? options.coordinationGroup.issueNumber,
+        expectedUpdatedAt: options.remoteSnapshot?.updatedAt ?? options.coordinationGroup.expectedUpdatedAt
+      }
+    : null;
+  const fullPresentation = options.coordinationPresentation && typeof options.coordinationPresentation === 'object' &&
+    !Array.isArray(options.coordinationPresentation) && options.coordinationPresentation.program &&
+    Array.isArray(options.coordinationPresentation.groups)
+    ? structuredClone(options.coordinationPresentation)
+    : null;
+  const coordination = fullPresentation ?? (group
+    ? {
+        issueMode: 'delivery-group',
+        projectMode: options.forgeConfig?.projectMode ?? 'preferred',
+        titleStyle: 'sentence',
+        maxChildIssues: 1,
+        program: {
+          title: options.planTitle ?? group.title,
+          summary: group.summary,
+          scope: [group.title],
+          nonGoals: ['merge and release'],
+          successCriteria: [`${group.title} verification passes`]
+        },
+        groups: [group]
+      }
+    : { issueMode: 'task' });
+  const plannedTasks = fullPresentation ? programTasks : group ? tasks : tasks;
+  const planned = planForgeSync({
+    provider: options.provider,
+    capabilities: options.capabilities,
+    language: options.forgeConfig?.language ?? options.presentationLanguage ?? 'auto',
+    milestoneTitle: options.milestoneTitle ?? null,
+    planId: options.planId ?? options.runId ?? 'automation-run',
+    planTitle: options.planTitle ?? null,
+    projectTitle: options.projectTitle ?? options.planTitle ?? null,
+    coordination,
+    tasks: group ? plannedTasks : [{
+      ...tasks.find((candidate) => candidate.id === task.id),
+      issueNumber: task.remoteIssueNumber,
+      expectedUpdatedAt: options.remoteSnapshot?.updatedAt ?? null
+    }]
+  });
+  if (group && planned.ok) {
+    const parentOperationId = `plan:${options.planId ?? options.runId ?? 'automation-run'}:issue`;
+    const parentOperation = planned.operations.find((operation) => operation.id === parentOperationId);
+    if (parentOperation && Number.isInteger(options.programSnapshot?.issueNumber) && hasBoundedText(options.programSnapshot?.updatedAt, 80)) {
+      parentOperation.action = 'update';
+      parentOperation.payload.issueNumber = options.programSnapshot.issueNumber;
+      parentOperation.payload.expectedUpdatedAt = options.programSnapshot.updatedAt;
+      parentOperation.payload.preserveNonManagedLabels = true;
+      parentOperation.payload.preserveManagedBody = true;
+    }
+    planned.operations = planned.operations.filter((operation) => (
+      operation.resource === 'milestone' ||
+      (operation.id === parentOperationId && Number.isInteger(options.programSnapshot?.issueNumber)) ||
+      operation.id === `group:${group.id}:issue` || operation.id === `group:${group.id}:project-item`
+    ));
+    planned.summary.operations = planned.operations.length;
+    planned.summary.artifacts = {
+      parentIssues: planned.operations.filter((operation) => operation.id === parentOperationId).length,
+      groupIssues: planned.operations.filter((operation) => operation.resource === 'issue').length,
+      taskIssues: 0,
+      subIssueLinks: 0,
+      projectItems: planned.operations.filter((operation) => operation.resource === 'project-item').length
+    };
+  }
+  return planned;
+}
+
+function renderCoordinatedDeliveryPullRequest(task, tasks, group, options) {
+  const ownershipScope = options.planId ?? options.runId ?? 'plan';
+  const markerId = String(`${ownershipScope}-${group.id ?? task.deliveryGroup ?? task.id}`)
+    .replace(/[^A-Za-z0-9._-]+/g, '-')
+    .slice(0, 100) || task.id;
+  const marker = `<!-- aapb:delivery:${markerId}:pr -->`;
+  const korean = deliveryPresentationIsKorean(options, group, tasks);
+  const issueNumbers = [...new Set([
+    Number(group.issueNumber),
+    ...tasks.map((candidate) => Number(candidate.remoteIssueNumber ?? candidate.source?.issueNumber))
+  ].filter((value) => Number.isInteger(value) && value > 0))];
+  const risk = highestDeliveryRisk(group.risk, tasks);
+  const taskLines = tasks.map((candidate) => (
+    `- [${deliveryTaskVerified(candidate) ? 'x' : ' '}] ${safeMarkdownLine(candidate.title, 500)}`
+  ));
+  const changedPaths = Array.isArray(options.delivery?.changedPaths)
+    ? [...new Set(options.delivery.changedPaths.filter((item) => typeof item === 'string'))].slice(0, 200)
+    : [];
+  const changedPathLines = changedPaths.length > 0
+    ? changedPaths.map((item) => `- \`${safeMarkdownCode(item, 1000)}\``)
+    : [`- ${korean ? 'controller가 보고한 변경 파일 없음' : 'No changed files reported by the controller'}`];
+  const verificationCommands = [...new Set(tasks
+    .filter(deliveryTaskVerified)
+    .flatMap((candidate) => Array.isArray(candidate.verificationCommands) ? candidate.verificationCommands : [])
+    .filter((command) => Array.isArray(command?.argv))
+    .map((command) => publicVerificationCommand(command.argv)))];
+  const verificationLines = verificationCommands.length > 0
+    ? verificationCommands.map((command) => `- [x] \`${command}\``)
+    : [`- ${korean ? '표시할 controller 검증 명령 없음' : 'No controller verification command to display'}`];
+  const evidence = [...new Set(tasks.flatMap((candidate) => (
+    (Array.isArray(candidate.criteria) ? candidate.criteria : [])
+      .filter((criterion) => criterion?.status === 'pass')
+      .flatMap((criterion) => Array.isArray(criterion.evidence) ? criterion.evidence : [])
+      .filter(isControllerEvidencePath)
+  )))];
+  const remaining = tasks.filter((candidate) => !deliveryTaskVerified(candidate));
+  const relatedIssues = issueNumbers.length > 0
+    ? issueNumbers.map((issueNumber) => `- #${issueNumber}`)
+    : [`- ${korean ? '연결된 이슈 없음' : 'No linked issue'}`];
+  const evidenceLines = evidence.length > 0
+    ? evidence.map((item) => `- \`${item}\``)
+    : [`- ${korean ? '표시할 새 controller 검증 증거 없음' : 'No fresh controller verification evidence to display'}`];
+  const remainingLines = remaining.length > 0
+    ? remaining.map((candidate) => `- ${safeMarkdownLine(candidate.title, 500)}`)
+    : [`- ${korean ? '없음' : 'None'}`];
+
+  const labels = korean
+    ? {
+        summary: '요약',
+        issue: '관련 이슈',
+        changes: '변경 및 작업',
+        files: '실제 변경 파일',
+        verification: '검증 결과',
+        evidence: '검증 증거',
+        risk: '위험',
+        rollback: '롤백',
+        remaining: '남은 작업'
+      }
+    : {
+        summary: 'Summary',
+        issue: 'Related issue',
+        changes: 'Changes and tasks',
+        files: 'Changed files',
+        verification: 'Verification results',
+        evidence: 'Verification evidence',
+        risk: 'Risk',
+        rollback: 'Rollback',
+        remaining: 'Remaining work'
+      };
+  return {
+    title: safeMarkdownLine(group.title, 240),
+    marker,
+    body: [
+      marker,
+      '',
+      `## ${labels.summary}`,
+      '',
+      safeMarkdownLine(group.summary, 2000),
+      '',
+      `## ${labels.issue}`,
+      '',
+      ...relatedIssues,
+      '',
+      `## ${labels.changes}`,
+      '',
+      ...taskLines,
+      '',
+      `## ${labels.files}`,
+      '',
+      ...changedPathLines,
+      '',
+      `## ${labels.verification}`,
+      '',
+      ...verificationLines,
+      '',
+      `## ${labels.evidence}`,
+      '',
+      ...evidenceLines,
+      '',
+      `## ${labels.risk}`,
+      '',
+      `- ${risk}`,
+      '',
+      `## ${labels.rollback}`,
+      '',
+      safeMarkdownLine(group.rollback, 2000),
+      '',
+      `## ${labels.remaining}`,
+      '',
+      ...remainingLines
+    ].join('\n').trimEnd()
+  };
+}
+
+function validCoordinationGroup(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) &&
+    hasBoundedText(value.title, 240) && hasBoundedText(value.summary, 2000) && hasBoundedText(value.rollback, 2000);
+}
+
+function deliveryPresentationIsKorean(options, group, tasks) {
+  const configured = String(options.presentationLanguage ?? options.forgeConfig?.language ?? 'auto').toLowerCase();
+  if (configured === 'ko' || configured.startsWith('ko-')) return true;
+  if (configured !== 'auto' && configured) return false;
+  return /[가-힣]/u.test(`${group.title} ${group.summary} ${tasks.map((candidate) => candidate.title).join(' ')}`);
+}
+
+function deliveryTaskVerified(task) {
+  const criteria = Array.isArray(task?.criteria) ? task.criteria : [];
+  return task?.status === 'completed' || (criteria.length > 0 && criteria.every((criterion) => criterion?.status === 'pass'));
+}
+
+function highestDeliveryRisk(groupRisk, tasks) {
+  const weights = { low: 1, medium: 2, high: 3 };
+  const risks = [groupRisk, ...tasks.map((candidate) => candidate.risk)].filter((risk) => weights[risk]);
+  return risks.sort((left, right) => weights[right] - weights[left])[0] ?? 'medium';
+}
+
+function isControllerEvidencePath(value) {
+  return typeof value === 'string' && /^evidence\/[A-Za-z0-9._/-]+$/.test(value) &&
+    !value.split('/').some((part) => !part || part === '.' || part === '..');
+}
+
+function safeMarkdownLine(value, maximum) {
+  return String(value ?? '').replace(/[\0\r\n]+/g, ' ').trim().slice(0, maximum);
+}
+
+function safeMarkdownCode(value, maximum) {
+  return safeMarkdownLine(value, maximum).replace(/`/g, '\\`');
+}
+
+function publicVerificationCommand(argv) {
+  return redactPublicArgv(argv).map((item) => /\s/.test(item) ? JSON.stringify(item) : item).join(' ');
 }
 
 function renderForgeStatusComment(task, status, options) {
@@ -2019,6 +2484,97 @@ function renderForgeStatusComment(task, status, options) {
   }
   const verification = ['review', 'completed'].includes(status) ? '\n\n- Controller verification passed\n- Evidence: see the local execution ledger' : '';
   return `Status: ${display}${verification}`;
+}
+
+export function buildForgeStatusCommentOperation(task, issueNumber, options = {}) {
+  const groupId = hasBoundedText(options.coordinationGroup?.id, 100) ? options.coordinationGroup.id : null;
+  const scope = groupId ? `group:${groupId}` : `task:${task.id}`;
+  const body = groupId
+    ? renderForgeGroupStatusComment(task, options)
+    : renderForgeStatusComment(task, task.status, options);
+  return {
+    id: `${scope}:status-comment`,
+    idempotencyKey: `forge.sync.${scope.replace(':', '.')}.status-comment`,
+    action: 'ensure',
+    resource: 'marker-comment',
+    capability: 'issues',
+    mode: 'native',
+    payload: {
+      issueNumber,
+      marker: `<!-- aapb:${scope}:status -->`,
+      body
+    }
+  };
+}
+
+function renderForgeGroupStatusComment(task, options) {
+  const tasks = (Array.isArray(options.deliveryGroupTasks) ? options.deliveryGroupTasks : [task])
+    .map((candidate) => candidate.id === task.id ? task : candidate);
+  const korean = deliveryPresentationIsKorean(options, options.coordinationGroup, tasks);
+  const completed = tasks.filter((candidate) => candidate.status === 'completed').length;
+  const criteria = tasks.flatMap((candidate) => candidate.criteria ?? []);
+  const passed = criteria.filter((criterion) => criterion.status === 'pass').length;
+  const blocked = tasks.filter((candidate) => ['blocked', 'paused', 'review'].includes(candidate.status));
+  return [
+    `**${korean ? '그룹 상태' : 'Group status'}:** ${completed}/${tasks.length}`,
+    `**${korean ? '수용 기준' : 'Acceptance criteria'}:** ${passed}/${criteria.length}`,
+    `**${korean ? '현재 작업' : 'Current task'}:** ${safeMarkdownLine(task.title, 500)} (${task.status})`,
+    blocked.length > 0
+      ? `**${korean ? '주의 필요' : 'Needs attention'}:** ${blocked.map((candidate) => `${safeMarkdownLine(candidate.title, 200)} (${candidate.status})`).join(', ')}`
+      : `**${korean ? '주의 필요' : 'Needs attention'}:** ${korean ? '없음' : 'None'}`
+  ].join('\n\n');
+}
+
+function coordinationPresentationFromPlan(plan) {
+  const coordination = plan?.coordination;
+  if (!coordination || typeof coordination !== 'object' || Array.isArray(coordination) || !Array.isArray(coordination.groups)) {
+    return null;
+  }
+  const groups = coordination.groups
+    .filter((group) => validCoordinationGroup(group) && Array.isArray(group.taskIds))
+    .map((group) => ({
+      id: safeMarkdownLine(group.id, 100),
+      title: safeMarkdownLine(group.title, 240),
+      summary: safeMarkdownLine(group.summary, 2000),
+      taskIds: [...new Set(group.taskIds.filter((taskId) => hasBoundedText(taskId, 100)).map(String))],
+      rollback: safeMarkdownLine(group.rollback, 2000),
+      ...(Number.isInteger(group.issueNumber) && group.issueNumber > 0 ? { issueNumber: group.issueNumber } : {}),
+      ...(['low', 'medium', 'high'].includes(group.risk) ? { risk: group.risk } : {})
+    }));
+  return {
+    language: hasBoundedText(plan.language, 40) ? String(plan.language) : 'auto',
+    issueMode: hasBoundedText(coordination.issueMode, 40) ? String(coordination.issueMode) : null,
+    projectMode: hasBoundedText(coordination.projectMode, 40) ? String(coordination.projectMode) : 'preferred',
+    titleStyle: hasBoundedText(coordination.titleStyle, 40) ? String(coordination.titleStyle) : 'auto',
+    maxChildIssues: Number.isInteger(coordination.maxChildIssues) ? coordination.maxChildIssues : 6,
+    program: coordination.program && typeof coordination.program === 'object' && !Array.isArray(coordination.program)
+      ? structuredClone(coordination.program)
+      : null,
+    groups
+  };
+}
+
+function coordinationGroupForTask(presentation, taskId, deliveryGroup) {
+  const groups = Array.isArray(presentation?.groups) ? presentation.groups : [];
+  const matched = groups.find((group) => Array.isArray(group?.taskIds) && group.taskIds.includes(taskId)) ??
+    groups.find((group) => group?.id === deliveryGroup);
+  return matched ? structuredClone(matched) : null;
+}
+
+function presentationWithRemoteGroups(presentation, remoteGroups) {
+  if (!presentation || typeof presentation !== 'object' || Array.isArray(presentation)) return null;
+  return {
+    ...structuredClone(presentation),
+    groups: (presentation.groups ?? []).map((group) => ({
+      ...structuredClone(group),
+      ...(Number.isInteger(remoteGroups?.[group.id]?.issueNumber) ? { issueNumber: remoteGroups[group.id].issueNumber } : {}),
+      ...(hasBoundedText(remoteGroups?.[group.id]?.updatedAt, 80) ? { expectedUpdatedAt: remoteGroups[group.id].updatedAt } : {})
+    }))
+  };
+}
+
+function hasBoundedText(value, maximum) {
+  return typeof value === 'string' && value.trim().length > 0 && value.length <= maximum;
 }
 
 async function persistEvidence(options) {
@@ -2177,23 +2733,58 @@ function taskFromState(state, taskId) {
 
 function remotePatchFromSync(result, task, options = {}) {
   if (!Array.isArray(result?.results)) return null;
-  const issueResult = result.results.find((item) => item.operationId === `task:${task.id}:issue` && ['created', 'updated', 'reused'].includes(item.status));
+  const groupId = hasBoundedText(options.coordinationGroup?.id, 100) ? options.coordinationGroup.id : null;
+  const issueOperationId = groupId ? `group:${groupId}:issue` : `task:${task.id}:issue`;
+  const parentOperationId = `plan:${options.planId ?? options.runId ?? 'automation-run'}:issue`;
+  const parentResult = result.results.find((item) => item.operationId === parentOperationId && ['created', 'updated', 'reused'].includes(item.status));
+  const parentIssue = parentResult?.resource;
+  const parentIssueNumber = parentIssue?.number ?? parentIssue?.index;
+  const program = Number.isInteger(parentIssueNumber) && parentIssueNumber > 0
+    ? {
+        issueNumber: parentIssueNumber,
+        updatedAt: parentIssue.updated_at ?? parentIssue.updatedAt ?? null,
+        title: parentIssue.title ?? options.coordinationPresentation?.program?.title ?? options.planTitle ?? '',
+        body: parentIssue.body ?? ''
+      }
+    : null;
+  const issueResult = result.results.find((item) => item.operationId === issueOperationId && ['created', 'updated', 'reused'].includes(item.status));
   const issue = result.remoteIssue ?? issueResult?.resource;
   const issueNumber = issue?.number ?? issue?.index;
-  if (!Number.isInteger(issueNumber) || issueNumber <= 0) return null;
   const remoteUrl = safeRemoteCheckpointUrl(options.remoteUrl);
+  if (!Number.isInteger(issueNumber) || issueNumber <= 0) {
+    return program ? {
+      provider: result.provider,
+      ...(remoteUrl ? { remoteUrl } : {}),
+      program
+    } : null;
+  }
+  const linkedTasks = groupId && Array.isArray(options.deliveryGroupTasks)
+    ? options.deliveryGroupTasks.filter((candidate) => options.coordinationGroup.taskIds?.includes(candidate.id))
+    : [task];
+  const updatedAt = issue.updated_at ?? issue.updatedAt ?? null;
+  const groupAcceptanceCriteria = linkedTasks.flatMap((candidate) => candidate.criteria.map((criterion) => criterion.text));
+  const tasks = Object.fromEntries(linkedTasks.map((candidate) => [candidate.id, {
+    issueNumber,
+    ...(groupId ? { groupId } : {}),
+    updatedAt,
+    title: issue.title ?? options.coordinationGroup?.title ?? candidate.title,
+    body: issue.body ?? '',
+    acceptanceCriteria: groupId ? groupAcceptanceCriteria : candidate.criteria.map((criterion) => criterion.text)
+  }]));
   return {
     provider: result.provider,
     ...(remoteUrl ? { remoteUrl } : {}),
-    tasks: {
-      [task.id]: {
-        issueNumber,
-        updatedAt: issue.updated_at ?? issue.updatedAt ?? null,
-        title: issue.title ?? task.title,
-        body: issue.body ?? '',
-        acceptanceCriteria: task.criteria.map((criterion) => criterion.text)
+    tasks,
+    ...(program ? { program } : {}),
+    ...(groupId ? {
+      groups: {
+        [groupId]: {
+          issueNumber,
+          updatedAt,
+          title: issue.title ?? options.coordinationGroup.title
+        }
       }
-    }
+    } : {})
   };
 }
 
@@ -2234,6 +2825,7 @@ function forgeLinkSource({ provider, repository, task, link }) {
     provider,
     repository: `${repository.owner}/${repository.name}`,
     issueNumber: link.issueNumber,
+    ...(hasBoundedText(link.groupId, 100) ? { groupId: link.groupId } : {}),
     remoteTaskId: task.id,
     criteriaSource: 'controller-sync',
     labels: Array.isArray(link.labels)
@@ -2246,6 +2838,11 @@ function forgeLinkSource({ provider, repository, task, link }) {
       updatedAt: typeof link.updatedAt === 'string' ? link.updatedAt.slice(0, 80) : null
     }
   };
+}
+
+function managedInFlightLabels(labels) {
+  return ['aapb:running', 'aapb:review', 'status:in-progress', 'status:review']
+    .some((label) => labels.has(label));
 }
 
 function progressFingerprint(state) {

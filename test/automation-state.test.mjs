@@ -137,11 +137,12 @@ test('workflow.plan.v2 validation rejects ambiguous criteria, dependencies, comm
   const unsafeExecution = validateWorkflowPlan(workflowPlan({
     tasks: [taskDefinition('unsafe-task', {
       priority: 1001,
-      verificationCommands: [{ id: 'unsafe-command', argv: ['npm test && echo injected'] }]
+      verificationCommands: [{ id: 'unsafe-command', argv: ['npm test && echo injected'], evidencePaths: ['../../secret.png'] }]
     })]
   }));
   assert.equal(unsafeExecution.conflicts.some((item) => item.id === 'automation.plan.priority-invalid'), true);
   assert.equal(unsafeExecution.conflicts.some((item) => item.id === 'automation.plan.verification-invalid'), true);
+  assert.equal(unsafeExecution.conflicts.some((item) => item.id === 'automation.plan.verification-evidence-invalid'), true);
 });
 
 test('only an approved plan can create executable run state', () => {

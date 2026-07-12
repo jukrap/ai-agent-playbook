@@ -22,7 +22,8 @@ import {
 import { automationDoctor } from './automation/doctor.mjs';
 import { scheduleAutomation } from './automation/scheduler.mjs';
 import { deriveAutomationPolicy } from './automation/policy.mjs';
-import { applyForgePlan, collectReadyForgeTasks, inspectForgeIssue, planForgeBootstrap, planForgeSync, reconcileForgeTask } from './forge/index.mjs';
+import { applyForgePlan, collectReadyForgeTasks, inspectForgeIssue, planForgeBootstrap, planForgePresentationReconcile, planForgeSync, queryManagedForgeIssues, queryReviewedForgePullRequests, reconcileForgeTask } from './forge/index.mjs';
+import { redactPublicArgv } from './forge/public-redaction.mjs';
 import { createDefaultForgeTransport } from './forge/http-transport.mjs';
 import {
   buildDependencyInventoryIndex,
@@ -1690,7 +1691,7 @@ export async function runCli(argv, io = {}) {
 
     if (command === 'forge' && subcommand === 'status') {
       const target = resolveTarget(cwd, targetArg);
-      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config'], parsed.flags);
       if (typeof parsed.flags.provider === 'string') config.forge.provider = parsed.flags.provider;
       if (typeof parsed.flags.remote === 'string') config.forge.remote = parsed.flags.remote;
       const doctor = await automationDoctor({
@@ -1710,14 +1711,16 @@ export async function runCli(argv, io = {}) {
 
     if (command === 'forge' && subcommand === 'bootstrap') {
       const target = resolveTarget(cwd, targetArg);
-      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config'], parsed.flags);
       const forgeContext = await resolveForgeContextForPlan({ target, config, flags: parsed.flags });
       const provider = forgeContext.provider;
       const plan = planForgeBootstrap({
         provider,
         capabilities: forgeContext.capabilities,
         milestoneTitle: typeof parsed.flags.milestone === 'string' ? parsed.flags.milestone : null,
-        projectTitle: typeof parsed.flags['project-title'] === 'string' ? parsed.flags['project-title'] : null
+        projectTitle: typeof parsed.flags['project-title'] === 'string' ? parsed.flags['project-title'] : null,
+        language: config.forge.language,
+        projectMode: config.forge.projectMode
       });
       const result = parsed.flags.apply
         ? await applyForgeCliPlan({ plan, provider, target, config, flags: parsed.flags })
@@ -1729,15 +1732,17 @@ export async function runCli(argv, io = {}) {
 
     if (command === 'forge' && subcommand === 'sync') {
       const target = resolveTarget(cwd, targetArg);
-      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config'], parsed.flags);
       let tasks = [];
       let planId;
       let planTitle;
       let planMilestone;
+      let coordination;
       if (typeof parsed.flags.plan === 'string') {
         const planInput = JSON.parse(await readFile(resolveRequiredPath(cwd, parsed.flags.plan, '--plan'), 'utf8'));
         const validation = validateWorkflowPlan(planInput, { requireApproved: Boolean(parsed.flags.apply) });
-        if (!validation.ok || (parsed.flags.apply && !validation.ready)) {
+        const presentation = validateAutomationPlan(planInput);
+        if (!validation.ok || (parsed.flags.apply && (!validation.ready || !presentation.forgeReady))) {
           const conflicts = [...validation.conflicts];
           if (parsed.flags.apply && validation.ok && !validation.ready) {
             conflicts.push({
@@ -1745,6 +1750,12 @@ export async function runCli(argv, io = {}) {
               message: 'The approved plan must include acceptance criteria and safe verification argv before forge synchronization can be applied.',
               paths: []
             });
+          }
+          if (parsed.flags.apply && validation.ok && validation.ready && !presentation.forgeReady) {
+            conflicts.push(...presentation.presentationFindings.map((finding) => ({
+              ...finding,
+              id: finding.id ?? 'plan.coordination.invalid'
+            })));
           }
           const rejected = {
             schemaVersion: '2',
@@ -1763,6 +1774,7 @@ export async function runCli(argv, io = {}) {
         planId = validatedPlan.planId;
         planTitle = validatedPlan.title;
         planMilestone = automationPlanMilestone(validatedPlan);
+        coordination = validatedPlan.coordination;
         tasks = validatedPlan.tasks.map((task) => ({
           id: task.id,
           title: task.title,
@@ -1770,7 +1782,12 @@ export async function runCli(argv, io = {}) {
           priority: task.priority,
           risk: task.risk,
           progress: 0,
-          acceptanceCriteria: (task.acceptanceCriteria ?? []).map((criterion) => criterion.text)
+          acceptanceCriteria: structuredClone(task.acceptanceCriteria ?? []),
+          dependsOn: [...(task.dependsOn ?? [])],
+          verificationCommands: structuredClone(task.verificationCommands ?? []),
+          paths: [...(task.paths ?? [])],
+          deliveryGroup: task.deliveryGroup,
+          remoteEligible: task.remoteEligible
         }));
       } else {
         const status = await automationStatus({ target, runId: typeof parsed.flags['run-id'] === 'string' ? parsed.flags['run-id'] : undefined });
@@ -1781,6 +1798,7 @@ export async function runCli(argv, io = {}) {
         }
         planId = status.state.planId;
         planTitle = status.state.planTitle;
+        coordination = status.remote?.presentation ?? null;
         tasks = status.state.tasks.map((task) => {
           const remoteSnapshot = status.remote?.tasks?.[task.id] ?? task.source?.snapshot ?? {};
           const issueNumber = Number(remoteSnapshot.issueNumber ?? task.source?.issueNumber);
@@ -1809,6 +1827,7 @@ export async function runCli(argv, io = {}) {
         planId,
         planTitle,
         projectTitle: planTitle,
+        coordination,
         tasks
       });
       const result = parsed.flags.apply
@@ -1820,7 +1839,7 @@ export async function runCli(argv, io = {}) {
           runId: parsed.flags['run-id'],
           provider,
           repository: forgeContext.status.repository,
-          links: forgeLinksFromApplyResults(result, tasks)
+          links: forgeLinksFromApplyResults(result, tasks, coordination)
         });
         result.checkpoint = checkpoint;
         if (!checkpoint.ok) {
@@ -1837,6 +1856,88 @@ export async function runCli(argv, io = {}) {
 
     if (command === 'forge' && subcommand === 'reconcile') {
       const target = resolveTarget(cwd, targetArg);
+      if (typeof parsed.flags.plan === 'string') {
+        const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config'], parsed.flags);
+        if (typeof parsed.flags.provider === 'string') config.forge.provider = parsed.flags.provider;
+        if (typeof parsed.flags.remote === 'string') config.forge.remote = parsed.flags.remote;
+        const planInput = JSON.parse(await readFile(resolveRequiredPath(cwd, parsed.flags.plan, '--plan'), 'utf8'));
+        const validation = validateWorkflowPlan(planInput, { requireApproved: Boolean(parsed.flags.apply) });
+        const presentation = validateAutomationPlan(planInput);
+        if (!validation.ok || !presentation.forgeReady) {
+          const rejected = {
+            schemaVersion: '1',
+            kind: 'forge.presentation-reconcile-plan',
+            ok: false,
+            mode: { apply: false, writes: false, requiresAllowSupersede: false },
+            summary: { operations: 0, conflicts: validation.conflicts.length + presentation.presentationFindings.length },
+            operations: [],
+            warnings: validation.warnings,
+            conflicts: [...validation.conflicts, ...presentation.presentationFindings]
+          };
+          if (parsed.flags.json) writeJson(stdout, rejected);
+          else printForgePlan(stdout, rejected, false);
+          return 1;
+        }
+        const context = await prepareCliForgeReadContext({ target, config });
+        if (!context.ok) {
+          const rejected = {
+            schemaVersion: '1',
+            kind: 'forge.presentation-reconcile-plan',
+            ok: false,
+            mode: { apply: false, writes: false, requiresAllowSupersede: false },
+            summary: { operations: 0, conflicts: 1 },
+            operations: [],
+            warnings: context.warnings,
+            conflicts: [{ id: 'forge.reconcile.read-unavailable', message: 'Forge issue inspection is unavailable.', paths: [] }]
+          };
+          if (parsed.flags.json) writeJson(stdout, rejected);
+          else printForgePlan(stdout, rejected, false);
+          return 1;
+        }
+        const inspected = await queryManagedForgeIssues({
+          provider: context.provider,
+          repository: context.repository,
+          transport: context.transport
+        });
+        const pullRequestNumbers = Array.isArray(validation.plan.coordination?.reconcile?.pullRequests)
+          ? validation.plan.coordination.reconcile.pullRequests.map((pull) => pull.number)
+          : [];
+        const inspectedPulls = inspected.ok
+          ? await queryReviewedForgePullRequests({
+              provider: context.provider,
+              repository: context.repository,
+              transport: context.transport,
+              pullRequestNumbers
+            })
+          : { ok: false, pullRequests: [], warnings: [], conflicts: [] };
+        const preview = inspected.ok && inspectedPulls.ok
+          ? planForgePresentationReconcile({
+              provider: context.provider,
+              planId: validation.plan.planId,
+              milestoneTitle: automationPlanMilestone(validation.plan),
+              projectTitle: validation.plan.coordination?.program?.title ?? validation.plan.title,
+              language: validation.plan.language,
+              coordination: validation.plan.coordination,
+              tasks: validation.plan.tasks,
+              remoteIssues: inspected.issues,
+              remotePullRequests: inspectedPulls.pullRequests,
+              capabilities: context.capabilities,
+              allowProjectFallback: config.forge.onMissingCapability === 'fallback'
+            })
+          : {
+              ...(inspected.ok ? inspectedPulls : inspected),
+              kind: 'forge.presentation-reconcile-plan',
+              operations: [],
+              warnings: [...(inspected.warnings ?? []), ...(inspectedPulls.warnings ?? [])],
+              conflicts: [...(inspected.conflicts ?? []), ...(inspectedPulls.conflicts ?? [])]
+            };
+        const result = parsed.flags.apply && preview.ok
+          ? await applyForgeCliPlan({ plan: preview, provider: context.provider, target, config, flags: parsed.flags })
+          : preview;
+        if (parsed.flags.json) writeJson(stdout, result);
+        else printForgePlan(stdout, result, Boolean(parsed.flags.apply));
+        return result.ok ? 0 : 1;
+      }
       const localTask = JSON.parse(await readFile(resolveRequiredPath(cwd, parsed.flags['local-task'], '--local-task'), 'utf8'));
       const remoteIssue = JSON.parse(await readFile(resolveRequiredPath(cwd, parsed.flags['remote-issue'], '--remote-issue'), 'utf8'));
       const preview = reconcileForgeTask({ localTask, remoteIssue });
@@ -1857,7 +1958,7 @@ export async function runCli(argv, io = {}) {
 
     if (command === 'automation' && subcommand === 'doctor') {
       const target = resolveTarget(cwd, targetArg);
-      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config'], parsed.flags);
       const result = await automationDoctor({
         target,
         config,
@@ -1876,7 +1977,7 @@ export async function runCli(argv, io = {}) {
 
     if (command === 'automation' && subcommand === 'start') {
       const target = resolveTarget(cwd, targetArg);
-      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config'], parsed.flags);
       if (config.automation.killSwitch) {
         const result = automationDisabledResult(target);
         printAutomationResult(result, parsed.flags, stdout);
@@ -1892,6 +1993,15 @@ export async function runCli(argv, io = {}) {
       const planInput = JSON.parse(await readFile(planPath, 'utf8'));
       const queue = await collectCliReadyQueue({ target, config, flags: parsed.flags, policy });
       const forgeRuntime = await inspectCliRuntimeForge({ target, config, flags: parsed.flags, policy });
+      if (policy.remote.write && forgeRuntime.status?.conflicts?.some((conflict) => conflict.id === 'forge.scope.projects-missing')) {
+        const blocked = {
+          schemaVersion: '2', kind: 'automation.controller.v2', ok: false, target, state: null,
+          warnings: forgeRuntime.status.warnings, conflicts: forgeRuntime.status.conflicts,
+          remediations: forgeRuntime.status.remediations ?? []
+        };
+        printAutomationResult(blocked, parsed.flags, stdout);
+        return 1;
+      }
       const result = await startAutomation({
         target,
         plan: planInput,
@@ -1917,12 +2027,14 @@ export async function runCli(argv, io = {}) {
           config,
           flags: parsed.flags,
           planInput,
+          state: result.state,
           checkpoint: startStatus?.remote?.coordination
         });
         const links = mergeForgeLinks(
           forgeLinksFromRunState(startStatus?.state, planInput),
           forgeLinksFromCoordination(result.forge, planInput)
         );
+        const program = forgeProgramFromCoordination(result.forge, planInput);
         if (result.forge.repository && ['github', 'gitea'].includes(result.forge.provider)) {
           const stages = {
             bootstrap: result.forge.bootstrapComplete,
@@ -1936,6 +2048,7 @@ export async function runCli(argv, io = {}) {
             provider: result.forge.provider,
             repository: result.forge.repository,
             links,
+            program,
             coordination: stages
           });
           if (linked.ok) {
@@ -1957,6 +2070,7 @@ export async function runCli(argv, io = {}) {
               provider: result.forge.provider,
               repository: result.forge.repository,
               links: [],
+              program,
               coordination
             });
             result.forge.coordination = coordination;
@@ -1989,7 +2103,7 @@ export async function runCli(argv, io = {}) {
 
     if (command === 'automation' && subcommand === 'tick') {
       const target = resolveTarget(cwd, targetArg);
-      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config'], parsed.flags);
       if (config.automation.killSwitch) {
         const result = automationDisabledResult(target);
         printAutomationResult(result, parsed.flags, stdout);
@@ -2034,7 +2148,7 @@ export async function runCli(argv, io = {}) {
 
     if (command === 'automation' && subcommand === 'supervise') {
       const target = resolveTarget(cwd, targetArg);
-      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config'], parsed.flags);
       if (config.automation.killSwitch) {
         const result = automationDisabledResult(target);
         printAutomationResult(result, parsed.flags, stdout);
@@ -2100,7 +2214,7 @@ export async function runCli(argv, io = {}) {
 
     if (command === 'automation' && subcommand === 'schedule') {
       const target = resolveTarget(cwd, targetArg);
-      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config']);
+      const config = await loadAutomationConfig(target, cwd, parsed.flags['user-config'], parsed.flags);
       const policy = commandAutomationPolicy(config, parsed.flags);
       if (parsed.flags.apply && (!policy.automation.execute || config.automation.killSwitch)) {
         const result = config.automation.killSwitch
@@ -2194,6 +2308,11 @@ export function parseArgs(argv) {
       continue;
     }
     const next = argv[i + 1];
+    if (STRICT_BOOLEAN_FLAGS.has(key) && (next === 'true' || next === 'false')) {
+      flags[key] = next === 'true';
+      i += 1;
+      continue;
+    }
     if (next && !next.startsWith('--') && needsValue(key)) {
       flags[key] = next;
       i += 1;
@@ -2256,6 +2375,7 @@ function needsValue(key) {
     'instruction',
     'milestone',
     'project-title',
+    'allow-capability-fallback',
     'local-task',
     'remote-issue'
   ].includes(key);
@@ -2263,6 +2383,7 @@ function needsValue(key) {
 
 const STRICT_BOOLEAN_FLAGS = new Set([
   'apply',
+  'allow-supersede',
   'approve-review',
   'automation',
   'dry-run',
@@ -2296,7 +2417,7 @@ function resolveRequiredPath(cwd, value, optionName) {
   return path.resolve(cwd, value);
 }
 
-async function loadAutomationConfig(target, cwd, userConfigPath) {
+async function loadAutomationConfig(target, cwd, userConfigPath, flags = {}) {
   const preview = await previewHarnessConfig({
     target,
     userConfigPath: resolveOptionalPath(cwd, userConfigPath)
@@ -2304,7 +2425,19 @@ async function loadAutomationConfig(target, cwd, userConfigPath) {
   if (!preview.ok) {
     throw new Error(`Harness config has conflicts: ${preview.conflicts.map((conflict) => conflict.message).join('; ')}`);
   }
-  return structuredClone(preview.config);
+  const config = structuredClone(preview.config);
+  const fallback = typeof flags['allow-capability-fallback'] === 'string'
+    ? flags['allow-capability-fallback'].split(',').map((item) => item.trim().toLowerCase()).filter(Boolean)
+    : [];
+  const unsupportedFallback = fallback.filter((item) => !['projects', 'views'].includes(item));
+  if (unsupportedFallback.length > 0) {
+    throw new Error(`Unsupported capability fallback: ${unsupportedFallback.join(', ')}. Allowed values: projects, views.`);
+  }
+  if (fallback.some((item) => item === 'projects' || item === 'views')) {
+    config.forge.projectMode = 'milestone';
+    config.forge.onMissingCapability = 'fallback';
+  }
+  return config;
 }
 
 function commandAutomationPolicy(config, flags) {
@@ -2405,6 +2538,7 @@ async function collectCliReadyQueue({ target, config, policy }) {
     repository: context.repository,
     transport: context.transport,
     readyLabel: config.automation.queue.readyLabel,
+    readyAliases: ['aapb:ready'],
     pauseLabels: ['aapb:paused', config.automation.queue.pauseLabel]
   });
 }
@@ -2472,7 +2606,15 @@ async function prepareCliForgeReadContext({ target, config }) {
       provider: forge.provider,
       repository: forge.repository
     });
-    return { ok: true, provider: forge.provider, repository: forge.repository, transport: prepared.transport, warnings: [] };
+    return {
+      ok: true,
+      provider: forge.provider,
+      repository: forge.repository,
+      transport: prepared.transport,
+      capabilities: forge.capabilities,
+      permissions: forge.permissions,
+      warnings: forge.warnings ?? []
+    };
   } catch (error) {
     return {
       ok: false,
@@ -2560,7 +2702,8 @@ async function applyForgeCliPlan(options) {
     repository: forge.repository,
     transport: prepared.transport,
     profile: doctor.policy.profile,
-    apply: true
+    apply: true,
+    allowSupersede: Boolean(flags['allow-supersede'])
   });
 }
 
@@ -2605,7 +2748,10 @@ async function coordinateAutomationStart(options) {
           provider,
           capabilities: doctor.forge.capabilities,
           milestoneTitle,
-          projectTitle: options.planInput.title
+          milestoneDescription: automationMilestoneDescription(options.planInput, options.config.forge.language),
+          projectTitle: options.planInput.title,
+          language: options.config.forge.language,
+          projectMode: options.config.forge.projectMode
         })
       });
     } catch (error) {
@@ -2626,15 +2772,8 @@ async function coordinateAutomationStart(options) {
           planId: options.planInput.planId,
           planTitle: options.planInput.title,
           projectTitle: options.planInput.title,
-          tasks: options.planInput.tasks.map((task) => ({
-            id: task.id,
-            title: task.title,
-            status: 'planned',
-            priority: task.priority,
-            risk: task.risk,
-            progress: 0,
-            acceptanceCriteria: task.acceptanceCriteria.map((criterion) => criterion.text)
-          }))
+          coordination: options.planInput.coordination,
+          tasks: forgeTasksFromApprovedPlan(options.planInput, options.state)
         })
       });
     } catch (error) {
@@ -2680,14 +2819,79 @@ function automationPlanMilestone(planInput) {
   return String(planInput?.title ?? '').match(/\b(?:v|release\s+)?(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)\b/i)?.[1] ?? null;
 }
 
-function forgeLinksFromCoordination(coordination, planInput) {
+function automationMilestoneDescription(planInput, configuredLanguage) {
+  const program = planInput?.coordination?.program;
+  if (!program || typeof program !== 'object' || Array.isArray(program)) return null;
+  const korean = String(configuredLanguage ?? planInput.language ?? 'auto').toLowerCase().startsWith('ko') ||
+    /[가-힣]/u.test(`${program.title ?? ''} ${program.summary ?? ''}`);
+  const criteria = Array.isArray(program.successCriteria) ? program.successCriteria.filter((item) => typeof item === 'string' && item.trim()) : [];
+  return [
+    `## ${korean ? '목적' : 'Purpose'}`,
+    String(program.summary ?? program.title ?? '').trim(),
+    '',
+    `## ${korean ? '완료 정의' : 'Completion definition'}`,
+    ...criteria.map((item) => `- ${item.trim()}`),
+    '',
+    `## ${korean ? '현재 gate' : 'Current gate'}`,
+    `- ${korean ? '실행 원장 시작 전' : 'Before the execution ledger starts'}`
+  ].join('\n').trim();
+}
+
+export function forgeTasksFromApprovedPlan(planInput, state) {
+  const stateById = new Map((state?.tasks ?? []).map((task) => [task.id, task]));
+  return (planInput.tasks ?? []).map((task) => {
+    const runtime = stateById.get(task.id);
+    const criteria = runtime?.criteria ?? [];
+    const status = runtime?.status ?? 'planned';
+    return {
+      id: task.id,
+      title: task.title,
+      status,
+      priority: task.priority,
+      risk: task.risk,
+      progress: criteria.length > 0
+        ? Math.round((criteria.filter((criterion) => criterion.status === 'pass').length / criteria.length) * 100)
+        : status === 'completed' ? 100 : 0,
+      acceptanceCriteria: structuredClone(task.acceptanceCriteria ?? []),
+      dependsOn: [...(task.dependsOn ?? [])],
+      verificationCommands: structuredClone(task.verificationCommands ?? []),
+      paths: [...(task.paths ?? [])],
+      deliveryGroup: task.deliveryGroup,
+      remoteEligible: task.remoteEligible
+    };
+  });
+}
+
+export function forgeLinksFromCoordination(coordination, planInput) {
   const tasks = new Map((planInput.tasks ?? []).map((task) => [task.id, task]));
+  const groups = new Map((planInput.coordination?.groups ?? []).map((group) => [group.id, group]));
   return (coordination.sync?.results ?? []).flatMap((result) => {
-    const match = /^task:([a-z0-9][a-z0-9._-]{0,99}):issue$/.exec(result.operationId ?? '');
-    const task = match ? tasks.get(match[1]) : null;
+    const taskMatch = /^task:([a-z0-9][a-z0-9._-]{0,99}):issue$/.exec(result.operationId ?? '');
+    const groupMatch = /^group:([a-z0-9][a-z0-9._-]{0,99}):issue$/.exec(result.operationId ?? '');
+    const task = taskMatch ? tasks.get(taskMatch[1]) : null;
+    const group = groupMatch ? groups.get(groupMatch[1]) : null;
     const resource = result.resource;
     const issueNumber = Number(resource?.number ?? resource?.index);
-    if (!task || !Number.isInteger(issueNumber) || issueNumber < 1 || !['created', 'updated', 'reused'].includes(result.status)) return [];
+    if (!Number.isInteger(issueNumber) || issueNumber < 1 || !['created', 'updated', 'reused'].includes(result.status)) return [];
+    if (group) {
+      const groupCriteria = (group.taskIds ?? []).flatMap((taskId) => tasks.get(taskId)?.acceptanceCriteria ?? [])
+        .map((criterion) => criterion.text ?? criterion);
+      return (group.taskIds ?? []).flatMap((taskId) => {
+        const groupedTask = tasks.get(taskId);
+        if (!groupedTask) return [];
+        return [{
+          taskId: groupedTask.id,
+          groupId: group.id,
+          issueNumber,
+          title: resource?.title ?? group.title,
+          body: resource?.body ?? '',
+          labels: resource?.labels ?? [],
+          acceptanceCriteria: groupCriteria,
+          updatedAt: resource?.updated_at ?? resource?.updatedAt ?? null
+        }];
+      });
+    }
+    if (!task) return [];
     return [{
       taskId: task.id,
       issueNumber,
@@ -2698,6 +2902,20 @@ function forgeLinksFromCoordination(coordination, planInput) {
       updatedAt: resource?.updated_at ?? resource?.updatedAt ?? null
     }];
   });
+}
+
+export function forgeProgramFromCoordination(coordination, planInput) {
+  const operationId = `plan:${planInput.planId}:issue`;
+  const result = (coordination.sync?.results ?? []).find((item) => item.operationId === operationId);
+  const resource = result?.resource;
+  const issueNumber = Number(resource?.number ?? resource?.index);
+  if (!Number.isInteger(issueNumber) || issueNumber < 1 || !['created', 'updated', 'reused'].includes(result?.status)) return null;
+  return {
+    issueNumber,
+    title: resource?.title ?? planInput.coordination?.program?.title ?? planInput.title,
+    body: resource?.body ?? '',
+    updatedAt: resource?.updated_at ?? resource?.updatedAt ?? null
+  };
 }
 
 function forgeLinksFromRunState(state, planInput) {
@@ -2737,14 +2955,35 @@ function forgePlanLinksComplete({ state, planInput, provider, repository }) {
   });
 }
 
-function forgeLinksFromApplyResults(result, tasks) {
+function forgeLinksFromApplyResults(result, tasks, coordination) {
   const taskMap = new Map((tasks ?? []).map((task) => [task.id, task]));
+  const groupMap = new Map((coordination?.groups ?? []).map((group) => [group.id, group]));
   return (result.results ?? []).flatMap((item) => {
-    const match = /^task:([a-z0-9][a-z0-9._-]{0,99}):issue$/.exec(item.operationId ?? '');
-    const task = match ? taskMap.get(match[1]) : null;
+    const taskMatch = /^task:([a-z0-9][a-z0-9._-]{0,99}):issue$/.exec(item.operationId ?? '');
+    const groupMatch = /^group:([a-z0-9][a-z0-9._-]{0,99}):issue$/.exec(item.operationId ?? '');
+    const task = taskMatch ? taskMap.get(taskMatch[1]) : null;
+    const group = groupMatch ? groupMap.get(groupMatch[1]) : null;
     const resource = item.resource;
     const issueNumber = Number(resource?.number ?? resource?.index);
-    if (!task || !Number.isInteger(issueNumber) || issueNumber < 1 || !['created', 'updated', 'reused'].includes(item.status)) return [];
+    if (!Number.isInteger(issueNumber) || issueNumber < 1 || !['created', 'updated', 'reused'].includes(item.status)) return [];
+    if (group) {
+      const groupCriteria = (group.taskIds ?? []).flatMap((taskId) => taskMap.get(taskId)?.acceptanceCriteria ?? [])
+        .map((criterion) => criterion.text ?? criterion);
+      return (group.taskIds ?? []).flatMap((taskId) => {
+        const groupedTask = taskMap.get(taskId);
+        return groupedTask ? [{
+          taskId: groupedTask.id,
+          groupId: group.id,
+          issueNumber,
+          title: resource?.title ?? group.title,
+          body: resource?.body ?? '',
+          labels: resource?.labels ?? [],
+          acceptanceCriteria: groupCriteria,
+          updatedAt: resource?.updated_at ?? resource?.updatedAt ?? null
+        }] : [];
+      });
+    }
+    if (!task) return [];
     return [{
       taskId: task.id,
       issueNumber,
@@ -2787,9 +3026,20 @@ function printForgeStatus(stdout, result) {
 
 function printForgePlan(stdout, result, apply) {
   write(stdout, `Forge ${apply ? 'apply' : 'plan'}: ${result.ok ? 'ok' : 'failed'}\n`);
+  if (result.summary?.artifacts) {
+    const artifacts = result.summary.artifacts;
+    write(stdout, `Artifacts: issues update=${artifacts.issuesUpdated ?? 0}, close=${artifacts.issuesClosed ?? 0}; projects=${artifacts.projects ?? 0}; views=${artifacts.views ?? 0}; labels=${artifacts.labels ?? 0}; milestones=${artifacts.milestones ?? 0}; PRs=${artifacts.pullRequests ?? 0}; project items=${artifacts.projectItems ?? 0}\n`);
+  }
+  if (result.summary?.bodyCompleteness) {
+    write(stdout, `Reviewable bodies: ${result.summary.bodyCompleteness.complete}/${result.summary.bodyCompleteness.total}\n`);
+  }
+  for (const title of result.summary?.publicTitles ?? []) write(stdout, `[TITLE] ${title}\n`);
   for (const operation of result.operations ?? []) write(stdout, `[PLAN] ${operation.action} ${operation.resource}\n`);
   for (const warning of result.warnings ?? []) write(stdout, `[WARN] ${warning.message}\n`);
-  for (const conflict of result.conflicts ?? []) write(stdout, `[CONFLICT] ${conflict.message}\n`);
+  for (const conflict of result.conflicts ?? []) {
+    write(stdout, `[CONFLICT] ${conflict.message}\n`);
+    for (const remediation of conflict.remediations ?? []) write(stdout, `[NEXT] ${redactPublicArgv(remediation.argv ?? []).join(' ')}\n`);
+  }
 }
 
 function printAutomationDoctor(stdout, result) {
@@ -2876,9 +3126,9 @@ Usage:
   aapb plan new <target> --automation --title <text> [--date YYYY-MM-DD] [--lang auto|ko|en] [--dry-run] [--force]
   aapb plan validate <target> --plan <workflow.plan.v2.json> [--json]
   aapb forge status <target> [--provider auto|github|gitea] [--remote <name>] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--offline] [--json]
-  aapb forge bootstrap <target> [--provider auto|github|gitea] [--milestone <title>] [--project-title <title>] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--offline] [--apply] [--json]
-  aapb forge sync <target> [--plan <path> | --run-id <id>] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--offline] [--apply] [--json]
-  aapb forge reconcile <target> --local-task <json> --remote-issue <json> [--run-id <id>] [--apply] [--json]
+  aapb forge bootstrap <target> [--provider auto|github|gitea] [--milestone <title>] [--project-title <title>] [--allow-capability-fallback projects,views] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--offline] [--apply] [--json]
+  aapb forge sync <target> [--plan <path> | --run-id <id>] [--allow-capability-fallback projects,views] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--offline] [--apply] [--json]
+  aapb forge reconcile <target> (--plan <workflow.plan.v2.json> | --local-task <json> --remote-issue <json>) [--run-id <id>] [--allow-capability-fallback projects,views] [--allow-supersede] [--apply] [--json]
   aapb automation doctor <target> [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--no-git] [--offline] [--enable-github-agent-task] [--json]
   aapb automation start <target> --plan <path> [--run-id <id>] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--offline] [--json]
   aapb automation tick <target> [--run-id <id>] [--profile <name>] [--instruction <text>] [--no-remote] [--remote-read-only] [--no-git] [--offline] [--no-interactive] [--approve-review] [--enable-github-agent-task] [--json]

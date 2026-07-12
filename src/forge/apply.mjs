@@ -19,6 +19,7 @@ const ACTIVE_STATES = new Set(['claimed', 'running', 'verifying', 'review']);
  *   remoteReadOnly?: boolean,
  *   noRemote?: boolean,
  *   offline?: boolean,
+ *   allowSupersede?: boolean,
  *   signal?: AbortSignal,
  *   apply?: boolean
  * }} options
@@ -58,6 +59,16 @@ export async function applyForgePlan(options = {}) {
     conflicts.push({
       id: 'forge.apply.remote-denied',
       message: 'Forge writes are disabled by the effective remote policy.'
+    });
+    return applyResult({ provider, apply: false, operations: plan.operations, warnings, conflicts, results: [] });
+  }
+
+  const supersede = plan.operations.find((operation) => operation?.requiresApproval === 'supersede');
+  if (supersede && options.allowSupersede !== true) {
+    conflicts.push({
+      id: 'forge.apply.supersede-approval-required',
+      message: 'Closing or unlinking superseded issues requires explicit allowSupersede approval.',
+      operationId: operationId(supersede)
     });
     return applyResult({ provider, apply: false, operations: plan.operations, warnings, conflicts, results: [] });
   }
@@ -112,9 +123,19 @@ export async function applyForgePlan(options = {}) {
 
   const results = [];
   const blockedTaskKeys = new Set();
+  let criticalPrerequisiteFailed = false;
   for (const operation of plan.operations) {
     const operationIdValue = operationId(operation);
     const taskKey = operationTaskKey(operation);
+    if (criticalPrerequisiteFailed) {
+      results.push({
+        operationId: operationIdValue,
+        resource: normalizedText(operation?.resource),
+        status: 'skipped',
+        reason: 'critical-prerequisite-failed'
+      });
+      continue;
+    }
     if (taskKey && blockedTaskKeys.has(taskKey)) {
       results.push({
         operationId: operationIdValue,
@@ -133,6 +154,7 @@ export async function applyForgePlan(options = {}) {
         resource: normalizedText(operation?.resource),
         ...sanitizeValue(outcome)
       });
+      if (operation?.critical === true && outcome?.status === 'fallback') criticalPrerequisiteFailed = true;
       if (outcome?.status === 'fallback' || outcome?.fallback) {
         warnings.push({
           id: 'forge.apply.documented-fallback',
@@ -149,7 +171,8 @@ export async function applyForgePlan(options = {}) {
         status: 'failed',
         error: serializeError(error)
       });
-      if (taskKey && operation?.resource === 'issue') blockedTaskKeys.add(taskKey);
+      if (operation?.critical === true) criticalPrerequisiteFailed = true;
+      if (taskKey && (operation?.resource === 'issue' || operation?.requiresApproval === 'supersede')) blockedTaskKeys.add(taskKey);
     }
   }
 
@@ -158,8 +181,8 @@ export async function applyForgePlan(options = {}) {
 
 function operationTaskKey(operation) {
   const id = operationId(operation);
-  const match = /^task:([^:]+):/.exec(id);
-  return match?.[1] ?? null;
+  const match = /^(task|group):([^:]+):/.exec(id);
+  return match ? `${match[1]}:${match[2]}` : null;
 }
 
 function assertNotAborted(signal) {
@@ -207,7 +230,7 @@ export function reconcileForgeTask(options = {}) {
     };
   }
 
-  if (ACTIVE_STATES.has(state)) {
+  if (ACTIVE_STATES.has(state) || normalizedText(localTask.source?.groupId ?? baselineValue.groupId)) {
     return {
       schemaVersion: SCHEMA_VERSION,
       kind: 'forge.reconcile-result',

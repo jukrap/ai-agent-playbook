@@ -3,8 +3,8 @@
     "profile": "deliver",
     "killSwitch": true,
     "queue": {
-      "readyLabel": "aapb:ready",
-      "pauseLabel": "aapb:paused",
+      "readyLabel": "status:ready",
+      "pauseLabel": "status:paused",
       "maxParallel": 1
     },
     "budget": {
@@ -20,7 +20,16 @@
     "apiBaseUrl": null,
     "sync": "hybrid",
     "language": "auto",
-    "autoBootstrap": true
+    "autoBootstrap": true,
+    "presentation": {
+      "issueMode": "delivery-group",
+      "maxChildIssues": 6,
+      "titleStyle": "auto",
+      "bodyDetail": "reviewable",
+      "labelStrategy": "minimal"
+    },
+    "projectMode": "preferred",
+    "onMissingCapability": "pause"
   },
   "git": {
     "strategy": "branch",

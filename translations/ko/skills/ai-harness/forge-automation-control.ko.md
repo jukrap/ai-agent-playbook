@@ -11,7 +11,7 @@ Forge 연계 작업을 재개 가능하고 review 가능하게 유지하면서, 
 
 1. Remote write를 제안하기 전에 repository state, remote, authentication, configured provider, 현재 deny flag를 확인합니다.
 2. Effective permission profile을 결정합니다. User instruction, project setting, CLI flag, provider capability 중 가장 제한적인 조건을 적용합니다.
-3. 승인된 structured plan을 검증한 뒤, plan에서 만든 task 또는 configured ready label이 있는 기존 issue만 queue에 넣습니다.
+3. 승인된 structured plan을 검증합니다. 세밀한 실행 task는 local ledger에 두고 사람이 검토할 delivery group을 issue로 발행합니다. Task별 issue는 명시적인 legacy 선택입니다.
 4. 한 번에 하나의 idempotent tick을 실행합니다. Ready task 하나를 claim하고, budget 안에서 실행하며, controller에서 verification을 다시 수행하고, evidence와 checkpoint를 기록합니다.
 5. 의미 있는 transition, blocker, reconciliation request, final verification만 동기화합니다. Managed issue, marker comment, branch, draft pull request를 재사용합니다.
 6. 실행 중 requirement가 바뀌거나, lease 또는 permission이 불확실하거나, verification이 반복 실패하거나, high-risk action에 승인이 필요하면 pause합니다.
@@ -23,6 +23,8 @@ Forge 연계 작업을 재개 가능하고 review 가능하게 유지하면서, 
 - Forge credential을 configuration, prompt, worker environment, ledger, evidence, log에 넣지 않습니다.
 - Worker가 push하거나 forge state를 변경하지 못하게 합니다. Delivery 전에 controller가 file과 verification을 review합니다.
 - 사용자의 working checkout을 보존합니다. Unattended execution에는 managed isolated checkout을 사용합니다.
+- 승인된 plan에 없는 선병합·선릴리스 gate를 만들지 않습니다. Merge 승인 대기 중에도 branch 구현, 검증, draft PR까지는 계속할 수 있습니다.
+- 설정된 GitHub Project에 `project` scope가 필요하면 첫 write 전에 중단합니다. `gh auth refresh -s project`와 status 재확인 명령을 안내하되 인증 갱신을 자동 실행하지 않습니다.
 
 ## Related Skills
 

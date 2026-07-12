@@ -20,14 +20,101 @@ test('doctor reports GitHub capability degradation without refreshing auth scope
     }
   });
 
-  assert.equal(result.ok, true);
   assert.equal(result.forge.provider, 'github');
   assert.equal(result.forge.repository.slug, 'owner/repo');
   assert.equal(result.forge.tooling.gh.version, '2.96.0');
   assert.equal(result.executor.selection.provider, 'codex');
   assert.equal(result.warnings.some((warning) => warning.id === 'forge.scope.projects-missing'), true);
+  assert.equal(result.ok, false);
+  assert.equal(result.conflicts.some((conflict) => conflict.id === 'forge.scope.projects-missing'), true);
+  assert.deepEqual(result.forge.remediations, [
+    {
+      id: 'forge.scope.projects-missing',
+      kind: 'command',
+      reason: 'GitHub Projects write access requires the project scope.',
+      argv: ['gh', 'auth', 'refresh', '-s', 'project'],
+      interactive: true
+    },
+    {
+      id: 'forge.scope.projects-recheck',
+      kind: 'command',
+      reason: 'Recheck forge capabilities after authentication.',
+      argv: ['aapb', 'forge', 'status', '.'],
+      interactive: false
+    }
+  ]);
   assert.equal(calls.some((call) => call.args.includes('refresh')), false);
   assert.equal(calls.every((call) => call.shell === false), true);
+});
+
+test('doctor keeps missing GitHub project scope advisory for explicit forge fallbacks', async () => {
+  for (const forgeConfig of [
+    { projectMode: 'milestone', onMissingCapability: 'pause' },
+    { projectMode: 'preferred', onMissingCapability: 'fallback' }
+  ]) {
+    const result = await automationDoctor({
+      target: 'C:/repo',
+      config: {
+        automation: { profile: 'coordinate' },
+        forge: { provider: 'auto', remote: 'origin', ...forgeConfig },
+        executor: { provider: 'command', command: ['worker'] }
+      },
+      which: async (name) => ({ git: 'git', gh: 'gh' })[name] ?? null,
+      runCommand: async (call) => {
+        const key = `${call.command} ${call.args.join(' ')}`;
+        if (key === 'git remote get-url origin') return { exitCode: 0, stdout: 'https://github.com/owner/repo.git\n', stderr: '' };
+        if (key === 'git --version') return { exitCode: 0, stdout: 'git version 2.55.0\n', stderr: '' };
+        if (key === 'gh --version') return { exitCode: 0, stdout: 'gh version 2.96.0\n', stderr: '' };
+        if (key === 'gh auth status --hostname github.com') return { exitCode: 0, stdout: "Token scopes: 'repo', 'workflow'\n", stderr: '' };
+        if (key === 'gh api --hostname github.com repos/owner/repo --method GET --header X-GitHub-Api-Version:2026-03-10') {
+          return {
+            exitCode: 0,
+            stdout: JSON.stringify({ full_name: 'owner/repo', permissions: { pull: true, push: true } }),
+            stderr: ''
+          };
+        }
+        if (key === 'git status --porcelain=v1') return { exitCode: 0, stdout: '', stderr: '' };
+        return { exitCode: 1, stdout: '', stderr: 'unexpected command' };
+      }
+    });
+
+    assert.equal(result.ok, true, JSON.stringify(forgeConfig));
+    assert.equal(result.warnings.some((warning) => warning.id === 'forge.scope.projects-missing'), true);
+    assert.equal(result.conflicts.some((conflict) => conflict.id === 'forge.scope.projects-missing'), false);
+    assert.equal(result.forge.remediations.length, 2);
+  }
+});
+
+test('doctor pauses preferred project writes when GitHub has only read project scope', async () => {
+  const result = await automationDoctor({
+    target: 'C:/repo',
+    config: {
+      automation: { profile: 'deliver' },
+      forge: { provider: 'auto', remote: 'origin', projectMode: 'preferred', onMissingCapability: 'pause' },
+      executor: { provider: 'command', command: ['worker'] }
+    },
+    which: async (name) => ({ git: 'git', gh: 'gh' })[name] ?? null,
+    runCommand: async (call) => {
+      const key = `${call.command} ${call.args.join(' ')}`;
+      if (key === 'git remote get-url origin') return { exitCode: 0, stdout: 'https://github.com/owner/repo.git\n', stderr: '' };
+      if (key === 'git --version') return { exitCode: 0, stdout: 'git version 2.55.0\n', stderr: '' };
+      if (key === 'gh --version') return { exitCode: 0, stdout: 'gh version 2.96.0\n', stderr: '' };
+      if (key === 'gh auth status --hostname github.com') return { exitCode: 0, stdout: "Token scopes: 'repo', 'read:project'\n", stderr: '' };
+      if (key === 'gh api --hostname github.com repos/owner/repo --method GET --header X-GitHub-Api-Version:2026-03-10') {
+        return {
+          exitCode: 0,
+          stdout: JSON.stringify({ full_name: 'owner/repo', permissions: { pull: true, push: true } }),
+          stderr: ''
+        };
+      }
+      if (key === 'git status --porcelain=v1') return { exitCode: 0, stdout: '', stderr: '' };
+      return { exitCode: 1, stdout: '', stderr: 'unexpected command' };
+    }
+  });
+
+  assert.equal(result.forge.permissions.projects, 'read-only');
+  assert.equal(result.conflicts.some((conflict) => conflict.id === 'forge.scope.projects-missing'), true);
+  assert.equal(result.forge.remediations.some((remediation) => remediation.argv.includes('project')), true);
 });
 
 test('doctor separates policy permission from verified forge writes when GitHub authentication fails', async () => {
@@ -98,9 +185,9 @@ test('doctor verifies GitHub repository permission and removes Projects without 
     }
   });
 
-  assert.equal(result.forge.mode.policyWrites, true);
-  assert.equal(result.forge.mode.verifiedWrites, true);
-  assert.equal(result.forge.mode.writes, true);
+  assert.equal(result.forge.mode.policyWrites, false);
+  assert.equal(result.forge.mode.verifiedWrites, false);
+  assert.equal(result.forge.mode.writes, false);
   assert.equal(result.forge.permissions.repositoryRead, true);
   assert.equal(result.forge.permissions.repositoryWrite, true);
   assert.equal(result.forge.capabilities.issues, 'supported');

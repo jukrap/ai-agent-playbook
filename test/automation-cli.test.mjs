@@ -7,7 +7,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { forgeCoordinationStages, parseArgs, runCli } from '../src/cli.mjs';
+import { forgeCoordinationStages, forgeLinksFromCoordination, forgeProgramFromCoordination, forgeTasksFromApprovedPlan, parseArgs, runCli } from '../src/cli.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const execFileAsync = promisify(execFile);
@@ -182,6 +182,72 @@ test('forge sync apply rejects a draft plan before any forge transport call', as
   assert.equal(requests, 0);
 });
 
+test('forge bootstrap preview uses configured Korean language for Project view names', async (t) => {
+  const target = await fixture(t);
+  await writeFile(path.join(target, '.ai-agent-playbook', 'config.json'), `${JSON.stringify({ forge: { language: 'ko' } })}\n`);
+  const output = capture(target);
+  assert.equal(await runCli([
+    'forge', 'bootstrap', '.', '--provider', 'github', '--project-title', '제품 개선', '--json'
+  ], output), 0);
+  const plan = JSON.parse(output.out());
+  assert.deepEqual(
+    plan.operations.filter((operation) => operation.resource === 'view').map((operation) => operation.payload.name),
+    ['전체', '보드', '로드맵', '주의 필요']
+  );
+});
+
+test('forge sync blocks approved plans without reviewed coordination metadata', async (t) => {
+  const target = await fixture(t);
+  const planFile = path.join(target, 'local-only-plan.json');
+  await writeFile(planFile, `${JSON.stringify(validPlan(), null, 2)}\n`);
+
+  const output = capture(target);
+  assert.equal(await runCli([
+    'forge', 'sync', '.', '--plan', planFile, '--provider', 'github', '--no-remote', '--json'
+  ], output), 1);
+  const result = JSON.parse(output.out());
+  assert.equal(result.operations.length, 0);
+  assert.equal(result.conflicts.some((conflict) => conflict.id === 'forge.coordination.required'), true);
+});
+
+test('forge sync forwards complete task contracts and coordination groups to the preview planner', async (t) => {
+  const target = await fixture(t);
+  const plan = validPlan();
+  plan.coordination = {
+    issueMode: 'delivery-group',
+    projectMode: 'preferred',
+    titleStyle: 'noun-phrase',
+    maxChildIssues: 6,
+    program: {
+      title: 'CLI 협업 구조 개선',
+      summary: '사람이 검토할 수 있는 원격 작업 구조를 만듭니다.',
+      scope: ['delivery group 이슈'],
+      nonGoals: ['자동 merge'],
+      successCriteria: ['CLI task 검증 통과']
+    },
+    groups: [{
+      id: 'cli',
+      title: 'CLI 전달 단위 구축',
+      summary: 'CLI 변경을 하나의 검토 단위로 표현합니다.',
+      taskIds: ['cli-task'],
+      rollback: 'CLI delivery branch를 되돌립니다.'
+    }]
+  };
+  const planFile = path.join(target, 'coordinated-plan.json');
+  await writeFile(planFile, `${JSON.stringify(plan, null, 2)}\n`);
+
+  const output = capture(target);
+  assert.equal(await runCli([
+    'forge', 'sync', '.', '--plan', planFile, '--provider', 'github', '--no-remote', '--json'
+  ], output), 0);
+  const result = JSON.parse(output.out());
+  const group = result.operations.find((operation) => operation.id === 'group:cli:issue');
+  assert.ok(group);
+  assert.match(group.payload.body, /node --version/);
+  assert.match(group.payload.body, /src\/cli-task\.mjs/);
+  assert.equal(result.summary.artifacts.groupIssues, 1);
+});
+
 test('forge bootstrap uses Gitea OpenAPI capabilities instead of the static provider matrix', async (t) => {
   const target = await fixture(t);
   const server = createServer((request, response) => {
@@ -296,6 +362,17 @@ test('forge bootstrap apply uses the same explicit remote that was previewed', a
   assert.equal(result.summary.applied > 0, true);
 });
 
+test('unknown capability fallback values fail closed before forge inspection', async (t) => {
+  const target = await fixture(t);
+  const output = capture(target);
+  assert.equal(await runCli([
+    'forge', 'bootstrap', '.',
+    '--allow-capability-fallback', 'projects,projectz',
+    '--json'
+  ], output), 1);
+  assert.match(output.err(), /Unsupported capability fallback: projectz/);
+});
+
 test('automation schedule stays preview-only without apply', async (t) => {
   const target = await fixture(t);
   const output = capture(target);
@@ -376,6 +453,59 @@ test('automation start resumes only incomplete forge coordination stages', () =>
     bootstrap: false,
     sync: true
   });
+});
+
+test('group issue coordination links every local task to the shared remote issue', () => {
+  const plan = validPlan();
+  plan.tasks.push({ ...structuredClone(plan.tasks[0]), id: 'cli-task-two', acceptanceCriteria: [{ id: 'cli-two', text: 'Two works.' }] });
+  plan.coordination = {
+    issueMode: 'delivery-group',
+    groups: [{ id: 'cli', title: 'CLI group', summary: 'CLI group summary.', taskIds: ['cli-task', 'cli-task-two'], rollback: 'Revert.' }]
+  };
+  const links = forgeLinksFromCoordination({
+    sync: {
+      results: [{
+        operationId: 'group:cli:issue',
+        status: 'created',
+        resource: { number: 22, title: 'CLI group', body: '<!-- aapb:group:cli -->', labels: [], updated_at: '2026-07-11T00:00:00Z' }
+      }]
+    }
+  }, plan);
+
+  assert.deepEqual(links.map((link) => link.taskId), ['cli-task', 'cli-task-two']);
+  assert.equal(links.every((link) => link.issueNumber === 22 && link.groupId === 'cli'), true);
+});
+
+test('automation coordination extracts the roadmap issue checkpoint', () => {
+  const program = forgeProgramFromCoordination({
+    sync: {
+      results: [{
+        operationId: 'plan:forge-plan:issue',
+        status: 'updated',
+        resource: { number: 1, title: 'Forge plan', body: 'Roadmap', updated_at: '2026-07-12T00:00:00Z' }
+      }]
+    }
+  }, { planId: 'forge-plan', title: 'Forge plan', coordination: { program: { title: 'Forge plan' } } });
+
+  assert.deepEqual(program, {
+    issueNumber: 1,
+    title: 'Forge plan',
+    body: 'Roadmap',
+    updatedAt: '2026-07-12T00:00:00Z'
+  });
+});
+
+test('automation start derives initial forge group readiness from reducer state', () => {
+  const plan = validPlan();
+  const state = { tasks: plan.tasks.map((task, index) => ({ ...task, status: index === 0 ? 'ready' : 'planned', criteria: task.acceptanceCriteria })) };
+  const tasks = forgeTasksFromApprovedPlan(plan, state);
+  assert.deepEqual(tasks.map((task) => task.status), ['ready']);
+});
+
+test('space-separated false cannot authorize supersede operations', () => {
+  const parsed = parseArgs(['forge', 'reconcile', '.', '--allow-supersede', 'false']);
+  assert.equal(parsed.flags['allow-supersede'], false);
+  assert.deepEqual(parsed.positionals, ['forge', 'reconcile', '.']);
 });
 
 async function fixture(t) {

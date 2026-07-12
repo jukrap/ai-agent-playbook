@@ -155,6 +155,38 @@ test('GitHub label ensure follows pagination and reuses an existing asset withou
   assert.equal(transport.calls[0].headers['x-github-api-version'], '2026-03-10');
 });
 
+test('GitHub can explicitly adopt and CAS-update a reviewed draft pull request without creating another PR', async () => {
+  const { createGithubProvider } = await loadGithub();
+  const current = {
+    number: 16, title: '기존 기준선', body: '사용자 작성 본문', state: 'open', draft: true,
+    updated_at: '2026-07-11T14:29:21Z', head: { ref: 'aapb/baseline' }, base: { ref: 'main' }
+  };
+  const transport = scriptedTransport([
+    { status: 200, data: current },
+    (request) => ({ status: 200, data: { ...current, ...request.body, updated_at: '2026-07-12T00:00:00Z' } })
+  ]);
+  const provider = createGithubProvider({ transport, repository });
+  const marker = '<!-- aapb:pr-reconcile:program:16 -->';
+  const result = await provider.ensureDraftPullRequest({
+    pullRequestNumber: 16,
+    expectedUpdatedAt: current.updated_at,
+    expectedTitle: current.title,
+    adoptExisting: true,
+    head: 'aapb/baseline',
+    base: 'main',
+    title: 'feat(writer): 로컬 writer MVP 기준선',
+    marker,
+    body: `${marker}\n\n## 남은 작업\n- Electron 구현 미포함`
+  });
+
+  assert.equal(result.status, 'updated');
+  assert.deepEqual(transport.calls.map((call) => `${call.method} ${call.path}`), [
+    'GET /repos/example/playbook/pulls/16',
+    'PATCH /repos/example/playbook/pulls/16'
+  ]);
+  assert.match(transport.calls[1].body.body, /Electron 구현 미포함/);
+});
+
 test('GitHub issue updates enforce updatedAt and send untrusted text only as JSON payload', async () => {
   const { createGithubProvider } = await loadGithub();
   assert.equal(typeof createGithubProvider, 'function');
@@ -306,6 +338,7 @@ test('GitHub and Gitea plan-only apply require reconcile when a marker child iss
     const plan = planForgeSync({
       provider,
       capabilities: getForgeCapabilities(provider),
+      coordination: { issueMode: 'task' },
       tasks: [{
         id: 'remote-owned',
         title: 'Plan title',
@@ -338,7 +371,7 @@ test('linked issue status updates preserve non-managed user labels', async () =>
     title: 'User-owned title',
     body: 'User-owned body',
     state: 'open',
-    labels: [{ name: 'bug' }, { name: 'aapb:ready' }, { name: 'aapb:paused' }, { name: 'customer-visible' }],
+    labels: [{ name: 'bug' }, { name: 'aapb:ready' }, { name: 'aapb:paused' }, { name: 'status:paused' }, { name: 'priority:p0' }, { name: 'risk:high' }, { name: 'area:desktop' }, { name: 'customer-visible' }],
     updated_at: '2026-07-11T06:00:00.000Z'
   };
   const transport = scriptedTransport([
@@ -350,15 +383,16 @@ test('linked issue status updates preserve non-managed user labels', async () =>
   const result = await provider.updateIssue({
     issueNumber: 17,
     expectedUpdatedAt: current.updated_at,
-    labels: ['aapb:running'],
+    labels: ['status:in-progress'],
     preserveNonManagedLabels: true,
+    removeClassificationLabels: true,
     state: 'open'
   });
 
   assert.equal(result.status, 'updated');
   assert.deepEqual(transport.calls[1].body, {
     state: 'open',
-    labels: ['bug', 'customer-visible', 'aapb:running']
+    labels: ['bug', 'customer-visible', 'status:in-progress']
   });
   assert.equal('title' in transport.calls[1].body, false);
   assert.equal('body' in transport.calls[1].body, false);
@@ -517,29 +551,45 @@ test('GitHub project item sync adds one child issue and idempotently updates man
     node_id: 'I_task_1',
     number: 31,
     title: 'Task 1',
-    body: '<!-- aapb:task:task-1 -->\nTask 1',
+    body: '<!-- aapb:group:group-1 -->\nGroup 1',
     state: 'open',
     labels: []
   };
+  const pull = {
+    id: 902,
+    node_id: 'PR_baseline_16',
+    number: 16,
+    title: 'Baseline',
+    body: '<!-- aapb:pr-reconcile:program:16 -->',
+    state: 'open',
+    draft: true
+  };
   const project = { id: 'P_delivery', number: 7, title: projectTitle };
   const restFields = [
+    { id: 100, name: 'AAPB Status', data_type: 'single_select' },
     { id: 101, name: 'AAPB Task ID', data_type: 'text' },
+    { id: 105, name: 'AAPB Phase', data_type: 'text' },
     { id: 102, name: 'AAPB Priority', data_type: 'single_select' },
     { id: 103, name: 'AAPB Risk', data_type: 'single_select' },
-    { id: 104, name: 'AAPB Progress', data_type: 'number' }
+    { id: 104, name: 'AAPB Progress', data_type: 'number' },
+    { id: 106, name: 'AAPB Area', data_type: 'text' }
   ];
   const graphFields = [
     {
       __typename: 'ProjectV2SingleSelectField',
       id: 'F_status',
-      name: 'Status',
+      name: 'AAPB Status',
       options: [
-        { id: 'O_todo', name: 'Todo' },
+        { id: 'O_planned', name: 'Planned' },
+        { id: 'O_ready', name: 'Ready' },
         { id: 'O_progress', name: 'In Progress' },
+        { id: 'O_review', name: 'In Review' },
+        { id: 'O_blocked', name: 'Blocked' },
         { id: 'O_done', name: 'Done' }
       ]
     },
     { __typename: 'ProjectV2Field', id: 'F_task', name: 'AAPB Task ID', dataType: 'TEXT' },
+    { __typename: 'ProjectV2Field', id: 'F_phase', name: 'AAPB Phase', dataType: 'TEXT' },
     {
       __typename: 'ProjectV2SingleSelectField',
       id: 'F_priority',
@@ -561,7 +611,8 @@ test('GitHub project item sync adds one child issue and idempotently updates man
         { id: 'O_high', name: 'high' }
       ]
     },
-    { __typename: 'ProjectV2Field', id: 'F_progress', name: 'AAPB Progress', dataType: 'NUMBER' }
+    { __typename: 'ProjectV2Field', id: 'F_progress', name: 'AAPB Progress', dataType: 'NUMBER' },
+    { __typename: 'ProjectV2Field', id: 'F_area', name: 'AAPB Area', dataType: 'TEXT' }
   ];
   const state = { items: [], values: new Map() };
   const calls = [];
@@ -572,6 +623,9 @@ test('GitHub project item sync adds one child issue and idempotently updates man
       calls.push(structuredClone(request));
       if (request.path === '/repos/example/playbook/issues' && request.method === 'GET') {
         return { status: 200, data: [issue], headers: {} };
+      }
+      if (request.path === '/repos/example/playbook/pulls/16' && request.method === 'GET') {
+        return { status: 200, data: pull, headers: {} };
       }
       if (request.path === '/orgs/example/projectsV2/7/fields' && request.method === 'GET') {
         return { status: 200, data: restFields, headers: {} };
@@ -644,7 +698,11 @@ test('GitHub project item sync adds one child issue and idempotently updates man
           };
         }
         if (operation === 'AapbAddProjectItem') {
-          const item = { id: 'PVTI_task_1', content: { id: issue.node_id, number: issue.number } };
+          const contentId = request.body.variables.contentId;
+          const item = {
+            id: contentId === pull.node_id ? 'PVTI_pr_16' : 'PVTI_task_1',
+            content: { id: contentId, number: contentId === pull.node_id ? pull.number : issue.number }
+          };
           state.items.push(item);
           return { status: 200, data: { data: { addProjectV2ItemById: { item } } } };
         }
@@ -663,13 +721,14 @@ test('GitHub project item sync adds one child issue and idempotently updates man
     ok: true,
     provider: 'github',
     operations: [{
-      id: 'task:task-1:project-item',
+      id: 'group:group-1:project-item',
       action: 'ensure',
       resource: 'project-item',
       payload: {
         projectTitle,
-        issueMarker: '<!-- aapb:task:task-1 -->',
-        taskId: 'task-1',
+        issueMarker: '<!-- aapb:group:group-1 -->',
+        groupId: 'group-1',
+        phase: 'desktop-foundation',
         status: 'running',
         priority: 750,
         risk: 'high',
@@ -686,13 +745,44 @@ test('GitHub project item sync adds one child issue and idempotently updates man
   assert.equal(second.ok, true);
   assert.equal(second.results[0].status, 'reused');
   assert.equal(calls.filter((call) => call.body?.operationName === 'AapbAddProjectItem').length, 1);
-  assert.equal(calls.filter((call) => call.body?.operationName === 'AapbUpdateProjectItemFieldValue').length, 5);
+  assert.equal(calls.filter((call) => call.body?.operationName === 'AapbUpdateProjectItemFieldValue').length, 7);
   assert.equal(state.values.get('F_status').singleSelectOptionId, 'O_progress');
-  assert.equal(state.values.get('F_task').text, 'task-1');
+  assert.equal(state.values.get('F_task').text, 'group-1');
+  assert.equal(state.values.get('F_phase').text, 'desktop-foundation');
   assert.equal(state.values.get('F_priority').singleSelectOptionId, 'O_p1');
   assert.equal(state.values.get('F_risk').singleSelectOptionId, 'O_high');
   assert.equal(state.values.get('F_progress').number, 25);
-  assert.equal(calls.filter((call) => call.path === '/graphql').every((call) => !call.body.query.includes('task-1')), true);
+  assert.equal(state.values.get('F_area').text, '');
+  const pullResult = await applyForgePlan({
+    apply: true,
+    profile: 'deliver',
+    provider: 'github',
+    repository,
+    transport,
+    plan: {
+      ok: true,
+      provider: 'github',
+      operations: [{
+        id: 'pr-16:project-item',
+        action: 'ensure',
+        resource: 'project-item',
+        payload: {
+          projectTitle,
+          pullRequestNumber: 16,
+          taskId: 'pr-16',
+          phase: 'baseline',
+          status: 'review',
+          priority: 1000,
+          risk: 'high',
+          progress: 0
+        }
+      }]
+    }
+  });
+  assert.equal(pullResult.ok, true);
+  assert.equal(pullResult.results[0].status, 'created');
+  assert.equal(calls.filter((call) => call.body?.operationName === 'AapbAddProjectItem').length, 2);
+  assert.equal(calls.filter((call) => call.path === '/graphql').every((call) => !call.body.query.includes('group-1')), true);
 });
 
 test('GitHub project bootstrap ensures managed fields and four views idempotently through public APIs', async () => {
@@ -803,14 +893,21 @@ test('GitHub project bootstrap ensures managed fields and four views idempotentl
   assert.equal(first.ok, true);
   assert.equal(second.ok, true);
   assert.deepEqual(state.fields.map((field) => field.name), [
+    'AAPB Status',
     'AAPB Task ID',
+    'AAPB Phase',
     'AAPB Priority',
     'AAPB Risk',
-    'AAPB Progress'
+    'AAPB Progress',
+    'AAPB Area'
   ]);
   assert.deepEqual(state.views.map((view) => view.name), ['Queue', 'Board', 'Roadmap', 'Blocked']);
   assert.equal(calls.filter((call) => call.body?.operationName === 'AapbCreateProject').length, 1);
-  assert.equal(calls.filter((call) => call.method === 'POST' && call.path.endsWith('/fields')).length, 4);
+  assert.equal(calls.filter((call) => call.method === 'POST' && call.path.endsWith('/fields')).length, 7);
+  assert.deepEqual(
+    state.fields.find((field) => field.name === 'AAPB Status').single_select_options.map((option) => option.name),
+    ['Planned', 'Ready', 'In Progress', 'In Review', 'Blocked', 'Done']
+  );
   assert.equal(calls.filter((call) => call.method === 'POST' && call.path.endsWith('/views')).length, 4);
   const graphQlCalls = calls.filter((call) => call.path === '/graphql');
   assert.equal(graphQlCalls.every((call) => !call.body.query.includes(projectTitle)), true);
@@ -980,6 +1077,7 @@ test('task-dependent forge mutations stop after the authoritative issue CAS fail
   const planned = planForgeSync({
     provider: 'github',
     capabilities: getForgeCapabilities('github'),
+    coordination: { issueMode: 'task' },
     projectTitle: 'CAS project',
     tasks: [{
       id: 'cas-task',
@@ -1030,6 +1128,166 @@ test('provider adapters reject repository path traversal before any remote reque
     /safe path components/
   );
   assert.equal(transport.calls.length, 0);
+});
+
+test('existing milestone description is updated when the program gate changes', async () => {
+  const { createGithubProvider } = await loadGithub();
+  const transport = scriptedTransport([
+    { status: 200, data: [{ number: 1, title: '0.5.5', description: '' }], headers: {} },
+    (request) => ({ status: 200, data: { number: 1, title: '0.5.5', ...request.body } })
+  ]);
+  const provider = createGithubProvider({ transport, repository });
+
+  const result = await provider.ensureMilestone({
+    title: '0.5.5',
+    description: '## Purpose\nProgram\n\n## Current gate\n- 1/4 tasks completed'
+  });
+
+  assert.equal(result.status, 'updated');
+  assert.equal(transport.calls[1].method, 'PATCH');
+  assert.equal(transport.calls[1].path, '/repos/example/playbook/milestones/1');
+  assert.match(transport.calls[1].body.description, /1\/4 tasks completed/);
+});
+
+test('group survivor CAS failure skips supersede close unlink and comment operations', async () => {
+  const { applyForgePlan } = await loadApply();
+  const transport = scriptedTransport([{ status: 200, data: { number: 2, title: 'Changed', body: 'Changed', labels: [], updated_at: '2026-07-12T00:00:00Z' } }]);
+  const operations = [
+    { id: 'group:desktop:issue', groupId: 'desktop', action: 'update', resource: 'issue', payload: { issueNumber: 2, expectedUpdatedAt: '2026-07-11T00:00:00Z', title: 'Desktop', body: 'Body' } },
+    { id: 'group:desktop:supersede:3', groupId: 'desktop', action: 'update', resource: 'issue', payload: { issueNumber: 3, expectedUpdatedAt: '2026-07-11T00:00:00Z', state: 'closed' } },
+    { id: 'group:desktop:unlink:3', groupId: 'desktop', action: 'remove', resource: 'sub-issue', payload: { parentIssueNumber: 1, childIssueId: 3 } },
+    { id: 'group:desktop:comment:3', groupId: 'desktop', action: 'ensure', resource: 'marker-comment', payload: { issueNumber: 3, marker: '<!-- aapb:superseded:desktop:3 -->', body: 'Moved' } }
+  ];
+  const result = await applyForgePlan({ apply: true, profile: 'deliver', provider: 'github', repository, transport, plan: { ok: true, operations } });
+  assert.equal(result.results[0].status, 'failed');
+  assert.equal(result.results.slice(1).every((item) => item.status === 'skipped'), true);
+  assert.equal(transport.calls.length, 1);
+});
+
+test('supersede unlink failure skips the comment and close for safe retry', async () => {
+  const { applyForgePlan } = await loadApply();
+  const transport = scriptedTransport([{ status: 503, data: { message: 'temporary failure' } }]);
+  const result = await applyForgePlan({
+    apply: true,
+    allowSupersede: true,
+    profile: 'deliver',
+    provider: 'github',
+    repository,
+    transport,
+    plan: {
+      ok: true,
+      operations: [{
+        id: 'group:desktop:unlink:3', action: 'remove', resource: 'sub-issue', requiresApproval: 'supersede',
+        payload: { parentIssueNumber: 1, childIssueId: 103, childIssueNumber: 3 }
+      }, {
+        id: 'group:desktop:comment:3', action: 'ensure', resource: 'marker-comment', requiresApproval: 'supersede',
+        payload: { issueNumber: 3, marker: '<!-- aapb:superseded:desktop:3 -->', body: 'Moved' }
+      }, {
+        id: 'group:desktop:supersede:3', action: 'update', resource: 'issue', requiresApproval: 'supersede',
+        payload: { issueNumber: 3, expectedUpdatedAt: '2026-07-11T00:00:00Z', state: 'closed' }
+      }]
+    }
+  });
+
+  assert.equal(result.results[0].status, 'failed');
+  assert.equal(result.results[1].status, 'skipped');
+  assert.equal(result.results[2].status, 'skipped');
+  assert.equal(transport.calls.length, 1);
+});
+
+test('managed issue body updates preserve user text outside the managed region', async () => {
+  const { createGithubProvider } = await loadGithub();
+  const current = {
+    number: 18,
+    title: 'Program',
+    body: '<!-- aapb:plan:program -->\n\n사용자 서문\n\n<!-- aapb:managed:start -->\n이전 관리 내용\n<!-- aapb:managed:end -->\n\n사용자 메모',
+    state: 'open',
+    labels: [{ name: 'customer-visible' }],
+    updated_at: '2026-07-11T06:00:00.000Z'
+  };
+  const transport = scriptedTransport([
+    { status: 200, data: current },
+    (request) => ({ status: 200, data: { ...current, ...request.body } })
+  ]);
+  const provider = createGithubProvider({ transport, repository });
+
+  await provider.updateIssue({
+    issueNumber: 18,
+    expectedUpdatedAt: current.updated_at,
+    title: 'Program roadmap',
+    body: '<!-- aapb:plan:program -->\n\n<!-- aapb:managed:start -->\n새 관리 내용\n<!-- aapb:managed:end -->',
+    labels: [],
+    preserveNonManagedLabels: true,
+    preserveManagedBody: true
+  });
+
+  assert.match(transport.calls[1].body.body, /사용자 서문/);
+  assert.match(transport.calls[1].body.body, /새 관리 내용/);
+  assert.match(transport.calls[1].body.body, /사용자 메모/);
+  assert.doesNotMatch(transport.calls[1].body.body, /이전 관리 내용/);
+  assert.deepEqual(transport.calls[1].body.labels, ['customer-visible']);
+});
+
+test('first managed migration preserves a legacy body while replacing its ownership marker', async () => {
+  const { createGithubProvider } = await loadGithub();
+  const current = {
+    number: 2,
+    title: 'Legacy task',
+    body: '<!-- aapb:task:legacy-task -->\n\n사용자 기록과 기존 검토 내용',
+    state: 'open',
+    labels: [],
+    updated_at: '2026-07-11T06:00:00.000Z'
+  };
+  const transport = scriptedTransport([
+    { status: 200, data: current },
+    (request) => ({ status: 200, data: { ...current, ...request.body } })
+  ]);
+  const provider = createGithubProvider({ transport, repository });
+
+  await provider.updateIssue({
+    issueNumber: 2,
+    expectedUpdatedAt: current.updated_at,
+    title: 'Delivery group',
+    body: '<!-- aapb:group:delivery -->\n\n<!-- aapb:managed:start -->\n새 관리 내용\n<!-- aapb:managed:end -->',
+    preserveManagedBody: true
+  });
+
+  assert.match(transport.calls[1].body.body, /aapb:group:delivery/);
+  assert.match(transport.calls[1].body.body, /사용자 기록과 기존 검토 내용/);
+  assert.match(transport.calls[1].body.body, /새 관리 내용/);
+  assert.doesNotMatch(transport.calls[1].body.body, /aapb:task:legacy-task/);
+});
+
+test('GitHub reconcile can unlink a superseded sub-issue without deleting either issue', async () => {
+  const { applyForgePlan } = await loadApply();
+  const transport = scriptedTransport([
+    { status: 200, data: [{ id: 102, number: 3, state: 'open' }], headers: {} },
+    { status: 200, data: { id: 102, number: 3, state: 'open' }, headers: {} }
+  ]);
+
+  const result = await applyForgePlan({
+    apply: true,
+    profile: 'deliver',
+    provider: 'github',
+    repository,
+    transport,
+    plan: {
+      ok: true,
+      operations: [{
+        id: 'group:desktop-foundation:unlink:task-2',
+        action: 'remove',
+        resource: 'sub-issue',
+        payload: { parentIssueNumber: 1, childIssueId: 102, childIssueNumber: 3 }
+      }]
+    }
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.results[0].status, 'removed');
+  assert.equal(transport.calls.length, 2);
+  assert.equal(transport.calls[1].method, 'DELETE');
+  assert.equal(transport.calls[1].path, '/repos/example/playbook/issues/1/sub_issue');
+  assert.deepEqual(transport.calls[1].body, { sub_issue_id: 102 });
 });
 
 test('reconcile pauses active work when remote requirements changed and syncs pre-run changes', async () => {

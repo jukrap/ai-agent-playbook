@@ -1,6 +1,6 @@
 {
   "name": "ai-agent-playbook",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "description": "Reusable AI agent skills, project playbook templates, and a small operator-controlled runtime harness.",
   "type": "module",
   "license": "MIT",

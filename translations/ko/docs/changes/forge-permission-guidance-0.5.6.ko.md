@@ -16,3 +16,9 @@ AI Agent Playbook 0.5.6은 Projects 권한 경계를 강화하고 새 GitHub Pro
 - 기존 `AAPB Status`, `AAPB Task ID`, `AAPB Phase`, `AAPB Priority`, `AAPB Risk`, `AAPB Progress`, `AAPB Area` field는 호환 alias로 유지합니다.
 - Legacy field는 중복 생성, 파괴적 rename, 삭제 없이 재사용합니다. 두 형식이 모두 있으면 중립 field를 우선하며 기존 View 필터는 실제 재사용한 field에 맞게 조정합니다.
 - 재개한 legacy field operation도 대응하는 중립 field를 재사용할 수 있습니다. 기존 중립 또는 legacy field의 type이 맞지 않거나 필수 single-select option이 없으면 누락 field를 만들기 전에 bootstrap을 중단하고 operator가 검토할 schema 충돌을 보고합니다.
+
+## 사용자 소유 Project View
+
+- 사용자 소유 Project의 field와 View REST 요청은 공식 `/users/{user_id}/projectsV2/{project_number}/...` 경로에 소유자 login을 사용합니다. 이전 구현은 View 생성에 GraphQL 숫자 `databaseId`를 잘못 넣어 Project field가 만들어진 뒤 404가 발생했습니다.
+- 더 이상 deprecated GraphQL user `databaseId`를 조회하지 않습니다. 조직 소유 Project 경로는 계속 조직 login을 사용합니다.
+- 실패한 0.5.5 실행은 이미 만든 제목 있는 Project를 안전하게 재사용해 재개할 수 있습니다. 기존 field와 View는 멱등적으로 재사용하며 기본 View, legacy field, 관련 없는 빈 Project를 삭제하지 않습니다.

@@ -16,3 +16,9 @@ AI Agent Playbook 0.5.6 tightens the Projects permission boundary and removes to
 - Existing `AAPB Status`, `AAPB Task ID`, `AAPB Phase`, `AAPB Priority`, `AAPB Risk`, `AAPB Progress`, and `AAPB Area` fields remain compatibility aliases.
 - Legacy fields are reused without duplicate creation, destructive renaming, or deletion. When both forms exist, the neutral field wins; existing view filters are adapted to the field that was actually reused.
 - A resumed legacy field operation can also reuse its neutral counterpart. If an existing neutral or legacy field has an incompatible type or is missing required single-select options, bootstrap fails before creating any missing field and reports the schema conflict for operator review.
+
+## User-owned Project views
+
+- User-owned Project field and View REST requests use the owner's login in the documented `/users/{user_id}/projectsV2/{project_number}/...` path. Earlier builds incorrectly substituted the GraphQL numeric `databaseId` for View creation, which produced a 404 after Project fields had already been created.
+- The adapter no longer queries the deprecated GraphQL user `databaseId`. Organization-owned Project paths continue to use the organization login.
+- A failed 0.5.5 run can safely resume against the titled Project it already created. Existing fields and Views are discovered and reused; the adapter does not delete the default View, legacy fields, or unrelated empty Projects.

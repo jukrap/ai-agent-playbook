@@ -75,7 +75,6 @@ query AapbProjectContext($owner: String!, $name: String!, $after: String) {
       ... on User {
         id
         login
-        databaseId
         projectsV2(first: 100, after: $after) {
           nodes { id number title }
           pageInfo { hasNextPage endCursor }
@@ -620,8 +619,7 @@ export function createRestProvider(options) {
       ownerContext = {
         type: ownerType,
         id: requiredGraphQlId(owner.id, 'Project owner node ID'),
-        login: repository.owner,
-        databaseId: Number.isInteger(owner.databaseId) && owner.databaseId > 0 ? owner.databaseId : null
+        login: requiredText(owner.login, 'Project owner login')
       };
       const connection = owner.projectsV2;
       const projects = Array.isArray(connection?.nodes) ? connection.nodes : [];
@@ -1621,12 +1619,9 @@ function projectFieldsPath(context) {
 
 function projectViewsPath(context) {
   const projectNumber = positiveInteger(context?.project?.number, 'Project number');
-  if (context?.owner?.type === 'Organization') {
-    const owner = encodeURIComponent(requiredText(context.owner.login, 'Project owner login'));
-    return `/orgs/${owner}/projectsV2/${projectNumber}/views`;
-  }
-  const userId = positiveInteger(context?.owner?.databaseId, 'Project owner user ID');
-  return `/users/${userId}/projectsV2/${projectNumber}/views`;
+  const owner = encodeURIComponent(requiredText(context?.owner?.login, 'Project owner login'));
+  const prefix = context?.owner?.type === 'Organization' ? `/orgs/${owner}` : `/users/${owner}`;
+  return `${prefix}/projectsV2/${projectNumber}/views`;
 }
 
 function mutationId(kind, repository, value) {

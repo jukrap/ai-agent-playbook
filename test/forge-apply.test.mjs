@@ -967,6 +967,82 @@ test('GitHub project bootstrap ensures managed fields and four views idempotentl
   assert.equal(second.results.every((result) => result.status === 'reused'), true);
 });
 
+test('GitHub user-owned Project views use the owner login required by the REST endpoint', async () => {
+  const { applyForgePlan } = await loadApply();
+  const projectTitle = 'User-owned delivery';
+  const project = { id: 'P_user', number: 7, title: projectTitle };
+  const fields = [{ id: 101, name: 'Task ID', data_type: 'text' }];
+  const calls = [];
+  const transport = {
+    calls,
+    async request(request) {
+      calls.push(structuredClone(request));
+      if (request.path === '/graphql' && request.body.operationName === 'AapbProjectContext') {
+        return {
+          status: 200,
+          data: {
+            data: {
+              repository: {
+                id: 'R_repo',
+                owner: {
+                  __typename: 'User',
+                  id: 'U_owner',
+                  login: 'example',
+                  databaseId: 41,
+                  projectsV2: {
+                    nodes: [project],
+                    pageInfo: { hasNextPage: false, endCursor: null }
+                  }
+                }
+              }
+            }
+          }
+        };
+      }
+      if (request.path === '/graphql' && request.body.operationName === 'AapbProjectViews') {
+        return {
+          status: 200,
+          data: { data: { node: { views: { nodes: [], pageInfo: { hasNextPage: false, endCursor: null } } } } }
+        };
+      }
+      if (request.path === '/users/example/projectsV2/7/fields' && request.method === 'GET') {
+        return { status: 200, data: fields, headers: {} };
+      }
+      if (request.path === '/users/example/projectsV2/7/views' && request.method === 'POST') {
+        return { status: 201, data: { value: { id: 501, number: 2, ...request.body } }, headers: {} };
+      }
+      throw new Error(`Unexpected ${request.method} ${request.path} ${request.body?.operationName ?? ''}`);
+    }
+  };
+
+  const result = await applyForgePlan({
+    apply: true,
+    profile: 'deliver',
+    provider: 'github',
+    repository,
+    transport,
+    plan: {
+      ok: true,
+      operations: [{
+        id: 'view:user-board',
+        action: 'ensure',
+        resource: 'view',
+        payload: {
+          projectTitle,
+          name: 'Board',
+          layout: 'board',
+          fields: [{ name: 'Task ID', data_type: 'text' }]
+        }
+      }]
+    }
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.results[0].status, 'created');
+  assert.equal(calls.some((call) => call.path.includes('/users/41/')), false);
+  assert.equal(calls.at(-1).path, '/users/example/projectsV2/7/views');
+});
+
 test('GitHub project field compatibility reuses a neutral field for a legacy serialized request', async () => {
   const { applyForgePlan } = await loadApply();
   const project = { id: 'P_legacy_resume', number: 7, title: 'Legacy resume' };

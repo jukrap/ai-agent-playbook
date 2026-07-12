@@ -26,7 +26,8 @@ export async function createAutomationPlan(options) {
     date = todayIso(),
     dryRun = false,
     force = false,
-    language = 'auto'
+    language = 'auto',
+    presentation = {}
   } = options;
   requireTitle(title);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('Invalid --date; expected YYYY-MM-DD.');
@@ -53,7 +54,7 @@ export async function createAutomationPlan(options) {
   }
 
   const resolvedLanguage = resolvePlanLanguage(language, title);
-  const manifest = createDraftManifest({ title: title.trim(), slug, language: resolvedLanguage });
+  const manifest = createDraftManifest({ title: title.trim(), slug, language: resolvedLanguage, presentation });
   const markdown = renderAutomationPlanMarkdown(manifest, path.basename(manifestFile), date);
   const operations = files.map((file) => `write ${file}`);
   if (!dryRun) {
@@ -230,15 +231,15 @@ function validateCoordination(coordination, tasks, language) {
   const program = coordination.program;
   if (
     !isRecord(program) ||
-    !hasText(program.title) ||
-    !hasText(program.summary) ||
-    !isNonEmptyTextArray(program.scope) ||
-    !isNonEmptyTextArray(program.nonGoals) ||
-    !isNonEmptyTextArray(program.successCriteria)
+    !hasReviewableText(program.title, 3) ||
+    !hasReviewableText(program.summary, 8) ||
+    !isReviewableTextArray(program.scope, 2) ||
+    !isReviewableTextArray(program.nonGoals, 2) ||
+    !isReviewableTextArray(program.successCriteria, 2)
   ) {
     findings.push(presentationProblem(
       'plan.coordination.program-incomplete',
-      'coordination.program requires a title, summary, and non-empty scope, nonGoals, and successCriteria arrays.',
+      'coordination.program requires a reviewable title and summary plus substantive scope, nonGoals, and successCriteria entries.',
       ['coordination.program']
     ));
   }
@@ -279,16 +280,16 @@ function validateCoordination(coordination, tasks, language) {
     if (
       !isRecord(group) ||
       !isSafeId(group.id) ||
-      !hasText(group.title) ||
-      !hasText(group.summary) ||
+      !hasReviewableText(group.title, 3) ||
+      !hasReviewableText(group.summary, 8) ||
       !Array.isArray(group.taskIds) ||
       group.taskIds.length === 0 ||
       !group.taskIds.every(isSafeId) ||
-      !hasText(group.rollback)
+      !hasReviewableText(group.rollback, 5)
     ) {
       findings.push(presentationProblem(
         'plan.coordination.group-invalid',
-        `${location} requires a safe id, title, summary, non-empty taskIds, and rollback.`,
+        `${location} requires a safe id, reviewable title and summary, non-empty taskIds, and substantive rollback guidance.`,
         [location]
       ));
     }
@@ -426,7 +427,15 @@ function validatePresentationReconcile(reconcile) {
   return findings;
 }
 
-function createDraftManifest({ title, slug, language }) {
+/**
+ * @param {{
+ *   title: string,
+ *   slug: string,
+ *   language: string,
+ *   presentation?: { issueMode?: string, projectMode?: string, titleStyle?: string, maxChildIssues?: number }
+ * }} options
+ */
+function createDraftManifest({ title, slug, language, presentation = {} }) {
   const implementationId = `${slug}-implementation`;
   const verificationId = `${slug}-verification`;
   const korean = language === 'ko';
@@ -438,10 +447,10 @@ function createDraftManifest({ title, slug, language }) {
     language,
     approval: { status: 'draft', approvedAt: null },
     coordination: {
-      issueMode: 'delivery-group',
-      projectMode: 'preferred',
-      titleStyle: 'auto',
-      maxChildIssues: DEFAULT_MAX_CHILD_ISSUES,
+      issueMode: presentation.issueMode ?? 'delivery-group',
+      projectMode: presentation.projectMode ?? 'preferred',
+      titleStyle: presentation.titleStyle ?? 'auto',
+      maxChildIssues: presentation.maxChildIssues ?? DEFAULT_MAX_CHILD_ISSUES,
       program: {
         title,
         summary: korean ? '승인할 프로그램 목표와 배경을 작성합니다.' : 'Describe the reviewed program outcome and context.',
@@ -560,6 +569,14 @@ function hasText(value) {
 
 function isNonEmptyTextArray(value) {
   return Array.isArray(value) && value.length > 0 && value.every(hasText);
+}
+
+function hasReviewableText(value, minimumLength) {
+  return typeof value === 'string' && value.trim().length >= minimumLength;
+}
+
+function isReviewableTextArray(value, minimumLength) {
+  return Array.isArray(value) && value.length > 0 && value.every((entry) => hasReviewableText(entry, minimumLength));
 }
 
 function isKoreanLanguage(language, ...values) {

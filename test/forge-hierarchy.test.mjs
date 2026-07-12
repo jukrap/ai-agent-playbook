@@ -359,6 +359,72 @@ test('parent-only mode keeps detailed tasks local while publishing one program i
   assert.equal(plan.summary.artifacts.groupIssues, 0);
 });
 
+test('direct forge planning rejects placeholder-length public issue content', () => {
+  const reviewed = groupedCoordination();
+  reviewed.program.summary = 'x';
+  reviewed.program.scope = ['x'];
+  reviewed.groups[0].summary = 'x';
+  reviewed.groups[0].rollback = 'x';
+  const plan = planForgeSync({
+    provider: 'github', capabilities: getForgeCapabilities('github'), planId: 'thin-content', planTitle: reviewed.program.title,
+    coordination: reviewed, tasks: [
+      { id: 'task-one', title: 'Task one', status: 'planned', deliveryGroup: 'desktop-foundation' },
+      { id: 'task-two', title: 'Task two', status: 'planned', deliveryGroup: 'desktop-foundation' }
+    ]
+  });
+  assert.equal(plan.ok, false);
+  assert.equal(plan.operations.length, 0);
+  assert.ok(plan.conflicts.some((conflict) => conflict.id === 'forge.coordination.program-summary-required'));
+  assert.ok(plan.conflicts.some((conflict) => conflict.id === 'forge.coordination.group-summary-required'));
+});
+
+test('sync preview exposes Projects capability blockers and reviewable presentation counts', () => {
+  const reviewed = groupedCoordination();
+  const tasks = [
+    { id: 'task-one', title: 'Task one', status: 'planned', deliveryGroup: 'desktop-foundation' },
+    { id: 'task-two', title: 'Task two', status: 'planned', deliveryGroup: 'desktop-foundation' }
+  ];
+  const blocked = planForgeSync({
+    provider: 'github',
+    capabilities: { ...getForgeCapabilities('github'), projects: 'unavailable', views: 'unavailable' },
+    planId: 'scope-preview', planTitle: reviewed.program.title, projectTitle: reviewed.program.title,
+    coordination: reviewed, tasks
+  });
+  assert.equal(blocked.ok, false);
+  assert.equal(blocked.operations.length, 0);
+  assert.equal(blocked.summary.operations, 0);
+  assert.ok(blocked.summary.plannedOperations > 0);
+  assert.equal(blocked.summary.artifacts.parentIssues, 1);
+  assert.equal(blocked.summary.artifacts.groupIssues, 1);
+  assert.equal(blocked.summary.artifacts.taskIssues, 0);
+  assert.deepEqual(blocked.summary.bodyCompleteness, { complete: 2, total: 2 });
+  assert.deepEqual(blocked.summary.publicTitles, [reviewed.program.title, reviewed.groups[0].title]);
+  assert.ok(blocked.conflicts.some((conflict) => conflict.id === 'forge.scope.projects-missing'));
+
+  const fallback = planForgeSync({
+    provider: 'github',
+    capabilities: { ...getForgeCapabilities('github'), projects: 'unavailable', views: 'unavailable' },
+    planId: 'scope-preview', planTitle: reviewed.program.title,
+    coordination: { ...reviewed, projectMode: 'milestone' }, tasks
+  });
+  assert.equal(fallback.ok, true);
+  assert.equal(fallback.summary.artifacts.taskIssues, 0);
+  assert.ok(fallback.operations.length > 0);
+});
+
+test('GitHub project mode off uses minimal status labels instead of hiding workflow state', () => {
+  const reviewed = groupedCoordination({ projectMode: 'off' });
+  reviewed.groups[0].taskIds = ['task-one'];
+  const plan = planForgeSync({
+    provider: 'github', capabilities: getForgeCapabilities('github'), planId: 'labels-off', planTitle: reviewed.program.title,
+    coordination: reviewed,
+    tasks: [{ id: 'task-one', title: 'Task one', status: 'running', deliveryGroup: 'desktop-foundation' }]
+  });
+  assert.equal(plan.ok, true);
+  assert.deepEqual(plan.operations.find((operation) => operation.id === 'group:desktop-foundation:issue').payload.labels, ['status:in-progress']);
+  assert.equal(plan.operations.some((operation) => operation.resource === 'project-item'), false);
+});
+
 test('GitHub sub-issue relation is idempotent and Gitea uses zero-write fallback', async () => {
   const issues = [
     { id: 10, number: 1, body: '<!-- aapb:plan:release-054 -->\nParent' },

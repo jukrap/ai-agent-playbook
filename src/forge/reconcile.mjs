@@ -302,6 +302,7 @@ export function planForgePresentationReconcile(options = {}) {
     ...pullRequests.map((pull) => text(pull.title))
   ].filter(Boolean);
   const reviewableBodies = (parent ? 1 : 0) + groups.length + supportingIssues.length + pullRequests.length + (milestoneTitle ? 1 : 0);
+  const executableOperations = conflicts.length === 0 ? operations : [];
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -312,13 +313,14 @@ export function planForgePresentationReconcile(options = {}) {
     summary: {
       groups: groups.length,
       superseded,
-      operations: operations.length,
+      operations: executableOperations.length,
+      plannedOperations: operations.length,
       conflicts: conflicts.length,
       artifacts: summaryArtifacts,
       publicTitles,
       bodyCompleteness: { complete: reviewableBodies, total: reviewableBodies }
     },
-    operations: conflicts.length === 0 ? operations : [],
+    operations: executableOperations,
     warnings: [],
     conflicts
   };

@@ -170,6 +170,8 @@ test('preferred GitHub Projects capability blocks reconcile before remote writes
 
   assert.equal(plan.ok, false);
   assert.equal(plan.operations.length, 0);
+  assert.equal(plan.summary.operations, 0);
+  assert.ok(plan.summary.plannedOperations > 0);
   assert.equal(plan.summary.artifacts.projects, 1);
   assert.equal(plan.summary.artifacts.views, 4);
   assert.equal(plan.summary.artifacts.projectItems, 5);

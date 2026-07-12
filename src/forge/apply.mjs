@@ -182,7 +182,12 @@ export async function applyForgePlan(options = {}) {
 function operationTaskKey(operation) {
   const id = operationId(operation);
   const match = /^(task|group):([^:]+):/.exec(id);
-  return match ? `${match[1]}:${match[2]}` : null;
+  if (match) return `${match[1]}:${match[2]}`;
+  const childMatch = /^plan:[^:]+:child:([^:]+)$/.exec(id);
+  if (!childMatch) return null;
+  const marker = normalizedText(operation?.payload?.childMarker) ?? '';
+  if (marker.includes('aapb:task:')) return `task:${childMatch[1]}`;
+  return `group:${childMatch[1]}`;
 }
 
 function assertNotAborted(signal) {

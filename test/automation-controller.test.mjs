@@ -442,7 +442,7 @@ test('task-time forge sync updates the shared group roadmap and whole-program mi
     programTasks: [current, sibling, otherGroupTask],
     coordinationPresentation: {
       issueMode: 'delivery-group',
-      projectMode: 'preferred',
+      projectMode: 'milestone',
       titleStyle: 'noun-phrase',
       maxChildIssues: 6,
       program: {
@@ -477,6 +477,42 @@ test('task-time forge sync updates the shared group roadmap and whole-program mi
   assert.equal(group.payload.issueNumber, 22);
   assert.match(group.payload.body, /One works/);
   assert.match(group.payload.body, /Two works/);
+});
+
+test('task-time forge sync without reviewed coordination cannot fall back to task issues', () => {
+  const task = deliveryTask('task-one', {
+    title: '내부 실행 작업',
+    status: 'completed',
+    deliveryGroup: 'desktop-foundation'
+  });
+  const plan = buildTaskForgeSyncPlan(task, {
+    provider: 'github',
+    capabilities: { issues: 'supported', milestones: 'supported', projects: 'supported', views: 'supported' },
+    planId: 'plan-one',
+    planTitle: '제품 전환'
+  });
+
+  assert.equal(plan.ok, false);
+  assert.equal(plan.operations.length, 0);
+  assert.equal(plan.summary.artifacts.taskIssues, 0);
+  assert.ok(plan.conflicts.some((conflict) => conflict.id === 'forge.coordination.required'));
+});
+
+test('task-time forge sync preserves an explicit milestone fallback from the start configuration', () => {
+  const current = deliveryTask('task-one', { status: 'completed', deliveryGroup: 'desktop-foundation' });
+  const plan = buildTaskForgeSyncPlan(current, {
+    provider: 'github',
+    capabilities: { issues: 'supported', milestones: 'supported', projects: 'unavailable', views: 'unavailable', subIssues: 'supported' },
+    planId: 'fallback-plan', planTitle: 'Desktop modernization',
+    forgeConfig: { language: 'en', projectMode: 'milestone', onMissingCapability: 'pause' },
+    coordinationPresentation: coordinationPresentation(),
+    coordinationGroup: coordinationPresentation().groups[0],
+    deliveryGroupTasks: [current], programTasks: [current]
+  });
+  assert.equal(plan.ok, true);
+  assert.equal(plan.conflicts.some((conflict) => conflict.id === 'forge.scope.projects-missing'), false);
+  assert.equal(plan.operations.some((operation) => operation.resource === 'project-item'), false);
+  assert.equal(plan.summary.artifacts.taskIssues, 0);
 });
 
 test('start creates a resumable run and one tick completes exactly one verified task', async (t) => {

@@ -76,6 +76,7 @@ When multiple controls apply, use the most restrictive result and record why.
 
 - Keep detailed tasks, argv, evidence, attempts, and resumable state in the local ledger.
 - Use one roadmap issue plus at most six delivery-group issues by default. Use Projects for state, priority, risk, phase, progress, and views; use a milestone for release-level progress.
+- Never infer legacy task-per-issue mode when coordination metadata is absent. A remote start stops before bootstrap, and task-time synchronization skips remote writes while the local ledger remains usable.
 - Write Korean public titles as explicit noun phrases. Reject generated declarative sentence endings before apply instead of applying a mechanical rewrite.
 - Keep issue bodies reviewable: outcome, scope, acceptance, dependencies, validation, risk, rollback, current gate, next action, and related pull requests. Put paths and argv in a collapsed technical section.
 - Supersede obsolete managed issues only with explicit approval. Preserve their history, unlink native sub-issue relationships where supported, link the survivor, and close them without deletion.

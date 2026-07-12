@@ -44,6 +44,28 @@ function scriptedTransport(steps = []) {
 
 const repository = { owner: 'example', name: 'playbook' };
 
+function groupedTask() {
+  return {
+    id: 'group-task', title: 'Grouped task', status: 'ready', priority: 50, risk: 'medium', progress: 0,
+    acceptanceCriteria: ['The grouped outcome is verified.'], deliveryGroup: 'delivery'
+  };
+}
+
+function groupedCoordination(overrides = {}) {
+  return {
+    issueMode: 'delivery-group', projectMode: 'preferred', titleStyle: 'noun-phrase', maxChildIssues: 6,
+    program: {
+      title: 'Roadmap coordination', summary: 'Coordinate the reviewed roadmap outcome.',
+      scope: ['Delivery coordination'], nonGoals: ['Automated merge'], successCriteria: ['The delivery group is verified.'],
+      ...(overrides.program ?? {})
+    },
+    groups: [{
+      id: 'delivery', title: 'Delivery coordination', summary: 'Coordinate the reviewed delivery outcome.',
+      taskIds: ['group-task'], rollback: 'Revert the delivery coordination branch.', ...(overrides.group ?? {})
+    }]
+  };
+}
+
 test('forge apply preview and write policy gates never call transport', async () => {
   const { applyForgePlan } = await loadApply();
   assert.equal(typeof applyForgePlan, 'function');
@@ -1128,6 +1150,82 @@ test('provider adapters reject repository path traversal before any remote reque
     /safe path components/
   );
   assert.equal(transport.calls.length, 0);
+});
+
+test('grouped sync stops every child mutation after the roadmap CAS fails', async () => {
+  const { applyForgePlan } = await loadApply();
+  const planned = planForgeSync({
+    provider: 'github',
+    capabilities: getForgeCapabilities('github'),
+    planId: 'roadmap-cas',
+    planTitle: 'Roadmap coordination',
+    projectTitle: 'Roadmap coordination',
+    coordination: groupedCoordination({
+      program: { issueNumber: 1, expectedUpdatedAt: '2026-07-11T00:00:00.000Z' },
+      group: { issueNumber: 2, expectedUpdatedAt: '2026-07-11T00:00:00.000Z' }
+    }),
+    tasks: [groupedTask()]
+  });
+  assert.equal(planned.ok, true);
+  const transport = scriptedTransport([{
+    status: 200,
+    data: { number: 1, title: 'User-edited roadmap', body: 'Changed requirements', labels: [], updated_at: '2026-07-11T01:00:00.000Z' },
+    headers: {}
+  }]);
+  const result = await applyForgePlan({ plan: planned, provider: 'github', repository, transport, profile: 'deliver', apply: true });
+  assert.equal(result.ok, false);
+  assert.equal(result.results[0].status, 'failed');
+  assert.ok(result.results.slice(1).every((item) => item.status === 'skipped' && item.reason === 'critical-prerequisite-failed'));
+  assert.equal(transport.calls.length, 1);
+});
+
+test('group issue failure skips its sub-issue link', async () => {
+  const { applyForgePlan } = await loadApply();
+  const planned = planForgeSync({
+    provider: 'github', capabilities: getForgeCapabilities('github'), planId: 'group-cas', planTitle: 'Group coordination',
+    coordination: groupedCoordination({ group: { issueNumber: 2, expectedUpdatedAt: '2026-07-11T00:00:00.000Z' } }),
+    tasks: [groupedTask()]
+  });
+  const plan = {
+    ...planned,
+    operations: planned.operations.filter((operation) => operation.id === 'group:delivery:issue' || operation.id === 'plan:group-cas:child:delivery')
+  };
+  const transport = scriptedTransport([{
+    status: 200,
+    data: { number: 2, title: 'Changed group', body: 'Changed requirements', labels: [], updated_at: '2026-07-11T01:00:00.000Z' },
+    headers: {}
+  }]);
+  const result = await applyForgePlan({ plan, provider: 'github', repository, transport, profile: 'deliver', apply: true });
+  assert.equal(result.results[0].status, 'failed');
+  assert.equal(result.results[1].status, 'skipped');
+  assert.equal(result.results[1].reason, 'authoritative-issue-operation-failed');
+  assert.equal(transport.calls.length, 1);
+});
+
+test('explicit legacy task issue failure also skips its sub-issue link', async () => {
+  const { applyForgePlan } = await loadApply();
+  const planned = planForgeSync({
+    provider: 'github', capabilities: getForgeCapabilities('github'), planId: 'legacy-cas', planTitle: 'Legacy coordination',
+    coordination: { issueMode: 'task', projectMode: 'off', titleStyle: 'sentence', program: {
+      title: 'Legacy coordination', summary: 'Coordinate a reviewed legacy task issue.',
+      scope: ['Legacy task'], nonGoals: ['Automated merge'], successCriteria: ['The legacy task is verified.']
+    }, groups: [] },
+    tasks: [{ id: 'legacy-task', title: 'Legacy task', status: 'ready', issueNumber: 7, expectedUpdatedAt: '2026-07-11T00:00:00.000Z', acceptanceCriteria: ['Legacy task works.'] }]
+  });
+  const plan = {
+    ...planned,
+    operations: planned.operations.filter((operation) => operation.id === 'task:legacy-task:issue' || operation.id === 'plan:legacy-cas:child:legacy-task')
+  };
+  const transport = scriptedTransport([{
+    status: 200,
+    data: { number: 7, title: 'Changed legacy task', body: 'Changed requirements', labels: [], updated_at: '2026-07-11T01:00:00.000Z' },
+    headers: {}
+  }]);
+  const result = await applyForgePlan({ plan, provider: 'github', repository, transport, profile: 'deliver', apply: true });
+  assert.equal(result.results[0].status, 'failed');
+  assert.equal(result.results[1].status, 'skipped');
+  assert.equal(result.results[1].reason, 'authoritative-issue-operation-failed');
+  assert.equal(transport.calls.length, 1);
 });
 
 test('existing milestone description is updated when the program gate changes', async () => {

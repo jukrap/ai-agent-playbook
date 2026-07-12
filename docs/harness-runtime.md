@@ -127,7 +127,7 @@ Start the local server with:
 npx ai-agent-playbook mcp
 ```
 
-An MCP-capable AI app can register that command and then call tools such as `runtime_schema_check`, `operator_search`, `automation_status`, `automation_plan_validate`, `forge_status`, `forge_bootstrap_plan`, and `forge_sync_plan`. Forge plan tools require a target and use the same target-aware provider/capability inspection as their gated apply counterparts. These default tools do not execute a task or mutate remote state.
+An MCP-capable AI app can register that command and then call tools such as `runtime_schema_check`, `operator_search`, `automation_status`, `automation_plan_validate`, `forge_status`, `forge_bootstrap_plan`, and `forge_sync_plan`. Forge plan tools require a target and use the same target-aware provider/capability inspection as their gated apply counterparts. Forge sync also requires reviewed roadmap/delivery-group coordination and does not infer task-per-issue mode. These default tools do not execute a task or mutate remote state.
 
 `--enable-write-tools` adds the existing bounded playbook write tools. The independent `--enable-forge-write-tools` gate adds only `forge_bootstrap_apply` and `forge_sync_apply`; both require a call argument `apply: true`. Even with both gates, MCP does not expose push, automation tick/supervisor, merge, release, delete, force-push, arbitrary project source writes, AST rewrite/apply, or LSP rename.
 

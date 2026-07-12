@@ -1898,7 +1898,11 @@ export async function runCli(argv, io = {}) {
         const inspected = await queryManagedForgeIssues({
           provider: context.provider,
           repository: context.repository,
-          transport: context.transport
+          transport: context.transport,
+          supersedeRecovery: {
+            planId: validation.plan.planId,
+            groups: validation.plan.coordination.groups
+          }
         });
         const pullRequestNumbers = Array.isArray(validation.plan.coordination?.reconcile?.pullRequests)
           ? validation.plan.coordination.reconcile.pullRequests.map((pull) => pull.number)
@@ -3101,7 +3105,7 @@ export function printForgePlan(stdout, result, apply) {
   write(stdout, `Forge ${apply ? 'apply' : 'plan'}: ${result.ok ? 'ok' : 'failed'}\n`);
   if (result.summary?.artifacts) {
     const artifacts = result.summary.artifacts;
-    write(stdout, `Artifacts: issues update=${artifacts.issuesUpdated ?? 0}, close=${artifacts.issuesClosed ?? 0}; projects=${artifacts.projects ?? 0}; views=${artifacts.views ?? 0}; labels=${artifacts.labels ?? 0}; milestones=${artifacts.milestones ?? 0}; PRs=${artifacts.pullRequests ?? 0}; project items=${artifacts.projectItems ?? 0}\n`);
+    write(stdout, `Artifacts: issues update=${artifacts.issuesUpdated ?? 0}, close=${artifacts.issuesClosed ?? 0}; projects=${artifacts.projects ?? 0}; views=${artifacts.views ?? 0}; labels=${artifacts.labels ?? 0}; milestones=${artifacts.milestones ?? 0}; PRs=${artifacts.pullRequests ?? 0}; project items ensure=${artifacts.projectItems ?? 0}, remove=${artifacts.projectItemsRemoved ?? 0}\n`);
   }
   if (result.summary?.bodyCompleteness) {
     write(stdout, `Reviewable bodies: ${result.summary.bodyCompleteness.complete}/${result.summary.bodyCompleteness.total}\n`);

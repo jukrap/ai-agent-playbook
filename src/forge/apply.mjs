@@ -63,11 +63,14 @@ export async function applyForgePlan(options = {}) {
     return applyResult({ provider, apply: false, operations: plan.operations, warnings, conflicts, results: [] });
   }
 
-  const supersede = plan.operations.find((operation) => operation?.requiresApproval === 'supersede');
+  const supersede = plan.operations.find((operation) => (
+    operation?.requiresApproval === 'supersede' ||
+    (operation?.action === 'remove' && ['project-item', 'sub-issue'].includes(operation?.resource))
+  ));
   if (supersede && options.allowSupersede !== true) {
     conflicts.push({
       id: 'forge.apply.supersede-approval-required',
-      message: 'Closing or unlinking superseded issues requires explicit allowSupersede approval.',
+      message: 'Closing or unlinking superseded issues and removing obsolete Project associations requires explicit allowSupersede approval.',
       operationId: operationId(supersede)
     });
     return applyResult({ provider, apply: false, operations: plan.operations, warnings, conflicts, results: [] });
@@ -266,7 +269,7 @@ export function reconcileForgeTask(options = {}) {
 
 function applyResult({ provider, apply, operations, warnings, conflicts, results }) {
   const failed = results.filter((result) => result.status === 'failed').length;
-  const applied = results.filter((result) => ['created', 'updated'].includes(result.status)).length;
+  const applied = results.filter((result) => ['created', 'updated', 'removed'].includes(result.status)).length;
   const reused = results.filter((result) => result.status === 'reused').length;
   const fallback = results.filter((result) => result.status === 'fallback').length;
   return {

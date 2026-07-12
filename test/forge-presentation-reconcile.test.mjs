@@ -24,6 +24,12 @@ test('presentation reconcile reuses one survivor per group and supersedes redund
   );
   assert.equal(plan.operations.filter((operation) => operation.resource === 'sub-issue' && operation.action === 'remove').length, 9);
   assert.equal(plan.operations.filter((operation) => operation.resource === 'issue' && operation.payload.state === 'closed').length, 9);
+  const closeIndex = plan.operations.findIndex((operation) => operation.id === 'group:desktop-foundation:supersede:3');
+  const commentIndex = plan.operations.findIndex((operation) => operation.id === 'group:desktop-foundation:comment:3');
+  const unlinkIndex = plan.operations.findIndex((operation) => operation.id === 'group:desktop-foundation:unlink:3');
+  const projectRemovalIndex = plan.operations.findIndex((operation) => operation.id === 'group:desktop-foundation:project-item-remove:3');
+  assert.equal(closeIndex < commentIndex && commentIndex < projectRemovalIndex && projectRemovalIndex < unlinkIndex, true);
+  assert.equal(plan.operations.filter((operation) => operation.resource === 'project-item' && operation.action === 'remove').length, 9);
   assert.equal(plan.operations.some((operation) => operation.action === 'delete'), false);
   assert.equal(plan.summary.groups, 4);
   assert.equal(plan.summary.superseded, 9);
@@ -71,7 +77,11 @@ test('presentation reconcile is idempotent with closed legacy task issues still 
       state: 'open',
       updatedAt: `2026-07-12T00:0${index}:00Z`
     })),
-    ...remoteIssues().slice(1).filter((issue) => ![2, 6, 8, 12].includes(issue.number)).map((issue) => ({ ...issue, state: 'closed' }))
+    ...remoteIssues().slice(1).filter((issue) => ![2, 6, 8, 12].includes(issue.number)).map((issue) => ({
+      ...issue,
+      state: 'closed',
+      parentIssueNumbers: undefined
+    }))
   ];
 
   const plan = planForgePresentationReconcile({
@@ -82,6 +92,85 @@ test('presentation reconcile is idempotent with closed legacy task issues still 
   assert.equal(plan.summary.superseded, 0);
   assert.deepEqual(plan.operations.filter((operation) => operation.groupId).map((operation) => operation.payload.issueNumber), [2, 6, 8, 12]);
   assert.equal(plan.operations.some((operation) => operation.resource === 'sub-issue'), false);
+});
+
+test('presentation reconcile closes an open unlinked issue recovered from a supersede marker without unlinking it again', () => {
+  const reviewed = coordination();
+  const issues = [
+    remoteIssues()[0],
+    ...reviewed.groups.map((group, index) => ({
+      id: 202 + index,
+      number: [2, 6, 8, 12][index],
+      title: group.title,
+      body: `<!-- aapb:group:${group.id} -->\nReviewed body`,
+      parentIssueNumbers: [1],
+      state: 'open',
+      updatedAt: `2026-07-12T00:0${index}:00Z`
+    })),
+    {
+      ...remoteIssues()[2],
+      parentIssueNumbers: undefined,
+      supersedeRecovery: {
+        planId: 'electron-overhaul',
+        groupId: 'desktop-foundation',
+        marker: '<!-- aapb:superseded:electron-overhaul:desktop-foundation:3 -->'
+      }
+    }
+  ];
+
+  const plan = planForgePresentationReconcile({
+    provider: 'github', planId: 'electron-overhaul', coordination: reviewed, tasks: tasks(), remoteIssues: issues
+  });
+
+  assert.equal(plan.ok, true);
+  assert.equal(plan.summary.superseded, 1);
+  const projectRemovalIndex = plan.operations.findIndex((operation) => operation.id === 'group:desktop-foundation:project-item-remove:3');
+  const closeIndex = plan.operations.findIndex((operation) => operation.id === 'group:desktop-foundation:supersede:3');
+  assert.equal(projectRemovalIndex < closeIndex, true);
+  assert.equal(plan.operations.some((operation) => operation.id === 'group:desktop-foundation:supersede:3'), true);
+  assert.equal(plan.operations.some((operation) => operation.id === 'group:desktop-foundation:comment:3'), false);
+  assert.equal(plan.operations.some((operation) => operation.id === 'group:desktop-foundation:unlink:3'), false);
+  assert.equal(plan.operations.some((operation) => operation.id === 'group:desktop-foundation:project-item-remove:3'), true);
+});
+
+test('presentation reconcile finishes marker and unlink cleanup for a closed issue that is still attached to the parent', () => {
+  const reviewed = coordination();
+  const issues = [
+    remoteIssues()[0],
+    ...reviewed.groups.map((group, index) => ({
+      id: 202 + index,
+      number: [2, 6, 8, 12][index],
+      title: group.title,
+      body: `<!-- aapb:group:${group.id} -->\nReviewed body`,
+      parentIssueNumbers: [1],
+      state: 'open',
+      updatedAt: `2026-07-12T00:0${index}:00Z`
+    })),
+    { ...remoteIssues()[2], state: 'closed' }
+  ];
+
+  const plan = planForgePresentationReconcile({
+    provider: 'github', planId: 'electron-overhaul', coordination: reviewed, tasks: tasks(), remoteIssues: issues
+  });
+
+  assert.equal(plan.ok, true);
+  assert.equal(plan.summary.superseded, 1);
+  assert.equal(plan.operations.some((operation) => operation.id === 'group:desktop-foundation:supersede:3'), false);
+  assert.equal(plan.operations.some((operation) => operation.id === 'group:desktop-foundation:comment:3'), true);
+  assert.equal(plan.operations.some((operation) => operation.id === 'group:desktop-foundation:unlink:3'), true);
+});
+
+test('presentation reconcile fails closed when managed task markers are duplicated', () => {
+  const reviewed = coordination();
+  const issues = [...remoteIssues(), { ...remoteIssues()[2], id: 999, number: 99, title: 'Duplicate marker' }];
+
+  const plan = planForgePresentationReconcile({
+    provider: 'github', planId: 'electron-overhaul', coordination: reviewed, tasks: tasks(), remoteIssues: issues
+  });
+
+  assert.equal(plan.ok, false);
+  assert.equal(plan.conflicts.some((conflict) => conflict.id === 'forge.reconcile.task-marker-duplicate'), true);
+  assert.equal(plan.operations.length, 0);
 });
 
 test('Gitea presentation reconcile requires an explicit plan ownership marker', () => {
@@ -143,7 +232,8 @@ test('presentation reconcile previews milestone, Project views, supporting issue
   assert.equal(plan.operations.filter((operation) => operation.resource === 'view').length, 4);
   assert.equal(plan.operations.some((operation) => operation.id === 'supporting:automation-baseline:issue'), true);
   assert.equal(plan.operations.some((operation) => operation.id === 'pull-request:16'), true);
-  assert.equal(plan.operations.filter((operation) => operation.resource === 'project-item').length, 7);
+  assert.equal(plan.operations.filter((operation) => operation.resource === 'project-item' && operation.action === 'ensure').length, 7);
+  assert.equal(plan.operations.filter((operation) => operation.resource === 'project-item' && operation.action === 'remove').length, 9);
   assert.match(plan.operations.find((operation) => operation.id === 'pull-request:16').payload.body, /Electron 구현 미포함/);
   assert.deepEqual(plan.summary.artifacts, {
     issuesUpdated: 6,
@@ -153,7 +243,8 @@ test('presentation reconcile previews milestone, Project views, supporting issue
     labels: 1,
     milestones: 1,
     pullRequests: 1,
-    projectItems: 7
+    projectItems: 7,
+    projectItemsRemoved: 9
   });
 });
 
@@ -233,7 +324,9 @@ test('classification transfer plans all Project items before any issue label rem
   });
 
   assert.equal(plan.ok, true);
-  const lastTransfer = Math.max(...plan.operations.map((operation, index) => operation.resource === 'project-item' ? index : -1));
+  const lastTransfer = Math.max(...plan.operations.map((operation, index) => (
+    operation.resource === 'project-item' && operation.action === 'ensure' ? index : -1
+  )));
   const firstRemoval = plan.operations.findIndex((operation) => operation.resource === 'issue' && operation.payload?.removeClassificationLabels === true);
   assert.equal(lastTransfer < firstRemoval, true);
   const desktop = plan.operations.find((operation) => operation.id === 'group:desktop-foundation:project-item');

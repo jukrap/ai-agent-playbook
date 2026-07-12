@@ -129,6 +129,13 @@ export async function queryManagedForgeIssues(options = {}) {
     conflicts.push(problem('forge.managed-issues.transport-missing', 'Managed issue inspection requires a request transport.'));
     return managedIssueResult({ provider, repository, issues: [], warnings, conflicts });
   }
+  let supersedeRecovery = null;
+  try {
+    supersedeRecovery = normalizeSupersedeRecovery(options.supersedeRecovery);
+  } catch (error) {
+    conflicts.push(problem('forge.managed-issues.supersede-recovery-invalid', error.message));
+    return managedIssueResult({ provider, repository, issues: [], warnings, conflicts });
+  }
 
   const path = `/repos/${encodeURIComponent(repository.owner)}/${encodeURIComponent(repository.name)}/issues`;
   const issues = [];
@@ -177,6 +184,15 @@ export async function queryManagedForgeIssues(options = {}) {
       if (provider === 'github') {
         const annotation = await annotateManagedSubIssueParents({ issues, repository, transport: options.transport });
         conflicts.push(...annotation.conflicts);
+        if (annotation.conflicts.length === 0 && supersedeRecovery) {
+          const recovery = await annotateSupersedeRecovery({
+            issues,
+            repository,
+            transport: options.transport,
+            recovery: supersedeRecovery
+          });
+          conflicts.push(...recovery.conflicts);
+        }
       }
       return managedIssueResult({ provider, repository, issues, warnings, conflicts });
     }
@@ -272,6 +288,108 @@ async function annotateManagedSubIssueParents({ issues, repository, transport })
     }
   }
   return { conflicts };
+}
+
+async function annotateSupersedeRecovery({ issues, repository, transport, recovery }) {
+  const conflicts = [];
+  const parent = issues.find((issue) => issue.body.startsWith(`<!-- aapb:plan:${recovery.planId} -->`));
+  if (!parent) return { conflicts };
+  const candidates = issues.filter((issue) => {
+    if (issue.state !== 'open' || issue.number === parent.number) return false;
+    if (Array.isArray(issue.parentIssueNumbers) && issue.parentIssueNumbers.includes(parent.number)) return false;
+    const taskId = OWNED_TASK_MARKER.exec(issue.body)?.[1];
+    return Boolean(taskId && recovery.taskToGroup.has(taskId));
+  });
+
+  for (const issue of candidates) {
+    const taskId = OWNED_TASK_MARKER.exec(issue.body)?.[1];
+    const groupId = recovery.taskToGroup.get(taskId);
+    const marker = `<!-- aapb:superseded:${recovery.planId}:${groupId}:${issue.number} -->`;
+    let finished = false;
+    let failed = false;
+    let markerMatches = 0;
+    for (let page = 1; page <= MAX_PAGES; page += 1) {
+      let response;
+      try {
+        response = normalizeResponse(await transport.request({
+          method: 'GET',
+          path: `/repos/${encodeURIComponent(repository.owner)}/${encodeURIComponent(repository.name)}/issues/${issue.number}/comments`,
+          headers: { accept: 'application/vnd.github+json', 'x-github-api-version': '2026-03-10' },
+          query: { per_page: PAGE_SIZE, page }
+        }));
+      } catch (error) {
+        conflicts.push(problem(
+          'forge.managed-issues.supersede-recovery-failed',
+          `Could not inspect supersede recovery marker for issue #${issue.number}: ${error?.message ?? 'remote request error'}`
+        ));
+        failed = true;
+        finished = true;
+        break;
+      }
+      if (response.status >= 400) {
+        conflicts.push(problem(
+          'forge.managed-issues.supersede-recovery-failed',
+          `Could not inspect supersede recovery marker for issue #${issue.number}; GitHub returned HTTP ${response.status}.`
+        ));
+        failed = true;
+        finished = true;
+        break;
+      }
+      const comments = Array.isArray(response.data) ? response.data : [];
+      markerMatches += comments.filter((comment) => hasOwnedMarker(comment?.body, marker)).length;
+      if (!hasNextPage(response.headers, comments.length, page)) {
+        finished = true;
+        break;
+      }
+    }
+    if (!finished) {
+      conflicts.push(problem(
+        'forge.managed-issues.supersede-recovery-pagination-limit',
+        `Supersede recovery marker inspection exceeded the 100 page safety limit for issue #${issue.number}.`
+      ));
+      continue;
+    }
+    if (failed) continue;
+    if (markerMatches > 1) {
+      conflicts.push(problem(
+        'forge.managed-issues.supersede-recovery-ambiguous',
+        `Supersede recovery marker is duplicated for issue #${issue.number}; no recovery write is allowed.`
+      ));
+      continue;
+    }
+    if (markerMatches === 1) issue.supersedeRecovery = { planId: recovery.planId, groupId, marker };
+  }
+  return { conflicts };
+}
+
+function normalizeSupersedeRecovery(value) {
+  if (value === undefined || value === null) return null;
+  if (!value || typeof value !== 'object') throw new TypeError('Supersede recovery must be an object.');
+  const planId = typeof value.planId === 'string' ? value.planId.trim() : '';
+  if (!STABLE_ID.test(planId)) throw new TypeError('Supersede recovery requires a stable planId.');
+  if (!Array.isArray(value.groups) || value.groups.length === 0 || value.groups.length > 6) {
+    throw new TypeError('Supersede recovery requires one to six coordination groups.');
+  }
+  const taskToGroup = new Map();
+  for (const group of value.groups) {
+    const groupId = typeof group?.id === 'string' ? group.id.trim() : '';
+    if (!STABLE_ID.test(groupId)) throw new TypeError('Supersede recovery group IDs must be stable identifiers.');
+    if (!Array.isArray(group.taskIds) || group.taskIds.length === 0) {
+      throw new TypeError(`Supersede recovery group ${groupId} requires taskIds.`);
+    }
+    for (const rawTaskId of group.taskIds) {
+      const taskId = typeof rawTaskId === 'string' ? rawTaskId.trim() : '';
+      if (!STABLE_ID.test(taskId)) throw new TypeError('Supersede recovery task IDs must be stable identifiers.');
+      if (taskToGroup.has(taskId)) throw new TypeError(`Supersede recovery task ${taskId} is mapped more than once.`);
+      taskToGroup.set(taskId, groupId);
+    }
+  }
+  if (taskToGroup.size > 100) throw new TypeError('Supersede recovery supports at most 100 task mappings.');
+  return { planId, taskToGroup };
+}
+
+function hasOwnedMarker(body, marker) {
+  return typeof body === 'string' && (body === marker || body.startsWith(`${marker}\n`) || body.startsWith(`${marker}\r\n`));
 }
 
 /**

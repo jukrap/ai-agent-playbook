@@ -79,7 +79,7 @@ Current-request restriction은 모든 configuration과 provider detection 이후
 - Coordination metadata가 없을 때 legacy task별 issue mode를 추론하지 않습니다. Remote start는 bootstrap 전에 중단하고 task-time sync는 remote write를 건너뛰되 local ledger는 계속 사용할 수 있습니다.
 - 한국어 public title은 plan에 자연스러운 명사형으로 명시합니다. `한다`, `된다`, `이다`로 끝나는 생성 title은 기계적으로 고치지 않고 apply 전에 차단합니다.
 - Issue body에는 결과물, 범위, acceptance criteria, dependency, verification, 위험, 복구, 현재 gate, 다음 행동과 관련 PR을 담습니다. Path와 argv는 접을 수 있는 technical detail에 둡니다.
-- 오래된 managed issue는 명시적 승인 때만 supersede합니다. 기록을 보존하고 가능한 경우 sub-issue 관계를 해제하며 통합 issue를 연결한 뒤 삭제 없이 종료합니다.
+- 오래된 managed issue는 명시적 승인 때만 supersede합니다. Parent에 연결된 검토 issue를 marker 댓글보다 먼저 종료하고 마지막 native 계층 해제 전에 오래된 Project card를 제거하며, 실패하면 같은 group의 뒤 mutation을 차단합니다. 이미 parent가 해제된 열린 이슈는 승인된 plan의 정확한 supersede marker로만 복구하고 종료 전에 Project card를 제거합니다.
 - Projects를 사용하면 관리되는 priority, risk, area 분류를 Project field로 옮기고 issue item에서는 해당 label을 제거합니다. 관련 없는 사용자 label은 보존하고 label 정의는 삭제하지 않습니다.
 
 ## Credential And Language Boundaries

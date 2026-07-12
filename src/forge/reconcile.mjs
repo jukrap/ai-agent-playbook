@@ -49,11 +49,23 @@ export function planForgePresentationReconcile(options = {}) {
   let parent = null;
   for (const issue of remoteIssues) {
     const body = String(issue.body ?? '');
-    if (body.startsWith(`<!-- aapb:plan:${planId} -->`)) parent = issue;
+    if (body.startsWith(`<!-- aapb:plan:${planId} -->`)) {
+      if (parent) conflicts.push(problem('forge.reconcile.plan-marker-duplicate', `Multiple issues use the plan marker for ${planId}.`));
+      else parent = issue;
+    }
     const match = body.match(/<!-- aapb:task:([a-z0-9][a-z0-9._-]{0,99}) -->/);
-    if (match) issueByTaskId.set(match[1], issue);
     const groupMatch = body.match(/<!-- aapb:group:([a-z0-9][a-z0-9._-]{0,99}) -->/);
-    if (groupMatch) issueByGroupId.set(groupMatch[1], issue);
+    if (match && groupMatch) {
+      conflicts.push(problem('forge.reconcile.issue-marker-ambiguous', `Issue #${issue.number} contains both task and group identity markers.`));
+    }
+    if (match) {
+      if (issueByTaskId.has(match[1])) conflicts.push(problem('forge.reconcile.task-marker-duplicate', `Multiple issues use task marker ${match[1]}.`));
+      else issueByTaskId.set(match[1], issue);
+    }
+    if (groupMatch) {
+      if (issueByGroupId.has(groupMatch[1])) conflicts.push(problem('forge.reconcile.group-marker-duplicate', `Multiple issues use group marker ${groupMatch[1]}.`));
+      else issueByGroupId.set(groupMatch[1], issue);
+    }
   }
 
   if (!parent) conflicts.push(problem('forge.reconcile.parent-missing', `No marker-owned parent issue was found for plan ${planId}.`));
@@ -67,18 +79,26 @@ export function planForgePresentationReconcile(options = {}) {
     const belongsToParent = (issue) => provider === 'github'
       ? Array.isArray(issue?.parentIssueNumbers) && issue.parentIssueNumbers.includes(parent?.number)
       : String(issue?.body ?? '').includes(`<!-- aapb:plan-owner:${planId} -->`);
+    const belongsToRecovery = (issue) => provider === 'github' &&
+      issue?.supersedeRecovery?.planId === planId && issue.supersedeRecovery.groupId === groupId;
     const existingGroupIssue = issueByGroupId.get(groupId);
-    const legacyTaskIssues = groupTasks.map((task) => issueByTaskId.get(task.id)).filter((issue) => (
-      Boolean(issue) && issue.state !== 'closed' && belongsToParent(issue)
-    ));
-    const candidateIssues = [existingGroupIssue, ...legacyTaskIssues].filter((issue) => Boolean(issue) && belongsToParent(issue))
+    const legacyTaskIssues = groupTasks.map((task) => issueByTaskId.get(task.id)).filter(Boolean);
+    const activeParentIssues = [existingGroupIssue, ...legacyTaskIssues]
+      .filter((issue) => Boolean(issue) && issue.state !== 'closed' && belongsToParent(issue))
       .filter((issue, index, values) => values.findIndex((candidate) => candidate.number === issue.number) === index)
       .sort((left, right) => positiveInteger(left.number, 'issue number') - positiveInteger(right.number, 'issue number'));
-    const survivor = candidateIssues[0];
+    const survivor = existingGroupIssue && existingGroupIssue.state !== 'closed' && belongsToParent(existingGroupIssue)
+      ? existingGroupIssue
+      : activeParentIssues[0];
     if (!survivor) {
       conflicts.push(problem('forge.reconcile.group-issue-missing', `No existing task issue can represent coordination group ${groupId}.`, [groupId]));
       continue;
     }
+    const obsoleteIssues = legacyTaskIssues
+      .filter((issue) => issue.number !== survivor.number && (belongsToParent(issue) || belongsToRecovery(issue)))
+      .filter((issue, index, values) => values.findIndex((candidate) => candidate.number === issue.number) === index)
+      .sort((left, right) => positiveInteger(left.number, 'issue number') - positiveInteger(right.number, 'issue number'));
+    const candidateIssues = [survivor, ...obsoleteIssues];
     survivorByGroup.set(groupId, survivor);
     classificationByGroup.set(groupId, classificationFromIssues(candidateIssues, groupTasks));
 
@@ -101,10 +121,56 @@ export function planForgePresentationReconcile(options = {}) {
       }
     });
 
-    for (const obsolete of candidateIssues.slice(1)) {
+    for (const obsolete of obsoleteIssues) {
       superseded += 1;
       const obsoleteNumber = positiveInteger(obsolete.number, 'issue number');
-      if (provider === 'github' && parent) {
+      const attachedToParent = belongsToParent(obsolete);
+      const recoveryOnly = belongsToRecovery(obsolete) && !attachedToParent;
+      const projectRemoval = provider === 'github' && projectEnabled && projectTitle
+        ? {
+            id: `group:${groupId}:project-item-remove:${obsoleteNumber}`,
+            groupId,
+            action: 'remove',
+            resource: 'project-item',
+            capability: 'projects',
+            requiresApproval: 'supersede',
+            payload: { projectTitle, issueNumber: obsoleteNumber }
+          }
+        : null;
+      if (recoveryOnly && projectRemoval) operations.push(projectRemoval);
+      if (obsolete.state !== 'closed') {
+        operations.push({
+          id: `group:${groupId}:supersede:${obsoleteNumber}`,
+          groupId,
+          action: 'update',
+          resource: 'issue',
+          requiresApproval: 'supersede',
+          payload: {
+            issueNumber: obsoleteNumber,
+            expectedUpdatedAt: updatedAt(obsolete),
+            state: 'closed',
+            labels: [],
+            preserveNonManagedLabels: true,
+            removeClassificationLabels: projectEnabled
+          }
+        });
+      }
+      if (!recoveryOnly) {
+        operations.push({
+          id: `group:${groupId}:comment:${obsoleteNumber}`,
+          groupId,
+          action: 'ensure',
+          resource: 'marker-comment',
+          requiresApproval: 'supersede',
+          payload: {
+            issueNumber: obsoleteNumber,
+            marker: `<!-- aapb:superseded:${planId}:${groupId}:${obsoleteNumber} -->`,
+            body: `이 작업은 #${survivor.number} 이슈로 통합되었습니다. 기존 기록은 보존합니다.`
+          }
+        });
+        if (projectRemoval) operations.push(projectRemoval);
+      }
+      if (provider === 'github' && parent && attachedToParent) {
         operations.push({
           id: `group:${groupId}:unlink:${obsoleteNumber}`,
           groupId,
@@ -118,33 +184,6 @@ export function planForgePresentationReconcile(options = {}) {
           }
         });
       }
-      operations.push({
-        id: `group:${groupId}:comment:${obsoleteNumber}`,
-        groupId,
-        action: 'ensure',
-        resource: 'marker-comment',
-        requiresApproval: 'supersede',
-        payload: {
-          issueNumber: obsoleteNumber,
-          marker: `<!-- aapb:superseded:${planId}:${groupId}:${obsoleteNumber} -->`,
-          body: `이 작업은 #${survivor.number} 이슈로 통합되었습니다. 기존 기록은 보존합니다.`
-        }
-      });
-      operations.push({
-        id: `group:${groupId}:supersede:${obsoleteNumber}`,
-        groupId,
-        action: 'update',
-        resource: 'issue',
-        requiresApproval: 'supersede',
-        payload: {
-          issueNumber: obsoleteNumber,
-          expectedUpdatedAt: updatedAt(obsolete),
-          state: 'closed',
-          labels: [],
-          preserveNonManagedLabels: true,
-          removeClassificationLabels: projectEnabled
-        }
-      });
     }
   }
 
@@ -466,7 +505,8 @@ function artifactSummary(operations) {
     labels: operations.filter((operation) => operation.resource === 'label').length,
     milestones: operations.filter((operation) => operation.resource === 'milestone').length,
     pullRequests: operations.filter((operation) => ['pull-request', 'draft-pull-request'].includes(operation.resource)).length,
-    projectItems: operations.filter((operation) => operation.resource === 'project-item').length
+    projectItems: operations.filter((operation) => operation.resource === 'project-item' && operation.action !== 'remove').length,
+    projectItemsRemoved: operations.filter((operation) => operation.resource === 'project-item' && operation.action === 'remove').length
   };
 }
 

@@ -96,7 +96,7 @@ npm 패키지는 명령줄 도구만 설치합니다. 스킬 복사, `.ai-agent-
 
 ## Forge 자동화 호환성
 
-0.5.6은 재개 가능한 로컬 실행 루프와 0.5.5에서 도입한 사람 중심 Forge 협업 구조를 유지합니다. 세밀한 task는 로컬 원장에 두고 roadmap과 delivery-group issue, Projects, Views, milestone, 검토 가능한 PR로 공유 작업을 보여줍니다. Projects 인증 권한이 부족하면 첫 쓰기 전에 직접 실행할 복구 명령과 함께 중단하며, 새로 관리하는 Project field에는 중립적인 이름을 사용하면서 기존 이름은 호환 alias로 유지합니다. 어댑터는 모든 서버가 같은 기능을 제공한다고 가정하지 않고, 감지한 API와 인증 권한에 따라 사용할 기능을 선택합니다.
+0.5.7은 재개 가능한 로컬 실행 루프와 0.5.5에서 도입한 사람 중심 Forge 협업 구조를 유지합니다. 세밀한 task는 로컬 원장에 두고 roadmap과 delivery-group issue, Projects, Views, milestone, 검토 가능한 PR로 공유 작업을 보여줍니다. 중단된 supersede 마이그레이션은 정확한 관리 marker가 있는 이슈를 다시 찾고, 검토한 snapshot을 댓글이나 계층 변경이 무효화하기 전에 이슈를 먼저 종료하며, 오래된 task card를 managed Project에서 제거합니다. Projects 인증 권한이 부족하면 계속 첫 쓰기 전에 직접 실행할 복구 명령과 함께 중단합니다.
 
 | 구성 요소 | 지원 버전 또는 연동 기준 | 상태 |
 | --- | --- | --- |
@@ -114,10 +114,11 @@ npm 패키지는 명령줄 도구만 설치합니다. 스킬 복사, `.ai-agent-
 - `forge status`는 설정상 허용된 `policyWrites`와 권한 확인을 마친 `verifiedWrites`를 구분하고, token material 없이 server/API version, authentication, repository permission, probe evidence를 보고합니다. 인증과 repository write permission이 확인될 때까지 effective `writes`는 false입니다.
 - GitHub Projects와 Views에는 해당 project scope가 필요합니다. Project 협업을 우선하는 설정에서는 둘 중 하나라도 사용할 수 없으면 모든 원격 쓰기 전에 중단합니다. `forge status`, bootstrap, synchronization preview는 브라우저 인증과 재확인 명령을 출력하며, 차단된 bootstrap preview는 실행 가능한 operation을 0건으로 유지하면서 요청된 산출물 수를 보여줍니다. Milestone 방식은 `projects,views` fallback을 명시했을 때만 사용합니다. 하네스는 인증 scope를 자동으로 확대하지 않습니다.
 - Managed Project는 Planned, Ready, In Progress, In Review, Blocked, Done 옵션을 가진 중립적인 `Delivery Status`와 `Priority`, `Risk`, `Phase`, `Progress`, `Area`, `Task ID` field를 만듭니다. 기존 `AAPB *` field는 읽기 호환 alias로 재사용하며 중복 생성, rename, 삭제하지 않습니다. 사용자 소유 Project의 field와 View REST 경로는 일관되게 소유자 login을 사용하므로 중단된 bootstrap도 기존의 제목 있는 Project를 재사용해 재개할 수 있습니다. 표시 구조 reconcile은 관리되는 분류 label을 Project로 먼저 옮기며, 이관에 실패하면 뒤의 원격 변경을 중단합니다.
+- 검토된 supersede reconcile은 parent에 연결된 오래된 이슈를 marker 댓글보다 먼저 종료하고, 마지막 계층 해제 전에 Project card를 제거하며, 실패하면 같은 group의 뒤 mutation을 차단합니다. 이전 실행이 열린 이슈의 parent 관계를 이미 해제했다면 다음 preview는 승인된 plan의 정확한 supersede marker로만 이를 복구하고 종료 전에 Project card를 제거합니다. 이슈, 댓글, label 정의는 보존합니다.
 - Gitea는 server OpenAPI가 필요한 method를 광고한 Issues, Labels, Milestones, pull request, Actions만 사용합니다. Draft review는 public pull-request API와 Gitea의 documented `WIP:` title convention을 사용합니다. Self-hosted hostname 단서는 `forge.provider: "gitea"` 또는 `/api/v1`으로 끝나는 credential-free `forge.apiBaseUrl`을 설정할 때까지 쓰기 불가 상태로 둡니다. Version과 OpenAPI probe는 token 없이 먼저 실행하고 그 뒤에 인증된 permission을 확인합니다. Project/View 상태는 라벨과 milestone 필터로, Discussions는 decision issue로 대체할 수 있습니다.
 - `gh agent-task`는 명시적으로 선택하는 preview 어댑터이며 자동 executor 후보가 아닙니다. forge 부트스트랩과 스케줄러 설치도 먼저 미리보기를 만들고 명시적인 적용 단계를 요구합니다.
 
-쓰기 전 인증 gate, 복구 흐름, 중립 Project field와 호환 동작은 [0.5.6 Forge 권한 안내 변경 기록](docs/changes/forge-permission-guidance-0.5.6.ko.md)을 봅니다. [0.5.5 사람 중심 Forge 협업 변경 기록](docs/changes/forge-human-coordination-0.5.5.ko.md)은 표시 구조 마이그레이션 기준으로, [0.5.4 자동화 변경 기록](docs/changes/forge-automation-0.5.4.ko.md)은 실행 루프 마이그레이션 기준으로 유지합니다.
+중단된 supersede 복구와 Project item 정리는 [0.5.7 Forge reconcile 복구 변경 기록](docs/changes/forge-reconcile-recovery-0.5.7.ko.md)을 봅니다. [0.5.6 Forge 권한 안내 변경 기록](docs/changes/forge-permission-guidance-0.5.6.ko.md)은 인증과 Project field 호환성 기준으로, [0.5.5 사람 중심 Forge 협업 변경 기록](docs/changes/forge-human-coordination-0.5.5.ko.md)은 표시 구조 마이그레이션 기준으로 유지합니다.
 
 ## 평소 작업 흐름
 
@@ -256,6 +257,7 @@ test/                 Node.js 테스트
 - [0.5.4 forge 자동화 변경 기록](docs/changes/forge-automation-0.5.4.ko.md): 재개 가능한 실행, provider 대체 동작, 마이그레이션, 비활성화 지침.
 - [0.5.5 사람 중심 Forge 협업 변경 기록](docs/changes/forge-human-coordination-0.5.5.ko.md): roadmap과 delivery-group 표시, Projects capability gate, 검토된 reconcile 마이그레이션.
 - [0.5.6 Forge 권한 안내 변경 기록](docs/changes/forge-permission-guidance-0.5.6.ko.md): 쓰기 전 Projects 인증 복구, 중립 Project field, 기존 alias 호환성.
+- [0.5.7 Forge reconcile 복구 변경 기록](docs/changes/forge-reconcile-recovery-0.5.7.ko.md): 중단된 supersede 복구, CAS 안전 순서, 오래된 Project item 정리.
 
 ## 라이선스
 

@@ -117,6 +117,7 @@ export function planForgePresentationReconcile(options = {}) {
         preserveNonManagedLabels: true,
         removeClassificationLabels: projectEnabled,
         preserveManagedBody: true,
+        replaceLegacyManagedPreamble: true,
         milestoneTitle: text(options.milestoneTitle) ?? null
       }
     });
@@ -222,6 +223,7 @@ export function planForgePresentationReconcile(options = {}) {
         preserveNonManagedLabels: true,
         removeClassificationLabels: projectEnabled,
         preserveManagedBody: true,
+        replaceLegacyManagedPreamble: true,
         milestoneTitle: text(options.milestoneTitle) ?? null
       }
     });
@@ -269,6 +271,7 @@ export function planForgePresentationReconcile(options = {}) {
         preserveNonManagedLabels: true,
         removeClassificationLabels: projectEnabled,
         preserveManagedBody: true,
+        replaceLegacyManagedPreamble: true,
         milestoneTitle: text(options.milestoneTitle) ?? null
       }
     });

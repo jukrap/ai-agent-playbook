@@ -182,6 +182,103 @@ export async function applyForgePlan(options = {}) {
   return applyResult({ provider, apply: true, operations: plan.operations, warnings, conflicts, results });
 }
 
+/**
+ * Resolve provider-confirmed no-op operations without allowing a remote write.
+ * Operations that would mutate remain in the returned plan.
+ */
+export async function previewForgePlan(options = {}) {
+  const plan = normalizePlan(options.plan);
+  const provider = normalizedText(options.provider)?.toLowerCase() ?? normalizedText(plan.provider)?.toLowerCase() ?? 'none';
+  if (plan.ok === false || plan.conflicts.length > 0) return plan;
+  if (provider !== 'github' && provider !== 'gitea') return plan;
+
+  const previewTransport = createPreviewTransport(options.transport);
+  const adapter = provider === 'github'
+    ? createGithubProvider({ transport: previewTransport, repository: options.repository })
+    : createGiteaProvider({ transport: previewTransport, repository: options.repository });
+  const operations = [];
+  const noOps = [];
+  const conflicts = sanitizeCollection(plan.conflicts);
+  for (const operation of plan.operations) {
+    try {
+      const outcome = await adapter.applyOperation(operation);
+      if (outcome?.status === 'reused') {
+        noOps.push({ operationId: operationId(operation), resource: normalizedText(operation?.resource), status: 'reused' });
+      } else {
+        operations.push(operation);
+      }
+    } catch (error) {
+      if (error?.code === 'forge.preview.write-required') {
+        operations.push(operation);
+        continue;
+      }
+      conflicts.push({
+        id: 'forge.preview.read-failed',
+        operationId: operationId(operation),
+        resource: normalizedText(operation?.resource),
+        message: redactSecrets(error?.message ?? 'Forge preview inspection failed.')
+      });
+    }
+  }
+  const summary = {
+    ...(plan.summary && typeof plan.summary === 'object' ? plan.summary : {}),
+    operations: conflicts.length === 0 ? operations.length : 0,
+    plannedOperations: Number.isInteger(plan.summary?.plannedOperations) ? plan.summary.plannedOperations : plan.operations.length,
+    noOps: noOps.length,
+    ...(plan.summary?.artifacts && typeof plan.summary.artifacts === 'object'
+      ? { artifacts: previewArtifactCounts(operations, Object.keys(plan.summary.artifacts)) }
+      : {})
+  };
+  return {
+    ...plan,
+    ok: conflicts.length === 0,
+    mode: { ...(plan.mode ?? {}), apply: false, writes: false },
+    summary,
+    operations: conflicts.length === 0 ? operations : [],
+    noOps,
+    conflicts
+  };
+}
+
+function previewArtifactCounts(operations, keys) {
+  const issueOperations = operations.filter((operation) => operation?.resource === 'issue');
+  const counts = {
+    issuesUpdated: issueOperations.filter((operation) => operation?.action === 'update' && operation?.payload?.state !== 'closed').length,
+    issuesClosed: issueOperations.filter((operation) => operation?.payload?.state === 'closed' || operation?.action === 'close').length,
+    parentIssues: issueOperations.filter((operation) => String(operation?.id ?? '').startsWith('plan:')).length,
+    groupIssues: issueOperations.filter((operation) => String(operation?.id ?? '').startsWith('group:')).length,
+    taskIssues: issueOperations.filter((operation) => String(operation?.id ?? '').startsWith('task:')).length,
+    subIssueLinks: operations.filter((operation) => operation?.resource === 'sub-issue').length,
+    projects: operations.filter((operation) => operation?.resource === 'project').length,
+    views: operations.filter((operation) => ['view', 'project-view'].includes(operation?.resource)).length,
+    labels: operations.filter((operation) => operation?.resource === 'label').length,
+    milestones: operations.filter((operation) => operation?.resource === 'milestone').length,
+    pullRequests: operations.filter((operation) => ['pull-request', 'draft-pull-request'].includes(operation?.resource)).length,
+    projectItems: operations.filter((operation) => operation?.resource === 'project-item' && operation?.action !== 'remove').length,
+    projectItemsRemoved: operations.filter((operation) => operation?.resource === 'project-item' && operation?.action === 'remove').length
+  };
+  return Object.fromEntries(keys.map((key) => [key, counts[key] ?? 0]));
+}
+
+function createPreviewTransport(transport) {
+  if (!transport || typeof transport.request !== 'function') throw new TypeError('Forge preview requires an injected transport.');
+  return {
+    async request(request) {
+      const method = normalizedText(request?.method)?.toUpperCase() ?? 'GET';
+      const query = typeof request?.body?.query === 'string' ? request.body.query.trimStart() : '';
+      const isRead = method === 'GET' || method === 'HEAD' ||
+        (method === 'POST' && request?.path === '/graphql' && query.startsWith('query '));
+      if (!isRead) {
+        throw Object.assign(new Error('Remote mutation is required for this forge operation.'), {
+          name: 'ForgePreviewWriteRequired',
+          code: 'forge.preview.write-required'
+        });
+      }
+      return transport.request(request);
+    }
+  };
+}
+
 function operationTaskKey(operation) {
   const id = operationId(operation);
   const match = /^(task|group):([^:]+):/.exec(id);

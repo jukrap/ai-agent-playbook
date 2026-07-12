@@ -22,7 +22,7 @@ import {
 import { automationDoctor } from './automation/doctor.mjs';
 import { scheduleAutomation } from './automation/scheduler.mjs';
 import { deriveAutomationPolicy } from './automation/policy.mjs';
-import { applyForgePlan, collectReadyForgeTasks, inspectForgeIssue, planForgeBootstrap, planForgePresentationReconcile, planForgeSync, queryManagedForgeIssues, queryReviewedForgePullRequests, reconcileForgeTask } from './forge/index.mjs';
+import { applyForgePlan, collectReadyForgeTasks, inspectForgeIssue, planForgeBootstrap, planForgePresentationReconcile, planForgeSync, previewForgePlan, queryManagedForgeIssues, queryReviewedForgePullRequests, reconcileForgeTask } from './forge/index.mjs';
 import { redactPublicArgv } from './forge/public-redaction.mjs';
 import { createDefaultForgeTransport } from './forge/http-transport.mjs';
 import {
@@ -1915,7 +1915,7 @@ export async function runCli(argv, io = {}) {
               pullRequestNumbers
             })
           : { ok: false, pullRequests: [], warnings: [], conflicts: [] };
-        const preview = inspected.ok && inspectedPulls.ok
+        const plannedPreview = inspected.ok && inspectedPulls.ok
           ? planForgePresentationReconcile({
               provider: context.provider,
               planId: validation.plan.planId,
@@ -1936,6 +1936,14 @@ export async function runCli(argv, io = {}) {
               warnings: [...(inspected.warnings ?? []), ...(inspectedPulls.warnings ?? [])],
               conflicts: [...(inspected.conflicts ?? []), ...(inspectedPulls.conflicts ?? [])]
             };
+        const preview = plannedPreview.ok
+          ? await previewForgePlan({
+              plan: plannedPreview,
+              provider: context.provider,
+              repository: context.repository,
+              transport: context.transport
+            })
+          : plannedPreview;
         const result = parsed.flags.apply && preview.ok
           ? await applyForgeCliPlan({ plan: preview, provider: context.provider, target, config, flags: parsed.flags })
           : preview;

@@ -710,7 +710,7 @@ test('GitHub project item sync adds one child issue and idempotently updates man
                     nodes: state.items.map((item) => ({
                       ...item,
                       fieldValues: {
-                        nodes: [...state.values.entries()].map(([fieldId, value]) => {
+                        nodes: [...state.values.entries()].filter(([, value]) => !('text' in value && value.text === '')).map(([fieldId, value]) => {
                           const field = fieldById.get(fieldId);
                           if ('text' in value) return { __typename: 'ProjectV2ItemFieldTextValue', text: value.text, field };
                           if ('number' in value) return { __typename: 'ProjectV2ItemFieldNumberValue', number: value.number, field };
@@ -794,7 +794,7 @@ test('GitHub project item sync adds one child issue and idempotently updates man
   assert.equal(second.ok, true);
   assert.equal(second.results[0].status, 'reused');
   assert.equal(calls.filter((call) => call.body?.operationName === 'AapbAddProjectItem').length, 1);
-  assert.equal(calls.filter((call) => call.body?.operationName === 'AapbUpdateProjectItemFieldValue').length, 7);
+  assert.equal(calls.filter((call) => call.body?.operationName === 'AapbUpdateProjectItemFieldValue').length, 6);
   assert.equal(calls.filter((call) => call.method === 'POST' && call.path.endsWith('/fields')).length, 0);
   assert.equal(calls.find((call) => call.method === 'POST' && call.path.endsWith('/views')).body.filter, 'aapb-status:Blocked');
   assert.equal(state.values.get('F_status').singleSelectOptionId, 'O_progress');
@@ -804,7 +804,7 @@ test('GitHub project item sync adds one child issue and idempotently updates man
   assert.equal(state.values.get('F_priority_neutral').singleSelectOptionId, 'N_p1');
   assert.equal(state.values.get('F_risk').singleSelectOptionId, 'O_high');
   assert.equal(state.values.get('F_progress').number, 25);
-  assert.equal(state.values.get('F_area').text, '');
+  assert.equal(state.values.has('F_area'), false);
   const pullResult = await applyForgePlan({
     apply: true,
     profile: 'deliver',
@@ -1069,6 +1069,60 @@ test('GitHub project bootstrap ensures managed fields and four views idempotentl
   assert.equal(graphQlCalls.every((call) => !call.body.query.includes(projectTitle)), true);
   assert.equal(graphQlCalls.some((call) => call.body.variables.title === projectTitle), true);
   assert.equal(second.results.every((result) => result.status === 'reused'), true);
+});
+
+test('GitHub reuses the system default table view for the managed all-view role', async () => {
+  const { createGithubProvider } = await loadGithub();
+  const project = { id: 'P_project', number: 7, title: 'Korean roadmap' };
+  const defaultView = { id: 'V_default', number: 1, name: 'View 1', layout: 'TABLE_LAYOUT', filter: null };
+  const fields = [];
+  const calls = [];
+  const transport = {
+    calls,
+    async request(request) {
+      calls.push(structuredClone(request));
+      if (request.path === '/graphql' && request.body.operationName === 'AapbProjectContext') {
+        return { status: 200, data: { data: { repository: {
+          id: 'R_repo',
+          owner: {
+            __typename: 'Organization', id: 'O_owner', login: 'example',
+            projectsV2: { nodes: [project], pageInfo: { hasNextPage: false, endCursor: null } }
+          }
+        } } } };
+      }
+      if (request.path === '/graphql' && request.body.operationName === 'AapbProjectViews') {
+        return { status: 200, data: { data: { node: {
+          views: { nodes: [defaultView], pageInfo: { hasNextPage: false, endCursor: null } }
+        } } } };
+      }
+      if (request.path === '/orgs/example/projectsV2/7/fields' && request.method === 'GET') {
+        return { status: 200, data: fields, headers: {} };
+      }
+      if (request.path === '/orgs/example/projectsV2/7/fields' && request.method === 'POST') {
+        const field = { id: 100 + fields.length, ...request.body };
+        fields.push(field);
+        return { status: 201, data: field, headers: {} };
+      }
+      if (request.path === '/orgs/example/projectsV2/7/views' && request.method === 'POST') {
+        return { status: 201, data: { value: { id: 'V_duplicate', number: 2, ...request.body } }, headers: {} };
+      }
+      throw new Error(`Unexpected request ${request.method} ${request.path}`);
+    }
+  };
+  const provider = createGithubProvider({ transport, repository });
+
+  const result = await provider.ensureProjectView({
+    projectTitle: project.title,
+    name: '전체',
+    role: 'all',
+    layout: 'table',
+    filter: '-is:closed'
+  });
+
+  assert.equal(result.status, 'reused');
+  assert.equal(result.resource.name, 'View 1');
+  assert.equal(result.resource.managedRole, 'all');
+  assert.equal(calls.some((call) => call.method === 'POST' && call.path.endsWith('/views')), false);
 });
 
 test('GitHub user-owned Project views use the owner login required by the REST endpoint', async () => {
@@ -1714,6 +1768,96 @@ test('managed issue body updates preserve user text outside the managed region',
   assert.match(transport.calls[1].body.body, /사용자 메모/);
   assert.doesNotMatch(transport.calls[1].body.body, /이전 관리 내용/);
   assert.deepEqual(transport.calls[1].body.labels, ['customer-visible']);
+});
+
+test('managed issue migration removes only a strict legacy generated preamble', async () => {
+  const { createGithubProvider } = await loadGithub();
+  const current = {
+    number: 15,
+    title: 'Legacy automation baseline',
+    body: [
+      '<!-- aapb:task:lw-001 -->',
+      '<!-- aapb:plan-owner:electron-overhaul -->',
+      '',
+      '## 목표',
+      '',
+      'AAPB 0.5.4 기준선과 main 병합 승인을 준비한다.',
+      '',
+      '<!-- aapb:acceptance:start -->',
+      '## 수용 기준',
+      '- [ ] main 병합 전 실행하지 않는다.',
+      '<!-- aapb:acceptance:end -->',
+      '',
+      '<!-- aapb:managed:start -->',
+      '이전 관리 내용',
+      '<!-- aapb:managed:end -->',
+      '',
+      '사용자 메모'
+    ].join('\n'),
+    state: 'open', labels: [], updated_at: '2026-07-12T08:00:00Z'
+  };
+  const transport = scriptedTransport([
+    { status: 200, data: current },
+    (request) => ({ status: 200, data: { ...current, ...request.body } })
+  ]);
+  const provider = createGithubProvider({ transport, repository });
+
+  await provider.updateIssue({
+    issueNumber: 15,
+    expectedUpdatedAt: current.updated_at,
+    title: '개발 자동화 기준선 구축',
+    body: [
+      '<!-- aapb:task:lw-001 -->',
+      '<!-- aapb:plan-owner:electron-overhaul -->',
+      '',
+      '<!-- aapb:managed:start -->',
+      'AAPB 0.5.7 기준선',
+      '<!-- aapb:managed:end -->'
+    ].join('\n'),
+    preserveManagedBody: true,
+    replaceLegacyManagedPreamble: true
+  });
+
+  const body = transport.calls[1].body.body;
+  assert.doesNotMatch(body, /AAPB 0\.5\.4/);
+  assert.doesNotMatch(body, /main 병합 전 실행/);
+  assert.match(body, /AAPB 0\.5\.7 기준선/);
+  assert.match(body, /사용자 메모/);
+});
+
+test('read-only forge preview removes provider-confirmed no-op operations', async () => {
+  const { previewForgePlan } = await loadApply();
+  assert.equal(typeof previewForgePlan, 'function');
+  const issue = {
+    number: 1, title: 'Roadmap', body: 'Current body', state: 'open', labels: [],
+    updated_at: '2026-07-12T08:00:00Z'
+  };
+  const transport = scriptedTransport([
+    { status: 200, data: [{ id: 1, name: 'status:ready', color: '1f883d', description: 'Ready' }], headers: {} },
+    { status: 200, data: issue, headers: {} }
+  ]);
+  const plan = {
+    ok: true,
+    provider: 'github',
+    summary: { operations: 2, plannedOperations: 2, artifacts: { labels: 1, issuesUpdated: 1 } },
+    operations: [{
+      id: 'label:status:ready', action: 'ensure', resource: 'label',
+      payload: { name: 'status:ready', color: '1f883d', description: 'Ready' }
+    }, {
+      id: 'plan:roadmap:issue', action: 'update', resource: 'issue',
+      payload: { issueNumber: 1, expectedUpdatedAt: issue.updated_at, title: issue.title, body: issue.body, state: 'open', labels: [] }
+    }]
+  };
+
+  const preview = await previewForgePlan({ plan, provider: 'github', repository, transport });
+
+  assert.equal(preview.ok, true);
+  assert.equal(preview.operations.length, 0);
+  assert.equal(preview.summary.operations, 0);
+  assert.equal(preview.summary.noOps, 2);
+  assert.deepEqual(preview.summary.artifacts, { labels: 0, issuesUpdated: 0 });
+  assert.deepEqual(preview.noOps.map((item) => item.operationId), ['label:status:ready', 'plan:roadmap:issue']);
+  assert.equal(transport.calls.every((call) => call.method === 'GET'), true);
 });
 
 test('first managed migration preserves a legacy body while replacing its ownership marker', async () => {

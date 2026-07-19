@@ -447,7 +447,7 @@ GitHub Projects를 우선 사용하도록 설정했지만 현재 `gh` 인증에 
 
 GitHub는 새 Project에 system `View 1`을 만듭니다. 안정 공개 View API는 이 system View의 생성 외 rename 또는 delete endpoint를 제공하지 않습니다. 따라서 AAPB는 table View를 하나 더 만들지 않고 이를 managed `all` 역할로 재사용합니다. 화면 이름은 `View 1`로 남을 수 있으며, 이를 바꾸기 위해 private endpoint나 browser automation을 사용하지 않습니다.
 
-Generated GitHub/Gitea workflow는 repository variable `AAPB_AUTOMATION_PLAN`이 commit된 approved plan sidecar를 가리킬 때 fresh runner를 초기화할 수 있습니다. Run cache 복원 뒤 해당 값을 인용된 environment expansion `"$AAPB_AUTOMATION_PLAN"`으로 멱등적인 `automation start`에 전달하고 tick 하나를 실행합니다. 변수가 없으면 checkout 또는 restored cache에 기존 run이 있어야 합니다. 같은 `planId`를 재사용하면 같은 기본 run을 재사용하며 변경된 plan 내용으로 다시 쓰지는 않습니다.
+Generated GitHub/Gitea workflow는 repository variable `AAPB_AUTOMATION_PLAN`이 commit된 approved plan sidecar를 가리킬 때 fresh runner를 초기화할 수 있습니다. Run cache 복원 뒤 해당 값을 인용된 environment expansion `"$AAPB_AUTOMATION_PLAN"`으로 멱등적인 `automation start`에 전달하고 tick 하나를 실행합니다. 두 command 모두 package release metadata의 정확한 AAPB version을 고정하며 validation은 generator 또는 copy template의 버전 불일치를 거부합니다. 변수가 없으면 checkout 또는 restored cache에 기존 run이 있어야 합니다. 같은 `planId`를 재사용하면 같은 기본 run을 재사용하며 변경된 plan 내용으로 다시 쓰지는 않습니다. 내용이 다른 기존 workflow file은 보존되며 업그레이드할 때 명시적으로 검토한 package pin 갱신이 필요합니다.
 
 Hosted cache에는 `.ai-agent-playbook/workflows/runs`와 external managed checkout이 들어가며 cache action의 post-job phase에서 저장됩니다. 실행 중 tick을 위한 durable storage가 아니라 완료된 마지막 job/tick checkpoint입니다. Timeout, cancellation, runner loss, cache eviction이 있으면 이전 saved checkpoint로 되돌아갈 수 있습니다. Gitea는 runner cache service가 설정되고 접근 가능해야 합니다. Unattended 사용 전에 두 경로의 save/restore 동작을 검증하고 replay 전에 모호한 forge/Git effect를 reconcile합니다.
 

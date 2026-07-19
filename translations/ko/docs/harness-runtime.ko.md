@@ -33,7 +33,7 @@ MCP 서버는 AI 앱을 위한 local stdio surface입니다. 기본 tool은 auto
 
 공개 실행 표면은 계속 Node 기반으로 유지합니다. `npx ai-agent-playbook`, 전역 `aapb` 명령, 표준 입출력 MCP 서버는 같은 JavaScript 진입점을 사용합니다. Python은 그 뒤에서 동작하는 로컬 능력 엔진이며, 한국어/영어 글 점검과 이후 분석/색인 보조처럼 이득이 분명한 영역에 사용합니다.
 
-Python은 권장 사항이지 필수 조건이 아닙니다. 연결부는 JSON 표준 입력/출력 계약만 사용하고, 장기 실행 프로세스를 띄우지 않고, 파일을 쓰지 않고, 네트워크를 호출하지 않습니다. 탐지 순서는 `AI_AGENT_PLAYBOOK_PYTHON`, 저장소 로컬 `.venv`, `python`, `python3`, Windows `py -3`입니다.
+Python은 권장 사항이지 필수 조건이 아닙니다. 연결부는 JSON 표준 입력/출력 계약만 사용하고, 장기 실행 프로세스를 띄우지 않고, 파일을 쓰지 않고, 네트워크를 호출하지 않습니다. 탐지 순서는 `AI_AGENT_PLAYBOOK_PYTHON`, 저장소 로컬 `.venv`, `python`, `python3`, Windows `py -3`입니다. 각 candidate는 격리된 process 생성 경계를 사용하므로 잘못된 command alias는 해당 candidate에만 보고하고 나머지 interpreter 탐색을 중단하지 않습니다.
 
 선택된 인터프리터는 아래 명령으로 확인합니다.
 
@@ -121,7 +121,7 @@ Task state는 `planned -> ready -> claimed -> running -> verifying -> review -> 
 
 Controller 하나만 ledger를 씁니다. Local lease는 30초 heartbeat, 2분 expiry, 단조 증가 fencing token을 사용합니다. Tick은 dependency-ready task 하나 이하를 claim하고 scrubbed environment에서 executor를 호출하며, controller가 declared verification을 다시 실행하고 evidence를 기록한 뒤 허용된 Git/forge delivery와 checkpoint를 완료하고 lease를 해제합니다. Supervisor는 configured budget 안에서 이 짧은 tick을 반복합니다.
 
-`automation start` 자체가 쓰기 명령이며 effective profile에서 remote coordination도 할 수 있습니다. `--apply` preview gate는 없습니다. Local-only run을 원하면 plan validation, forge preview, `--no-remote`를 사용합니다. Hosted/OS schedule은 preview-first이며 `automation schedule --apply`가 필요합니다.
+`automation start` 자체가 쓰기 명령이며 effective profile에서 remote coordination도 할 수 있습니다. `--apply` preview gate는 없습니다. Local-only run을 원하면 plan validation, forge preview, `--no-remote`를 사용합니다. Hosted/OS schedule은 preview-first이며 `automation schedule --apply`가 필요합니다. 생성한 hosted workflow의 start와 tick은 release metadata에서 읽은 정확한 package version으로 고정됩니다. Target에 이미 존재하는 내용이 다른 workflow는 그대로 보존하므로 이전에 복사한 workflow의 업그레이드는 자동 덮어쓰기가 아니라 검토된 pin 갱신이 필요합니다.
 
 ## MCP 도구 표면
 

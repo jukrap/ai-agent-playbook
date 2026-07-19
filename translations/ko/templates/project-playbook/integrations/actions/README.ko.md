@@ -30,7 +30,7 @@ Pinned `actions/cache` step은 `.ai-agent-playbook/workflows/runs`와 `~/.cache/
 
 ## Runtime
 
-Template은 `npx`로 정확한 `ai-agent-playbook` release를 호출하고 package install script를 비활성화합니다. Runner가 package registry에 접근할 수 없으면 pinned CLI를 runner image 또는 repository에 설치하고 해당 line을 동등한 local `aapb automation tick` command로 교체합니다.
+Template은 `npx`로 정확한 `ai-agent-playbook` release를 호출하고 package install script를 비활성화합니다. Release pin은 package metadata와 일치하며 start와 tick 모두에 적용됩니다. Schedule apply는 내용이 다른 기존 file을 보존하므로 이미 복사한 workflow를 업그레이드할 때 두 pin을 명시적으로 검토하고 갱신합니다. Runner가 package registry에 접근할 수 없으면 pinned CLI를 runner image 또는 repository에 설치하고 해당 line을 동등한 local `aapb automation start`와 `aapb automation tick` command로 교체합니다.
 
 Runner에는 Node.js 18 이상과 Git이 필요합니다. 또한 설정한 executor가 설치·인증되어 있고 non-interactive로 동작해야 합니다. 선택한 Codex 또는 Claude CLI를 runner image에 설치하거나 해당 환경에서 argv를 실행할 수 있는 명시적 `command` adapter를 설정합니다. Hosted Codex는 일반적으로 `OPENAI_API_KEY`가 필요하고, hosted Claude는 `ANTHROPIC_API_KEY` 또는 `ANTHROPIC_AUTH_TOKEN`이 필요하며 `--bare`로 실행됩니다. 이 model secret은 forge permission과 별도 범위로 관리합니다. Forge token은 executor/model credential이 아닙니다. 같은 runner image에서 `aapb automation doctor .`를 실행하고 executor selection이 모호함 없이 성공하기 전에는 repository variable을 활성화하지 않습니다. Gitea runner에는 Actions-compatible checkout implementation과 configured package source에 대한 network access도 필요합니다. `actions/cache` checkpoint가 동작하려면 runner cache service도 활성화·설정되어 있고 접근 가능해야 합니다. Actions 실행 지원만으로 run state가 persistent해지지는 않습니다. Unattended continuation에 의존하기 전에 ledger와 managed checkout의 save/restore cycle을 함께 검증합니다. Cache를 사용할 수 없으면 fresh runner를 resumable하다고 간주하지 말고 review된 persistent storage 또는 local supervisor를 사용합니다.
 

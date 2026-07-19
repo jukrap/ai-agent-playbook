@@ -6,6 +6,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { scheduleAutomation } from '../src/automation/scheduler.mjs';
 
+const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+const packageSpec = `ai-agent-playbook@${packageJson.version}`;
+
 test('GitHub and Gitea schedules are preview-first repeatable tick workflows', async () => {
   const target = await mkdtemp(path.join(os.tmpdir(), 'aapb-schedule-preview-'));
 
@@ -17,7 +20,7 @@ test('GitHub and Gitea schedules are preview-first repeatable tick workflows', a
   assert.equal(github.path, '.github/workflows/aapb-automation.yml');
   assert.match(github.content, /workflow_dispatch:/);
   assert.match(github.content, /concurrency:/);
-  assert.match(github.content, /ai-agent-playbook@0\.5\.4 automation tick \. --no-interactive/);
+  assert.match(github.content, new RegExp(`${escapeRegExp(packageSpec)} automation tick \\. --no-interactive`));
   assert.match(github.content, /persist-credentials: false/);
   assert.match(github.content, /actions\/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57/);
   assert.match(github.content, /\.ai-agent-playbook\/workflows\/runs/);
@@ -50,10 +53,25 @@ test('hosted generators and copyable templates initialize a configured plan befo
     {
       name: 'copyable Gitea workflow',
       content: await readFile(path.resolve('templates/project-playbook/integrations/actions/gitea-automation.yml'), 'utf8')
+    },
+    {
+      name: 'copyable Korean GitHub workflow',
+      content: await readFile(path.resolve('translations/ko/templates/project-playbook/integrations/actions/github-automation.ko.yml'), 'utf8')
+    },
+    {
+      name: 'copyable Korean Gitea workflow',
+      content: await readFile(path.resolve('translations/ko/templates/project-playbook/integrations/actions/gitea-automation.ko.yml'), 'utf8')
     }
   ];
 
   for (const workflow of workflows) {
+    assert.match(workflow.content, new RegExp(`${escapeRegExp(packageSpec)} automation start`), workflow.name);
+    assert.match(workflow.content, new RegExp(`${escapeRegExp(packageSpec)} automation tick`), workflow.name);
+    assert.deepEqual(
+      [...new Set([...workflow.content.matchAll(/ai-agent-playbook@(\d+\.\d+\.\d+)/g)].map((match) => match[1]))],
+      [packageJson.version],
+      workflow.name
+    );
     assert.match(workflow.content, /AAPB_AUTOMATION_PLAN: \$\{\{ vars\.AAPB_AUTOMATION_PLAN \}\}/, workflow.name);
     assert.match(workflow.content, /if \[ -n "\$AAPB_AUTOMATION_PLAN" \]; then/, workflow.name);
     assert.match(
@@ -68,6 +86,10 @@ test('hosted generators and copyable templates initialize a configured plan befo
 
   await rm(target, { recursive: true, force: true });
 });
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 test('remote schedule writes only with apply and preserves differing existing workflows', async () => {
   const target = await mkdtemp(path.join(os.tmpdir(), 'aapb-schedule-apply-'));

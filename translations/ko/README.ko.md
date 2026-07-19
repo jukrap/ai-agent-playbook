@@ -96,7 +96,7 @@ npm 패키지는 명령줄 도구만 설치합니다. 스킬 복사, `.ai-agent-
 
 ## Forge 자동화 호환성
 
-0.5.9는 재개 가능한 로컬 실행 루프와 0.5.5에서 도입한 사람 중심 Forge 협업 구조를 유지합니다. 세밀한 task는 로컬 원장에 두고 roadmap과 delivery-group issue, Projects, Views, milestone, 검토 가능한 PR로 공유 작업을 보여줍니다. Attempt 복구는 reset 가능한 retry budget과 단조 증가 ledger serial을 분리하므로 `automation resume --reset-attempts`가 과거 event ID를 재사용하지 않고 기존 run을 계속합니다. 0.5.8의 멱등 Forge reconcile, 중단된 supersede 복구, Projects 권한 gate도 유지합니다.
+0.5.10은 재개 가능한 로컬 실행 루프와 0.5.5에서 도입한 사람 중심 Forge 협업 구조를 유지합니다. 세밀한 task는 로컬 원장에 두고 roadmap과 delivery-group issue, Projects, Views, milestone, 검토 가능한 PR로 공유 작업을 보여줍니다. 생성되거나 복사되는 hosted workflow는 이제 이를 제공한 package와 같은 정확한 AAPB release를 실행하고 Forge request도 해당 release를 일관되게 보고하며, 잘못된 platform Python alias 하나가 다른 interpreter 탐색을 중단하지 않습니다. 0.5.9의 단조 증가 attempt reset 복구, 0.5.8의 멱등 Forge reconcile, 중단된 supersede 복구, Projects 권한 gate도 유지합니다.
 
 | 구성 요소 | 지원 버전 또는 연동 기준 | 상태 |
 | --- | --- | --- |
@@ -120,7 +120,7 @@ npm 패키지는 명령줄 도구만 설치합니다. 스킬 복사, `.ai-agent-
 - Gitea는 server OpenAPI가 필요한 method를 광고한 Issues, Labels, Milestones, pull request, Actions만 사용합니다. Draft review는 public pull-request API와 Gitea의 documented `WIP:` title convention을 사용합니다. Self-hosted hostname 단서는 `forge.provider: "gitea"` 또는 `/api/v1`으로 끝나는 credential-free `forge.apiBaseUrl`을 설정할 때까지 쓰기 불가 상태로 둡니다. Version과 OpenAPI probe는 token 없이 먼저 실행하고 그 뒤에 인증된 permission을 확인합니다. Project/View 상태는 라벨과 milestone 필터로, Discussions는 decision issue로 대체할 수 있습니다.
 - `gh agent-task`는 명시적으로 선택하는 preview 어댑터이며 자동 executor 후보가 아닙니다. forge 부트스트랩과 스케줄러 설치도 먼저 미리보기를 만들고 명시적인 적용 단계를 요구합니다.
 
-Append-only retry 복구는 [0.5.9 attempt reset 복구 변경 기록](docs/changes/automation-attempt-reset-0.5.9.ko.md)을 봅니다. [0.5.8 Forge 멱등 reconcile 변경 기록](docs/changes/forge-idempotent-reconcile-0.5.8.ko.md)은 provider 확인 no-op 제거, Project 수렴, legacy body 마이그레이션 기준으로 유지합니다.
+Release와 일치하는 Actions 생성 및 업그레이드 지침은 [0.5.10 hosted runtime 버전 변경 기록](docs/changes/hosted-runtime-version-0.5.10.ko.md)을, 격리된 interpreter probe는 [0.5.10 Python candidate 복구 변경 기록](docs/changes/python-candidate-recovery-0.5.10.ko.md)을 봅니다. [0.5.9 attempt reset 복구 변경 기록](docs/changes/automation-attempt-reset-0.5.9.ko.md)은 append-only retry 복구를 다루며, [0.5.8 Forge 멱등 reconcile 변경 기록](docs/changes/forge-idempotent-reconcile-0.5.8.ko.md)은 provider 확인 no-op 제거, Project 수렴, legacy body 마이그레이션 기준으로 유지합니다.
 
 ## 평소 작업 흐름
 
@@ -259,6 +259,8 @@ test/                 Node.js 테스트
 - [0.5.4 forge 자동화 변경 기록](docs/changes/forge-automation-0.5.4.ko.md): 재개 가능한 실행, provider 대체 동작, 마이그레이션, 비활성화 지침.
 - [0.5.5 사람 중심 Forge 협업 변경 기록](docs/changes/forge-human-coordination-0.5.5.ko.md): roadmap과 delivery-group 표시, Projects capability gate, 검토된 reconcile 마이그레이션.
 - [0.5.6 Forge 권한 안내 변경 기록](docs/changes/forge-permission-guidance-0.5.6.ko.md): 쓰기 전 Projects 인증 복구, 중립 Project field, 기존 alias 호환성.
+- [0.5.10 hosted runtime 버전 변경 기록](docs/changes/hosted-runtime-version-0.5.10.ko.md): release와 일치하는 hosted workflow pin, request identity, 기존 workflow 업그레이드 안전성.
+- [0.5.10 Python candidate 복구 변경 기록](docs/changes/python-candidate-recovery-0.5.10.ko.md): interpreter 탐색 중 격리된 process 실패.
 - [0.5.9 attempt reset 복구 변경 기록](docs/changes/automation-attempt-reset-0.5.9.ko.md): 명시적 retry budget reset 뒤에도 단조 증가하는 attempt event ID.
 - [0.5.8 Forge 멱등 reconcile 변경 기록](docs/changes/forge-idempotent-reconcile-0.5.8.ko.md): provider 확인 no-op 제거, Project 수렴, 엄격한 legacy body 마이그레이션.
 - [0.5.7 Forge reconcile 복구 변경 기록](docs/changes/forge-reconcile-recovery-0.5.7.ko.md): 중단된 supersede 복구, CAS 안전 순서, 오래된 Project item 정리.

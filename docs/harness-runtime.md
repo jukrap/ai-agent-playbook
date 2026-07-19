@@ -33,7 +33,7 @@ The short role split is:
 
 The stable public facade stays Node-based: `npx ai-agent-playbook`, the global `aapb` command, and the stdio MCP server all run through the same JavaScript entrypoint. Python is a local capability engine behind that facade for checks where it gives a clear benefit, especially Korean/English prose analysis and future analysis/indexing helpers.
 
-Python is recommended, not required. The bridge uses JSON over stdin/stdout, does not keep a daemon alive, does not write files, and does not call the network. Detection order is `AI_AGENT_PLAYBOOK_PYTHON`, repo-local `.venv`, `python`, `python3`, then Windows `py -3`.
+Python is recommended, not required. The bridge uses JSON over stdin/stdout, does not keep a daemon alive, does not write files, and does not call the network. Detection order is `AI_AGENT_PLAYBOOK_PYTHON`, repo-local `.venv`, `python`, `python3`, then Windows `py -3`. Each candidate has an isolated process-creation boundary, so a broken command alias is reported for that candidate without aborting discovery of the remaining interpreters.
 
 Check the selected interpreter with:
 
@@ -121,7 +121,7 @@ Each task keeps two attempt counters with different authority. `attempts` is the
 
 One controller writes the ledger. A local lease uses a 30-second heartbeat, two-minute expiry, and monotonically increasing fencing token. A tick claims at most one dependency-ready task, invokes the selected executor with a scrubbed environment, has the controller rerun declared verification, records evidence, performs permitted Git/forge delivery, and checkpoints before releasing the lease. The supervisor repeats these short ticks within configured budgets.
 
-`automation start` is itself a write command and can coordinate remotely under the effective profile; it has no `--apply` preview gate. Use plan validation, forge previews, and `--no-remote` when a local-only run is intended. Hosted and OS schedules remain preview-first and require `automation schedule --apply`.
+`automation start` is itself a write command and can coordinate remotely under the effective profile; it has no `--apply` preview gate. Use plan validation, forge previews, and `--no-remote` when a local-only run is intended. Hosted and OS schedules remain preview-first and require `automation schedule --apply`. Generated hosted workflows pin both start and tick to the exact package version read from release metadata. A differing workflow already present in the target remains untouched, so upgrading a previously copied workflow requires a reviewed pin update instead of an automatic overwrite.
 
 ## MCP tool surface
 

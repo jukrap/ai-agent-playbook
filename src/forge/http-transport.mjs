@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { retryWithBackoff } from './transport.mjs';
+import { PACKAGE_USER_AGENT } from '../version.mjs';
 
 const execFileAsync = promisify(execFile);
 
@@ -18,7 +19,7 @@ export function createFetchForgeTransport(options) {
       const headers = normalizeHeaders(request.headers);
       if (token) headers.authorization = `${provider === 'gitea' ? 'token' : 'Bearer'} ${token}`;
       headers['content-type'] ??= 'application/json';
-      headers['user-agent'] ??= 'ai-agent-playbook/0.5.4';
+      headers['user-agent'] ??= PACKAGE_USER_AGENT;
       const body = request.body === undefined ? undefined : JSON.stringify(request.body);
       return retryWithBackoff(async () => {
         const timeoutMs = requestTimeoutMs(options, now);

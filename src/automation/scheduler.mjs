@@ -5,6 +5,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import path from 'node:path';
+import { PACKAGE_SPECIFIER } from '../version.mjs';
 
 const REMOTE_PLATFORMS = new Set(['github-actions', 'gitea-actions']);
 const LOCAL_PLATFORMS = new Set(['windows-task', 'systemd-user']);
@@ -223,11 +224,11 @@ function githubWorkflow(tickFlags = []) {
     '      - name: Initialize or reuse the configured automation run',
     '        run: |',
     '          if [ -n "$AAPB_AUTOMATION_PLAN" ]; then',
-    `            npx --yes ai-agent-playbook@0.5.4 automation start . --plan "$AAPB_AUTOMATION_PLAN" --json${policyFlags}`,
+    `            npx --yes ${PACKAGE_SPECIFIER} automation start . --plan "$AAPB_AUTOMATION_PLAN" --json${policyFlags}`,
     '          fi',
     '      - name: Run one resumable tick',
     '        id: aapb-tick',
-    `        run: npx --yes ai-agent-playbook@0.5.4 automation tick . --no-interactive --json${policyFlags}`,
+    `        run: npx --yes ${PACKAGE_SPECIFIER} automation tick . --no-interactive --json${policyFlags}`,
     ''
   ].join('\n');
 }
@@ -272,11 +273,11 @@ function giteaWorkflow(tickFlags = []) {
     '      - name: Initialize or reuse the configured automation run',
     '        run: |',
     '          if [ -n "$AAPB_AUTOMATION_PLAN" ]; then',
-    `            npx --yes ai-agent-playbook@0.5.4 automation start . --plan "$AAPB_AUTOMATION_PLAN" --json${policyFlags}`,
+    `            npx --yes ${PACKAGE_SPECIFIER} automation start . --plan "$AAPB_AUTOMATION_PLAN" --json${policyFlags}`,
     '          fi',
     '      - name: Run one resumable tick',
     '        id: aapb-tick',
-    `        run: npx --yes ai-agent-playbook@0.5.4 automation tick . --no-interactive --json${policyFlags}`,
+    `        run: npx --yes ${PACKAGE_SPECIFIER} automation tick . --no-interactive --json${policyFlags}`,
     ''
   ].join('\n');
 }

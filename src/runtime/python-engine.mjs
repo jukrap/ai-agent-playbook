@@ -6,13 +6,14 @@ const DEFAULT_TIMEOUT_MS = 8000;
 
 export async function pythonEngineStatus(options = {}) {
   const repoRoot = path.resolve(options.repoRoot ?? process.cwd());
+  const spawnImpl = options.spawnImpl ?? spawn;
   const candidates = pythonCandidates(repoRoot);
   const deprecations = deprecatedPythonEnvWarnings();
   const checked = [];
   let selected = null;
 
   for (const candidate of candidates) {
-    const probe = await probeCandidate(candidate, repoRoot);
+    const probe = await probeCandidate(candidate, repoRoot, spawnImpl);
     checked.push(probe);
     if (!selected && probe.available && probe.engineAvailable) {
       selected = probe;
@@ -49,7 +50,7 @@ export async function runPythonWritingNaturalness(options) {
     filePath,
     timeoutMs = DEFAULT_TIMEOUT_MS
   } = options;
-  const status = await pythonEngineStatus({ repoRoot });
+  const status = await pythonEngineStatus({ repoRoot, spawnImpl: options.spawnImpl });
   if (!status.selected) {
     const unavailable = status.warnings.find((warning) => warning.id === 'python-engine.unavailable') ?? status.warnings[0];
     return {
@@ -76,7 +77,8 @@ export async function runPythonWritingNaturalness(options) {
   ], {
     repoRoot,
     input,
-    timeoutMs
+    timeoutMs,
+    spawnImpl: options.spawnImpl
   });
   if (!run.ok) {
     return {
@@ -136,7 +138,7 @@ function pythonCandidates(repoRoot) {
     .map(({ key, ...candidate }) => candidate);
 }
 
-async function probeCandidate(candidate, repoRoot) {
+async function probeCandidate(candidate, repoRoot, spawnImpl) {
   const code = [
     'import json, sys',
     'payload = {"executable": sys.executable, "version": sys.version.split()[0]}',
@@ -152,7 +154,8 @@ async function probeCandidate(candidate, repoRoot) {
   const result = await runPython(candidate.command, [...candidate.args, '-c', code], {
     repoRoot,
     input: '',
-    timeoutMs: 3000
+    timeoutMs: 3000,
+    spawnImpl
   });
   const base = {
     id: candidate.id,
@@ -186,14 +189,20 @@ async function probeCandidate(candidate, repoRoot) {
 }
 
 function runPython(command, args, options) {
-  const { repoRoot, input, timeoutMs } = options;
+  const { repoRoot, input, timeoutMs, spawnImpl = spawn } = options;
   return new Promise((resolve) => {
-    const child = spawn(command, args, {
-      cwd: repoRoot,
-      env: pythonEnv(repoRoot),
-      windowsHide: true,
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
+    let child;
+    try {
+      child = spawnImpl(command, args, {
+        cwd: repoRoot,
+        env: pythonEnv(repoRoot),
+        windowsHide: true,
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+    } catch (error) {
+      resolve({ ok: false, stdout: '', stderr: '', error: error.message });
+      return;
+    }
     let stdout = '';
     let stderr = '';
     let settled = false;

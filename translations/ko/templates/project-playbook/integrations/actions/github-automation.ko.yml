@@ -42,7 +42,7 @@ jobs:
           NPM_CONFIG_IGNORE_SCRIPTS: "true"
         run: |
           if [ -n "$AAPB_AUTOMATION_PLAN" ]; then
-            npx --yes ai-agent-playbook@0.5.4 automation start . --plan "$AAPB_AUTOMATION_PLAN" --json
+            npx --yes ai-agent-playbook@0.5.10 automation start . --plan "$AAPB_AUTOMATION_PLAN" --json
           fi
 
       - name: Controller tick 하나 실행
@@ -54,4 +54,4 @@ jobs:
           NPM_CONFIG_AUDIT: "false"
           NPM_CONFIG_FUND: "false"
           NPM_CONFIG_IGNORE_SCRIPTS: "true"
-        run: npx --yes ai-agent-playbook@0.5.4 automation tick . --no-interactive --json
+        run: npx --yes ai-agent-playbook@0.5.10 automation tick . --no-interactive --json

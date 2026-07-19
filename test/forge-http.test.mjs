@@ -1,6 +1,9 @@
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createFetchForgeTransport, createDefaultForgeTransport, probeGiteaCapabilities } from '../src/forge/http-transport.mjs';
+
+const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 
 test('fetch transport sends structured REST requests and never exposes tokens in errors', async () => {
   const calls = [];
@@ -24,7 +27,11 @@ test('fetch transport sends structured REST requests and never exposes tokens in
   assert.equal(calls[0].url, 'https://api.github.com/repos/owner/repo/issues?page=1&per_page=100');
   assert.equal(calls[0].options.method, 'POST');
   assert.equal(calls[0].options.headers.authorization, 'Bearer github_pat_supersecret123456');
+  assert.equal(calls[0].options.headers['user-agent'], `ai-agent-playbook/${packageJson.version}`);
   assert.deepEqual(JSON.parse(calls[0].options.body), { title: '안전한 제목' });
+
+  await transport.request({ method: 'GET', path: '/user', headers: { 'user-agent': 'project-client/1.0' } });
+  assert.equal(calls[1].options.headers['user-agent'], 'project-client/1.0');
 
   const failing = createFetchForgeTransport({
     provider: 'github',

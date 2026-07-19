@@ -21,6 +21,18 @@ test('package metadata exposes aapb bin and is publishable', async () => {
   assert.equal(packageJson.repository.type, 'git');
 });
 
+test('Node and Python release metadata stay aligned', async () => {
+  const packageJson = JSON.parse(await readFile(path.join(repoRoot, 'package.json'), 'utf8'));
+  const pyproject = await readFile(path.join(repoRoot, 'pyproject.toml'), 'utf8');
+  const pythonModule = await readFile(
+    path.join(repoRoot, 'engines', 'python', 'ai_agent_playbook_engine', '__init__.py'),
+    'utf8'
+  );
+
+  assert.equal(pyproject.match(/^version = "([^"]+)"$/m)?.[1], packageJson.version);
+  assert.equal(pythonModule.match(/^__version__ = "([^"]+)"$/m)?.[1], packageJson.version);
+});
+
 test('npm pack dry-run includes runtime files and excludes local/test payloads', async () => {
   const { stdout } = await execFileAsync(npmCommand, ['pack', '--dry-run', '--json'], {
     cwd: repoRoot,

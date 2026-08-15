@@ -2,6 +2,8 @@
 
 신뢰가 낮아 보이는 코드를 동작 변경 없이 정리합니다.
 
+이 스킬은 코드 구조만 검토합니다. 템플릿처럼 보이거나 카드·pill·gradient·glow가 과도한 시각 표현은 `generic-ui-review`로 연결합니다.
+
 ## 진행 절차
 
 1. 정리 범위를 file, function, component, 최근 diff 중 하나로 제한합니다.

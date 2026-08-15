@@ -14,7 +14,7 @@
 - `issue-planning-triage`: spec, bug, review finding, worklog, follow-up을 scoped issue와 task batch로 바꿀 때.
 - `release-notes-changelog`: user-facing release note, internal changelog, migration note, rollback note를 준비할 때.
 - `documentation-artifact-package`: docs, runbook, diagram, screenshot, report, evidence를 stakeholder handoff나 knowledge artifact로 묶을 때.
-- `natural-writing-humanization`: 한국어 또는 영어 글을 사실, 의미, 기술 용어, 작성 의도를 보존하면서 자연스럽게 다듬을 때.
+- `natural-writing-humanization`: 한국어 또는 영어 글을 사실, 구조, register, 기술 용어, 작성 의도를 보존하면서 자연스럽게 다듬고 필요하면 수정 전후 fidelity 증거를 검토할 때.
 
 ## 전달, 검증, Git
 
@@ -81,6 +81,7 @@
 - `design-brief-direction`: 모호한 제품, 페이지, 브랜드, UI 요청을 디자인 방향과 결정 가능한 brief로 정리할 때.
 - `brand-identity-system`: typography, color, logo usage, iconography, voice, brand application rule을 정의하거나 검토할 때.
 - `design-reference-analysis`: screenshot, competitor site, reference app, visual sample, design board를 분석할 때.
+- `generic-ui-review`: 템플릿 같거나 카드·pill·gradient·glow가 과도한 프런트엔드 표현을 제품 작업과 렌더링 근거에 맞춰 검토할 때.
 - `image-to-code-handoff`: image, screenshot, mockup, reference board, Figma frame을 UI contract로 변환할 때.
 - `frontend-ui-polish`: 제품 의도와 기존 디자인 관례를 보존하면서 보이는 UI를 구현하거나 다듬을 때.
 - `ui-polish`: visible UI, responsive layout, accessibility state, interaction feedback, production polish를 다룰 때.

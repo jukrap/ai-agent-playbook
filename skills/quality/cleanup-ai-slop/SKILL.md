@@ -7,6 +7,8 @@ description: Use when cleaning AI-looking, low-trust, overcomplicated, duplicate
 
 Clean code that looks low-trust without changing what it does.
 
+This skill reviews code structure only. Route template-like, overly card-heavy, pill-heavy, gradient-heavy, or glowy visual treatment to `generic-ui-review`.
+
 ## Workflow
 
 1. Define the cleanup scope by file, function, component, or recently changed diff.

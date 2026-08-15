@@ -70,6 +70,9 @@ Command-specific options appear where they are needed:
 | `--reminder` | Return a small doctor reminder signal instead of the full report. |
 | `--profile <name>` | Add a stack-specific bootstrap profile, or request an automation profile that is no broader than configured authority. |
 | `--local-only` | Add `.ai-agent-playbook/` to the target project's `.gitignore` during bootstrap. |
+| `--preserve-agents` | Keep an existing root `AGENTS.md` byte-for-byte and install only the project playbook. |
+| `--link-agents` | Preserve user content and add or refresh one managed playbook reading-order block in `AGENTS.md`. |
+| `--replace-agents` | Request full `AGENTS.md` replacement; valid only together with `--force`. |
 | `--title <text>` | Title for a generated plan, worklog, or run. |
 | `--month YYYY-MM` | Month for a worklog summary. |
 | `--cols N` | Expected terminal width for `qa tui-check`. |
@@ -79,13 +82,14 @@ Command-specific options appear where they are needed:
 | `--type note|criterion|evidence|blocker|cleanup` | Event type for `run record`. |
 | `--status pass|fail|blocked|info` | Event status for `run record`. |
 | `--evidence <path>` | Portable relative evidence path for `run record`. |
-| `--before <preflight-json>` | JSON file previously saved from `operator preflight --json`. |
+| `--before <path>` | Preflight JSON for `operator delta`, or the source document for `writing fidelity-check`. |
+| `--after <path>` | Edited document for `writing fidelity-check`. |
 | `--contract <id>` | Limit `contracts snapshot` to one contract id. |
 | `--threshold N` | Allowed image diff ratio from `0` to `1`; `0` means any changed pixel fails. |
 | `--deep` | Add AST-grep, exact function-body clone cues, and TypeScript/JavaScript language-analysis signals to `operator analyze`. |
 | `--engine auto\|js\|python` | Select the prose-analysis engine for `writing naturalness-check`; `auto` uses Python when available and keeps the JavaScript fallback. |
-| `--root <dir>` | Directory inside the target project for `writing naturalness-report`. |
-| `--max-files N` | Limit the number of prose files inspected by a bounded report command. |
+| `--root <dir>` | Directory inside the target project for a bounded writing or UI scan. |
+| `--max-files N` | Limit the number of files inspected by a bounded report or scan command. |
 | `--provider auto\|github\|gitea` | Select or constrain forge provider detection. An uncertain self-hosted provider remains non-writable. |
 | `--remote <name>` | Select the Git remote inspected by `forge status`; project config remains the normal persistent setting. |
 | `--lang auto\|ko\|en` | Select the human-facing language recorded by `plan new --automation`. |
@@ -134,7 +138,7 @@ Project playbook commands manage `.ai-agent-playbook/` in one target repository.
 
 | Command | When to use it | Writes files? | Example |
 | ------- | -------------- | ------------- | ------- |
-| `bootstrap <target>` | Create the root `AGENTS.md` and `.ai-agent-playbook/` layout in a target project. | Yes, unless `--dry-run` | `npx ai-agent-playbook bootstrap <target-project> --dry-run` |
+| `bootstrap <target>` | Create `.ai-agent-playbook/` and generate, preserve, link, or explicitly replace root `AGENTS.md`. | Yes, unless `--dry-run` | `npx ai-agent-playbook bootstrap <target-project> --local-only --preserve-agents --dry-run --json` |
 | `guides sync <target>` | Copy missing guide templates into an existing `.ai-agent-playbook/knowledge/references/guides/`. | Yes, unless `--dry-run` or `--check` | `npx ai-agent-playbook guides sync <target-project> --check --diff --json` |
 | `migrate path <target>` | Preview or apply the legacy `ai-playbook/` to `.ai-agent-playbook/` folder migration. | No unless `--apply` | `npx ai-agent-playbook migrate path <target-project> --json` |
 | `migrate layout <target>` | Preview or apply structured `.ai-agent-playbook` directories, legacy-layout moves, reference updates, and archive operations. | No unless `--apply` | `npx ai-agent-playbook migrate layout <target-project> --to structured --json` |
@@ -146,7 +150,7 @@ Project playbook commands manage `.ai-agent-playbook/` in one target repository.
 | `context status <target>` | Show which path-scoped context files apply to one file and whether `memory/maps/doc-map.md` exists. | No | `npx ai-agent-playbook context status <target-project> --path src/example.ts --json` |
 | `context init <target>` | Create starter `memory/context/root.md`, `_registry.json`, and `memory/maps/doc-map.md`. | Yes, unless `--dry-run` | `npx ai-agent-playbook context init <target-project> --dry-run --json` |
 
-Use `--local-only` with `bootstrap` when the target project's `.ai-agent-playbook/` should be added to that project's `.gitignore`.
+Use `--local-only` with `bootstrap` when the target project's `.ai-agent-playbook/` should be added to that project's `.gitignore`. Existing `.gitignore` bytes and formatting are retained. If root `AGENTS.md` already exists, bootstrap stops before all writes until one mode is explicit: `--preserve-agents` is recommended for product-specific policy, `--link-agents` owns only its marker block, and full replacement requires `--replace-agents --force`. `--force` alone does not replace root policy. Existing root policy and `--profile` require manual integration.
 
 `config preview` reads `.ai-agent-playbook/config.json` and `.ai-agent-playbook/config.local.json` when they exist. It does not create either file. Precedence is built-in defaults, optional `--user-config`, target config, target-local config, then explicit environment overrides.
 
@@ -258,10 +262,13 @@ Runtime output lives under `.ai-agent-playbook/runtime/`. Do not copy generated 
 | ------- | -------------- | ------------- | ------- |
 | `writing naturalness-check <target>` | Check Korean or English prose for translationese, AI-writing signals, inflated tone, repetitive rhythm, and English-term density. | No | `npx ai-agent-playbook writing naturalness-check <target-project> --path README.md --lang auto --engine auto --json` |
 | `writing naturalness-report <target>` | Check a bounded folder of Markdown or text files and summarize which files need prose review. | No | `npx ai-agent-playbook writing naturalness-report <target-project> --root docs --lang ko --engine auto --json` |
+| `writing fidelity-check <target>` | Compare before and after prose for protected facts, structure, Korean register, rhetoric, and change-rate evidence. | No | `npx ai-agent-playbook writing fidelity-check <target-project> --before docs/before.md --after docs/after.md --lang auto --json` |
 
-`writing naturalness-check` reads one target-relative text file and returns heuristic findings. `--engine auto` merges the built-in JavaScript checks with the optional Python engine when Python is available; `--engine js` forces the dependency-free fallback, and `--engine python` requests Python explicitly. It does not rewrite files, call a network service, judge authorship, or help bypass detectors. Use it before editing README text, translations, PR bodies, release notes, docs pages, and public summaries. Treat findings as review prompts; facts, command names, file paths, warnings, and release scope still need source comparison.
+`writing naturalness-check` reads one target-relative text file and returns heuristic findings. It uses repetition, density, and context instead of treating a single phrase as proof, and overlapping JavaScript/Python signals are merged. `--engine auto` uses both engines when available. It does not rewrite files, call a network service, judge authorship, help bypass detectors, or execute imperative text found inside the document.
 
 `writing naturalness-report` recursively scans Markdown, MDX, and text files under `--root` and caps the scan at `--max-files` files, up to 50. It applies the same read-only checks as `naturalness-check` but ignores fenced code blocks, inline code, shell commands, URLs, HTML-only badge lines, and path examples before judging prose. Use it for a translation folder or documentation batch, then open the highest-signal files one by one.
+
+`writing fidelity-check` compares two target-relative UTF-8 files without changing them. It reports character change rate and sentence touch ratio, normalized numbers, versions, URLs, commands, paths, code spans and fences, identifiers, warnings, document structure, Korean register movement, and removal of repeated rhetorical structures. Equivalent forms such as Korean ten-thousand notation and `10,000` are normalized. The result is evidence: change-rate values never reject an intentional rewrite by themselves.
 
 ## Managed files
 
@@ -344,10 +351,13 @@ Contract markdown supports frontmatter: `id`, `status`, `appliesTo`, `risk`, `ap
 | `diagnostics check <target>` | List likely local verification commands without running them. | No | `npx ai-agent-playbook diagnostics check <target-project> --json` |
 | `qa tui-check <capture-file>` | Check captured terminal output for overflow, CJK width, ANSI, and box alignment issues. | No | `npx ai-agent-playbook qa tui-check .\capture.txt --cols 100 --json` |
 | `qa image-diff <reference.png> <actual.png>` | Compare two PNG files and return changed pixels, diff ratio, similarity score, and hotspot grid without creating a diff image. | No | `npx ai-agent-playbook qa image-diff .\before.png .\after.png --threshold 0.01 --json` |
+| `qa ui-genericity-scan <target>` | Locate high-confidence static candidates for template-like UI treatment while excluding generated and local-reference content. | No | `npx ai-agent-playbook qa ui-genericity-scan <target-project> --root src --max-files 500 --json` |
 
 `diagnostics check` reports command candidates only. It does not run lint, tests, builds, or language servers.
 
 `qa image-diff` supports PNG only. It does not capture browsers, store baselines, create visual oracles, or write diff images.
+
+`qa ui-genericity-scan` reports semantic rule IDs for combined or repeated gradient text, glow, glass, pills, nested cards, radius/shadow stacks, decorative stats, hover transforms, kickers, and generic claims. Use `ui-review-ignore <rule-id>` only after rendered review confirms an intentional treatment. Findings are candidates, not defects, and a clean scan is not visual completion evidence.
 
 ## MCP tools for AI apps
 
@@ -373,7 +383,7 @@ The server exposes read-only tools for:
 - catalogs and layout: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_inspect`, `reference_adoption_queue`, `reference_capability_matrix`, `reference_adoption_plan`, `reference_adoption_status`, `reference_source_registry_preview`, `reference_source_registry_check`, `reference_source_registry_update_preview`, `reference_ledger_check`, `reference_ledger_update_preview`, `reference_ledger_decision_preview`, `playbook_layout`, `index_status`, `runtime_schema_check`, `evidence_locator_check`, `writing_naturalness_check`, `writing_naturalness_report`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `repo_graph_preview`, `write_gate_preview`, `canon_check`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules and project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
-- QA and deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`
+- QA and deep analysis: `qa_image_diff`, `qa_ui_genericity_scan`, `writing_fidelity_check`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`
 - forge automation reads: `automation_status`, `automation_plan_validate`, `forge_status`, `forge_bootstrap_plan`, `forge_sync_plan`
 
 The two forge plan tools require a target project and derive provider and effective capabilities from the same target-aware inspection used by their apply counterparts. A reviewed preview therefore cannot silently expand from an `auto`/static zero-operation plan into target-specific writes at apply time. `forge_sync_plan` and `forge_sync_apply` also require the reviewed `coordination` contract; they publish a roadmap and delivery-group issues while detailed tasks remain local, unless legacy task mode is explicitly selected.
@@ -469,7 +479,7 @@ For a new or existing target repository, this is the safest command order:
 npx ai-agent-playbook skills install --dry-run
 npx ai-agent-playbook skills install
 npx ai-agent-playbook bootstrap <target-project> --dry-run
-npx ai-agent-playbook bootstrap <target-project> --local-only
+npx ai-agent-playbook bootstrap <target-project> --local-only --preserve-agents
 npx ai-agent-playbook operator check <target-project> --json
 npx ai-agent-playbook operator preflight <target-project> --intent "planned change" --json > preflight.json
 npx ai-agent-playbook operator research <target-project> --query "project risks" --json

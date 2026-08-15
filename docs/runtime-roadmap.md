@@ -13,14 +13,14 @@ The default path stays simple: install skills, bootstrap `.ai-agent-playbook/` w
 
 ## Current Strengths
 
-- `bootstrap` creates a thin root `AGENTS.md` and a project-memory `.ai-agent-playbook/` folder without assuming a stack.
-- `bootstrap` preflights planned writes so existing-project conflicts do not leave partial playbook output behind.
+- `bootstrap` creates a thin root `AGENTS.md` when absent and a project-memory `.ai-agent-playbook/` folder without assuming a stack. Existing root policy requires an explicit preserve, managed-link, or guarded-replace mode.
+- `bootstrap` preflights planned writes, protected-file symlinks, and compare-and-swap snapshots so existing-project conflicts do not leave partial playbook output behind. Local-only `.gitignore` additions retain the existing byte and line-ending form.
 - `doctor` already checks minimum layout, root policy placement, local-only policy, template adaptation, worklog summary freshness, obsolete skill references, and fixed local paths.
 - `guides sync` adds missing guide templates without replacing local edits by default, and `guides sync --check --diff --json` reports stale guides with source and target hashes plus the first differing line.
 - `migrate path` previews and optionally applies the legacy `ai-playbook/` to `.ai-agent-playbook/` folder move, reference updates, and `.gitignore` transition.
 - `context`, `run`, `contracts`, `plan`, `worklog`, and `worklog summarize` keep path-scoped memory, working vocabulary, active evidence, contract notes, plans, detailed history, and monthly summaries in predictable paths.
 - `managed check`, `managed catalog`, `managed adopt`, `managed prune`, and `managed uninstall` use a project-level marker to inspect, catalog, adopt, or remove only selected unmodified files copied by this playbook.
-- `context status`, `run status`, `contracts check`, `contracts snapshot`, `operator check`, `operator search`, `operator preflight`, `operator delta`, `operator context`, `operator analyze`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, `skills lint`, `qa tui-check`, and `qa image-diff` provide operator-triggered diagnostics for path-scoped memory, run evidence, contract freshness, combined health review, local search, before/after evidence comparison, context preview, analysis signal aggregation, codebase mapping, playbook drift audit, preview-first managed cleanup, rule matching, verification command discovery, skill quality review, terminal/CJK layout evidence, and small PNG comparison.
+- `context status`, `run status`, `contracts check`, `contracts snapshot`, `operator check`, `operator search`, `operator preflight`, `operator delta`, `operator context`, `operator analyze`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, `skills lint`, `writing fidelity-check`, `qa tui-check`, `qa image-diff`, and `qa ui-genericity-scan` provide operator-triggered diagnostics for path-scoped memory, run evidence, contract freshness, combined health review, local search, before/after evidence comparison, context preview, analysis signal aggregation, codebase mapping, playbook drift audit, preview-first managed cleanup, rule matching, verification command discovery, skill quality review, writing fidelity, terminal/CJK layout evidence, small PNG comparison, and static UI review candidates.
 - `plan new --automation`, `forge`, and `automation` provide structured plans, capability-gated coordination, schema v2 ledgers, resumable ticks, controller verification, and preview-first scheduling with a local-only fallback.
 - `aapb mcp` exposes default read-only tools, including forge/automation status and plans. Separately gated forge coordination writes require server opt-in plus call-level apply and do not expose task execution or Git delivery.
 - `operator analyze --deep` adds explicit AST-grep, exact function-body clone, and TypeScript/JavaScript language-analysis signals while keeping the default `operator analyze` path light.
@@ -34,7 +34,7 @@ Keep improving these areas before making hooks part of any default install path:
 - Keep `doctor` check ids, severity, actionable messages, and strict/non-strict exit behavior stable.
 - Keep `doctor` warning categories separated into setup health, adaptation reminders, local-only policy, and public-safety findings.
 - Keep `bootstrap` dry-run first for existing projects and keep conflict output easy to copy into a migration note.
-- Keep `--force` scoped to reviewed overwrites; do not use broad force as a migration strategy.
+- Keep `--force` scoped to reviewed overwrites; root policy replacement requires the separate `--replace-agents` intent and broad force is not a migration strategy.
 - Maintain the guide manifest so `guides sync --check --json` can report stale guides without overwriting project-specific edits.
 - Use `guides sync --check --diff --json` before overwriting stale guide files so local edits stay visible.
 - Use `migrate path --json` before applying legacy folder moves so path changes stay explicit and reversible by normal Git review.
@@ -109,7 +109,7 @@ These can be implemented before a full plugin exists:
 
 - Verify in real projects whether rendered adapter settings reduce setup mistakes without adding noise.
 - Verify in real projects whether `migrate path --json` catches common legacy path references without touching unrelated files.
-- Verify whether the managed marker, managed catalog, selected managed prune, combined operator check, local search, preflight/delta evidence comparison, contract hash snapshots, path-scoped context preview, analysis signal aggregation, codebase map summary, playbook drift audit, preview-first managed cleanup, rule matching, diagnostics command discovery, skill linting, TUI layout checks, and PNG image comparison reduce review misses before promoting any hook-driven diagnostics.
+- Verify whether the managed marker, managed catalog, selected managed prune, combined operator check, local search, preflight/delta and writing-fidelity evidence comparison, contract hash snapshots, path-scoped context preview, analysis signal aggregation, codebase map summary, playbook drift audit, preview-first managed cleanup, rule matching, diagnostics command discovery, skill linting, TUI layout checks, PNG image comparison, and generic UI candidate scan reduce review misses before promoting any hook-driven diagnostics.
 - Verify whether MCP tool use reduces command memorization without hiding decisions that should remain visible in `.ai-agent-playbook/`.
 - Verify remote write behavior only in disposable GitHub and Gitea repositories, and keep fake-transport or local results distinct from live remote evidence.
 - Candidates still requiring caution: continuation, blocking feedback, and any automatic doctor execution after cost and noise are proven acceptable.

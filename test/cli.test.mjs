@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, readdir, rm, stat, utimes, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, stat, symlink, utimes, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import os from 'node:os';
@@ -6,6 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runCli } from '../src/cli.mjs';
+import { bootstrapProject } from '../src/harness/bootstrap.mjs';
 import { validateSourceRegistry } from '../src/runtime/schemas.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
@@ -327,7 +328,7 @@ test('structured playbook commands expose layout, catalog, index, and write-gate
   const catalogReport = JSON.parse(catalog.out());
   assert.equal(catalogReport.taxonomyKind, 'capability');
   assert.equal(catalogReport.summary.categories, 13);
-  assert.equal(catalogReport.summary.skills, 93);
+  assert.equal(catalogReport.summary.skills, 94);
 
   const catalogCheck = capture(target);
   assert.equal(await runCli(['catalog', 'check', '--json'], catalogCheck), 0);
@@ -349,6 +350,7 @@ test('structured playbook commands expose layout, catalog, index, and write-gate
     'brand-identity-system',
     'design-reference-analysis',
     'image-to-code-handoff',
+    'generic-ui-review',
     'interactive-media-3d-review',
     'design-system-handoff'
   ]) {
@@ -1767,8 +1769,295 @@ test('bootstrap conflict preflight refuses existing AGENTS without partial write
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], checked), 2);
   assert.match(checked.err(), /Conflicts:/);
   assert.match(checked.err(), /AGENTS\.md/);
+  assert.match(checked.err(), /--preserve-agents/);
   assert.equal(existsSync(path.join(target, '.ai-agent-playbook')), false);
   assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('writing naturalness uses repetition and merges overlapping JavaScript and Python signals', async () => {
+  const target = await tempRepo('writing repetition-한글-');
+  await mkdir(path.join(target, 'docs'), { recursive: true });
+  await writeFile(path.join(target, 'docs', 'single.md'), '이를 통해 한 가지 결과를 설명합니다. 나머지 문장은 구체적인 동작을 기록합니다.\n');
+  await writeFile(path.join(target, 'docs', 'repeated.md'), [
+    '이를 통해 첫 번째 결과를 설명할 수 있습니다.',
+    '이를 통해 두 번째 결과를 설명할 수 있습니다.',
+    ''
+  ].join('\n'));
+
+  const single = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-check', '.', '--path', 'docs/single.md', '--lang', 'ko', '--engine', 'js', '--json'], single), 0);
+  assert.equal(JSON.parse(single.out()).findings.some((finding) => finding.id === 'writing.translationese.ko'), false);
+
+  const repeated = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-check', '.', '--path', 'docs/repeated.md', '--lang', 'ko', '--engine', 'auto', '--json'], repeated), 0);
+  const report = JSON.parse(repeated.out());
+  assert.equal(report.findings.some((finding) => finding.id === 'writing.translationese.ko'), true);
+  if (report.engines.used.includes('python')) {
+    const overlap = report.findings.filter((finding) => /translationese|connector-template/.test(finding.id));
+    assert.equal(overlap.length, 1);
+    assert.deepEqual(overlap[0].engines.sort(), ['js', 'python']);
+  }
+  await cleanup(target);
+});
+
+test('writing fidelity-check compares protected facts, register, rhetoric, and change metrics without writing files', async () => {
+  const target = await tempRepo('writing fidelity-공백-한글-');
+  await mkdir(path.join(target, 'docs'), { recursive: true });
+  const beforePath = path.join(target, 'docs', 'before.md');
+  const afterPath = path.join(target, 'docs', 'after.md');
+  await writeFile(beforePath, [
+    '# 배포 검토',
+    '',
+    '이 문서는 배포 조건을 설명합니다. 검증 결과를 기록합니다. 실패 시 이전 상태로 복구합니다.',
+    '속도가 아니라 안정성을 선택한다. 장식이 아니라 실제 동작을 선택한다.',
+    '버전 `0.5.11`은 https://example.com/v1 문서를 사용합니다.',
+    'npm publish --access public',
+    '파일은 src/api/client.ts에 있고 `ForgeAPI.fetch`를 호출합니다.',
+    '',
+    '```ts',
+    'ForgeAPI.fetch("v1");',
+    '```',
+    '',
+    '> WARNING: 배포 키를 확인합니다.',
+    ''
+  ].join('\n'));
+  await writeFile(afterPath, [
+    '# 배포 검토',
+    '',
+    '이 문서는 배포 조건을 설명한다. 검증 결과를 기록한다. 실패하면 새 상태를 유지한다.',
+    '속도와 안정성을 함께 확인한다. 장식보다 실제 동작을 먼저 본다.',
+    '버전 `0.5.12`는 https://example.com/v2 문서를 사용한다.',
+    'npm publish --tag next',
+    '파일은 src/api/release.ts에 있고 `ReleaseAPI.send`를 호출한다.',
+    '',
+    '```ts',
+    'ReleaseAPI.send("v2");',
+    '```',
+    '',
+    '> WARNING: 배포 채널을 확인한다.',
+    ''
+  ].join('\n'));
+  const beforeBytes = await readFile(beforePath);
+  const afterBytes = await readFile(afterPath);
+
+  const output = capture(target);
+  assert.equal(await runCli(['writing', 'fidelity-check', '.', '--before', 'docs/before.md', '--after', 'docs/after.md', '--lang', 'ko', '--json'], output), 0);
+  const report = JSON.parse(output.out());
+  assert.equal(report.kind, 'runtime.writing-fidelity-check');
+  assert.equal(report.status, 'review');
+  assert.equal(report.reviewRequired, true);
+  assert.equal(report.mode.evidenceOnly, true);
+  assert.equal(report.metrics.characterChangeRate > 0, true);
+  assert.equal(report.metrics.sentenceTouchRatio > 0, true);
+  assert.deepEqual(report.changes.versions.removed, ['0.5.11']);
+  assert.deepEqual(report.changes.versions.added, ['0.5.12']);
+  assert.equal(report.changes.urls.changed, true);
+  assert.equal(report.changes.commands.changed, true);
+  assert.equal(report.changes.paths.changed, true);
+  assert.equal(report.changes.codeSpans.changed, true);
+  assert.equal(report.changes.codeFences.changed, true);
+  assert.equal(report.changes.identifiers.changed, true);
+  assert.equal(report.register.before, 'formal');
+  assert.equal(report.register.after, 'plain');
+  assert.equal(report.register.shifted, true);
+  assert.equal(report.rhetoric.annihilated.includes('negative-positive-pair'), true);
+  assert.deepEqual(await readFile(beforePath), beforeBytes);
+  assert.deepEqual(await readFile(afterPath), afterBytes);
+  await cleanup(target);
+});
+
+test('writing fidelity-check normalizes equivalent numbers and treats change rates as evidence only', async () => {
+  const target = await tempRepo('writing fidelity evidence-한글-');
+  await mkdir(path.join(target, 'docs'), { recursive: true });
+  await writeFile(path.join(target, 'docs', 'before.md'), '처리 한도는 1만 건입니다. 이 값은 운영 기준입니다.\n');
+  await writeFile(path.join(target, 'docs', 'after.md'), '운영 기준에 따라 처리 한도는 10,000건입니다.\n');
+  await writeFile(path.join(target, 'docs', 'same.md'), '같은 문서입니다.\n');
+  await writeFile(path.join(target, 'docs', 'rewrite-a.md'), '첫 문장은 짧다. 둘째 문장도 짧다.\n');
+  await writeFile(path.join(target, 'docs', 'rewrite-b.md'), '전혀 다른 설명을 길게 작성하지만 보호할 수치나 명령은 넣지 않는다.\n');
+
+  const equivalent = capture(target);
+  assert.equal(await runCli(['writing', 'fidelity-check', '.', '--before', 'docs/before.md', '--after', 'docs/after.md', '--lang', 'ko', '--json'], equivalent), 0);
+  const equivalentReport = JSON.parse(equivalent.out());
+  assert.equal(equivalentReport.changes.numbers.changed, false);
+  assert.equal(equivalentReport.status, 'pass');
+
+  const unchanged = capture(target);
+  assert.equal(await runCli(['writing', 'fidelity-check', '.', '--before', 'docs/same.md', '--after', 'docs/same.md', '--json'], unchanged), 0);
+  assert.equal(JSON.parse(unchanged.out()).status, 'not-applicable');
+
+  const rewrite = capture(target);
+  assert.equal(await runCli(['writing', 'fidelity-check', '.', '--before', 'docs/rewrite-a.md', '--after', 'docs/rewrite-b.md', '--lang', 'ko', '--json'], rewrite), 0);
+  const rewriteReport = JSON.parse(rewrite.out());
+  assert.equal(rewriteReport.metrics.characterChangeRate > 0.8, true);
+  assert.equal(rewriteReport.reviewRequired, false);
+  assert.equal(rewriteReport.status, 'pass');
+
+  const traversal = capture(target);
+  assert.equal(await runCli(['writing', 'fidelity-check', '.', '--before', '../before.md', '--after', 'docs/after.md', '--json'], traversal), 1);
+  assert.equal(JSON.parse(traversal.out()).conflicts.some((item) => item.id === 'writing-fidelity.before-boundary'), true);
+  await cleanup(target);
+});
+
+test('bootstrap preserve mode keeps AGENTS bytes and appends only the local playbook ignore entry', async () => {
+  const target = await tempRepo('bootstrap preserve-한글-');
+  const agents = Buffer.from('# Product boundary\r\n\r\nKeep this policy.\r\n', 'utf8');
+  const gitignore = Buffer.concat([
+    Buffer.from([0xef, 0xbb, 0xbf]),
+    Buffer.from('# Existing order\r\ndist/\r\n', 'utf8')
+  ]);
+  await writeFile(path.join(target, 'AGENTS.md'), agents);
+  await writeFile(path.join(target, '.gitignore'), gitignore);
+
+  const output = capture(target);
+  assert.equal(await runCli(['bootstrap', '.', '--local-only', '--preserve-agents', '--json'], output), 0);
+  const report = JSON.parse(output.out());
+  assert.equal(report.agentsMode, 'preserved');
+  assert.deepEqual(await readFile(path.join(target, 'AGENTS.md')), agents);
+  const updatedIgnore = await readFile(path.join(target, '.gitignore'));
+  assert.deepEqual(updatedIgnore.subarray(0, gitignore.length), gitignore);
+  assert.equal(updatedIgnore.toString('utf8').endsWith('.ai-agent-playbook/\r\n'), true);
+  const manifest = JSON.parse(await readFile(path.join(target, '.ai-agent-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
+  assert.equal(manifest.agentsMode, 'preserved');
+  assert.equal(manifest.files.some((file) => file.path === 'AGENTS.md'), false);
+
+  assert.equal(await runCli(['bootstrap', '.', '--local-only', '--preserve-agents', '--force'], capture(target)), 0);
+  const ignoreText = (await readFile(path.join(target, '.gitignore'))).toString('utf8');
+  assert.equal((ignoreText.match(/\.ai-agent-playbook\//g) ?? []).length, 1);
+
+  const doctor = capture(target);
+  assert.equal(await runCli(['doctor', '.', '--json'], doctor), 0);
+  const doctorReport = JSON.parse(doctor.out());
+  assert.equal(doctorReport.checks.find((check) => check.id === 'root-agents.points-to-playbook').level, 'pass');
+  await cleanup(target);
+});
+
+test('bootstrap preserves a missing final newline and links only a correctly ordered reading list', async () => {
+  const target = await tempRepo('bootstrap byte-order-한글-');
+  const agentsPath = path.join(target, 'AGENTS.md');
+  const ignorePath = path.join(target, '.gitignore');
+  await writeFile(agentsPath, [
+    '# Product boundary',
+    '',
+    'Read .ai-agent-playbook/policy/GIT.md, .ai-agent-playbook/policy/SKILLS.md, .ai-agent-playbook/CURRENT.md, then .ai-agent-playbook/START_HERE.md.'
+  ].join('\r\n'));
+  const ignore = Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('dist/\r\ncache/', 'utf8')]);
+  await writeFile(ignorePath, ignore);
+
+  assert.equal(await runCli(['bootstrap', '.', '--local-only', '--link-agents'], capture(target)), 0);
+  const linked = await readFile(agentsPath, 'utf8');
+  assert.equal((linked.match(/ai-agent-playbook:link:start/g) ?? []).length, 1);
+  const updatedIgnore = await readFile(ignorePath);
+  assert.deepEqual(updatedIgnore.subarray(0, ignore.length), ignore);
+  assert.equal(updatedIgnore.toString('utf8').endsWith('.ai-agent-playbook/'), true);
+  assert.equal(updatedIgnore.toString('utf8').endsWith('\r\n'), false);
+  await cleanup(target);
+
+  const ordered = await tempRepo('bootstrap ordered-links-한글-');
+  await writeFile(path.join(ordered, 'AGENTS.md'), [
+    '# Product boundary',
+    '',
+    'Read these files in order:',
+    '1. `.ai-agent-playbook/START_HERE.md`',
+    '2. `.ai-agent-playbook/CURRENT.md`',
+    '3. `.ai-agent-playbook/questions.md`',
+    '4. `.ai-agent-playbook/policy/SKILLS.md`',
+    '5. `.ai-agent-playbook/policy/GIT.md`',
+    ''
+  ].join('\n'));
+  const orderedOutput = capture(ordered);
+  assert.equal(await runCli(['bootstrap', '.', '--link-agents', '--json'], orderedOutput), 0);
+  const orderedReport = JSON.parse(orderedOutput.out());
+  assert.equal(orderedReport.agentsMode, 'preserved');
+  assert.deepEqual(orderedReport.preservedFiles, ['AGENTS.md']);
+  assert.doesNotMatch(await readFile(path.join(ordered, 'AGENTS.md'), 'utf8'), /ai-agent-playbook:link:start/);
+  await cleanup(ordered);
+});
+
+test('bootstrap link mode owns only its marker block and uninstall restores user AGENTS content', async () => {
+  const target = await tempRepo('bootstrap link-한글-');
+  const original = '# Product rules\n\nNever replace this section.\n';
+  await writeFile(path.join(target, 'AGENTS.md'), original);
+
+  assert.equal(await runCli(['bootstrap', '.', '--link-agents'], capture(target)), 0);
+  const linked = await readFile(path.join(target, 'AGENTS.md'), 'utf8');
+  assert.equal(linked.startsWith(original), true);
+  assert.equal((linked.match(/ai-agent-playbook:link:start/g) ?? []).length, 1);
+  assert.match(linked, /\.ai-agent-playbook\/START_HERE\.md/);
+
+  await writeFile(path.join(target, 'AGENTS.md'), linked.replace('# Product rules', '# Updated product rules'));
+  const checked = capture(target);
+  assert.equal(await runCli(['managed', 'check', '.', '--json'], checked), 0);
+  assert.equal(JSON.parse(checked.out()).files.find((file) => file.path === 'AGENTS.md').status, 'present');
+
+  assert.equal(await runCli(['bootstrap', '.', '--link-agents', '--force'], capture(target)), 0);
+  const relinked = await readFile(path.join(target, 'AGENTS.md'), 'utf8');
+  assert.equal((relinked.match(/ai-agent-playbook:link:start/g) ?? []).length, 1);
+
+  const uninstall = capture(target);
+  assert.equal(await runCli(['managed', 'uninstall', '.', '--apply', '--json'], uninstall), 0);
+  assert.equal(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), '# Updated product rules\n\nNever replace this section.\n');
+  await cleanup(target);
+});
+
+test('bootstrap replace mode requires both replace-agents and force', async () => {
+  const target = await tempRepo('bootstrap replace-한글-');
+  await writeFile(path.join(target, 'AGENTS.md'), '# Existing policy\n');
+
+  assert.equal(await runCli(['bootstrap', '.', '--force'], capture(target)), 2);
+  assert.equal(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), '# Existing policy\n');
+  assert.equal(await runCli(['bootstrap', '.', '--replace-agents'], capture(target)), 2);
+  assert.equal(await runCli(['bootstrap', '.', '--replace-agents', '--force'], capture(target)), 0);
+  assert.match(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), /\.ai-agent-playbook\//);
+  const manifest = JSON.parse(await readFile(path.join(target, '.ai-agent-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
+  assert.equal(manifest.agentsMode, 'replaced');
+  await cleanup(target);
+});
+
+test('bootstrap rejects ambiguous agent modes, profile merging, malformed markers, and protected-file races', async () => {
+  const target = await tempRepo('bootstrap preflight-한글-');
+  await writeFile(path.join(target, 'AGENTS.md'), '# Existing\n<!-- ai-agent-playbook:link:start -->\n');
+  const before = await listRelativeFiles(target);
+
+  assert.equal(await runCli(['bootstrap', '.', '--preserve-agents', '--link-agents'], capture(target)), 2);
+  assert.equal(await runCli(['bootstrap', '.', '--profile', 'react-vite-fsd', '--preserve-agents'], capture(target)), 2);
+  assert.equal(await runCli(['bootstrap', '.', '--link-agents'], capture(target)), 2);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+
+  const raced = await tempRepo('bootstrap race-한글-');
+  const racedResult = await bootstrapProject({
+    repoRoot,
+    target: raced,
+    localOnly: true,
+    beforeApply: async () => writeFile(path.join(raced, '.gitignore'), '# changed after preview\n')
+  });
+  assert.equal(racedResult.ok, false);
+  assert.match(racedResult.conflicts.join('\n'), /changed after bootstrap preflight/);
+  assert.equal(existsSync(path.join(raced, '.ai-agent-playbook')), false);
+  await cleanup(raced);
+});
+
+test('bootstrap refuses symlinked protected files before writing', async (t) => {
+  const target = await tempRepo('bootstrap symlink-한글-');
+  const outside = path.join(await tempRepo('bootstrap symlink outside-'), 'AGENTS.md');
+  await writeFile(outside, '# Outside\n');
+  try {
+    await symlink(outside, path.join(target, 'AGENTS.md'), 'file');
+  } catch (error) {
+    if (error.code === 'EPERM') {
+      t.skip('File symlink creation is unavailable on this Windows host.');
+      await cleanup(path.dirname(outside));
+      await cleanup(target);
+      return;
+    }
+    throw error;
+  }
+  const result = await bootstrapProject({ repoRoot, target, preserveAgents: true });
+  assert.equal(result.ok, false);
+  assert.match(result.conflicts.join('\n'), /Refusing to modify symlinked AGENTS\.md/);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook')), false);
+  await cleanup(path.dirname(outside));
   await cleanup(target);
 });
 

@@ -85,10 +85,12 @@ npx ai-agent-playbook bootstrap <target-project> --local-only --dry-run
 미리 보기가 맞을 때만 적용합니다.
 
 ```powershell
-npx ai-agent-playbook bootstrap <target-project> --local-only
+npx ai-agent-playbook bootstrap <target-project> --local-only --preserve-agents
 ```
 
-프로젝트에서 `.ai-agent-playbook/`을 커밋해야 한다면 `--local-only`를 빼고 실행합니다.
+저장소에 제품별 루트 지침이 이미 있으면 `--preserve-agents`를 사용합니다. 루트 파일에 짧은 playbook 읽기 순서 관리 블록을 추가해야 할 때만 `--link-agents`를 사용합니다. 전체 교체에는 `--replace-agents --force`가 모두 필요하며 `--force`만으로 기존 `AGENTS.md`를 바꾸지 않습니다. 명시적 모드가 없거나 marker가 잘못됐거나 사전 점검 뒤 보호 파일이 바뀌면 모든 쓰기 전에 중단합니다.
+
+프로젝트에서 `.ai-agent-playbook/`을 커밋해야 한다면 `--local-only`를 빼고 실행합니다. 기존 `.gitignore`의 byte, BOM, 줄바꿈, 순서, 마지막 개행 형식은 유지하고 playbook ignore 항목이 없을 때만 추가합니다.
 
 ## 6. 위험한 수정 전후 비교
 

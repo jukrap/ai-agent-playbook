@@ -2,7 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readFile } from 'node:fs/promises';
 import { checkAdapterReadiness, renderAdapterConfig } from './adapter-readiness.mjs';
-import { analyzeOperator, auditOperator, checkDiagnostics, checkImageDiff, checkOperator, checkRules, checkTuiCapture, deltaOperator, gcOperator, mapOperator, preflightOperator, previewOperatorContext, researchOperator, searchOperator } from './operator-diagnostics.mjs';
+import { analyzeOperator, auditOperator, checkDiagnostics, checkImageDiff, checkOperator, checkRules, checkTuiCapture, checkUiGenericity, deltaOperator, gcOperator, mapOperator, preflightOperator, previewOperatorContext, researchOperator, searchOperator } from './operator-diagnostics.mjs';
 import { lintSkills, runSkillsLifecycle } from './skills-lifecycle.mjs';
 import { runMcpServer } from './mcp-server.mjs';
 import { createAutomationPlan, validateAutomationPlan } from './automation/plan-manifest.mjs';
@@ -47,6 +47,7 @@ import {
   checkRuntimeSchema,
   checkWritingNaturalness,
   checkWritingNaturalnessReport,
+  checkWritingFidelity,
   checkReferenceAdoptionLedger,
   checkReferenceSourceRegistry,
   catalogManagedManifest,
@@ -133,11 +134,24 @@ export async function runCli(argv, io = {}) {
         profile: parsed.flags.profile,
         localOnly: Boolean(parsed.flags['local-only']),
         dryRun: Boolean(parsed.flags['dry-run']),
-        force: Boolean(parsed.flags.force)
+        force: Boolean(parsed.flags.force),
+        preserveAgents: Boolean(parsed.flags['preserve-agents']),
+        linkAgents: Boolean(parsed.flags['link-agents']),
+        replaceAgents: Boolean(parsed.flags['replace-agents'])
       });
-      printOperations(stdout, result.operations);
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        printOperations(stdout, result.operations);
+        for (const warning of result.warnings ?? []) write(stderr, `Warning: ${warning}\n`);
+      }
       if (!result.ok) {
-        write(stderr, `Conflicts:\n${result.conflicts.map((item) => `- ${item}`).join('\n')}\nUse --force to overwrite.\n`);
+        if (!parsed.flags.json) {
+          write(stderr, `Conflicts:\n${result.conflicts.map((item) => `- ${item}`).join('\n')}\n`);
+          if (result.nextSteps?.length) {
+            write(stderr, `Choose one explicit resolution:\n${result.nextSteps.map((item) => `- ${item}`).join('\n')}\n`);
+          }
+        }
         return 2;
       }
       return 0;
@@ -1635,6 +1649,44 @@ export async function runCli(argv, io = {}) {
       return result.ok ? 0 : 1;
     }
 
+    if (command === 'writing' && subcommand === 'fidelity-check') {
+      const result = await checkWritingFidelity({
+        target: resolveTarget(cwd, targetArg),
+        before: parsed.flags.before,
+        after: parsed.flags.after,
+        lang: parsed.flags.lang ?? 'auto'
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Writing fidelity: ${result.status}; character change ${Math.round(result.metrics.characterChangeRate * 100)}%; sentence touch ${Math.round(result.metrics.sentenceTouchRatio * 100)}%\n`);
+        for (const reason of result.reviewReasons) write(stdout, `[REVIEW] ${reason}\n`);
+        for (const conflict of result.conflicts) write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        write(stdout, `${result.guidance}\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'qa' && subcommand === 'ui-genericity-scan') {
+      const result = await checkUiGenericity({
+        target: resolveTarget(cwd, targetArg),
+        root: typeof parsed.flags.root === 'string' ? parsed.flags.root : undefined,
+        maxFiles: parsed.flags['max-files']
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `UI genericity candidates: ${result.summary.findings} in ${result.summary.scannedFiles} scanned file(s)\n`);
+        for (const finding of result.findings) {
+          write(stdout, `[REVIEW] ${finding.ruleId} ${finding.path}:${finding.line} — ${finding.message}\n`);
+        }
+        for (const warning of result.warnings) write(stdout, `[WARN] ${warning.message}\n`);
+        for (const conflict of result.conflicts) write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        write(stdout, `${result.guidance}\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
     if (command === 'adapter' && subcommand === 'check') {
       const result = await checkAdapterReadiness({
         repoRoot: root,
@@ -2364,6 +2416,7 @@ function needsValue(key) {
     'intent',
     'advisory',
     'before',
+    'after',
     'contract',
     'threshold',
     'max-results',
@@ -2419,11 +2472,14 @@ const STRICT_BOOLEAN_FLAGS = new Set([
   'force-unmanaged',
   'json',
   'local-only',
+  'link-agents',
   'no-git',
   'no-interactive',
   'no-remote',
   'offline',
+  'preserve-agents',
   'remote-read-only',
+  'replace-agents',
   'reset-attempts'
 ]);
 
@@ -3214,7 +3270,7 @@ function helpText() {
 
 Usage:
   aapb --version
-  aapb bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]
+  aapb bootstrap <target> [--profile <name>] [--local-only] [--preserve-agents | --link-agents | --replace-agents --force] [--dry-run] [--json]
   aapb mcp [--enable-write-tools] [--enable-forge-write-tools]
   aapb doctor <target> [--strict] [--json]
   aapb doctor <target> --reminder [--json]
@@ -3266,6 +3322,7 @@ Usage:
   aapb evidence locator-check <target> --path <json-or-md> [--json]
   aapb writing naturalness-check <target> --path <file> [--lang auto|ko|en] [--engine auto|js|python] [--json]
   aapb writing naturalness-report <target> [--root <dir>] [--max-files N] [--lang auto|ko|en] [--engine auto|js|python] [--json]
+  aapb writing fidelity-check <target> --before <path> --after <path> [--lang auto|ko|en] [--json]
   aapb index build <target> [--apply] [--json]
   aapb index status <target> [--json]
   aapb index search <target> --query <text> [--max-results N] [--json]
@@ -3310,6 +3367,7 @@ Usage:
   aapb diagnostics check <target> [--json]
   aapb qa tui-check <capture-file> [--cols N] [--json]
   aapb qa image-diff <reference.png> <actual.png> [--threshold N] [--json]
+  aapb qa ui-genericity-scan <target> [--root <dir>] [--max-files N] [--json]
   aapb adapter config <target> --adapter codex|claude-code [--json]
   aapb adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]
   aapb plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]

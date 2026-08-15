@@ -30,6 +30,7 @@ const COMMON_PATTERNS = [
     lang: 'en',
     category: 'tone',
     severity: 'medium',
+    minimum: 2,
     pattern: /\b(crucial|pivotal|transformative|game[- ]changing|seamless|robust|comprehensive|cutting[- ]edge|powerful|unlock|elevate|leverage)\b/gi,
     message: 'Promotional or generic intensity words may make the text feel less specific.',
     suggestion: 'Replace broad praise with concrete behavior, evidence, or a plainer verb.'
@@ -39,6 +40,7 @@ const COMMON_PATTERNS = [
     lang: 'ko',
     category: 'tone',
     severity: 'medium',
+    minimum: 2,
     pattern: /(강력한|혁신적인|완벽한|압도적인|극대화|최적의|획기적인|매끄러운|종합적인|탁월한)/g,
     message: '과한 강조어가 반복되면 홍보문이나 AI식 요약처럼 보일 수 있습니다.',
     suggestion: '주장보다 실제 기능, 한계, 조건, 검증 근거를 짧게 적으세요.'
@@ -48,6 +50,7 @@ const COMMON_PATTERNS = [
     lang: 'en',
     category: 'naturalness',
     severity: 'medium',
+    minimum: 2,
     pattern: /\b(in today's (?:fast[- ]paced|digital) (?:world|landscape)|serves as a testament|it is important to note|delve into|tapestry|realm|landscape|underscores|highlights the importance)\b/gi,
     message: 'Common AI-writing phrases are present.',
     suggestion: 'Use the direct subject and the specific claim instead of a broad framing phrase.'
@@ -57,6 +60,7 @@ const COMMON_PATTERNS = [
     lang: 'en',
     category: 'rhythm',
     severity: 'low',
+    minimum: 2,
     pattern: /\bnot only\b[\s\S]{0,120}\bbut also\b/gi,
     message: 'The “not only ... but also” construction can sound formulaic when overused.',
     suggestion: 'Split the two claims or keep only the stronger one.'
@@ -66,6 +70,7 @@ const COMMON_PATTERNS = [
     lang: 'en',
     category: 'sentence-shape',
     severity: 'low',
+    minimum: 2,
     pattern: /,\s+(highlighting|underscoring|ensuring|reflecting|showcasing|enabling|allowing)\b/gi,
     message: 'Comma-led participle clauses can pad sentences without adding precision.',
     suggestion: 'Turn the clause into a concrete verb, or remove it when the meaning is already clear.'
@@ -75,6 +80,7 @@ const COMMON_PATTERNS = [
     lang: 'ko',
     category: 'translationese',
     severity: 'medium',
+    minimum: 2,
     pattern: /(중요한 역할을 합니다|기여합니다|이를 통해|뿐만 아니라|바탕으로|관점에서|측면에서|것으로 보입니다|할 수 있습니다)/g,
     message: '한국어 문서에서 자주 보이는 번역투/템플릿 표현이 있습니다.',
     suggestion: '주어와 행동을 앞에 두고, 조건과 결과를 더 짧은 문장으로 나누세요.'
@@ -84,6 +90,7 @@ const COMMON_PATTERNS = [
     lang: 'ko',
     category: 'sentence-shape',
     severity: 'low',
+    minimum: 2,
     pattern: /(제공됩니다|수행됩니다|진행됩니다|구성됩니다|처리됩니다|되어집니다)/g,
     message: '수동형이나 명사화가 많으면 문장이 멀어지고 딱딱해집니다.',
     suggestion: '가능하면 누가 무엇을 하는지 드러나는 능동형으로 바꾸세요.'
@@ -179,7 +186,7 @@ export async function checkWritingNaturalness(options) {
       });
     }
   }
-  findings = findings.slice(0, 40);
+  findings = deduplicateFindings(findings).slice(0, 40);
 
   return {
     schemaVersion: '1',
@@ -344,32 +351,77 @@ function detectLanguage(text) {
 }
 
 function patternFindings(text, language) {
-  const lines = text.split(/\r?\n/);
   const findings = [];
   for (const rule of COMMON_PATTERNS.filter((item) => item.lang === language)) {
-    const evidence = [];
-    for (let lineIndex = 0; lineIndex < lines.length && evidence.length < 5; lineIndex += 1) {
-      const line = lines[lineIndex];
-      rule.pattern.lastIndex = 0;
-      if (rule.pattern.test(line)) {
-        evidence.push({
-          line: lineIndex + 1,
-          excerpt: compactExcerpt(line)
-        });
-      }
-    }
-    if (evidence.length) {
+    const matcher = new RegExp(rule.pattern.source, rule.pattern.flags.includes('g') ? rule.pattern.flags : `${rule.pattern.flags}g`);
+    const matches = [...text.matchAll(matcher)];
+    if (matches.length >= (rule.minimum ?? 1)) {
+      const evidence = matches.slice(0, 5).map((match) => ({
+        line: lineNumberAt(text, match.index ?? 0),
+        excerpt: compactExcerpt(lineTextAt(text, match.index ?? 0))
+      }));
       findings.push({
         id: rule.id,
         category: rule.category,
         severity: rule.severity,
-        message: evidence.length > 1 ? `${rule.message} (${evidence.length} occurrences shown)` : rule.message,
+        message: `${rule.message} (${matches.length} occurrences)`,
         evidence,
         suggestion: rule.suggestion
       });
     }
   }
   return findings;
+}
+
+function deduplicateFindings(findings) {
+  const merged = [];
+  for (const finding of findings) {
+    const group = semanticFindingGroup(finding.id);
+    const lines = new Set((finding.evidence ?? []).map((item) => item.line).filter(Number.isInteger));
+    const duplicate = merged.find((item) => item.group === group && [...lines].some((line) => item.lines.has(line)));
+    if (!duplicate) {
+      merged.push({
+        finding: { ...finding, engines: [finding.engine] },
+        group,
+        lines
+      });
+      continue;
+    }
+    if (!duplicate.finding.engines.includes(finding.engine)) duplicate.finding.engines.push(finding.engine);
+    duplicate.finding.evidence = uniqueEvidence([...(duplicate.finding.evidence ?? []), ...(finding.evidence ?? [])]).slice(0, 5);
+  }
+  return merged.map((item) => item.finding);
+}
+
+function semanticFindingGroup(id) {
+  const value = String(id);
+  if (/(?:connector|translationese|repeated-template)/.test(value)) return 'ko-template-phrasing';
+  if (/(?:passive|nominalization)/.test(value)) return 'ko-sentence-shape';
+  if (/uniform/.test(value)) return 'uniform-rhythm';
+  if (/english-(?:term-)?density/.test(value)) return 'ko-english-density';
+  if (/(?:promotional-intensity|ai-register|ai-phrase)/.test(value)) return 'generic-register';
+  if (/participle-padding/.test(value)) return 'participle-padding';
+  return value;
+}
+
+function uniqueEvidence(evidence) {
+  const seen = new Set();
+  return evidence.filter((item) => {
+    const key = `${item.line ?? ''}:${item.excerpt ?? ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function lineNumberAt(text, index) {
+  return text.slice(0, index).split(/\r?\n/).length;
+}
+
+function lineTextAt(text, index) {
+  const start = Math.max(text.lastIndexOf('\n', index - 1) + 1, 0);
+  const end = text.indexOf('\n', index);
+  return text.slice(start, end === -1 ? text.length : end);
 }
 
 function shapeFindings(text, language) {

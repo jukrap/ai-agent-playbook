@@ -134,12 +134,15 @@ Frontend quality skills separate user-visible polish from state/data correctness
 - `frontend/style-policy-selection`: repository styling method selection across design systems, CSS/classes, utility classes, and inline styles.
 - `frontend/frontend-state-data-flow`: state ownership, server/client cache behavior, data fetching, optimistic updates, URL state, loading/error/empty states, and stale UI bugs.
 - `frontend/frontend-accessibility-review`: keyboard access, focus management, semantics, forms, dialogs, menus, announcements, contrast, reduced motion, and accessible interaction states.
+- `frontend/generic-ui-review`: product-context and rendered-evidence review of excessive cards, pills, gradients, glow, glass, decorative stats, repeated kickers, and template-like visual treatment.
 - `frontend/ui-polish`: visible UI quality, responsive layout, accessibility states, visual hierarchy, interaction feedback, and production polish.
 - `frontend/visual-regression-qa`: screenshots, responsive breakpoints, layout overflow, clipping, visual diffs, text fit, canvas/media rendering, and browser-rendered regressions.
 - `frontend/interactive-media-3d-review`: Three.js, WebGL, canvas, SVG, chart, map, animation, video, media-heavy interaction, asset loading, nonblank rendering, and responsive scene verification.
 - `frontend/design-system-handoff`: Figma, brand, design-token, component-library, theme, variant, and visual-spec handoff into repository-native UI primitives.
 
 Framework-specific details belong in references or project-local playbooks. The primary skills should work for React, Vue, Svelte, Angular, server-rendered pages, lighter DOM-first frontends, canvas/media tools, and 3D or chart-heavy interfaces.
+
+`generic-ui-review` identifies candidates and protects intentional brand expression; `ui-polish` finishes hierarchy, spacing, responsiveness, and interaction quality after direction is known. Design-direction and reference-analysis skills establish intent and evidence. `cleanup-ai-slop` remains a source-code cleanup skill and routes visual-template concerns here instead of treating them as code-style defects.
 
 `quality/ui-style-policy` remains only as a compatibility route for older prompts and project docs. New project guidance should point to `frontend/style-policy-selection`.
 
@@ -172,7 +175,7 @@ Data and documentation skills separate pipeline reliability, reporting correctne
 - `project/issue-planning-triage`: issue/task breakdown, triage, priority, dependencies, blocked status, ownership, and verification planning.
 - `project/release-notes-changelog`: user-facing release notes, internal changelogs, migration/upgrade notes, rollback notes, known issues, and verified change summaries.
 - `project/documentation-artifact-package`: stakeholder packages, developer handoffs, runbook/report bundles, knowledge-base artifacts, source evidence, and maintenance rules.
-- `project/natural-writing-humanization`: Korean/English prose naturalness, translationese cleanup, voice preservation, AI-writing signal review, and meaning-preserving edits.
+- `project/natural-writing-humanization`: Korean/English prose naturalness, translationese cleanup, voice preservation, repeated-pattern review, protected facts, and fidelity evidence for meaning-preserving edits.
 
 Generated runtime reports should not be promoted into `memory/` without review. Reporting, migration, and handoff skills should preserve source evidence while keeping private paths, credentials, branch names, PR numbers, and noisy reference names out of public documentation.
 

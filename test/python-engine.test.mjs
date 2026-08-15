@@ -41,7 +41,7 @@ function successfulPythonChild(command) {
       executable: command,
       version: '3.13.0',
       engineAvailable: true,
-      engineVersion: '0.5.10'
+      engineVersion: '0.5.11'
     }));
     child.stderr.end();
     child.emit('close', 0);

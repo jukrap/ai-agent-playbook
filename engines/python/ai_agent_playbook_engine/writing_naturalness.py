@@ -13,6 +13,7 @@ class Rule:
     language: str
     category: str
     severity: str
+    minimum: int
     pattern: re.Pattern[str]
     message: str
     suggestion: str
@@ -24,6 +25,7 @@ RULES = [
         "ko",
         "translationese",
         "medium",
+        2,
         re.compile(r"(할 수 있습니다|것으로 보입니다|제공됩니다|진행됩니다|수행됩니다|처리됩니다|구성됩니다)"),
         "반복되는 가능/수동 표현이 한국어 문장을 번역문처럼 만들 수 있습니다.",
         "가능하면 주어와 행동을 드러내고, 같은 어미가 반복되는 문장을 나누세요.",
@@ -33,6 +35,7 @@ RULES = [
         "ko",
         "sentence-shape",
         "low",
+        2,
         re.compile(r"(\w+화|검토|진행|수행|처리|제공|구성)(을|를|이|가)?\s*(합니다|합니다\.|됩니다|됩니다\.)"),
         "명사화된 동작이 많으면 책임 주체와 행동이 흐려질 수 있습니다.",
         "명사형 표현을 동사로 바꾸거나, 실행 주체를 문장 앞에 두세요.",
@@ -42,6 +45,7 @@ RULES = [
         "ko",
         "flow",
         "low",
+        2,
         re.compile(r"(이를 통해|뿐만 아니라|또한|따라서|관점에서|측면에서|바탕으로)"),
         "템플릿형 연결어가 반복되어 문단 흐름이 기계적으로 보일 수 있습니다.",
         "연결어를 줄이고 문장 순서, 주어, 구체적인 결과로 흐름을 만드세요.",
@@ -51,6 +55,7 @@ RULES = [
         "en",
         "naturalness",
         "medium",
+        2,
         re.compile(r"\b(delves? into|realm|landscape|it is important to note|seamless|robust|comprehensive|powerful|transformative)\b", re.I),
         "Common AI-writing register appears in the text.",
         "Replace broad framing or praise with concrete behavior, limits, or evidence.",
@@ -60,6 +65,7 @@ RULES = [
         "en",
         "sentence-shape",
         "low",
+        2,
         re.compile(r",\s+(ensuring|enabling|allowing|highlighting|underscoring)\b", re.I),
         "Comma-led participle clauses can pad prose without adding a decision.",
         "Turn the clause into a direct action or remove it if it repeats the prior claim.",
@@ -194,20 +200,21 @@ def pattern_findings(text: str, language: str) -> list[dict[str, Any]]:
     lines = text.splitlines()
     for rule in [item for item in RULES if item.language == language]:
         evidence = []
+        occurrence_count = 0
         for index, line in enumerate(lines, start=1):
-            if rule.pattern.search(line):
+            matches = list(rule.pattern.finditer(line))
+            occurrence_count += len(matches)
+            if matches:
                 evidence.append({"line": index, "excerpt": compact(line)})
-            if len(evidence) >= 5:
-                break
-        if evidence:
+        if occurrence_count >= rule.minimum:
             findings.append({
                 "id": rule.id,
                 "engine": "python",
                 "category": rule.category,
                 "severity": rule.severity,
-                "message": rule.message,
+                "message": f"{rule.message} ({occurrence_count} occurrences)",
                 "suggestion": rule.suggestion,
-                "evidence": evidence,
+                "evidence": evidence[:5],
             })
     return findings
 

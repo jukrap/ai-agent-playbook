@@ -1126,6 +1126,98 @@ test('qa image-diff --json compares PNG images without writing files', async () 
   await cleanup(target);
 });
 
+test('qa ui-genericity-scan reports high-confidence candidates, suppressions, and exclusions without writing files', async () => {
+  const target = await tempRepo('qa ui genericity-공백-한글-');
+  await mkdir(path.join(target, 'src'), { recursive: true });
+  await mkdir(path.join(target, '_reference'), { recursive: true });
+  await mkdir(path.join(target, 'dist'), { recursive: true });
+  const source = path.join(target, 'src', 'Dashboard.tsx');
+  const suppressed = path.join(target, 'src', 'BrandHero.tsx');
+  await writeFile(source, [
+    'export function Dashboard() {',
+    '  return <main>',
+    '    <h1 className="bg-gradient-to-r from-cyan-400 to-violet-500 bg-clip-text text-transparent">Workspace</h1>',
+    '    <div className="absolute pointer-events-none blur-3xl" />',
+    '    <div className="absolute pointer-events-none blur-3xl" />',
+    '    <Card><Card>Nested</Card></Card>',
+    '    <span className="badge rounded-full">One</span>',
+    '    <span className="badge rounded-full">Two</span>',
+    '    <span className="badge rounded-full">Three</span>',
+    '    <span className="badge rounded-full">Four</span>',
+    '    <button className="hover:scale-105">A</button>',
+    '    <button className="hover:scale-105">B</button>',
+    '    <button className="hover:scale-105">C</button>',
+    '    <p>Unlock a seamless all-in-one workflow.</p>',
+    '  </main>;',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(suppressed, [
+    '// ui-review-ignore visual.gradient-text',
+    'export const BrandHero = () => <h1 className="bg-gradient-to-r bg-clip-text text-transparent">Brand</h1>;',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(target, 'src', 'FakeSuppression.tsx'), [
+    'const ignored = "ui-review-ignore visual.gradient-text";',
+    'export const FakeSuppression = () => <h1 className="bg-gradient-to-r bg-clip-text text-transparent">Review</h1>;',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(target, '_reference', 'copied.tsx'), '<h1 className="bg-gradient-to-r bg-clip-text text-transparent">Skip</h1>\n');
+  await writeFile(path.join(target, 'dist', 'bundle.min.css'), '.x{background:linear-gradient(red,blue);background-clip:text}\n');
+  const beforeSource = await readFile(source);
+  const beforeFiles = await listRelativeFiles(target);
+
+  const output = capture(target);
+  assert.equal(await runCli(['qa', 'ui-genericity-scan', '.', '--json'], output), 0);
+  const report = JSON.parse(output.out());
+  assert.equal(report.schemaVersion, '1');
+  assert.equal(report.ok, true);
+  assert.equal(report.status, 'review');
+  assert.equal(report.reviewRequired, true);
+  for (const ruleId of ['visual.gradient-text', 'visual.ambient-glow', 'shape.pill-taxonomy', 'layout.nested-cards', 'motion.uniform-hover-transform']) {
+    assert.equal(report.findings.some((finding) => finding.ruleId === ruleId), true, ruleId);
+  }
+  assert.equal(report.findings.some((finding) => finding.path.includes('_reference')), false);
+  assert.equal(report.findings.some((finding) => finding.path === 'src/BrandHero.tsx' && finding.ruleId === 'visual.gradient-text'), false);
+  assert.equal(report.findings.some((finding) => finding.path === 'src/FakeSuppression.tsx' && finding.ruleId === 'visual.gradient-text'), true);
+  assert.equal(report.suppressions.some((item) => item.path === 'src/BrandHero.tsx' && item.ruleId === 'visual.gradient-text'), true);
+  assert.equal(report.warnings.some((warning) => warning.id === 'qa.ui.invalid-suppression-context'), true);
+  assert.deepEqual(await listRelativeFiles(target), beforeFiles);
+  assert.deepEqual(await readFile(source), beforeSource);
+
+  const outside = capture(target);
+  assert.equal(await runCli(['qa', 'ui-genericity-scan', '.', '--root', '..', '--json'], outside), 1);
+  assert.equal(JSON.parse(outside.out()).conflicts.some((item) => item.id === 'qa.ui.root-outside-target'), true);
+  await cleanup(target);
+});
+
+test('qa ui-genericity-scan avoids single intentional accents and reports bounded scans', async () => {
+  const target = await tempRepo('qa ui bounded-한글-');
+  await mkdir(path.join(target, 'src'), { recursive: true });
+  await writeFile(path.join(target, 'src', 'Brand.tsx'), [
+    'export const Brand = () => <div>',
+    '  <div className="bg-gradient-to-r">Intentional background</div>',
+    '  <span className="badge rounded-full">Status</span>',
+    '</div>;',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(target, 'src', 'Other.css'), '.button:hover { color: red; }\n');
+
+  const clean = capture(target);
+  assert.equal(await runCli(['qa', 'ui-genericity-scan', '.', '--json'], clean), 0);
+  const cleanReport = JSON.parse(clean.out());
+  assert.equal(cleanReport.status, 'pass');
+  assert.equal(cleanReport.findings.length, 0);
+
+  const bounded = capture(target);
+  assert.equal(await runCli(['qa', 'ui-genericity-scan', '.', '--max-files', '1', '--json'], bounded), 0);
+  const boundedReport = JSON.parse(bounded.out());
+  assert.equal(boundedReport.summary.scannedFiles, 1);
+  assert.equal(boundedReport.summary.truncated, true);
+  assert.equal(boundedReport.warnings.some((warning) => warning.id === 'qa.ui.file-limit'), true);
+  await cleanup(target);
+});
+
 function capture(cwd) {
   let stdout = '';
   let stderr = '';

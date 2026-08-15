@@ -97,7 +97,9 @@ Runtime artifact JSON은 안정적인 evidence envelope를 유지해야 합니�
 
 `graph preview`는 현재 file inventory, symbol outline, dependency inventory, route/API/data hint에서 read-only `runtime.repo-graph` report를 만듭니다. 검토용 compact node와 source-backed edge를 기록하지만 여전히 generated runtime evidence입니다. 안정적인 fact를 memory map으로 옮기기 전에는 canon 또는 documentation promotion을 사용합니다.
 
-`writing naturalness-check`도 읽기 전용입니다. 대상 프로젝트 안의 상대 경로 파일 하나를 읽고 한국어 또는 영어 글의 번역투, AI식 표현, 과한 어조, 반복 문장 리듬, 영어 용어 과다를 보고합니다. `writing naturalness-report`는 같은 점검을 제한된 Markdown/MDX/text 폴더에 적용해 번역본이나 문서 묶음을 먼저 훑을 수 있게 합니다. 두 명령은 글을 판단하기 전에 코드 블록, 인라인 코드, 셸 명령, URL, HTML 배지 줄, 경로 예시를 제외합니다. `--engine auto`는 기본 JavaScript 대체 분석과, 사용 가능한 경우 선택 Python 엔진을 함께 사용합니다. JSON 결과에는 `engines.used`와 `engines.unavailable`이 포함됩니다. 파일을 다시 쓰지 않고, 네트워크를 호출하지 않고, 저자성을 판정하지 않고, 탐지 우회를 돕지 않습니다. README, 문서, 번역, PR 본문, 배포 노트, 공개 요약을 고치기 전의 편집 점검표로 사용합니다.
+`writing naturalness-check`도 읽기 전용입니다. 대상 프로젝트 안의 상대 경로 파일 하나를 읽고 한국어 또는 영어 글의 번역투, 과한 어조, 반복 문장 리듬, 영어 용어 과다를 보고합니다. 표현 하나가 단발로 쓰였다는 이유만으로 신호로 보지 않고 반복되거나 문맥상 밀도가 높을 때만 보고합니다. `writing naturalness-report`는 같은 점검을 제한된 Markdown/MDX/text 폴더에 적용하고, JavaScript와 Python 엔진에서 나온 동등한 결과를 합쳐 같은 문제를 중복 보고하지 않습니다. 두 명령은 글을 판단하기 전에 코드 블록, 인라인 코드, 셸 명령, URL, HTML 배지 줄, 경로 예시를 제외합니다. `--engine auto`는 기본 JavaScript 대체 분석과, 사용 가능한 경우 선택 Python 엔진을 함께 사용합니다. JSON 결과에는 `engines.used`와 `engines.unavailable`이 포함됩니다.
+
+`writing fidelity-check`는 수정 전후 문서를 비교하기 전에 사실, 버전, 수치, URL, 명령, 경로, 코드, 식별자, 경고, 문서 구조를 보호 증거로 다룹니다. 한국어 register의 큰 변화와 반복 수사 구조의 전멸도 보고하며 동등한 수치 표기는 정규화합니다. 문서에 들어 있는 명령형 문구를 실행하지 않고, 파일을 다시 쓰지 않고, 저자성을 판정하지 않고, 고정 변경률로 수정안을 거절하지 않고, 네트워크를 호출하거나 탐지 우회를 돕지 않습니다. README, 문서, 번역, PR 본문, 배포 노트, 공개 요약을 고치기 전에 두 writing 검사를 검토 증거로 사용합니다.
 
 ## Workflow run record
 
@@ -151,13 +153,16 @@ MCP를 지원하는 AI 앱은 이 명령을 등록한 뒤 `runtime_schema_check`
 ## Bootstrap 동작
 
 - `templates/project-playbook/`을 `<target>/.ai-agent-playbook/`로 복사합니다.
-- `templates/agents/global/AGENTS.md`를 얇은 `<target>/AGENTS.md`로 복사합니다. 이 파일은 프로젝트 루트 부트스트랩이며, Codex의 개인 `~/.codex/AGENTS.md`가 아닙니다.
+- `<target>/AGENTS.md`가 없을 때만 `templates/agents/global/AGENTS.md`에서 얇은 파일을 생성합니다. 이 파일은 프로젝트 루트 부트스트랩이며, Codex의 개인 `~/.codex/AGENTS.md`가 아닙니다.
+- 기존 `AGENTS.md`가 있으면 명시적인 모드를 선택할 때까지 모든 쓰기 전에 중단합니다. 제품별 정책을 byte 단위로 지키는 `--preserve-agents`를 권장하고, `--link-agents`는 제한된 marker 블록만 관리하며, 전체 교체는 `--replace-agents --force` 조합으로만 허용합니다. `--force`만으로는 root 정책을 교체하지 않습니다.
+- 기존 root 정책과 `--profile`을 함께 사용하면 두 지침을 임의로 합치지 않고 수동 통합을 요구합니다.
 - `.ai-agent-playbook/policy/SKILLS.md`와 `.ai-agent-playbook/policy/GIT.md`는 project playbook의 일부로 포함됩니다.
 - `--profile <name>`이 있으면 `templates/agents/profiles/<name>/AGENTS.md`를 root `AGENTS.md`에 병합합니다.
-- `--local-only`가 있으면 대상 `.gitignore`에만 `.ai-agent-playbook/`을 추가합니다.
-- `.ai-agent-playbook/.ai-agent-playbook-install.json`을 써서 이 playbook이 복사한 파일을 표시합니다. Marker에는 portable relative path와 content hash만 저장합니다.
-- 기존 파일은 `--force`가 없으면 덮어쓰지 않습니다.
-- 파일을 만들기 전에 예정된 모든 쓰기 작업을 먼저 점검합니다. 충돌이 있으면 부분적인 `.ai-agent-playbook/` 트리를 남기지 않고 충돌만 보고합니다.
+- `--local-only`가 있고 동등한 패턴이 없을 때만 대상 `.gitignore`에 `.ai-agent-playbook/`을 추가합니다. 기존 byte, UTF-8 BOM 여부, 줄바꿈, 순서, 마지막 개행 여부를 보존합니다.
+- `.ai-agent-playbook/.ai-agent-playbook-install.json`을 써서 이 playbook이 복사한 파일을 표시합니다. Marker에는 portable relative path와 hash, 선택적인 `agentsMode`와 marker 블록 소유권을 저장합니다. 보존된 root 정책은 managed file로 등록하지 않고 linked 정책은 marker 블록만 소유합니다.
+- 명시된 소유 모드가 허용하지 않는 한 기존 관리 파일을 덮어쓰지 않습니다. `managed check`와 `managed uninstall`은 linked marker 블록만 확인하거나 제거하고 나머지 `AGENTS.md`를 보존합니다.
+- 파일을 만들기 전에 예정된 모든 쓰기 작업을 먼저 점검합니다. 보호 파일 symlink, 잘못된 marker, 충돌, preflight 이후의 `AGENTS.md` 또는 `.gitignore` 변경이 있으면 부분적인 `.ai-agent-playbook/` 트리를 남기지 않고 전체 작업을 중단합니다.
+- `--json`은 같은 안전 검사를 유지하면서 예정 작업, 보존 파일, 충돌, 경고, 복사 가능한 다음 명령을 보고합니다.
 
 호환성: 새 bootstrap 결과는 `.ai-agent-playbook/`을 사용합니다. 기존 `ai-playbook/` 폴더는 더 이상 활성 runtime root가 아니므로, project playbook 명령을 실행하기 전에 `migrate path`로 명시적 폴더 전환을 preview하고 적용합니다. 두 폴더가 모두 있으면 runtime 명령은 `.ai-agent-playbook/`을 읽고 diagnostic은 legacy folder 경고를 냅니다.
 
@@ -369,6 +374,14 @@ npx ai-agent-playbook qa image-diff .\before.png .\after.png --threshold 0.01 --
 ```
 
 Dimensions, changed pixels, diff ratio, similarity score, hotspot cell을 반환합니다. PNG만 지원하며 browser capture, baseline 관리, visual oracle, 파일 쓰기를 하지 않습니다.
+
+`qa ui-genericity-scan`은 일반적인 template UI처럼 보일 가능성이 높은 정적 후보를 찾습니다.
+
+```powershell
+npx ai-agent-playbook qa ui-genericity-scan <target> --root src --max-files 500 --json
+```
+
+Gradient text, 장식용 glow·glass, 과도한 pill, 중첩 card, radius·shadow 누적, 장식형 stat, 일률적인 hover transform, 반복 kicker, 상투적인 marketing claim이 함께 쓰이거나 반복될 때 의미 기반 rule ID로 보고합니다. 생성물, dependency, lockfile, minified file, local reference, work folder, playbook runtime은 제외합니다. 검토 결과 의도적인 표현으로 확인됐을 때만 source comment의 `ui-review-ignore <rule-id>`로 후보 하나를 억제할 수 있습니다. 결과는 검토 후보이지 확정 결함이 아니며 clean scan도 실제 desktop/mobile 렌더링 증거나 제품 문맥 검토를 대신하지 않습니다.
 
 ## Adapter config와 준비 점검
 

@@ -328,7 +328,7 @@ test('structured playbook commands expose layout, catalog, index, and write-gate
   const catalogReport = JSON.parse(catalog.out());
   assert.equal(catalogReport.taxonomyKind, 'capability');
   assert.equal(catalogReport.summary.categories, 13);
-  assert.equal(catalogReport.summary.skills, 93);
+  assert.equal(catalogReport.summary.skills, 94);
 
   const catalogCheck = capture(target);
   assert.equal(await runCli(['catalog', 'check', '--json'], catalogCheck), 0);
@@ -350,6 +350,7 @@ test('structured playbook commands expose layout, catalog, index, and write-gate
     'brand-identity-system',
     'design-reference-analysis',
     'image-to-code-handoff',
+    'generic-ui-review',
     'interactive-media-3d-review',
     'design-system-handoff'
   ]) {
@@ -1929,6 +1930,48 @@ test('bootstrap preserve mode keeps AGENTS bytes and appends only the local play
   const doctorReport = JSON.parse(doctor.out());
   assert.equal(doctorReport.checks.find((check) => check.id === 'root-agents.points-to-playbook').level, 'pass');
   await cleanup(target);
+});
+
+test('bootstrap preserves a missing final newline and links only a correctly ordered reading list', async () => {
+  const target = await tempRepo('bootstrap byte-order-한글-');
+  const agentsPath = path.join(target, 'AGENTS.md');
+  const ignorePath = path.join(target, '.gitignore');
+  await writeFile(agentsPath, [
+    '# Product boundary',
+    '',
+    'Read .ai-agent-playbook/policy/GIT.md, .ai-agent-playbook/policy/SKILLS.md, .ai-agent-playbook/CURRENT.md, then .ai-agent-playbook/START_HERE.md.'
+  ].join('\r\n'));
+  const ignore = Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('dist/\r\ncache/', 'utf8')]);
+  await writeFile(ignorePath, ignore);
+
+  assert.equal(await runCli(['bootstrap', '.', '--local-only', '--link-agents'], capture(target)), 0);
+  const linked = await readFile(agentsPath, 'utf8');
+  assert.equal((linked.match(/ai-agent-playbook:link:start/g) ?? []).length, 1);
+  const updatedIgnore = await readFile(ignorePath);
+  assert.deepEqual(updatedIgnore.subarray(0, ignore.length), ignore);
+  assert.equal(updatedIgnore.toString('utf8').endsWith('.ai-agent-playbook/'), true);
+  assert.equal(updatedIgnore.toString('utf8').endsWith('\r\n'), false);
+  await cleanup(target);
+
+  const ordered = await tempRepo('bootstrap ordered-links-한글-');
+  await writeFile(path.join(ordered, 'AGENTS.md'), [
+    '# Product boundary',
+    '',
+    'Read these files in order:',
+    '1. `.ai-agent-playbook/START_HERE.md`',
+    '2. `.ai-agent-playbook/CURRENT.md`',
+    '3. `.ai-agent-playbook/questions.md`',
+    '4. `.ai-agent-playbook/policy/SKILLS.md`',
+    '5. `.ai-agent-playbook/policy/GIT.md`',
+    ''
+  ].join('\n'));
+  const orderedOutput = capture(ordered);
+  assert.equal(await runCli(['bootstrap', '.', '--link-agents', '--json'], orderedOutput), 0);
+  const orderedReport = JSON.parse(orderedOutput.out());
+  assert.equal(orderedReport.agentsMode, 'preserved');
+  assert.deepEqual(orderedReport.preservedFiles, ['AGENTS.md']);
+  assert.doesNotMatch(await readFile(path.join(ordered, 'AGENTS.md'), 'utf8'), /ai-agent-playbook:link:start/);
+  await cleanup(ordered);
 });
 
 test('bootstrap link mode owns only its marker block and uninstall restores user AGENTS content', async () => {

@@ -974,7 +974,8 @@ export async function writeManagedFile(destination, content, context) {
 
 export async function ensureGitignoreEntry(target, entry, context) {
   const file = path.join(target, '.gitignore');
-  const existing = existsSync(file) ? await readUtf8Buffer(file, '.gitignore') : Buffer.alloc(0);
+  const fileExists = existsSync(file);
+  const existing = fileExists ? await readUtf8Buffer(file, '.gitignore') : Buffer.alloc(0);
   const text = stripUtf8Bom(existing).toString('utf8');
   if (hasEquivalentGitignoreEntry(text, entry)) {
     context.operations.push(`keep .gitignore ${entry}`);
@@ -983,11 +984,12 @@ export async function ensureGitignoreEntry(target, entry, context) {
   context.operations.push(`append .gitignore ${entry}`);
   if (!context.dryRun) {
     const eol = detectEol(text);
+    const hasFinalEol = text.endsWith('\n') || text.endsWith('\r');
     const suffix = text.length === 0
-      ? `${entry}${eol}`
-      : text.endsWith('\n') || text.endsWith('\r')
+      ? fileExists ? entry : `${entry}${eol}`
+      : hasFinalEol
         ? `${entry}${eol}`
-        : `${eol}${entry}${eol}`;
+        : `${eol}${entry}`;
     await writeFile(file, Buffer.concat([existing, Buffer.from(suffix, 'utf8')]));
   }
 }
@@ -1066,7 +1068,13 @@ export function inspectAgentsLink(text) {
 }
 
 export function agentsReferencesPlaybook(text, playbookDir = DEFAULT_PLAYBOOK_DIR) {
-  return ROOT_BOOTSTRAP_REFS.every((file) => String(text).includes(`${playbookDir}/${file}`));
+  let previous = -1;
+  for (const file of ROOT_BOOTSTRAP_REFS) {
+    const index = String(text).indexOf(`${playbookDir}/${file}`, previous + 1);
+    if (index === -1) return false;
+    previous = index;
+  }
+  return true;
 }
 
 export function planAgentsLink(content, playbookDir = DEFAULT_PLAYBOOK_DIR) {

@@ -1157,6 +1157,11 @@ test('qa ui-genericity-scan reports high-confidence candidates, suppressions, an
     'export const BrandHero = () => <h1 className="bg-gradient-to-r bg-clip-text text-transparent">Brand</h1>;',
     ''
   ].join('\n'));
+  await writeFile(path.join(target, 'src', 'FakeSuppression.tsx'), [
+    'const ignored = "ui-review-ignore visual.gradient-text";',
+    'export const FakeSuppression = () => <h1 className="bg-gradient-to-r bg-clip-text text-transparent">Review</h1>;',
+    ''
+  ].join('\n'));
   await writeFile(path.join(target, '_reference', 'copied.tsx'), '<h1 className="bg-gradient-to-r bg-clip-text text-transparent">Skip</h1>\n');
   await writeFile(path.join(target, 'dist', 'bundle.min.css'), '.x{background:linear-gradient(red,blue);background-clip:text}\n');
   const beforeSource = await readFile(source);
@@ -1174,7 +1179,9 @@ test('qa ui-genericity-scan reports high-confidence candidates, suppressions, an
   }
   assert.equal(report.findings.some((finding) => finding.path.includes('_reference')), false);
   assert.equal(report.findings.some((finding) => finding.path === 'src/BrandHero.tsx' && finding.ruleId === 'visual.gradient-text'), false);
+  assert.equal(report.findings.some((finding) => finding.path === 'src/FakeSuppression.tsx' && finding.ruleId === 'visual.gradient-text'), true);
   assert.equal(report.suppressions.some((item) => item.path === 'src/BrandHero.tsx' && item.ruleId === 'visual.gradient-text'), true);
+  assert.equal(report.warnings.some((warning) => warning.id === 'qa.ui.invalid-suppression-context'), true);
   assert.deepEqual(await listRelativeFiles(target), beforeFiles);
   assert.deepEqual(await readFile(source), beforeSource);
 

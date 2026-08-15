@@ -1,7 +1,7 @@
 import { lstat, readdir, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { SCHEMA_VERSION } from '../harness/core.mjs';
+import { LEGACY_PLAYBOOK_DIRS, SCHEMA_VERSION } from '../harness/core.mjs';
 
 export const UI_GENERICITY_RULE_IDS = Object.freeze([
   'visual.gradient-text',
@@ -16,9 +16,9 @@ export const UI_GENERICITY_RULE_IDS = Object.freeze([
   'copy.generic-marketing-claims'
 ]);
 
-const UI_EXTENSIONS = new Set(['.css', '.scss', '.sass', '.less', '.html', '.htm', '.jsx', '.tsx', '.vue', '.svelte']);
+const UI_EXTENSIONS = new Set(['.css', '.scss', '.sass', '.less', '.html', '.htm', '.jsx', '.tsx', '.vue', '.svelte', '.astro']);
 const EXCLUDED_DIRECTORIES = new Set([
-  '.git', '.ai-agent-playbook', '.ai-playbook', 'ai-playbook',
+  '.git', '.ai-agent-playbook', ...LEGACY_PLAYBOOK_DIRS,
   'node_modules', 'vendor', 'dist', 'build', 'out', 'coverage',
   '.next', '.nuxt', '.svelte-kit', '.turbo', '.vite', '.cache',
   '_reference', '_work'
@@ -50,11 +50,11 @@ export async function checkUiGenericity(options) {
   }
   const rootInfo = await lstat(root);
   if (rootInfo.isSymbolicLink()) {
-    conflicts.push(conflict('qa.ui.root-symlink', 'Scan root cannot be a symbolic link.', [portable(path.relative(target, root) || '.')]))
+    conflicts.push(conflict('qa.ui.root-symlink', 'Scan root cannot be a symbolic link.', [portable(path.relative(target, root) || '.')]));
     return uiResult({ target, root, maxFiles, findings, suppressions, skipped, warnings, conflicts, scannedFiles: 0, candidateFiles: 0, truncated: false });
   }
   if (!rootInfo.isDirectory()) {
-    conflicts.push(conflict('qa.ui.root-not-directory', 'Scan root must be a directory.', [portable(path.relative(target, root) || '.')]))
+    conflicts.push(conflict('qa.ui.root-not-directory', 'Scan root must be a directory.', [portable(path.relative(target, root) || '.')]));
     return uiResult({ target, root, maxFiles, findings, suppressions, skipped, warnings, conflicts, scannedFiles: 0, candidateFiles: 0, truncated: false });
   }
 
@@ -199,7 +199,21 @@ function finding(ruleId, file, line, count, message, evidence) {
 }
 
 function parseSuppressions(text, file, warnings) {
-  const found = [...String(text).matchAll(/ui-review-ignore\s+([a-z0-9.-]+)/gi)].map((match) => match[1]);
+  const found = [];
+  const lines = String(text).split(/\r?\n|\r/);
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const anyMarkers = [...line.matchAll(/ui-review-ignore\s+([a-z0-9.-]+)/gi)];
+    const validMarker = /^\s*(?:\/\/|\/\*+|\*|<!--|\{\/\*)\s*ui-review-ignore\s+([a-z0-9.-]+)/i.exec(line);
+    if (validMarker) found.push(validMarker[1]);
+    if (anyMarkers.length > (validMarker ? 1 : 0)) {
+      warnings.push({
+        id: 'qa.ui.invalid-suppression-context',
+        message: `UI review suppression must be a standalone source comment at ${file}:${index + 1}.`,
+        paths: [file]
+      });
+    }
+  }
   const valid = [];
   for (const ruleId of found) {
     if (UI_GENERICITY_RULE_IDS.includes(ruleId)) valid.push(ruleId);

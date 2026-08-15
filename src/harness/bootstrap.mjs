@@ -75,7 +75,7 @@ export async function bootstrapProject(options) {
     nextSteps.push(
       `aapb bootstrap "${target}"${localOnly ? ' --local-only' : ''} --preserve-agents`,
       `aapb bootstrap "${target}"${localOnly ? ' --local-only' : ''} --link-agents`,
-      `aapb bootstrap "${target}" --replace-agents --force`
+      `aapb bootstrap "${target}"${localOnly ? ' --local-only' : ''} --replace-agents --force`
     );
   }
 
@@ -141,7 +141,7 @@ export async function bootstrapProject(options) {
   }
 
   if (dryRun || conflicts.length > 0) {
-    return bootstrapResult({ target, ok: conflicts.length === 0, agentsMode, operations, warnings, conflicts, nextSteps, preserveAgents, agentSnapshot });
+    return bootstrapResult({ target, ok: conflicts.length === 0, agentsMode, operations, warnings, conflicts, nextSteps, agentSnapshot });
   }
 
   if (beforeApply) await beforeApply();
@@ -150,7 +150,7 @@ export async function bootstrapProject(options) {
     await assertProtectedFileUnchanged(targetGitignore, gitignoreSnapshot, '.gitignore');
   } catch (error) {
     conflicts.push(error.message);
-    return bootstrapResult({ target, ok: false, agentsMode, operations, warnings, conflicts, nextSteps, preserveAgents, agentSnapshot });
+    return bootstrapResult({ target, ok: false, agentsMode, operations, warnings, conflicts, nextSteps, agentSnapshot });
   }
 
   operations.length = 0;
@@ -178,7 +178,7 @@ export async function bootstrapProject(options) {
     agentEntry
   });
 
-  return bootstrapResult({ target, ok: conflicts.length === 0, applied: conflicts.length === 0, agentsMode, operations, warnings, conflicts, nextSteps, preserveAgents, agentSnapshot });
+  return bootstrapResult({ target, ok: conflicts.length === 0, applied: conflicts.length === 0, agentsMode, operations, warnings, conflicts, nextSteps, agentSnapshot });
 }
 
 function bootstrapResult(options) {
@@ -191,7 +191,6 @@ function bootstrapResult(options) {
     warnings,
     conflicts,
     nextSteps,
-    preserveAgents = false,
     agentSnapshot = null
   } = options;
   return {
@@ -202,12 +201,12 @@ function bootstrapResult(options) {
     agentsMode,
     summary: {
       operations: operations.length,
-      preserved: preserveAgents && agentSnapshot?.exists ? 1 : 0,
+      preserved: agentsMode === 'preserved' && agentSnapshot?.exists ? 1 : 0,
       warnings: warnings.length,
       conflicts: conflicts.length
     },
     operations,
-    preservedFiles: preserveAgents && agentSnapshot?.exists ? ['AGENTS.md'] : [],
+    preservedFiles: agentsMode === 'preserved' && agentSnapshot?.exists ? ['AGENTS.md'] : [],
     warnings,
     conflicts,
     nextSteps

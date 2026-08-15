@@ -8,3 +8,4 @@ export { auditOperator, gcOperator } from './operator/audit-gc.mjs';
 export { checkRules } from './operator/rules.mjs';
 export { checkDiagnostics, checkTuiCapture } from './operator/diagnostics.mjs';
 export { checkImageDiff } from './operator/qa-image-diff.mjs';
+export { checkUiGenericity } from './operator/qa-ui-genericity.mjs';

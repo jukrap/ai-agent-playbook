@@ -16,7 +16,7 @@ test('mcp exposes read-only forge automation surfaces and separately gates forge
   try {
     const listed = await readOnlyConnection.client.listTools();
     const names = listed.tools.map((tool) => tool.name);
-    for (const expected of ['automation_status', 'automation_plan_validate', 'forge_status', 'forge_bootstrap_plan', 'forge_sync_plan']) {
+    for (const expected of ['automation_status', 'automation_plan_validate', 'forge_status', 'forge_bootstrap_plan', 'forge_sync_plan', 'qa_ui_genericity_scan']) {
       assert.equal(names.includes(expected), true, expected);
       assert.equal(listed.tools.find((tool) => tool.name === expected).annotations?.readOnlyHint, true);
     }
@@ -124,6 +124,30 @@ test('mcp forge sync preview keeps detailed tasks local while planning a roadmap
     await client.close();
     await transport.close();
     await rm(target, { recursive: true, force: true });
+  }
+});
+
+test('mcp qa_ui_genericity_scan returns the same read-only candidate contract', async () => {
+  const target = await tempRepo('aapb-mcp-ui-genericity-');
+  await mkdir(path.join(target, 'src'), { recursive: true });
+  const file = path.join(target, 'src', 'Hero.tsx');
+  const content = 'export const Hero = () => <h1 className="bg-gradient-to-r bg-clip-text text-transparent">Hero</h1>;\n';
+  await writeFile(file, content);
+  const before = await readFile(file, 'utf8');
+  const { client, transport } = await connectMcp();
+  try {
+    const response = await client.callTool({
+      name: 'qa_ui_genericity_scan',
+      arguments: { target, root: 'src', maxFiles: 10 }
+    });
+    assert.equal(response.structuredContent.ok, true);
+    assert.equal(response.structuredContent.status, 'review');
+    assert.equal(response.structuredContent.findings.some((finding) => finding.ruleId === 'visual.gradient-text'), true);
+    assert.equal(await readFile(file, 'utf8'), before);
+  } finally {
+    await client.close();
+    await transport.close();
+    await cleanup(target);
   }
 });
 

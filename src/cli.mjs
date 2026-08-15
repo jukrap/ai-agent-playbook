@@ -2,7 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readFile } from 'node:fs/promises';
 import { checkAdapterReadiness, renderAdapterConfig } from './adapter-readiness.mjs';
-import { analyzeOperator, auditOperator, checkDiagnostics, checkImageDiff, checkOperator, checkRules, checkTuiCapture, deltaOperator, gcOperator, mapOperator, preflightOperator, previewOperatorContext, researchOperator, searchOperator } from './operator-diagnostics.mjs';
+import { analyzeOperator, auditOperator, checkDiagnostics, checkImageDiff, checkOperator, checkRules, checkTuiCapture, checkUiGenericity, deltaOperator, gcOperator, mapOperator, preflightOperator, previewOperatorContext, researchOperator, searchOperator } from './operator-diagnostics.mjs';
 import { lintSkills, runSkillsLifecycle } from './skills-lifecycle.mjs';
 import { runMcpServer } from './mcp-server.mjs';
 import { createAutomationPlan, validateAutomationPlan } from './automation/plan-manifest.mjs';
@@ -1644,6 +1644,26 @@ export async function runCli(argv, io = {}) {
         for (const conflict of result.conflicts) {
           write(stdout, `[CONFLICT] ${conflict.message}\n`);
         }
+      }
+      return result.ok ? 0 : 1;
+    }
+
+    if (command === 'qa' && subcommand === 'ui-genericity-scan') {
+      const result = await checkUiGenericity({
+        target: resolveTarget(cwd, targetArg),
+        root: typeof parsed.flags.root === 'string' ? parsed.flags.root : undefined,
+        maxFiles: parsed.flags['max-files']
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `UI genericity candidates: ${result.summary.findings} in ${result.summary.scannedFiles} scanned file(s)\n`);
+        for (const finding of result.findings) {
+          write(stdout, `[REVIEW] ${finding.ruleId} ${finding.path}:${finding.line} — ${finding.message}\n`);
+        }
+        for (const warning of result.warnings) write(stdout, `[WARN] ${warning.message}\n`);
+        for (const conflict of result.conflicts) write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        write(stdout, `${result.guidance}\n`);
       }
       return result.ok ? 0 : 1;
     }
@@ -3326,6 +3346,7 @@ Usage:
   aapb diagnostics check <target> [--json]
   aapb qa tui-check <capture-file> [--cols N] [--json]
   aapb qa image-diff <reference.png> <actual.png> [--threshold N] [--json]
+  aapb qa ui-genericity-scan <target> [--root <dir>] [--max-files N] [--json]
   aapb adapter config <target> --adapter codex|claude-code [--json]
   aapb adapter check <target> --adapter codex|claude-code [--json] [--max-chars N] [--settings <path>]
   aapb plan new <target> --title <text> [--date YYYY-MM-DD] [--dry-run] [--force]

@@ -48,6 +48,7 @@ import {
   auditOperator,
   checkDiagnostics,
   checkImageDiff,
+  checkUiGenericity,
   checkOperator,
   checkRules,
   deltaOperator,
@@ -497,6 +498,15 @@ export function registerPlaybookMcpTools(server, options) {
       reference: args.reference,
       actual: args.actual,
       threshold: args.threshold ?? 0
+    })),
+    tool('qa_ui_genericity_scan', 'Find high-confidence static candidates for generic or template-like UI treatment without modifying files.', {
+      target: targetSchema,
+      root: z.string().min(1).optional().describe('Optional directory inside the target project.'),
+      maxFiles: z.number().int().min(1).max(10_000).optional()
+    }, (args) => checkUiGenericity({
+      target: args.target,
+      root: args.root,
+      maxFiles: args.maxFiles
     })),
     tool('operator_analyze_deep', 'Run deep local analysis with AST and TypeScript language signals.', {
       target: targetSchema,

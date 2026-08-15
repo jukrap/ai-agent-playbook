@@ -81,6 +81,7 @@ Each `SKILL.md` stays short and trigger-focused. Longer procedures, examples, st
 - `design-brief-direction`: use when turning vague product, page, brand, or UI requests into design direction and decision-ready briefs.
 - `brand-identity-system`: use when defining or reviewing typography, color, logo usage, iconography, voice, and brand application rules.
 - `design-reference-analysis`: use when analyzing screenshots, competitor sites, reference apps, visual samples, or design boards before UI work.
+- `generic-ui-review`: use when reviewing template-like, card-heavy, pill-heavy, gradient-heavy, glowy, or otherwise generic frontend presentation against product tasks and rendered evidence.
 - `image-to-code-handoff`: use when turning images, screenshots, mockups, reference boards, or Figma frames into UI contracts.
 - `frontend-ui-polish`: use when implementing or refining visible frontend surfaces while preserving product intent and local design conventions.
 - `ui-polish`: use when working on visible UI, responsive layout, accessibility states, interaction feedback, and production polish.

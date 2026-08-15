@@ -369,6 +369,7 @@ test('mcp server lists read-only playbook tools and calls operator search withou
       'evidence_locator_check',
       'writing_naturalness_check',
       'writing_naturalness_report',
+      'writing_fidelity_check',
       'index_search',
       'symbol_outline',
       'dependency_inventory',
@@ -633,6 +634,20 @@ test('mcp server lists read-only playbook tools and calls operator search withou
     assert.equal(naturalnessReport.structuredContent.summary.files, 1);
     assert.equal(naturalnessReport.structuredContent.files.some((file) => file.path === 'docs/natural-writing.md'), true);
     assert.equal(naturalnessReport.structuredContent.summary.findings > 0, true);
+
+    const fidelity = await client.callTool({
+      name: 'writing_fidelity_check',
+      arguments: {
+        target,
+        before: 'docs/natural-writing.md',
+        after: 'docs/natural-writing.md',
+        lang: 'ko'
+      }
+    });
+    assert.equal(fidelity.isError, undefined);
+    assert.equal(fidelity.structuredContent.ok, true);
+    assert.equal(fidelity.structuredContent.status, 'not-applicable');
+    assert.equal(fidelity.structuredContent.mode.writes, false);
 
     const symbolOutline = await client.callTool({
       name: 'symbol_outline',

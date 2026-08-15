@@ -1774,6 +1774,130 @@ test('bootstrap conflict preflight refuses existing AGENTS without partial write
   await cleanup(target);
 });
 
+test('writing naturalness uses repetition and merges overlapping JavaScript and Python signals', async () => {
+  const target = await tempRepo('writing repetition-한글-');
+  await mkdir(path.join(target, 'docs'), { recursive: true });
+  await writeFile(path.join(target, 'docs', 'single.md'), '이를 통해 한 가지 결과를 설명합니다. 나머지 문장은 구체적인 동작을 기록합니다.\n');
+  await writeFile(path.join(target, 'docs', 'repeated.md'), [
+    '이를 통해 첫 번째 결과를 설명할 수 있습니다.',
+    '이를 통해 두 번째 결과를 설명할 수 있습니다.',
+    ''
+  ].join('\n'));
+
+  const single = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-check', '.', '--path', 'docs/single.md', '--lang', 'ko', '--engine', 'js', '--json'], single), 0);
+  assert.equal(JSON.parse(single.out()).findings.some((finding) => finding.id === 'writing.translationese.ko'), false);
+
+  const repeated = capture(target);
+  assert.equal(await runCli(['writing', 'naturalness-check', '.', '--path', 'docs/repeated.md', '--lang', 'ko', '--engine', 'auto', '--json'], repeated), 0);
+  const report = JSON.parse(repeated.out());
+  assert.equal(report.findings.some((finding) => finding.id === 'writing.translationese.ko'), true);
+  if (report.engines.used.includes('python')) {
+    const overlap = report.findings.filter((finding) => /translationese|connector-template/.test(finding.id));
+    assert.equal(overlap.length, 1);
+    assert.deepEqual(overlap[0].engines.sort(), ['js', 'python']);
+  }
+  await cleanup(target);
+});
+
+test('writing fidelity-check compares protected facts, register, rhetoric, and change metrics without writing files', async () => {
+  const target = await tempRepo('writing fidelity-공백-한글-');
+  await mkdir(path.join(target, 'docs'), { recursive: true });
+  const beforePath = path.join(target, 'docs', 'before.md');
+  const afterPath = path.join(target, 'docs', 'after.md');
+  await writeFile(beforePath, [
+    '# 배포 검토',
+    '',
+    '이 문서는 배포 조건을 설명합니다. 검증 결과를 기록합니다. 실패 시 이전 상태로 복구합니다.',
+    '속도가 아니라 안정성을 선택한다. 장식이 아니라 실제 동작을 선택한다.',
+    '버전 `0.5.11`은 https://example.com/v1 문서를 사용합니다.',
+    'npm publish --access public',
+    '파일은 src/api/client.ts에 있고 `ForgeAPI.fetch`를 호출합니다.',
+    '',
+    '```ts',
+    'ForgeAPI.fetch("v1");',
+    '```',
+    '',
+    '> WARNING: 배포 키를 확인합니다.',
+    ''
+  ].join('\n'));
+  await writeFile(afterPath, [
+    '# 배포 검토',
+    '',
+    '이 문서는 배포 조건을 설명한다. 검증 결과를 기록한다. 실패하면 새 상태를 유지한다.',
+    '속도와 안정성을 함께 확인한다. 장식보다 실제 동작을 먼저 본다.',
+    '버전 `0.5.12`는 https://example.com/v2 문서를 사용한다.',
+    'npm publish --tag next',
+    '파일은 src/api/release.ts에 있고 `ReleaseAPI.send`를 호출한다.',
+    '',
+    '```ts',
+    'ReleaseAPI.send("v2");',
+    '```',
+    '',
+    '> WARNING: 배포 채널을 확인한다.',
+    ''
+  ].join('\n'));
+  const beforeBytes = await readFile(beforePath);
+  const afterBytes = await readFile(afterPath);
+
+  const output = capture(target);
+  assert.equal(await runCli(['writing', 'fidelity-check', '.', '--before', 'docs/before.md', '--after', 'docs/after.md', '--lang', 'ko', '--json'], output), 0);
+  const report = JSON.parse(output.out());
+  assert.equal(report.kind, 'runtime.writing-fidelity-check');
+  assert.equal(report.status, 'review');
+  assert.equal(report.reviewRequired, true);
+  assert.equal(report.mode.evidenceOnly, true);
+  assert.equal(report.metrics.characterChangeRate > 0, true);
+  assert.equal(report.metrics.sentenceTouchRatio > 0, true);
+  assert.deepEqual(report.changes.versions.removed, ['0.5.11']);
+  assert.deepEqual(report.changes.versions.added, ['0.5.12']);
+  assert.equal(report.changes.urls.changed, true);
+  assert.equal(report.changes.commands.changed, true);
+  assert.equal(report.changes.paths.changed, true);
+  assert.equal(report.changes.codeSpans.changed, true);
+  assert.equal(report.changes.codeFences.changed, true);
+  assert.equal(report.changes.identifiers.changed, true);
+  assert.equal(report.register.before, 'formal');
+  assert.equal(report.register.after, 'plain');
+  assert.equal(report.register.shifted, true);
+  assert.equal(report.rhetoric.annihilated.includes('negative-positive-pair'), true);
+  assert.deepEqual(await readFile(beforePath), beforeBytes);
+  assert.deepEqual(await readFile(afterPath), afterBytes);
+  await cleanup(target);
+});
+
+test('writing fidelity-check normalizes equivalent numbers and treats change rates as evidence only', async () => {
+  const target = await tempRepo('writing fidelity evidence-한글-');
+  await mkdir(path.join(target, 'docs'), { recursive: true });
+  await writeFile(path.join(target, 'docs', 'before.md'), '처리 한도는 1만 건입니다. 이 값은 운영 기준입니다.\n');
+  await writeFile(path.join(target, 'docs', 'after.md'), '운영 기준에 따라 처리 한도는 10,000건입니다.\n');
+  await writeFile(path.join(target, 'docs', 'same.md'), '같은 문서입니다.\n');
+  await writeFile(path.join(target, 'docs', 'rewrite-a.md'), '첫 문장은 짧다. 둘째 문장도 짧다.\n');
+  await writeFile(path.join(target, 'docs', 'rewrite-b.md'), '전혀 다른 설명을 길게 작성하지만 보호할 수치나 명령은 넣지 않는다.\n');
+
+  const equivalent = capture(target);
+  assert.equal(await runCli(['writing', 'fidelity-check', '.', '--before', 'docs/before.md', '--after', 'docs/after.md', '--lang', 'ko', '--json'], equivalent), 0);
+  const equivalentReport = JSON.parse(equivalent.out());
+  assert.equal(equivalentReport.changes.numbers.changed, false);
+  assert.equal(equivalentReport.status, 'pass');
+
+  const unchanged = capture(target);
+  assert.equal(await runCli(['writing', 'fidelity-check', '.', '--before', 'docs/same.md', '--after', 'docs/same.md', '--json'], unchanged), 0);
+  assert.equal(JSON.parse(unchanged.out()).status, 'not-applicable');
+
+  const rewrite = capture(target);
+  assert.equal(await runCli(['writing', 'fidelity-check', '.', '--before', 'docs/rewrite-a.md', '--after', 'docs/rewrite-b.md', '--lang', 'ko', '--json'], rewrite), 0);
+  const rewriteReport = JSON.parse(rewrite.out());
+  assert.equal(rewriteReport.metrics.characterChangeRate > 0.8, true);
+  assert.equal(rewriteReport.reviewRequired, false);
+  assert.equal(rewriteReport.status, 'pass');
+
+  const traversal = capture(target);
+  assert.equal(await runCli(['writing', 'fidelity-check', '.', '--before', '../before.md', '--after', 'docs/after.md', '--json'], traversal), 1);
+  assert.equal(JSON.parse(traversal.out()).conflicts.some((item) => item.id === 'writing-fidelity.before-boundary'), true);
+  await cleanup(target);
+});
+
 test('bootstrap preserve mode keeps AGENTS bytes and appends only the local playbook ignore entry', async () => {
   const target = await tempRepo('bootstrap preserve-한글-');
   const agents = Buffer.from('# Product boundary\r\n\r\nKeep this policy.\r\n', 'utf8');

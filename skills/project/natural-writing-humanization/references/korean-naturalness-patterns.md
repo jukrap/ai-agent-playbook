@@ -12,6 +12,8 @@ Use this reference for Korean README text, docs, release notes, PR bodies, guide
 
 ## Translationese Signals
 
+Treat these as density and context signals. One causal connector, plain declarative ending, contrast pair, or positive/negative construction is normal Korean and is not evidence by itself.
+
 - Repeated polite possibility, passive, or vague evidential endings.
 - Template connectors equivalent to "through this", "not only", "also", "therefore", "from a perspective", or "in terms of" when every paragraph uses them.
 - Abstract role or value claims equivalent to "plays an important role", "contributes to", "provides the best experience", or "provides powerful functionality" without concrete evidence.
@@ -32,3 +34,4 @@ Use this reference for Korean README text, docs, release notes, PR bodies, guide
 - Can a reader tell what to do next without decoding English-heavy phrasing?
 - Are terms consistent across the document and its Korean translation?
 - Did the edit accidentally soften a warning, change a command, or hide a caveat?
+- Did the edit preserve versions, numbers, URLs, paths, code, identifiers, register, and intentional rhetorical structure? Use `writing fidelity-check` after a material rewrite.

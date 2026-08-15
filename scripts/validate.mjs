@@ -376,7 +376,7 @@ async function validatePython() {
     repoRoot: root,
     lang: 'ko',
     filePath: 'sample.md',
-    text: '이 문서는 중요한 역할을 합니다. 이를 통해 사용자는 더 강력한 결과를 얻을 수 있습니다.'
+    text: '이를 통해 첫 결과를 설명할 수 있습니다. 이를 통해 다음 결과도 설명할 수 있습니다.'
   });
   if (!result.ok || !result.result?.ok) {
     throw new Error('Python writing naturalness check failed.');

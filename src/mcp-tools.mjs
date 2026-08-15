@@ -21,6 +21,7 @@ import {
   checkRuntimeSchema,
   checkWritingNaturalness,
   checkWritingNaturalnessReport,
+  checkWritingFidelity,
   contextStatus,
   describePlaybookLayout,
   listContexts,
@@ -347,6 +348,17 @@ export function registerPlaybookMcpTools(server, options) {
       lang: args.lang ?? 'auto',
       engine: args.engine ?? 'auto',
       maxFiles: args.maxFiles ?? 20
+    })),
+    tool('writing_fidelity_check', 'Compare before and after prose for factual, structural, register, and rhetorical fidelity without modifying files.', {
+      target: targetSchema,
+      before: z.string().min(1).describe('Before file path inside the target project.'),
+      after: z.string().min(1).describe('After file path inside the target project.'),
+      lang: z.enum(['auto', 'ko', 'en']).optional().describe('Language to analyze. Defaults to auto.')
+    }, (args) => checkWritingFidelity({
+      target: args.target,
+      before: args.before,
+      after: args.after,
+      lang: args.lang ?? 'auto'
     })),
     tool('index_search', 'Search local project files without writing the runtime index.', {
       target: targetSchema,

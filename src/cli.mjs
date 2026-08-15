@@ -47,6 +47,7 @@ import {
   checkRuntimeSchema,
   checkWritingNaturalness,
   checkWritingNaturalnessReport,
+  checkWritingFidelity,
   checkReferenceAdoptionLedger,
   checkReferenceSourceRegistry,
   catalogManagedManifest,
@@ -1648,6 +1649,24 @@ export async function runCli(argv, io = {}) {
       return result.ok ? 0 : 1;
     }
 
+    if (command === 'writing' && subcommand === 'fidelity-check') {
+      const result = await checkWritingFidelity({
+        target: resolveTarget(cwd, targetArg),
+        before: parsed.flags.before,
+        after: parsed.flags.after,
+        lang: parsed.flags.lang ?? 'auto'
+      });
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        write(stdout, `Writing fidelity: ${result.status}; character change ${Math.round(result.metrics.characterChangeRate * 100)}%; sentence touch ${Math.round(result.metrics.sentenceTouchRatio * 100)}%\n`);
+        for (const reason of result.reviewReasons) write(stdout, `[REVIEW] ${reason}\n`);
+        for (const conflict of result.conflicts) write(stdout, `[CONFLICT] ${conflict.message}\n`);
+        write(stdout, `${result.guidance}\n`);
+      }
+      return result.ok ? 0 : 1;
+    }
+
     if (command === 'qa' && subcommand === 'ui-genericity-scan') {
       const result = await checkUiGenericity({
         target: resolveTarget(cwd, targetArg),
@@ -2397,6 +2416,7 @@ function needsValue(key) {
     'intent',
     'advisory',
     'before',
+    'after',
     'contract',
     'threshold',
     'max-results',
@@ -3302,6 +3322,7 @@ Usage:
   aapb evidence locator-check <target> --path <json-or-md> [--json]
   aapb writing naturalness-check <target> --path <file> [--lang auto|ko|en] [--engine auto|js|python] [--json]
   aapb writing naturalness-report <target> [--root <dir>] [--max-files N] [--lang auto|ko|en] [--engine auto|js|python] [--json]
+  aapb writing fidelity-check <target> --before <path> --after <path> [--lang auto|ko|en] [--json]
   aapb index build <target> [--apply] [--json]
   aapb index status <target> [--json]
   aapb index search <target> --query <text> [--max-results N] [--json]

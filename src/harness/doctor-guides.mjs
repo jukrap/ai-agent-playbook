@@ -21,6 +21,7 @@ import {
   hashFile,
   loadGuideManifest,
   reminder,
+  readManagedManifest,
   resolvePlaybookLayout,
   result,
   summarizeChecks,
@@ -62,33 +63,37 @@ export async function doctorProject(options) {
 
   const agentsFile = path.join(target, 'AGENTS.md');
   const hasAgents = existsSync(agentsFile);
+  const managedManifest = hasPlaybook ? await readManagedManifest(target, playbook) : null;
+  const preservedAgents = managedManifest?.ok && managedManifest.manifest.agentsMode === 'preserved';
   checks.push(result(
-    hasAgents ? 'pass' : 'warn',
+    hasAgents || preservedAgents ? 'pass' : 'warn',
     'root-agents.exists',
     'bootstrap',
     'root AGENTS.md',
-    hasAgents ? 'Found.' : 'Missing root agent policy.',
+    hasAgents ? 'Found.' : preservedAgents ? 'Intentionally left unmanaged by bootstrap.' : 'Missing root agent policy.',
     ['AGENTS.md']
   ));
   if (hasAgents) {
     const agentsText = await readFile(agentsFile, 'utf8');
     const pointsToPlaybook = agentsText.includes(playbook.relativeRoot);
     checks.push(result(
-      pointsToPlaybook ? 'pass' : 'warn',
+      pointsToPlaybook || preservedAgents ? 'pass' : 'warn',
       'root-agents.points-to-playbook',
       'bootstrap',
       'root AGENTS bootstrap',
-      pointsToPlaybook ? `Points to ${playbook.relativeRoot}.` : `Found, but does not point agents to ${playbook.relativeRoot}.`,
+      pointsToPlaybook ? `Points to ${playbook.relativeRoot}.` : preservedAgents ? 'Intentionally preserved outside playbook management.' : `Found, but does not point agents to ${playbook.relativeRoot}.`,
       ['AGENTS.md']
     ));
     const expectedRefs = ROOT_BOOTSTRAP_REFS.map((ref) => `${playbook.relativeRoot}${ref}`);
     const missingRefs = expectedRefs.filter((ref) => !agentsText.includes(ref));
     checks.push(result(
-      missingRefs.length ? 'warn' : 'pass',
+      missingRefs.length && !preservedAgents ? 'warn' : 'pass',
       'root-agents.reading-order',
       'bootstrap',
       'root AGENTS reading order',
-      missingRefs.length ? `Missing explicit references: ${missingRefs.join(', ')}` : `References core ${playbook.relativeRoot} files.`,
+      missingRefs.length
+        ? preservedAgents ? 'Existing reading order is intentionally preserved.' : `Missing explicit references: ${missingRefs.join(', ')}`
+        : `References core ${playbook.relativeRoot} files.`,
       ['AGENTS.md', ...missingRefs]
     ));
   }

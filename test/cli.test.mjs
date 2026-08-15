@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, readdir, rm, stat, utimes, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, stat, symlink, utimes, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import os from 'node:os';
@@ -6,6 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runCli } from '../src/cli.mjs';
+import { bootstrapProject } from '../src/harness/bootstrap.mjs';
 import { validateSourceRegistry } from '../src/runtime/schemas.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
@@ -1767,8 +1768,129 @@ test('bootstrap conflict preflight refuses existing AGENTS without partial write
   assert.equal(await runCli(['bootstrap', '.', '--local-only'], checked), 2);
   assert.match(checked.err(), /Conflicts:/);
   assert.match(checked.err(), /AGENTS\.md/);
+  assert.match(checked.err(), /--preserve-agents/);
   assert.equal(existsSync(path.join(target, '.ai-agent-playbook')), false);
   assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+});
+
+test('bootstrap preserve mode keeps AGENTS bytes and appends only the local playbook ignore entry', async () => {
+  const target = await tempRepo('bootstrap preserve-한글-');
+  const agents = Buffer.from('# Product boundary\r\n\r\nKeep this policy.\r\n', 'utf8');
+  const gitignore = Buffer.concat([
+    Buffer.from([0xef, 0xbb, 0xbf]),
+    Buffer.from('# Existing order\r\ndist/\r\n', 'utf8')
+  ]);
+  await writeFile(path.join(target, 'AGENTS.md'), agents);
+  await writeFile(path.join(target, '.gitignore'), gitignore);
+
+  const output = capture(target);
+  assert.equal(await runCli(['bootstrap', '.', '--local-only', '--preserve-agents', '--json'], output), 0);
+  const report = JSON.parse(output.out());
+  assert.equal(report.agentsMode, 'preserved');
+  assert.deepEqual(await readFile(path.join(target, 'AGENTS.md')), agents);
+  const updatedIgnore = await readFile(path.join(target, '.gitignore'));
+  assert.deepEqual(updatedIgnore.subarray(0, gitignore.length), gitignore);
+  assert.equal(updatedIgnore.toString('utf8').endsWith('.ai-agent-playbook/\r\n'), true);
+  const manifest = JSON.parse(await readFile(path.join(target, '.ai-agent-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
+  assert.equal(manifest.agentsMode, 'preserved');
+  assert.equal(manifest.files.some((file) => file.path === 'AGENTS.md'), false);
+
+  assert.equal(await runCli(['bootstrap', '.', '--local-only', '--preserve-agents', '--force'], capture(target)), 0);
+  const ignoreText = (await readFile(path.join(target, '.gitignore'))).toString('utf8');
+  assert.equal((ignoreText.match(/\.ai-agent-playbook\//g) ?? []).length, 1);
+
+  const doctor = capture(target);
+  assert.equal(await runCli(['doctor', '.', '--json'], doctor), 0);
+  const doctorReport = JSON.parse(doctor.out());
+  assert.equal(doctorReport.checks.find((check) => check.id === 'root-agents.points-to-playbook').level, 'pass');
+  await cleanup(target);
+});
+
+test('bootstrap link mode owns only its marker block and uninstall restores user AGENTS content', async () => {
+  const target = await tempRepo('bootstrap link-한글-');
+  const original = '# Product rules\n\nNever replace this section.\n';
+  await writeFile(path.join(target, 'AGENTS.md'), original);
+
+  assert.equal(await runCli(['bootstrap', '.', '--link-agents'], capture(target)), 0);
+  const linked = await readFile(path.join(target, 'AGENTS.md'), 'utf8');
+  assert.equal(linked.startsWith(original), true);
+  assert.equal((linked.match(/ai-agent-playbook:link:start/g) ?? []).length, 1);
+  assert.match(linked, /\.ai-agent-playbook\/START_HERE\.md/);
+
+  await writeFile(path.join(target, 'AGENTS.md'), linked.replace('# Product rules', '# Updated product rules'));
+  const checked = capture(target);
+  assert.equal(await runCli(['managed', 'check', '.', '--json'], checked), 0);
+  assert.equal(JSON.parse(checked.out()).files.find((file) => file.path === 'AGENTS.md').status, 'present');
+
+  assert.equal(await runCli(['bootstrap', '.', '--link-agents', '--force'], capture(target)), 0);
+  const relinked = await readFile(path.join(target, 'AGENTS.md'), 'utf8');
+  assert.equal((relinked.match(/ai-agent-playbook:link:start/g) ?? []).length, 1);
+
+  const uninstall = capture(target);
+  assert.equal(await runCli(['managed', 'uninstall', '.', '--apply', '--json'], uninstall), 0);
+  assert.equal(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), '# Updated product rules\n\nNever replace this section.\n');
+  await cleanup(target);
+});
+
+test('bootstrap replace mode requires both replace-agents and force', async () => {
+  const target = await tempRepo('bootstrap replace-한글-');
+  await writeFile(path.join(target, 'AGENTS.md'), '# Existing policy\n');
+
+  assert.equal(await runCli(['bootstrap', '.', '--force'], capture(target)), 2);
+  assert.equal(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), '# Existing policy\n');
+  assert.equal(await runCli(['bootstrap', '.', '--replace-agents'], capture(target)), 2);
+  assert.equal(await runCli(['bootstrap', '.', '--replace-agents', '--force'], capture(target)), 0);
+  assert.match(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), /\.ai-agent-playbook\//);
+  const manifest = JSON.parse(await readFile(path.join(target, '.ai-agent-playbook', '.ai-agent-playbook-install.json'), 'utf8'));
+  assert.equal(manifest.agentsMode, 'replaced');
+  await cleanup(target);
+});
+
+test('bootstrap rejects ambiguous agent modes, profile merging, malformed markers, and protected-file races', async () => {
+  const target = await tempRepo('bootstrap preflight-한글-');
+  await writeFile(path.join(target, 'AGENTS.md'), '# Existing\n<!-- ai-agent-playbook:link:start -->\n');
+  const before = await listRelativeFiles(target);
+
+  assert.equal(await runCli(['bootstrap', '.', '--preserve-agents', '--link-agents'], capture(target)), 2);
+  assert.equal(await runCli(['bootstrap', '.', '--profile', 'react-vite-fsd', '--preserve-agents'], capture(target)), 2);
+  assert.equal(await runCli(['bootstrap', '.', '--link-agents'], capture(target)), 2);
+  assert.deepEqual(await listRelativeFiles(target), before);
+  await cleanup(target);
+
+  const raced = await tempRepo('bootstrap race-한글-');
+  const racedResult = await bootstrapProject({
+    repoRoot,
+    target: raced,
+    localOnly: true,
+    beforeApply: async () => writeFile(path.join(raced, '.gitignore'), '# changed after preview\n')
+  });
+  assert.equal(racedResult.ok, false);
+  assert.match(racedResult.conflicts.join('\n'), /changed after bootstrap preflight/);
+  assert.equal(existsSync(path.join(raced, '.ai-agent-playbook')), false);
+  await cleanup(raced);
+});
+
+test('bootstrap refuses symlinked protected files before writing', async (t) => {
+  const target = await tempRepo('bootstrap symlink-한글-');
+  const outside = path.join(await tempRepo('bootstrap symlink outside-'), 'AGENTS.md');
+  await writeFile(outside, '# Outside\n');
+  try {
+    await symlink(outside, path.join(target, 'AGENTS.md'), 'file');
+  } catch (error) {
+    if (error.code === 'EPERM') {
+      t.skip('File symlink creation is unavailable on this Windows host.');
+      await cleanup(path.dirname(outside));
+      await cleanup(target);
+      return;
+    }
+    throw error;
+  }
+  const result = await bootstrapProject({ repoRoot, target, preserveAgents: true });
+  assert.equal(result.ok, false);
+  assert.match(result.conflicts.join('\n'), /Refusing to modify symlinked AGENTS\.md/);
+  assert.equal(existsSync(path.join(target, '.ai-agent-playbook')), false);
+  await cleanup(path.dirname(outside));
   await cleanup(target);
 });
 

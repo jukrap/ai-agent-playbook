@@ -12,6 +12,7 @@ import {
   matchingManifestCandidates,
   normalizeManagedPath,
   readManagedManifest,
+  removeManagedBlock,
   removeEmptyManagedDirectories,
   resolvePlaybookLayout,
   summarizeManagedFiles,
@@ -112,6 +113,7 @@ export async function catalogManagedManifest(options) {
       source: manifestResult.manifest.source,
       playbookDir: manifestResult.manifest.playbookDir,
       localOnly: Boolean(manifestResult.manifest.localOnly),
+      agentsMode: manifestResult.manifest.agentsMode ?? null,
       installedAtUtc: manifestResult.manifest.installedAtUtc,
       updatedAtUtc: manifestResult.manifest.updatedAtUtc
     },
@@ -145,6 +147,7 @@ export async function adoptManagedManifest(options) {
   if (apply) {
     await writeManagedManifest(resolvedTarget, playbook, {
       localOnly,
+      agentsMode: candidates.some((file) => file.path === 'AGENTS.md') ? 'generated' : 'preserved',
       files: candidates,
       installedAtUtc: new Date().toISOString()
     });
@@ -228,9 +231,12 @@ export async function pruneManagedManifest(options) {
 
   let applied = false;
   if (apply && conflicts.length === 0 && operations.length > 0) {
-    await rm(path.join(resolvedTarget, ...file.path.split('/')), { force: true });
+    const fullPath = path.join(resolvedTarget, ...file.path.split('/'));
+    if (entry.ownership === 'block') await removeManagedBlock(fullPath, entry);
+    else await rm(fullPath, { force: true });
     await writeManagedManifest(resolvedTarget, playbook, {
       localOnly: Boolean(manifestResult.manifest.localOnly),
+      agentsMode: entry.path === 'AGENTS.md' ? 'preserved' : manifestResult.manifest.agentsMode,
       installedAtUtc: manifestResult.manifest.installedAtUtc,
       files: manifestResult.manifest.files.filter((item) => item.path !== file.path)
     });
@@ -291,7 +297,9 @@ export async function uninstallManagedManifest(options) {
 
   if (apply) {
     for (const file of removable) {
-      await rm(path.join(resolvedTarget, ...file.path.split('/')), { force: true });
+      const fullPath = path.join(resolvedTarget, ...file.path.split('/'));
+      if (file.ownership === 'block') await removeManagedBlock(fullPath, file);
+      else await rm(fullPath, { force: true });
     }
     if (conflicts.length === 0) {
       await rm(path.join(playbook.root, INSTALL_MANIFEST_FILE), { force: true });

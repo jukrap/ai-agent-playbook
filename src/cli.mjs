@@ -133,11 +133,24 @@ export async function runCli(argv, io = {}) {
         profile: parsed.flags.profile,
         localOnly: Boolean(parsed.flags['local-only']),
         dryRun: Boolean(parsed.flags['dry-run']),
-        force: Boolean(parsed.flags.force)
+        force: Boolean(parsed.flags.force),
+        preserveAgents: Boolean(parsed.flags['preserve-agents']),
+        linkAgents: Boolean(parsed.flags['link-agents']),
+        replaceAgents: Boolean(parsed.flags['replace-agents'])
       });
-      printOperations(stdout, result.operations);
+      if (parsed.flags.json) {
+        writeJson(stdout, result);
+      } else {
+        printOperations(stdout, result.operations);
+        for (const warning of result.warnings ?? []) write(stderr, `Warning: ${warning}\n`);
+      }
       if (!result.ok) {
-        write(stderr, `Conflicts:\n${result.conflicts.map((item) => `- ${item}`).join('\n')}\nUse --force to overwrite.\n`);
+        if (!parsed.flags.json) {
+          write(stderr, `Conflicts:\n${result.conflicts.map((item) => `- ${item}`).join('\n')}\n`);
+          if (result.nextSteps?.length) {
+            write(stderr, `Choose one explicit resolution:\n${result.nextSteps.map((item) => `- ${item}`).join('\n')}\n`);
+          }
+        }
         return 2;
       }
       return 0;
@@ -2419,11 +2432,14 @@ const STRICT_BOOLEAN_FLAGS = new Set([
   'force-unmanaged',
   'json',
   'local-only',
+  'link-agents',
   'no-git',
   'no-interactive',
   'no-remote',
   'offline',
+  'preserve-agents',
   'remote-read-only',
+  'replace-agents',
   'reset-attempts'
 ]);
 
@@ -3214,7 +3230,7 @@ function helpText() {
 
 Usage:
   aapb --version
-  aapb bootstrap <target> [--profile <name>] [--local-only] [--dry-run] [--force]
+  aapb bootstrap <target> [--profile <name>] [--local-only] [--preserve-agents | --link-agents | --replace-agents --force] [--dry-run] [--json]
   aapb mcp [--enable-write-tools] [--enable-forge-write-tools]
   aapb doctor <target> [--strict] [--json]
   aapb doctor <target> --reminder [--json]

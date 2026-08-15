@@ -2,16 +2,24 @@ import { readFile, rename, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
+  AGENTS_LINK_END,
+  AGENTS_LINK_START,
   DEFAULT_PLAYBOOK_DIR,
   LEGACY_PLAYBOOK_DIRS,
   SCHEMA_VERSION,
   applyGitignoreMigration,
+  assertProtectedFileUnchanged,
   assertDirectory,
+  captureProtectedFileSnapshot,
   copyTree,
   ensureGitignoreEntry,
   gitignoreMigrationPlan,
+  hashContent,
+  planAgentsLink,
   playbookReferenceUpdatePlan,
+  readManagedManifest,
   replaceLegacyPlaybookRefs,
+  resolvePlaybookLayout,
   toPortablePath,
   writeBootstrapManifest,
   writeManagedFile
@@ -24,17 +32,52 @@ export async function bootstrapProject(options) {
     profile,
     localOnly = false,
     dryRun = false,
-    force = false
+    force = false,
+    preserveAgents = false,
+    linkAgents = false,
+    replaceAgents = false,
+    beforeApply
   } = options;
 
   await assertDirectory(target, 'Target repository does not exist');
 
   const operations = [];
+  const warnings = [];
   const conflicts = [];
+  const nextSteps = [];
   const templateRoot = path.join(repoRoot, 'templates');
   const playbookSource = path.join(templateRoot, 'project-playbook');
   const playbookTarget = path.join(target, DEFAULT_PLAYBOOK_DIR);
   const rootAgent = path.join(templateRoot, 'agents', 'global', 'AGENTS.md');
+  const targetAgent = path.join(target, 'AGENTS.md');
+  const targetGitignore = path.join(target, '.gitignore');
+  let agentSnapshot;
+  let gitignoreSnapshot;
+  try {
+    agentSnapshot = await captureProtectedFileSnapshot(targetAgent, 'AGENTS.md');
+    gitignoreSnapshot = await captureProtectedFileSnapshot(targetGitignore, '.gitignore');
+  } catch (error) {
+    return bootstrapResult({ target, ok: false, agentsMode: null, operations, warnings, conflicts: [error.message], nextSteps });
+  }
+  const explicitModes = [preserveAgents, linkAgents, replaceAgents].filter(Boolean).length;
+
+  if (explicitModes > 1) {
+    conflicts.push('Choose only one of --preserve-agents, --link-agents, or --replace-agents.');
+  }
+  if (replaceAgents && !force) {
+    conflicts.push('--replace-agents requires --force.');
+  }
+  if (agentSnapshot.exists && profile) {
+    conflicts.push('Existing AGENTS.md cannot be combined with --profile automatically; integrate the profile manually.');
+  }
+  if (agentSnapshot.exists && explicitModes === 0) {
+    conflicts.push('Existing AGENTS.md requires an explicit preservation mode; --force alone never replaces it.');
+    nextSteps.push(
+      `aapb bootstrap "${target}"${localOnly ? ' --local-only' : ''} --preserve-agents`,
+      `aapb bootstrap "${target}"${localOnly ? ' --local-only' : ''} --link-agents`,
+      `aapb bootstrap "${target}" --replace-agents --force`
+    );
+  }
 
   let agentContent = await readFile(rootAgent, 'utf8');
   if (profile) {
@@ -46,25 +89,81 @@ export async function bootstrapProject(options) {
     agentContent = `${agentContent.trimEnd()}\n\n---\n\n# Profile: ${profile}\n\n${profileContent.trimStart()}`;
   }
 
+  let agentsMode = agentSnapshot.exists ? 'preserved' : 'generated';
+  let linkedPlan = null;
+  let agentEntry = null;
   const preflight = { dryRun: true, force, operations, conflicts };
   await copyTree(playbookSource, playbookTarget, preflight);
-  await writeManagedFile(path.join(target, 'AGENTS.md'), agentContent, preflight);
+  if (preserveAgents) {
+    operations.push(`${agentSnapshot.exists ? 'preserve' : 'leave absent'} AGENTS.md`);
+    agentsMode = 'preserved';
+  } else if (linkAgents && agentSnapshot.exists) {
+    linkedPlan = planAgentsLink(agentSnapshot.content);
+    if (!linkedPlan.ok) {
+      conflicts.push(linkedPlan.conflict);
+    } else if (linkedPlan.alreadyLinked) {
+      operations.push('keep AGENTS.md existing playbook reading order');
+      warnings.push('AGENTS.md already references the full playbook reading order; no managed link block will be added.');
+      agentsMode = 'preserved';
+    } else {
+      const existingManifest = await readManagedManifest(target, resolvePlaybookLayout(target));
+      const existingBlock = existingManifest.ok
+        ? existingManifest.manifest.files.find((file) => file.path === 'AGENTS.md' && file.ownership === 'block')
+        : null;
+      if (existingBlock) {
+        linkedPlan.leadingSeparator = existingBlock.leadingSeparator ?? '';
+        linkedPlan.trailingSeparator = existingBlock.trailingSeparator ?? '';
+      }
+      operations.push(`${linkedPlan.changed ? 'update' : 'keep'} AGENTS.md managed link block`);
+      agentsMode = 'linked';
+      agentEntry = {
+        path: 'AGENTS.md',
+        kind: 'bootstrap',
+        source: 'templates/agents/global/AGENTS.md',
+        sourceHash: hashContent(linkedPlan.block),
+        targetHash: hashContent(linkedPlan.block),
+        ownership: 'block',
+        startMarker: AGENTS_LINK_START,
+        endMarker: AGENTS_LINK_END,
+        leadingSeparator: linkedPlan.leadingSeparator,
+        trailingSeparator: linkedPlan.trailingSeparator
+      };
+    }
+  } else {
+    const mayReplace = !agentSnapshot.exists || (replaceAgents && force);
+    if (mayReplace) {
+      await writeManagedFile(targetAgent, agentContent, { ...preflight, force: true });
+      agentsMode = agentSnapshot.exists ? 'replaced' : 'generated';
+    }
+  }
   if (localOnly) {
     await ensureGitignoreEntry(target, `${DEFAULT_PLAYBOOK_DIR}/`, preflight);
   }
 
   if (dryRun || conflicts.length > 0) {
-    return {
-      ok: conflicts.length === 0,
-      operations,
-      conflicts
-    };
+    return bootstrapResult({ target, ok: conflicts.length === 0, agentsMode, operations, warnings, conflicts, nextSteps, preserveAgents, agentSnapshot });
+  }
+
+  if (beforeApply) await beforeApply();
+  try {
+    await assertProtectedFileUnchanged(targetAgent, agentSnapshot, 'AGENTS.md');
+    await assertProtectedFileUnchanged(targetGitignore, gitignoreSnapshot, '.gitignore');
+  } catch (error) {
+    conflicts.push(error.message);
+    return bootstrapResult({ target, ok: false, agentsMode, operations, warnings, conflicts, nextSteps, preserveAgents, agentSnapshot });
   }
 
   operations.length = 0;
   conflicts.length = 0;
   await copyTree(playbookSource, playbookTarget, { dryRun: false, force, operations, conflicts });
-  await writeManagedFile(path.join(target, 'AGENTS.md'), agentContent, { dryRun: false, force, operations, conflicts });
+  if (agentsMode === 'generated' || agentsMode === 'replaced') {
+    await writeManagedFile(targetAgent, agentContent, { dryRun: false, force: true, operations, conflicts });
+  } else if (agentsMode === 'linked' && linkedPlan?.changed) {
+    operations.push('update AGENTS.md managed link block');
+    await writeFile(targetAgent, linkedPlan.content);
+  } else {
+    operations.push(`${agentSnapshot.exists ? 'preserve' : 'leave absent'} AGENTS.md`);
+  }
 
   if (localOnly) {
     await ensureGitignoreEntry(target, `${DEFAULT_PLAYBOOK_DIR}/`, { dryRun: false, operations });
@@ -74,13 +173,44 @@ export async function bootstrapProject(options) {
     target,
     agentContent,
     localOnly,
-    profile
+    profile,
+    agentsMode,
+    agentEntry
   });
 
-  return {
-    ok: conflicts.length === 0,
+  return bootstrapResult({ target, ok: conflicts.length === 0, applied: conflicts.length === 0, agentsMode, operations, warnings, conflicts, nextSteps, preserveAgents, agentSnapshot });
+}
+
+function bootstrapResult(options) {
+  const {
+    target,
+    ok,
+    applied = false,
+    agentsMode,
     operations,
-    conflicts
+    warnings,
+    conflicts,
+    nextSteps,
+    preserveAgents = false,
+    agentSnapshot = null
+  } = options;
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    ok,
+    target: path.resolve(target),
+    applied,
+    agentsMode,
+    summary: {
+      operations: operations.length,
+      preserved: preserveAgents && agentSnapshot?.exists ? 1 : 0,
+      warnings: warnings.length,
+      conflicts: conflicts.length
+    },
+    operations,
+    preservedFiles: preserveAgents && agentSnapshot?.exists ? ['AGENTS.md'] : [],
+    warnings,
+    conflicts,
+    nextSteps
   };
 }
 

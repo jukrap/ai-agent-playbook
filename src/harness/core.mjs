@@ -1,4 +1,4 @@
-import { appendFile, mkdir, readdir, readFile, rename, rm, rmdir, stat, writeFile, copyFile } from 'node:fs/promises';
+import { appendFile, lstat, mkdir, readdir, readFile, rename, rm, rmdir, stat, writeFile, copyFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -43,6 +43,8 @@ export const CONTRACTS_DIR = 'memory/contracts';
 export const WORKLOGS_DIR = 'workflows/worklogs';
 export const GUIDES_DIR = 'knowledge/references/guides';
 export const RUN_SUMMARY_MARKER = '<!-- ai-agent-playbook-run-summary -->';
+export const AGENTS_LINK_START = '<!-- ai-agent-playbook:link:start -->';
+export const AGENTS_LINK_END = '<!-- ai-agent-playbook:link:end -->';
 
 export const OBSOLETE_STYLE_SKILLS = [
   'design-system-first',
@@ -972,21 +974,175 @@ export async function writeManagedFile(destination, content, context) {
 
 export async function ensureGitignoreEntry(target, entry, context) {
   const file = path.join(target, '.gitignore');
-  const existing = existsSync(file) ? await readFile(file, 'utf8') : '';
-  const lines = existing.split(/\r?\n/).map((line) => line.trim());
-  if (lines.includes(entry)) {
+  const existing = existsSync(file) ? await readUtf8Buffer(file, '.gitignore') : Buffer.alloc(0);
+  const text = stripUtf8Bom(existing).toString('utf8');
+  if (hasEquivalentGitignoreEntry(text, entry)) {
     context.operations.push(`keep .gitignore ${entry}`);
     return;
   }
   context.operations.push(`append .gitignore ${entry}`);
   if (!context.dryRun) {
-    const prefix = existing && !existing.endsWith('\n') ? `${existing}\n` : existing;
-    await writeFile(file, `${prefix}${entry}\n`);
+    const eol = detectEol(text);
+    const suffix = text.length === 0
+      ? `${entry}${eol}`
+      : text.endsWith('\n') || text.endsWith('\r')
+        ? `${entry}${eol}`
+        : `${eol}${entry}${eol}`;
+    await writeFile(file, Buffer.concat([existing, Buffer.from(suffix, 'utf8')]));
   }
 }
 
+export function hasEquivalentGitignoreEntry(text, entry) {
+  const expected = String(entry).replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  return String(text).split(/\r?\n|\r/).some((rawLine) => {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#') || line.startsWith('!')) return false;
+    const normalized = line.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+    return normalized === expected;
+  });
+}
+
+export function detectEol(text) {
+  if (String(text).includes('\r\n')) return '\r\n';
+  if (String(text).includes('\r')) return '\r';
+  return '\n';
+}
+
+export async function readUtf8Buffer(file, label = path.basename(file)) {
+  const content = await readFile(file);
+  try {
+    new TextDecoder('utf-8', { fatal: true }).decode(stripUtf8Bom(content));
+  } catch {
+    throw new Error(`${label} must be valid UTF-8.`);
+  }
+  return content;
+}
+
+export function stripUtf8Bom(content) {
+  return content.length >= 3 && content[0] === 0xef && content[1] === 0xbb && content[2] === 0xbf
+    ? content.subarray(3)
+    : content;
+}
+
+export async function captureProtectedFileSnapshot(file, label = path.basename(file)) {
+  if (!existsSync(file)) return { exists: false, digest: null, content: Buffer.alloc(0) };
+  const info = await lstat(file);
+  if (info.isSymbolicLink()) {
+    throw new Error(`Refusing to modify symlinked ${label}. Replace it with a repository-local file or integrate manually.`);
+  }
+  if (!info.isFile()) throw new Error(`Refusing non-file ${label}.`);
+  const content = await readUtf8Buffer(file, label);
+  return { exists: true, digest: hashContent(content), content };
+}
+
+export async function assertProtectedFileUnchanged(file, snapshot, label = path.basename(file)) {
+  const current = await captureProtectedFileSnapshot(file, label);
+  if (current.exists !== snapshot.exists || current.digest !== snapshot.digest) {
+    throw new Error(`${label} changed after bootstrap preflight; no files were written. Run bootstrap again.`);
+  }
+}
+
+export function buildAgentsLinkBlock(playbookDir = DEFAULT_PLAYBOOK_DIR, eol = '\n') {
+  return [
+    AGENTS_LINK_START,
+    '## Project playbook',
+    '',
+    `For repository work, read these files from \`${playbookDir}/\` in order:`,
+    ...ROOT_BOOTSTRAP_REFS.map((file, index) => `${index + 1}. \`${playbookDir}/${file}\``),
+    AGENTS_LINK_END
+  ].join(eol);
+}
+
+export function inspectAgentsLink(text) {
+  const starts = [...String(text).matchAll(new RegExp(escapeRegex(AGENTS_LINK_START), 'g'))];
+  const ends = [...String(text).matchAll(new RegExp(escapeRegex(AGENTS_LINK_END), 'g'))];
+  if (starts.length === 0 && ends.length === 0) return { status: 'absent' };
+  if (starts.length !== 1 || ends.length !== 1 || starts[0].index > ends[0].index) {
+    return { status: 'malformed' };
+  }
+  const start = starts[0].index;
+  const end = ends[0].index + AGENTS_LINK_END.length;
+  return { status: 'present', start, end, block: String(text).slice(start, end) };
+}
+
+export function agentsReferencesPlaybook(text, playbookDir = DEFAULT_PLAYBOOK_DIR) {
+  return ROOT_BOOTSTRAP_REFS.every((file) => String(text).includes(`${playbookDir}/${file}`));
+}
+
+export function planAgentsLink(content, playbookDir = DEFAULT_PLAYBOOK_DIR) {
+  const hasBom = content.length >= 3 && content[0] === 0xef && content[1] === 0xbb && content[2] === 0xbf;
+  const text = stripUtf8Bom(content).toString('utf8');
+  const eol = detectEol(text);
+  const inspection = inspectAgentsLink(text);
+  if (inspection.status === 'malformed') {
+    return { ok: false, conflict: 'AGENTS.md contains a malformed ai-agent-playbook link marker block.' };
+  }
+  if (inspection.status === 'absent' && agentsReferencesPlaybook(text, playbookDir)) {
+    return { ok: true, changed: false, alreadyLinked: true, content, block: null, leadingSeparator: '', trailingSeparator: '' };
+  }
+
+  const block = buildAgentsLinkBlock(playbookDir, eol);
+  let updatedText;
+  let leadingSeparator = '';
+  let trailingSeparator = '';
+  if (inspection.status === 'present') {
+    updatedText = `${text.slice(0, inspection.start)}${block}${text.slice(inspection.end)}`;
+  } else {
+    leadingSeparator = text.length === 0 ? '' : text.endsWith(`${eol}${eol}`) ? '' : text.endsWith(eol) ? eol : `${eol}${eol}`;
+    trailingSeparator = eol;
+    updatedText = `${text}${leadingSeparator}${block}${trailingSeparator}`;
+  }
+  const prefix = hasBom ? Buffer.from([0xef, 0xbb, 0xbf]) : Buffer.alloc(0);
+  return {
+    ok: true,
+    changed: updatedText !== text,
+    alreadyLinked: false,
+    content: Buffer.concat([prefix, Buffer.from(updatedText, 'utf8')]),
+    block,
+    leadingSeparator,
+    trailingSeparator
+  };
+}
+
+export function managedBlockStatus(content, file) {
+  const text = stripUtf8Bom(content).toString('utf8');
+  const inspection = inspectAgentsLink(text);
+  if (inspection.status === 'absent') return { status: 'missing' };
+  if (inspection.status !== 'present') return { status: 'modified' };
+  const currentHash = hashContent(inspection.block);
+  const separatorsMatch = String(file.leadingSeparator ?? '') === text.slice(
+    Math.max(0, inspection.start - String(file.leadingSeparator ?? '').length),
+    inspection.start
+  ) && String(file.trailingSeparator ?? '') === text.slice(
+    inspection.end,
+    inspection.end + String(file.trailingSeparator ?? '').length
+  );
+  return {
+    status: currentHash === file.targetHash && separatorsMatch ? 'present' : 'modified',
+    currentHash
+  };
+}
+
+export async function removeManagedBlock(filePath, entry) {
+  const content = await readUtf8Buffer(filePath, entry.path);
+  const hasBom = content.length >= 3 && content[0] === 0xef && content[1] === 0xbb && content[2] === 0xbf;
+  const text = stripUtf8Bom(content).toString('utf8');
+  const inspection = inspectAgentsLink(text);
+  if (inspection.status !== 'present') throw new Error(`Managed block missing from ${entry.path}.`);
+  const leading = String(entry.leadingSeparator ?? '');
+  const trailing = String(entry.trailingSeparator ?? '');
+  const start = inspection.start - leading.length;
+  const end = inspection.end + trailing.length;
+  if (start < 0 || text.slice(start, inspection.start) !== leading || text.slice(inspection.end, end) !== trailing) {
+    throw new Error(`Managed block boundaries changed in ${entry.path}.`);
+  }
+  const updated = `${text.slice(0, start)}${text.slice(end)}`;
+  const prefix = hasBom ? Buffer.from([0xef, 0xbb, 0xbf]) : Buffer.alloc(0);
+  await writeFile(filePath, Buffer.concat([prefix, Buffer.from(updated, 'utf8')]));
+}
+
 export async function writeBootstrapManifest(options) {
-  const { repoRoot, target, agentContent, localOnly, profile } = options;
+  const { repoRoot, target, agentContent, localOnly, profile, agentsMode = 'generated', agentEntry = null } = options;
   const playbook = resolvePlaybookLayout(target);
   const files = await sourceTemplateManifestEntries({
     repoRoot,
@@ -995,18 +1151,23 @@ export async function writeBootstrapManifest(options) {
     includeOnlyExistingAndMatching: false
   });
   const playbookFiles = files.filter((file) => file.path !== 'AGENTS.md');
-  const agentHash = hashContent(agentContent);
-  playbookFiles.push({
-    path: 'AGENTS.md',
-    kind: 'bootstrap',
-    source: profile
-      ? `templates/agents/global/AGENTS.md+templates/agents/profiles/${profile}/AGENTS.md`
-      : 'templates/agents/global/AGENTS.md',
-    sourceHash: agentHash,
-    targetHash: await hashFile(path.join(target, 'AGENTS.md'))
-  });
+  if (agentEntry) {
+    playbookFiles.push(agentEntry);
+  } else if (agentsMode === 'generated' || agentsMode === 'replaced') {
+    const agentHash = hashContent(agentContent);
+    playbookFiles.push({
+      path: 'AGENTS.md',
+      kind: 'bootstrap',
+      source: profile
+        ? `templates/agents/global/AGENTS.md+templates/agents/profiles/${profile}/AGENTS.md`
+        : 'templates/agents/global/AGENTS.md',
+      sourceHash: agentHash,
+      targetHash: await hashFile(path.join(target, 'AGENTS.md'))
+    });
+  }
   await writeManagedManifest(target, playbook, {
     localOnly,
+    agentsMode,
     files: playbookFiles,
     installedAtUtc: new Date().toISOString()
   });
@@ -1021,6 +1182,7 @@ export async function updateGuideManifestEntries(options) {
   const merged = mergeManagedFiles(existingFiles, guideEntries);
   await writeManagedManifest(target, playbook, {
     localOnly: existing.ok ? Boolean(existing.manifest.localOnly) : await hasGitignoreEntry(target, `${playbook.dir}/`),
+    agentsMode: existing.ok ? existing.manifest.agentsMode : undefined,
     files: merged,
     installedAtUtc: existing.ok ? existing.manifest.installedAtUtc : new Date().toISOString()
   });
@@ -1035,6 +1197,7 @@ export async function writeManagedManifest(target, playbook, options) {
     source: INSTALL_SOURCE,
     playbookDir: playbook.dir,
     localOnly: Boolean(options.localOnly),
+    ...(options.agentsMode ? { agentsMode: options.agentsMode } : {}),
     installedAtUtc,
     updatedAtUtc: now,
     files
@@ -1089,12 +1252,19 @@ export function validateManagedManifest(manifest) {
   if (manifest.source !== INSTALL_SOURCE) return 'source mismatch';
   if (typeof manifest.playbookDir !== 'string') return 'missing playbookDir';
   if (!Array.isArray(manifest.files)) return 'missing files';
+  if (manifest.agentsMode !== undefined && !['preserved', 'linked', 'generated', 'replaced'].includes(manifest.agentsMode)) {
+    return 'invalid agentsMode';
+  }
   for (const file of manifest.files) {
     if (!file || typeof file.path !== 'string') return 'file entry missing path';
     if (!isPortableManagedPath(file.path)) return `non-portable path ${file.path}`;
     if (typeof file.kind !== 'string' || typeof file.source !== 'string') return `invalid entry ${file.path}`;
     if (!isPortableManagedPath(file.source)) return `non-portable source ${file.source}`;
     if (typeof file.sourceHash !== 'string' || typeof file.targetHash !== 'string') return `missing hashes for ${file.path}`;
+    if (file.ownership !== undefined && file.ownership !== 'block') return `invalid ownership for ${file.path}`;
+    if (file.ownership === 'block' && (file.startMarker !== AGENTS_LINK_START || file.endMarker !== AGENTS_LINK_END)) {
+      return `invalid block markers for ${file.path}`;
+    }
   }
   return null;
 }
@@ -1117,6 +1287,11 @@ export async function managedFileStatuses(target, files) {
     const fullPath = path.join(target, ...file.path.split('/'));
     if (!existsSync(fullPath)) {
       statuses.push({ ...file, status: 'missing' });
+      continue;
+    }
+    if (file.ownership === 'block') {
+      const block = managedBlockStatus(await readUtf8Buffer(fullPath, file.path), file);
+      statuses.push({ ...file, ...block });
       continue;
     }
     const targetHash = await hashFile(fullPath);

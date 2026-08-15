@@ -77,7 +77,7 @@ $env:AI_AGENT_PLAYBOOK_PYTHON = ".\.venv\Scripts\python.exe"
 npx ai-agent-playbook runtime python-status --json
 ```
 
-일반적인 글 점검은 `writing naturalness-check --engine auto`를 사용합니다. Python을 무시해야 하면 `--engine js`, Python 누락을 명시적으로 보고해야 하면 `--engine python`을 사용합니다.
+일반적인 글 점검은 `writing naturalness-check --engine auto`를 사용합니다. Python을 무시해야 하면 `--engine js`, Python 누락을 명시적으로 보고해야 하면 `--engine python`을 사용합니다. 의도적인 수정 후에는 `writing fidelity-check`로 수정 전후 파일을 비교해 고정 변경률을 강제하지 않으면서 보호 사실, 구조, register, 수사 구조, 변경 범위를 검토합니다.
 
 ## 재사용 스킬 수명주기
 
@@ -173,7 +173,7 @@ npx ai-agent-playbook mcp
 | `skills check` | 아니오 | 스킬 상태를 보고합니다. |
 | `skills install` / `skills update` | `--dry-run`이 없으면 예 | 사용자 스킬 루트를 변경합니다. |
 | `skills uninstall` | `--dry-run`이 없으면 예 | 사용자 스킬 루트에서 관리 대상 스킬을 제거합니다. |
-| `bootstrap <target>` | `--dry-run`이 없으면 예 | 대상 프로젝트의 루트 `AGENTS.md`와 `.ai-agent-playbook/`을 변경합니다. |
+| `bootstrap <target>` | `--dry-run`이 없으면 예 | 대상 `.ai-agent-playbook/`, 선택적인 byte 보존 `.gitignore` 항목, 기존 파일이 있을 때 명시적 소유 모드로 허용된 root `AGENTS.md`만 변경합니다. |
 | `guides sync <target>` | `--dry-run` 또는 `--check`가 없으면 예 | 대상 프로젝트의 `.ai-agent-playbook/knowledge/references/guides/`를 변경합니다. |
 | `context init` | `--dry-run`이 없으면 예 | 대상 프로젝트의 `.ai-agent-playbook/memory/context/`와 `.ai-agent-playbook/memory/maps/doc-map.md`를 변경합니다. |
 | `context list/status` | 아니오 | 경로 범위 프로젝트 기억을 읽기 전용으로 점검합니다. |
@@ -333,6 +333,10 @@ npx ai-agent-playbook operator check <target-project> --json
 전역 설치 후에는 `npx ai-agent-playbook`을 `aapb`으로 바꿔 실행합니다. 로컬 체크아웃에서는 `node .\bin\aapb.mjs`로 바꿔 실행합니다. 프로젝트 플레이북, 문맥, 실행 기록, 계약, 관리 파일 정리, 운영자 점검, 어댑터, 계획, 작업 기록 명령 전체 목록은 [명령어 가이드](commands.ko.md)를 봅니다.
 
 대상 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다. `.ai-agent-playbook/`을 대상 `.gitignore`에 추가해야 하면 `--local-only`를 사용합니다.
+
+Root `AGENTS.md`가 이미 있으면 소유 방식을 명시할 때까지 bootstrap은 모든 쓰기 전에 중단합니다. 제품 정책을 byte 단위로 지키면서 playbook만 설치하려면 `--preserve-agents`, 작은 managed 읽기 순서 블록을 따라야 하면 `--link-agents`를 사용합니다. 전체 교체에는 `--replace-agents --force`가 모두 필요하며 `--force`만으로는 root 정책을 교체하지 않습니다. 기존 root 정책과 `--profile`은 자동으로 합치지 않습니다. `--json`을 추가하면 예정 작업, 보존 경로, 충돌, 경고, 허용된 다음 명령을 구조화해 확인할 수 있습니다.
+
+Local-only `.gitignore` 처리는 필요한 패턴 하나만 추가하며 BOM, 줄바꿈, 순서, 마지막 개행 여부를 보존합니다. 보호 파일 symlink는 거부하고 preflight 이후 `AGENTS.md`나 `.gitignore`가 바뀌면 중단합니다. Linked 설치는 marker 블록만 소유권으로 기록하므로 managed check와 uninstall이 주변 사용자 정책을 소유하지 않습니다.
 
 이미 `.ai-agent-playbook/`이 있는 프로젝트에서 새 플레이북 체크아웃의 누락된 가이드 템플릿만 가져오려면 `guides sync`를 사용합니다. `guides sync --check --json`은 원본과 대상 해시를 사용해 오래된 가이드도 보고하고, `--diff`를 추가하면 파일을 쓰지 않고 첫 차이 줄을 보여줍니다. 이 명령은 `--force`로 가이드 파일 덮어쓰기를 명시하지 않는 한 루트 `AGENTS.md`, 플레이북 정책 파일, 프로젝트별 메모를 수정하지 않습니다.
 

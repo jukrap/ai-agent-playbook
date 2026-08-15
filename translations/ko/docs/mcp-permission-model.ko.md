@@ -16,7 +16,7 @@
 
 기본 지시문은 검토 작업을 필수 근거, 선택 근거, 중단 조건, 검증 기대치에 맞춰 안내합니다. 지시문 자체는 쓰기 권한을 열지 않고, 생성된 실행 단서를 장기 기억으로 승격하지 않습니다.
 
-읽기 전용 도구는 도구 스키마가 선택지를 제공할 때 선택형 로컬 엔진을 호출할 수 있습니다. 예를 들어 `writing_naturalness_check`와 `writing_naturalness_report`는 `engine: "auto" | "js" | "python"`을 받습니다. Python 경로도 대상 프로젝트 안의 상대 경로 글 파일만 읽고 JSON 결과를 반환할 뿐, 파일을 쓰거나 네트워크를 호출하지 않습니다.
+읽기 전용 도구는 도구 스키마가 선택지를 제공할 때 선택형 로컬 엔진을 호출할 수 있습니다. 예를 들어 `writing_naturalness_check`와 `writing_naturalness_report`는 `engine: "auto" | "js" | "python"`을 받습니다. Python 경로도 대상 프로젝트 안의 상대 경로 글 파일만 읽고 JSON 결과를 반환할 뿐, 파일을 쓰거나 네트워크를 호출하지 않습니다. `writing_fidelity_check`는 대상 안의 글 파일 두 개를 비교하고 `qa_ui_genericity_scan`은 제한된 정적 검토 후보를 반환합니다. 두 tool 모두 source를 수정하거나 문서 내용을 실행하거나 browser를 capture하지 않으며 clean 결과를 완료 증거로 취급하지 않습니다.
 
 Forge read tool은 configured remote, local authentication status, 허용된 provider capability를 inspect할 수 있습니다. `offline: true`는 network-dependent inspection을 막습니다. Read tool은 forge state를 바꾸거나 scope를 refresh하거나 executor를 실행하거나 Git change를 전달하지 않습니다.
 
@@ -73,11 +73,13 @@ Structured permission resource는 playbook tool 5개를 `managedWriteTools`, for
 - `evidence_locator_check`
 - `writing_naturalness_check`
 - `writing_naturalness_report`
+- `writing_fidelity_check`
 - `index_search`
 - `symbol_outline`
 - `dependency_inventory`
 - `route_api_hints`
 - `repo_graph_preview`
+- `qa_ui_genericity_scan`
 - `write_gate_preview`
 - `reference_inventory`
 - `reference_inspect`

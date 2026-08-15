@@ -77,7 +77,7 @@ $env:AI_AGENT_PLAYBOOK_PYTHON = ".\.venv\Scripts\python.exe"
 npx ai-agent-playbook runtime python-status --json
 ```
 
-Use `writing naturalness-check --engine auto` for the normal path. Use `--engine js` when Python should be ignored, and `--engine python` when a missing Python environment should be reported explicitly.
+Use `writing naturalness-check --engine auto` for the normal path. Use `--engine js` when Python should be ignored, and `--engine python` when a missing Python environment should be reported explicitly. After an intentional rewrite, run `writing fidelity-check` against the before/after files to review protected facts, structure, register, rhetoric, and change scope without enforcing a fixed rewrite threshold.
 
 ## Reusable Skills Lifecycle
 
@@ -173,7 +173,7 @@ This project does not edit your MCP settings automatically. `adapter config <tar
 | `skills check` | No | Reports skill status. |
 | `skills install` / `skills update` | Yes unless `--dry-run` | User skill roots. |
 | `skills uninstall` | Yes unless `--dry-run` | Removes managed skills from user skill roots. |
-| `bootstrap <target>` | Yes unless `--dry-run` | Target project's root `AGENTS.md` and `.ai-agent-playbook/`. |
+| `bootstrap <target>` | Yes unless `--dry-run` | Target `.ai-agent-playbook/`, optional byte-preserving `.gitignore` addition, and root `AGENTS.md` only under an explicit ownership mode when it already exists. |
 | `guides sync <target>` | Yes unless `--dry-run` or `--check` | Target project's `.ai-agent-playbook/knowledge/references/guides/`. |
 | `context init` | Yes unless `--dry-run` | Target project's `.ai-agent-playbook/memory/context/` and `.ai-agent-playbook/memory/maps/doc-map.md`. |
 | `context list/status` | No | Read-only path-scoped project memory inspection. |
@@ -335,6 +335,10 @@ npx ai-agent-playbook operator check <target-project> --json
 After a global install, replace `npx ai-agent-playbook` with `aapb`. From a local checkout, replace it with `node .\bin\aapb.mjs`. For the full list of project playbook, context, runs, contracts, managed cleanup, operator, adapter, plan, and worklog commands, see [Command guide](commands.md).
 
 Use `--profile <name>` only after the target stack is known. Use `--local-only` when `.ai-agent-playbook/` should be added to the target `.gitignore`.
+
+If root `AGENTS.md` already exists, bootstrap stops before all writes until ownership is explicit. Use `--preserve-agents` to keep product policy byte-for-byte while installing only the playbook, or `--link-agents` when agents should follow a small managed reading-order block. Full replacement requires `--replace-agents --force`; `--force` alone does not replace root policy. Existing root policy cannot be combined automatically with `--profile`. Add `--json` to receive planned actions, preserved paths, conflicts, warnings, and the allowed next commands.
+
+Local-only `.gitignore` handling is append-only for the one required pattern and retains BOM, line endings, ordering, and final-newline choice. Bootstrap rejects protected-file symlinks and stops if `AGENTS.md` or `.gitignore` changes after preflight. A linked install records ownership of only its marker block, so managed checks and uninstall do not take ownership of surrounding user policy.
 
 Use `guides sync` for projects that already have `.ai-agent-playbook/` and only need missing guide templates from a newer playbook checkout. `guides sync --check --json` also reports stale guides using source and target hashes, and `--diff` adds the first differing line without writing files. It does not modify root `AGENTS.md`, playbook policy files, or project-specific notes unless `--force` is explicitly used for guide files.
 

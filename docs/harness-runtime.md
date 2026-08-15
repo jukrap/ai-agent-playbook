@@ -97,7 +97,9 @@ Runtime artifact JSON must keep a stable evidence envelope: `schemaVersion`, `ki
 
 `graph preview` builds a read-only `runtime.repo-graph` report from current file inventory, symbol outline, dependency inventory, and route/API/data hints. It records compact nodes and source-backed edges for review, but it remains generated runtime evidence. Use canon or documentation promotion before moving stable facts into memory maps.
 
-`writing naturalness-check` is also read-only. It reads one target-relative text file and reports Korean or English prose signals such as translationese, AI-writing phrases, inflated tone, repeated sentence rhythm, and English-term density. `writing naturalness-report` applies the same checks to a bounded Markdown/MDX/text folder so translation or documentation batches can be triaged before opening individual files. Both commands ignore fenced code, inline code, shell commands, URLs, HTML-only badge lines, and path examples before scoring prose. `--engine auto` combines the built-in JavaScript fallback with the optional Python engine when available; the JSON result reports `engines.used` and `engines.unavailable`. They never rewrite files, call a network service, judge authorship, or bypass detectors. Use the result as an editing checklist before changing README text, docs, translations, PR bodies, release notes, or public summaries.
+`writing naturalness-check` is also read-only. It reads one target-relative text file and reports Korean or English prose signals such as translationese, inflated tone, repeated sentence rhythm, and English-term density. A phrase must repeat or form a dense contextual pattern before it is treated as a signal; a single normal use is not evidence of generic writing. `writing naturalness-report` applies the same checks to a bounded Markdown/MDX/text folder and merges equivalent JavaScript and Python findings instead of reporting the same issue twice. Both commands ignore fenced code, inline code, shell commands, URLs, HTML-only badge lines, and path examples before scoring prose. `--engine auto` combines the built-in JavaScript fallback with the optional Python engine when available; the JSON result reports `engines.used` and `engines.unavailable`.
+
+`writing fidelity-check` compares a before/after document pair after facts, versions, numbers, URLs, commands, paths, code, identifiers, warnings, and structure have been treated as protected evidence. It also reports broad Korean register movement and disappearance of repeated rhetorical structures. Equivalent number forms are normalized. The command does not execute imperative text found in the documents, rewrite files, infer authorship, enforce a fixed change-rate threshold, call a network service, or help bypass detectors. Use both writing checks as review evidence before changing README text, docs, translations, PR bodies, release notes, or public summaries.
 
 ## Workflow run records
 
@@ -151,13 +153,16 @@ An MCP-capable AI app can register that command and then call tools such as `run
 ## Bootstrap behavior
 
 - Copies `templates/project-playbook/` to `<target>/.ai-agent-playbook/`.
-- Writes a thin `<target>/AGENTS.md` from `templates/agents/global/AGENTS.md`. This is a project-root bootstrap, not Codex's personal `~/.codex/AGENTS.md`.
+- Writes a thin `<target>/AGENTS.md` from `templates/agents/global/AGENTS.md` only when that file is absent. This is a project-root bootstrap, not Codex's personal `~/.codex/AGENTS.md`.
+- If `AGENTS.md` already exists, bootstrap stops before every write until one explicit mode is chosen: `--preserve-agents` keeps it byte-for-byte and is recommended for product-specific policy, `--link-agents` manages only a bounded marker block, and `--replace-agents --force` replaces the full file. `--force` alone never replaces root policy.
+- Existing root policy and `--profile` require manual integration instead of guessing how two instruction sets should be merged.
 - Includes `.ai-agent-playbook/policy/SKILLS.md` and `.ai-agent-playbook/policy/GIT.md` as part of the project playbook.
 - Merges a stack profile into `AGENTS.md` when `--profile <name>` is provided.
-- Appends `.ai-agent-playbook/` to `.gitignore` only when `--local-only` is provided.
-- Writes `.ai-agent-playbook/.ai-agent-playbook-install.json` to mark files copied by this playbook. The marker stores only portable relative paths and content hashes.
-- Refuses to overwrite existing files unless `--force` is provided.
-- Preflights all planned writes before creating files. If a conflict is found, the command reports it without leaving a partial `.ai-agent-playbook/` tree behind.
+- Appends `.ai-agent-playbook/` to `.gitignore` only when `--local-only` is provided and no equivalent pattern exists. Existing bytes, UTF-8 BOM state, line endings, order, and final-newline choice are retained.
+- Writes `.ai-agent-playbook/.ai-agent-playbook-install.json` to mark files copied by this playbook. The marker stores portable relative paths and hashes plus optional `agentsMode` and marker-block ownership. Preserved root policy is not registered as a managed file; linked policy owns only its marker block.
+- Refuses to overwrite existing managed files unless the relevant explicit ownership mode permits it. `managed check` and `managed uninstall` inspect or remove only a linked marker block and preserve the rest of `AGENTS.md`.
+- Preflights all planned writes before creating files. Symlinked protected files, malformed markers, conflicts, or an `AGENTS.md`/`.gitignore` change between preflight and apply stop the entire operation without a partial `.ai-agent-playbook/` tree.
+- `--json` reports planned actions, preserved files, conflicts, warnings, and copyable next commands without weakening the same safety checks.
 
 Compatibility: new bootstrap output uses `.ai-agent-playbook/`. Legacy `ai-playbook/` folders are no longer active runtime roots; use `migrate path` to preview and apply the explicit folder migration before running project playbook commands. If both folders exist, runtime commands read `.ai-agent-playbook/` and diagnostics warn about the legacy folder.
 
@@ -369,6 +374,14 @@ npx ai-agent-playbook qa image-diff .\before.png .\after.png --threshold 0.01 --
 ```
 
 It returns dimensions, changed pixels, diff ratio, similarity score, and hotspot cells. It supports PNG only and does not capture browsers, manage baselines, call a visual oracle, or write files.
+
+`qa ui-genericity-scan` finds high-confidence static candidates for generic or template-like UI treatment:
+
+```powershell
+npx ai-agent-playbook qa ui-genericity-scan <target> --root src --max-files 500 --json
+```
+
+The scan uses semantic rule IDs for combined or repeated treatments such as gradient text, decorative glow or glass, excessive pills, nested cards, radius/shadow stacks, decorative stats, uniform hover transforms, repeated kickers, and generic marketing claims. It excludes generated output, dependencies, lockfiles, minified files, local references, work folders, and playbook runtime data. A source comment may suppress one reviewed candidate with `ui-review-ignore <rule-id>`. Findings are review candidates, not proven defects; a clean scan never replaces rendered desktop/mobile evidence or product-context review.
 
 ## Adapter config and readiness
 

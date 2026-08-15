@@ -14,7 +14,7 @@
 - `issue-planning-triage`: spec, bug, review finding, worklog, follow-up을 scoped issue와 task batch로 바꿀 때.
 - `release-notes-changelog`: user-facing release note, internal changelog, migration note, rollback note를 준비할 때.
 - `documentation-artifact-package`: docs, runbook, diagram, screenshot, report, evidence를 stakeholder handoff나 knowledge artifact로 묶을 때.
-- `natural-writing-humanization`: 한국어 또는 영어 글을 사실, 의미, 기술 용어, 작성 의도를 보존하면서 자연스럽게 다듬을 때.
+- `natural-writing-humanization`: 한국어 또는 영어 글을 사실, 구조, register, 기술 용어, 작성 의도를 보존하면서 자연스럽게 다듬고 필요하면 수정 전후 fidelity 증거를 검토할 때.
 
 ## 전달, 검증, Git
 

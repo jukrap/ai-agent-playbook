@@ -81,6 +81,7 @@ $env:AI_AGENT_PLAYBOOK_PYTHON = ".\.venv\Scripts\python.exe"
 npx ai-agent-playbook runtime python-status --json
 npx ai-agent-playbook writing naturalness-check <target-project> --path README.md --lang auto --engine auto --json
 npx ai-agent-playbook writing naturalness-report <target-project> --root docs --lang ko --engine auto --json
+npx ai-agent-playbook writing fidelity-check <target-project> --before docs/before.md --after docs/after.md --lang auto --json
 ```
 
 From a source checkout, `.\scripts\bootstrap-python.ps1` creates a local `.venv` and installs the optional Python extras for development. Without Python, the CLI and MCP server still work and return JavaScript fallback results with an `engines.unavailable` warning for Python-backed checks.
@@ -96,7 +97,7 @@ For command-by-command usage, see [Command guide](docs/commands.md). For update,
 
 ## Forge Automation Compatibility
 
-Version 0.5.10 keeps the resumable local execution loop and the human-facing Forge coordination model introduced in 0.5.5. Fine-grained tasks stay in the local ledger, while roadmap and delivery-group issues, Projects, Views, milestones, and reviewable PRs present the shared work. Generated and copyable hosted workflows now run the same exact AAPB release as the package that ships them, Forge requests report that release consistently, and a broken platform Python alias no longer aborts discovery of other interpreters. The 0.5.9 monotonic attempt-reset recovery, 0.5.8 idempotent Forge reconciliation, interrupted supersede recovery, and Projects authorization gates remain in place.
+Version 0.5.11 adds explicit preserve, managed-link, and guarded-replace modes for repositories that already have `AGENTS.md`; `.gitignore` additions now preserve existing bytes and line endings. It also adds a rendered-evidence-led generic UI review skill and read-only UI and writing-fidelity checks. The resumable local execution loop and human-facing Forge coordination model remain unchanged: fine-grained tasks stay in the local ledger, while roadmap and delivery-group issues, Projects, Views, milestones, and reviewable PRs present shared work. Hosted workflows continue to run the exact AAPB release that ships them.
 
 | Component | Supported version or integration target | Status |
 | --- | --- | --- |
@@ -120,7 +121,7 @@ Only the row that explicitly says “verified” identifies a tool version exerc
 - Gitea uses Issues, Labels, Milestones, pull requests, and Actions only where the server OpenAPI advertises the required methods. Draft review uses the public pull-request API with Gitea's documented `WIP:` title convention. A self-hosted hostname hint remains non-writable until `forge.provider: "gitea"` or a credential-free `forge.apiBaseUrl` ending in `/api/v1` is configured. Version and OpenAPI probes run without a token before authenticated permission checks. Project/View state falls back to labels and milestone filters, and a decision issue can replace Discussions.
 - `gh agent-task` is an explicit preview adapter, not an automatic executor choice. Forge bootstrap and scheduler installation are also preview-first and require an explicit apply step.
 
-See the [0.5.10 hosted runtime version change note](docs/changes/hosted-runtime-version-0.5.10.md) for release-aligned Actions generation and upgrade guidance, and the [0.5.10 Python candidate recovery change note](docs/changes/python-candidate-recovery-0.5.10.md) for isolated interpreter probing. The [0.5.9 attempt reset recovery change note](docs/changes/automation-attempt-reset-0.5.9.md) covers append-only retry recovery, while the [0.5.8 Forge idempotent reconcile change note](docs/changes/forge-idempotent-reconcile-0.5.8.md) remains the reference for provider-confirmed no-op filtering, Project convergence, and legacy body migration.
+See the [0.5.11 safe bootstrap and quality review change note](docs/changes/safe-bootstrap-quality-review-0.5.11.md) for migration choices, review-tool boundaries, and reference provenance. The [0.5.10 hosted runtime version change note](docs/changes/hosted-runtime-version-0.5.10.md) covers release-aligned Actions generation, while the [0.5.10 Python candidate recovery change note](docs/changes/python-candidate-recovery-0.5.10.md) covers isolated interpreter probing.
 
 ## Everyday Flow
 
@@ -137,11 +138,13 @@ For existing projects, start with a dry run and inspect conflicts before writing
 
 ```powershell
 npx ai-agent-playbook bootstrap <target-project> --local-only --dry-run
-npx ai-agent-playbook bootstrap <target-project> --local-only
+npx ai-agent-playbook bootstrap <target-project> --local-only --preserve-agents
 npx ai-agent-playbook operator check <target-project> --json
 npx ai-agent-playbook operator preflight <target-project> --intent "planned change" --json
 npx ai-agent-playbook operator research <target-project> --query "project risks" --json
 ```
+
+If the target already has `AGENTS.md`, bootstrap stops before all writes until you choose `--preserve-agents` (recommended), `--link-agents`, or `--replace-agents --force`. `--force` alone never replaces an existing root policy. Use `aapb qa ui-genericity-scan <target-project> --json` to locate static UI review candidates, then inspect the rendered screen before changing it.
 
 See [Command guide](docs/commands.md) for search, managed cleanup, adapter setup, plan, and worklog commands.
 
@@ -222,6 +225,7 @@ Detailed triggers live in [Skill catalog](docs/skill-catalog.md). The README kee
 - [0.5.6 Forge permission guidance change note](docs/changes/forge-permission-guidance-0.5.6.md): pre-write Projects authorization recovery, neutral Project fields, and legacy alias compatibility.
 - [0.5.10 hosted runtime version change note](docs/changes/hosted-runtime-version-0.5.10.md): release-aligned hosted workflow pins, request identity, and existing-workflow upgrade safety.
 - [0.5.10 Python candidate recovery change note](docs/changes/python-candidate-recovery-0.5.10.md): isolated process failures during interpreter discovery.
+- [0.5.11 safe bootstrap and quality review change note](docs/changes/safe-bootstrap-quality-review-0.5.11.md): existing `AGENTS.md` ownership, byte-preserving `.gitignore` updates, generic UI review, writing fidelity, and reference provenance.
 - [0.5.9 attempt reset recovery change note](docs/changes/automation-attempt-reset-0.5.9.md): monotonic attempt event IDs across explicit retry-budget resets.
 - [0.5.8 Forge idempotent reconcile change note](docs/changes/forge-idempotent-reconcile-0.5.8.md): provider-confirmed no-op filtering, Project convergence, and strict legacy body migration.
 - [0.5.7 Forge reconcile recovery change note](docs/changes/forge-reconcile-recovery-0.5.7.md): interrupted supersede recovery, CAS-safe ordering, and obsolete Project item cleanup.

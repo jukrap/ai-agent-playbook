@@ -70,6 +70,9 @@ npx ai-agent-playbook bootstrap ".\example app" --dry-run
 | `--reminder` | 전체 doctor report 대신 작은 reminder signal을 반환합니다. |
 | `--profile <name>` | Stack-specific bootstrap profile을 추가하거나 configured authority보다 넓지 않은 automation profile을 요청합니다. |
 | `--local-only` | bootstrap 중 대상 프로젝트 `.gitignore`에 `.ai-agent-playbook/`을 추가합니다. |
+| `--preserve-agents` | 기존 루트 `AGENTS.md`를 byte 단위로 보존하고 프로젝트 playbook만 설치합니다. |
+| `--link-agents` | 사용자 내용을 보존하고 `AGENTS.md`의 playbook 읽기 순서 관리 블록 하나만 추가하거나 갱신합니다. |
+| `--replace-agents` | `AGENTS.md` 전체 교체를 요청합니다. `--force`와 함께 있을 때만 유효합니다. |
 | `--title <text>` | 생성할 plan, worklog, run 제목입니다. |
 | `--month YYYY-MM` | worklog summary 대상 월입니다. |
 | `--cols N` | `qa tui-check`에서 기대하는 terminal width입니다. |
@@ -79,13 +82,14 @@ npx ai-agent-playbook bootstrap ".\example app" --dry-run
 | `--type note|criterion|evidence|blocker|cleanup` | `run record`에 기록할 event type입니다. |
 | `--status pass|fail|blocked|info` | `run record`에 기록할 event status입니다. |
 | `--evidence <path>` | `run record`에 남길 portable relative evidence path입니다. |
-| `--before <preflight-json>` | 이전에 `operator preflight --json`으로 저장한 JSON 파일입니다. |
+| `--before <path>` | `operator delta`의 preflight JSON 또는 `writing fidelity-check`의 원문입니다. |
+| `--after <path>` | `writing fidelity-check`의 수정본입니다. |
 | `--contract <id>` | `contracts snapshot`을 특정 contract id 하나로 제한합니다. |
 | `--threshold N` | 허용할 image diff ratio입니다. `0`부터 `1`까지 쓰며, `0`은 픽셀이 하나라도 바뀌면 실패입니다. |
 | `--deep` | `operator analyze`에 AST-grep, 정확한 함수 본문 중복 단서, TypeScript/JavaScript 언어 분석 signal을 추가합니다. |
 | `--engine auto\|js\|python` | `writing naturalness-check`의 글 분석 엔진을 고릅니다. `auto`는 Python이 있으면 함께 쓰고 JavaScript 대체 분석도 유지합니다. |
-| `--root <dir>` | `writing naturalness-report`에서 검사할 대상 프로젝트 안의 폴더입니다. |
-| `--max-files N` | 제한된 보고 명령이 살펴볼 글 파일 개수를 제한합니다. |
+| `--root <dir>` | 제한된 writing 또는 UI scan이 검사할 대상 프로젝트 안의 폴더입니다. |
+| `--max-files N` | 제한된 report 또는 scan이 검사할 파일 수를 제한합니다. |
 | `--provider auto\|github\|gitea` | Forge provider 탐지를 선택하거나 제한합니다. 확정할 수 없는 self-hosted provider에는 쓰기를 허용하지 않습니다. |
 | `--remote <name>` | `forge status`가 inspect할 Git remote를 선택합니다. 지속 설정에는 project config를 사용합니다. |
 | `--lang auto\|ko\|en` | `plan new --automation`이 기록하는 human-facing language를 선택합니다. |
@@ -134,7 +138,7 @@ npx ai-agent-playbook operator check <target-project> --json
 
 | 명령 | 언제 쓰나 | 파일을 쓰나 | 예시 |
 | ---- | --------- | ----------- | ---- |
-| `bootstrap <target>` | 대상 프로젝트에 root `AGENTS.md`와 `.ai-agent-playbook/` 구조를 만듭니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook bootstrap <target-project> --dry-run` |
+| `bootstrap <target>` | `.ai-agent-playbook/`을 만들고 root `AGENTS.md`를 생성·보존·연결하거나 명시적으로 교체합니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook bootstrap <target-project> --local-only --preserve-agents --dry-run --json` |
 | `guides sync <target>` | 기존 `.ai-agent-playbook/knowledge/references/guides/`에 누락된 guide template을 복사합니다. | `--dry-run` 또는 `--check`가 없으면 예 | `npx ai-agent-playbook guides sync <target-project> --check --diff --json` |
 | `migrate path <target>` | legacy `ai-playbook/`에서 `.ai-agent-playbook/`로 이동하는 작업을 preview하거나 적용합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook migrate path <target-project> --json` |
 | `migrate layout <target>` | 구조화 `.ai-agent-playbook` 디렉터리, 구 레이아웃 이동, 참조 갱신, 보관 작업을 미리 보거나 적용합니다. | `--apply`가 있을 때만 예 | `npx ai-agent-playbook migrate layout <target-project> --to structured --json` |
@@ -146,7 +150,7 @@ npx ai-agent-playbook operator check <target-project> --json
 | `context status <target>` | 한 파일에 적용되는 경로별 문맥과 `memory/maps/doc-map.md` 존재 여부를 보여줍니다. | 아니오 | `npx ai-agent-playbook context status <target-project> --path src/example.ts --json` |
 | `context init <target>` | starter `memory/context/root.md`, `_registry.json`, `memory/maps/doc-map.md`를 만듭니다. | `--dry-run`이 없으면 예 | `npx ai-agent-playbook context init <target-project> --dry-run --json` |
 
-대상 프로젝트의 `.ai-agent-playbook/`을 `.gitignore`에 추가해야 하면 `bootstrap`에 `--local-only`를 사용합니다.
+대상 프로젝트의 `.ai-agent-playbook/`을 `.gitignore`에 추가해야 하면 `bootstrap`에 `--local-only`를 사용합니다. 기존 `.gitignore`의 byte와 형식은 유지합니다. 루트 `AGENTS.md`가 이미 있으면 명시적 모드 전에는 모든 쓰기를 중단합니다. 제품별 정책은 `--preserve-agents`가 권장되고, `--link-agents`는 marker 블록만 소유하며, 전체 교체에는 `--replace-agents --force`가 모두 필요합니다. `--force`만으로 루트 정책을 바꾸지 않습니다. 기존 루트 정책과 `--profile`은 수동 통합이 필요합니다.
 
 `config preview`는 존재하는 경우 `.ai-agent-playbook/config.json`과 `.ai-agent-playbook/config.local.json`을 읽습니다. 두 파일을 생성하지는 않습니다. 우선순위는 built-in default, optional `--user-config`, target config, target-local config, 명시적 environment override입니다.
 
@@ -258,10 +262,13 @@ Runtime output은 `.ai-agent-playbook/runtime/` 아래에 둡니다. 검토와 �
 | ---- | --------- | ----------- | ---- |
 | `writing naturalness-check <target>` | 한국어 또는 영어 글에서 번역투, AI식 표현, 과한 홍보 문구, 반복 리듬, 영어 용어 과다를 점검합니다. | 아니오 | `npx ai-agent-playbook writing naturalness-check <target-project> --path README.md --lang auto --engine auto --json` |
 | `writing naturalness-report <target>` | Markdown 또는 text 파일이 있는 폴더를 제한된 범위로 훑고, 어느 파일을 다듬어야 하는지 요약합니다. | 아니오 | `npx ai-agent-playbook writing naturalness-report <target-project> --root docs --lang ko --engine auto --json` |
+| `writing fidelity-check <target>` | 수정 전후 문서의 보호 사실, 구조, 한국어 격식, 수사 구조, 변경률 근거를 비교합니다. | 아니오 | `npx ai-agent-playbook writing fidelity-check <target-project> --before docs/before.md --after docs/after.md --lang auto --json` |
 
-`writing naturalness-check`는 대상 프로젝트 안의 상대 경로 파일 하나를 읽고 휴리스틱 결과를 반환합니다. `--engine auto`는 기본 JavaScript 점검과, Python이 있을 때 선택형 Python 엔진을 함께 사용합니다. `--engine js`는 의존성이 없는 대체 분석만 강제하고, `--engine python`은 Python을 명시적으로 요청합니다. 이 명령은 파일을 고치지 않고, 네트워크를 호출하지 않고, 저자성을 판정하지 않고, 탐지 우회를 돕지 않습니다. README, 번역본, PR 본문, 배포 노트, 문서 페이지, 공개 요약을 다듬기 전에 사용합니다. 결과는 검토 단서일 뿐입니다. 사실, 명령어, 파일 경로, 경고, 배포 범위는 여전히 원문과 비교해야 합니다.
+`writing naturalness-check`는 대상 프로젝트 안의 상대 경로 파일 하나를 읽고 휴리스틱 결과를 반환합니다. 한 표현만으로 단정하지 않고 반복, 밀도, 문맥을 함께 보며 JavaScript와 Python이 같은 문제를 보고하면 하나로 묶습니다. `--engine auto`는 가능한 두 엔진을 함께 사용합니다. 파일 수정, 네트워크 호출, 저자성 판정, 탐지 우회, 문서 안 지시문 실행은 하지 않습니다.
 
 `writing naturalness-report`는 `--root` 아래의 Markdown, MDX, text 파일을 재귀적으로 훑고, 최대 `--max-files`개까지 검사합니다. 한도는 50개입니다. `naturalness-check`와 같은 읽기 전용 점검을 사용하되, 글을 판단하기 전에 코드 블록, 인라인 코드, 셸 명령, URL, HTML 배지 줄, 경로 예시는 제외합니다. 번역 폴더나 문서 묶음을 먼저 훑은 뒤, 신호가 큰 파일부터 하나씩 열어 고칩니다.
+
+`writing fidelity-check`는 대상 안의 UTF-8 파일 두 개를 수정하지 않고 비교합니다. 문자 변경률, 문장 touch 비율, 정규화한 수치, 버전, URL, 명령, 경로, code span과 fence, 식별자, 경고, 문서 구조, 한국어 격식 이동, 반복 수사 구조 제거를 보고합니다. `1만`과 `10,000` 같은 동등 표기는 정규화합니다. 결과는 검토 근거이며 변경률만으로 의도적인 재작성을 거절하지 않습니다.
 
 ## Managed files
 
@@ -344,10 +351,13 @@ Contract markdown은 `id`, `status`, `appliesTo`, `risk`, `approvedAt`, `freshne
 | `diagnostics check <target>` | 실행하지 않은 상태로 local verification command 후보를 나열합니다. | 아니오 | `npx ai-agent-playbook diagnostics check <target-project> --json` |
 | `qa tui-check <capture-file>` | terminal capture의 overflow, CJK width, ANSI, box alignment 문제를 확인합니다. | 아니오 | `npx ai-agent-playbook qa tui-check .\capture.txt --cols 100 --json` |
 | `qa image-diff <reference.png> <actual.png>` | 두 PNG의 changed pixel, diff ratio, similarity score, hotspot grid를 diff image 생성 없이 반환합니다. | 아니오 | `npx ai-agent-playbook qa image-diff .\before.png .\after.png --threshold 0.01 --json` |
+| `qa ui-genericity-scan <target>` | 생성물과 로컬 참고 자료를 제외하고 템플릿 같은 UI 표현의 고신뢰 정적 후보를 찾습니다. | 아니오 | `npx ai-agent-playbook qa ui-genericity-scan <target-project> --root src --max-files 500 --json` |
 
 `diagnostics check`는 command 후보만 보고합니다. lint, test, build, language server를 실행하지 않습니다.
 
 `qa image-diff`는 PNG만 지원합니다. Browser capture, baseline 저장, visual oracle, diff image 생성은 하지 않습니다.
+
+`qa ui-genericity-scan`은 gradient text, glow, glass, pill, 중첩 card, radius/shadow 조합, 장식형 stat, hover transform, kicker, 일반적인 홍보 문구의 조합 또는 반복을 의미 기반 rule ID로 보고합니다. 렌더링을 확인해 의도적이라고 판단한 뒤에만 `ui-review-ignore <rule-id>`를 사용합니다. Finding은 후보일 뿐 결함 확정이나 화면 완료 증거가 아닙니다.
 
 ## AI 앱용 MCP 도구
 
@@ -373,7 +383,7 @@ aapb mcp
 - 카탈로그와 레이아웃: `capability_catalog`, `skill_catalog`, `workflow_list`, `workflow_run_preview`, `reference_inventory`, `reference_inspect`, `reference_adoption_queue`, `reference_capability_matrix`, `reference_adoption_plan`, `reference_adoption_status`, `reference_source_registry_preview`, `reference_source_registry_check`, `reference_source_registry_update_preview`, `reference_ledger_check`, `reference_ledger_update_preview`, `reference_ledger_decision_preview`, `playbook_layout`, `index_status`, `runtime_schema_check`, `evidence_locator_check`, `writing_naturalness_check`, `writing_naturalness_report`, `index_search`, `symbol_outline`, `dependency_inventory`, `route_api_hints`, `repo_graph_preview`, `write_gate_preview`, `canon_check`
 - operator diagnostics: `operator_check`, `operator_search`, `operator_research`, `operator_preflight`, `operator_delta`, `operator_map`, `operator_audit`, `operator_analyze_deep`
 - rules와 project state: `rules_check`, `contracts_check`, `contracts_list`, `managed_check`, `managed_catalog`, `diagnostics_check`
-- QA와 deep analysis: `qa_image_diff`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`
+- QA와 deep analysis: `qa_image_diff`, `qa_ui_genericity_scan`, `writing_fidelity_check`, `source_function_clones`, `ast_grep_search`, `lsp_status`, `lsp_diagnostics`, `lsp_symbols`, `lsp_references`, `lsp_definition`
 - Forge automation 읽기: `automation_status`, `automation_plan_validate`, `forge_status`, `forge_bootstrap_plan`, `forge_sync_plan`
 
 두 forge plan tool은 target project를 요구하고 apply counterpart와 같은 target-aware inspection에서 provider와 effective capability를 결정합니다. 따라서 review한 `auto`/static zero-operation preview가 apply 시 target-specific write로 조용히 확대되지 않습니다. `forge_sync_plan`과 `forge_sync_apply`는 reviewed `coordination` contract도 요구하며, legacy task mode를 명시하지 않은 경우 세밀한 task는 local에 두고 roadmap과 delivery-group issue를 발행합니다.
@@ -469,7 +479,7 @@ Linked forge-issue task는 remote read가 성공할 때 tick의 claim 전과 exe
 npx ai-agent-playbook skills install --dry-run
 npx ai-agent-playbook skills install
 npx ai-agent-playbook bootstrap <target-project> --dry-run
-npx ai-agent-playbook bootstrap <target-project> --local-only
+npx ai-agent-playbook bootstrap <target-project> --local-only --preserve-agents
 npx ai-agent-playbook operator check <target-project> --json
 npx ai-agent-playbook operator preflight <target-project> --intent "planned change" --json > preflight.json
 npx ai-agent-playbook operator research <target-project> --query "project risks" --json

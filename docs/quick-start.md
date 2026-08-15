@@ -85,10 +85,12 @@ npx ai-agent-playbook bootstrap <target-project> --local-only --dry-run
 Only apply after the preview looks right:
 
 ```powershell
-npx ai-agent-playbook bootstrap <target-project> --local-only
+npx ai-agent-playbook bootstrap <target-project> --local-only --preserve-agents
 ```
 
-Omit `--local-only` if the project should commit `.ai-agent-playbook/`.
+Use `--preserve-agents` when the repository already has product-specific root instructions. Use `--link-agents` only when the root file should gain a small managed playbook reading-order block. Full replacement requires both `--replace-agents --force`; `--force` alone never replaces an existing `AGENTS.md`. Bootstrap stops before all writes if an existing root policy has no explicit mode, if markers are malformed, or if protected files change after preflight.
+
+Omit `--local-only` if the project should commit `.ai-agent-playbook/`. Existing `.gitignore` bytes, BOM, line endings, ordering, and final-newline style are retained; bootstrap only appends the missing playbook ignore entry.
 
 ## 6. Before and after a risky edit
 

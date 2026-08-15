@@ -134,12 +134,15 @@ Frontend quality skill은 user-visible polish를 state/data correctness, accessi
 - `frontend/style-policy-selection`: 디자인 시스템, CSS/클래스, 유틸리티 클래스, 인라인 스타일 사이에서 저장소 스타일링 방식을 선택합니다.
 - `frontend/frontend-state-data-flow`: state ownership, server/client cache behavior, data fetching, optimistic update, URL state, loading/error/empty state, stale UI bug.
 - `frontend/frontend-accessibility-review`: keyboard access, focus management, semantic, form, dialog, menu, announcement, contrast, reduced motion, accessible interaction state.
+- `frontend/generic-ui-review`: 제품 문맥과 실제 렌더링 증거를 바탕으로 과도한 card, pill, gradient, glow, glass, 장식형 stat, 반복 kicker, template형 시각 표현을 검토합니다.
 - `frontend/ui-polish`: visible UI quality, responsive layout, accessibility state, visual hierarchy, interaction feedback, production polish.
 - `frontend/visual-regression-qa`: screenshot, responsive breakpoint, layout overflow, clipping, visual diff, text fit, canvas/media rendering, browser-rendered regression.
 - `frontend/interactive-media-3d-review`: Three.js, WebGL, canvas, SVG, chart, map, animation, video, media-heavy interaction, asset loading, nonblank rendering, responsive scene verification.
 - `frontend/design-system-handoff`: Figma, brand, design-token, component-library, theme, variant, visual-spec을 repository-native UI primitive로 넘기는 handoff.
 
 Framework-specific detail은 reference 또는 project-local playbook에 둡니다. Primary skill은 React, Vue, Svelte, Angular, server-rendered page, 가벼운 DOM-first frontend, canvas/media tool, 3D 또는 chart-heavy interface에서도 작동해야 합니다.
+
+`generic-ui-review`는 검토 후보를 찾고 의도적인 brand 표현을 보존합니다. `ui-polish`는 방향이 정해진 뒤 hierarchy, spacing, responsiveness, interaction quality를 완성합니다. Design direction과 reference analysis skill은 의도와 증거를 정립합니다. `cleanup-ai-slop`은 source code 정리 skill로 유지하며 시각적 template 문제를 code-style 결함으로 취급하지 않고 이 skill로 라우팅합니다.
 
 `quality/ui-style-policy`는 오래된 프롬프트와 프로젝트 문서를 위한 호환 라우트로만 남깁니다. 새 프로젝트 지침은 `frontend/style-policy-selection`을 가리켜야 합니다.
 
@@ -172,7 +175,7 @@ Data와 documentation skill은 pipeline reliability, reporting correctness, migr
 - `project/issue-planning-triage`: issue/task breakdown, triage, priority, dependency, blocked status, ownership, verification planning.
 - `project/release-notes-changelog`: user-facing release note, internal changelog, migration/upgrade note, rollback note, known issue, verified change summary.
 - `project/documentation-artifact-package`: stakeholder package, developer handoff, runbook/report bundle, knowledge-base artifact, source evidence, maintenance rule.
-- `project/natural-writing-humanization`: 한국어/영어 문체 자연스러움, 번역투 정리, 말투 보존, AI식 표현 점검, 의미 보존 편집.
+- `project/natural-writing-humanization`: 한국어/영어 문체 자연스러움, 번역투 정리, 말투 보존, 반복 패턴 검토, 보호 사실, 의미 보존 편집의 fidelity 증거.
 
 Generated runtime report는 검토 없이 `memory/`로 승격하지 않습니다. Reporting, migration, handoff skill은 source evidence를 보존하되 private path, credential, branch name, PR number, noisy reference name이 public documentation에 들어가지 않게 해야 합니다.
 

@@ -13,14 +13,14 @@
 
 ## 현재 장점
 
-- `bootstrap`은 stack을 가정하지 않고 얇은 root `AGENTS.md`와 project-memory `.ai-agent-playbook/` 폴더를 만듭니다.
-- `bootstrap`은 예정된 쓰기 작업을 먼저 점검해 기존 프로젝트 충돌이 부분적인 playbook output을 남기지 않게 합니다.
+- `bootstrap`은 stack을 가정하지 않고 root 파일이 없을 때 얇은 `AGENTS.md`와 project-memory `.ai-agent-playbook/` 폴더를 만듭니다. 기존 root 정책이 있으면 명시적인 preserve, managed-link, guarded-replace 모드가 필요합니다.
+- `bootstrap`은 예정된 쓰기 작업, 보호 파일 symlink, compare-and-swap snapshot을 먼저 점검해 기존 프로젝트 충돌이 부분적인 playbook output을 남기지 않게 합니다. Local-only `.gitignore` 추가는 기존 byte와 줄바꿈 형식을 유지합니다.
 - `doctor`는 최소 layout, root policy 위치, local-only 정책, template adaptation, worklog summary freshness, obsolete skill reference, fixed local path를 이미 점검합니다.
 - `guides sync`는 기본적으로 local edit을 교체하지 않고 누락된 guide template만 추가하며, `guides sync --check --diff --json`은 source와 target hash와 첫 차이 line으로 stale guide를 보고합니다.
 - `migrate path`는 legacy `ai-playbook/`에서 `.ai-agent-playbook/`로의 폴더 이동, 참조 갱신, `.gitignore` 전환을 preview하고 필요할 때만 적용합니다.
 - `context`, `run`, `contracts`, `plan`, `worklog`, `worklog summarize`는 path-scoped memory, working vocabulary, active evidence, contract note, plan, 상세 이력, 월간 summary를 예측 가능한 경로에 둡니다.
 - `managed check`, `managed catalog`, `managed adopt`, `managed prune`, `managed uninstall`은 project-level marker를 사용해 이 playbook이 복사한 수정되지 않은 파일만 확인, cataloging, 채택, 선택 제거, 전체 제거합니다.
-- `context status`, `run status`, `contracts check`, `contracts snapshot`, `operator check`, `operator search`, `operator preflight`, `operator delta`, `operator context`, `operator analyze`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, `skills lint`, `qa tui-check`, `qa image-diff`는 path-scoped memory, run evidence, contract freshness, combined health review, local search, before/after evidence comparison, context preview, analysis signal aggregation, codebase mapping, playbook drift audit, preview-first managed cleanup, rule matching, verification command discovery, skill quality review, terminal/CJK layout evidence, 작은 PNG 비교를 위한 operator-triggered diagnostics를 제공합니다.
+- `context status`, `run status`, `contracts check`, `contracts snapshot`, `operator check`, `operator search`, `operator preflight`, `operator delta`, `operator context`, `operator analyze`, `operator map`, `operator audit`, `operator gc`, `rules check`, `diagnostics check`, `skills lint`, `writing fidelity-check`, `qa tui-check`, `qa image-diff`, `qa ui-genericity-scan`은 path-scoped memory, run evidence, contract freshness, combined health review, local search, before/after evidence comparison, context preview, analysis signal aggregation, codebase mapping, playbook drift audit, preview-first managed cleanup, rule matching, verification command discovery, skill quality review, writing fidelity, terminal/CJK layout evidence, 작은 PNG 비교, 정적 UI 검토 후보를 위한 operator-triggered diagnostics를 제공합니다.
 - `plan new --automation`, `forge`, `automation`은 structured plan, capability-gated coordination, schema v2 ledger, resumable tick, controller verification, preview-first scheduling과 local-only fallback을 제공합니다.
 - `aapb mcp`는 forge/automation status와 plan을 포함한 기본 read-only tool을 제공합니다. 별도로 gate된 forge coordination write는 server opt-in과 call-level apply가 모두 필요하고 task execution이나 Git delivery를 노출하지 않습니다.
 - `operator analyze --deep`은 기본 `operator analyze` 경로를 가볍게 유지하면서 명시적으로 AST-grep, 정확한 함수 본문 중복 단서, TypeScript/JavaScript 언어 분석 signal을 추가합니다.
@@ -34,7 +34,7 @@ Hook을 기본 설치 경로에 넣기 전까지 아래 영역을 계속 강화�
 - `doctor` check id, severity, actionable message, strict/non-strict exit behavior를 안정적으로 유지합니다.
 - `doctor` warning category를 setup health, adaptation reminder, local-only policy, public-safety finding으로 분리해 유지합니다.
 - 기존 프로젝트에는 `bootstrap` dry run을 먼저 사용하고, conflict output을 migration note로 옮기기 쉽게 유지합니다.
-- `--force`는 검토한 overwrite에만 제한합니다. Migration을 위해 넓은 force를 쓰지 않습니다.
+- `--force`는 검토한 overwrite에만 제한합니다. Root 정책 교체에는 별도의 `--replace-agents` 의도가 필요하며 넓은 force를 migration 수단으로 쓰지 않습니다.
 - Guide manifest를 유지해 `guides sync --check --json`이 project-specific edit을 덮어쓰지 않고 stale guide를 보고할 수 있게 합니다.
 - Stale guide file을 덮어쓰기 전에는 `guides sync --check --diff --json`으로 local edit을 눈에 보이게 합니다.
 - Legacy folder move는 적용 전에 `migrate path --json`으로 확인해 path 변경이 명시적이고 일반 Git review로 되돌릴 수 있게 합니다.
@@ -110,7 +110,7 @@ Codex App 호환성을 위해 향후 plugin 또는 hook PoC는 아래를 지켜�
 - 구체적인 V4+ 실행 계획과 다음 session handoff는 `plans/2026-06-11-runtime-harness-v4-plus.ko.md`를 봅니다.
 - 렌더링된 adapter 설정이 실제 프로젝트에서 설정 실수를 줄이고 noise를 늘리지 않는지 확인.
 - `migrate path --json`이 실제 프로젝트에서 흔한 legacy path reference를 관련 없는 파일을 건드리지 않고 잡아내는지 확인.
-- Managed marker, managed catalog, selected managed prune, combined operator check, local search, preflight/delta evidence comparison, contract hash snapshot, path-scoped context preview, analysis signal aggregation, codebase map summary, playbook drift audit, preview-first managed cleanup, rule matching, diagnostics command discovery, skill linting, TUI layout check, PNG image comparison이 hook-driven diagnostics로 승격하기 전에 review miss를 줄이는지 확인.
+- Managed marker, managed catalog, selected managed prune, combined operator check, local search, preflight/delta와 writing-fidelity evidence comparison, contract hash snapshot, path-scoped context preview, analysis signal aggregation, codebase map summary, playbook drift audit, preview-first managed cleanup, rule matching, diagnostics command discovery, skill linting, TUI layout check, PNG image comparison, generic UI candidate scan이 hook-driven diagnostics로 승격하기 전에 review miss를 줄이는지 확인.
 - MCP 도구 사용이 명령어 암기 부담을 줄이면서도 `.ai-agent-playbook/`에 남겨야 할 결정을 숨기지 않는지 확인.
 - Remote write는 disposable GitHub/Gitea repository에서만 검증하고 fake transport 또는 local result를 live remote evidence와 구분합니다.
 - 아직 신중해야 하는 후보: 비용과 소음이 검증된 뒤의 continuation, blocking feedback, 자동 doctor 실행.

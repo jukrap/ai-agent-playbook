@@ -14,7 +14,7 @@ Each `SKILL.md` stays short and trigger-focused. Longer procedures, examples, st
 - `issue-planning-triage`: use when converting specs, bugs, review findings, worklogs, and follow-ups into scoped issues and task batches.
 - `release-notes-changelog`: use when preparing release notes, internal changelogs, migration notes, rollback notes, and verified summaries.
 - `documentation-artifact-package`: use when bundling docs, runbooks, diagrams, screenshots, reports, references, and evidence for handoff.
-- `natural-writing-humanization`: use when editing Korean or English prose so it reads naturally while preserving facts, meaning, technical terms, and author intent.
+- `natural-writing-humanization`: use when editing Korean or English prose so it reads naturally while preserving facts, structure, register, technical terms, and author intent with before/after fidelity evidence when needed.
 
 ## Delivery, Verification, And Git
 

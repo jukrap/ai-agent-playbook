@@ -49,6 +49,8 @@ test('npm pack dry-run includes runtime files and excludes local/test payloads',
   assert.equal(files.includes('src/runtime/indexes.mjs'), true);
   assert.equal(files.includes('src/runtime/python-engine.mjs'), true);
   assert.equal(files.includes('src/runtime/writing-naturalness.mjs'), true);
+  assert.equal(files.includes('src/runtime/writing-fidelity.mjs'), true);
+  assert.equal(files.includes('src/operator/qa-ui-genericity.mjs'), true);
   assert.equal(files.includes('src/runtime/schemas.mjs'), true);
   assert.equal(files.includes('src/runtime/capability-history.mjs'), true);
   assert.equal(files.includes('pyproject.toml'), true);
@@ -60,16 +62,20 @@ test('npm pack dry-run includes runtime files and excludes local/test payloads',
   assert.equal(files.includes('skills/backend/server-rendered-change/SKILL.md'), true);
   assert.equal(files.includes('skills/project/project-bootstrap/SKILL.md'), true);
   assert.equal(files.includes('skills/project/natural-writing-humanization/SKILL.md'), true);
+  assert.equal(files.includes('skills/frontend/generic-ui-review/SKILL.md'), true);
   assert.equal(files.includes('templates/project-playbook/manifest.json'), true);
   assert.equal(files.includes('templates/project-playbook/README.md'), true);
   assert.equal(files.includes('templates/project-playbook/knowledge/reference-adoption-ledger.md'), true);
   assert.equal(files.includes('docs/changes/structured-playbook-cutover.md'), true);
+  assert.equal(files.includes('docs/changes/safe-bootstrap-quality-review-0.5.11.md'), true);
   assert.equal(files.includes('adapters/codex/hook.mjs'), true);
 
   assert.equal(files.some((file) => file.startsWith('test/')), false);
   assert.equal(files.some((file) => file.startsWith('translations/')), false);
   assert.equal(files.some((file) => file.startsWith('docs/assets/')), false);
   assert.equal(files.some((file) => file.startsWith('_reference/')), false);
+  assert.equal(files.some((file) => file.startsWith('_work/')), false);
+  assert.equal(files.some((file) => file.startsWith('.ai-agent-playbook/')), false);
   assert.equal(files.includes('docs/maintenance.md'), false);
   assert.equal(files.includes('docs/publishing-checklist.md'), false);
   assert.equal(files.includes('docs/translation-policy.md'), false);

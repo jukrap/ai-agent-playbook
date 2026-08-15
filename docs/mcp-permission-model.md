@@ -16,7 +16,7 @@ The default MCP server exposes read-only tools, resources, and prompts. Tools ar
 
 Default prompts route review work through required evidence, optional evidence, stop conditions, and verification expectations. They do not grant write access or promote generated runtime hints into memory.
 
-Read-only tools may call optional local engines when their tool schema exposes that choice. For example, `writing_naturalness_check` and `writing_naturalness_report` accept `engine: "auto" | "js" | "python"`; the Python path still reads only target-relative prose files, returns JSON findings, and does not write files or call the network.
+Read-only tools may call optional local engines when their tool schema exposes that choice. For example, `writing_naturalness_check` and `writing_naturalness_report` accept `engine: "auto" | "js" | "python"`; the Python path still reads only target-relative prose files, returns JSON findings, and does not write files or call the network. `writing_fidelity_check` compares two target-relative prose files, while `qa_ui_genericity_scan` returns bounded static review candidates. Neither tool modifies source, executes document content, captures a browser, or treats a clean result as completion evidence.
 
 Forge read tools can inspect configured remotes, local authentication status, and permitted provider capabilities. `offline: true` prevents network-dependent inspection. A read tool does not mutate forge state, refresh scopes, run an executor, or deliver Git changes.
 
@@ -73,11 +73,13 @@ Default read-only additions:
 - `evidence_locator_check`
 - `writing_naturalness_check`
 - `writing_naturalness_report`
+- `writing_fidelity_check`
 - `index_search`
 - `symbol_outline`
 - `dependency_inventory`
 - `route_api_hints`
 - `repo_graph_preview`
+- `qa_ui_genericity_scan`
 - `write_gate_preview`
 - `reference_inventory`
 - `reference_inspect`

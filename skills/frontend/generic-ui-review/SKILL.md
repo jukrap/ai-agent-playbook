@@ -12,8 +12,9 @@ Review generic visual treatment as a product-fit problem, not as a universal sty
 1. Identify the product type, primary user task, target viewports, and existing design-system or brand constraints.
 2. Inspect the rendered interface before treating static code signals as defects. Use `aapb qa ui-genericity-scan <target> --json` only to locate review candidates.
 3. Check whether repeated cards, pills, gradients, glass, glow, large radii, stat blocks, hover transforms, kickers, or marketing claims support the task hierarchy.
-4. Preserve deliberate brand expression and established components. Recommend the smallest coherent change that improves task focus, hierarchy, density, or trust.
-5. Verify changed screens at named viewport sizes and retain image or video evidence. A clean static scan is not completion evidence.
+4. Preserve deliberate brand expression and established components. For a review-only request, report the candidate and recommendation without editing files.
+5. When the request authorizes UI changes, use `ui-polish` or the repository's implementation workflow to make the smallest coherent correction that improves task focus, hierarchy, density, or trust.
+6. Verify changed screens at named viewport sizes and retain image or video evidence. A clean static scan is not completion evidence.
 
 ## Boundaries
 

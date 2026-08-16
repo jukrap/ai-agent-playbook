@@ -97,7 +97,7 @@ npm 패키지는 명령줄 도구만 설치합니다. 스킬 복사, `.ai-agent-
 
 ## Forge 자동화 호환성
 
-0.5.11은 이미 `AGENTS.md`가 있는 저장소를 위한 명시적 보존, 관리 블록 연결, 보호된 교체 모드를 추가합니다. `.gitignore` 항목을 더할 때는 기존 byte와 줄바꿈도 보존합니다. 실제 화면 근거를 우선하는 일반적인 UI 검토 스킬과 읽기 전용 UI·문서 충실도 검사도 추가했습니다. 재개 가능한 로컬 실행 루프와 사람 중심 Forge 협업 구조는 그대로 유지합니다. 세밀한 task는 로컬 원장에 두고 roadmap과 delivery-group issue, Projects, Views, milestone, 검토 가능한 PR로 공유 작업을 보여줍니다.
+세밀한 실행 task는 로컬 원장에 두고 roadmap과 delivery-group issue, Projects, Views, milestone, 검토 가능한 pull request로 공유 작업을 보여줍니다. Provider capability 검사, 권한 gate, 미리보기 우선 쓰기, 재개 가능한 tick, 격리된 무인 workspace, local-only fallback이 현재 계약에 포함됩니다.
 
 | 구성 요소 | 지원 버전 또는 연동 기준 | 상태 |
 | --- | --- | --- |
@@ -111,17 +111,12 @@ npm 패키지는 명령줄 도구만 설치합니다. 스킬 복사, `.ai-agent-
 
 “검증”이라고 명시한 행만 실제 확인한 도구 버전을 뜻합니다. API와 provider 기준 행은 호환성 계약을 정의하며, 실제 원격 쓰기 스모크 테스트를 완료했다는 뜻이 아닙니다.
 
-- 사용할 수 있는 remote가 없거나 `--no-remote`, `--offline`으로 현재 요청의 범위를 줄이면 forge transport를 호출하지 않고 같은 실행을 로컬 원장에서 계속합니다. 인증 또는 write permission이 없으면 mutation은 비활성화하지만 anonymous capability probe나 허용된 remote read는 수행할 수 있습니다.
-- `forge status`는 설정상 허용된 `policyWrites`와 권한 확인을 마친 `verifiedWrites`를 구분하고, token material 없이 server/API version, authentication, repository permission, probe evidence를 보고합니다. 인증과 repository write permission이 확인될 때까지 effective `writes`는 false입니다.
-- GitHub Projects와 Views에는 해당 project scope가 필요합니다. Project 협업을 우선하는 설정에서는 둘 중 하나라도 사용할 수 없으면 모든 원격 쓰기 전에 중단합니다. `forge status`, bootstrap, synchronization preview는 브라우저 인증과 재확인 명령을 출력하며, 차단된 bootstrap preview는 실행 가능한 operation을 0건으로 유지하면서 요청된 산출물 수를 보여줍니다. Milestone 방식은 `projects,views` fallback을 명시했을 때만 사용합니다. 하네스는 인증 scope를 자동으로 확대하지 않습니다.
-- Managed Project는 Planned, Ready, In Progress, In Review, Blocked, Done 옵션을 가진 중립적인 `Delivery Status`와 `Priority`, `Risk`, `Phase`, `Progress`, `Area`, `Task ID` field를 만듭니다. 기존 `AAPB *` field는 읽기 호환 alias로 재사용하며 중복 생성, rename, 삭제하지 않습니다. 사용자 소유 Project의 field와 View REST 경로는 일관되게 소유자 login을 사용하므로 중단된 bootstrap도 기존의 제목 있는 Project를 재사용해 재개할 수 있습니다. 표시 구조 reconcile은 관리되는 분류 label을 Project로 먼저 옮기며, 이관에 실패하면 뒤의 원격 변경을 중단합니다.
-- Reconcile 사전 점검은 mutation을 차단한 transport 뒤에서 실제 provider adapter를 사용합니다. Provider가 재사용 가능하다고 확인한 operation은 `noOps`로 옮기고, 실행 가능한 산출물 수는 남은 변경만 반영하며, 원래 의도 수는 `plannedOperations`에 유지합니다. GitHub 응답에서 생략된 빈 text field는 빈 목표 값과 같은 상태로 수렴합니다.
-- GitHub는 새 Project에 `View 1`을 자동으로 만듭니다. 안정 공개 View API는 이 system View의 rename이나 delete를 지원하지 않으므로 AAPB는 table View를 중복 생성하지 않고 이를 managed `all` 역할로 재사용하며 표시 이름이 바뀌었다고 주장하지 않습니다.
-- 검토된 supersede reconcile은 parent에 연결된 오래된 이슈를 marker 댓글보다 먼저 종료하고, 마지막 계층 해제 전에 Project card를 제거하며, 실패하면 같은 group의 뒤 mutation을 차단합니다. 이전 실행이 열린 이슈의 parent 관계를 이미 해제했다면 다음 preview는 승인된 plan의 정확한 supersede marker로만 이를 복구하고 종료 전에 Project card를 제거합니다. 이슈, 댓글, label 정의는 보존합니다.
-- Gitea는 server OpenAPI가 필요한 method를 광고한 Issues, Labels, Milestones, pull request, Actions만 사용합니다. Draft review는 public pull-request API와 Gitea의 documented `WIP:` title convention을 사용합니다. Self-hosted hostname 단서는 `forge.provider: "gitea"` 또는 `/api/v1`으로 끝나는 credential-free `forge.apiBaseUrl`을 설정할 때까지 쓰기 불가 상태로 둡니다. Version과 OpenAPI probe는 token 없이 먼저 실행하고 그 뒤에 인증된 permission을 확인합니다. Project/View 상태는 라벨과 milestone 필터로, Discussions는 decision issue로 대체할 수 있습니다.
-- `gh agent-task`는 명시적으로 선택하는 preview 어댑터이며 자동 executor 후보가 아닙니다. forge 부트스트랩과 스케줄러 설치도 먼저 미리보기를 만들고 명시적인 적용 단계를 요구합니다.
+- 사용할 수 있는 remote가 없거나 `--no-remote`, `--offline`으로 범위를 줄이면 Forge transport를 호출하지 않고 같은 실행을 로컬 원장에서 계속합니다.
+- `forge status`는 설정 정책과 권한 확인을 마친 쓰기를 구분하고, GitHub Projects scope가 없을 때 부분 쓰기 전에 실행 가능한 복구 명령을 안내합니다.
+- Gitea는 server OpenAPI가 광고한 공개 method만 사용하고 안정적인 Project 또는 View API가 없으면 milestone과 상태 label로 대체합니다.
+- Merge, release, delete, force-push, protected branch 변경은 계속 승인 gate를 거칩니다. `gh agent-task`는 명시적으로 선택하는 preview adapter입니다.
 
-[0.5.11 안전한 bootstrap과 품질 검토 변경 기록](docs/changes/safe-bootstrap-quality-review-0.5.11.ko.md)에서 마이그레이션 선택지, 검토 도구의 경계, 참고 자료 출처를 확인할 수 있습니다. Release와 일치하는 Actions 생성 지침은 [0.5.10 hosted runtime 버전 변경 기록](docs/changes/hosted-runtime-version-0.5.10.ko.md)을, 격리된 interpreter probe는 [0.5.10 Python candidate 복구 변경 기록](docs/changes/python-candidate-recovery-0.5.10.ko.md)을 봅니다.
+실행, 권한, 표시 구조, reconcile, 복구, fallback 계약은 [Forge 자동화와 재개 가능한 전달](docs/forge-automation.ko.md)을 봅니다.
 
 ## 평소 작업 흐름
 
@@ -154,7 +149,7 @@ npx ai-agent-playbook operator research <target-project> --query "project risks"
 
 ### 스킬과 작업 지침
 
-- 93개 재사용 스킬을 제공합니다.
+- 94개 재사용 스킬을 제공합니다.
 - 스킬은 기술 스택보다 문제 유형과 작업 능력 중심으로 분류합니다.
 - 스킬 본문은 짧게 유지하고, 긴 절차와 세부 지식은 참고 문서로 분리합니다.
 - 예전 이름으로 호출하던 스택 중심 스킬은 호환용으로 유지합니다.
@@ -220,6 +215,7 @@ translations/         사람이 읽는 번역본. 스킬 설치 대상이 아님
 adapters/             에이전트별 설정 메모와 선택적 훅 예시
 docs/                 빠른 시작, 사용 수명주기, 명령어, 구조, 기능 참고 자료
 docs/assets/          README와 문서용 이미지
+CHANGELOG.md          배포된 사용자 영향 변경과 release 링크
 scripts/              검증과 로컬 동기화 도우미
 test/                 Node.js 테스트
 .github/              GitHub Actions 검증 흐름
@@ -235,7 +231,7 @@ test/                 Node.js 테스트
 - 아키텍처와 백엔드: 경계 검토, 기능 단위 구조, 도메인 모델, 모노레포 패키지, API 계약, 백엔드 변경 안전성, 요청 검증과 오류 계약, 잡/워커 신뢰성, 외부 연동, 서버 렌더링 흐름.
 - 데이터와 데이터베이스: 분석, 데이터 계보, 마이그레이션, 검색 지식 기반, 원본 등록, 스키마 변경, 쿼리 성능, 데이터 무결성.
 - 운영과 릴리스: 컨테이너, 배포, 패키지 공개, 운영 장애 대응, 릴리스 준비.
-- 디자인과 프론트엔드: 디자인 방향, 브랜드 정체성, 참고 화면 분석, 이미지/Figma 인수인계, 스타일 정책 선택, UI 다듬기, 접근성, 상태와 데이터 흐름, 시각 회귀, 3D 상호작용.
+- 디자인과 프론트엔드: 디자인 방향, 브랜드 정체성, 참고 화면 분석, 이미지/Figma 인수인계, 일반적인 UI 검토, 스타일 정책 선택, UI 다듬기, 접근성, 상태와 데이터 흐름, 시각 회귀, 3D 상호작용.
 - 모바일: 네이티브 릴리스, 기기 권한, 오프라인 동기화, WebView 연결.
 - 보안과 컴플라이언스: 보안 검토, 인증과 권한, 의존성 공급망, 라이선스와 고지, 공개 전 보안 기준.
 - 레거시: 숨은 결합, 오래된 웹 스택, 서버 렌더링 시스템, WebView 하이브리드, IE/ActiveX 호환성, 데이터베이스 중심 업무 흐름.
@@ -247,6 +243,10 @@ test/                 Node.js 테스트
 - [명령어 가이드](docs/commands.ko.md): 각 명령이 무엇을 하는지, 언제 쓰는지, 파일을 쓰는지 설명.
 - [사용 수명주기](docs/lifecycle.ko.md): npm/npx 사용, 전역 명령 설정, 스킬 관리, 프로젝트 부트스트랩과 제거, 정리 절차.
 - [런타임 하네스](docs/harness-runtime.ko.md): 런타임 원칙, JSON 계약, 덮어쓰기 정책, 대상 프로젝트 적용 흐름.
+- [Forge 자동화](docs/forge-automation.ko.md): 재개 가능한 실행, 사람 중심 협업 구조, provider 권한, reconcile, 복구.
+- [기존 저장소 bootstrap](docs/existing-repository-bootstrap.ko.md): `AGENTS.md` 소유권 모드, 보호 파일 사전 점검, 관리 제거 동작.
+- [UI와 문서 품질 검토](docs/quality-review.ko.md): 일반적인 UI 후보, 실제 화면 수정 흐름, 문체 자연스러움, 충실도 근거.
+- [Runtime engine과 이식성](docs/runtime-engines.ko.md): Node/Python 역할, interpreter 탐색, hosted workflow 버전 정렬.
 - [구조화 플레이북 레이아웃](docs/structured-playbook-layout.ko.md): `.ai-agent-playbook` 디렉터리 역할과 전환 명령.
 - [능력 분류 체계](docs/capability-taxonomy.ko.md): 능력 중심 분류와 호환 스킬 정책.
 - [스킬 카탈로그](docs/skill-catalog.ko.md): 한국어 스킬 목록과 사용 상황 요약.
@@ -258,16 +258,7 @@ test/                 Node.js 테스트
 - [템플릿](templates/README.ko.md): 프로젝트 저장소에 복사할 문서와 설치형 스킬의 차이.
 - [분류](docs/classification.ko.md): 스킬, 템플릿, 예시, 문서, 어댑터를 나누는 이유.
 - [Superpowers 연동](docs/superpowers-integration.ko.md): 외부 작업 흐름 스킬과 함께 쓰는 기준.
-- [구조화 플레이북 전환 기록](docs/changes/structured-playbook-cutover.ko.md): 레이아웃과 런타임 재정렬의 변경 내역.
-- [0.5.4 forge 자동화 변경 기록](docs/changes/forge-automation-0.5.4.ko.md): 재개 가능한 실행, provider 대체 동작, 마이그레이션, 비활성화 지침.
-- [0.5.5 사람 중심 Forge 협업 변경 기록](docs/changes/forge-human-coordination-0.5.5.ko.md): roadmap과 delivery-group 표시, Projects capability gate, 검토된 reconcile 마이그레이션.
-- [0.5.6 Forge 권한 안내 변경 기록](docs/changes/forge-permission-guidance-0.5.6.ko.md): 쓰기 전 Projects 인증 복구, 중립 Project field, 기존 alias 호환성.
-- [0.5.10 hosted runtime 버전 변경 기록](docs/changes/hosted-runtime-version-0.5.10.ko.md): release와 일치하는 hosted workflow pin, request identity, 기존 workflow 업그레이드 안전성.
-- [0.5.10 Python candidate 복구 변경 기록](docs/changes/python-candidate-recovery-0.5.10.ko.md): interpreter 탐색 중 격리된 process 실패.
-- [0.5.11 안전한 bootstrap과 품질 검토 변경 기록](docs/changes/safe-bootstrap-quality-review-0.5.11.ko.md): 기존 `AGENTS.md` 소유권, byte 보존 `.gitignore`, 일반적인 UI 검토, 문서 충실도, 참고 자료 출처.
-- [0.5.9 attempt reset 복구 변경 기록](docs/changes/automation-attempt-reset-0.5.9.ko.md): 명시적 retry budget reset 뒤에도 단조 증가하는 attempt event ID.
-- [0.5.8 Forge 멱등 reconcile 변경 기록](docs/changes/forge-idempotent-reconcile-0.5.8.ko.md): provider 확인 no-op 제거, Project 수렴, 엄격한 legacy body 마이그레이션.
-- [0.5.7 Forge reconcile 복구 변경 기록](docs/changes/forge-reconcile-recovery-0.5.7.ko.md): 중단된 supersede 복구, CAS 안전 순서, 오래된 Project item 정리.
+- [변경 기록](CHANGELOG.ko.md): 간결한 배포 변경과 전체 GitHub release 자료 링크.
 
 ## 라이선스
 

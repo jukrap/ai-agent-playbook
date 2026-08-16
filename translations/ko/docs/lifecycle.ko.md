@@ -59,6 +59,8 @@ aapb skills check
 
 ## 선택형 Python 엔진
 
+Node/Python 역할 경계, interpreter 복구, 선택 Python capability 추가 기준은 [Runtime engine과 이식성](runtime-engines.ko.md)을 봅니다.
+
 CLI, 스킬 수명주기, 프로젝트 부트스트랩, MCP 서버에는 Node.js만 있어도 됩니다. 한국어 글과 번역 정리처럼 더 강한 로컬 언어 점검이 필요하면 Python 3.11 이상 설치를 권장합니다. Python 엔진은 읽기 전용이고 선택 사항입니다. 사용할 수 없으면 지원 명령은 JavaScript 대체 분석을 유지합니다.
 
 소스 체크아웃에서는 아래 명령으로 로컬 환경을 준비합니다.
@@ -335,6 +337,8 @@ npx ai-agent-playbook operator check <target-project> --json
 대상 스택이 확인된 뒤에만 `--profile <name>`을 사용합니다. `.ai-agent-playbook/`을 대상 `.gitignore`에 추가해야 하면 `--local-only`를 사용합니다.
 
 Root `AGENTS.md`가 이미 있으면 소유 방식을 명시할 때까지 bootstrap은 모든 쓰기 전에 중단합니다. 제품 정책을 byte 단위로 지키면서 playbook만 설치하려면 `--preserve-agents`, 작은 managed 읽기 순서 블록을 따라야 하면 `--link-agents`를 사용합니다. 전체 교체에는 `--replace-agents --force`가 모두 필요하며 `--force`만으로는 root 정책을 교체하지 않습니다. 기존 root 정책과 `--profile`은 자동으로 합치지 않습니다. `--json`을 추가하면 예정 작업, 보존 경로, 충돌, 경고, 허용된 다음 명령을 구조화해 확인할 수 있습니다.
+
+보호 파일과 managed lifecycle의 전체 계약은 [기존 저장소 bootstrap](existing-repository-bootstrap.ko.md)을 봅니다.
 
 Local-only `.gitignore` 처리는 필요한 패턴 하나만 추가하며 BOM, 줄바꿈, 순서, 마지막 개행 여부를 보존합니다. 보호 파일 symlink는 거부하고 preflight 이후 `AGENTS.md`나 `.gitignore`가 바뀌면 중단합니다. Linked 설치는 marker 블록만 소유권으로 기록하므로 managed check와 uninstall이 주변 사용자 정책을 소유하지 않습니다.
 

@@ -81,7 +81,7 @@
 - `design-brief-direction`: 모호한 제품, 페이지, 브랜드, UI 요청을 디자인 방향과 결정 가능한 brief로 정리할 때.
 - `brand-identity-system`: typography, color, logo usage, iconography, voice, brand application rule을 정의하거나 검토할 때.
 - `design-reference-analysis`: screenshot, competitor site, reference app, visual sample, design board를 분석할 때.
-- `generic-ui-review`: 템플릿 같거나 카드·pill·gradient·glow가 과도한 프런트엔드 표현을 제품 작업과 렌더링 근거에 맞춰 검토할 때.
+- `generic-ui-review`: 템플릿 같거나 카드·pill·gradient·glow가 과도한 프런트엔드 표현을 제품 작업과 렌더링 근거에 맞춰 검토하고 UI 흐름으로 허용된 최소 수정을 적용할 때.
 - `image-to-code-handoff`: image, screenshot, mockup, reference board, Figma frame을 UI contract로 변환할 때.
 - `frontend-ui-polish`: 제품 의도와 기존 디자인 관례를 보존하면서 보이는 UI를 구현하거나 다듬을 때.
 - `ui-polish`: visible UI, responsive layout, accessibility state, interaction feedback, production polish를 다룰 때.

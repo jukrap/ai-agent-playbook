@@ -5,7 +5,7 @@ Resumable automation run을 시작, monitor, pause, recover, stop할 때 이 run
 ## Safety Defaults
 
 - Example configuration은 `deliver` profile을 사용하지만 `automation.killSwitch`가 활성화된 상태로 시작합니다.
-- Approved plan task와 `status:ready` label이 있는 기존 issue만 queue에 들어갈 수 있습니다. `aapb:ready`는 0.5.4 repository용 read-only compatibility alias입니다.
+- Approved plan task와 `status:ready` label이 있는 기존 issue만 queue에 들어갈 수 있습니다. `aapb:ready`는 legacy repository용 read-only compatibility alias입니다.
 - Merge, release, delete, force-push, protected-branch write에는 항상 explicit approval이 필요합니다.
 - Unattended work는 managed isolated checkout과 `aapb/` branch를 사용합니다. 사용자의 checkout을 switch하거나 clean하지 않습니다.
 - `--no-remote`는 forge API와 remote Git delivery를 비활성화하지만 local execution은 유지합니다.

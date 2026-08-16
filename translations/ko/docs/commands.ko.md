@@ -152,9 +152,11 @@ npx ai-agent-playbook operator check <target-project> --json
 
 대상 프로젝트의 `.ai-agent-playbook/`을 `.gitignore`에 추가해야 하면 `bootstrap`에 `--local-only`를 사용합니다. 기존 `.gitignore`의 byte와 형식은 유지합니다. 루트 `AGENTS.md`가 이미 있으면 명시적 모드 전에는 모든 쓰기를 중단합니다. 제품별 정책은 `--preserve-agents`가 권장되고, `--link-agents`는 marker 블록만 소유하며, 전체 교체에는 `--replace-agents --force`가 모두 필요합니다. `--force`만으로 루트 정책을 바꾸지 않습니다. 기존 루트 정책과 `--profile`은 수동 통합이 필요합니다.
 
+소유권, 동시 편집, symlink, manifest, doctor, uninstall 동작은 [기존 저장소 bootstrap](existing-repository-bootstrap.ko.md)을 봅니다.
+
 `config preview`는 존재하는 경우 `.ai-agent-playbook/config.json`과 `.ai-agent-playbook/config.local.json`을 읽습니다. 두 파일을 생성하지는 않습니다. 우선순위는 built-in default, optional `--user-config`, target config, target-local config, 명시적 environment override입니다.
 
-0.5.4 기본값에는 `automation`, `forge`, `git`, `executor` section이 추가됩니다. `automation.profile: "deliver"`, `automation.killSwitch: false`, 한 번에 task 하나, 30분 tick, attempt 3회, stall 3회, 전체 8시간, `forge.provider: "auto"`, remote `origin`, `forge.apiBaseUrl: null`, hybrid sync, working language 자동 선택, 첫 sync bootstrap, branch delivery, isolated unattended checkout, executor 자동 선택을 사용합니다. Custom port 또는 subpath의 self-hosted Gitea에는 `https://code.example/gitea/api/v1` 같은 credential-free API base를 설정합니다. Embedded credential, query string, fragment, non-local HTTP URL은 거부합니다. 이 기본값만으로 run이 시작되거나 schedule이 설치되지는 않습니다. Copy 가능한 `forge.example.json`은 안전한 도입을 위해 kill switch를 의도적으로 `true`로 바꿉니다. `automation start`는 쓰기 명령이며 effective remote-write permission이 있으면 approved plan을 coordinate하고 누락된 managed asset을 자동 bootstrap할 수 있습니다. Local run만 만들려면 forge preview를 먼저 확인하고 `--no-remote`를 사용합니다.
+자동화 기본값에는 `automation`, `forge`, `git`, `executor` section이 포함됩니다. `automation.profile: "deliver"`, `automation.killSwitch: false`, 한 번에 task 하나, 30분 tick, attempt 3회, stall 3회, 전체 8시간, `forge.provider: "auto"`, remote `origin`, `forge.apiBaseUrl: null`, hybrid sync, working language 자동 선택, 첫 sync bootstrap, branch delivery, isolated unattended checkout, executor 자동 선택을 사용합니다. Custom port 또는 subpath의 self-hosted Gitea에는 `https://code.example/gitea/api/v1` 같은 credential-free API base를 설정합니다. Embedded credential, query string, fragment, non-local HTTP URL은 거부합니다. 이 기본값만으로 run이 시작되거나 schedule이 설치되지는 않습니다. Copy 가능한 `forge.example.json`은 안전한 도입을 위해 kill switch를 의도적으로 `true`로 바꿉니다. `automation start`는 쓰기 명령이며 effective remote-write permission이 있으면 approved plan을 coordinate하고 누락된 managed asset을 자동 bootstrap할 수 있습니다. Local run만 만들려면 forge preview를 먼저 확인하고 `--no-remote`를 사용합니다.
 
 Automation 환경 변수는 기존 context/runtime/MCP 변수 외에 `AI_AGENT_PLAYBOOK_AUTOMATION_PROFILE`, `AI_AGENT_PLAYBOOK_AUTOMATION_KILL_SWITCH`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_PARALLEL`, `AI_AGENT_PLAYBOOK_AUTOMATION_TICK_MINUTES`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_ATTEMPTS`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_STALLED`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_WALL_MINUTES`, `AI_AGENT_PLAYBOOK_FORGE_PROVIDER`, `AI_AGENT_PLAYBOOK_FORGE_REMOTE`, `AI_AGENT_PLAYBOOK_FORGE_SYNC`, `AI_AGENT_PLAYBOOK_FORGE_LANGUAGE`, `AI_AGENT_PLAYBOOK_FORGE_AUTO_BOOTSTRAP`, `AI_AGENT_PLAYBOOK_GIT_AUTO_COMMIT`, `AI_AGENT_PLAYBOOK_GIT_AUTO_PUSH`, `AI_AGENT_PLAYBOOK_EXECUTOR_PROVIDER`로 제한합니다. Custom executor 설정은 interpolated shell command가 아니라 `["agent-cli", "--json"]` 같은 argv array입니다.
 
@@ -270,6 +272,8 @@ Runtime output은 `.ai-agent-playbook/runtime/` 아래에 둡니다. 검토와 �
 
 `writing fidelity-check`는 대상 안의 UTF-8 파일 두 개를 수정하지 않고 비교합니다. 문자 변경률, 문장 touch 비율, 정규화한 수치, 버전, URL, 명령, 경로, code span과 fence, 식별자, 경고, 문서 구조, 한국어 격식 이동, 반복 수사 구조 제거를 보고합니다. `1만`과 `10,000` 같은 동등 표기는 정규화합니다. 결과는 검토 근거이며 변경률만으로 의도적인 재작성을 거절하지 않습니다.
 
+휴리스틱 결과를 증명으로 단정하지 않고 검토 또는 승인된 수정으로 연결하는 agent 흐름은 [UI와 문서 품질 검토](quality-review.ko.md)를 봅니다.
+
 ## Managed files
 
 Managed 명령은 `.ai-agent-playbook/.ai-agent-playbook-install.json`을 확인하거나 관리합니다. 파일을 제거하거나 adopt하기 전에 hash를 비교해 수정된 project memory를 보호합니다.
@@ -359,6 +363,8 @@ Contract markdown은 `id`, `status`, `appliesTo`, `risk`, `approvedAt`, `freshne
 
 `qa ui-genericity-scan`은 gradient text, glow, glass, pill, 중첩 card, radius/shadow 조합, 장식형 stat, hover transform, kicker, 일반적인 홍보 문구의 조합 또는 반복을 의미 기반 rule ID로 보고합니다. 렌더링을 확인해 의도적이라고 판단한 뒤에만 `ui-review-ignore <rule-id>`를 사용합니다. Finding은 후보일 뿐 결함 확정이나 화면 완료 증거가 아닙니다.
 
+`generic-ui-review` 스킬로 제품 문맥과 실제 화면을 확인합니다. 코드 변경이 허용되고 후보가 결함으로 확인되면 `ui-polish` 또는 저장소 UI 흐름으로 가장 작은 일관된 수정을 진행합니다.
+
 ## AI 앱용 MCP 도구
 
 MCP는 도구를 직접 호출할 수 있는 AI 앱을 위한 표면입니다. CLI를 대체하지 않습니다. AI가 자연어 작업 중 read-only CLI signal을 더 쉽게 발견하고 호출하게 하는 역할입니다.
@@ -423,12 +429,14 @@ Adapter는 선택 사항입니다. 기본 harness는 hook이나 agent plugin 없
 
 ## Forge coordination과 재개 가능한 자동화
 
+역할 분리, 권한 모델, provider fallback, reconcile, 복구 계약은 [Forge 자동화와 재개 가능한 전달](forge-automation.ko.md)을 봅니다.
+
 Forge 명령은 capability 탐지와 effective permission profile을 사용합니다. GitHub와 Gitea는 issue, label, milestone, pull request, Actions core를 공유하며, 지원하지 않는 Project, View, Discussion, child-task 기능은 문서화된 fallback을 사용합니다. Remote access가 없어도 local ledger 동작은 유지됩니다.
 
 | 명령 | 사용할 때 | 파일 또는 remote state를 쓰는가 | 예시 |
 | --- | --- | --- | --- |
 | `forge status <target>` | Selected remote/provider, server/API version, tooling, auth, repository permission, capability evidence, policy/verified write mode를 확인할 때. | Mutation 없음. 허용된 read-only inspection은 수행할 수 있음 | `npx ai-agent-playbook forge status <target-project> --json` |
-| `forge bootstrap <target>` | 누락된 managed label, milestone, Project field, View, provider fallback을 preview하고 검토 뒤 `--apply`로 만들 때. | `--apply`가 없으면 아니요. Apply는 remote state를 씀 | `npx ai-agent-playbook forge bootstrap <target-project> --milestone 0.5.5 --json` |
+| `forge bootstrap <target>` | 누락된 managed label, milestone, Project field, View, provider fallback을 preview하고 검토 뒤 `--apply`로 만들 때. | `--apply`가 없으면 아니요. Apply는 remote state를 씀 | `npx ai-agent-playbook forge bootstrap <target-project> --milestone <release> --json` |
 | `forge sync <target>` | Plan/run task synchronization을 preview하고 operation 검토 뒤 `--apply`할 때. Sidecar apply에는 complete approved plan이 필요합니다. | `--apply`가 없으면 아니요. Apply는 remote state를 씀 | `npx ai-agent-playbook forge sync <target-project> --run-id <run-id> --json` |
 | `forge reconcile <target>` | Reviewed snapshot의 requirement drift를 preview하거나 task issue를 delivery group으로 통합할 때. Supersede에는 `--apply --allow-supersede`가 필요합니다. | `--apply`가 없으면 아니요. Apply는 ledger 또는 reviewed remote issue state를 씀 | `npx ai-agent-playbook forge reconcile <target-project> --plan <plan.json> --json` |
 | `automation doctor <target>` | 시작 전에 executor, effective policy, tool version, forge access, dirty-checkout safety, preview-first scheduler mode를 확인할 때. | Mutation 없음 | `npx ai-agent-playbook automation doctor <target-project> --json` |

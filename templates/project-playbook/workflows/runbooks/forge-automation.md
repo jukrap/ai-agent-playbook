@@ -5,7 +5,7 @@ Use this runbook to start, monitor, pause, recover, and stop a resumable automat
 ## Safety Defaults
 
 - The example configuration uses the `deliver` profile but starts with `automation.killSwitch` enabled.
-- Only approved plan tasks and existing issues labeled `status:ready` may enter the queue. `aapb:ready` remains a read-only compatibility alias for 0.5.4 repositories.
+- Only approved plan tasks and existing issues labeled `status:ready` may enter the queue. `aapb:ready` remains a read-only compatibility alias for legacy repositories.
 - Merge, release, delete, force-push, and protected-branch writes always require explicit approval.
 - Unattended work uses a managed isolated checkout and an `aapb/` branch. It does not switch or clean the user's checkout.
 - `--no-remote` disables forge APIs and remote Git delivery while keeping local execution available.

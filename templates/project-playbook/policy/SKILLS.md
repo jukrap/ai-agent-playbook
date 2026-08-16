@@ -27,6 +27,7 @@ Use installed playbook skills for recurring repository concerns:
 - `pre-action-fact-gate`: checking facts, source locators, write risk, and rollback before high-impact actions.
 - `review-work-light`: reviewing recent implementation work before handoff; pair with the relevant backend, database, or legacy skill below when risk is capability-specific.
 - `cleanup-ai-slop`: cleaning low-trust code in a bounded behavior-preserving way.
+- `generic-ui-review`: reviewing template-like or overly card-, pill-, gradient-, glass-, or glow-heavy UI against product context and rendered evidence before changing it.
 
 ## Capability routing
 
@@ -35,7 +36,7 @@ Prefer capability-first skills before stack-name skills:
 - Foundation and docs: `project-bootstrap`, `repo-onboarding`, `project-doc-system`, `documentation-artifact-package`, `natural-writing-humanization`, `adr-spec-handoff`.
 - Delivery and quality gates: `git-worklog-guardrails`, `ci-quality-gate`, `ci-failure-triage`, `flaky-test-triage`, `eval-harness-design`, `capability-witness-history`.
 - Architecture: `boundary-review`, `feature-slice-boundary`, `domain-model-change`, `monorepo-package-boundary`.
-- Frontend and design implementation: `style-policy-selection`, `frontend-ui-polish`, `frontend-state-data-flow`, `frontend-accessibility-review`, `browser-dom-change`, `design-system-handoff`.
+- Frontend and design implementation: `style-policy-selection`, `generic-ui-review`, `ui-polish`, `frontend-ui-polish`, `frontend-state-data-flow`, `frontend-accessibility-review`, `browser-dom-change`, `design-system-handoff`.
 - Design direction and source handoff: `design-brief-direction`, `brand-identity-system`, `design-reference-analysis`, `image-to-code-handoff`.
 - Interactive and 3D surfaces: `interactive-media-3d-review` plus frontend quality skills for rendered verification.
 - Backend and integrations: `backend-change-safety`, `api-contract-boundary`, `request-validation-error-contract`, `job-worker-reliability`, `server-rendered-change`, `connector-integration-change`.
@@ -54,6 +55,7 @@ When an AI app has the playbook MCP server available, prefer read-only discovery
 - Use catalog and layout tools to choose skills, recipes, and playbook files.
 - Use `operator_context`, `operator_search`, `index_search`, `operator_preflight`, `write_gate_preview`, and domain-specific tools before broad edits or when the relevant `.ai-agent-playbook/` context is unclear.
 - Use `writing_naturalness_check` with `engine: "auto"` and the `natural_writing_review` prompt when reviewing README text, docs, translations, PR bodies, release notes, or reader-facing summaries.
+- Use `qa_ui_genericity_scan` to locate static UI candidates, then inspect the rendered product before treating them as defects. Use `writing_fidelity_check` after a material prose edit to review protected facts and scope.
 - Do not assume write-capable MCP tools exist. They require `mcp --enable-write-tools` and an explicit tool-call `apply: true`.
 - Do not treat runtime reports, indexes, screenshots, or graph hints as trusted memory until reviewed and promoted.
 

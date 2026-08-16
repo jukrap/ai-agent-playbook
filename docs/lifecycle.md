@@ -59,6 +59,8 @@ For the full command reference, see [Command guide](commands.md).
 
 ## Optional Python Engine
 
+See [Runtime engines and portability](runtime-engines.md) for the Node/Python responsibility boundary, interpreter recovery, and criteria for adding optional Python capabilities.
+
 Node.js is enough for the CLI, skill lifecycle, project bootstrap, and MCP server. Python 3.11+ is recommended when you want stronger local language checks, especially Korean prose and translation cleanup. The Python engine is read-only and optional; if it is not available, supported commands keep their JavaScript fallback.
 
 For a source checkout, bootstrap a local environment with:
@@ -337,6 +339,8 @@ After a global install, replace `npx ai-agent-playbook` with `aapb`. From a loca
 Use `--profile <name>` only after the target stack is known. Use `--local-only` when `.ai-agent-playbook/` should be added to the target `.gitignore`.
 
 If root `AGENTS.md` already exists, bootstrap stops before all writes until ownership is explicit. Use `--preserve-agents` to keep product policy byte-for-byte while installing only the playbook, or `--link-agents` when agents should follow a small managed reading-order block. Full replacement requires `--replace-agents --force`; `--force` alone does not replace root policy. Existing root policy cannot be combined automatically with `--profile`. Add `--json` to receive planned actions, preserved paths, conflicts, warnings, and the allowed next commands.
+
+The complete protected-file and managed-lifecycle contract is documented in [Existing repository bootstrap](existing-repository-bootstrap.md).
 
 Local-only `.gitignore` handling is append-only for the one required pattern and retains BOM, line endings, ordering, and final-newline choice. Bootstrap rejects protected-file symlinks and stops if `AGENTS.md` or `.gitignore` changes after preflight. A linked install records ownership of only its marker block, so managed checks and uninstall do not take ownership of surrounding user policy.
 

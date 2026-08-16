@@ -27,6 +27,7 @@
 - `pre-action-fact-gate`: 영향이 큰 작업 전에 사실, 근거 위치, 쓰기 위험, 되돌림 경로를 확인할 때.
 - `review-work-light`: 최근 구현 작업을 인수인계 전에 점검할 때. 백엔드, 데이터베이스, 레거시 위험은 아래의 해당 역량 스킬을 함께 사용합니다.
 - `cleanup-ai-slop`: 신뢰가 낮아 보이는 코드를 범위를 제한해 동작 보존 방식으로 정리할 때.
+- `generic-ui-review`: UI를 바꾸기 전에 제품 문맥과 실제 화면을 기준으로 템플릿 같거나 카드·pill·gradient·glass·glow가 과도한 표현을 검토할 때.
 
 ## 역량별 라우팅
 
@@ -35,7 +36,7 @@
 - 기반과 문서: `project-bootstrap`, `repo-onboarding`, `project-doc-system`, `documentation-artifact-package`, `natural-writing-humanization`, `adr-spec-handoff`.
 - 전달과 품질 게이트: `git-worklog-guardrails`, `ci-quality-gate`, `ci-failure-triage`, `flaky-test-triage`, `eval-harness-design`, `capability-witness-history`.
 - 아키텍처: `boundary-review`, `feature-slice-boundary`, `domain-model-change`, `monorepo-package-boundary`.
-- 프론트엔드와 구현 디자인: `style-policy-selection`, `frontend-ui-polish`, `frontend-state-data-flow`, `frontend-accessibility-review`, `browser-dom-change`, `design-system-handoff`.
+- 프론트엔드와 구현 디자인: `style-policy-selection`, `generic-ui-review`, `ui-polish`, `frontend-ui-polish`, `frontend-state-data-flow`, `frontend-accessibility-review`, `browser-dom-change`, `design-system-handoff`.
 - 디자인 방향과 원본 인수인계: `design-brief-direction`, `brand-identity-system`, `design-reference-analysis`, `image-to-code-handoff`.
 - 인터랙션과 3D 화면: `interactive-media-3d-review`를 쓰고, 렌더링 검증은 프론트엔드 품질 스킬과 함께 확인합니다.
 - 백엔드와 연동: `backend-change-safety`, `api-contract-boundary`, `request-validation-error-contract`, `job-worker-reliability`, `server-rendered-change`, `connector-integration-change`.
@@ -54,6 +55,7 @@ AI 앱에서 playbook MCP 서버를 사용할 수 있다면 수정 전에 read-o
 - catalog와 layout 도구로 필요한 스킬, recipe, playbook 파일을 고릅니다.
 - 큰 수정 전이나 관련 `.ai-agent-playbook/` 문맥이 불분명할 때는 `operator_context`, `operator_search`, `index_search`, `operator_preflight`, `write_gate_preview`, 도메인별 도구를 사용합니다.
 - README, 문서, 번역, PR 본문, 배포 노트, 독자를 위한 요약을 검토할 때는 `engine: "auto"`를 지정한 `writing_naturalness_check`와 `natural_writing_review` prompt를 사용합니다.
+- `qa_ui_genericity_scan`으로 정적 UI 후보를 찾은 뒤 실제 화면을 확인하고 결함 여부를 판단합니다. 중요한 문서 수정 뒤에는 `writing_fidelity_check`로 보호할 사실과 변경 범위를 검토합니다.
 - 쓰기 가능한 MCP 도구가 당연히 있다고 가정하지 않습니다. 해당 도구는 `mcp --enable-write-tools`와 명시적 tool-call `apply: true`가 모두 필요합니다.
 - runtime report, index, screenshot, graph hint는 검토와 승격 전까지 신뢰된 memory로 취급하지 않습니다.
 

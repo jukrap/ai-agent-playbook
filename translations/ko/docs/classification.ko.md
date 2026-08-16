@@ -110,6 +110,7 @@ Runtime hook layer를 local experiment로 둘지, adapter로 만들지, 문서�
 
 ## 품질 지도
 
+- `generic-ui-review`: 템플릿 같은 시각 표현을 제품 작업과 실제 화면 근거로 검토하고, 확인되어 수정이 허용된 문제를 UI 구현 흐름으로 연결합니다.
 - `ui-style-policy`: 오래된 UI 스타일 정책 요청을 위한 호환 라우트입니다. 기본 라우트는 `frontend/style-policy-selection`입니다.
 - `style-quality-review`: 제품 의도를 유지하면서 보이는 UI 품질을 검토합니다.
 - `frontend-ui-polish`: 제품 의도와 기존 디자인 관례를 보존하면서 보이는 UI surface를 구현하거나 다듬습니다.

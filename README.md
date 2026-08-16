@@ -97,7 +97,7 @@ For command-by-command usage, see [Command guide](docs/commands.md). For update,
 
 ## Forge Automation Compatibility
 
-Version 0.5.11 adds explicit preserve, managed-link, and guarded-replace modes for repositories that already have `AGENTS.md`; `.gitignore` additions now preserve existing bytes and line endings. It also adds a rendered-evidence-led generic UI review skill and read-only UI and writing-fidelity checks. The resumable local execution loop and human-facing Forge coordination model remain unchanged: fine-grained tasks stay in the local ledger, while roadmap and delivery-group issues, Projects, Views, milestones, and reviewable PRs present shared work. Hosted workflows continue to run the exact AAPB release that ships them.
+Fine-grained execution tasks stay in the local ledger, while roadmap and delivery-group issues, Projects, Views, milestones, and reviewable pull requests present shared work. Provider capability checks, permission gates, preview-first writes, resumable ticks, isolated unattended workspaces, and local-only fallback are part of the current contract.
 
 | Component | Supported version or integration target | Status |
 | --- | --- | --- |
@@ -111,17 +111,12 @@ Version 0.5.11 adds explicit preserve, managed-link, and guarded-replace modes f
 
 Only the row that explicitly says “verified” identifies a tool version exercised as a verification reference. API and provider target rows define the compatibility contract; they do not claim that a live remote write smoke test ran.
 
-- Without a usable remote—or when `--no-remote` or `--offline` narrows the request—the same run continues against the local ledger without calling the forge transport. Missing authentication or write permission disables mutations but can still allow anonymous capability probes or permitted remote reads.
-- `forge status` separates configured `policyWrites` from permission-checked `verifiedWrites` and reports server/API version, authentication without token material, repository permission, and probe evidence. Effective `writes` remains false until authentication and repository write permission are verified.
-- GitHub Projects and Views require the corresponding project scopes. Preferred Project coordination pauses before every remote write when either capability is missing. `forge status`, bootstrap, and synchronization previews print the browser-auth and recheck commands; blocked bootstrap previews report zero executable operations while preserving the requested artifact counts. An explicit `projects,views` fallback is required to use milestone coordination instead. The harness never expands authentication scopes automatically.
-- Managed Projects create the neutral `Delivery Status` field with Planned, Ready, In Progress, In Review, Blocked, and Done options, plus `Priority`, `Risk`, `Phase`, `Progress`, `Area`, and `Task ID`. Existing `AAPB *` fields remain read-compatible aliases and are reused without creating duplicates, renaming, or deleting remote assets. User-owned Project field and View REST paths consistently use the owner login, so an interrupted bootstrap can resume against its existing titled Project. Presentation reconciliation transfers managed classification labels before removing them from issues and stops later mutations if a Project transfer fails.
-- Reconcile preflight uses the provider adapter with a mutation-blocking transport. Provider-confirmed reusable operations move to `noOps`, executable artifact counts reflect only remaining changes, and the original intent count remains in `plannedOperations`. GitHub's omitted empty text fields converge with an empty target instead of being rewritten on every run.
-- GitHub automatically creates `View 1` for a new Project. The stable public View API does not rename or delete that system view, so AAPB reuses it for the managed `all` role instead of creating a duplicate table view; it does not claim that the visible name changed.
-- Reviewed supersede reconciliation closes an attached obsolete issue before updating its marker comment, removes its Project card before the final hierarchy unlink, and blocks later group mutations after a failure. If a prior run already unlinked an open issue, the next preview recovers it only from the exact approved-plan supersede marker and removes its Project card before closing it. Issues, comments, and label definitions remain preserved.
-- Gitea uses Issues, Labels, Milestones, pull requests, and Actions only where the server OpenAPI advertises the required methods. Draft review uses the public pull-request API with Gitea's documented `WIP:` title convention. A self-hosted hostname hint remains non-writable until `forge.provider: "gitea"` or a credential-free `forge.apiBaseUrl` ending in `/api/v1` is configured. Version and OpenAPI probes run without a token before authenticated permission checks. Project/View state falls back to labels and milestone filters, and a decision issue can replace Discussions.
-- `gh agent-task` is an explicit preview adapter, not an automatic executor choice. Forge bootstrap and scheduler installation are also preview-first and require an explicit apply step.
+- Without a usable remote—or when `--no-remote` or `--offline` narrows the request—the same run continues against the local ledger without calling Forge transport.
+- `forge status` separates configured policy from permission-checked writes and gives an actionable recovery command before a missing GitHub Projects scope can cause a partial write.
+- Gitea uses only public methods advertised by the server's OpenAPI and falls back to milestones and status labels where stable Project or View APIs are unavailable.
+- Merge, release, delete, force-push, and protected-branch changes remain approval-gated. `gh agent-task` remains an explicitly selected preview adapter.
 
-See the [0.5.11 safe bootstrap and quality review change note](docs/changes/safe-bootstrap-quality-review-0.5.11.md) for migration choices, review-tool boundaries, and reference provenance. The [0.5.10 hosted runtime version change note](docs/changes/hosted-runtime-version-0.5.10.md) covers release-aligned Actions generation, while the [0.5.10 Python candidate recovery change note](docs/changes/python-candidate-recovery-0.5.10.md) covers isolated interpreter probing.
+See [Forge automation and resumable delivery](docs/forge-automation.md) for the execution, permission, presentation, reconciliation, recovery, and fallback contracts.
 
 ## Everyday Flow
 
@@ -181,6 +176,7 @@ translations/         Human translations; never install these as skills
 adapters/             Agent-specific install notes and optional hook PoCs
 docs/                 Quick start, lifecycle, command, architecture, and capability references
 docs/assets/          README and documentation images
+CHANGELOG.md          Shipped user-visible change history and release links
 scripts/              Validation and local sync helpers
 test/                 Node CLI and adapter tests
 .github/              GitHub Actions validation workflow
@@ -196,7 +192,7 @@ Detailed triggers live in [Skill catalog](docs/skill-catalog.md). The README kee
 - Architecture and backend: boundaries, feature slices, domain modeling, monorepos, API contracts, backend change safety, request/error contracts, job/worker reliability, connectors, and server-rendered flows.
 - Data and database: analytics, lineage, migrations, retrieval knowledge bases, source registries, schema changes, query performance, and data integrity.
 - DevOps and release: containers, deployment, package publishing, release readiness, and incident/observability triage.
-- Design and frontend: design direction, brand identity, visual references, image/Figma handoff, style policy, UI polish, accessibility, state/data flow, visual regression, and 3D interaction.
+- Design and frontend: design direction, brand identity, visual references, image/Figma handoff, generic UI review, style policy, UI polish, accessibility, state/data flow, visual regression, and 3D interaction.
 - Mobile: native release, device permissions, offline sync, and WebView bridges.
 - Security and compliance: security review, authentication/authorization, dependency supply chain, license/notice evidence, and release gates.
 - Legacy: hidden coupling, old web stacks, server-rendered systems, WebView hybrids, IE/ActiveX compatibility, reporting/printing, batch/file transfer, and database-heavy systems.
@@ -208,6 +204,10 @@ Detailed triggers live in [Skill catalog](docs/skill-catalog.md). The README kee
 - [Command guide](docs/commands.md): what each CLI command does, when to use it, and whether it writes files.
 - [Lifecycle guide](docs/lifecycle.md): npm/npx usage, global CLI setup, skill lifecycle, project bootstrap/removal, cleanup, and legacy PowerShell paths.
 - [Runtime harness](docs/harness-runtime.md): runtime principles, JSON contract notes, overwrite policy, and target-project flow.
+- [Forge automation](docs/forge-automation.md): resumable execution, human-facing coordination, provider permissions, reconciliation, and recovery.
+- [Existing repository bootstrap](docs/existing-repository-bootstrap.md): `AGENTS.md` ownership modes, protected-file preflight, and managed uninstall behavior.
+- [UI and writing quality review](docs/quality-review.md): generic UI candidates, rendered remediation flow, writing naturalness, and fidelity evidence.
+- [Runtime engines and portability](docs/runtime-engines.md): Node/Python responsibilities, interpreter discovery, and hosted workflow version alignment.
 - [Structured playbook layout](docs/structured-playbook-layout.md): `.ai-agent-playbook` directory roles and migration commands.
 - [Capability taxonomy](docs/capability-taxonomy.md): capability-first categories and compatibility wrapper policy.
 - [Skill catalog](docs/skill-catalog.md): long-form skill list and trigger summary.
@@ -219,16 +219,7 @@ Detailed triggers live in [Skill catalog](docs/skill-catalog.md). The README kee
 - [Templates](templates/README.md): what to copy into project repositories and what to leave as installable skills.
 - [Classification](docs/classification.md): why skills, templates, examples, docs, and adapters are separated.
 - [Superpowers integration](docs/superpowers-integration.md): how to use this playbook alongside external process skills.
-- [Structured playbook cutover notes](docs/changes/structured-playbook-cutover.md): historical notes for the layout and runtime reorganization.
-- [0.5.4 forge automation change note](docs/changes/forge-automation-0.5.4.md): resumable execution, provider fallback, migration, and disable guidance.
-- [0.5.5 human-centered Forge coordination change note](docs/changes/forge-human-coordination-0.5.5.md): roadmap and delivery-group presentation, Projects capability gates, and reviewed reconcile migration.
-- [0.5.6 Forge permission guidance change note](docs/changes/forge-permission-guidance-0.5.6.md): pre-write Projects authorization recovery, neutral Project fields, and legacy alias compatibility.
-- [0.5.10 hosted runtime version change note](docs/changes/hosted-runtime-version-0.5.10.md): release-aligned hosted workflow pins, request identity, and existing-workflow upgrade safety.
-- [0.5.10 Python candidate recovery change note](docs/changes/python-candidate-recovery-0.5.10.md): isolated process failures during interpreter discovery.
-- [0.5.11 safe bootstrap and quality review change note](docs/changes/safe-bootstrap-quality-review-0.5.11.md): existing `AGENTS.md` ownership, byte-preserving `.gitignore` updates, generic UI review, writing fidelity, and reference provenance.
-- [0.5.9 attempt reset recovery change note](docs/changes/automation-attempt-reset-0.5.9.md): monotonic attempt event IDs across explicit retry-budget resets.
-- [0.5.8 Forge idempotent reconcile change note](docs/changes/forge-idempotent-reconcile-0.5.8.md): provider-confirmed no-op filtering, Project convergence, and strict legacy body migration.
-- [0.5.7 Forge reconcile recovery change note](docs/changes/forge-reconcile-recovery-0.5.7.md): interrupted supersede recovery, CAS-safe ordering, and obsolete Project item cleanup.
+- [Changelog](CHANGELOG.md): concise shipped changes with links to the complete GitHub release artifacts.
 
 ## License
 

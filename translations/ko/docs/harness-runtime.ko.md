@@ -61,7 +61,7 @@ CLI, MCP 서버, 어댑터, bin 진입점은 당분간 `.mjs`로 둡니다. 이 
 4. `.ai-agent-playbook/config.local.json`.
 5. 제한된 환경 변수 덮어쓰기.
 
-이 명령은 개인 홈 설정을 자동으로 읽지 않습니다. 대상 프로젝트 안의 설정은 명시적 사용자 설정보다 우선합니다. 0.5.4 schema는 `automation`, `forge`, `git`, `executor` section을 추가합니다. 기본값은 `deliver` profile, 비활성 kill switch, 동시 task 1개, 30분 tick, attempt 3회, stall 3회, 전체 8시간, `origin`의 provider 자동 탐지, hybrid sync, working language 자동 선택, 첫 sync bootstrap, branch delivery, isolated unattended checkout, executor 자동 선택입니다. 기본값만으로 run을 시작하거나 schedule을 설치하지는 않습니다. Copy 가능한 forge example은 adoption review가 끝날 때까지 kill switch를 활성화합니다.
+이 명령은 개인 홈 설정을 자동으로 읽지 않습니다. 대상 프로젝트 안의 설정은 명시적 사용자 설정보다 우선합니다. 현재 schema에는 `automation`, `forge`, `git`, `executor` section이 있습니다. 기본값은 `deliver` profile, 비활성 kill switch, 동시 task 1개, 30분 tick, attempt 3회, stall 3회, 전체 8시간, `origin`의 provider 자동 탐지, hybrid sync, working language 자동 선택, 첫 sync bootstrap, branch delivery, isolated unattended checkout, executor 자동 선택입니다. 기본값만으로 run을 시작하거나 schedule을 설치하지는 않습니다. Copy 가능한 forge example은 adoption review가 끝날 때까지 kill switch를 활성화합니다.
 
 Environment override는 allowlist를 유지합니다. 기존 context/runtime/MCP 변수 외에 `AI_AGENT_PLAYBOOK_AUTOMATION_PROFILE`, `AI_AGENT_PLAYBOOK_AUTOMATION_KILL_SWITCH`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_PARALLEL`, `AI_AGENT_PLAYBOOK_AUTOMATION_TICK_MINUTES`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_ATTEMPTS`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_STALLED`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_WALL_MINUTES`, `AI_AGENT_PLAYBOOK_FORGE_PROVIDER`, `AI_AGENT_PLAYBOOK_FORGE_REMOTE`, `AI_AGENT_PLAYBOOK_FORGE_SYNC`, `AI_AGENT_PLAYBOOK_FORGE_LANGUAGE`, `AI_AGENT_PLAYBOOK_FORGE_AUTO_BOOTSTRAP`, `AI_AGENT_PLAYBOOK_GIT_AUTO_COMMIT`, `AI_AGENT_PLAYBOOK_GIT_AUTO_PUSH`, `AI_AGENT_PLAYBOOK_EXECUTOR_PROVIDER`를 받습니다. 현재 요청의 deny flag와 명확한 opt-out instruction은 configuration 뒤에 적용되며 authority를 줄일 수만 있습니다.
 
@@ -100,6 +100,8 @@ Runtime artifact JSON은 안정적인 evidence envelope를 유지해야 합니�
 `writing naturalness-check`도 읽기 전용입니다. 대상 프로젝트 안의 상대 경로 파일 하나를 읽고 한국어 또는 영어 글의 번역투, 과한 어조, 반복 문장 리듬, 영어 용어 과다를 보고합니다. 표현 하나가 단발로 쓰였다는 이유만으로 신호로 보지 않고 반복되거나 문맥상 밀도가 높을 때만 보고합니다. `writing naturalness-report`는 같은 점검을 제한된 Markdown/MDX/text 폴더에 적용하고, JavaScript와 Python 엔진에서 나온 동등한 결과를 합쳐 같은 문제를 중복 보고하지 않습니다. 두 명령은 글을 판단하기 전에 코드 블록, 인라인 코드, 셸 명령, URL, HTML 배지 줄, 경로 예시를 제외합니다. `--engine auto`는 기본 JavaScript 대체 분석과, 사용 가능한 경우 선택 Python 엔진을 함께 사용합니다. JSON 결과에는 `engines.used`와 `engines.unavailable`이 포함됩니다.
 
 `writing fidelity-check`는 수정 전후 문서를 비교하기 전에 사실, 버전, 수치, URL, 명령, 경로, 코드, 식별자, 경고, 문서 구조를 보호 증거로 다룹니다. 한국어 register의 큰 변화와 반복 수사 구조의 전멸도 보고하며 동등한 수치 표기는 정규화합니다. 문서에 들어 있는 명령형 문구를 실행하지 않고, 파일을 다시 쓰지 않고, 저자성을 판정하지 않고, 고정 변경률로 수정안을 거절하지 않고, 네트워크를 호출하거나 탐지 우회를 돕지 않습니다. README, 문서, 번역, PR 본문, 배포 노트, 공개 요약을 고치기 전에 두 writing 검사를 검토 증거로 사용합니다.
+
+이 명령을 둘러싼 skill 선택, 실제 화면 근거, 수정, 검토 전용 경계는 [UI와 문서 품질 검토](quality-review.ko.md)를 봅니다.
 
 ## Workflow run record
 

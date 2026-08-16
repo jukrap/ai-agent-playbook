@@ -152,9 +152,11 @@ Project playbook commands manage `.ai-agent-playbook/` in one target repository.
 
 Use `--local-only` with `bootstrap` when the target project's `.ai-agent-playbook/` should be added to that project's `.gitignore`. Existing `.gitignore` bytes and formatting are retained. If root `AGENTS.md` already exists, bootstrap stops before all writes until one mode is explicit: `--preserve-agents` is recommended for product-specific policy, `--link-agents` owns only its marker block, and full replacement requires `--replace-agents --force`. `--force` alone does not replace root policy. Existing root policy and `--profile` require manual integration.
 
+See [Existing repository bootstrap](existing-repository-bootstrap.md) for ownership, concurrent-edit, symlink, manifest, doctor, and uninstall behavior.
+
 `config preview` reads `.ai-agent-playbook/config.json` and `.ai-agent-playbook/config.local.json` when they exist. It does not create either file. Precedence is built-in defaults, optional `--user-config`, target config, target-local config, then explicit environment overrides.
 
-The 0.5.4 defaults add `automation`, `forge`, `git`, and `executor` sections. They select `automation.profile: "deliver"`, `automation.killSwitch: false`, one task at a time, a 30-minute tick, three attempts, three stalled ticks, an eight-hour wall budget, `forge.provider: "auto"`, remote `origin`, `forge.apiBaseUrl: null`, hybrid synchronization, automatic working-language selection, first-sync bootstrap, branch delivery, an isolated unattended checkout, and automatic executor selection. For a self-hosted Gitea instance on a custom port or subpath, set a credential-free API base such as `https://code.example/gitea/api/v1`; embedded credentials, query strings, fragments, and non-local HTTP URLs are rejected. These defaults do not start a run or install a schedule by themselves. The copyable `forge.example.json` intentionally changes the kill switch to `true` for safer adoption. `automation start` is a write command and, under effective remote-write permission, can coordinate the approved plan and auto-bootstrap missing managed assets. Use forge previews first or pass `--no-remote` when only a local run is intended.
+The automation defaults include `automation`, `forge`, `git`, and `executor` sections. They select `automation.profile: "deliver"`, `automation.killSwitch: false`, one task at a time, a 30-minute tick, three attempts, three stalled ticks, an eight-hour wall budget, `forge.provider: "auto"`, remote `origin`, `forge.apiBaseUrl: null`, hybrid synchronization, automatic working-language selection, first-sync bootstrap, branch delivery, an isolated unattended checkout, and automatic executor selection. For a self-hosted Gitea instance on a custom port or subpath, set a credential-free API base such as `https://code.example/gitea/api/v1`; embedded credentials, query strings, fragments, and non-local HTTP URLs are rejected. These defaults do not start a run or install a schedule by themselves. The copyable `forge.example.json` intentionally changes the kill switch to `true` for safer adoption. `automation start` is a write command and, under effective remote-write permission, can coordinate the approved plan and auto-bootstrap missing managed assets. Use forge previews first or pass `--no-remote` when only a local run is intended.
 
 Automation environment overrides are limited to `AI_AGENT_PLAYBOOK_AUTOMATION_PROFILE`, `AI_AGENT_PLAYBOOK_AUTOMATION_KILL_SWITCH`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_PARALLEL`, `AI_AGENT_PLAYBOOK_AUTOMATION_TICK_MINUTES`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_ATTEMPTS`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_STALLED`, `AI_AGENT_PLAYBOOK_AUTOMATION_MAX_WALL_MINUTES`, `AI_AGENT_PLAYBOOK_FORGE_PROVIDER`, `AI_AGENT_PLAYBOOK_FORGE_REMOTE`, `AI_AGENT_PLAYBOOK_FORGE_SYNC`, `AI_AGENT_PLAYBOOK_FORGE_LANGUAGE`, `AI_AGENT_PLAYBOOK_FORGE_AUTO_BOOTSTRAP`, `AI_AGENT_PLAYBOOK_GIT_AUTO_COMMIT`, `AI_AGENT_PLAYBOOK_GIT_AUTO_PUSH`, and `AI_AGENT_PLAYBOOK_EXECUTOR_PROVIDER`, in addition to the existing context/runtime/MCP variables. Custom executor configuration is an argv array such as `["agent-cli", "--json"]`, not an interpolated shell command.
 
@@ -270,6 +272,8 @@ Runtime output lives under `.ai-agent-playbook/runtime/`. Do not copy generated 
 
 `writing fidelity-check` compares two target-relative UTF-8 files without changing them. It reports character change rate and sentence touch ratio, normalized numbers, versions, URLs, commands, paths, code spans and fences, identifiers, warnings, document structure, Korean register movement, and removal of repeated rhetorical structures. Equivalent forms such as Korean ten-thousand notation and `10,000` are normalized. The result is evidence: change-rate values never reject an intentional rewrite by themselves.
 
+See [UI and writing quality review](quality-review.md) for the agent workflow that turns these signals into a review or an authorized correction without treating heuristic output as proof.
+
 ## Managed files
 
 Managed commands inspect or maintain `.ai-agent-playbook/.ai-agent-playbook-install.json`. They protect edited project memory by comparing hashes before removing or adopting files.
@@ -359,6 +363,8 @@ Contract markdown supports frontmatter: `id`, `status`, `appliesTo`, `risk`, `ap
 
 `qa ui-genericity-scan` reports semantic rule IDs for combined or repeated gradient text, glow, glass, pills, nested cards, radius/shadow stacks, decorative stats, hover transforms, kickers, and generic claims. Use `ui-review-ignore <rule-id>` only after rendered review confirms an intentional treatment. Findings are candidates, not defects, and a clean scan is not visual completion evidence.
 
+Use the `generic-ui-review` skill to inspect product context and rendered evidence. When code changes are authorized and a candidate is confirmed, route the smallest coherent correction through `ui-polish` or the repository's UI workflow.
+
 ## MCP tools for AI apps
 
 MCP is for AI apps that can call tools directly. It does not replace the CLI. It makes the read-only CLI signals easier for an AI to discover and call during a natural-language task.
@@ -423,12 +429,14 @@ Existing plan and worklog files are not overwritten unless `--force` is provided
 
 ## Forge coordination and resumable automation
 
+See [Forge automation and resumable delivery](forge-automation.md) for the responsibility split, permission model, provider fallback, reconciliation, and recovery contract.
+
 Forge commands use capability detection and the effective permission profile. GitHub and Gitea share the issue, label, milestone, pull-request, and Actions core; unsupported Project, View, Discussion, or child-task features use documented fallbacks. Missing remote access never prevents local ledger operation.
 
 | Command | When to use it | Writes files or remote state? | Example |
 | ------- | -------------- | ----------------------------- | ------- |
 | `forge status <target>` | Inspect selected remote/provider, server/API version, tooling, auth, repository permission, capability evidence, and policy-versus-verified write mode. | No mutation; may perform permitted read-only inspection | `npx ai-agent-playbook forge status <target-project> --json` |
-| `forge bootstrap <target>` | Preview missing managed labels, milestone, Project fields, Views, or provider fallbacks; add `--apply` to create supported missing assets. | No unless `--apply`; apply writes remote state | `npx ai-agent-playbook forge bootstrap <target-project> --milestone 0.5.5 --json` |
+| `forge bootstrap <target>` | Preview missing managed labels, milestone, Project fields, Views, or provider fallbacks; add `--apply` to create supported missing assets. | No unless `--apply`; apply writes remote state | `npx ai-agent-playbook forge bootstrap <target-project> --milestone <release> --json` |
 | `forge sync <target>` | Preview plan/run task synchronization; add `--apply` after reviewing operations. A sidecar apply requires a complete approved plan. | No unless `--apply`; apply writes remote state | `npx ai-agent-playbook forge sync <target-project> --run-id <run-id> --json` |
 | `forge reconcile <target>` | Preview requirement drift from reviewed snapshots, or consolidate a reviewed plan from task issues into delivery groups. Superseding requires `--apply --allow-supersede`. | No unless `--apply`; apply writes the ledger or reviewed remote issue state | `npx ai-agent-playbook forge reconcile <target-project> --plan <plan.json> --json` |
 | `automation doctor <target>` | Check executor, effective policy, tool versions, forge access, dirty-checkout safety, and preview-first scheduler modes before starting. | No mutation | `npx ai-agent-playbook automation doctor <target-project> --json` |

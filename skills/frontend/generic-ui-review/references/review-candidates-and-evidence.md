@@ -36,3 +36,7 @@ Use `ui-review-ignore <rule-id>` in a source comment only after rendered review 
 ## Evidence
 
 For a confirmed issue, record the rule ID or observed symptom, affected screen, viewport, user impact, and a rendered screenshot or video. After changes, compare the same state and viewport. Do not use a zero-finding scan as proof that the UI is complete.
+
+## Remediation handoff
+
+If the request is review-only, stop after evidence and recommendations. If implementation is authorized, pass the confirmed issue, product constraint, affected viewport, and expected outcome into `ui-polish` or the repository's UI workflow. Prefer removing or simplifying the smallest repeated device that restores hierarchy; do not flatten intentional brand expression or redesign unrelated screens.

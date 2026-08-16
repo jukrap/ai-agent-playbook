@@ -110,6 +110,7 @@ Use `docs/runtime-roadmap.md` when deciding whether a runtime hook layer should 
 
 ## Quality map
 
+- `generic-ui-review`: reviews template-like visual treatment against product tasks and rendered evidence, then routes confirmed and authorized corrections to the UI implementation workflow.
 - `ui-style-policy`: compatibility route for older UI style policy prompts; primary route is `frontend/style-policy-selection`.
 - `style-quality-review`: reviews visible UI quality while preserving product intent.
 - `frontend-ui-polish`: implements or refines visible UI surfaces while preserving product intent and existing design conventions.

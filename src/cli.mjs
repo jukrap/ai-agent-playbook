@@ -8,7 +8,7 @@ import { PACKAGE_VERSION } from './version.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FLAGS = new Set(['json','help','version','dry-run','apply','local-only','preserve-agents','offline','no-remote','remote-read-only','force-managed','force-unmanaged']);
-const VALUES = new Set(['profile','skill','agents-root','codex-root','backup-root','backup','path','query','max-results','max-chars','start-line','project','to','before','after','lang','engine','root','max-files','plan','provider','remote','milestone','project-title','project-mode']);
+const VALUES = new Set(['profile','skill','agents-root','codex-root','backup-root','backup','path','query','max-results','max-chars','start-line','end-line','cursor','page-size','view','project','to','before','after','lang','engine','root','max-files','plan','provider','remote','milestone','project-title','project-mode']);
 const RETIRED = new Set(['automation','plan','worklog','workflow','reference','index','graph','canon','write-gate','rules','diagnostics','run','source','ast','lsp']);
 function parse(argv) {
   const args = [], flags = {}, skills = [];
@@ -64,13 +64,13 @@ export async function runCli(argv, io = {}) {
       if (flags.to && flags.to !== 'minimal') throw new Error('1.0 migrates to minimal layout only; existing structured records remain readable.');
       result = await migrateRecords({ target, apply: Boolean(flags.apply && !flags['dry-run']) });
     } else if ((command === 'records' && sub === 'status') || (command === 'context' && ['list','status'].includes(sub)) || (command === 'layout' && sub === 'status') || (command === 'managed' && sub === 'catalog')) {
-      result = await playbookStatus({ target });
+      result = await playbookStatus({ target, view: flags.view, cursor: flags.cursor, pageSize: flags['page-size'], maxChars: flags['max-chars'] });
     } else if ((command === 'records' && sub === 'read') || (command === 'context' && !['init','list','status'].includes(sub))) {
-      result = await playbookRead({ target, path: flags.path, startLine: flags['start-line'], maxChars: flags['max-chars'] });
+      result = await playbookRead({ target, path: flags.path, startLine: flags['start-line'], endLine: flags['end-line'], cursor: flags.cursor, maxChars: flags['max-chars'] });
     } else if ((command === 'records' && sub === 'search') || (command === 'operator' && sub === 'search')) {
-      result = await playbookSearch({ target, query: flags.query, maxResults: flags['max-results'], maxChars: flags['max-chars'] });
+      result = await playbookSearch({ target, query: flags.query, view: flags.view, cursor: flags.cursor, maxResults: flags['max-results'], maxChars: flags['max-chars'] });
     } else if (command === 'doctor' || (command === 'records' && sub === 'validate') || (command === 'managed' && sub === 'check') || (command === 'operator' && ['check','audit'].includes(sub)) || (command === 'contracts' && sub === 'check')) {
-      result = await playbookValidate({ target });
+      result = await playbookValidate({ target, view: flags.view, cursor: flags.cursor, pageSize: flags['page-size'], maxChars: flags['max-chars'] });
     } else if (command === 'writing') {
       if (sub === 'fidelity-check') {
         const { checkWritingFidelity } = await import('./runtime/writing-fidelity.mjs');
@@ -96,11 +96,11 @@ export async function runCli(argv, io = {}) {
       result = retired(args.join(' '));
     } else throw new Error('Unknown command. Run aapb --help.');
     if (flags.json) stdout.write(JSON.stringify(result, null, 2) + '\n');
-    else if (result.kind === 'playbook.read') stdout.write(result.content + (result.truncated ? '\n[truncated]\n' : '\n'));
+    else if (result.kind === 'aapb.read') stdout.write(result.content + (result.truncated ? '\n[More text: repeat this path with --cursor ' + result.nextCursor + ' --json]\n' : ''));
     else stdout.write(JSON.stringify(result, null, 2) + '\n');
     return result.ok === false ? result.kind === 'command.retired' ? 2 : 1 : 0;
   } catch (error) {
-    if (argv.includes('--json')) stdout.write(JSON.stringify({ schemaVersion: 2, ok: false, kind: 'error', message: error.message }) + '\n');
+    if (argv.includes('--json')) stdout.write(JSON.stringify({ schemaVersion: 2, ok: false, kind: 'error', code: error.code, message: error.message }) + '\n');
     else stderr.write(error.message + '\n');
     return 1;
   }
@@ -133,9 +133,10 @@ function help() {
 
 Project records:
   aapb bootstrap <project> [--local-only] [--preserve-agents] [--dry-run]
-  aapb records status|validate <project> [--json]
-  aapb records read <project> [--path CURRENT.md] [--start-line N] [--max-chars N] [--json]
-  aapb records search <project> --query <literal> [--max-results N] [--max-chars N] [--json]
+  aapb records status <project> [--view summary|records|warnings] [--page-size N] [--cursor token] [--json]
+  aapb records validate <project> [--view summary|issues|warnings] [--page-size N] [--cursor token] [--json]
+  aapb records read <project> [--path CURRENT.md] [--start-line N] [--end-line N] [--max-chars N] [--cursor token] [--json]
+  aapb records search <project> --query <literal> [--max-results N] [--max-chars N] [--cursor token] [--json]
   aapb migrate layout <project> --to minimal [--apply] [--json]
   aapb migrate rollback <project> --backup <playbook-relative-backup> [--apply] [--json]
 
@@ -147,7 +148,7 @@ Skills (default destination: .agents/skills):
   Destination overrides: --agents-root <directory>, --codex-root <legacy-directory>, --backup-root <directory>
 
 Optional tools:
-  aapb mcp [--project <project>]  (four read-only tools; never registered automatically)
+  aapb mcp [--project <project>]  (aapb_status/search/read/validate; never registered automatically)
   aapb writing naturalness-check <project> --path <file> [--lang auto|ko|en] [--engine js|auto|python] [--json]
   aapb writing naturalness-report <project> [--root <directory>] [--max-files N] [--lang auto|ko|en] [--engine js|auto|python] [--json]
   aapb writing fidelity-check <project> --before <file> --after <file> [--lang auto|ko|en] [--json]

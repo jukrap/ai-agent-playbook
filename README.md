@@ -50,6 +50,8 @@ Migration preserves changed and unmanaged files and reports conflicts. A success
 - [Commands](docs/commands.md)
 - [Project records and compatibility](docs/structured-playbook-layout.md)
 - [MCP boundary](docs/mcp-permission-model.md)
+- [AAPB response budgets and continuation](docs/record-responses.md)
+- [Demonstrate an unpublished package](docs/demo.md)
 - [Skill catalog](docs/skill-catalog.md) and [complete legacy disposition](docs/skill-decisions.md)
 - [Design, UI and writing](docs/quality-review.md)
 - [Forge coordination](docs/forge-automation.md)

@@ -209,8 +209,8 @@ async function validateTranslations() {
 async function validateMcpDocs() {
   const root = resolveRoot();
   const source = await readRepoFile(root, 'src/mcp-tools.mjs');
-  const names = unique([...source.matchAll(/\['(playbook_[a-z]+)'/g)].map((match) => match[1])).sort();
-  const expected = ['playbook_read', 'playbook_search', 'playbook_status', 'playbook_validate'];
+  const names = unique([...source.matchAll(/\['(aapb_[a-z]+)'/g)].map((match) => match[1])).sort();
+  const expected = ['aapb_read', 'aapb_search', 'aapb_status', 'aapb_validate'];
   const errors = [];
   if (JSON.stringify(names) !== JSON.stringify(expected)) errors.push('MCP must expose exactly the four project record tools.');
   for (const doc of ['docs/commands.md', 'docs/mcp-permission-model.md', 'translations/ko/docs/commands.ko.md', 'translations/ko/docs/mcp-permission-model.ko.md']) {

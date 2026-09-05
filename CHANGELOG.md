@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0-next.2 (source prerelease)
+
+- Rename the four MCP tools to aapb_status/search/read/validate; keep package and record-directory names.
+- Replace clipped JSON previews with adjustable content budgets and source-bound continuation.
+- Preserve source text, match locations, validation totals and incomplete scan evidence across pages.
+- Separate the content budget from a 256 KiB complete-result ceiling and document prerelease allowlist migration.
+
 ## 1.0.0-next.1 (source prerelease)
 
 - Replace broad process routing with selected project-record, artifact, design, UI, prose and optional legacy-contract skills.

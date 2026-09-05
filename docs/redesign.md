@@ -40,7 +40,7 @@ Retired entrypoints are not installed as compatibility wrappers. Their substanti
 
 - A minimal bootstrap creates CURRENT.md and ownership/layout metadata; it does not generate a tree of empty policies.
 - Existing structured and legacy records remain readable. Migration changes managed files only, reports modified/unmanaged conflicts, and preserves record content.
-- MCP exposes only playbook_status, playbook_search, playbook_read, and playbook_validate, bound to one project. It has no write tools or required startup hook.
+- MCP exposes only aapb_status, aapb_search, aapb_read, and aapb_validate, bound to one project. It has no write tools or required startup hook.
 - GitHub/Gitea retain reviewed coordination plans, stable identifiers, concurrency checks, partial-failure reporting, and explicit apply. There is no automatic publication.
 - Retire task execution, supervisors, schedules, automatic Git delivery, and duplicate analysis commands. Explain the replacement and pinned 0.5.11 recovery instead of executing an old runtime behind the user's back.
 - Keep optional writing checks as advisory tools. They do not run for every edit or decide authorship.

@@ -40,7 +40,7 @@
 
 - 최소 bootstrap은 CURRENT.md와 소유권·레이아웃 metadata를 만들며 빈 정책 문서 묶음을 생성하지 않습니다.
 - structured 및 레거시 기록을 계속 읽습니다. 이전은 관리 파일만 변경하고 수정본·미관리 충돌과 원문을 보존합니다.
-- MCP는 프로젝트에 묶인 playbook_status, playbook_search, playbook_read, playbook_validate만 제공합니다. 쓰기 도구와 필수 시작 훅은 없습니다.
+- MCP는 프로젝트에 묶인 aapb_status, aapb_search, aapb_read, aapb_validate만 제공합니다. 쓰기 도구와 필수 시작 훅은 없습니다.
 - GitHub/Gitea는 검토된 협업 계획, 안정적인 식별자, 동시 수정 검사, 부분 실패 결과와 명시적 적용을 유지합니다. 자동 게시는 하지 않습니다.
 - 작업 실행기·감독 루프·예약·자동 Git 전달과 중복 분석 명령은 종료합니다. 대체 기능과 고정 0.5.11 복구를 안내하며 구버전을 몰래 실행하지 않습니다.
 - 글쓰기 검사는 선택적 참고 도구로 남깁니다. 모든 편집 때 실행하거나 작성 주체를 판정하지 않습니다.

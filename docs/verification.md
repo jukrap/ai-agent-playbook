@@ -4,9 +4,9 @@
 
 This release changes project records, selected skills, installation and local capability exposure. Writer and Game received separate local plans only; existing dirty file hashes, repository heads and worktree listings were preserved. Their product implementations and real game-engine execution were not validated by this release.
 
-The redesigned suite passes 128 tests on Windows with Node.js 22.22.3. Twenty-five tests cover the new CLI, records, installation/recovery and actual stdio MCP. The remaining 103 preserve forge and Python-discovery coverage. The old 458-pass/one-skip baseline included retired execution, indexing and scheduling features; the totals are not a performance or coverage comparison.
+The redesigned suite passes 136 tests on Windows with Node.js 22.22.3. Thirty-three tests cover the new CLI, records, installation/recovery and actual stdio MCP. The remaining 103 preserve forge and Python-discovery coverage. The old 458-pass/one-skip baseline included retired execution, indexing and scheduling features; the totals are not a performance or coverage comparison.
 
-Syntax, TypeScript, skills, translations, public-document and Python checks passed. The 25 new tests also passed under Node.js 18.20.8. This is a compatibility smoke test, not a claim that the full suite ran on every supported OS or Node release. The Windows/Ubuntu CI matrix was prepared but has not run remotely.
+Syntax, TypeScript, skills, translations, public-document and Python checks passed. The 33 new tests also passed under Node.js 18.20.8. This is a compatibility smoke test, not a claim that the full suite ran on every supported OS or Node release. The Windows/Ubuntu CI matrix was prepared but has not run remotely.
 
 A release-readiness follow-up reproduced an EXDEV failure when an explicit backup and installation used different volumes. Default backups now follow the selected installation root. Preview and apply reject a different-filesystem backup before writing; regression tests exercised separate Windows volumes, same-filesystem default installation and rollback. Atomic cross-filesystem copying is not supported. The npm publish dry run with the next tag passed; it does not establish registry authorization or a completed publication.
 
@@ -15,6 +15,12 @@ Installation checks cover a single destination, selected profiles, Korean/space 
 Additional review reproduced and fixed empty explicit skill selections, unreadable current-state entrypoints, a writing report that ignored --root, and linked ancestor paths in advisory readers. Regressions now reject unsafe inputs without changing project records or external files. The MCP assertion covers the entire tool result, including both text and structured representations; checking each representation separately had missed the combined limit. The npm file list now includes Korean and linked maintenance documentation. An archive-content audit checked 106 current guide/skill Markdown files for missing relative links and excluded private records, backups and tests.
 
 A local package archive was inspected for required runtime/catalog/reference files and absence of private records. An isolated npm prefix successfully ran the previous global 0.5.10 package, upgraded to 1.0.0-next.1, recovered 0.5.10, then upgraded again. Source recovery remains separately pinned to 0.5.11. No registry publication or remote push was performed.
+
+## Response continuation and existing-project demonstration
+
+The next.2 response contract was exercised with Unicode/CRLF reconstruction, long lines, exact source locations, source/query/project cursor mismatch, small budgets, paged warnings and validation totals. The four aapb_* tools were called through the SDK stdio transport from an isolated npm archive installation against two existing structured record sets. All source CURRENT.md text was reconstructed exactly. The original projects received read-only calls and migration previews; successful apply/rollback and ownership-conflict refusal were exercised on preserved copies.
+
+The first record set contained 73 records and three modified managed documents; the second contained 74 records and 18 modified managed documents. These are preservation signals, not proof that the document contents are defective. The second layout's manifest lacked a matching ownership entry, so migration correctly refused it. No original metadata was forced into a managed state. Project-local demonstrations retain their raw transcripts and hashes outside the release artifacts.
 
 ## Five-case comparison
 

@@ -15,6 +15,8 @@ Use the installed `aapb` executable, or `node bin/aapb.mjs` in a checkout. Place
 
 Read accepts --start-line and --max-chars. Search accepts --max-results and --max-chars. Output truncation and skipped scan scope are reported. doctor, context, operator search/check, managed check/catalog and layout status retain narrow record-oriented aliases.
 
+Read also accepts --end-line for an initial range. Continue with the same --path and --cursor, omitting line arguments. Status defaults to --view summary; --view records or warnings uses --page-size and --cursor. Validation defaults to --view issues and also supports summary/warnings. Search uses --view results or warnings, --max-results and --cursor; repeat the query on later pages. Use --json to retain continuation metadata. [Response budgets and continuation](record-responses.md) are separate from host token limits.
+
 ## Skills
 
 `skills list` shows profiles and names. `skills install`, `update`, `check`, and `uninstall` select `--profile core|development|legacy` or repeated `--skill <name>`. Default: core, installed only into .agents/skills. Uninstall affects the selected skills only.
@@ -25,7 +27,7 @@ Read accepts --start-line and --max-chars. Search accepts --max-results and --ma
 
 ## Optional MCP
 
-`aapb mcp --project <project>` binds one existing project. The only tools are `playbook_status`, `playbook_search`, `playbook_read`, and `playbook_validate`. There are no write tools, arbitrary shell commands, or automatic registration.
+`aapb mcp --project <project>` binds one existing project. The only tools are `aapb_status`, `aapb_search`, `aapb_read`, and `aapb_validate`. There are no write tools, arbitrary shell commands, or automatic registration.
 
 ## Advisory checks
 

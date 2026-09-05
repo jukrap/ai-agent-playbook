@@ -52,7 +52,7 @@ test('linked record directories cannot disclose data outside the bound project',
   await assert.rejects(playbookRead({ target, path: 'linked/private.md' }), /link|junction/);
   const search = await playbookSearch({ target, query: 'not a record' });
   assert.equal(search.results.length, 0);
-  assert.ok(search.warnings.some((w) => w.includes('linked')));
+  assert.ok(search.warnings.sample.some((w) => w.code === 'linked-record'));
 });
 test('legacy roots and ownership arrays remain readable; ambiguity is reported', async (t) => {
   const target = await fixture(t), pb = path.join(target, '.ai-playbook');

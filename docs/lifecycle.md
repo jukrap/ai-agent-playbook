@@ -2,6 +2,8 @@
 
 Package installation and skill installation are separate. Validate a local prerelease tarball with an isolated npm prefix. Publishing is not part of install or update.
 
+The next.2 MCP catalog uses aapb_status/search/read/validate in place of the earlier playbook_* prerelease names. Update explicit allowlists; no duplicate alias tools are exposed. Existing record directories and the npm package name stay unchanged. Validate an archive before publishing it: registry publication is not required for installation, migration or stdio MCP demonstrations.
+
 ## Skill selection
 
 Core installs two record/format entrypoints. Development adds three design/UI/prose entrypoints. Legacy installs one stack-contract entrypoint. Individual --skill selections replace the profile selection. References belonging to a selected skill travel with it; the larger source reference library is not automatically installed.

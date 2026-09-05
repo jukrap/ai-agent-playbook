@@ -6,7 +6,7 @@ import { PACKAGE_VERSION } from './version.mjs';
 
 export async function runMcpServer({ target = process.cwd() } = {}) {
   const root = await projectRoot(target);
-  const server = new McpServer({ name: 'ai-agent-playbook', version: PACKAGE_VERSION });
+  const server = new McpServer({ name: 'aapb', version: PACKAGE_VERSION });
   registerPlaybookMcpTools(server, { target: root });
   await server.connect(new StdioServerTransport());
   return server;

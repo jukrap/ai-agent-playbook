@@ -41,10 +41,22 @@ aapb skills rollback --backup <transaction-directory> --json
 aapb skills rollback --backup <transaction-directory> --apply --json
 ```
 
-수정본과 미관리 파일은 보존하고 충돌을 보고합니다. 설정 변경 후에는 새 호스트 로딩에서 실제 노출을 확인해야 합니다. 자세한 내용은 lifecycle 가이드를 확인합니다.
+수정본과 미관리 파일은 보존하고 충돌을 보고합니다. 설정 변경 후에는 새 호스트 로딩에서 실제 노출을 확인해야 합니다. 자세한 내용은 [이전과 복구](docs/lifecycle.ko.md)를 확인합니다.
 
 ## 안내
 
-명령, 기록 구조·호환성, MCP 경계, 스킬 목록·전수 판정, 디자인·글쓰기, Forge 협업, 설계 근거와 선택 참조 라이브러리는 대응하는 docs 문서를 참고합니다. 라이선스는 MIT입니다.
+- [명령](docs/commands.ko.md)
+- [프로젝트 기록과 호환성](docs/structured-playbook-layout.ko.md)
+- [MCP 경계](docs/mcp-permission-model.ko.md)
+- [AAPB 응답 예산과 이어 읽기](docs/record-responses.ko.md)
+- [게시 전 패키지 시연](docs/demo.ko.md)
+- [스킬 목록](docs/skill-catalog.ko.md)과 [구버전 전수 판정](docs/skill-decisions.ko.md)
+- [디자인·UI·문장·코드 품질](docs/quality-review.ko.md)
+- [Forge 협업](docs/forge-automation.ko.md)
+- [설계 근거](docs/redesign.ko.md)
+- [선택 참조 라이브러리](references/README.ko.md)
+- [유지보수](docs/maintenance.ko.md)
+
+[MIT](../../LICENSE) 라이선스를 사용합니다.
 
 검증과 로컬 기능 선택 기준: [사전 릴리스 근거](docs/verification.ko.md), [환경 프로필](docs/environment-profiles.ko.md).

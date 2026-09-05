@@ -1,5 +1,7 @@
 # Project MCP boundary
 
+Each serialized tool result is capped at 12,000 characters, including JSON escaping. Oversized results return an explicit truncated preview; narrow the query or use smaller record reads. This also bounds status and validation output, not just record content.
+
 MCP is optional and never registered by package installation. Bind it with `aapb mcp --project <project>`; omission uses the startup working directory.
 
 | Tool | Allowed behavior |

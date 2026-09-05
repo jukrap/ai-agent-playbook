@@ -3,6 +3,22 @@ import { playbookStatus, playbookSearch, playbookRead, playbookValidate, RECORD_
 
 export { RECORD_TOOLS };
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
+export const MAX_MCP_RESULT_CHARS = 12000;
+function boundedResult(result) {
+  const serialized = JSON.stringify(result);
+  if (serialized.length <= MAX_MCP_RESULT_CHARS) return result;
+  const summary = { kind: result.kind, ok: result.ok, truncated: true, fullResultChars: serialized.length,
+    message: 'Response capped. Narrow the query or read a record in smaller line ranges.', preview: '' };
+  let low = 0, high = MAX_MCP_RESULT_CHARS;
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    summary.preview = serialized.slice(0, mid);
+    if (JSON.stringify(summary).length <= MAX_MCP_RESULT_CHARS) low = mid;
+    else high = mid - 1;
+  }
+  summary.preview = serialized.slice(0, low);
+  return summary;
+}
 export function registerPlaybookMcpTools(server, { target }) {
   /** @type {Array<[string, string, Record<string, z.ZodTypeAny>, (args: any) => Promise<any>]>} */
   const definitions = [
@@ -18,10 +34,10 @@ export function registerPlaybookMcpTools(server, { target }) {
   for (const [name, description, inputSchema, handler] of definitions) {
     server.registerTool(name, { description, inputSchema, annotations: READ_ONLY }, async (args) => {
       try {
-        const result = await handler({ ...args, target });
+        const result = boundedResult(await handler({ ...args, target }));
         return { structuredContent: result, content: [{ type: 'text', text: JSON.stringify(result) }], isError: !result.ok };
       } catch (error) {
-        return { isError: true, content: [{ type: 'text', text: error.message }] };
+        return { isError: true, content: [{ type: 'text', text: String(error.message).slice(0, MAX_MCP_RESULT_CHARS) }] };
       }
     });
   }

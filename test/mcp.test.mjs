@@ -26,6 +26,13 @@ test('MCP exposes only four bound read-only tools and tool calls do not change f
     assert.match(JSON.stringify(search), /CURRENT.md/);
     assert.equal((await client.callTool({ name: 'playbook_read', arguments: { path: '../AGENTS.md' } })).isError, true);
     assert.deepEqual(await treeSnapshot(target), before);
+    await writeFile(path.join(target, '.ai-agent-playbook/large.md'), '"\\quoted\\"\n'.repeat(5000));
+    const largeBefore = await treeSnapshot(target);
+    const large = await client.callTool({ name: 'playbook_read', arguments: { path: 'large.md', maxChars: 100000 } });
+    assert.equal(large.structuredContent.truncated, true);
+    assert.ok(JSON.stringify(large.structuredContent).length <= 12000);
+    assert.ok(large.content[0].text.length <= 12000);
+    assert.deepEqual(await treeSnapshot(target), largeBefore);
   } finally {
     await client.close(); await transport.close();
     assert.equal(path.dirname(target), os.tmpdir()); await rm(target, { recursive: true, force: true });

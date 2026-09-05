@@ -19,6 +19,7 @@ Choose a route for the task at hand. These human guides are not an agent startup
 - [Existing repositories](existing-repository-bootstrap.md): inspect records and preserve project instructions.
 - [Record layout](structured-playbook-layout.md): current facts, supporting documents, ownership, and examples.
 - [MCP setup](mcp-permission-model.md): connect four project-bound read-only tools.
+- [Agent use](agent-usage.md): how skills, MCP, and advisory commands become available and how to verify actual use.
 - [Response limits](record-responses.md): CLI/MCP examples for long text and lists.
 - [Forge coordination](forge-automation.md): GitHub/Gitea plans, application, conflicts, and retry.
 - [Runtime engines](runtime-engines.md): Node and optional Python setup.
@@ -39,7 +40,7 @@ Choose a route for the task at hand. These human guides are not an agent startup
 ## Understand, contribute, and release
 
 - [Repository context](../CONTEXT.md) and [runtime architecture](harness-runtime.md): terms, data flow, and boundaries.
-- [1.0 redesign](redesign.md): decisions and evidence limits.
+- [1.0 changes and previous versions](redesign.md): decisions and evidence limits.
 - [Verification](verification.md): actual tests, bounded comparisons, and untested scope.
 - [Release readiness](runtime-roadmap.md) and [publishing checklist](publishing-checklist.md): prerelease-to-stable conditions.
 - [Maintenance](maintenance.md) and [translation policy](translation-policy.md): editing, preservation, and checks.

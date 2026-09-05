@@ -4,12 +4,12 @@ MCP lets an agent app call AAPB's record tools. It is optional: the CLI and dire
 
 ## Before connecting
 
-Use an installed archive or checkout whose CLI you have verified. Select one existing project, and check its records with `aapb records status "<project>" --json`. Keep an older common MCP entry disabled until you intentionally replace its command and tool allowlist.
+Use an installed archive or checkout whose CLI you have verified. Select one existing project, and check its records with `ai-agent-playbook records status "<project>" --json`. Keep an older common MCP entry disabled until you intentionally replace its command and tool allowlist.
 
 The server binds one project at startup:
 
 ```powershell
-aapb mcp --project "<project>"
+ai-agent-playbook mcp --project "<project>"
 ```
 
 It uses stdio: the client and server exchange messages over standard input/output. Running it in a terminal may look idle because it is waiting for a client. That is not a loading or functional test; stop the manual process with Ctrl+C when finished.
@@ -50,7 +50,9 @@ After reloading the host's MCP connection, inspect the tool list. It should adve
 
 Exercise a status and read request, inspect source paths and warnings, and compare the text with the file. `runtimeVerified: false` is expected from record validation. A configuration entry, a running process, a visible tool catalog, and a successful invocation are separate observations.
 
-Earlier 1.0 prereleases advertised `playbook_*`; next.2 uses `aapb_*` without duplicate aliases. Update explicit allowlists. The npm package name and record directories are unchanged.
+Earlier 1.0 prereleases advertised `playbook_*`; starting with next.2, the tools use `aapb_*` without duplicate aliases. Update explicit allowlists. The npm package name and record directories are unchanged. CLI aliases do not add MCP tools or skills.
+
+For the distinction between a successful SDK test and an agent choosing a tool for a natural-language request, see [Agent use](agent-usage.md).
 
 ## Read boundary and output
 

@@ -1,64 +1,66 @@
-# Playbook 1.0 design
+# What changed in 1.0
 
-## Decision
+AAPB 1.0 focuses on durable project records, useful artifact formats, and selected specialist guidance. The package remains `ai-agent-playbook`. Its primary installed command is now `ai-agent-playbook`, with `aapb` as a short alias.
 
-Focus the package on portable project records, selected document formats, and task-specific expertise. Keep the Node ESM implementation, package name, and `aapb` executable. Replace broad process routing with a small catalog and optional references. This is a major-version migration, not a claim that every external skill harms every model.
+## Why the package changed
 
-The source baseline is 0.5.11. Environment-specific executable versions, settings, installed paths, hashes, worktrees, and recovery archives belong in local evidence, never in this document.
+As coding models and their host applications became more capable, AAPB's role needed to change too. Repeating general planning, exploration, review, and execution instructions could add work even when the host already supplied those abilities. The goal was to keep what a model cannot infer reliably: project decisions, evidence, product constraints, requested formats, and specialist exceptions.
 
-## Evidence and limits
+Newer models also follow instructions more closely. Ambiguous or conflicting process rules can therefore matter more, rather than becoming harmless background text. The [official Astra guidance](https://developers.openai.com/api/docs/guides/latest-model?model=gpt-6-astra) recommends auditing skills and making instruction priorities clear. This motivates reviewing guidance; it does not prescribe a universal skill count.
 
-- The [Astra model guide](https://developers.openai.com/api/docs/guides/latest-model) recommends auditing instructions and scoping testing to the task. This supports removing redundant requirements, not removing useful domain contracts.
-- [Evaluating AGENTS.md](https://arxiv.org/abs/2602.11988) studied earlier models and repository-context configurations. Its reported extra exploration and cost are not a measured Astra regression.
-- [SkillsBench](https://arxiv.org/abs/2602.12670) separates curated and self-generated skills; gains vary across tasks. Its small task-local skill bundles do not prescribe a global installation count.
-- [SWE-Skills-Bench](https://arxiv.org/abs/2603.15401) is another software-task comparison, not a measurement of this installation.
-- [ARC Prize's Astra analysis](https://arcprize.org/blog/astra) distinguishes standard and provider-adapter harnesses and reasoning levels. It shows why preserving execution state matters; it does not compare AAPB or Superpowers on coding tasks.
-- [Superpowers](https://github.com/obra/superpowers) describes mandatory planning, worktree, test-first, and review workflows. These overlap with the host and this user's existing instructions. It stays disabled; no Superpowers workflow is adopted.
-- Community reports are leads, not controlled measurements. Direct X and DCInside retrieval failed during this investigation; Threads searches did not establish a matching model/task/settings comparison. Search excerpts and reposts are not original-source verification.
+Useful skills remain valuable. [SkillsBench](https://arxiv.org/abs/2602.12670) found benefits for curated task-specific skills in its tested configurations. Its results do not determine the best global catalog for every user or establish an AAPB performance gain. The intended improvement is a clearer division of responsibility and less duplicated mandatory work, not an unmeasured speed or cost guarantee.
 
-Sources were inspected during the design investigation. Public code was compared with the installed Codex 0.153.4 family, rather than assuming that current main equals account rollout.
+## What stays, changes, or retires
 
-## Native context and costs
+| Area | 1.0 behavior |
+| --- | --- |
+| Project continuity | Start from CURRENT.md and link detail as needed; old records remain readable |
+| Specialist guidance | Core, development, and optional legacy skills, with relevant references |
+| Human documentation | Beginner guides, detailed commands, examples, and language-specific presentation |
+| Installation | One default skill root, explicit selection, ownership checks, and recoverable migration |
+| MCP | Four optional, project-bound read-only record tools |
+| Writing and UI checks | Optional advisory commands, chosen when useful |
+| GitHub/Gitea | Reviewed coordination plans with explicit application and conflict reporting |
+| Execution, schedules, and broad analysis | Use host/project tools, or explicitly retain the previous runtime |
 
-The [versioned model override code](https://github.com/openai/codex/blob/rust-v0.153.4/codex-rs/models-manager/src/model_info.rs) caps context overrides at the advertised maximum. The [model protocol](https://github.com/openai/codex/blob/rust-v0.153.4/codex-rs/protocol/src/openai_models.rs) separates configured, usable, and auto-compaction context limits.
+The old catalog had 94 entrypoints; 1.0 has six installable skills, of which the development profile selects five. Substantive domain references remain available. These counts describe packaging decisions, not proof that six skills are optimal or that more skills are inherently harmful. See [Skill catalog](skill-catalog.md) and [the reference mapping](skill-decisions.md).
 
-The [history/notes extension](https://github.com/openai/codex/blob/rust-v0.153.4/codex-rs/ext/history-notes/src/extension.rs) checks configuration, provider, and backend authentication. Its thread hint is bounded to 4,000 bytes. Source availability and model-driven defaults do not prove that a session exposes these tools. File records remain sufficient when native retrieval is unavailable; no experimental setting is required.
+## Choose the amount of guidance you need
 
-The [skill renderer](https://github.com/openai/codex/blob/rust-v0.153.4/codex-rs/ext/skills/src/render.rs) can shorten descriptions and omit catalog entries under a budget. Count installed directories, discovered skills, rendered entries, and actual invocations separately.
+There are two separate choices: how much guidance to make available, and which runtime features to use.
 
-[API prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching), [subscription limits](https://learn.chatgpt.com/docs/pricing), [personal purchased credits](https://help.openai.com/en/articles/12642688), and [Enterprise token pricing](https://help.openai.com/en/articles/20001415-chatgpt-rate-card-enterprise-token-based-pricing) are distinct. The Enterprise Astra/Codex long-context exception does not establish personal subscription accounting. Report observed tokens and cached inputs without converting a quota percentage into task cost.
+| Need | Current choice |
+| --- | --- |
+| A small record/artifact baseline | `--profile core` |
+| Records plus design, UI, and prose guidance | `--profile development` |
+| A particular legacy contract | `--profile legacy` or individual `--skill` selections |
+| More domain detail for one task | Select relevant references without loading the whole library |
+| The previous broad catalog and executor/scheduler | Use the pinned 0.5.11 package |
 
-## Skill and reference boundaries
+A future extended skill profile could fit the same 1.0 runtime if its entries add demonstrated value. Reintroducing the old runtime under a single "heavy" switch would also reintroduce its separate contracts, dependencies, and maintenance burden. No light/heavy runtime switch is implemented, and the current profile decision is not a comparison proving one universal optimum.
 
-See [the complete disposition table](skill-decisions.md) and its machine-readable companion. Core installation contains project-memory and spec-artifacts. Development adds design-brief-direction, ui-polish, and natural-writing-humanization. Legacy contracts are selected separately.
+## Continue using 0.5.11
 
-Keep design direction, rendered UI review, tool integration, prose editing, and code-structure cleanup distinct. Preserve brand expression, density, accessibility, terminology, register, and before/after examples. No universal ban on gradients, cards, or normal Korean constructions is introduced. General prose editing must not flatten accepted fiction voice.
+If you rely on earlier skills or runtime features, keep using the exact previous release instead of moving immediately:
 
-Retired entrypoints are not installed as compatibility wrappers. Their substantive reference material remains an explicitly selected reference library, with source-to-destination mappings. A reference library is not a startup reading list.
+```sh
+npx ai-agent-playbook@0.5.11 --help
+npx ai-agent-playbook@0.5.11 skills install --dry-run
+```
 
-## Runtime decisions
+To keep that version globally:
 
-- A minimal bootstrap creates CURRENT.md and ownership/layout metadata; it does not generate a tree of empty policies.
-- Existing structured and legacy records remain readable. Migration changes managed files only, reports modified/unmanaged conflicts, and preserves record content.
-- MCP exposes only aapb_status, aapb_search, aapb_read, and aapb_validate, bound to one project. It has no write tools or required startup hook.
-- GitHub/Gitea retain reviewed coordination plans, stable identifiers, concurrency checks, partial-failure reporting, and explicit apply. There is no automatic publication.
-- Retire task execution, supervisors, schedules, automatic Git delivery, and duplicate analysis commands. Explain the replacement and pinned 0.5.11 recovery instead of executing an old runtime behind the user's back.
-- Keep optional writing checks as advisory tools. They do not run for every edit or decide authorship.
+```sh
+npm install -g ai-agent-playbook@0.5.11
+aapb --version
+```
 
-## Installation and recovery
+The 0.5.11 package exposes the global `aapb` command, not the new full-name executable. Do not substitute the 1.0 `ai-agent-playbook` command when following 0.5.11 instructions. A global change replaces the runtime used by existing callers; use pinned `npx` or an isolated prefix if both versions are needed.
 
-Use one implementation for CLI and PowerShell wrappers. Default to .agents/skills. A migration inventories old managed copies, validates hashes and real paths, previews all operations, creates a recovery journal, and then applies independent safe items. Never remove a changed or unmanaged directory merely because its name matches. Do not traverse junctions when removing installations.
+Preview old skill installation before applying it: do not overwrite a 1.0 installation or user edits merely to restore a large catalog. Keep the previous package, skills, records, and recovery data. Existing schedules and remote records are not automatically changed. [Lifecycle](lifecycle.md) covers installation and guarded recovery.
 
-Back up affected content before mutation. Recheck hashes immediately before each operation. Record partial completion so retries and rollback cannot overwrite later user edits. Preserve plugin caches and unrelated project profiles. A settings edit is not proof of successful host reload.
+## Move when the new workflow fits
 
-## Delivery and acceptance
+Inspect existing records first, then preview selected skill migration. Record reading does not require converting an old layout. Root instructions, historical decisions, and user edits should stay intact. Test the package on a representative project before replacing an operational runtime.
 
-Commit the design before implementation. Then commit runtime/skills, installation/recovery, and final verification as separate milestones. Use 1.0.0-next.1 for validation and prepare a 1.0.0 transition; registry publication is a separate action.
-
-The baseline suite had 458 passes, one skip, and no failures. Baseline syntax, type, skill, translation, public-document, Python, and installation-preview checks passed. These results do not validate the new implementation.
-
-Verify ownership conflicts, links/junctions, bounded record access, legacy reading, read-only MCP, migration replay/rollback, mocked forge conflict handling, and packaged installation. Use two UI cases, two Korean-document cases, and one code-cleanup case for a bounded before/after comparison. Record fidelity, product fit, over-correction, calls, rereads, duration, and available usage. Do not claim population-level performance gains from five cases.
-
-## Human documentation
-
-Instruction reduction applies to skill discovery and unnecessary mandatory reading. Human onboarding, command explanations, examples, recovery, and README branding serve a different purpose. Preserve those reader journeys and language-specific presentation while updating functionality. See [Maintenance](maintenance.md) and [Translation policy](translation-policy.md).
+Verification distinguishes code tests, package installation, MCP transport, host discovery, and actual task behavior. The initial small quality comparison did not prove that the lighter setup improves every task. Model capabilities and project needs can change; preserve the ability to add useful guidance without restoring every old mandatory procedure.

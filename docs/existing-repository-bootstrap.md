@@ -5,9 +5,9 @@ Start by inspecting the repository and its existing instructions. AAPB can read 
 ## Inspect before writing
 
 ```sh
-aapb records status "<project>" --json
-aapb records status "<project>" --view records --json
-aapb bootstrap "<project>" --local-only --dry-run
+ai-agent-playbook records status "<project>" --json
+ai-agent-playbook records status "<project>" --view records --json
+ai-agent-playbook bootstrap "<project>" --local-only --dry-run
 ```
 
 Use `--local-only` only for a Git repository whose new records should remain local. Read `AGENTS.md` and the entrypoint shown by status. Check dirty Git changes before deciding whether any document should be changed.
@@ -23,7 +23,7 @@ Use `--local-only` only for a Git repository whose new records should remain loc
 ## Apply a new bootstrap
 
 ```sh
-aapb bootstrap "<project>" --local-only
+ai-agent-playbook bootstrap "<project>" --local-only
 ```
 
 For a new playbook, this creates CURRENT.md and two metadata files, plus the Git-local exclusion. Existing root instructions are preserved automatically. `--preserve-agents` remains accepted for compatibility but is no longer required. Old link/replace-root-policy modes are not supported by the 1.0 bootstrap.

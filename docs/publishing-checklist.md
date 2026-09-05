@@ -1,6 +1,6 @@
 # Publishing checklist
 
-This source uses npm `1.0.0-next.2` and Python `1.0.0.dev2`. They are source versions, not statements of publication. Testing a local archive comes before a registry decision.
+This source uses npm `1.0.0-next.3` and Python `1.0.0.dev3`. They are source versions, not statements of publication. Testing a local archive comes before a registry decision.
 
 ## Prepare the release candidate
 

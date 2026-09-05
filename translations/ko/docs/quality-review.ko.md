@@ -20,7 +20,7 @@
 필요한 경우 일반·로딩·빈 결과·오류·비활성·포커스 상태를 확인합니다. 주요 화면 너비와 키보드 조작을 비교하세요. 소스의 정적 신호는 후보를 찾는 데 쓰고, 수정 필요성은 실제 화면과 제품 목적에 맞는지로 판단합니다.
 
 ```sh
-aapb qa ui-genericity-scan "<project>" --root src --max-files 20 --json
+ai-agent-playbook qa ui-genericity-scan "<project>" --root src --max-files 20 --json
 ```
 
 이 명령은 선택한 텍스트를 읽으며 앱을 렌더링하지 않습니다. 화면과 상호작용은 프로젝트의 브라우저 도구로 확인하세요. 코드 정리 결과와 시각적 취향 판단은 따로 기록합니다.
@@ -34,8 +34,8 @@ aapb qa ui-genericity-scan "<project>" --root src --max-files 20 --json
 큰 재작성에서는 선택형 검사가 정보 변경 후보를 찾는 데 도움이 될 수 있습니다.
 
 ```sh
-aapb writing fidelity-check "<project>" --before docs/before.md --after docs/after.md --lang auto --json
-aapb writing naturalness-check "<project>" --path docs/after.md --lang ko --engine js --json
+ai-agent-playbook writing fidelity-check "<project>" --before docs/before.md --after docs/after.md --lang auto --json
+ai-agent-playbook writing naturalness-check "<project>" --path docs/after.md --lang ko --engine js --json
 ```
 
 실제 수정 전·후 파일을 먼저 준비하세요. 결과에 나온 문장은 문맥과 함께 읽어야 합니다. 어느 검사도 의미 보존이나 작성 주체를 인증하지 않습니다. 일반적인 편집마다 CLI 검사나 점수표를 만들 필요는 없습니다.

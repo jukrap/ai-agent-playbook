@@ -5,9 +5,9 @@
 ## 쓰기 전에 확인하기
 
 ```sh
-aapb records status "<project>" --json
-aapb records status "<project>" --view records --json
-aapb bootstrap "<project>" --local-only --dry-run
+ai-agent-playbook records status "<project>" --json
+ai-agent-playbook records status "<project>" --view records --json
+ai-agent-playbook bootstrap "<project>" --local-only --dry-run
 ```
 
 `--local-only`는 새 기록을 로컬에만 둘 Git 저장소에서 사용합니다. `AGENTS.md`와 상태 조회에 나온 시작 문서를 읽으세요. 어떤 문서를 바꿀지 정하기 전에 커밋하지 않은 변경도 확인합니다.
@@ -23,7 +23,7 @@ aapb bootstrap "<project>" --local-only --dry-run
 ## 새 기록 생성하기
 
 ```sh
-aapb bootstrap "<project>" --local-only
+ai-agent-playbook bootstrap "<project>" --local-only
 ```
 
 새 플레이북에는 CURRENT.md와 관리 파일 두 개를 만들고 Git 로컬 제외 항목을 추가합니다. 루트 지침은 자동으로 보존합니다. `--preserve-agents`는 호환성을 위해 받아들이지만 이제 필수 옵션은 아닙니다. 과거의 루트 지침 링크·교체 모드는 1.0 bootstrap에서 지원하지 않습니다.

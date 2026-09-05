@@ -20,7 +20,7 @@ State the actual workflow and what should be preserved before changing a screen.
 Inspect normal, loading, empty, error, disabled, and focus states when relevant. Compare useful widths and keyboard interaction. A static source signal can help find a candidate; the rendered result and task fit determine whether a correction is useful.
 
 ```sh
-aapb qa ui-genericity-scan "<project>" --root src --max-files 20 --json
+ai-agent-playbook qa ui-genericity-scan "<project>" --root src --max-files 20 --json
 ```
 
 This command reads selected text and does not render the app. Use the project's browser tools for visual and interaction evidence. Keep code cleanup findings separate from visual style judgments.
@@ -34,8 +34,8 @@ Preserve protected information and deliberate voice. For example, keep a timeout
 For a substantial rewrite, optional checks can help locate information changes:
 
 ```sh
-aapb writing fidelity-check "<project>" --before docs/before.md --after docs/after.md --lang auto --json
-aapb writing naturalness-check "<project>" --path docs/after.md --lang ko --engine js --json
+ai-agent-playbook writing fidelity-check "<project>" --before docs/before.md --after docs/after.md --lang auto --json
+ai-agent-playbook writing naturalness-check "<project>" --path docs/after.md --lang ko --engine js --json
 ```
 
 Prepare actual before/after files first. Review the reported passages in context; neither tool certifies meaning preservation or authorship. Ordinary edits do not require a CLI check or a scoring table.

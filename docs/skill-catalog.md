@@ -26,14 +26,16 @@ Read the selected SKILL.md first. Its local references provide detail when neede
 ## Install, inspect, and combine selections
 
 ```sh
-aapb skills list --json
-aapb skills install --profile development --dry-run --json
-aapb skills install --skill project-memory --skill legacy-contracts --dry-run --json
+ai-agent-playbook skills list --json
+ai-agent-playbook skills install --profile development --dry-run --json
+ai-agent-playbook skills install --skill project-memory --skill legacy-contracts --dry-run --json
 ```
 
 Explicit `--skill` values replace a profile rather than add to it. To keep the development profile and add legacy, install development first, then install `--skill legacy-contracts`; ordinary installs do not remove unrelated selected copies. Use corresponding selections for update/check/uninstall. See [Lifecycle](lifecycle.md).
 
 The standard destination is `.agents/skills`. The six source entries, the selected installed count, and the host's discovered or injected catalog are different counts. Installation success does not prove the host loaded the names.
+
+[Agent use](agent-usage.md) explains implicit selection, explicit requests, and how to check actual use of skills, MCP, and writing commands.
 
 ## Where did the earlier skills go?
 

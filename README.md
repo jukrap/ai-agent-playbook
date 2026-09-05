@@ -53,31 +53,33 @@ Install the npm package with Node.js 18 or later:
 
 ```sh
 npm install -g ai-agent-playbook
-aapb --help
+ai-agent-playbook --help
 ```
 
-The package name is `ai-agent-playbook`; `aapb` is its command. For occasional use without a global installation, run `npx ai-agent-playbook --help`. A source checkout or PowerShell installation script is not required for normal operation.
+The package and primary command are both `ai-agent-playbook`. `aapb` is a short alias with the same options and behavior. For occasional use without a global installation, run `npx ai-agent-playbook --help`. A source checkout or PowerShell installation script is not required for normal operation.
 
 Choose reusable skills separately. Preview the development profile, inspect the result, then install:
 
 ```sh
-aapb skills install --profile development --dry-run --json
-aapb skills install --profile development --json
-aapb skills check --profile development --json
+ai-agent-playbook skills install --profile development --dry-run --json
+ai-agent-playbook skills install --profile development --json
+ai-agent-playbook skills check --profile development --json
 ```
 
 Reload the agent's skills or start a fresh session. File installation and actual host loading are separate checks.
 
-Replace `<project>` with a target folder, quoting spaces. After global installation, these commands can run from any directory:
+Run these commands from the project folder. Omitting the project path uses the terminal's current directory:
 
 ```sh
-aapb records status "<project>" --json
-aapb bootstrap "<project>" --dry-run
-aapb bootstrap "<project>"
-aapb records read "<project>" --path CURRENT.md
+ai-agent-playbook records status --json
+ai-agent-playbook bootstrap --dry-run
+ai-agent-playbook bootstrap
+ai-agent-playbook records read --path CURRENT.md
 ```
 
 Bootstrap preserves existing `AGENTS.md` and records. For a new playbook it creates `CURRENT.md` and two metadata files. Add `--local-only` to both bootstrap commands when this is a Git repository and records should remain local.
+
+To work on another folder, add a quoted path, for example `ai-agent-playbook bootstrap "<project>" --dry-run`, or use `--project "<project>"`. [The command guide](docs/commands.md) explains complete command combinations and their options.
 
 [First 10 minutes](docs/quick-start.md) provides a practice project, glossary, expected results, and troubleshooting. [Lifecycle](docs/lifecycle.md) covers updates, removal, version selection, and recovery.
 
@@ -113,8 +115,8 @@ For example, ask your agent: “Read CURRENT.md, follow the linked API decision,
 Use record commands to locate evidence and check document consistency:
 
 ```sh
-aapb records search "<project>" --query "API decision" --json
-aapb records validate "<project>" --json
+ai-agent-playbook records search "<project>" --query "API decision" --json
+ai-agent-playbook records validate "<project>" --json
 ```
 
 Validation checks records, links, and managed-file integrity. It does not run the application's tests or verify that an old statement is still true. Longer results provide continuation information; [response limits and continuation](docs/record-responses.md) shows how to read the rest.
@@ -122,7 +124,7 @@ Validation checks records, links, and managed-file integrity. It does not run th
 ## Repository Map
 
 ```text
-bin/                  aapb command entrypoint
+bin/                  Shared ai-agent-playbook / aapb command entrypoint
 src/                  Record, installation, MCP, writing, and Forge implementation
 skills/
   project/            Project memory, artifact formats, and document editing
@@ -170,6 +172,7 @@ Choose a route in the [documentation map](docs/README.md), or open a guide direc
 - [Project record layout](docs/structured-playbook-layout.md): what belongs in CURRENT.md and when to add detail.
 - [Runtime architecture](docs/harness-runtime.md): data flow, ownership, and validation boundaries.
 - [MCP setup and permissions](docs/mcp-permission-model.md): connect the four optional read-only tools.
+- [Agent use](docs/agent-usage.md): distinguish available skills and tools from actual selection and successful execution.
 - [Response limits and continuation](docs/record-responses.md): choose a content size and continue long results.
 - [Forge coordination](docs/forge-automation.md): reviewed plans, remote writes, conflicts, and retry behavior.
 - [UI and writing review](docs/quality-review.md): preserve product intent, facts, and voice during review.
@@ -177,7 +180,7 @@ Choose a route in the [documentation map](docs/README.md), or open a guide direc
 - [Local package demonstration](docs/demo.md): test an unpublished archive against project records.
 - [Skill catalog](docs/skill-catalog.md), [capability selection](docs/capability-taxonomy.md), and [reference adoption](docs/reference-adoption.md): choose the right guidance.
 - [Codex adapter](adapters/codex/README.md), [Claude Code adapter](adapters/claude-code/README.md), and [templates](templates/README.md): adapt the files to your environment.
-- [1.0 redesign](docs/redesign.md), [verification](docs/verification.md), and [release readiness](docs/runtime-roadmap.md): rationale, evidence, and remaining conditions.
+- [1.0 changes and previous versions](docs/redesign.md), [verification](docs/verification.md), and [release readiness](docs/runtime-roadmap.md): rationale, evidence, and remaining conditions.
 - [Maintenance](docs/maintenance.md), [content classification](docs/classification.md), [translation policy](docs/translation-policy.md), and [publishing checklist](docs/publishing-checklist.md): contribute and prepare a release.
 - [Environment profiles](docs/environment-profiles.md) and [external process frameworks](docs/superpowers-integration.md): scope optional integrations.
 - [Changelog](CHANGELOG.md): versioned user-visible changes.

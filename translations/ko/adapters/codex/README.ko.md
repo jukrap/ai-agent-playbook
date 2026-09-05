@@ -7,9 +7,9 @@ AAPB는 일반 파일로 쓰는 기록과 선택한 스킬을 제공합니다. �
 검증한 CLI로 개발 프로필을 미리 봅니다.
 
 ```powershell
-aapb skills install --profile development --dry-run --json
-aapb skills install --profile development --json
-aapb skills check --profile development --json
+ai-agent-playbook skills install --profile development --dry-run --json
+ai-agent-playbook skills install --profile development --json
+ai-agent-playbook skills check --profile development --json
 ```
 
 기본 사용자 경로는 `.agents/skills`입니다. 같은 스킬을 `.codex/skills`에도 복제하지 마세요. 알려진 구버전 복사본은 [설치 안내](../../docs/lifecycle.ko.md)에 따라 명시적으로 이전합니다. 목록을 다시 불러오거나 새 세션에서 실제 다섯 이름을 확인하세요. 디스크 파일과 대화에 들어간 지침은 별개의 관측입니다.
@@ -22,7 +22,7 @@ aapb skills check --profile development --json
 
 ## 선택형 MCP
 
-원할 때만 `aapb mcp --project "<project>"`를 프로젝트에 연결합니다. [MCP 설정](../../docs/mcp-permission-model.ko.md)에 명령·인자, 예상 도구, 로딩 확인 방법이 있습니다. 데스크톱 앱과 터미널의 PATH가 다르면 Node·스크립트 절대 경로가 유용합니다.
+원할 때만 `ai-agent-playbook mcp --project "<project>"`를 프로젝트에 연결합니다. [MCP 설정](../../docs/mcp-permission-model.ko.md)에 명령·인자, 예상 도구, 로딩 확인 방법이 있습니다. 데스크톱 앱과 터미널의 PATH가 다르면 Node·스크립트 절대 경로가 유용합니다.
 
 기존 공통 MCP 항목은 의도적으로 갱신하기 전까지 꺼 둡니다. 서버는 `aapb_status`, `aapb_search`, `aapb_read`, `aapb_validate`만 제공합니다. 쓰기는 파일 도구나 명시적 CLI로 진행합니다.
 

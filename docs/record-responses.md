@@ -17,8 +17,8 @@ The server cannot see the conversation's remaining token budget. The caller choo
 ## Continue a CLI read
 
 ```sh
-aapb records read "<project>" --path CURRENT.md --max-chars 700 --json
-aapb records read "<project>" --path CURRENT.md --cursor "<nextCursor>" --max-chars 2000 --json
+ai-agent-playbook records read "<project>" --path CURRENT.md --max-chars 700 --json
+ai-agent-playbook records read "<project>" --path CURRENT.md --cursor "<nextCursor>" --max-chars 2000 --json
 ```
 
 Replace `<nextCursor>` with the actual first result's `nextCursor`. Repeat until `truncated` is false and there is no next cursor. The second request may use a different content budget. Concatenate the `content` strings without adding separators to reconstruct the text.
@@ -28,10 +28,10 @@ For an initial line range, use `--start-line 10 --end-line 40`. On continuation,
 ## Continue a list or search
 
 ```sh
-aapb records status "<project>" --view records --page-size 5 --json
-aapb records status "<project>" --view records --page-size 5 --cursor "<page.nextCursor>" --json
-aapb records search "<project>" --query "API decision" --max-results 3 --json
-aapb records search "<project>" --query "API decision" --max-results 3 --cursor "<page.nextCursor>" --json
+ai-agent-playbook records status "<project>" --view records --page-size 5 --json
+ai-agent-playbook records status "<project>" --view records --page-size 5 --cursor "<page.nextCursor>" --json
+ai-agent-playbook records search "<project>" --query "API decision" --max-results 3 --json
+ai-agent-playbook records search "<project>" --query "API decision" --max-results 3 --cursor "<page.nextCursor>" --json
 ```
 
 List cursors are in `page.nextCursor`. Repeat the view and, for search, the same query. Status offers `summary`, `records`, and `warnings`; validation offers `issues` (default), `summary`, and `warnings`; search offers `results` (default) and `warnings`.

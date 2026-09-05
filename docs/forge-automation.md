@@ -5,8 +5,8 @@ Forge means a collaboration service such as GitHub or Gitea. AAPB can plan and e
 ## Inspect the selected remote
 
 ```sh
-aapb forge status "<project>" --json
-aapb forge status "<project>" --remote origin --provider github --json
+ai-agent-playbook forge status "<project>" --json
+ai-agent-playbook forge status "<project>" --remote origin --provider github --json
 ```
 
 Status reads the local Git remote and policy. It does not contact the service or verify credentials. `policyWrites` describes configured policy; `verifiedWrites` requires authentication/permission evidence and must not be inferred from it. Use an explicit provider when automatic detection cannot identify a self-hosted service.
@@ -14,7 +14,7 @@ Status reads the local Git remote and policy. It does not contact the service or
 ## Preview initial coordination assets
 
 ```sh
-aapb forge bootstrap "<project>" --milestone "Example delivery" --json
+ai-agent-playbook forge bootstrap "<project>" --milestone "Example delivery" --json
 ```
 
 This previews labels and the selected milestone without remote calls. Inspect `summary.planned`, the operation IDs/resources in `results`, provider, warnings, and conflicts. `--project-title` and `--project-mode` select project presentation where supported; the CLI defaults to `milestone` mode. A capability or provider target is not proof that the actual remote supports every operation.
@@ -44,7 +44,7 @@ For a GitHub example, save the following as `docs/coordination.json` inside the 
 ```
 
 ```sh
-aapb forge sync "<project>" --plan docs/coordination.json --json
+ai-agent-playbook forge sync "<project>" --plan docs/coordination.json --json
 ```
 
 The plan provider must match the selected remote. The preview reports the operation as planned. A reviewed plan can also use the retained task/coordination input: `planId`, tasks, and a `coordination` object with a public program summary, scope, non-goals, success criteria, and grouped delivery information. Use that form when coordinating work groups, not when a single explicit provider operation is sufficient.
@@ -56,7 +56,7 @@ The plan provider must match the selected remote. The preview reports the operat
 Only after reviewing the plan, use:
 
 ```sh
-aapb forge sync "<project>" --plan docs/coordination.json --apply --json
+ai-agent-playbook forge sync "<project>" --plan docs/coordination.json --apply --json
 ```
 
 This can write remotely. The CLI's default Forge profile is `coordinate`; unlike a skill profile, it governs allowed remote operations. `off` and `observe` do not permit writes. `deliver` and `release` allow additional retained coordination resources such as pull requests; their names do not activate source execution or publishing. Delete and force-push remain denied. Superseding associations requires an additional approval path that the current CLI does not expose; a normal apply does not bypass it.

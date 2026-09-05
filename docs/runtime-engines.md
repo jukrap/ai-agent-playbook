@@ -17,7 +17,7 @@ The public minimum and a version actually tested are different claims. See [Veri
 ## Start with JavaScript
 
 ```powershell
-aapb writing naturalness-check "<project>" --path README.md --lang auto --engine js --json
+ai-agent-playbook writing naturalness-check "<project>" --path README.md --lang auto --engine js --json
 ```
 
 The CLI defaults to `js`. `--engine auto` and `--engine python` both request optional Python discovery in the retained writing implementation. If Python cannot run, the result keeps JavaScript findings and reports the unavailable engine. Inspect `engines.requested`, `engines.used`, `engines.unavailable`, and warnings; do not assume requesting Python proves it ran.
@@ -47,7 +47,7 @@ For a session in PowerShell, set an explicit interpreter if needed:
 
 ```powershell
 $env:AI_AGENT_PLAYBOOK_PYTHON = '"<absolute-python-executable>"'
-aapb runtime python-status --json
+ai-agent-playbook runtime python-status --json
 ```
 
 Replace the placeholder and keep the inner quotes when the path contains spaces. Discovery checks the explicit environment setting, the package checkout's `.venv`, then available `python`, `python3`, and `py -3` candidates. The virtual environment belongs to the package/checkout, not automatically to the target project.
@@ -56,6 +56,6 @@ Each probe is bounded at eight seconds. `python-status` reports the selected int
 
 ## Versions and validation
 
-The Node prerelease `1.0.0-next.2` maps to Python's PEP 440 version `1.0.0.dev2`. For development, run `npm run validate:python` after changing engine behavior. An optional engine being absent in a user's environment is different from a failed required development check.
+The Node prerelease `1.0.0-next.3` maps to Python's PEP 440 version `1.0.0.dev3`. For development, run `npm run validate:python` after changing engine behavior. An optional engine being absent in a user's environment is different from a failed required development check.
 
 Writing findings remain advisory. See [Quality review](quality-review.md) for how to preserve meaning and voice instead of treating every signal as a required edit.

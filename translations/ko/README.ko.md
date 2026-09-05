@@ -30,7 +30,7 @@ AI Agent Playbook(AAPB)은 코딩 에이전트와 함께 작업할 때 프로젝
 
 특정 에이전트에 묶이지 않습니다. Codex, Claude Code 등에서 같은 기록과 참고 자료를 사용할 수 있으며, 도구별 설정은 `adapters/`에서 따로 설명합니다.
 
-1.0은 프로젝트 기록, 산출물 형식, 필요한 전문 지침에 집중합니다. 코드 실행과 예약 작업은 에이전트 앱이나 프로젝트의 기존 도구가 맡습니다. 0.5 버전을 사용했다면 [1.0 개편과 이전 기준](docs/redesign.ko.md)을 함께 확인하세요.
+1.0은 프로젝트 기록, 산출물 형식, 필요한 전문 지침에 집중합니다. 코드 실행과 예약 작업은 에이전트 앱이나 프로젝트의 기존 도구가 맡습니다. 0.5 버전을 사용했다면 [1.0 변경사항과 이전 버전](docs/redesign.ko.md)을 함께 확인하세요.
 
 ## 제공하는 것
 
@@ -51,31 +51,33 @@ Node.js 18 이상에서 npm 패키지를 설치합니다.
 
 ```sh
 npm install -g ai-agent-playbook
-aapb --help
+ai-agent-playbook --help
 ```
 
-패키지 이름은 `ai-agent-playbook`, 실행 명령은 `aapb`입니다. 전역 설치 없이 가끔 실행하려면 `npx ai-agent-playbook --help`를 사용할 수 있습니다. 일반적인 사용에는 소스 체크아웃이나 PowerShell 설치 스크립트가 필요하지 않습니다.
+패키지 이름과 기본 명령은 모두 `ai-agent-playbook`입니다. `aapb`는 같은 옵션과 기능을 제공하는 축약 명령입니다. 전역 설치 없이 가끔 실행하려면 `npx ai-agent-playbook --help`를 사용할 수 있습니다. 일반적인 사용에는 소스 체크아웃이나 PowerShell 설치 스크립트가 필요하지 않습니다.
 
 재사용 스킬은 따로 선택합니다. 개발 프로필을 미리 보고 결과를 확인한 뒤 설치하세요.
 
 ```sh
-aapb skills install --profile development --dry-run --json
-aapb skills install --profile development --json
-aapb skills check --profile development --json
+ai-agent-playbook skills install --profile development --dry-run --json
+ai-agent-playbook skills install --profile development --json
+ai-agent-playbook skills check --profile development --json
 ```
 
 에이전트에서 스킬 목록을 다시 불러오거나 새 세션을 시작합니다. 파일 설치와 실제 앱 로딩은 별도로 확인합니다.
 
-`<project>`는 대상 폴더로 바꾸고 공백이 있으면 따옴표로 감쌉니다. 전역 설치 뒤에는 어느 폴더에서든 아래 명령을 실행할 수 있습니다.
+프로젝트 폴더에서 아래 명령을 실행하세요. 프로젝트 경로를 생략하면 현재 터미널의 작업 폴더를 사용합니다.
 
 ```sh
-aapb records status "<project>" --json
-aapb bootstrap "<project>" --dry-run
-aapb bootstrap "<project>"
-aapb records read "<project>" --path CURRENT.md
+ai-agent-playbook records status --json
+ai-agent-playbook bootstrap --dry-run
+ai-agent-playbook bootstrap
+ai-agent-playbook records read --path CURRENT.md
 ```
 
 Bootstrap은 기존 `AGENTS.md`와 기록을 보존합니다. 새 플레이북에는 `CURRENT.md`와 관리 파일 두 개를 만듭니다. Git 저장소에서 기록을 로컬에만 두려면 두 bootstrap 명령에 모두 `--local-only`를 붙입니다.
+
+다른 폴더를 대상으로 삼으려면 `ai-agent-playbook bootstrap "<project>" --dry-run`처럼 경로를 붙이거나 `--project "<project>"`를 사용하세요. [명령어 가이드](docs/commands.ko.md)에서 전체 명령 조합과 옵션별 뜻을 설명합니다.
 
 [처음 10분 사용법](docs/quick-start.ko.md)에서 연습 프로젝트, 용어, 예상 결과, 문제 해결을 확인할 수 있습니다. 업데이트·삭제·버전 선택·복구는 [설치 안내](docs/lifecycle.ko.md)에 있습니다.
 
@@ -111,8 +113,8 @@ Forge는 GitHub나 Gitea처럼 이슈와 코드 리뷰를 관리하는 서비스
 근거를 찾거나 기록 사이의 일관성을 확인할 때는 다음 명령을 사용합니다.
 
 ```sh
-aapb records search "<project>" --query "API decision" --json
-aapb records validate "<project>" --json
+ai-agent-playbook records search "<project>" --query "API decision" --json
+ai-agent-playbook records validate "<project>" --json
 ```
 
 이 검증은 기록·링크·관리 파일 변경 여부를 확인합니다. 애플리케이션 테스트를 실행하거나 오래된 문장을 현재 사실로 확인해 주지는 않습니다. 긴 결과를 이어 읽는 방법은 [응답 크기와 이어 읽기](docs/record-responses.ko.md)에 있습니다.
@@ -142,7 +144,7 @@ Codex와 Claude Code의 설정 안내를 따로 제공합니다. 스킬 형식, 
 ## 저장소 지도
 
 ```text
-bin/                  aapb 명령 진입점
+bin/                  ai-agent-playbook / aapb 공통 명령 진입점
 src/                  기록·설치·MCP·문서 점검·Forge 구현
 skills/
   project/            프로젝트 기억, 산출물 형식, 문서 편집
@@ -187,6 +189,7 @@ CHANGELOG.md          버전별 변경 기록
 - [프로젝트 기록 구조](docs/structured-playbook-layout.ko.md): CURRENT.md 작성과 상세 문서 추가 기준.
 - [런타임 구조](docs/harness-runtime.ko.md): 데이터 흐름, 소유권, 검증 범위.
 - [MCP 설정과 권한](docs/mcp-permission-model.ko.md): 선택형 읽기 전용 도구 네 개 연결.
+- [에이전트의 도구 활용](docs/agent-usage.ko.md): 스킬·도구의 사용 가능 여부와 실제 선택·실행을 구분하는 방법.
 - [응답 크기와 이어 읽기](docs/record-responses.ko.md): 크기 조절과 긴 결과 읽기.
 - [Forge 협업](docs/forge-automation.ko.md): 계획 검토, 원격 적용, 충돌, 재시도.
 - [UI와 문서 품질 검토](docs/quality-review.ko.md): 제품 의도, 사실, 문체를 보존하며 검토하기.
@@ -194,7 +197,7 @@ CHANGELOG.md          버전별 변경 기록
 - [로컬 패키지 시연](docs/demo.ko.md): npm에 게시하기 전에 압축 파일로 시험하기.
 - [스킬 카탈로그](docs/skill-catalog.ko.md), [기능 선택 기준](docs/capability-taxonomy.ko.md), [참고 자료 활용](docs/reference-adoption.ko.md): 작업에 맞는 지침 고르기.
 - [Codex 어댑터](adapters/codex/README.ko.md), [Claude Code 어댑터](adapters/claude-code/README.ko.md), [템플릿](templates/README.ko.md): 사용 환경에 맞춰 적용하기.
-- [1.0 개편 설계](docs/redesign.ko.md), [검증 보고서](docs/verification.ko.md), [정식 버전 준비](docs/runtime-roadmap.ko.md): 변경 근거, 확인한 결과, 남은 조건.
+- [1.0 변경사항과 이전 버전](docs/redesign.ko.md), [검증 보고서](docs/verification.ko.md), [정식 버전 준비](docs/runtime-roadmap.ko.md): 변경 근거, 확인한 결과, 남은 조건.
 - [유지보수](docs/maintenance.ko.md), [콘텐츠 분류](docs/classification.ko.md), [번역 정책](docs/translation-policy.ko.md), [배포 점검표](docs/publishing-checklist.ko.md): 기여와 릴리스 준비.
 - [공통 환경 구성](docs/environment-profiles.ko.md), [외부 작업 절차 도구](docs/superpowers-integration.ko.md): 선택형 연동의 범위.
 - [변경 기록](CHANGELOG.ko.md): 버전별 사용자 영향 변경.

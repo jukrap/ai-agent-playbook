@@ -39,7 +39,7 @@ For human documentation, also follow the beginner path in an isolated folder, ru
 
 ## Package and public artifacts
 
-Keep Node ESM, the package name, and the `aapb` executable. Verify meaningful behavior boundaries such as ownership, path limits, migration, and recovery. Python prerelease metadata maps npm `next.N` to PEP 440 `devN`.
+Keep Node ESM, the `ai-agent-playbook` package and primary executable, and the compatible `aapb` alias. Both executables use the same implementation. Verify meaningful behavior boundaries such as ownership, path limits, migration, and recovery. Python prerelease metadata maps npm `next.N` to PEP 440 `devN`.
 
 Inspect the actual npm archive, not only the checkout. Include linked human guides, examples, and README images. Check Markdown links and HTML `src`/`href`, including language-specific relative paths. Verify code-font paths and commands separately; a Markdown link checker does not catch nonexistent paths mentioned in prose.
 

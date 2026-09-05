@@ -6,7 +6,7 @@ AAPB 기록은 일반 Markdown·JSON 파일이며 스킬 형식은 앱별 설정
 
 프로젝트의 기존 지침과 CURRENT.md를 읽고 관련 링크를 따릅니다. 현재 상태, 결정, 인수인계는 일반 파일 편집으로 작성합니다. 애플리케이션 검사는 프로젝트 도구로 실행하고 실제 결과를 기록합니다.
 
-기록이 없으면 `aapb bootstrap "<project>" --dry-run`으로 생성을 미리 봅니다. 기존 지침과 기록은 보존합니다. 전체 연습 순서는 [처음 10분 사용법](../../docs/quick-start.ko.md)에 있습니다.
+기록이 없으면 `ai-agent-playbook bootstrap "<project>" --dry-run`으로 생성을 미리 봅니다. 기존 지침과 기록은 보존합니다. 전체 연습 순서는 [처음 10분 사용법](../../docs/quick-start.ko.md)에 있습니다.
 
 ## 지침 선택과 도구 연결
 

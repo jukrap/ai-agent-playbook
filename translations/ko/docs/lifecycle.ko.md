@@ -1,20 +1,20 @@
 # 설치·업데이트·이전·복구
 
-CLI 패키지, 사용자 스킬, 프로젝트 기록은 따로 관리합니다. npm은 Node CLI를 설치·갱신하고, `aapb skills`는 선택한 지침을 관리하며, 기록 명령은 프로젝트 하나를 다룹니다. MCP는 앱에서 별도로 설정합니다.
+CLI 패키지, 사용자 스킬, 프로젝트 기록은 따로 관리합니다. npm은 Node CLI를 설치·갱신하고, `ai-agent-playbook skills`는 선택한 지침을 관리하며, 기록 명령은 프로젝트 하나를 다룹니다. MCP는 앱에서 별도로 설정합니다.
 
 ## npm으로 설치·업데이트하기
 
 ```sh
 npm install -g ai-agent-playbook
-aapb --version
-aapb --help
+ai-agent-playbook --version
+ai-agent-playbook --help
 ```
 
 현재 게시된 최신 버전으로 갱신하려면 다음을 실행합니다.
 
 ```sh
 npm install -g ai-agent-playbook@latest
-aapb --version
+ai-agent-playbook --version
 ```
 
 기존 실행 파일을 바꾸기 전에는 정확한 버전과 복구용 패키지를 보관합니다. 예약 작업이 해당 명령을 참조하는지도 확인하세요. npm 파일을 갱신해도 설치된 스킬, 프로젝트 기록, MCP 등록, 모델 설정이 바뀌지는 않습니다.
@@ -38,7 +38,7 @@ npm install --prefix "<prefix>" "ai-agent-playbook@<version>"
 node "<prefix>/node_modules/ai-agent-playbook/bin/aapb.mjs" --help
 ```
 
-의존성을 바꾸고 싶지 않은 프로젝트 밖에 설치 위치를 정하세요. 이후 예시에서는 `aapb` 대신 이 Node 스크립트를 실행합니다. PowerShell 래퍼는 필요하지 않습니다.
+의존성을 바꾸고 싶지 않은 프로젝트 밖에 설치 위치를 정하세요. 이후 예시에서는 `ai-agent-playbook` 대신 이 Node 스크립트를 실행합니다. PowerShell 래퍼는 필요하지 않습니다.
 
 ## 전역 CLI 삭제·복구하기
 
@@ -52,6 +52,8 @@ npm uninstall -g ai-agent-playbook
 npm install -g "<previous-archive.tgz>"
 aapb --version
 ```
+
+복구 예시는 0.5.11에서도 쓸 수 있는 `aapb`를 사용합니다. 1.0의 기본 명령은 `ai-agent-playbook`이며 `aapb`도 축약 명령으로 유지합니다.
 
 실제 이전 설치본이 소스 기준 버전과 다르면 별도로 보관하세요. 사용자 스킬과 프로젝트 구조는 아래의 별도 복구 절차를 사용합니다.
 
@@ -71,11 +73,11 @@ node "<demo-prefix>/node_modules/ai-agent-playbook/bin/aapb.mjs" --version
 기본 `core`는 `project-memory`, `spec-artifacts`를 선택합니다. `development`는 디자인 방향, UI 다듬기, 문서 편집을 더합니다. `legacy`는 `legacy-contracts` 하나만 선택합니다. `--skill`을 반복 지정하면 프로필 대신 그 목록을 사용합니다. [스킬 카탈로그](skill-catalog.ko.md)에 자세한 예시가 있습니다.
 
 ```sh
-aapb skills install --profile development --dry-run --json
-aapb skills install --profile development --json
-aapb skills check --profile development --json
-aapb skills update --profile development --dry-run --json
-aapb skills update --profile development --json
+ai-agent-playbook skills install --profile development --dry-run --json
+ai-agent-playbook skills install --profile development --json
+ai-agent-playbook skills check --profile development --json
+ai-agent-playbook skills update --profile development --dry-run --json
+ai-agent-playbook skills update --profile development --json
 ```
 
 일반 설치·갱신은 `.agents/skills`의 선택한 항목만 바꿉니다. `.codex/skills`에 복제하거나 다른 프로필과 구버전 복사본 전체를 정리하지 않습니다. 선택한 스킬 안의 참고 자료는 함께 설치하지만, 과거의 큰 참고 자료 모음은 자동 설치하지 않습니다.
@@ -83,8 +85,8 @@ aapb skills update --profile development --json
 선택한 관리 스킬을 삭제하려면 다음을 실행합니다.
 
 ```sh
-aapb skills uninstall --profile development --dry-run --json
-aapb skills uninstall --profile development --json
+ai-agent-playbook skills uninstall --profile development --dry-run --json
+ai-agent-playbook skills uninstall --profile development --json
 ```
 
 결과를 읽고 반환된 백업 디렉터리를 보관하세요. 수정된 파일, 소유권이 불명확한 파일, 연결된 디렉터리는 충돌로 남겨 보존합니다. 이름이 같다는 이유만으로 AAPB 소유라고 판단하지 않습니다. 강제 덮어쓰기는 지원하지 않습니다.
@@ -96,8 +98,8 @@ aapb skills uninstall --profile development --json
 `.codex/skills`와 `.agents/skills` 양쪽에 AAPB 복사본이 남아 있을 때 사용합니다.
 
 ```sh
-aapb skills migrate --profile development --json
-aapb skills migrate --profile development --apply --json
+ai-agent-playbook skills migrate --profile development --json
+ai-agent-playbook skills migrate --profile development --apply --json
 ```
 
 첫 명령은 미리보기입니다. 선택한 스킬, 예정된 작업, 소유권·해시 검사, 대상 경로, 충돌을 확인합니다. 두 번째 명령은 독립적으로 처리할 수 있는 항목을 적용하고 내역을 남깁니다. 충돌한 항목은 건드리지 않습니다. 일부 적용이 끝났어도 충돌 때문에 실패 상태가 반환될 수 있습니다.
@@ -109,8 +111,8 @@ aapb skills migrate --profile development --apply --json
 설치 작업은 작업별 디렉터리에 기존 내용과 복구 일지를 남깁니다. 이 일지에는 준비·적용·복원 상태가 기록됩니다. 내용을 편집하면 복구할 수 없을 수 있으니 그대로 보관하세요.
 
 ```sh
-aapb skills rollback --backup "<transaction-directory>" --json
-aapb skills rollback --backup "<transaction-directory>" --apply --json
+ai-agent-playbook skills rollback --backup "<transaction-directory>" --json
+ai-agent-playbook skills rollback --backup "<transaction-directory>" --apply --json
 ```
 
 해당 작업이 반환한 디렉터리를 사용합니다. 같은 스킬에 여러 작업을 했다면 최신 작업부터 되돌립니다. 복구는 현재 파일과 백업의 해시를 확인하고, 나중에 수정한 파일은 충돌로 보존합니다. 중간에 작업이 끊겼다면 일지와 현재 파일 상태를 보고 재시도하거나 복구하세요. 종료 코드가 실패라고 해서 아무 파일도 바뀌지 않았다고 가정하면 안 됩니다.
@@ -118,8 +120,8 @@ aapb skills rollback --backup "<transaction-directory>" --apply --json
 ## 프로젝트 기록 만들기·공유하기·보관하기
 
 ```sh
-aapb bootstrap "<project>" --local-only --dry-run
-aapb bootstrap "<project>" --local-only
+ai-agent-playbook bootstrap "<project>" --local-only --dry-run
+ai-agent-playbook bootstrap "<project>" --local-only
 ```
 
 새 bootstrap은 `CURRENT.md`, `manifest.json`, `.ai-agent-playbook-install.json`을 만들고 루트 `AGENTS.md`를 보존합니다. `--local-only`는 Git의 로컬 제외 파일을 사용하며 연결된 worktree도 지원합니다. Git이 필요하고 공유 `.gitignore`는 바꾸지 않습니다. 기록을 커밋해서 공유하거나 Git이 아닌 폴더라면 이 옵션을 빼세요.
@@ -133,15 +135,15 @@ aapb bootstrap "<project>" --local-only
 기존 구조화 기록이나 구버전 플레이북은 이전 없이 읽을 수 있습니다. `minimal`로 이전할 때는 소유권이 확인되고 수정되지 않은 관리 정보만 바꿉니다. 크기 제한 안에서 읽을 수 있는 UTF-8 `CURRENT.md`가 있어야 합니다. 적용 전에 문서의 현재 사실은 직접 검토하세요.
 
 ```sh
-aapb migrate layout "<project>" --to minimal --json
-aapb migrate layout "<project>" --to minimal --apply --json
+ai-agent-playbook migrate layout "<project>" --to minimal --json
+ai-agent-playbook migrate layout "<project>" --to minimal --apply --json
 ```
 
 결과의 백업 값은 플레이북 기준 상대 경로입니다. 백업에는 기존 manifest와 소유권 표식이 저장됩니다. 과거 기록, 근거 링크, 루트 지침은 그대로 남습니다. 과거 요약을 현재 사실로 자동 등록하지 않습니다.
 
 ```sh
-aapb migrate rollback "<project>" --backup "<returned-relative-backup>" --json
-aapb migrate rollback "<project>" --backup "<returned-relative-backup>" --apply --json
+ai-agent-playbook migrate rollback "<project>" --backup "<returned-relative-backup>" --json
+ai-agent-playbook migrate rollback "<project>" --backup "<returned-relative-backup>" --apply --json
 ```
 
 이후에 바뀐 관리 정보는 충돌로 보존합니다. 소유권이 없거나 manifest가 수정되었다면 이유를 확인해야 합니다. 이전을 통과시키려고 관리 정보를 만들어 넣지 마세요. 플레이북 폴더가 여러 개라면 어느 기록을 기준으로 할지 먼저 정리해야 합니다.

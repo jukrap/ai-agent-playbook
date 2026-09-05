@@ -4,6 +4,7 @@
 
 - Replace broad process routing with selected project-record, artifact, design, UI, prose and optional legacy-contract skills.
 - Use one default installation root with migration journals and guarded rollback.
+- Keep default backups beside custom installation roots and reject cross-filesystem backup transactions during preview.
 - Reduce MCP to four project-bound record tools and preserve legacy record reading.
 - Retire autonomous execution, scheduling, automatic delivery and duplicate analysis. Keep explicit forge coordination.
 - Registry publication and stable promotion are separate from this source version.

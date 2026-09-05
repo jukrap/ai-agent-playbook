@@ -10,6 +10,8 @@ An ordinary install/update affects only selected skills in .agents/skills. It do
 
 ## Transaction
 
+The default backup parent is a sibling of the selected .agents/skills directory, named aapb-backups. Custom installation roots therefore keep their default backups on the installation filesystem. Backups and every affected installation in one transaction must share a filesystem so directory moves remain atomic. Preview rejects a mismatched --backup-root before creating a journal or changing installed files. A migration spanning multiple filesystems must be split into separate selections/root pairs with a local backup for each; cross-filesystem copying is not an atomic migration mode.
+
 1. Preview the selected installation and known legacy cleanup.
 2. Inspect ownership markers, hashes, destination roots, and conflicts.
 3. Apply with a backup root outside both installation roots.

@@ -1,4 +1,4 @@
-import { mkdir, cp, rename, readdir } from 'node:fs/promises';
+import { mkdir, cp, rename } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { randomUUID } from 'node:crypto';
@@ -38,6 +38,36 @@ async function rootsFor(options) {
   if (inside(roots.agents, roots.codex) || inside(roots.codex, roots.agents)) throw new Error('Installation roots must be separate and non-overlapping.');
   await noLinks(roots.agents); await noLinks(roots.codex);
   return roots;
+}
+async function filesystemForDirectory(directory) {
+  await noLinks(directory);
+  let current = path.resolve(directory);
+  while (true) {
+    const st = await statOrNull(current);
+    if (st) {
+      if (!st.isDirectory()) throw new Error('Expected a directory for installation or backup: ' + current);
+      return st.dev;
+    }
+    const parent = path.dirname(current);
+    if (parent === current) throw new Error('Cannot inspect the installation filesystem: ' + directory);
+    current = parent;
+  }
+}
+async function validateBackupPlacement({ operations, roots, backupRoot }) {
+  const parent = path.resolve(backupRoot ?? path.join(path.dirname(roots.agents), 'aapb-backups'));
+  for (const root of Object.values(roots)) if (inside(root, parent) || inside(parent, root)) throw new Error('Backup root must be outside and separate from installation roots.');
+  const backupFilesystem = await filesystemForDirectory(parent);
+  const checked = new Set();
+  for (const operation of operations) {
+    const destination = safeDestination(roots, operation.rootKind, operation.relative);
+    const container = path.dirname(destination);
+    if (checked.has(container)) continue;
+    if (await filesystemForDirectory(container) !== backupFilesystem) {
+      throw new Error('Backup and affected installations must use the same filesystem for atomic moves. Choose a backup on that filesystem; migrate separate filesystems independently. No file changes were started.');
+    }
+    checked.add(container);
+  }
+  return parent;
 }
 export async function runSkillsLifecycle(options) {
   const { repoRoot, command = 'check', profile = 'core', dryRun = false, apply = false } = options;
@@ -93,21 +123,21 @@ export async function runSkillsLifecycle(options) {
     for (const s of catalog) if (!baseline.some((b) => b.name === s.name)) await schedule('codex', s.name);
   }
   const shouldApply = command === 'migrate' ? apply && !dryRun : ['install', 'update', 'uninstall'].includes(command) && !dryRun;
+  const plannedBackupRoot = operations.length && ['install', 'update', 'migrate', 'uninstall'].includes(command)
+    ? await validateBackupPlacement({ operations, roots, backupRoot: options.backupRoot }) : null;
   let transaction = null;
   if (shouldApply && operations.length) {
-    transaction = await applySkillOperations({ operations, roots, profile, backupRoot: options.backupRoot, beforeOperation: options.beforeOperation });
+    transaction = await applySkillOperations({ operations, roots, profile, backupRoot: plannedBackupRoot, beforeOperation: options.beforeOperation });
     conflicts.push(...transaction.conflicts);
   }
   return {
     schemaVersion: 2, kind: 'skills.' + command, ok: conflicts.length === 0, writes: Boolean(transaction?.applied),
     applied: Boolean(transaction?.applied), profile, roots, operations, conflicts, warnings,
-    backup: transaction?.backup ?? null, summary: { selected: selected.length, operations: operations.length, applied: transaction?.applied ?? 0, conflicts: conflicts.length }
+    backup: transaction?.backup ?? null, backupRoot: plannedBackupRoot, summary: { selected: selected.length, operations: operations.length, applied: transaction?.applied ?? 0, conflicts: conflicts.length }
   };
 }
 export async function applySkillOperations({ operations, roots, profile, backupRoot, beforeOperation }) {
-  const parent = path.resolve(backupRoot ?? path.join(os.homedir(), '.agents', 'aapb-backups'));
-  for (const root of Object.values(roots)) if (inside(root, parent) || inside(parent, root)) throw new Error('Backup root must be outside and separate from installation roots.');
-  await noLinks(parent);
+  const parent = await validateBackupPlacement({ operations, roots, backupRoot });
   const backup = path.join(parent, 'skills-' + new Date().toISOString().replaceAll(':', '-') + '-' + randomUUID());
   await mkdir(backup, { recursive: true });
   const journalFile = path.join(backup, 'journal.json');
@@ -187,6 +217,7 @@ export async function rollbackSkills({ backup, apply = false, dryRun = false, be
     if (destinations.has(destination)) throw new Error('Duplicate recovery destination.');
     ids.add(entry.id); destinations.add(destination);
   }
+  await validateBackupPlacement({ operations: journal.entries.filter((entry) => !['prepared', 'restored'].includes(entry.state)), roots, backupRoot: directory });
   const operations = [], conflicts = [];
   let restored = 0;
   for (const entry of [...journal.entries].reverse()) {

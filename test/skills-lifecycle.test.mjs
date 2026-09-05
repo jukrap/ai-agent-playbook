@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, rm, symlink, rename } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, symlink, rename, stat } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -29,6 +29,40 @@ test('selected installation is single-root, preview is write-free, repeat is a n
   assert.equal(await statOrNull(f.codexRoot), null);
   assert.equal((await runSkillsLifecycle({ ...f, command: 'update', profile: 'core' })).summary.operations, 0);
   assert.equal((await runSkillsLifecycle({ ...f, command: 'check', profile: 'core' })).ok, true);
+});
+
+test('custom installation defaults to a sibling backup and previews its placement', async (t) => {
+  const f = await fixture(t);
+  const options = { ...f, command: 'install', backupRoot: undefined };
+  const preview = await runSkillsLifecycle({ ...options, dryRun: true });
+  assert.equal(preview.backupRoot, path.join(f.root, 'aapb-backups'));
+  assert.equal(await statOrNull(preview.backupRoot), null);
+  const result = await runSkillsLifecycle(options);
+  assert.equal(path.dirname(result.backup), preview.backupRoot);
+  assert.equal(result.summary.applied, 2);
+});
+
+test('cross-filesystem backups fail before writes and a local default supports install and recovery', async (t) => {
+  const f = await fixture(t), firstDevice = (await stat(f.root)).dev;
+  let otherParent = null;
+  for (const candidate of [repoRoot, ...(process.platform === 'win32' ? [] : ['/dev/shm'])]) {
+    const st = await statOrNull(candidate);
+    if (st?.isDirectory() && st.dev !== firstDevice) { otherParent = candidate; break; }
+  }
+  if (!otherParent) { t.skip('A second writable filesystem is not available.'); return; }
+  const second = await mkdtemp(path.join(otherParent, '.aapb-volume-test-'));
+  t.after(async () => { assert.equal(path.dirname(second), otherParent); await rm(second, { recursive: true, force: true }); });
+  const options = { ...f, agentsRoot: path.join(second, 'skills'), command: 'install' };
+  const firstBefore = await treeSnapshot(f.root), secondBefore = await treeSnapshot(second);
+  for (const dryRun of [true, false]) await assert.rejects(runSkillsLifecycle({ ...options, dryRun }), /same filesystem/);
+  assert.deepEqual(await treeSnapshot(f.root), firstBefore);
+  assert.deepEqual(await treeSnapshot(second), secondBefore);
+  const installed = await runSkillsLifecycle({ ...options, backupRoot: undefined });
+  assert.equal(installed.ok, true);
+  assert.equal(installed.summary.applied, 2);
+  const restored = await runSkillsLifecycle({ ...options, command: 'rollback', backup: installed.backup, apply: true });
+  assert.equal(restored.ok, true);
+  assert.equal(restored.summary.restored, 2);
 });
 test('migration removes owned duplicates and preserves independent changed and unmanaged files', async (t) => {
   const f = await fixture(t);

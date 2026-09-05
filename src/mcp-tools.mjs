@@ -15,8 +15,8 @@ export function registerPlaybookMcpTools(server, { target }) {
     ['aapb_search', 'Search literal record text with source locations and continuation. Repeat query/view with cursor; changed sources require a restart.', {
       ...budget, query: z.string().min(1).max(1000), maxResults: z.number().int().min(1).max(100).optional(), view: z.enum(['results', 'warnings']).optional()
     }, playbookSearch],
-    ['aapb_read', 'Read exact record text with a content budget. Continue with the same path and cursor, without line arguments; source changes reject the cursor.', {
-      ...budget, path: z.string().min(1).max(1024).optional(), startLine: z.number().int().min(1).max(1000000).optional(), endLine: z.number().int().min(1).max(1000000).optional()
+    ['aapb_read', 'Read exact text from the bound playbook; omit path to read CURRENT.md. Paths are relative to the playbook folder, not the project. Continue with the same path and cursor, without line arguments; source changes reject the cursor.', {
+      ...budget, path: z.string().min(1).max(1024).describe('Record path such as CURRENT.md or memory/decisions/example.md. Do not prefix the playbook folder name (for example .ai-agent-playbook/) or an absolute project path. Defaults to CURRENT.md.').optional(), startLine: z.number().int().min(1).max(1000000).optional(), endLine: z.number().int().min(1).max(1000000).optional()
     }, playbookRead],
     ['aapb_validate', 'Validate record JSON, links and ownership with paged issues or warnings. Every page preserves totals and scan completeness; no runtime tests or writes.', {
       ...list, view: z.enum(['summary', 'issues', 'warnings']).optional()

@@ -1,29 +1,24 @@
 param(
   [string]$CodexSkillsRoot = (Join-Path $env:USERPROFILE '.codex\skills'),
   [string]$AgentsSkillsRoot = (Join-Path $env:USERPROFILE '.agents\skills'),
+  [ValidateSet('core', 'development', 'legacy')][string]$Profile = 'core',
+  [string[]]$Skill = @(),
+  [string]$BackupRoot,
+  [switch]$Migrate,
   [switch]$SkipValidation,
-  [switch]$ForceManaged,
-  [switch]$ForceUnmanaged,
+  [switch]$Pull,
   [switch]$WhatIf
 )
-
 $ErrorActionPreference = 'Stop'
-$repoRoot = $PSScriptRoot
-
-if (Test-Path -LiteralPath (Join-Path $repoRoot '.git')) {
-  if ($WhatIf) {
-    Write-Host "Would run: git -C `"$repoRoot`" pull --ff-only"
-  } else {
-    git -C $repoRoot pull --ff-only
+if ($Pull) {
+  if ($WhatIf) { Write-Output 'Would run git pull --ff-only for this checkout.' }
+  else {
+    & git -C $PSScriptRoot pull --ff-only
+    if ($LASTEXITCODE -ne 0) { throw 'Fast-forward update failed; installation was not started.' }
   }
-} else {
-  Write-Warning 'This directory is not a git clone. Skipping git pull and running local install only.'
 }
-
-& (Join-Path $repoRoot 'install.ps1') `
-  -CodexSkillsRoot $CodexSkillsRoot `
-  -AgentsSkillsRoot $AgentsSkillsRoot `
-  -SkipValidation:$SkipValidation `
-  -ForceManaged:$ForceManaged `
-  -ForceUnmanaged:$ForceUnmanaged `
-  -WhatIf:$WhatIf
+if (-not $SkipValidation) {
+  & (Join-Path $PSScriptRoot 'scripts\validate-skills.ps1')
+  & (Join-Path $PSScriptRoot 'scripts\validate-translations.ps1')
+}
+& (Join-Path $PSScriptRoot 'scripts\sync-skills.ps1') -CodexSkillsRoot $CodexSkillsRoot -AgentsSkillsRoot $AgentsSkillsRoot -Profile $Profile -Skill $Skill -BackupRoot $BackupRoot -Migrate:$Migrate -WhatIf:$WhatIf

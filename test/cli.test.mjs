@@ -110,9 +110,9 @@ test('advisory checks reject ancestor junctions without reading outside the proj
 });
 test('release metadata, copyable templates and selected skill references agree', async () => {
   const pkg = JSON.parse(await readFile(path.join(repoRoot, 'package.json'), 'utf8'));
-  assert.equal(pkg.version, '1.0.0-next.3');
+  assert.equal(pkg.version, '1.0.0');
   assert.deepEqual(pkg.bin, { 'ai-agent-playbook': 'bin/aapb.mjs', aapb: 'bin/aapb.mjs' });
-  assert.match(await readFile(path.join(repoRoot, 'pyproject.toml'), 'utf8'), /1\.0\.0\.dev3/);
+  assert.match(await readFile(path.join(repoRoot, 'pyproject.toml'), 'utf8'), /version = "1\.0\.0"/);
   const { skillCatalog } = await import('../src/catalog/selection.mjs');
   for (const skill of await skillCatalog({ repoRoot })) {
     const body = await readFile(path.join(skill.directory, 'SKILL.md'), 'utf8');

@@ -1,6 +1,8 @@
-# 1.0 prerelease verification
+# Verification record
 
-## Scope and runtime checks
+The sections below preserve development-stage evidence and its original scope. Current release information is in [1.0.0 release notes](release-1.0.0.md). Test totals and package checks from an earlier archive do not automatically describe a later archive.
+
+## Earlier prerelease scope and runtime checks
 
 This release changes project records, selected skills, installation and local capability exposure. Writer and Game received separate local plans only; existing dirty file hashes, repository heads and worktree listings were preserved. Their product implementations and real game-engine execution were not validated by this release.
 

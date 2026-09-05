@@ -1,6 +1,6 @@
-# Preparing a stable release
+# Release readiness and follow-up
 
-The source is a 1.0 prerelease. Stable readiness depends on observable behavior and a usable adoption path, not only a version field or a reduced catalog. The [verification report](verification.md) records evidence already gathered; this page explains how to assess the remaining release decision.
+The source targets the stable 1.0.0 release. Readiness depends on observable behavior and a usable adoption path, not only a version field or a reduced catalog. The [verification report](verification.md) records evidence already gathered; this page explains how to assess the remaining release decision.
 
 ## Readiness areas
 
@@ -15,7 +15,7 @@ The source is a 1.0 prerelease. Stable readiness depends on observable behavior 
 | Package | Actual archive contents, images/links, isolated install, exact version and checksum |
 | Environment | Installed count, discovered catalog, injected context, and tools measured separately |
 
-## From prerelease to stable
+## Prepare the next release
 
 First resolve findings that affect preservation, command correctness, or the documented first-use path. Repeat affected checks after fixes. Then prepare aligned Node/Python versions, changelog, migration notes, and a reviewed package archive using the [publishing checklist](publishing-checklist.md).
 

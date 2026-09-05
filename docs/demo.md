@@ -16,7 +16,7 @@ node $demoCli --version
 node $demoCli --help
 ```
 
-Confirm `1.0.0-next.3` for this candidate. Package installation does not install user skills or enable MCP. All following calls use `node $demoCli` so a different global version cannot accidentally supply the result. In another shell, invoke the installed script by its absolute path.
+Confirm `1.0.0` for this release artifact. Package installation does not install user skills or enable MCP. All following calls use `node $demoCli` so a different global version cannot accidentally supply the result. In another shell, invoke the installed script by its absolute path.
 
 ## 2. Inspect an existing project without changing it
 

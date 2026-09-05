@@ -1,5 +1,7 @@
 # 설치·이전·복구
 
+기록 레이아웃은 aapb migrate layout <project> --to minimal --json으로 미리 보고 --apply를 명시해 적용합니다. 결과의 backup은 플레이북 상대 경로입니다. aapb migrate rollback <project> --backup <반환된-경로> --json으로 복구를 미리 본 다음 --apply로 변경되지 않은 메타데이터를 복원합니다. 이후의 편집은 충돌로 보존됩니다.
+
 패키지 설치와 스킬 설치는 별개입니다. 로컬 prerelease archive는 격리된 npm prefix에서 확인합니다. install·update는 게시를 수행하지 않습니다.
 
 ## 스킬 선택

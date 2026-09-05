@@ -48,16 +48,12 @@ async function validateNaming() {
 
   const allowedLegacyFiles = new Set([
     'src/harness/core.mjs',
-    'src/harness/bootstrap.mjs',
-    'src/layout/structured-playbook-layout.mjs',
+    'src/records.mjs',
     'src/runtime/python-engine.mjs',
     'src/runtime/writing-naturalness.mjs',
-    'src/operator/shared.mjs',
-    'adapters/shared/context-hook.mjs',
     'scripts/validate-translations.ps1',
-    'test/adapters.test.mjs',
     'test/cli.test.mjs',
-    'test/operator-diagnostics.test.mjs'
+    'test/records.test.mjs'
   ]);
   const findings = [];
 
@@ -336,7 +332,7 @@ async function readRepoFile(root, rel) {
 }
 
 async function gitLsFiles(root) {
-  const result = await execFileAsync('git', ['ls-files'], { cwd: root });
+  const result = await execFileAsync('git', ['ls-files', '--cached', '--others', '--exclude-standard'], { cwd: root });
   return result.stdout.split(/\r?\n/).filter(Boolean);
 }
 

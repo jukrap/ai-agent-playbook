@@ -26,6 +26,8 @@ New bootstrap preserves root instructions and creates only CURRENT.md plus metad
 
 Structured and legacy playbook paths remain readable. If multiple roots exist, reconcile the ambiguity rather than silently selecting one. Layout migration requires an existing reviewed CURRENT.md and owned, unchanged layout metadata. It saves the previous manifest and ownership marker in a local archive. User records are not rewritten or automatically summarized.
 
+Preview with `aapb migrate layout <project> --to minimal --json`, then explicitly add --apply. The applied result returns the playbook-relative backup path. Preview recovery with `aapb migrate rollback <project> --backup <returned-path> --json`, then add --apply to restore unchanged metadata. Later edits are preserved as conflicts.
+
 ## Retired commands and exact recovery
 
 Execution, supervisors, schedules and automatic delivery are not included in 1.0. Native host execution/scheduling or existing project tools are the replacement. For an intentional old-runtime operation, use the pinned `npx ai-agent-playbook@0.5.11` command. Preserve the actual previous global package separately if it differs from the source baseline.

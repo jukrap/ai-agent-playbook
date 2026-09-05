@@ -58,3 +58,5 @@ Migration preserves changed and unmanaged files and reports conflicts. A success
 - [Maintenance](docs/maintenance.md)
 
 Licensed under [MIT](LICENSE).
+
+Verification and local capability policy: [prerelease evidence](docs/verification.md), [environment profiles](docs/environment-profiles.md).

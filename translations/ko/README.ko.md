@@ -46,3 +46,5 @@ aapb skills rollback --backup <transaction-directory> --apply --json
 ## 안내
 
 명령, 기록 구조·호환성, MCP 경계, 스킬 목록·전수 판정, 디자인·글쓰기, Forge 협업, 설계 근거와 선택 참조 라이브러리는 대응하는 docs 문서를 참고합니다. 라이선스는 MIT입니다.
+
+검증과 로컬 기능 선택 기준: [사전 릴리스 근거](docs/verification.ko.md), [환경 프로필](docs/environment-profiles.ko.md).

@@ -1,43 +1,8 @@
-# AGENTS.md
-# AI Playbook Bootstrap
+# Project instructions
 
-This file is the thin project-root entry point for agents. Keep durable project memory, policies, plans, and worklogs in `.ai-agent-playbook/`.
-
-## Start here
-
-- Reply in the user's language by default.
-- Inspect the repository structure, README, config, scripts, lockfiles, and current git state before choosing tooling.
-- Look for lower-level `AGENTS.md` files before editing files in subdirectories.
-- If `.ai-agent-playbook/` exists, read these before planning:
-  1. `.ai-agent-playbook/START_HERE.md`
-  2. `.ai-agent-playbook/CURRENT.md`
-  3. `.ai-agent-playbook/questions.md`
-  4. Relevant maps, runbooks, plans, decisions, or guides
-  5. `.ai-agent-playbook/policy/SKILLS.md` before selecting optional skills
-  6. `.ai-agent-playbook/policy/GIT.md` before staging, committing, pushing, or writing PR text
-- If `.ai-agent-playbook/` does not exist, work from the actual code and README first. Create or install a playbook only after the user or project asks for it.
-
-## Working rules
-
-- Prefer the latest user instruction, then actual code/config/output, then project docs.
-- Do not assume framework, architecture, package manager, tests, lint, deployment, or branch workflow.
-- Match existing project patterns before introducing new structure.
-- Keep changes scoped to the request.
-- Never revert unrelated user changes.
-- Prefer `rg` for search.
-- Do not guess API contracts, data fields, credentials, or external workflows.
-- Verify completion claims with fresh command output or clearly state what was not verified.
-
-## Git and local files
-
-- Respect local-only policy in `.gitignore`, `.ai-agent-playbook/policy/GIT.md`, and project docs.
-- Keep root policy files minimal. Do not add root `SKILLS.md` or `GIT.md`; use `.ai-agent-playbook/policy/SKILLS.md` and `.ai-agent-playbook/policy/GIT.md`.
-- Stage explicit related paths instead of `git add .`.
-- Do not add agent, model, generated-by, co-author, or signature footers unless the repository explicitly requires them.
-
-## Playbook ownership
-
-- Treat `.ai-agent-playbook/` as project memory, not as an excuse to ignore current code.
-- Promote durable facts into `.ai-agent-playbook/CURRENT.md`, maps, runbooks, or decisions.
-- Keep detailed history in `.ai-agent-playbook/workflows/worklogs/`.
-- Archive stale plans and handoffs instead of leaving them in active guidance.
+- Follow the current user scope and preserve unrelated changes.
+- Inspect the actual repository instructions, code and configuration needed for the task.
+- If project records exist, use .ai-agent-playbook/CURRENT.md as the short entrypoint and read relevant links only.
+- Use project-defined verification and record actual results. Do not add a generic review or approval ceremony.
+- Keep durable product facts and decisions in the existing project records; do not duplicate them here.
+- Respect local-only policy and existing commit conventions. Remote publication requires authorization.

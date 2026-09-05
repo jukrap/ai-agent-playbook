@@ -48,16 +48,12 @@ async function validateNaming() {
 
   const allowedLegacyFiles = new Set([
     'src/harness/core.mjs',
-    'src/harness/bootstrap.mjs',
-    'src/layout/structured-playbook-layout.mjs',
+    'src/records.mjs',
     'src/runtime/python-engine.mjs',
     'src/runtime/writing-naturalness.mjs',
-    'src/operator/shared.mjs',
-    'adapters/shared/context-hook.mjs',
     'scripts/validate-translations.ps1',
-    'test/adapters.test.mjs',
     'test/cli.test.mjs',
-    'test/operator-diagnostics.test.mjs'
+    'test/records.test.mjs'
   ]);
   const findings = [];
 
@@ -212,78 +208,17 @@ async function validateTranslations() {
 
 async function validateMcpDocs() {
   const root = resolveRoot();
+  const source = await readRepoFile(root, 'src/mcp-tools.mjs');
+  const names = unique([...source.matchAll(/\['(aapb_[a-z]+)'/g)].map((match) => match[1])).sort();
+  const expected = ['aapb_read', 'aapb_search', 'aapb_status', 'aapb_validate'];
   const errors = [];
-  const mcpSourcePath = 'src/mcp-tools.mjs';
-  const mcpSource = await readRepoFile(root, mcpSourcePath);
-
-  const resourceUris = unique([...mcpSource.matchAll(/resource\('([^']+)',\s*'([^']+)'/g)].map((match) => match[2])).sort();
-  if (resourceUris.length === 0) {
-    errors.push(`${mcpSourcePath}: No MCP resources were discovered.`);
+  if (JSON.stringify(names) !== JSON.stringify(expected)) errors.push('MCP must expose exactly the four project record tools.');
+  for (const doc of ['docs/commands.md', 'docs/mcp-permission-model.md', 'translations/ko/docs/commands.ko.md', 'translations/ko/docs/mcp-permission-model.ko.md']) {
+    const text = await readRepoFile(root, doc);
+    for (const name of names) if (!text.includes(name)) errors.push(doc + ': Missing documented tool ' + name);
   }
-
-  const writeBlock = /const writeTools = enableWriteTools \? \[([\s\S]*?)\]\s*:\s*\[\];/.exec(mcpSource);
-  const managedWriteToolNames = writeBlock
-    ? unique([...writeBlock[1].matchAll(/tool\('([^']+)'/g)].map((match) => match[1])).sort()
-    : [];
-  if (!writeBlock) {
-    errors.push(`${mcpSourcePath}: Could not locate opt-in write tool registration block.`);
-  }
-  const forgeWriteBlock = /const forgeWriteTools = enableForgeWriteTools \? \[([\s\S]*?)\]\s*:\s*\[\];/.exec(mcpSource);
-  const forgeWriteToolNames = forgeWriteBlock
-    ? unique([...forgeWriteBlock[1].matchAll(/tool\('([^']+)'/g)].map((match) => match[1])).sort()
-    : [];
-  if (!forgeWriteBlock) {
-    errors.push(`${mcpSourcePath}: Could not locate opt-in forge write tool registration block.`);
-  }
-  const writeToolNames = unique([...managedWriteToolNames, ...forgeWriteToolNames]).sort();
-
-  const requiredPreviewTools = [
-    'reference_source_registry_update_preview',
-    'reference_ledger_update_preview',
-    'reference_ledger_decision_preview'
-  ];
-  const requiredAutomationReadTools = [
-    'automation_status',
-    'automation_plan_validate',
-    'forge_status',
-    'forge_bootstrap_plan',
-    'forge_sync_plan'
-  ];
-  for (const toolName of requiredAutomationReadTools) {
-    if (!mcpSource.includes(`tool('${toolName}'`)) {
-      errors.push(`${mcpSourcePath}: Missing required read-only forge/automation tool: ${toolName}`);
-    }
-  }
-  const docsToCheck = [
-    'docs/commands.md',
-    'docs/mcp-permission-model.md',
-    'translations/ko/docs/commands.ko.md',
-    'translations/ko/docs/mcp-permission-model.ko.md'
-  ];
-
-  for (const docPath of docsToCheck) {
-    const content = await readRepoFile(root, docPath);
-    for (const uri of resourceUris) {
-      if (!content.includes(uri)) errors.push(`${docPath}: Missing MCP resource URI: ${uri}`);
-    }
-    for (const toolName of writeToolNames) {
-      if (!content.includes(toolName)) errors.push(`${docPath}: Missing opt-in write tool: ${toolName}`);
-    }
-    for (const toolName of requiredAutomationReadTools) {
-      if (!content.includes(toolName)) errors.push(`${docPath}: Missing read-only forge/automation tool: ${toolName}`);
-    }
-    if (!content.includes('--enable-forge-write-tools')) {
-      errors.push(`${docPath}: Missing separate forge write opt-in flag: --enable-forge-write-tools`);
-    }
-    if (docPath.includes('mcp-permission-model')) {
-      for (const toolName of requiredPreviewTools) {
-        if (!content.includes(toolName)) errors.push(`${docPath}: Missing read-only preview tool: ${toolName}`);
-      }
-    }
-  }
-
-  failIfFindings(errors, `MCP docs validation failed with ${errors.length} finding(s).`);
-  console.log(`Validated MCP docs for ${resourceUris.length} resources, ${requiredAutomationReadTools.length} forge/automation read tools, and ${writeToolNames.length} opt-in write tools.`);
+  failIfFindings(errors, 'MCP documentation does not match the record tool surface.');
+  console.log('Validated documentation for four project-bound read-only MCP tools.');
 }
 
 async function validatePublicDocs() {
@@ -311,6 +246,7 @@ async function validatePublicDocs() {
     'docs',
     'examples',
     'skills',
+    'references',
     'templates',
     'translations/ko'
   ];
@@ -370,7 +306,8 @@ async function validatePython() {
   const root = resolveRoot();
   const status = await pythonEngineStatus({ repoRoot: root });
   if (!status.selected) {
-    throw new Error('Python was not found or ai_agent_playbook_engine is unavailable. Install Python 3.11+ or set AI_AGENT_PLAYBOOK_PYTHON.');
+    const details = status.candidates.map((candidate) => `${candidate.id}: ${candidate.error ?? candidate.engineError ?? 'engine unavailable'}`).join('; ');
+    throw new Error('Python was not found or ai_agent_playbook_engine is unavailable. Install Python 3.11+ or set AI_AGENT_PLAYBOOK_PYTHON. Probe results: ' + details);
   }
   const result = await runPythonWritingNaturalness({
     repoRoot: root,
@@ -396,7 +333,7 @@ async function readRepoFile(root, rel) {
 }
 
 async function gitLsFiles(root) {
-  const result = await execFileAsync('git', ['ls-files'], { cwd: root });
+  const result = await execFileAsync('git', ['ls-files', '--cached', '--others', '--exclude-standard'], { cwd: root });
   return result.stdout.split(/\r?\n/).filter(Boolean);
 }
 

@@ -1,0 +1,25 @@
+{
+  "purpose": "Contextual Korean document-editing examples; not automatic replacement rules.",
+  "examples": [
+    {
+      "before": "이를 통해 사용자는 설정 파일을 수정할 수 있습니다.",
+      "after": "사용자는 설정 파일을 수정할 수 있습니다.",
+      "preserve": "The ability to edit the configuration; remove padding only when the causal claim is unnecessary."
+    },
+    {
+      "before": "버전 0.5.11에서는 aapb doctor . --json을 실행합니다.",
+      "after": "버전 0.5.11에서는 aapb doctor . --json을 실행합니다.",
+      "preserve": "The source is already clear; preserve the version and command exactly."
+    },
+    {
+      "before": "확인해 주시면 감사하겠습니다. 금요일 오후 3시까지 회신 부탁드립니다.",
+      "after": "금요일 오후 3시까지 확인 후 회신 부탁드립니다.",
+      "preserve": "Use only for a concise business request; keep politeness and the exact deadline."
+    },
+    {
+      "before": "아니, 잠깐. 지금은 아니야.",
+      "after": "아니, 잠깐. 지금은 아니야.",
+      "preserve": "Intentional dialogue fragments belong to the author or writing product; do not flatten them into general document prose."
+    }
+  ]
+}

@@ -1,23 +1,10 @@
 ---
 name: ui-polish
-description: Use when refining visible frontend UI, responsive layout, accessibility states, visual hierarchy, interaction feedback, or production polish.
+description: Use when improving or reviewing rendered UI against its workflow, design system, density, and accessibility needs.
 ---
 
-# UI Polish
+# UI Review and Polish
 
-Use this as the primary frontend skill for visible UI quality.
+Inspect the rendered screen and the user's task. Keep existing design-system ownership and deliberate visual choices. A review request produces findings; an authorized edit proceeds directly to the scoped correction.
 
-## Workflow
-
-1. Inspect the product workflow, existing design system, nearby components, and target viewports.
-2. Improve hierarchy, spacing, layout stability, text fit, accessibility, and state coverage around the actual task.
-3. Avoid unrelated redesign unless the user asks for a new visual direction.
-4. Verify rendered UI on relevant desktop and mobile widths when possible.
-
-## Reference
-
-Read `references/task-surface-polish-check.md` when a polish pass needs concrete checks for task fit, hierarchy, spacing, overflow, accessibility states, responsive behavior, and visual verification.
-
-## Compatibility
-
-`frontend-ui-polish` is a compatibility trigger for this skill.
+Consult `references/rendered-review.md` when the task needs concrete checks or a before/after comparison. A small, clear edit does not require the reference. Static scan signals are candidates, never automatic design defects. Load styling-policy detail only when conventions conflict. Do not chain separate polish, style-selection, and generic-UI skills.

@@ -1,7 +1,8 @@
-import { lstat, readdir, readFile } from 'node:fs/promises';
+import { lstat, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { LEGACY_PLAYBOOK_DIRS, SCHEMA_VERSION } from '../harness/core.mjs';
+import { noLinks, readText } from '../fs-safety.mjs';
 
 export const UI_GENERICITY_RULE_IDS = Object.freeze([
   'visual.gradient-text',
@@ -44,6 +45,11 @@ export async function checkUiGenericity(options) {
     conflicts.push(conflict('qa.ui.root-outside-target', 'Scan root must stay inside the target project.', [requestedRoot]));
     return uiResult({ target, root, maxFiles, findings, suppressions, skipped, warnings, conflicts, scannedFiles: 0, candidateFiles: 0, truncated: false });
   }
+  try { await noLinks(root); }
+  catch {
+    conflicts.push(conflict('qa.ui.root-symlink', 'Scan root cannot contain a symbolic link or junction.', [requestedRoot]));
+    return uiResult({ target, root, maxFiles, findings, suppressions, skipped, warnings, conflicts, scannedFiles: 0, candidateFiles: 0, truncated: false });
+  }
   if (!existsSync(root)) {
     conflicts.push(conflict('qa.ui.root-missing', 'Scan root does not exist.', [portable(path.relative(target, root) || '.')]));
     return uiResult({ target, root, maxFiles, findings, suppressions, skipped, warnings, conflicts, scannedFiles: 0, candidateFiles: 0, truncated: false });
@@ -82,7 +88,7 @@ export async function checkUiGenericity(options) {
       skipped.push({ path: rel, reason: 'file-too-large' });
       continue;
     }
-    const text = await readFile(file, 'utf8');
+    const text = await readText(file, MAX_SOURCE_BYTES);
     if (/^.{0,120}(?:@generated|generated file|do not edit)/i.test(text.slice(0, 500))) {
       skipped.push({ path: rel, reason: 'generated' });
       continue;
@@ -111,6 +117,7 @@ export async function checkUiGenericity(options) {
 }
 
 async function collectUiFiles(directory, target, files, skipped) {
+  await noLinks(directory);
   const entries = await readdir(directory, { withFileTypes: true });
   entries.sort((left, right) => left.name.localeCompare(right.name));
   for (const entry of entries) {

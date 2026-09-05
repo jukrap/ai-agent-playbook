@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.0-next.2 (source prerelease)
+
+- Rename the four MCP tools to aapb_status/search/read/validate; keep package and record-directory names.
+- Replace clipped JSON previews with adjustable content budgets and source-bound continuation.
+- Preserve source text, match locations, validation totals and incomplete scan evidence across pages.
+- Separate the content budget from a 256 KiB complete-result ceiling and document prerelease allowlist migration.
+- Allow up to eight seconds for Python interpreter probes and include candidate diagnostics when validation cannot find a usable engine.
+
+## 1.0.0-next.1 (source prerelease)
+
+- Replace broad process routing with selected project-record, artifact, design, UI, prose and optional legacy-contract skills.
+- Use one default installation root with migration journals and guarded rollback.
+- Keep default backups beside custom installation roots and reject cross-filesystem backup transactions during preview.
+- Reject empty explicit skill selections and unreadable current-state entrypoints before migration.
+- Honor the writing report root and reject linked ancestor paths in advisory checks.
+- Cap the complete MCP tool result and include Korean documentation in npm archives.
+- Reduce MCP to four project-bound record tools and preserve legacy record reading.
+- Retire autonomous execution, scheduling, automatic delivery and duplicate analysis. Keep explicit forge coordination.
+- Registry publication and stable promotion are separate from this source version.
+
 This file summarizes shipped, user-visible changes. Current behavior belongs in the feature and operator documents under `docs/`; detailed release artifacts remain on [GitHub Releases](https://github.com/jukrap/ai-agent-playbook/releases).
 
 ## 0.5.11 (2026-08-15)

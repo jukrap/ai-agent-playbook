@@ -1,67 +1,7 @@
-# 구조화 플레이북 레이아웃
+# 프로젝트 기록
 
-구조화된 `.ai-agent-playbook` 레이아웃은 오래 유지할 프로젝트 기억과 도구가 생성한 런타임 산출물, 통합 설정을 분리합니다.
+현재 진입점은 CURRENT.md입니다. 새 bootstrap은 manifest.json과 소유권 marker를 함께 만들며 CURRENT.md는 사용자가 편집합니다. 상세 결정·계약·계획·인수인계는 필요할 때 기존 프로젝트 경로에 만듭니다.
 
-```text
-.ai-agent-playbook/
-  README.md
-  START_HERE.md
-  CURRENT.md
-  questions.md
-  manifest.json
-  config.json
-  config.local.json
-  policy/
-  memory/
-  workflows/
-  knowledge/
-  runtime/
-  integrations/
-  archive/
-```
+structured와 레거시 기록을 계속 읽으며 이전 정책·map·runtime·recipe 전체를 필수로 요구하지 않습니다. 루트 모호성·읽기 실패·불완전한 검색을 보고합니다.
 
-## 디렉터리 역할
-
-- `policy/`: agent 규칙, git 정책, 안전 메모, 범위별 규칙.
-- `memory/`: 안정적인 context, map, decision, contract, glossary.
-- `workflows/`: recipe, runbook, plan, run, worklog, handoff.
-- `knowledge/`: source registry, 채택한 reference, research note.
-- `runtime/`: 생성된 cache, index, graph, report, snapshot, 임시 파일.
-- `integrations/`: MCP, adapter, hook, forge 설정, 선택 scheduler workflow 예시.
-- `archive/`: 더 이상 쓰지 않는 로컬 메모.
-
-`config.json`과 `config.local.json`은 선택 사항입니다. `config preview`는 두 파일이 있을 때 읽습니다. `config.local.json`은 특정 장비의 local override용이므로 프로젝트가 의도적으로 다르게 정하지 않는 한 local-only로 둡니다.
-
-## 문맥 선택
-
-에이전트는 기본적으로 `.ai-agent-playbook/`의 모든 파일을 읽지 않습니다. 먼저 `START_HERE.md`, `CURRENT.md`, `questions.md`를 보고, `operator context --path <file> --json`으로 관련 `memory/context/`, map, contract, runbook, decision, guide, plan을 고릅니다. 그래도 필요한 파일이 불분명하면 큰 메모를 읽기 전에 `operator search` 또는 `index search`를 사용합니다.
-
-생성된 근거는 `runtime/`, 작업 중 근거는 `workflows/runs/`, 오래 남길 이력은 `workflows/worklogs/`에 둡니다. 검토된 사실만 `memory/` 또는 `knowledge/`로 승격합니다.
-
-## Canon Facts
-
-Runtime evidence는 canon fact 후보를 만들 수 있지만 그 자체로 신뢰된 memory가 되지는 않습니다. 검토한 fact JSON만 명시적 promotion 단계 뒤 `memory/` 아래에 두고, `canon check`로 source report와 현재 file 기준 drift를 확인합니다. Check는 파일을 쓰지 않고 `verified`, `missing`, `stale`, `changed`, `unverified` 상태를 보고합니다.
-
-## Workflow Runs
-
-`workflows/recipes/` 아래 recipe는 반복 가능한 절차를 설명합니다. `workflow run-preview`는 target-local recipe를 먼저 읽고 없으면 bundled template으로 fallback한 뒤, inputs, outputs, skills, tools, stop conditions, verification을 포함한 read-only run manifest를 반환합니다. 이 명령은 `workflows/runs/` 아래 파일을 만들지 않습니다.
-
-`workflow run-start --apply`는 `workflows/runs/` 아래에 새 bounded record만 쓰는 scaffold-tier operation이며 project source나 trusted memory를 편집하지 않습니다.
-
-Structured automation은 `workflows/plans/` 아래 Markdown plan과 `workflow.plan.v2` JSON sidecar를 함께 사용합니다. `automation start`는 approved sidecar를 읽고 `workflows/runs/` 아래 immutable plan/task input, append-only ledger, derived state, remote sync state, lease state, summary, handoff, evidence를 가진 schema v2 directory를 만듭니다. Legacy schema v1 run은 계속 읽을 수 있지만 compatibility path가 덮어쓰지는 않습니다.
-
-## Migration
-
-먼저 preview mode로 layout migration을 확인합니다.
-
-```bash
-aapb migrate layout <target> --to structured --json
-```
-
-작업 목록을 검토한 뒤 적용합니다.
-
-```bash
-aapb migrate layout <target> --to structured --apply
-```
-
-마이그레이션은 구조화 디렉터리를 만들고, 알려진 구 레이아웃 파일을 충돌 없이 활성 위치로 옮긴 뒤 이전 위치를 `archive/legacy-layout/` 아래에 보관합니다.
+레이아웃 이전은 변경되지 않은 관리 metadata만 갱신하고 기존 기록을 보존합니다. 루트 지침을 다시 쓰거나 과거 작업을 자동 요약하지 않습니다. archive에 이전 manifest와 marker를 저장합니다. migrate rollback에 playbook 상대 백업 경로를 지정하면 해시를 확인해 복구하며 이후 편집은 충돌로 보존합니다. lifecycle·commands 가이드를 참고합니다.

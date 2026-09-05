@@ -6,7 +6,6 @@ export { getForgeCapabilities, getEffectiveForgeCapabilities } from './capabilit
 export { createCommandTransport, retryWithBackoff } from './transport.mjs';
 export { createFetchForgeTransport, createDefaultForgeTransport, probeGiteaCapabilities } from './http-transport.mjs';
 export { planForgeBootstrap, planForgeSync } from './plan.mjs';
-export { queryReadyForgeIssues, queryManagedForgeIssues, queryReviewedForgePullRequests, inspectForgeIssue, collectReadyForgeTasks, forgeIssueToAutomationTask, mergeForgeQueueIntoPlan } from './queue.mjs';
 export { applyForgePlan, previewForgePlan, reconcileForgeTask } from './apply.mjs';
 export { planForgePresentationReconcile } from './reconcile.mjs';
 export { createGithubProvider } from './providers/github.mjs';

@@ -1,43 +1,165 @@
-# Installation, migration and recovery
+# Installation, update, migration, and recovery
 
-Package installation and skill installation are separate. Validate a local prerelease tarball with an isolated npm prefix. Publishing is not part of install or update.
+Manage the CLI package, user skills, and project records separately. npm installs and updates the Node CLI; `aapb skills` manages selected guidance; record commands work on one project. MCP remains a separate host setting.
 
-The next.2 MCP catalog uses aapb_status/search/read/validate in place of the earlier playbook_* prerelease names. Update explicit allowlists; no duplicate alias tools are exposed. Existing record directories and the npm package name stay unchanged. Validate an archive before publishing it: registry publication is not required for installation, migration or stdio MCP demonstrations.
+## Install and update with npm
 
-## Skill selection
+```sh
+npm install -g ai-agent-playbook
+aapb --version
+aapb --help
+```
 
-Core installs two record/format entrypoints. Development adds three design/UI/prose entrypoints. Legacy installs one stack-contract entrypoint. Individual --skill selections replace the profile selection. References belonging to a selected skill travel with it; the larger source reference library is not automatically installed.
+To update to the current published release:
 
-Explicit selections must contain non-empty skill names; an empty comma-separated item is rejected before legacy cleanup. Layout migration also checks that CURRENT.md is a readable UTF-8 text file within the record size limit before changing metadata.
+```sh
+npm install -g ai-agent-playbook@latest
+aapb --version
+```
 
-An ordinary install/update affects only selected skills in .agents/skills. It does not mirror them into .codex/skills or delete old copies. Run migrate explicitly for a 0.5 installation.
+Before replacing an existing executable, save its exact version and recovery package. Check whether an existing schedule refers to it. Updating npm files does not update installed skills, alter project records, register MCP, or change model settings.
 
-## Transaction
+### Select a specific version
 
-The default backup parent is a sibling of the selected .agents/skills directory, named aapb-backups. Custom installation roots therefore keep their default backups on the installation filesystem. Backups and every affected installation in one transaction must share a filesystem so directory moves remain atomic. Preview rejects a mismatched --backup-root before creating a journal or changing installed files. A migration spanning multiple filesystems must be split into separate selections/root pairs with a local backup for each; cross-filesystem copying is not an atomic migration mode.
+```sh
+npm view ai-agent-playbook dist-tags --json
+npm install -g "ai-agent-playbook@<version>"
+npx "ai-agent-playbook@<version>" --help
+```
 
-1. Preview the selected installation and known legacy cleanup.
-2. Inspect ownership markers, hashes, destination roots, and conflicts.
-3. Apply with a backup root outside both installation roots.
-4. Keep the returned transaction directory and journal.
-5. Reload the host and inspect the new catalog separately from the file changes.
+Replace `<version>` with a published version you intend to use. `npx` is convenient for occasional calls; repeat the version pin to avoid mixing runtimes. A global installation, npm cache, and source checkout may contain different versions. Use the selected executable's `--version` when diagnosing a mismatch.
 
-The journal records prepared, applying, applied and restored entries. Existing directories are moved into the backup before replacements are activated. Interrupted operations retain their recoverable content. A retry observes the current filesystem; it does not assume that the previous run completed.
+### Install without a global command
 
-Modified managed files, unmanaged files and linked directories are preserved. Independent safe items may complete while the result reports conflicts. Rollback checks current and saved hashes before restoring; later user edits are not overwritten. Do not modify a recovery journal or its content.
+Use a separate directory as the npm prefix:
 
-## Project records
+```sh
+npm install --prefix "<prefix>" "ai-agent-playbook@<version>"
+node "<prefix>/node_modules/ai-agent-playbook/bin/aapb.mjs" --help
+```
 
-New bootstrap preserves root instructions and creates only CURRENT.md plus metadata. --local-only uses the Git-local exclude file, including linked worktrees. Existing projects are not re-bootstrapped over their content.
+Choose a prefix outside projects whose dependencies you want to leave unchanged. Use that Node script in place of `aapb` for later examples. No PowerShell wrapper is required.
 
-Structured and legacy playbook paths remain readable. If multiple roots exist, reconcile the ambiguity rather than silently selecting one. Layout migration requires an existing reviewed CURRENT.md and owned, unchanged layout metadata. It saves the previous manifest and ownership marker in a local archive. User records are not rewritten or automatically summarized.
+## Remove or recover the global CLI
 
-Preview with `aapb migrate layout <project> --to minimal --json`, then explicitly add --apply. The applied result returns the playbook-relative backup path. Preview recovery with `aapb migrate rollback <project> --backup <returned-path> --json`, then add --apply to restore unchanged metadata. Later edits are preserved as conflicts.
+```sh
+npm uninstall -g ai-agent-playbook
+```
 
-## Retired commands and exact recovery
+This removes the program and leaves skills and project records in place. To recover an earlier executable, install its saved archive and check the version:
 
-Execution, supervisors, schedules and automatic delivery are not included in 1.0. Native host execution/scheduling or existing project tools are the replacement. For an intentional old-runtime operation, use the pinned `npx ai-agent-playbook@0.5.11` command. Preserve the actual previous global package separately if it differs from the source baseline.
+```sh
+npm install -g "<previous-archive.tgz>"
+aapb --version
+```
 
-Before replacing a global executable, check whether existing local or remote schedules reference it. This package never rewrites or deletes schedules or remote records. Keep the older executable available for an explicitly chosen recovery.
+Keep the exact previous installation separately if it differs from the source baseline. Recovery of user skills and project layout uses the distinct procedures below.
 
-PowerShell install and sync wrap the same Node implementation. update.ps1 no longer pulls implicitly; -Pull explicitly requests git pull --ff-only. -WhatIf performs no mutation.
+## Development and local package testing
+
+For an unpublished candidate, npm can install a local archive using the same installation mechanism. Build and inspect it with [Local package testing](demo.md), then pass the archive instead of a registry package:
+
+```sh
+npm install --prefix "<demo-prefix>" --ignore-scripts "<archive.tgz>"
+node "<demo-prefix>/node_modules/ai-agent-playbook/bin/aapb.mjs" --version
+```
+
+Keep the archive checksum with its verification evidence. From a source checkout, use `npm install --no-package-lock` and `node bin/aapb.mjs --help`; see [Maintenance](maintenance.md) for source checks. Publishing is a separate release action, not an installation prerequisite.
+
+## Select and manage skills
+
+Default `core` selects `project-memory` and `spec-artifacts`. `development` adds design direction, UI polish, and document editing. `legacy` selects `legacy-contracts` alone. Repeated `--skill` options replace a profile with an explicit list. See [Skill catalog](skill-catalog.md).
+
+```sh
+aapb skills install --profile development --dry-run --json
+aapb skills install --profile development --json
+aapb skills check --profile development --json
+aapb skills update --profile development --dry-run --json
+aapb skills update --profile development --json
+```
+
+An ordinary install/update touches only the selected skills in `.agents/skills`. It does not mirror them into `.codex/skills`, delete other profiles, or clean up all old copies. Each selected skill's own references travel with it; the larger historical reference library is not automatically installed.
+
+To remove the selected managed skills:
+
+```sh
+aapb skills uninstall --profile development --dry-run --json
+aapb skills uninstall --profile development --json
+```
+
+Read the result and preserve its backup directory. Modified files, unknown ownership, and linked directories are preserved as conflicts. A filename alone is not proof of ownership. Force replacement is unsupported.
+
+After installation or removal, reload the agent and check its actual catalog. `skills check` verifies disk copies, not whether a running conversation loaded them.
+
+## Migrate 0.5 copies into one root
+
+Use this when AAPB copies remain in both `.codex/skills` and `.agents/skills`:
+
+```sh
+aapb skills migrate --profile development --json
+aapb skills migrate --profile development --apply --json
+```
+
+The first command is a preview. Inspect selected skills, proposed operations, ownership/hash checks, destination paths, and conflicts. The second applies independent safe operations and records what happened. Conflicting items remain untouched; the result can report failure even when other items completed.
+
+Custom roots use `--agents-root`, `--codex-root`, and optionally `--backup-root`. The default backup parent is `aapb-backups` beside the selected skill directory. Backups must be outside both installation roots and on the same filesystem as every affected installation in that transaction. A cross-filesystem backup is rejected before changes. Split migrations across filesystems into separate selections/root pairs with local backups; copying across volumes is not an atomic migration mode.
+
+## Recover a skill operation
+
+Installation operations retain a transaction directory with a journal and saved content. The journal records preparation, application, and restoration. Keep it intact; editing its data can make recovery fail.
+
+```sh
+aapb skills rollback --backup "<transaction-directory>" --json
+aapb skills rollback --backup "<transaction-directory>" --apply --json
+```
+
+Use the directory returned by the operation. If several transactions affected the same skills, reverse them newest first. Rollback checks current and saved hashes and preserves later user edits as conflicts. An interrupted operation retains recoverable content; inspect the journal and current filesystem before retrying or rolling back. Do not assume a nonzero exit means no files changed.
+
+## Create, share, or retain project records
+
+```sh
+aapb bootstrap "<project>" --local-only --dry-run
+aapb bootstrap "<project>" --local-only
+```
+
+New bootstrap creates `CURRENT.md`, `manifest.json`, and `.ai-agent-playbook-install.json`; it preserves root `AGENTS.md`. `--local-only` adds an exclusion through Git's local exclude file, including linked worktrees. It requires Git and does not change shared `.gitignore`. Omit it when records should be available for committing or when the project is not a Git repository.
+
+Existing records are not overwritten. Rerunning bootstrap does not convert an existing shared playbook into local-only records. Choose that Git policy explicitly for existing records; see [Existing repositories](existing-repository-bootstrap.md).
+
+Project record deletion is a deliberate file-management decision, not part of package uninstall. Back up useful records and check references and Git tracking before removing a playbook. The old `managed uninstall` command is retired; it does not silently delete documents in 1.0.
+
+## Migrate and restore layout metadata
+
+Reading an existing structured or legacy playbook does not require migration. Migration to `minimal` changes owned, unchanged metadata only. It requires an existing readable UTF-8 `CURRENT.md` within the record-size bound; review that document yourself before applying.
+
+```sh
+aapb migrate layout "<project>" --to minimal --json
+aapb migrate layout "<project>" --to minimal --apply --json
+```
+
+The result returns a playbook-relative backup path. It stores the original manifest and ownership marker. Old records, evidence links, and root instructions remain in place; no summary is promoted into current facts.
+
+```sh
+aapb migrate rollback "<project>" --backup "<returned-relative-backup>" --json
+aapb migrate rollback "<project>" --backup "<returned-relative-backup>" --apply --json
+```
+
+Later metadata changes are preserved as conflicts. Missing ownership or a modified manifest is a reason to inspect and reconcile, not invent ownership to force migration. Multiple playbook roots are ambiguous and must be reconciled deliberately.
+
+## PowerShell checkout helpers
+
+These wrappers call the same Node implementation:
+
+```powershell
+.\install.ps1 -Profile development -WhatIf
+.\scripts\sync-skills.ps1 -Profile development -WhatIf
+.\update.ps1 -Profile development -WhatIf
+```
+
+Remove `-WhatIf` to apply. `-Migrate` selects explicit legacy migration; without it the wrappers update selected skills only. `update.ps1` does not pull implicitly. `-Pull` requests `git pull --ff-only`; with `-WhatIf` even that is previewed. Run wrappers from a source checkout, and sync only from the intended source.
+
+## Retired runtime recovery
+
+Execution, supervision, schedules, indexing, and automatic delivery are retired in 1.0. Use host execution/scheduling or existing project tools. If an old-runtime operation is intentionally needed, the recovery reference is `npx ai-agent-playbook@0.5.11`; preserve an exact older global installation separately if its version differs.
+
+AAPB never rewrites existing schedules or remote records, runs a pinned old runtime automatically, or restores a whole personal configuration. Recover only the affected settings and preserve newer user choices. See [Commands](commands.md) for aliases and [MCP setup](mcp-permission-model.md) for the `playbook_*` to `aapb_*` prerelease name change.

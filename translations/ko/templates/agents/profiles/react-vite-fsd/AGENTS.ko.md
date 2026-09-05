@@ -32,7 +32,7 @@ React, Vite, TypeScript, pnpm, pragmatic FSD 또는 유사한 layered frontend �
 
 ## UI and styling
 
-- 저장소에 명시된 스타일 정책이 있으면 따릅니다. 정책이 불분명하거나 충돌하면 `style-policy-selection`을 사용합니다.
+- 저장소에 명시된 스타일 정책을 따릅니다. 불분명하거나 충돌하면 기존 컴포넌트를 살펴보고 이번 변경에 필요한 결정만 확인합니다. 실제 화면 검토 지침이 도움이 되면 `ui-polish`를 사용합니다.
 - documented policy가 없으면 새 styling system을 도입하지 말고 component의 existing local pattern을 유지합니다.
 - design-system이 강한 프로젝트에서는 custom styling 전에 shared UI variants, tokens, component props를 우선합니다.
 - button, input, select, modal, toast, pagination을 새로 만들기 전에 existing shared wrappers를 검색합니다.

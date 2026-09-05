@@ -58,3 +58,7 @@ Commit the design before implementation. Then commit runtime/skills, installatio
 The baseline suite had 458 passes, one skip, and no failures. Baseline syntax, type, skill, translation, public-document, Python, and installation-preview checks passed. These results do not validate the new implementation.
 
 Verify ownership conflicts, links/junctions, bounded record access, legacy reading, read-only MCP, migration replay/rollback, mocked forge conflict handling, and packaged installation. Use two UI cases, two Korean-document cases, and one code-cleanup case for a bounded before/after comparison. Record fidelity, product fit, over-correction, calls, rereads, duration, and available usage. Do not claim population-level performance gains from five cases.
+
+## Human documentation
+
+Instruction reduction applies to skill discovery and unnecessary mandatory reading. Human onboarding, command explanations, examples, recovery, and README branding serve a different purpose. Preserve those reader journeys and language-specific presentation while updating functionality. See [Maintenance](maintenance.md) and [Translation policy](translation-policy.md).

@@ -1,23 +1,26 @@
-# AGENTS.md Template Guide
+# Project AGENTS.md templates
 
-`templates/agents` contains `AGENTS.md` examples that can be copied into project roots. A project usually keeps one thin root `AGENTS.md` that points agents to `.ai-agent-playbook/`, then merges in the nearest matching profile only when the stack is confirmed.
+These are examples to adapt into a project's root instructions. Read any existing AGENTS.md first and merge only relevant rules. AAPB 1.0 bootstrap preserves that file automatically.
 
-The `global/` name means "stack-neutral project-root base template" inside this repository. It is not Codex's personal global file in `~/.codex/AGENTS.md`. For Codex home-level defaults, use `../codex-home/`.
+`global/` here means a stack-neutral project template. It is not a personal global instruction file; those examples are in [codex-home](../codex-home/README.md).
 
-## Choosing a profile
+## Choose a matching profile
 
-- `global/AGENTS.md`: thin project-root bootstrap for unknown stacks, documentation-first projects, and general repositories.
-- `profiles/react-vite-fsd/AGENTS.md`: React, Vite, TypeScript, pnpm, and pragmatic FSD or a similar layered frontend.
-- `profiles/react-native-expo/AGENTS.md`: Expo Router, React Native, and native/device verification.
-- `profiles/legacy-jquery-web/AGENTS.md`: jQuery, plugins, direct DOM manipulation, and script-order dependent pages.
-- `profiles/legacy-server-rendered-web/AGENTS.md`: JSP, Thymeleaf, Razor, PHP templates, or server-rendered form flows.
-- `profiles/legacy-android-webview-hybrid/AGENTS.md`: Android native shell, WebView, local assets, and JavaScript bridges.
+| Template | Matching project |
+| --- | --- |
+| [global](global/AGENTS.md) | General repositories and documentation work |
+| [react-vite-fsd](profiles/react-vite-fsd/AGENTS.md) | React/Vite/TypeScript with existing layered boundaries |
+| [react-native-expo](profiles/react-native-expo/AGENTS.md) | Expo/React Native and device verification |
+| [legacy-jquery-web](profiles/legacy-jquery-web/AGENTS.md) | jQuery, direct DOM manipulation, and script ordering |
+| [legacy-server-rendered-web](profiles/legacy-server-rendered-web/AGENTS.md) | Server templates, forms, and server-side contracts |
+| [legacy-android-webview-hybrid](profiles/legacy-android-webview-hybrid/AGENTS.md) | Native shell, WebView, local assets, and bridges |
 
-## How to apply
+## Apply to the actual repository
 
-1. Inspect the project's real config, README, build files, and existing docs first.
-2. Start with `global/AGENTS.md` as a short bootstrap; keep skill and Git policy under `.ai-agent-playbook/policy/SKILLS.md` and `.ai-agent-playbook/policy/GIT.md`.
-3. Pick the closest stack profile and remove rules that do not apply.
-4. If the project needs durable agent memory, copy `templates/project-playbook/` as `.ai-agent-playbook/`.
-5. If the project needs detailed commit, push, PR, and worklog guidance, adapt `templates/project-playbook/policy/GIT.md` and `templates/project-playbook/knowledge/references/guides/commit-push-worklog.md`.
-6. Keep project-specific product rules in separate docs. Use `AGENTS.md` only for the minimum entrypoint and local override rules.
+1. Inspect configuration, build scripts, existing instructions, and dirty changes.
+2. Keep the root policy focused on applicable rules and the current-state entrypoint.
+3. Choose a profile only if its stack matches; remove inapplicable assumptions and commands.
+4. Create records with bootstrap if needed, then write actual current facts in CURRENT.md.
+5. Keep detailed product, Git, and verification rules in the project's established documents and link them where useful.
+
+The old template paths `policy/SKILLS.md`, `policy/GIT.md`, and the generated guide tree are not part of the minimal template. Do not copy or require those nonexistent files. Existing project copies remain valid historical/project material. See [Record layout](../../docs/structured-playbook-layout.md).

@@ -2,6 +2,8 @@
 
 ## 1.0.0-next.2 (source prerelease)
 
+- Restore README branding and localized navigation; rebuild beginner, command, recovery, integration, and maintenance guides with worked examples.
+- Include README images, context, and examples in npm archives; deactivate examples that referenced removed hooks and remove orphaned retired-skill metadata.
 - Rename the four MCP tools to aapb_status/search/read/validate; keep package and record-directory names.
 - Replace clipped JSON previews with adjustable content budgets and source-bound continuation.
 - Preserve source text, match locations, validation totals and incomplete scan evidence across pages.

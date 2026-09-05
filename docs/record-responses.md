@@ -1,27 +1,80 @@
-# AAPB record response contract
+# Response size and continuation
 
-The public MCP names are aapb_status, aapb_search, aapb_read and aapb_validate. The earlier prerelease playbook_* names are no longer advertised. Update explicit tool allowlists when adopting this prerelease. The npm package name, aapb command and existing record directories remain unchanged.
+AAPB normally returns a compact status or a bounded part of a record. Ask for more detail when needed. These limits control tool results; they do not change the agent host's context window or output-token setting.
 
-## Budgets and continuation
+## Choose a useful amount
 
-Use a 12,000-character default content budget, adjustable with maxChars up to 100,000. List pages default to 20 complete items and accept pageSize up to 100; search retains maxResults as its page-size option. These are content budgets, not token estimates. A separate 256 KiB UTF-8 limit applies to the complete MCP result, including both representations and metadata. It is a defensive ceiling, not a target size or the host's token setting.
+| Situation | Request |
+| --- | --- |
+| Find the current entrypoint | Status with the default `summary` view |
+| Inspect a small document | Read with the default 12,000-character budget |
+| Find relevant evidence | Search for a phrase, then read a matching file |
+| Work with a long document | Select a line range or continue using the returned cursor |
+| Inspect many records or issues | Page complete items with `pageSize` / `maxResults` |
 
-Status defaults to a compact summary. Its records and warnings views are paged. Validation defaults to a page of issues and also offers summary and warnings views. All views retain scan completeness and total counts within the inspected scope. Pagination never changes a failed validation into a successful validation. A page too small for one complete item returns an actionable error instead of a cut JSON fragment.
+The server cannot see the conversation's remaining token budget. The caller chooses a size using the task and visible output. Increasing the content budget is supported, but requesting the maximum for every call adds unnecessary text.
 
-Search returns source paths, line numbers and text around each match. Read returns original text slices, including line endings, with source hashes and exact continuation positions. Long lines and Unicode pairs must resume without dropped or repeated text. Read supports startLine/endLine for the first request. A returned cursor carries the continuation range; subsequent requests repeat the path and may change maxChars.
+## Continue a CLI read
 
-For paged lists, repeat the same query/view and pass nextCursor. Cursors bind the project, operation and inspected content. A changed source or an incompatible request rejects a cursor; restart the query instead of silently skipping or duplicating results. Cursors are opaque continuation data, not permission grants. Every request still enforces filesystem boundaries.
+```sh
+aapb records read "<project>" --path CURRENT.md --max-chars 700 --json
+aapb records read "<project>" --path CURRENT.md --cursor "<nextCursor>" --max-chars 2000 --json
+```
 
-## Scan boundaries and evidence
+Replace `<nextCursor>` with the actual first result's `nextCursor`. Repeat until `truncated` is false and there is no next cursor. The second request may use a different content budget. Concatenate the `content` strings without adding separators to reconstruct the text.
 
-Each file is limited to 500,000 bytes. Traversal is limited to 2,000 entries and aggregate text inspection to 32 MB per request. Search matches and validation issues each have a 10,000-item inspection ceiling, reported as incomplete when reached. Skipped, unreadable or uninspected scope remains visible in scan metadata and warnings. The server does not know the conversation's remaining token budget and does not guess it.
+For an initial line range, use `--start-line 10 --end-line 40`. On continuation, repeat the path and cursor but omit line arguments: the cursor already remembers the selected range.
 
-This continuation contract belongs to AAPB tool arguments/results. The [MCP list pagination mechanism](https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/pagination) does not automatically paginate tools/call results.
+## Continue a list or search
 
-The result-size check does not summarize or rewrite source records. MCP calls never create result caches or temporary report files. A validation result describes configuration and document checks; runtimeVerified remains false.
+```sh
+aapb records status "<project>" --view records --page-size 5 --json
+aapb records status "<project>" --view records --page-size 5 --cursor "<page.nextCursor>" --json
+aapb records search "<project>" --query "API decision" --max-results 3 --json
+aapb records search "<project>" --query "API decision" --max-results 3 --cursor "<page.nextCursor>" --json
+```
 
-## Verification and demonstration
+List cursors are in `page.nextCursor`. Repeat the view and, for search, the same query. Status offers `summary`, `records`, and `warnings`; validation offers `issues` (default), `summary`, and `warnings`; search offers `results` (default) and `warnings`.
 
-Test exact text reconstruction, stable list pagination, changed-source cursors, query/project mismatch, small budgets, warning visibility, Unicode and complete serialized response sizes. Exercise an actual SDK stdio client.
+Every page keeps totals and scan completeness for the inspected scope. A failed validation stays failed even when the displayed page contains no new issue. An incomplete scan is not made complete by reading all returned pages.
 
-Install a local npm archive into an isolated prefix before registry publication. Use existing project records to demonstrate status, search, reading, validation and migration preview. Apply/rollback demonstrations use preserved record copies. Keep machine-specific output and project details out of public release artifacts. Compare English and Korean command names, limits, migration notes and verification claims in the same change.
+## Equivalent MCP requests
+
+Call `aapb_read` with:
+
+```json
+{"path":"CURRENT.md","maxChars":700}
+```
+
+Then use the returned cursor:
+
+```json
+{"path":"CURRENT.md","cursor":"<nextCursor>","maxChars":2000}
+```
+
+MCP uses camelCase arguments (`maxChars`, `pageSize`, `maxResults`, `startLine`, `endLine`); CLI options use hyphens. The other public tools are `aapb_status`, `aapb_search`, and `aapb_validate`. The earlier `playbook_*` prerelease names are no longer advertised.
+
+## Exact text and changed sources
+
+Reads preserve source text and line endings. A UTF-8 BOM is omitted from text output, while the source hash still identifies the original bytes. Positions and character budgets use JavaScript UTF-16 units; some emoji occupy two units, and the reader avoids splitting the pair. Search returns the source path, line number, and text around each match.
+
+Cursors bind the project, operation, query/view, and inspected content. If a source changes or the request no longer matches, restart the operation. Do not edit a cursor or use it to switch projects. Each request enforces the same filesystem boundaries; a cursor does not grant permission.
+
+## Content and transport limits
+
+| Limit | Value | Meaning |
+| --- | --- | --- |
+| Default content | 12,000 characters | Adjustable with `maxChars` |
+| Maximum content | 100,000 characters | Requested text/list content, not tokens |
+| List page | 20 default, 100 maximum | Complete items; search uses `maxResults` |
+| Complete MCP result | 256 KiB UTF-8 | Text and structured representations plus metadata; excludes JSON-RPC envelope |
+| One file | 500,000 bytes | Maximum readable record file |
+| Traversal | 2,000 entries | Filesystem inspection bound |
+| Text inspection | 32 MB per request | Aggregate scan bound |
+| Search matches / validation issues | 10,000 each | Reaching the inspection ceiling is reported as incomplete |
+
+The complete-result ceiling is a defensive bound. Because MCP can carry text and structured representations together, it is separate from the content budget. It does not mean every result should approach 256 KiB. If one complete list item cannot fit, the tool returns an actionable error instead of a broken JSON fragment. Narrow the request or adjust the relevant size.
+
+Scan metadata and warnings identify skipped, unreadable, or uninspected scope. No source rewriting, automatic summaries, result-cache files, or temporary reports are used to shrink responses. Validation always keeps `runtimeVerified: false`.
+
+Continuation is part of AAPB's tool arguments and results. MCP's protocol-level list pagination does not automatically paginate `tools/call` results. See [Runtime architecture](harness-runtime.md) and [the demonstration guide](demo.md) for verification boundaries.

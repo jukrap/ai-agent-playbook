@@ -1,7 +1,61 @@
-# Runtime engines
+# Node and optional Python
 
-Node.js ESM remains the CLI and MCP runtime. The package keeps Node 18+ as the public floor; development and platform evidence must state the actual version exercised. TypeScript is a development checker, not a runtime analysis engine. AST-grep and PNG-diff dependencies were removed with retired analysis commands.
+Node.js runs the CLI and MCP server. Python is optional for additional Korean/English writing signals. Neither record inspection nor JavaScript writing checks requires a model API or a new service.
 
-The optional Python 3.11+ writing engine retains the existing interpreter selection and JS fallback. CLI writing checks use JS by default; --engine auto or python opts into Python discovery. Python release metadata uses the corresponding PEP 440 development version for npm prereleases. No model inference or new service is required by the runtime.
+## Required and optional parts
 
-Interpreter probes have an eight-second bound per candidate, allowing slower cold starts while keeping discovery finite. Failed Python validation reports candidate errors; a timeout is not proof that Python is absent.
+| Part | Requirement | Purpose |
+| --- | --- | --- |
+| Node.js | `18+` | CLI, MCP, installation, and JavaScript checks |
+| npm | Supplied with a normal Node installation | Install package dependencies and archives |
+| Python | Optional `3.11+` | Additional writing analysis |
+| `kss`, `kiwipiepy` | Optional Python `ko` extras | Korean language analysis capabilities |
+| TypeScript | Development dependency | Source checking, not a runtime analysis service |
+
+The public minimum and a version actually tested are different claims. See [Verification](verification.md) for exercised versions. Retired AST and image-diff commands no longer bring AST-grep or PNG-diff dependencies.
+
+## Start with JavaScript
+
+```powershell
+aapb writing naturalness-check "<project>" --path README.md --lang auto --engine js --json
+```
+
+The CLI defaults to `js`. `--engine auto` and `--engine python` both request optional Python discovery in the retained writing implementation. If Python cannot run, the result keeps JavaScript findings and reports the unavailable engine. Inspect `engines.requested`, `engines.used`, `engines.unavailable`, and warnings; do not assume requesting Python proves it ran.
+
+## Set up Python from a checkout
+
+The PowerShell helper creates `.venv` and installs the optional extras:
+
+```powershell
+.\scripts\bootstrap-python.ps1
+node bin/aapb.mjs runtime python-status --json
+```
+
+A manual cross-platform setup uses the checkout's Python package metadata:
+
+```sh
+python -m venv .venv
+.venv/bin/python -m pip install -e '.[ko]'
+node bin/aapb.mjs runtime python-status --json
+```
+
+On Windows, use `.venv/Scripts/python.exe` in place of `.venv/bin/python`. Choose a Python 3.11+ executable explicitly if `python` points elsewhere. The npm archive bundles the Python engine source; installing Node dependencies does not install optional Python libraries.
+
+## Select a particular interpreter
+
+For a session in PowerShell, set an explicit interpreter if needed:
+
+```powershell
+$env:AI_AGENT_PLAYBOOK_PYTHON = '"<absolute-python-executable>"'
+aapb runtime python-status --json
+```
+
+Replace the placeholder and keep the inner quotes when the path contains spaces. Discovery checks the explicit environment setting, the package checkout's `.venv`, then available `python`, `python3`, and `py -3` candidates. The virtual environment belongs to the package/checkout, not automatically to the target project.
+
+Each probe is bounded at eight seconds. `python-status` reports the selected interpreter and candidate errors. A timeout may mean a slow or broken startup; it does not prove Python is uninstalled. Check the reported command and engine import error before changing settings.
+
+## Versions and validation
+
+The Node prerelease `1.0.0-next.2` maps to Python's PEP 440 version `1.0.0.dev2`. For development, run `npm run validate:python` after changing engine behavior. An optional engine being absent in a user's environment is different from a failed required development check.
+
+Writing findings remain advisory. See [Quality review](quality-review.md) for how to preserve meaning and voice instead of treating every signal as a required edit.

@@ -1,23 +1,26 @@
-# AGENTS.md 템플릿 가이드
+# 프로젝트 AGENTS.md 템플릿
 
-`templates/agents`에는 프로젝트 루트에 복사할 수 있는 `AGENTS.md` 예시가 있습니다. 보통 프로젝트는 에이전트를 `.ai-agent-playbook/`으로 안내하는 얇은 루트 `AGENTS.md` 하나를 유지하고, 스택이 확인된 경우에만 가장 가까운 프로필을 병합합니다.
+프로젝트 루트 지침에 맞게 조정해 쓰는 예시입니다. 기존 AGENTS.md를 먼저 읽고 필요한 규칙만 합치세요. AAPB 1.0 bootstrap은 이 파일을 자동으로 보존합니다.
 
-여기서 `global/`은 이 저장소 안에서 "스택 중립 프로젝트 루트 기본 템플릿"이라는 뜻입니다. Codex의 개인 전역 파일인 `~/.codex/AGENTS.md`가 아닙니다. Codex home 수준 기본값은 `../codex-home/`을 사용합니다.
+여기서 `global/`은 특정 기술에 묶이지 않은 프로젝트 템플릿을 뜻합니다. 개인 전역 지침 파일이 아닙니다. 개인 설정 예시는 [codex-home](../codex-home/README.ko.md)에 있습니다.
 
-## 프로필 선택
+## 맞는 프로필 고르기
 
-- `global/AGENTS.md`: 알 수 없는 스택, 문서 중심 프로젝트, 일반 저장소에 쓰는 얇은 프로젝트 루트 부트스트랩.
-- `profiles/react-vite-fsd/AGENTS.md`: React, Vite, TypeScript, pnpm, pragmatic FSD 또는 유사한 layered frontend.
-- `profiles/react-native-expo/AGENTS.md`: Expo Router, React Native, native/device verification.
-- `profiles/legacy-jquery-web/AGENTS.md`: jQuery, plugin, direct DOM manipulation, script-order dependent pages.
-- `profiles/legacy-server-rendered-web/AGENTS.md`: JSP, Thymeleaf, Razor, PHP template 또는 server-rendered form flow.
-- `profiles/legacy-android-webview-hybrid/AGENTS.md`: Android native shell, WebView, local assets, JavaScript bridge.
+| 템플릿 | 해당 프로젝트 |
+| --- | --- |
+| [global](global/AGENTS.ko.md) | 일반 저장소와 문서 작업 |
+| [react-vite-fsd](profiles/react-vite-fsd/AGENTS.ko.md) | 기존 계층 구조를 사용하는 React/Vite/TypeScript |
+| [react-native-expo](profiles/react-native-expo/AGENTS.ko.md) | Expo/React Native와 기기 검증 |
+| [legacy-jquery-web](profiles/legacy-jquery-web/AGENTS.ko.md) | jQuery, 직접 DOM 조작, 스크립트 순서 |
+| [legacy-server-rendered-web](profiles/legacy-server-rendered-web/AGENTS.ko.md) | 서버 템플릿, 폼, 서버 계약 |
+| [legacy-android-webview-hybrid](profiles/legacy-android-webview-hybrid/AGENTS.ko.md) | 네이티브 셸, WebView, 로컬 자산, 브리지 |
 
-## 적용 방법
+## 실제 저장소에 적용하기
 
-1. 프로젝트의 실제 config, README, build files, existing docs를 먼저 확인합니다.
-2. `global/AGENTS.md`를 짧은 부트스트랩으로 사용하고, skill/Git 정책은 `.ai-agent-playbook/policy/SKILLS.md`와 `.ai-agent-playbook/policy/GIT.md` 아래에 둡니다.
-3. 가장 가까운 스택 프로필을 고르고 적용되지 않는 규칙을 제거합니다.
-4. 오래 남길 에이전트 메모리가 필요하면 `templates/project-playbook/`을 `.ai-agent-playbook/`로 복사합니다.
-5. 자세한 commit, push, PR, worklog 지침이 필요하면 `templates/project-playbook/policy/GIT.md`와 `templates/project-playbook/knowledge/references/guides/commit-push-worklog.md`를 조정합니다.
-6. 프로젝트 고유 제품 규칙은 별도 문서에 둡니다. `AGENTS.md`는 최소 진입점과 로컬 override 규칙에만 사용합니다.
+1. 설정, 빌드 명령, 기존 지침, 커밋하지 않은 변경을 확인합니다.
+2. 루트 정책에는 실제 적용할 규칙과 현재 상태의 시작 위치를 둡니다.
+3. 기술 환경이 맞을 때만 프로필을 고르고 해당하지 않는 전제·명령을 뺍니다.
+4. 기록이 필요하면 bootstrap으로 만든 뒤 CURRENT.md에 현재 사실을 적습니다.
+5. 상세 제품·Git·검증 규칙은 프로젝트의 기존 문서에 두고 필요할 때 연결합니다.
+
+과거 템플릿의 `policy/SKILLS.md`, `policy/GIT.md`, 생성형 안내 폴더는 최소 템플릿에 없습니다. 존재하지 않는 파일을 복사하거나 필수로 요구하지 마세요. 기존 프로젝트에 남은 문서는 과거 기록이나 해당 프로젝트 자료로 계속 사용할 수 있습니다. [기록 구조](../../docs/structured-playbook-layout.ko.md)를 참고하세요.

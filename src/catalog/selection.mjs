@@ -29,7 +29,8 @@ export async function skillCatalog({ repoRoot }) {
  * @param {{profile?: string, skills?: string[]}} options */
 export function selectSkills(catalog, { profile = 'core', skills } = {}) {
   if (!SKILL_PROFILES[profile]) throw new Error('Unknown skill profile: ' + profile);
-  const names = skills?.length ? skills.flatMap((s) => s.split(',')).filter(Boolean) : SKILL_PROFILES[profile];
+  const names = skills?.length ? skills.flatMap((s) => s.split(',').map((name) => name.trim())) : SKILL_PROFILES[profile];
+  if (names.some((name) => !name)) throw new Error('An explicit selection contains an empty skill name. Use skills list for available names.');
   const selected = [...new Set(names)].map((name) => {
     const skill = catalog.find((s) => s.name === name);
     if (!skill) throw new Error('Unknown skill: ' + name + '. Use skills list for available entrypoints; old wrappers are retired.');

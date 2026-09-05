@@ -4,20 +4,24 @@ import { playbookStatus, playbookSearch, playbookRead, playbookValidate, RECORD_
 export { RECORD_TOOLS };
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 export const MAX_MCP_RESULT_CHARS = 12000;
+function toolResult(result) {
+  return { structuredContent: result, content: [{ type: 'text', text: JSON.stringify(result) }], isError: !result.ok };
+}
 function boundedResult(result) {
   const serialized = JSON.stringify(result);
-  if (serialized.length <= MAX_MCP_RESULT_CHARS) return result;
+  const response = toolResult(result);
+  if (JSON.stringify(response).length <= MAX_MCP_RESULT_CHARS) return response;
   const summary = { kind: result.kind, ok: result.ok, truncated: true, fullResultChars: serialized.length,
     message: 'Response capped. Narrow the query or read a record in smaller line ranges.', preview: '' };
   let low = 0, high = MAX_MCP_RESULT_CHARS;
   while (low < high) {
     const mid = Math.ceil((low + high) / 2);
     summary.preview = serialized.slice(0, mid);
-    if (JSON.stringify(summary).length <= MAX_MCP_RESULT_CHARS) low = mid;
+    if (JSON.stringify(toolResult(summary)).length <= MAX_MCP_RESULT_CHARS) low = mid;
     else high = mid - 1;
   }
   summary.preview = serialized.slice(0, low);
-  return summary;
+  return toolResult(summary);
 }
 export function registerPlaybookMcpTools(server, { target }) {
   /** @type {Array<[string, string, Record<string, z.ZodTypeAny>, (args: any) => Promise<any>]>} */
@@ -34,10 +38,9 @@ export function registerPlaybookMcpTools(server, { target }) {
   for (const [name, description, inputSchema, handler] of definitions) {
     server.registerTool(name, { description, inputSchema, annotations: READ_ONLY }, async (args) => {
       try {
-        const result = boundedResult(await handler({ ...args, target }));
-        return { structuredContent: result, content: [{ type: 'text', text: JSON.stringify(result) }], isError: !result.ok };
+        return boundedResult(await handler({ ...args, target }));
       } catch (error) {
-        return { isError: true, content: [{ type: 'text', text: String(error.message).slice(0, MAX_MCP_RESULT_CHARS) }] };
+        return boundedResult({ kind: 'playbook.error', ok: false, message: String(error.message) });
       }
     });
   }

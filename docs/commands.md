@@ -37,6 +37,8 @@ Read accepts --start-line and --max-chars. Search accepts --max-results and --ma
 
 Writing checks default to the JS engine in the CLI. Explicit auto/python selection may invoke the optional Python engine. Signals are advisory and are never authorship or automatic design judgments.
 
+The writing report honors --root and scans only that selected project-relative directory. Writing and UI checks reject linked input paths, including symbolic links or junctions in ancestor directories. Inputs must be bounded UTF-8 text files.
+
 ## Forge and retired commands
 
 `forge status <project>` inspects configured coordination without network writes. `forge bootstrap` previews labels/milestone/project setup. `forge sync|reconcile <project> --plan <relative-json>` consumes reviewed coordination data; `--apply` is required for remote writes. --offline, --no-remote and --remote-read-only deny remote writes. Plan paths must remain inside the selected project.

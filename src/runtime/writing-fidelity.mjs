@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
-import { lstat, readFile } from 'node:fs/promises';
+import { lstat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { noLinks, readBytes } from '../fs-safety.mjs';
 
 const VALID_LANGUAGES = new Set(['auto', 'ko', 'en']);
 const MAX_FILE_BYTES = 500_000;
@@ -95,6 +96,11 @@ function resolveDocument(target, value, role, conflicts) {
 }
 
 async function readDocument(document, conflicts) {
+  try { await noLinks(document.path); }
+  catch {
+    conflicts.push(conflict('writing-fidelity.file-symlink', `Linked input paths are not supported: ${document.relativePath}`, [document.relativePath]));
+    return '';
+  }
   if (!existsSync(document.path)) {
     conflicts.push(conflict('writing-fidelity.file-missing', `File does not exist: ${document.relativePath}`, [document.relativePath]));
     return '';
@@ -112,7 +118,7 @@ async function readDocument(document, conflicts) {
     conflicts.push(conflict('writing-fidelity.file-too-large', `File exceeds ${MAX_FILE_BYTES} bytes: ${document.relativePath}`, [document.relativePath]));
     return '';
   }
-  const content = await readFile(document.path);
+  const content = await readBytes(document.path, MAX_FILE_BYTES);
   let text;
   try {
     text = new TextDecoder('utf-8', { fatal: true }).decode(content);

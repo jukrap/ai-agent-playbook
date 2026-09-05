@@ -97,3 +97,23 @@ test('unmanaged layout and later metadata edits are never overwritten', async (t
   assert.equal(result.applied, false);
   assert.deepEqual(await treeSnapshot(target), before);
 });
+
+test('layout migration requires a readable text entrypoint before writing metadata', async (t) => {
+  for (const content of [null, Buffer.from([0]), Buffer.from([0xff])]) {
+    const target = await fixture(t), pb = path.join(target, '.ai-agent-playbook');
+    await mkdir(pb);
+    const body = '{"layoutKind":"structured"}\n';
+    await writeFile(path.join(pb, 'manifest.json'), body);
+    await writeFile(path.join(pb, '.ai-agent-playbook-install.json'), JSON.stringify({ source: 'ai-agent-playbook', files: { 'manifest.json': sha256(body) } }));
+    if (content === null) await mkdir(path.join(pb, 'CURRENT.md'));
+    else await writeFile(path.join(pb, 'CURRENT.md'), content);
+    const before = await treeSnapshot(target);
+    for (const apply of [false, true]) {
+      const result = await migrateRecords({ target, apply });
+      assert.equal(result.ok, false);
+      assert.equal(result.applied, false);
+      assert.ok(result.conflicts.some((c) => c.path === 'CURRENT.md'));
+      assert.deepEqual(await treeSnapshot(target), before);
+    }
+  }
+});

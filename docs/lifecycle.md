@@ -6,6 +6,8 @@ Package installation and skill installation are separate. Validate a local prere
 
 Core installs two record/format entrypoints. Development adds three design/UI/prose entrypoints. Legacy installs one stack-contract entrypoint. Individual --skill selections replace the profile selection. References belonging to a selected skill travel with it; the larger source reference library is not automatically installed.
 
+Explicit selections must contain non-empty skill names; an empty comma-separated item is rejected before legacy cleanup. Layout migration also checks that CURRENT.md is a readable UTF-8 text file within the record size limit before changing metadata.
+
 An ordinary install/update affects only selected skills in .agents/skills. It does not mirror them into .codex/skills or delete old copies. Run migrate explicitly for a 0.5 installation.
 
 ## Transaction

@@ -32,6 +32,7 @@ test('MCP exposes only four bound read-only tools and tool calls do not change f
     assert.equal(large.structuredContent.truncated, true);
     assert.ok(JSON.stringify(large.structuredContent).length <= 12000);
     assert.ok(large.content[0].text.length <= 12000);
+    assert.ok(JSON.stringify(large).length <= 12000, 'The entire MCP result, including both representations, must fit.');
     assert.deepEqual(await treeSnapshot(target), largeBefore);
   } finally {
     await client.close(); await transport.close();

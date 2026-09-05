@@ -35,6 +35,8 @@ aapb mcp --project <project>는 기존 프로젝트 하나에 묶입니다. 도�
 
 CLI의 글쓰기 검사는 JS가 기본입니다. auto·python을 명시하면 선택 Python 엔진을 호출할 수 있습니다. 결과는 참고 신호이며 작성 주체나 디자인 결함을 자동 판정하지 않습니다.
 
+문서 보고서는 --root로 선택한 프로젝트 상대 디렉터리만 검사합니다. 문서·UI 검사는 상위 폴더의 symbolic link나 junction을 포함한 링크 경로를 거부합니다. 입력은 크기 제한 안의 UTF-8 텍스트 파일이어야 합니다.
+
 ## Forge와 종료된 명령
 
 forge status는 네트워크 쓰기 없이 설정을 확인하고 forge bootstrap은 협업 자산 생성을 미리 보여 줍니다. forge sync|reconcile <project> --plan <relative-json>은 검토된 협업 데이터를 사용하며 원격 쓰기에는 --apply가 필요합니다. --offline·--no-remote·--remote-read-only는 원격 쓰기를 막습니다. plan 경로는 선택한 프로젝트 안에 있어야 합니다.

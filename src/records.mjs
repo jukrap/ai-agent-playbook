@@ -198,7 +198,11 @@ export async function migrateRecords({ target, apply = false }) {
   if (!original || !ownedHash || sha256(original) !== ownedHash || marker?.source !== 'ai-agent-playbook') {
     conflicts.push({ path: 'manifest.json', reason: 'Unmanaged or modified layout metadata is preserved. Existing records remain readable without migration.' });
   }
-  if (!await statOrNull(await safePath(pb.directory, 'CURRENT.md'))) conflicts.push({ path: 'CURRENT.md', reason: 'Create a reviewed current-state entrypoint before migration; no automatic summary is written.' });
+  try {
+    await readText(await safePath(pb.directory, 'CURRENT.md'), MAX_FILE_BYTES);
+  } catch {
+    conflicts.push({ path: 'CURRENT.md', reason: 'Create a reviewed, readable UTF-8 text entrypoint within the record size limit before migration; no automatic summary is written.' });
+  }
   const operations = conflicts.length ? [] : ['manifest.json', MARKER];
   let backupPath = null;
   if (apply && operations.length) {

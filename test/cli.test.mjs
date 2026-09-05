@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm, readFile, symlink } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { runCli } from '../src/cli.mjs';
@@ -42,6 +42,39 @@ test('optional writing fidelity reports changed numeric and URL evidence without
   assert.match(JSON.stringify(r.value), /12|20/);
   assert.equal(r.value.reviewRequired, true);
   assert.deepEqual(await treeSnapshot(root), before);
+});
+test('writing reports honor the selected root and reject a root outside the project', async (t) => {
+  const root = await fixture(t);
+  await mkdir(path.join(root, 'selected'));
+  await writeFile(path.join(root, 'selected/note.md'), 'Selected text.');
+  await writeFile(path.join(root, 'unrelated.md'), 'Unrelated text.');
+  const before = await treeSnapshot(root);
+  const result = await cli(['writing', 'naturalness-report', root, '--root', 'selected', '--json'], root);
+  assert.equal(result.code, 0);
+  assert.equal(result.value.root, 'selected');
+  assert.deepEqual(result.value.files.map((f) => f.path), ['selected/note.md']);
+  assert.equal((await cli(['writing', 'naturalness-report', root, '--root', '..', '--json'], root)).code, 1);
+  assert.deepEqual(await treeSnapshot(root), before);
+});
+test('advisory checks reject ancestor junctions without reading outside the project', async (t) => {
+  const root = await fixture(t), outside = await fixture(t);
+  await mkdir(path.join(outside, 'texts'));
+  await writeFile(path.join(outside, 'texts/note.md'), 'Outside evidence 12. https://example.com/private');
+  await writeFile(path.join(outside, 'texts/view.css'), '.view { border-radius: 12px; }');
+  await symlink(outside, path.join(root, 'linked'), process.platform === 'win32' ? 'junction' : 'dir');
+  const before = await treeSnapshot(outside);
+  for (const args of [
+    ['writing', 'naturalness-check', root, '--path', 'linked/texts/note.md'],
+    ['writing', 'naturalness-report', root, '--root', 'linked/texts'],
+    ['writing', 'fidelity-check', root, '--before', 'linked/texts/note.md', '--after', 'linked/texts/note.md'],
+    ['qa', 'ui-genericity-scan', root, '--root', 'linked/texts']
+  ]) {
+    const result = await cli([...args, '--json'], root);
+    assert.equal(result.code, 1, args.join(' '));
+    assert.equal(result.value.ok, false);
+    assert.doesNotMatch(result.out, /Outside evidence/);
+  }
+  assert.deepEqual(await treeSnapshot(outside), before);
 });
 test('release metadata, copyable templates and selected skill references agree', async () => {
   const pkg = JSON.parse(await readFile(path.join(repoRoot, 'package.json'), 'utf8'));

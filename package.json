@@ -32,9 +32,7 @@
     "pyproject.toml",
     "docs/*.md",
     "docs/skill-decisions.json",
-    "!docs/maintenance.md",
-    "!docs/publishing-checklist.md",
-    "!docs/translation-policy.md",
+    "translations/ko/",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"

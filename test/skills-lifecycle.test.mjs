@@ -126,6 +126,18 @@ test('backup roots cannot overlap installations and invalid selections do not mu
   assert.deepEqual(await treeSnapshot(f.root), before);
 });
 
+test('empty explicit skill selections cannot trigger legacy cleanup', async (t) => {
+  const f = await fixture(t);
+  await legacy(f.codexRoot, 'repo-onboarding');
+  const before = await treeSnapshot(f.root);
+  for (const skills of [[''], [','], ['project-memory,,spec-artifacts']]) {
+    for (const dryRun of [true, false]) {
+      await assert.rejects(runSkillsLifecycle({ ...f, command: 'migrate', skills, apply: true, dryRun }), /empty skill/i);
+      assert.deepEqual(await treeSnapshot(f.root), before);
+    }
+  }
+});
+
 test('interrupted apply can restore a moved original before a replacement is installed', async (t) => {
   const f = await fixture(t), old = await legacy(f.agentsRoot, 'project-memory');
   const original = await treeSnapshot(old);

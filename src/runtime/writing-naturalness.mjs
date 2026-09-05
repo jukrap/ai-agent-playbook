@@ -1,6 +1,7 @@
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { runPythonWritingNaturalness } from './python-engine.mjs';
+import { noLinks, readText } from '../fs-safety.mjs';
 
 const MAX_FILE_BYTES = 200_000;
 const MAX_REPORT_FILES = 50;
@@ -123,6 +124,11 @@ export async function checkWritingNaturalness(options) {
   if (conflicts.length) {
     return emptyReport({ target, filePath: filePath ?? '', requestedLanguage, requestedEngine, conflicts, warnings });
   }
+  try { await noLinks(resolved.path); }
+  catch {
+    conflicts.push(conflict('writing-naturalness.path-boundary', 'Linked input paths are not supported.'));
+    return emptyReport({ target, filePath: resolved.relativePath, requestedLanguage, requestedEngine, conflicts, warnings });
+  }
 
   let info;
   try {
@@ -142,7 +148,7 @@ export async function checkWritingNaturalness(options) {
     return emptyReport({ target, filePath: resolved.relativePath, requestedLanguage, requestedEngine, conflicts, warnings });
   }
 
-  const text = await readFile(resolved.path, 'utf8');
+  const text = await readText(resolved.path, MAX_FILE_BYTES);
   if (CONTROL_CHAR_RE.test(text)) {
     conflicts.push(conflict('writing-naturalness.binary-or-control', 'File appears to contain binary or control characters.'));
     return emptyReport({ target, filePath: resolved.relativePath, requestedLanguage, requestedEngine, conflicts, warnings });
@@ -216,7 +222,7 @@ export async function checkWritingNaturalnessReport(options) {
   const target = path.resolve(options.target ?? '.');
   const requestedLanguage = options.lang ?? 'auto';
   const requestedEngine = options.engine ?? 'auto';
-  const rootPath = options.rootPath ?? options.path ?? '.';
+  const rootPath = options.rootPath ?? options.root ?? options.path ?? '.';
   const maxFiles = normalizeMaxFiles(options.maxFiles);
   const warnings = [];
   const conflicts = [];
@@ -233,6 +239,11 @@ export async function checkWritingNaturalnessReport(options) {
     conflicts.push(conflict('writing-naturalness.path-boundary', 'Report root must stay inside the target project.'));
   }
   if (conflicts.length) {
+    return emptyReportSet({ target, rootPath, requestedLanguage, requestedEngine, conflicts, warnings });
+  }
+  try { await noLinks(resolved.path); }
+  catch {
+    conflicts.push(conflict('writing-naturalness.path-boundary', 'Linked report roots are not supported.'));
     return emptyReportSet({ target, rootPath, requestedLanguage, requestedEngine, conflicts, warnings });
   }
 
@@ -671,6 +682,7 @@ async function collectReportFiles(rootPath, target, limit) {
 
   async function walk(current) {
     if (files.length >= limit) return;
+    await noLinks(current);
     const entries = await readdir(current, { withFileTypes: true });
     entries.sort((a, b) => a.name.localeCompare(b.name));
     for (const entry of entries) {

@@ -6,7 +6,7 @@ AAPB records are plain Markdown/JSON, and its skill formats are kept separate fr
 
 Read the project's existing instructions and CURRENT.md, then follow relevant links. Use normal file editing for current state, decisions, and handoffs. Run application checks with the project's tools and record the actual result.
 
-To create records when absent, preview `aapb bootstrap "<project>" --dry-run`. Existing project instructions and records remain in place. [First 10 minutes](../../docs/quick-start.md) covers a complete practice run.
+To create records when absent, preview `ai-agent-playbook bootstrap "<project>" --dry-run`. Existing project instructions and records remain in place. [First 10 minutes](../../docs/quick-start.md) covers a complete practice run.
 
 ## Select guidance and connect tools
 

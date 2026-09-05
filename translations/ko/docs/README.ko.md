@@ -19,6 +19,7 @@
 - [기존 저장소에 적용하기](existing-repository-bootstrap.ko.md): 기존 기록 점검과 프로젝트 지침 보존.
 - [프로젝트 기록 구조](structured-playbook-layout.ko.md): 현재 사실, 상세 문서, 관리 파일 구분, 작성 예시.
 - [MCP 설정](mcp-permission-model.ko.md): 프로젝트에 연결하는 읽기 전용 도구 네 개.
+- [에이전트의 도구 활용](agent-usage.ko.md): 스킬·MCP·문서 점검을 사용할 수 있게 하는 방법과 실제 활용 확인.
 - [응답 크기와 이어 읽기](record-responses.ko.md): 긴 문서와 목록을 다루는 CLI/MCP 예시.
 - [Forge 협업](forge-automation.ko.md): GitHub/Gitea 계획, 적용, 충돌, 재시도.
 - [실행 환경](runtime-engines.ko.md): Node와 선택형 Python 설정.
@@ -39,7 +40,7 @@
 ## 구조 이해·기여·배포
 
 - [저장소 맥락](../CONTEXT.ko.md), [런타임 구조](harness-runtime.ko.md): 용어, 데이터 흐름, 기능 범위.
-- [1.0 개편 설계](redesign.ko.md): 개편 이유와 근거의 한계.
+- [1.0 변경사항과 이전 버전](redesign.ko.md): 개편 이유와 근거의 한계.
 - [검증 보고서](verification.ko.md): 실제 검사, 제한된 비교 결과, 미검증 사항.
 - [정식 버전 준비](runtime-roadmap.ko.md), [배포 점검표](publishing-checklist.ko.md): 사전 릴리스에서 정식 버전으로 넘어가는 조건.
 - [유지보수](maintenance.ko.md), [번역 정책](translation-policy.ko.md): 편집, 보존 기준, 필요한 검사.

@@ -17,8 +17,8 @@ AAPB는 보통 짧은 상태 요약이나 크기가 제한된 문서 일부를 �
 ## CLI에서 문서 이어 읽기
 
 ```sh
-aapb records read "<project>" --path CURRENT.md --max-chars 700 --json
-aapb records read "<project>" --path CURRENT.md --cursor "<nextCursor>" --max-chars 2000 --json
+ai-agent-playbook records read "<project>" --path CURRENT.md --max-chars 700 --json
+ai-agent-playbook records read "<project>" --path CURRENT.md --cursor "<nextCursor>" --max-chars 2000 --json
 ```
 
 `<nextCursor>`는 첫 결과의 실제 `nextCursor` 값으로 바꿉니다. `truncated`가 false이고 다음 커서가 없을 때까지 반복합니다. 다음 요청의 크기는 달라도 됩니다. 원문을 재구성하려면 각 결과의 `content`를 구분자 없이 순서대로 붙입니다.
@@ -28,10 +28,10 @@ aapb records read "<project>" --path CURRENT.md --cursor "<nextCursor>" --max-ch
 ## 목록과 검색 결과 이어 보기
 
 ```sh
-aapb records status "<project>" --view records --page-size 5 --json
-aapb records status "<project>" --view records --page-size 5 --cursor "<page.nextCursor>" --json
-aapb records search "<project>" --query "API decision" --max-results 3 --json
-aapb records search "<project>" --query "API decision" --max-results 3 --cursor "<page.nextCursor>" --json
+ai-agent-playbook records status "<project>" --view records --page-size 5 --json
+ai-agent-playbook records status "<project>" --view records --page-size 5 --cursor "<page.nextCursor>" --json
+ai-agent-playbook records search "<project>" --query "API decision" --max-results 3 --json
+ai-agent-playbook records search "<project>" --query "API decision" --max-results 3 --cursor "<page.nextCursor>" --json
 ```
 
 목록의 다음 커서는 `page.nextCursor`에 있습니다. 같은 보기를 유지하고, 검색은 같은 검색어도 다시 넘깁니다. 상태는 `summary`, `records`, `warnings`, 검증은 `issues`(기본값), `summary`, `warnings`, 검색은 `results`(기본값), `warnings`를 제공합니다.

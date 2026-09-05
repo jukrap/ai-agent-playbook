@@ -7,9 +7,9 @@ AAPB supplies portable records and selected skills. Use the installed host's nat
 Use a verified CLI and preview the development profile:
 
 ```powershell
-aapb skills install --profile development --dry-run --json
-aapb skills install --profile development --json
-aapb skills check --profile development --json
+ai-agent-playbook skills install --profile development --dry-run --json
+ai-agent-playbook skills install --profile development --json
+ai-agent-playbook skills check --profile development --json
 ```
 
 The default user directory is `.agents/skills`. Do not mirror the same skills into `.codex/skills`; migrate known older copies explicitly using [Lifecycle](../../docs/lifecycle.md). Reload skills or start a fresh session and check the actual five-name catalog. Disk copies and prompt injection are separate observations.
@@ -22,7 +22,7 @@ Preserve existing personal model, reasoning, context, compaction, output, and se
 
 ## Optional MCP
 
-Connect a project-bound `aapb mcp --project "<project>"` only when wanted. [MCP setup](../../docs/mcp-permission-model.md) gives command/argument fields, expected tools, and a loading checklist. An absolute Node/script invocation is useful when desktop PATH differs from a terminal.
+Connect a project-bound `ai-agent-playbook mcp --project "<project>"` only when wanted. [MCP setup](../../docs/mcp-permission-model.md) gives command/argument fields, expected tools, and a loading checklist. An absolute Node/script invocation is useful when desktop PATH differs from a terminal.
 
 Keep old common MCP entries disabled until intentionally updated. The server exposes only `aapb_status`, `aapb_search`, `aapb_read`, and `aapb_validate`; writing still uses file tools or explicit CLI operations.
 

@@ -1,136 +1,207 @@
 # Command guide
 
-Use this page to look up a command, its write behavior, and how to interpret the result. For a guided first run, start with [First 10 minutes](quick-start.md).
-
-## Running the examples
-
-`aapb` means the installed executable. In a source checkout, replace it with `node bin/aapb.mjs` and stay in that checkout. Replace `<project>` and other placeholders; quote paths or text containing spaces. Use `.` for the project only when the terminal is inside that project.
+The primary command is `ai-agent-playbook`. `aapb` is a shorter alias of the same program: both use the same skills, project records, options, and permissions. Install once with npm; choosing an executable name does not install another skill.
 
 ```sh
-aapb --version
+npm install -g ai-agent-playbook
+ai-agent-playbook --help
 aapb --help
-aapb records status "<project>" --json
 ```
 
-`--json` retains warnings, totals, and continuation fields. Without it, `records read` prints text; most other commands still print structured results.
+For occasional use, prepend `npx` to the full name. From source, use `node bin/aapb.mjs` instead of either installed command.
 
-## Which commands write?
+## Read the syntax and choose the project
 
-| Commands | Default behavior | Preview / application |
+A positional argument supplies a value such as a project path. An option starts with `--`: `--local-only` is an on/off flag; `--path CURRENT.md` is an option followed by a value. Quote values containing spaces. Angle brackets mark a placeholder to replace; square brackets in syntax descriptions mean optional and are not typed.
+
+**Project paths are optional.** Omitting the project uses the current terminal directory, just like writing `.`. It does not automatically search upward for the Git root. Change directories first, give a positional path, or use `--project`.
+
+| Complete command | Meaning |
+| --- | --- |
+| `ai-agent-playbook bootstrap --local-only --dry-run` | Preview a local-only playbook in the current directory |
+| `ai-agent-playbook bootstrap . --local-only --dry-run` | The same preview with the current directory written explicitly |
+| `ai-agent-playbook bootstrap "<project>" --local-only --dry-run` | Preview the explicitly selected project's local-only playbook |
+| `ai-agent-playbook bootstrap --project "<project>" --local-only --dry-run` | Select the same target using an option |
+
+`--project` takes precedence if both forms are supplied; use one form for clarity. Project paths are resolved relative to the terminal directory. Skill commands are different: they manage user skill roots and do not install into the current project merely because you run them there.
+
+## Shared options and results
+
+| Option | Where it applies | Meaning |
 | --- | --- | --- |
-| `records status/read/search/validate`, `skills list/lint/check` | Read-only | No apply step |
-| `bootstrap` | Creates records if none exist | Add `--dry-run` to preview |
-| `skills install/update/uninstall` | Changes the selected installation | Add `--dry-run` to preview |
-| `skills migrate/rollback`, `migrate layout/rollback` | Preview | Add `--apply`; `--dry-run` always prevents writes |
-| `writing ...`, `qa ui-genericity-scan`, `runtime python-status` | Advisory inspection | Python discovery runs only when selected or requested |
-| `forge status` | Local configuration inspection | No network write |
-| `forge bootstrap/sync/reconcile` | Preview | `--apply` allows the reviewed remote operation |
-| `mcp` | Starts a stdio server | Does not register itself or write project records |
+| `--help` | CLI | Show commands without performing the requested action |
+| `--version` | CLI | Show the actual executable's package version |
+| `--json` | Commands returning results | Retain structured fields such as warnings, totals, and cursors |
+| `--project "<directory>"` | Project commands | Explicitly select a project instead of the current directory |
+| `--dry-run` | Bootstrap, skill changes, migration, Forge changes | Prevent writes and inspect the proposed operation |
+| `--apply` | Migration, rollback, Forge changes | Apply an operation that otherwise previews |
+| `--local-only` | Bootstrap | Add a new playbook to Git's local exclude file; requires Git |
 
-`--apply` is not a universal requirement: an ordinary skill install or bootstrap writes without it. Preview those commands with `--dry-run` first.
+`--apply` is not required by ordinary bootstrap or skill install/update/uninstall. Those commands write unless `--dry-run` is present. When both `--apply` and `--dry-run` are present, preview wins.
 
-## Project records
+Most commands print JSON. `records read` prints plain text unless `--json` is present; use JSON for scripts that need continuation fields. Exit codes are `0` for success, `1` for a failure/conflict, and `2` for a retired command. Inspect warnings and scope even on success. A partial operation may have completed safe items before reporting conflicts.
 
-```sh
-aapb bootstrap "<project>" --local-only --dry-run
-aapb bootstrap "<project>" --local-only
-aapb records status "<project>" --json
-aapb records status "<project>" --view records --page-size 10 --json
-aapb records read "<project>" --path CURRENT.md --json
-aapb records read "<project>" --path CURRENT.md --start-line 1 --end-line 20 --json
-aapb records search "<project>" --query "API decision" --max-results 5 --json
-aapb records validate "<project>" --json
-```
+## Create project records: bootstrap
 
-Bootstrap creates `CURRENT.md` and two metadata files only when no playbook exists. It preserves `AGENTS.md`. `--local-only` requires Git and adds the new record directory to Git's local exclude file; omit it for shared records or non-Git folders.
+Run these from the target directory, or add a project path after `bootstrap`.
 
-`--path` is relative to the selected playbook, not the repository root. Search is literal text search, not a regular expression. Validation checks JSON, record links, and managed-file integrity; it does not run project tests.
-
-| Operation | Views and size options | Continuation |
+| Complete command | What it does | Writes? |
 | --- | --- | --- |
-| Status | Default `summary`; `records` or `warnings`; `--page-size` | Repeat the view with `--cursor` |
-| Read | `--start-line`, `--end-line`, `--max-chars` | Repeat path and cursor, omit line options |
-| Search | Default `results`; `warnings`; `--max-results`, `--max-chars` | Repeat query and view with cursor |
-| Validate | Default `issues`; `summary` or `warnings`; `--page-size` | Repeat view with cursor |
+| `ai-agent-playbook bootstrap --dry-run` | Show the three files proposed for a new playbook | No |
+| `ai-agent-playbook bootstrap` | Create CURRENT.md, manifest.json, and the ownership marker if records are absent | Yes, when absent |
+| `ai-agent-playbook bootstrap --local-only --dry-run` | Preview the files and Git-local exclusion | No |
+| `ai-agent-playbook bootstrap --local-only` | Create new records and add the directory to Git's local exclude file | Yes, when absent |
+| `ai-agent-playbook bootstrap --local-only --json` | Apply the same operation and retain structured output | Yes, when absent |
+| `ai-agent-playbook bootstrap --preserve-agents --dry-run` | Compatibility form; root instructions are always preserved in 1.0 | No |
 
-List pages default to 20 items and allow up to 100. The content budget defaults to 12,000 characters and allows up to 100,000. All four record commands accept `--max-chars`. These are not host token settings. See [Response limits](record-responses.md) for complete examples and the separate MCP result ceiling.
-
-## Skills
-
-```sh
-aapb skills list --json
-aapb skills lint --json
-aapb skills install --profile development --dry-run --json
-aapb skills install --profile development --json
-aapb skills check --profile development --json
-aapb skills update --profile development --dry-run --json
-aapb skills uninstall --profile development --dry-run --json
-```
-
-The default is `core` with two skills. `development` contains five; `legacy` contains only `legacy-contracts`. Use the same selection when checking, updating, or removing an installation. `list` shows the source catalog; `check` compares selected installed copies. Neither proves host loading.
-
-For individual selection, repeat `--skill`:
+A useful sequence is:
 
 ```sh
-aapb skills install --skill project-memory --skill legacy-contracts --dry-run --json
+cd "<project>"
+ai-agent-playbook bootstrap --local-only --dry-run
+ai-agent-playbook bootstrap --local-only
+ai-agent-playbook records read --path CURRENT.md
 ```
 
-Explicit skills replace the profile selection. Empty names are rejected. `--agents-root` overrides the destination, `--codex-root` identifies a legacy root, and `--backup-root` chooses the backup parent. Backups must be outside both skill roots and on the same filesystem as the affected installations. Force-replacement flags are rejected. [Lifecycle](lifecycle.md) explains conflicts and recovery.
+Omit `--local-only` outside Git or when records should be available for commits. AAPB does not commit them. Existing AGENTS.md and playbooks are preserved. Repeating bootstrap does not change the tracking policy of existing records. See [Existing repositories](existing-repository-bootstrap.md).
 
-## Migration and rollback
+## Inspect records: status and validation
 
-Skill migration reconciles known, owned 0.5 copies; it does not infer ownership from directory names. Layout migration changes managed metadata while preserving records.
+| Complete command | Meaning |
+| --- | --- |
+| `ai-agent-playbook records status --json` | Show layout, entrypoint, record count, and scan summary for the current directory |
+| `ai-agent-playbook records status --view records --page-size 10 --json` | List up to 10 complete record entries |
+| `ai-agent-playbook records status --view warnings --page-size 10 --json` | Page through inspection warnings |
+| `ai-agent-playbook records status --view records --cursor "<cursor>" --json` | Continue the same record listing using `page.nextCursor` |
+| `ai-agent-playbook records validate --json` | Check record JSON, links, and managed integrity; return the first issue page |
+| `ai-agent-playbook records validate --view summary --json` | Return validation totals without a detailed issue page |
+| `ai-agent-playbook records validate --view issues --page-size 5 --json` | Show up to five complete issues |
+| `ai-agent-playbook records validate --view warnings --json` | Inspect skipped/unreadable scope and other warnings |
+| `ai-agent-playbook records validate --view issues --cursor "<cursor>" --json` | Continue issues while preserving overall failure and totals |
+
+All are read-only. Validation never runs application tests or verifies the truth of historical prose. `runtimeVerified: false` is expected. A `managed-modified` issue can reflect useful customization; inspect it rather than overwrite it for a clean report.
+
+## Read and search records
+
+Read/search paths stay inside the selected playbook. `--path CURRENT.md` means its CURRENT.md, not a root README or an arbitrary source file.
+
+| Complete command | Meaning |
+| --- | --- |
+| `ai-agent-playbook records read` | Print the current playbook's CURRENT.md with the default content budget |
+| `ai-agent-playbook records read --path decisions/api.md --json` | Read an existing record and include source/continuation metadata |
+| `ai-agent-playbook records read --path CURRENT.md --start-line 10 --end-line 30 --json` | Read the inclusive range from line 10 through 30 |
+| `ai-agent-playbook records read --path CURRENT.md --max-chars 2000 --json` | Read at most the requested content amount |
+| `ai-agent-playbook records read --path CURRENT.md --cursor "<cursor>" --json` | Continue with the returned `nextCursor`; omit line options |
+| `ai-agent-playbook records search --query "API decision" --json` | Literal, case-insensitive search within record text |
+| `ai-agent-playbook records search --query "API decision" --max-results 5 --max-chars 3000 --json` | Return up to five complete matches within the content budget |
+| `ai-agent-playbook records search --query "API decision" --cursor "<cursor>" --json` | Continue with `page.nextCursor`, repeating the same query |
+| `ai-agent-playbook records search --query "API decision" --view warnings --json` | Inspect search warnings for that query |
+
+| Option | Default / limit | Use |
+| --- | --- | --- |
+| `--path` | Read defaults to CURRENT.md | Existing playbook-relative text file |
+| `--query` | Required for search | Literal text; not a regular expression |
+| `--start-line`, `--end-line` | Optional; lines start at 1 | Initial inclusive read range |
+| `--max-chars` | 12,000 default; 100,000 maximum | Content size in UTF-16 units, not host tokens |
+| `--page-size` | 20 default; 100 maximum | Status/validation list items |
+| `--max-results` | 20 default; 100 maximum | Search page items |
+| `--cursor` | Returned value | Continue without editing the cursor |
+| `--view` | Operation-specific | Choose summary, detailed items, or warnings |
+
+Content size applies to read/search and detailed list views. Summary metadata is not a text slice. If a source changes, restart rather than reuse an invalid cursor. See [Response limits](record-responses.md) for reconstruction and the separate 256 KiB complete-MCP-result ceiling.
+
+## Install and manage skills
+
+These commands operate on user skill directories, independently of the current project.
+
+| Complete command | Meaning | Writes? |
+| --- | --- | --- |
+| `ai-agent-playbook skills list --json` | Show source profiles and skill names | No |
+| `ai-agent-playbook skills lint --json` | Check the source skill catalog format | No |
+| `ai-agent-playbook skills install --dry-run --json` | Preview default core installation (two skills) | No |
+| `ai-agent-playbook skills install --profile development --dry-run --json` | Preview five development skills | No |
+| `ai-agent-playbook skills install --profile development --json` | Install the selected development skills | Yes |
+| `ai-agent-playbook skills check --profile development --json` | Compare selected installed copies with their source | No |
+| `ai-agent-playbook skills update --profile development --dry-run --json` | Preview changes to the selected installed copies | No |
+| `ai-agent-playbook skills update --profile development --json` | Apply safe updates and preserve conflicts | Yes |
+| `ai-agent-playbook skills uninstall --profile development --dry-run --json` | Preview removal of selected managed copies | No |
+| `ai-agent-playbook skills uninstall --profile development --json` | Remove safe selected copies and retain recovery data | Yes |
+| `ai-agent-playbook skills install --profile legacy --dry-run --json` | Preview only legacy-contracts | No |
+| `ai-agent-playbook skills install --skill project-memory --skill legacy-contracts --dry-run --json` | Preview exactly these two skills, replacing the profile selection | No |
+
+`--profile` accepts `core`, `development`, or `legacy`. Repeated `--skill` or comma-separated names select explicit entries; empty names are rejected. Ordinary updates do not remove unrelated skills or duplicate old installations automatically. Profiles are capability selections, not light/heavy runtime modes.
+
+For custom locations:
 
 ```sh
-aapb skills migrate --profile development --json
-aapb skills migrate --profile development --apply --json
-aapb skills rollback --backup "<transaction-directory>" --json
-aapb skills rollback --backup "<transaction-directory>" --apply --json
-aapb migrate layout "<project>" --to minimal --json
-aapb migrate layout "<project>" --to minimal --apply --json
-aapb migrate rollback "<project>" --backup "<returned-relative-backup>" --json
-aapb migrate rollback "<project>" --backup "<returned-relative-backup>" --apply --json
+ai-agent-playbook skills install --profile development --agents-root "<skills-directory>" --codex-root "<legacy-directory>" --backup-root "<backup-directory>" --dry-run --json
 ```
 
-Use backup values returned by the actual operation, not a guessed path. Skill rollback expects a transaction directory; record rollback expects a playbook-relative archive path. Modified or unowned metadata may prevent migration while reading remains available. Repeated rollback does not overwrite later edits.
+`--agents-root` changes the destination; `--codex-root` identifies the legacy root; `--backup-root` is the backup parent. Backups must be outside both roots and share the filesystem of affected installations. Modified, unmanaged, and linked directories are preserved. Force replacement is unsupported. Reload the host to check discovery separately from disk installation.
+
+## Migrate and recover
+
+| Complete command | Meaning | Writes? |
+| --- | --- | --- |
+| `ai-agent-playbook skills migrate --profile development --json` | Preview reconciliation of known owned 0.5 copies | No |
+| `ai-agent-playbook skills migrate --profile development --apply --json` | Apply independent safe migration operations | Yes |
+| `ai-agent-playbook skills rollback --backup "<transaction-directory>" --json` | Preview restoration of one skill transaction | No |
+| `ai-agent-playbook skills rollback --backup "<transaction-directory>" --apply --json` | Restore unchanged affected skill entries | Yes |
+| `ai-agent-playbook migrate layout --to minimal --json` | Preview metadata migration in the current project | No |
+| `ai-agent-playbook migrate layout --to minimal --apply --json` | Apply compatible owned metadata changes and preserve records | Yes |
+| `ai-agent-playbook migrate rollback --backup "<returned-relative-backup>" --json` | Preview record-metadata restoration | No |
+| `ai-agent-playbook migrate rollback --backup "<returned-relative-backup>" --apply --json` | Restore metadata if hashes still permit it | Yes |
+
+Use the backup actually returned. Skill recovery takes a transaction directory; record recovery takes a playbook-relative JSON backup path. Missing ownership or modified metadata may block migration while reads remain available. Inspect partial results and recover newest transactions first. [Lifecycle](lifecycle.md) explains preflight and preservation.
 
 ## Optional writing and UI checks
 
-```sh
-aapb writing naturalness-check "<project>" --path README.md --lang en --engine js --json
-aapb writing naturalness-report "<project>" --root docs --lang ko --max-files 10 --engine auto --json
-aapb writing fidelity-check "<project>" --before docs/before.md --after docs/after.md --lang auto --json
-aapb runtime python-status --json
-aapb qa ui-genericity-scan "<project>" --root src --max-files 20 --json
-```
+Here `--path`, `--root`, `--before`, and `--after` are project-relative, unlike record-read paths.
 
-These file paths are project-relative. A report's `--root` limits inspection to that directory. Inputs must be bounded UTF-8 text; links and junctions in input paths are refused. The default writing engine is `js`; `auto` or `python` explicitly requests optional Python discovery. See [Runtime engines](runtime-engines.md) for fallback details.
-
-Naturalness signals suggest passages to review; fidelity checks help find changes to protected information. The UI scanner finds static candidates and does not render the screen. None of these checks proves authorship or supplies an automatic quality verdict. See [Quality review](quality-review.md).
-
-## MCP and Forge
-
-```sh
-aapb mcp --project "<project>"
-aapb forge status "<project>" --json
-aapb forge bootstrap "<project>" --milestone "Example delivery" --json
-aapb forge sync "<project>" --plan docs/coordination.json --json
-```
-
-MCP exposes `aapb_status`, `aapb_search`, `aapb_read`, and `aapb_validate`. It waits for a stdio client; a quiet terminal is not a completed check. Connect through the host as described in [MCP setup](mcp-permission-model.md).
-
-Forge `sync` and `reconcile` require an existing reviewed JSON plan inside the project. `--remote` selects a Git remote (default `origin`); `--provider` accepts `auto`, `github`, or `gitea`. `--profile` here is a Forge policy, not a skill selection. The CLI defaults to `coordinate`. `--offline`, `--no-remote`, and `--remote-read-only` prevent writes even with `--apply`. See [Forge coordination](forge-automation.md) for plan examples and apply behavior.
-
-## Older commands and exit codes
-
-| Previous entrypoint | Current route |
+| Complete command | Meaning |
 | --- | --- |
-| `context`, `context list/status` | Narrow read/status aliases; prefer `records read/status` |
-| `doctor`, `operator check/audit`, `managed check`, `contracts check` | Record validation only; prefer `records validate` |
-| `operator search`, `managed catalog`, `layout status` | Record search/status aliases |
-| `catalog list/check` | Source skill catalog/lint aliases |
-| `run`, `plan`, `worklog`, `automation`, `index`, broad analysis and managed writes | Retired; use host/project tools and edit records directly |
+| `ai-agent-playbook writing naturalness-check --path README.md --lang ko --engine js --json` | Inspect Korean prose in the current project's README using JavaScript |
+| `ai-agent-playbook writing naturalness-report --root docs --lang auto --max-files 10 --engine auto --json` | Inspect up to 10 files under docs, detect language, and request optional Python support |
+| `ai-agent-playbook writing fidelity-check --before docs/before.md --after docs/after.md --lang auto --json` | Compare existing before/after files for protected-information changes |
+| `ai-agent-playbook runtime python-status --json` | Report Python candidates and which engine can actually run |
+| `ai-agent-playbook qa ui-genericity-scan --root src --max-files 20 --json` | Find static UI review candidates in up to 20 source files; do not render the UI |
 
-Retired commands return exit code `2` and a pinned `npx ai-agent-playbook@0.5.11` recovery hint. They do not run the old runtime automatically. Use an old package only for an intentional recovery with preserved data; see [Lifecycle](lifecycle.md).
+`--lang` accepts `auto`, `ko`, or `en`. Writing defaults to `--engine js`; `auto` and `python` request Python discovery. If unavailable, retained checks report JavaScript fallback and engine warnings. `--max-files` and `--root` bound the requested scan. Linked input paths and unsuitable text are rejected. Ordinary prose editing does not require these checks; use [Quality review](quality-review.md) to interpret them.
 
-Exit code `0` means the command succeeded, `1` means failure or reported conflict, and `2` means a retired command. An operation reporting conflicts may have completed independent safe items; inspect its operations and backup before retrying. Document validation success is not runtime verification.
+## Optional MCP
+
+| Complete command | Meaning |
+| --- | --- |
+| `ai-agent-playbook mcp` | Start a stdio server bound to the current directory |
+| `ai-agent-playbook mcp --project "<project>"` | Start the server for an explicitly selected project |
+
+The host starts this process to call `aapb_status`, `aapb_search`, `aapb_read`, and `aapb_validate`. A quiet standalone terminal is waiting for the client. Installation does not register or activate MCP, and the server has no write tools. See [MCP setup](mcp-permission-model.md) and [Using skills and tools with an agent](agent-usage.md).
+
+## Forge coordination
+
+| Complete command | Meaning | Remote writes? |
+| --- | --- | --- |
+| `ai-agent-playbook forge status --json` | Inspect local remote/policy configuration; does not prove authentication | No |
+| `ai-agent-playbook forge status --remote origin --provider github --json` | Select a named Git remote and provider | No |
+| `ai-agent-playbook forge bootstrap --milestone "Example delivery" --json` | Preview labels and a milestone | No |
+| `ai-agent-playbook forge bootstrap --project-title "Example delivery" --project-mode milestone --json` | Preview the selected presentation mode | No |
+| `ai-agent-playbook forge bootstrap --milestone "Example delivery" --apply --json` | Apply reviewed initial coordination assets | Yes |
+| `ai-agent-playbook forge sync --plan docs/coordination.json --json` | Preview an existing reviewed project-relative plan | No |
+| `ai-agent-playbook forge sync --plan docs/coordination.json --apply --json` | Apply permitted operations from that plan | Yes |
+| `ai-agent-playbook forge reconcile --plan docs/coordination.json --json` | Preview presentation reconciliation | No |
+| `ai-agent-playbook forge sync --plan docs/coordination.json --apply --offline --json` | Refuse remote writing because offline takes precedence | No |
+| `ai-agent-playbook forge sync --plan docs/coordination.json --apply --no-remote --json` | Refuse remote writing because remote access is disabled | No |
+| `ai-agent-playbook forge sync --plan docs/coordination.json --apply --remote-read-only --json` | Refuse writes even though the plan requested apply | No |
+| `ai-agent-playbook forge sync --plan docs/coordination.json --profile observe --apply --json` | Refuse writes under the observe policy | No |
+
+Forge `--profile` is separate from skill profiles: `coordinate` is the CLI default, `off`/`observe` deny writes, and retained `deliver`/`release` policies allow additional resources without starting execution or publishing. `--provider` accepts `auto`, `github`, or `gitea`; `--remote` defaults to `origin`. `--project-mode` selects `milestone` or the provider's `preferred` presentation. Review supported capabilities and the input plan alongside result IDs/states. [Forge coordination](forge-automation.md) explains credentials, stale state, and partial failure.
+
+## Previous-version users
+
+Version 0.5.11 keeps the older catalog and runtime. Use it explicitly when you depend on those features:
+
+```sh
+npx ai-agent-playbook@0.5.11 --help
+```
+
+Its global executable is `aapb`; the full installed executable name is added in 1.0. Current narrow aliases include `context` for record reads, `doctor` / `operator check` for record validation, and `catalog list/check` for source skill inspection. Execution, scheduling, broad analysis, and managed-write commands are retired in 1.0 and return code 2 without automatically launching 0.5.11. See [1.0 changes and previous-version use](redesign.md).

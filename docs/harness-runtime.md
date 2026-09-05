@@ -1,6 +1,6 @@
 # Runtime architecture
 
-AAPB is a local Node.js ESM program for project records and explicit supporting operations. Its CLI is `aapb`; optional MCP exposes a subset of the same record readers. The host and the project retain responsibility for implementing and executing work.
+AAPB is a local Node.js ESM program for project records and explicit supporting operations. Its primary CLI is `ai-agent-playbook`, with `aapb` as a short alias; optional MCP exposes a subset of the same record readers. The host and the project retain responsibility for implementing and executing work.
 
 ## From request to result
 

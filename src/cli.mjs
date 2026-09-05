@@ -94,7 +94,7 @@ export async function runCli(argv, io = {}) {
       result = await runSkillsLifecycle({ repoRoot, command: sub === 'list' ? 'list' : 'lint' });
     } else if (RETIRED.has(command) || ['operator','managed','layout','migrate','context','qa','adapter','guides','contracts','forge','writing','runtime'].includes(command)) {
       result = retired(args.join(' '));
-    } else throw new Error('Unknown command. Run aapb --help.');
+    } else throw new Error('Unknown command. Run ai-agent-playbook --help.');
     if (flags.json) stdout.write(JSON.stringify(result, null, 2) + '\n');
     else if (result.kind === 'aapb.read') stdout.write(result.content + (result.truncated ? '\n[More text: repeat this path with --cursor ' + result.nextCursor + ' --json]\n' : ''));
     else stdout.write(JSON.stringify(result, null, 2) + '\n');
@@ -131,34 +131,39 @@ async function forgeCommand({ target, command, flags }) {
 function help() {
   return `AI Agent Playbook ${PACKAGE_VERSION}
 
+Commands: ai-agent-playbook (primary), aapb (short alias). Both run the same CLI.
+Project paths are optional; omission uses the terminal working directory.
+--project <directory> explicitly selects a target for project commands.
+Skill installation uses user skill roots, not the working directory.
+
 Project records:
-  aapb bootstrap <project> [--local-only] [--preserve-agents] [--dry-run]
-  aapb records status <project> [--view summary|records|warnings] [--page-size N] [--cursor token] [--json]
-  aapb records validate <project> [--view summary|issues|warnings] [--page-size N] [--cursor token] [--json]
-  aapb records read <project> [--path CURRENT.md] [--start-line N] [--end-line N] [--max-chars N] [--cursor token] [--json]
-  aapb records search <project> --query <literal> [--max-results N] [--max-chars N] [--cursor token] [--json]
-  aapb migrate layout <project> --to minimal [--apply] [--json]
-  aapb migrate rollback <project> --backup <playbook-relative-backup> [--apply] [--json]
+  ai-agent-playbook bootstrap [project] [--local-only] [--preserve-agents] [--dry-run]
+  ai-agent-playbook records status [project] [--view summary|records|warnings] [--page-size N] [--cursor token] [--json]
+  ai-agent-playbook records validate [project] [--view summary|issues|warnings] [--page-size N] [--cursor token] [--json]
+  ai-agent-playbook records read [project] [--path CURRENT.md] [--start-line N] [--end-line N] [--max-chars N] [--cursor token] [--json]
+  ai-agent-playbook records search [project] --query <literal> [--max-results N] [--max-chars N] [--cursor token] [--json]
+  ai-agent-playbook migrate layout [project] --to minimal [--apply] [--json]
+  ai-agent-playbook migrate rollback [project] --backup <playbook-relative-backup> [--apply] [--json]
 
 Skills (default destination: .agents/skills):
-  aapb skills list|lint [--json]
-  aapb skills install|update|check|uninstall [--profile core|development|legacy] [--skill name] [--dry-run] [--json]
-  aapb skills migrate [--profile development] [--apply] [--dry-run] [--json]
-  aapb skills rollback --backup <transaction-directory> [--apply] [--json]
+  ai-agent-playbook skills list|lint [--json]
+  ai-agent-playbook skills install|update|check|uninstall [--profile core|development|legacy] [--skill name] [--dry-run] [--json]
+  ai-agent-playbook skills migrate [--profile development] [--apply] [--dry-run] [--json]
+  ai-agent-playbook skills rollback --backup <transaction-directory> [--apply] [--json]
   Destination overrides: --agents-root <directory>, --codex-root <legacy-directory>, --backup-root <directory>
 
 Optional tools:
-  aapb mcp [--project <project>]  (aapb_status/search/read/validate; never registered automatically)
-  aapb writing naturalness-check <project> --path <file> [--lang auto|ko|en] [--engine js|auto|python] [--json]
-  aapb writing naturalness-report <project> [--root <directory>] [--max-files N] [--lang auto|ko|en] [--engine js|auto|python] [--json]
-  aapb writing fidelity-check <project> --before <file> --after <file> [--lang auto|ko|en] [--json]
-  aapb runtime python-status [--json]
-  aapb qa ui-genericity-scan <project> [--root <directory>] [--max-files N] [--json]
+  ai-agent-playbook mcp [--project <project>]  (aapb_status/search/read/validate; never registered automatically)
+  ai-agent-playbook writing naturalness-check [project] --path <file> [--lang auto|ko|en] [--engine js|auto|python] [--json]
+  ai-agent-playbook writing naturalness-report [project] [--root <directory>] [--max-files N] [--lang auto|ko|en] [--engine js|auto|python] [--json]
+  ai-agent-playbook writing fidelity-check [project] --before <file> --after <file> [--lang auto|ko|en] [--json]
+  ai-agent-playbook runtime python-status [--json]
+  ai-agent-playbook qa ui-genericity-scan [project] [--root <directory>] [--max-files N] [--json]
 
 Reviewed forge coordination:
-  aapb forge status <project> [--provider auto|github|gitea] [--json]
-  aapb forge bootstrap <project> [--milestone <title>] [--project-title <title>] [--apply] [--json]
-  aapb forge sync|reconcile <project> --plan <relative-json> [--apply] [--json]
+  ai-agent-playbook forge status [project] [--provider auto|github|gitea] [--json]
+  ai-agent-playbook forge bootstrap [project] [--milestone <title>] [--project-title <title>] [--apply] [--json]
+  ai-agent-playbook forge sync|reconcile [project] --plan <relative-json> [--apply] [--json]
   --offline, --no-remote, and --remote-read-only forbid remote writes.
 
 All previews are write-free. Apply changes only within the user's authorization.

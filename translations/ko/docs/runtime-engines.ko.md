@@ -17,7 +17,7 @@ CLI와 MCP 서버는 Node.js로 실행합니다. Python은 한국어·영어 문
 ## JavaScript로 시작하기
 
 ```powershell
-aapb writing naturalness-check "<project>" --path README.md --lang auto --engine js --json
+ai-agent-playbook writing naturalness-check "<project>" --path README.md --lang auto --engine js --json
 ```
 
 CLI 기본값은 `js`입니다. 유지한 문서 점검 구현에서 `--engine auto`와 `--engine python`은 둘 다 선택형 Python 탐색을 요청합니다. Python을 실행하지 못하면 JavaScript 결과를 유지하고 엔진을 사용할 수 없었다고 표시합니다. `engines.requested`, `engines.used`, `engines.unavailable`과 경고를 확인하세요. Python을 요청한 것만으로 실제 실행했다고 판단하지 않습니다.
@@ -47,7 +47,7 @@ Windows에서는 `.venv/bin/python` 대신 `.venv/Scripts/python.exe`를 사용�
 
 ```powershell
 $env:AI_AGENT_PLAYBOOK_PYTHON = '"<absolute-python-executable>"'
-aapb runtime python-status --json
+ai-agent-playbook runtime python-status --json
 ```
 
 자리표시자를 실제 경로로 바꾸고, 공백이 있으면 안쪽 따옴표도 유지하세요. 탐색은 환경 변수, 패키지 소스의 `.venv`, 사용 가능한 `python`, `python3`, `py -3` 후보를 확인합니다. 여기서 가상 환경은 패키지·소스 폴더 기준이며 대상 프로젝트의 가상 환경을 자동 선택하는 것은 아닙니다.
@@ -56,6 +56,6 @@ aapb runtime python-status --json
 
 ## 버전과 검증
 
-Node 사전 릴리스 `1.0.0-next.2`에 대응하는 Python PEP 440 버전은 `1.0.0.dev2`입니다. 엔진 동작을 개발·수정했다면 `npm run validate:python`을 실행합니다. 사용자 환경에 선택형 엔진이 없는 것과 개발에 필요한 검사가 실패한 것은 다른 상황입니다.
+Node 사전 릴리스 `1.0.0-next.3`에 대응하는 Python PEP 440 버전은 `1.0.0.dev3`입니다. 엔진 동작을 개발·수정했다면 `npm run validate:python`을 실행합니다. 사용자 환경에 선택형 엔진이 없는 것과 개발에 필요한 검사가 실패한 것은 다른 상황입니다.
 
 문서 점검 결과는 참고용입니다. 모든 신호를 수정 요구로 보지 않고 의미와 문체를 보존하는 방법은 [품질 검토](quality-review.ko.md)에 있습니다.

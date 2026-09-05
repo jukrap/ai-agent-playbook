@@ -5,8 +5,8 @@ Forge는 GitHub나 Gitea 같은 협업 서비스를 뜻합니다. AAPB는 협업
 ## 대상 원격 확인하기
 
 ```sh
-aapb forge status "<project>" --json
-aapb forge status "<project>" --remote origin --provider github --json
+ai-agent-playbook forge status "<project>" --json
+ai-agent-playbook forge status "<project>" --remote origin --provider github --json
 ```
 
 상태 조회는 로컬 Git 원격과 정책을 읽습니다. 서비스에 접속하거나 인증 정보를 검증하지 않습니다. `policyWrites`는 설정된 정책을 뜻합니다. 인증·권한 근거가 필요한 `verifiedWrites`를 이 값만으로 판단하면 안 됩니다. 자체 호스팅 서비스를 자동으로 구분하지 못하면 제공 서비스를 직접 지정하세요.
@@ -14,7 +14,7 @@ aapb forge status "<project>" --remote origin --provider github --json
 ## 초기 협업 항목 미리보기
 
 ```sh
-aapb forge bootstrap "<project>" --milestone "Example delivery" --json
+ai-agent-playbook forge bootstrap "<project>" --milestone "Example delivery" --json
 ```
 
 원격 호출 없이 라벨과 지정한 마일스톤 작업을 미리 봅니다. `summary.planned`, `results`의 작업 식별자·대상 종류, 제공 서비스, 경고, 충돌을 확인하세요. `--project-title`과 `--project-mode`는 지원되는 프로젝트 표시 방식을 선택합니다. CLI 기본 모드는 `milestone`입니다. 호환성 기준에 이름이 있다고 실제 원격에서 모든 기능을 쓸 수 있다는 뜻은 아닙니다.
@@ -44,7 +44,7 @@ GitHub 예제로 아래 내용을 대상 프로젝트의 `docs/coordination.json
 ```
 
 ```sh
-aapb forge sync "<project>" --plan docs/coordination.json --json
+ai-agent-playbook forge sync "<project>" --plan docs/coordination.json --json
 ```
 
 계획의 제공 서비스는 선택한 원격과 일치해야 합니다. 미리보기에서는 해당 작업이 예정 상태로 나옵니다. 기존 작업·협업 입력 형식도 받을 수 있습니다. 이 형식은 `planId`, 작업 목록, 공개용 요약·범위·제외 사항·성공 기준·작업 그룹이 담긴 `coordination` 객체를 사용합니다. 단일 서비스 작업보다 여러 작업 그룹을 조율할 때 적합합니다.
@@ -56,7 +56,7 @@ aapb forge sync "<project>" --plan docs/coordination.json --json
 계획을 검토한 뒤에만 적용 명령을 실행합니다.
 
 ```sh
-aapb forge sync "<project>" --plan docs/coordination.json --apply --json
+ai-agent-playbook forge sync "<project>" --plan docs/coordination.json --apply --json
 ```
 
 이 명령은 원격에 쓸 수 있습니다. CLI의 Forge 기본 프로필은 `coordinate`이며 스킬 프로필과 달리 원격 작업 권한을 정합니다. `off`, `observe`는 쓰기를 허용하지 않습니다. `deliver`, `release`는 PR 같은 추가 협업 항목을 허용하지만 이름만으로 소스 실행이나 게시를 시작하지 않습니다. 삭제와 강제 push는 계속 거부합니다. 기존 연결을 대체하는 작업에는 현재 CLI가 노출하지 않는 별도 승인 경로가 필요하며 일반 apply로 우회할 수 없습니다.

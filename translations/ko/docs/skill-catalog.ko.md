@@ -26,14 +26,16 @@
 ## 설치·확인·조합
 
 ```sh
-aapb skills list --json
-aapb skills install --profile development --dry-run --json
-aapb skills install --skill project-memory --skill legacy-contracts --dry-run --json
+ai-agent-playbook skills list --json
+ai-agent-playbook skills install --profile development --dry-run --json
+ai-agent-playbook skills install --skill project-memory --skill legacy-contracts --dry-run --json
 ```
 
 `--skill`은 프로필에 추가되는 옵션이 아니라 프로필 대신 직접 목록을 지정하는 옵션입니다. 개발 프로필에 레거시를 더하려면 development를 설치한 다음 `--skill legacy-contracts`를 따로 설치하세요. 일반 설치는 다른 설치본을 삭제하지 않습니다. 갱신·확인·삭제 때도 해당 선택을 사용합니다. [설치 안내](lifecycle.ko.md)를 참고하세요.
 
 기본 설치 위치는 `.agents/skills`입니다. 소스의 여섯 진입점, 선택해서 설치한 수, 앱이 검색하거나 대화에 넣은 수는 서로 다릅니다. 파일 설치 성공만으로 앱이 이름을 불러왔다고 판단하지 않습니다.
+
+자동 선택, 명시적 요청, 스킬·MCP·문서 명령의 실제 활용 확인은 [에이전트의 도구 활용](agent-usage.ko.md)에서 설명합니다.
 
 ## 이전 스킬은 어디로 갔나요?
 

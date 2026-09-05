@@ -42,6 +42,6 @@ Read paths are relative to the selected playbook. Supported text extensions are 
 
 ## Validation and migration
 
-`aapb records validate "<project>" --json` checks document structure, links, and managed-file hashes. A modified managed document in an older layout may be valuable customization. Inspect it; do not overwrite it to obtain a clean result.
+`ai-agent-playbook records validate "<project>" --json` checks document structure, links, and managed-file hashes. A modified managed document in an older layout may be valuable customization. Inspect it; do not overwrite it to obtain a clean result.
 
 Layout migration changes owned metadata and preserves old documents and evidence links. It requires a readable CURRENT.md and unchanged managed metadata; the tool cannot decide whether the prose is up to date. Preview, explicit apply, and guarded rollback are described in [Lifecycle](lifecycle.md). No automatic path relocation or historical summary is performed.

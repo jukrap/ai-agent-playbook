@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0-next.3
+
+- Add `ai-agent-playbook` as the primary executable and retain `aapb` as an equivalent short alias.
+- Document and test the existing current-directory default when a project argument is omitted.
+- Expand the command guide with complete invocations, option meanings, write behavior, and recovery examples in English and Korean.
+- Replace implementation-design notes with a reader-facing 1.0 rationale and 0.5.11 guidance; explain skill selection and MCP verification separately.
+
 ## 1.0.0-next.2 (source prerelease)
 
 - Restore README branding and localized navigation; rebuild beginner, command, recovery, integration, and maintenance guides with worked examples.

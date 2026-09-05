@@ -22,4 +22,4 @@ Do not load the entire library at startup or copy an external methodology as a m
 | Generic process advice | Use only if it adds value beyond current instructions |
 | Private source or raw local output | Store in an approved local location, not public package docs |
 
-The old reference queue/scoring CLI is retired. Plain files and normal research/file tools are sufficient. Preserve source attribution and applicable license conditions when adapting external material. The [reference library](../references/README.md) and [1.0 design](redesign.md) provide context.
+The old reference queue/scoring CLI is retired. Plain files and normal research/file tools are sufficient. Preserve source attribution and applicable license conditions when adapting external material. The [reference library](../references/README.md) and [1.0 changes and previous versions](redesign.md) provide context.

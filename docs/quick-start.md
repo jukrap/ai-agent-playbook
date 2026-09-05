@@ -6,7 +6,7 @@ Start with a disposable project: create a current-state record, edit it, search 
 
 | Part | Meaning | Location |
 | --- | --- | --- |
-| CLI package | The program that provides `aapb` | A source checkout, npm installation, or npm cache |
+| CLI package | The program that provides `ai-agent-playbook` and its alias `aapb` | A source checkout, npm installation, or npm cache |
 | Skills | Reusable task guidance for an agent | User-level `.agents/skills` by default |
 | Project records | Current goals, decisions, and evidence | One project's `.ai-agent-playbook/` |
 | MCP connection | Lets an agent app call record tools | The app's optional server configuration |
@@ -19,11 +19,11 @@ You need Node.js 18 or later and npm. A source checkout and PowerShell installer
 
 ```sh
 npm install -g ai-agent-playbook
-aapb --version
-aapb --help
+ai-agent-playbook --version
+ai-agent-playbook --help
 ```
 
-The global installation makes `aapb` available in a normal terminal. Help lists the available record, skill, and optional commands. For occasional use without a global installation, use `npx ai-agent-playbook` in place of `aapb`.
+The global installation provides `ai-agent-playbook` and its short alias `aapb`. Both accept the same commands and options. Help lists the available record, skill, and optional commands. For occasional use without a global installation, use `npx ai-agent-playbook` in place of `ai-agent-playbook`.
 
 For a pinned version or isolated installation, follow [Installation and recovery](lifecycle.md). Continue in a parent folder where you can create a new practice directory.
 
@@ -34,17 +34,19 @@ Use a new, empty directory. If `aapb-demo` already exists, choose another name t
 ```sh
 mkdir aapb-demo
 cd aapb-demo
-aapb records status . --json
-aapb bootstrap . --dry-run
+ai-agent-playbook records status --json
+ai-agent-playbook bootstrap --dry-run
 ```
 
 Status reports a missing playbook, which is normal for a new folder. Preview lists three planned files without creating them.
 
+These commands use the current terminal directory. An explicit `.` means the same thing. A path or `--project "<project>"` selects another folder. Commands do not automatically move up to a parent Git root.
+
 ## 3. Create and edit a current-state record
 
 ```sh
-aapb bootstrap .
-aapb records read . --path CURRENT.md
+ai-agent-playbook bootstrap
+ai-agent-playbook records read --path CURRENT.md
 ```
 
 The project now contains:
@@ -80,10 +82,10 @@ Search for "practice folder" and inspect validation output.
 ## 4. Read, search, and validate
 
 ```sh
-aapb records status . --json
-aapb records read . --path CURRENT.md
-aapb records search . --query "practice folder" --json
-aapb records validate . --json
+ai-agent-playbook records status --json
+ai-agent-playbook records read --path CURRENT.md
+ai-agent-playbook records search --query "practice folder" --json
+ai-agent-playbook records validate --json
 ```
 
 - Status should identify `CURRENT.md` as the entrypoint and `minimal` as the layout.
@@ -98,15 +100,15 @@ Inspect warnings and `scan.complete` as well as `ok`. If a result has a cursor, 
 The practice above works without user-level skills. To add AAPB guidance to your agent, preview development-profile installation:
 
 ```sh
-aapb skills list --json
-aapb skills install --profile development --dry-run --json
+ai-agent-playbook skills list --json
+ai-agent-playbook skills install --profile development --dry-run --json
 ```
 
 The target is your user skill directory, not the practice project. Development selects five skills for records, artifact formats, design, UI, and document editing. Inspect any conflicts, then apply:
 
 ```sh
-aapb skills install --profile development --json
-aapb skills check --profile development --json
+ai-agent-playbook skills install --profile development --json
+ai-agent-playbook skills check --profile development --json
 ```
 
 Reload your agent's skills or start a fresh session. Confirm the names in [the catalog](skill-catalog.md). If 0.5 copies remain in two folders, follow [the separate migration procedure](lifecycle.md); normal installation does not remove them.
@@ -116,8 +118,8 @@ Reload your agent's skills or start a fresh session. Confirm the names in [the c
 Replace `<project>` with its actual folder. Quote paths containing spaces; do not type the placeholder itself.
 
 ```sh
-aapb records status "<project>" --json
-aapb bootstrap "<project>" --local-only --dry-run
+ai-agent-playbook records status "<project>" --json
+ai-agent-playbook bootstrap "<project>" --local-only --dry-run
 ```
 
 `--local-only` requires a Git repository. For a new playbook, it adds the records to Git's local exclude file. Omit it for a non-Git folder or when records should be available for committing. Neither mode creates a commit.
@@ -130,7 +132,7 @@ If records already exist, read their entrypoint. Bootstrap preserves them and ex
 | --- | --- |
 | `node` or `npm` not found | Install Node.js, reopen the terminal, check `node --version` and `npm --version` |
 | A local Node script cannot be found | Check the absolute package path used by the isolated installation |
-| `aapb` not found | Reopen the terminal after npm global installation; check the npm prefix and PATH, or use the isolated Node entrypoint |
+| `ai-agent-playbook` not found | Check the version: 0.5.11 provides only `aapb`. For 1.0, reopen the terminal after npm global installation; check the npm prefix and PATH, or use the isolated Node entrypoint |
 | `--local-only` fails outside Git | Omit it for the practice folder; use it only in a Git repository |
 | Skills absent in the agent | Check profile, installation result, supported path, and a fresh session's catalog |
 | Old skill conflicts | Preserve it and inspect migration; force-replacement flags are unsupported |
@@ -140,7 +142,7 @@ If records already exist, read their entrypoint. Bootstrap preserves them and ex
 
 | Term | Meaning |
 | --- | --- |
-| `aapb` | Executable supplied by the `ai-agent-playbook` package |
+| `ai-agent-playbook` / `aapb` | Primary executable / short alias supplied by the same package |
 | `npx` | Runs an npm package, possibly a different version from a checkout or global installation |
 | `bootstrap` | Creates a playbook only when none exists |
 | `--dry-run` | Shows proposed operations without writing |

@@ -1,6 +1,6 @@
 {
   "name": "ai-agent-playbook",
-  "version": "1.0.0-next.2",
+  "version": "1.0.0-next.3",
   "description": "Portable project records, selected artifact skills, and optional read-only project tools.",
   "type": "module",
   "license": "MIT",
@@ -16,6 +16,7 @@
     "runtime-harness"
   ],
   "bin": {
+    "ai-agent-playbook": "bin/aapb.mjs",
     "aapb": "bin/aapb.mjs"
   },
   "files": [

@@ -133,7 +133,7 @@ skills/
   legacy/             Optional stack preservation contracts
 references/           Optional domain detail from the earlier catalog
 templates/
-  agents/             Copyable root policies and selected stack profiles
+  agents/             Stack-neutral project instructions
   codex-home/         Optional personal instruction template
   project-playbook/   Minimal current-state template and layout metadata
 examples/             Worklog, prompt, and handoff examples
@@ -169,6 +169,7 @@ Choose a route in the [documentation map](docs/README.md), or open a guide direc
 - [Command guide](docs/commands.md): commands, options, examples, write behavior, and exit codes.
 - [Lifecycle guide](docs/lifecycle.md): package and skill installation, updates, removal, migration, and recovery.
 - [Existing repositories](docs/existing-repository-bootstrap.md): inspect existing records and preserve project instructions.
+- [Project architecture](docs/project-architecture.md): choose and evolve boundaries without imposing a stack during bootstrap.
 - [Project record layout](docs/structured-playbook-layout.md): what belongs in CURRENT.md and when to add detail.
 - [Runtime architecture](docs/harness-runtime.md): data flow, ownership, and validation boundaries.
 - [MCP setup and permissions](docs/mcp-permission-model.md): connect the four optional read-only tools.

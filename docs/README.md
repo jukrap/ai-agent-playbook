@@ -17,6 +17,7 @@ Choose a route for the task at hand. These human guides are not an agent startup
 - [Commands](commands.md): syntax, writes, results, errors, and old command replacements.
 - [Lifecycle](lifecycle.md): package and skill installation, updates, removal, migration, and recovery.
 - [Existing repositories](existing-repository-bootstrap.md): inspect records and preserve project instructions.
+- [Project architecture](project-architecture.md): architecture decisions, FSD as an option, evolving boundaries, and bootstrap scope.
 - [Record layout](structured-playbook-layout.md): current facts, supporting documents, ownership, and examples.
 - [MCP setup](mcp-permission-model.md): connect four project-bound read-only tools.
 - [Agent use](agent-usage.md): how skills, MCP, and advisory commands become available and how to verify actual use.

@@ -10,6 +10,8 @@ Before a major documentation rewrite, compare the previous structure and reader 
 
 English and Korean should agree on commands, limits, behavior, and verification claims. Their taglines, explanation order, language selectors, and emphasis can differ intentionally. Review Korean for understandable prose, not just source-file coverage.
 
+For copyable instructions, review the rules themselves as well as Markdown links: code-font filenames, reading order, retired commands, and architecture assumptions can be wrong even when link checks pass. Compare removed rules with their replacements and preserve useful contracts in a discoverable reference. Personal templates need enough detail for their purpose; skill brevity is not their length limit.
+
 ## Content placement
 
 Installable SKILL.md files belong under `skills/<category>/<name>`. Frontmatter contains only `name` and a trigger-focused `description` beginning with `Use when`. Put longer selected detail in local references; the root reference library is optional, not an automatic reading list.

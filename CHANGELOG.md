@@ -2,6 +2,9 @@
 
 ## 1.0.0-next.3
 
+- Replace stack-specific root instruction templates with one neutral template, preserving domain contracts in selected references and explaining project-owned architecture decisions.
+- Restore useful personal instruction detail and correct obsolete bootstrap references without changing automatic installation behavior.
+
 - Add `ai-agent-playbook` as the primary executable and retain `aapb` as an equivalent short alias.
 - Document and test the existing current-directory default when a project argument is omitted.
 - Expand the command guide with complete invocations, option meanings, write behavior, and recovery examples in English and Korean.

@@ -1,24 +1,25 @@
-# Feature Slice Layering
+# 기능과 페이지의 경계
 
-Feature folder, route module, UI slice, page module, shared layer, cross-slice import를 건드릴 때 사용합니다.
+기능 폴더, 라우트, 페이지나 모듈 간 import를 바꿀 때 사용합니다. 실제 프로젝트에서 채택한 경계 모델을 기준으로 삼습니다. React나 Vite를 사용한다는 이유만으로 FSD를 적용하지 않습니다.
 
-## Boundary Evidence
+## 담당 범위 확인하기
 
-- 실제 project convention을 확인합니다. FSD, vertical slice, feature-first, route-first, layered, module-first, mixed 중 무엇인지 봅니다.
-- UI, state, data fetching, validation, API call, domain rule, test, fixture의 intended owner를 명시합니다.
-- Local rule 기준으로 lower layer to higher layer, feature to feature, shared to app, app to feature, circular dependency를 확인합니다.
-- Folder name을 증거로 삼지 않습니다. Import, export, test, runtime behavior, project docs를 확인합니다.
+UI, 상태, 데이터 조회, 검증, API 어댑터, 업무 규칙, 테스트와 준비된 입력을 누가 담당하는지 확인합니다. 채택한 설계와 함께 import와 공개 진입점을 살핍니다. 폴더 이름만으로 의존성이 설계를 따른다고 판단하지 않습니다.
 
-## Change Safety
+구조를 고르거나 설계를 바꿀 때는 [프로젝트 아키텍처 안내](../../../docs/project-architecture.ko.md)를 사용합니다. 캐시·서버 상태와 관련된 작업에서는 [상태 관리 주체](../../frontend/frontend-state-data-flow/state-ownership.ko.md)를 참고합니다.
 
-- 요청된 behavior가 좁다면 broad reshuffle보다 작은 ownership repair를 우선합니다.
-- Caller가 깨질 수 있으면 compatibility path 또는 re-export를 유지합니다.
-- Test는 증명하는 behavior와 함께 이동하고, shared test helper가 production module에 섞이지 않게 합니다.
-- Cache, optimistic update, stale UI behavior가 바뀌면 frontend state/data 변경은 `frontend/frontend-state-data-flow`로 라우팅합니다.
+## 프로젝트가 FSD를 채택했을 때
 
-## Stop Conditions
+사용 중단 계층을 제외한 일반적인 순서는 app, pages, widgets, features, entities, shared입니다. [공식 계층 안내](https://feature-sliced.design/docs/reference/layers)는 유용한 계층만 사용하고 페이지에서만 쓰는 UI와 요청을 페이지 슬라이스 안에 둘 수 있다고 설명합니다. 별도 기능으로 나눌 때는 재사용이나 담당 범위 분리의 이유가 있어야 합니다.
 
-- Target architecture를 observed code가 아니라 framework name에서 추정했습니다.
-- 명시적 compatibility reason 없이 한 slice가 다른 slice의 private internal을 import합니다.
-- Shared/common module에 ownership 없는 product-specific behavior가 들어갑니다.
-- Migration이 public import, generated route, test fixture를 staged plan 없이 깨뜨립니다.
+모든 프로젝트에서 페이지를 조합 용도로만 제한하거나 페이지가 담당하는 요청을 금지하지 않습니다. 프로젝트가 선택한 공개 import와 예외를 포함한 계약을 따릅니다. 표준 FSD와 다르면 조용히 다른 구조를 적용하지 말고 차이를 명시합니다.
+
+## 경계를 바꿀 때
+
+- 좁은 동작 변경에서는 무관한 폴더를 재배치하지 말고 영향을 받는 역할이나 의존성을 바로잡습니다.
+- 기존 호출부를 단계적으로 바꿔야 하면 호환 진입점이나 재노출을 유지합니다.
+- 테스트는 확인하는 동작과 함께 옮기고 테스트 전용 도우미를 제품 모듈에서 제외합니다.
+- 역방향 import, 순환 의존성, 다른 모듈의 내부 파일 참조와 공유 코드에 들어간 제품 동작을 프로젝트 규칙에 대조합니다.
+- 허용된 변경으로 계약이 바뀌면 채택한 결정과 경계 검사 설정도 갱신합니다.
+
+공개 import나 라우트 생성기를 깨뜨리는 문제가 남아 있다면 적용 전에 이전 방법을 정합니다. 독립적으로 진행할 수 있는 일까지 멈출 필요는 없습니다. [공개 API 검사](slice-public-api-checks.ko.md)를 참고하세요.

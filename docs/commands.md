@@ -65,6 +65,8 @@ ai-agent-playbook records read --path CURRENT.md
 
 Omit `--local-only` outside Git or when records should be available for commits. AAPB does not commit them. Existing AGENTS.md and playbooks are preserved. Repeating bootstrap does not change the tracking policy of existing records. See [Existing repositories](existing-repository-bootstrap.md).
 
+Bootstrap does not select an architecture or generate source folders. Project root instructions and architecture decisions are adapted separately; see [Project architecture](project-architecture.md).
+
 ## Inspect records: status and validation
 
 | Complete command | Meaning |

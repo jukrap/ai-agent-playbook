@@ -1,64 +1,21 @@
-# Project Bootstrap Checklist
+# Bootstrap and project instructions
 
-Use this checklist when creating root agent files or an `.ai-agent-playbook/` folder for a target project.
+Use this reference when adding project records or adapting root instructions. Check existing instructions, relevant configuration, dirty changes, and the current record location first.
 
-## Discovery
+## Separate the choices
 
-- Check branch, remotes, dirty files, staged files, and local-only policy.
-- Inspect root docs, README, package/build files, lockfiles, scripts, and existing agent instructions.
-- Search for existing project memory, plans, worklogs, ADRs, runbooks, and onboarding notes.
-- Confirm package manager, runtime, verification commands, and project shape from files, not habit.
+- Record creation: run `ai-agent-playbook bootstrap --dry-run` from the project, inspect the result, then omit `--dry-run` to create records when absent.
+- Git-local records: add `--local-only` to both commands only in a Git repository. It uses Git's local exclude file and does not untrack existing committed records.
+- Root instructions: adapt [the project template](../../../templates/agents/AGENTS.md) only when useful; preserve existing user instructions.
+- Architecture: follow accepted project decisions or choose a proportionate structure within the request. [Architecture guidance](../../../docs/project-architecture.md) explains recording and revisiting boundaries.
+- Skills: choose relevant guidance separately. A skill profile is not a project folder layout.
 
-## Template selection
+## What gets created
 
-- Thin root bootstrap: `templates/agents/global/AGENTS.md`.
-- Skill policy: `templates/project-playbook/policy/SKILLS.md`, copied as `.ai-agent-playbook/policy/SKILLS.md`.
-- Git policy: `templates/project-playbook/policy/GIT.md`, copied as `.ai-agent-playbook/policy/GIT.md`.
-- Project memory: copy `templates/project-playbook/` as `.ai-agent-playbook/`.
-- Stack profile: add the closest `templates/agents/profiles/**/AGENTS.md` only when the stack is confirmed; keep the root entrypoint short.
+New bootstrap creates CURRENT.md, manifest.json, and .ai-agent-playbook-install.json in .ai-agent-playbook. It does not create source folders, root AGENTS.md, empty policy documents, or a workflow tree. Existing records are preserved. See [the record layout](../../../docs/structured-playbook-layout.md).
 
-## Minimum useful `.ai-agent-playbook/`
+Write actual goals and evidence in CURRENT.md and link existing detail only when useful. If no detailed decision is needed, do not create one to complete a checklist. Keep private execution output in an approved local-only location.
 
-For most projects, start with:
+## When a decision changes
 
-- `README.md`
-- `START_HERE.md`
-- `CURRENT.md`
-- `questions.md`
-- `manifest.json`
-- `policy/SKILLS.md`
-- `policy/GIT.md`
-- `policy/SAFETY.md`
-- `memory/README.md`
-- `memory/maps/README.md`
-- `workflows/runbooks/README.md`
-- `workflows/plans/README.md`
-- `workflows/worklogs/README.md`
-- `knowledge/sources.json`
-- `runtime/README.md`
-- `integrations/README.md`
-
-Add detailed maps, runbooks, decisions, and guides only when there is project evidence to fill them.
-
-## Content rules
-
-- `START_HERE.md`: what the next agent should read and do first.
-- `CURRENT.md`: current truth, active risks, and decisions that still matter.
-- `policy/`: skill selection, Git policy, safety notes, and scoped rules.
-- `memory/context/`: path-scoped reading hints and facts.
-- `memory/maps/`: structure and runtime facts with scan range and freshness.
-- `workflows/runbooks/`: verified commands and cleanup steps.
-- `workflows/plans/`: active execution plans only.
-- `workflows/runs/`: in-progress evidence for long work.
-- `workflows/worklogs/`: detailed history plus monthly summaries.
-- `knowledge/`: source registry and reviewed references.
-- `runtime/`: generated evidence, indexes, reports, and snapshots.
-- `archive/`: stale plans, prompts, and handoffs.
-
-## Hygiene
-
-- Do not commit personal absolute paths, private names, credentials, internal URLs, raw tokens, customer data, or machine-local assumptions.
-- Use relative paths in reusable templates.
-- If `.ai-agent-playbook/` is local-only, add it to `.gitignore` before writing private notes.
-- If worklogs are committed, keep them scrubbed and useful for future maintainers.
-- Do not add runtime hooks during bootstrap. Stabilize the document harness first, then use `templates/project-playbook/knowledge/references/guides/runtime-roadmap.md` if the project needs optional hook behavior.
+Update its project-owned document and the relevant code or checks together. Preserve earlier rationale and note temporary exceptions. An old template or record does not override a newer accepted decision. See [existing repository adoption](../../../docs/existing-repository-bootstrap.md) before changing an established layout.

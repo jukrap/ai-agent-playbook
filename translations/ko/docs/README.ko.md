@@ -17,6 +17,7 @@
 - [명령어 가이드](commands.ko.md): 문법, 쓰기 여부, 결과, 오류, 구버전 명령의 대체 방법.
 - [설치·업데이트·복구](lifecycle.ko.md): 패키지와 스킬의 설치, 갱신, 삭제, 이전, 복원.
 - [기존 저장소에 적용하기](existing-repository-bootstrap.ko.md): 기존 기록 점검과 프로젝트 지침 보존.
+- [프로젝트 아키텍처](project-architecture.ko.md): 아키텍처 결정, 선택지로서의 FSD, 경계 변경과 부트스트랩 범위.
 - [프로젝트 기록 구조](structured-playbook-layout.ko.md): 현재 사실, 상세 문서, 관리 파일 구분, 작성 예시.
 - [MCP 설정](mcp-permission-model.ko.md): 프로젝트에 연결하는 읽기 전용 도구 네 개.
 - [에이전트의 도구 활용](agent-usage.ko.md): 스킬·MCP·문서 점검을 사용할 수 있게 하는 방법과 실제 활용 확인.

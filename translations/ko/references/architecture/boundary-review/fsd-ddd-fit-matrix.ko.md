@@ -1,29 +1,16 @@
-# FSD와 DDD 적합성 매트릭스
+# 아키텍처 경계 비교
 
-Frontend, backend, full-stack, monorepo code에서 어떤 boundary model을 고를지 판단할 때 사용합니다.
+프로젝트에 실제로 경계 결정이 필요할 때 사용합니다. 아래 표는 비교할 질문이며 보편적인 순위나 이름 붙은 아키텍처를 고르라는 요구가 아닙니다. [프로젝트의 제약과 채택한 결정](../../../docs/project-architecture.ko.md)부터 확인하세요.
 
-## 적합성 매트릭스
-
-| 접근 | 잘 맞는 경우 | 약한 경우 | 첫 안전 조치 |
+| 접근 | 검토할 질문 | 주의할 점 | 처음 바꿔볼 범위 |
 | --- | --- | --- | --- |
-| Feature-Sliced Design | pages, widgets, features, entities, shared UI/lib가 보이고 feature 간 결합이 반복되는 UI 중심 app. | Backend-only service, 작은 app, 안정된 feature boundary가 없는 app. | 한 feature 또는 shared layer의 public import를 정의합니다. |
-| Layered architecture | Controller, service, repository, adapter, infrastructure가 이미 있고 의존 방향만 새는 경우. | Domain behavior가 불명확해 layer 이름이 인위적인 경우. | Request/session concern을 낮은 layer에서 제거합니다. |
-| DDD modules | Business invariant, aggregate, policy, bounded context가 변경 위험의 중심인 경우. | 강한 domain language가 없는 CRUD/reporting/integration glue. | Aggregate 또는 policy boundary 하나를 이름 붙이고 invariant를 보호합니다. |
-| Modular monolith | 하나의 deployable app 내부에 ownership, dependency rule, optional extraction이 필요한 경우. | Package split이 미관용이고 tooling이 enforce하지 못하는 경우. | Module entrypoint를 만들고 deep import를 금지합니다. |
-| Monorepo packages | 독립 build/test/release ownership이 중요한 경우. | Shared code가 dumping ground가 될 가능성이 큰 경우. | Package export와 dependency direction check를 추가합니다. |
-| Legacy seam | Compatibility와 hidden coupling이 위험의 중심인 경우. | Rewrite가 이미 계획되어 있고 별도 scope로 안전하게 가능한 경우. | Behavior change 전에 adapter/shim을 추가합니다. |
+| Feature-Sliced Design | 프론트엔드 페이지, 재사용과 공개 import에 공통 규칙이 도움이 되는가? | 백엔드 전용 코드에 적용하거나 역할 없는 계층을 추가하지 않음. 작다는 이유만으로 배제하지도 않음 | 페이지나 기능 하나의 적용 범위와 공개 import 정의 |
+| 계층형 아키텍처 | 통신, 애플리케이션 동작과 저장 책임이 섞여 있는가? | 계층을 늘려도 같은 전달 코드를 이름만 바꿔 반복할 수 있음 | 요청이나 저장 책임이 섞인 경계 하나 분리 |
+| DDD 모듈 | 동작이 바뀌어도 일관되게 지켜야 할 업무 규칙과 용어는 무엇인가? | 도메인 이유 없이 집합체나 경계 맥락 이름을 추가하지 않음 | 업무 불변식 하나와 담당 모듈 기록 |
+| 모듈형 모놀리스 | 함께 배포하는 앱 안에서 담당 범위를 명확히 할 필요가 있는가? | 폴더를 나누기만 해서는 인터페이스가 지켜지지 않음 | 모듈 진입점 하나와 허용할 호출부 정의 |
+| 모노레포 패키지 | 일부에 독립적인 빌드·테스트·릴리스 책임이 필요한가? | 패키지를 나누면 의존성과 릴리스 조정도 필요함 | 실제 패키지 경계 하나의 export와 검사 정의 |
+| 레거시 호환 경계 | 내부를 바꾸는 동안 안정적으로 유지해야 할 기존 계약은 무엇인가? | 래퍼에는 목적과 제거 또는 유지 조건이 필요함 | 바꾸는 인터페이스에 범위가 명확한 어댑터 추가 |
 
-## 결정 규칙
+import, 라우트, manifest, 테스트와 실행 시 역할로 현재 상태를 확인합니다. 의도한 계약과 대조하고 현재 코드를 최종 설계로 조용히 바꾸어 해석하지 않습니다.
 
-- Import, entrypoint, package manifest, route, test, runtime ownership의 증거에서 시작합니다.
-- 다음 regression을 막는 가장 작은 boundary model을 고릅니다.
-- 조직에서 FSD를 쓴다는 이유만으로 backend code에 FSD를 강요하지 않습니다.
-- Business language가 안정되지 않았으면 DDD 이름을 붙이지 않습니다.
-- Folder naming만으로는 부족하며 documented public API를 우선합니다.
-
-## 산출물
-
-- 선택한 boundary model과 선택하지 않은 모델의 이유.
-- 결정이 적용되는 directory 또는 module.
-- 허용 import, 금지 import, 예외 경로.
-- Boundary drift를 감지할 command 또는 search.
+선택한 범위, 이유, 허용 의존성, 예외, 검증과 재검토 조건을 기록합니다. 앞으로의 요구가 불분명하면 작은 임시 구조로 충분할 수 있습니다. 결정은 프로젝트에 두고 새 근거로 장단점이 달라지면 갱신합니다.

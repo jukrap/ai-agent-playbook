@@ -36,6 +36,10 @@ Omit `--local-only` for records intended for commits. AAPB does not stage or com
 
 The ownership marker covers only known managed files. User documents and root instructions are not disposable template output. Layout migration requires owned, unchanged metadata; do not rewrite hashes or invent ownership to bypass a conflict.
 
+## Architecture and root instructions
+
+Bootstrap does not choose or migrate source architecture. Keep accepted project boundaries and existing AGENTS.md; when instructions or architecture decisions need writing, adapt [the neutral project template](../templates/agents/AGENTS.md) and [architecture guidance](project-architecture.md). A stack dependency is not permission to apply an old profile or move source files.
+
 ## Update old records gradually
 
 Keep historical decisions and evidence links. Add or update CURRENT.md using verified current facts, then link detail when useful. Do not automatically summarize old execution reports as today's status. Test the application with its own commands and record the actual scope.

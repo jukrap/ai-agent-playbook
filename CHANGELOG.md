@@ -6,6 +6,7 @@
 - Replace clipped JSON previews with adjustable content budgets and source-bound continuation.
 - Preserve source text, match locations, validation totals and incomplete scan evidence across pages.
 - Separate the content budget from a 256 KiB complete-result ceiling and document prerelease allowlist migration.
+- Allow up to eight seconds for Python interpreter probes and include candidate diagnostics when validation cannot find a usable engine.
 
 ## 1.0.0-next.1 (source prerelease)
 

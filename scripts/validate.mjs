@@ -306,7 +306,8 @@ async function validatePython() {
   const root = resolveRoot();
   const status = await pythonEngineStatus({ repoRoot: root });
   if (!status.selected) {
-    throw new Error('Python was not found or ai_agent_playbook_engine is unavailable. Install Python 3.11+ or set AI_AGENT_PLAYBOOK_PYTHON.');
+    const details = status.candidates.map((candidate) => `${candidate.id}: ${candidate.error ?? candidate.engineError ?? 'engine unavailable'}`).join('; ');
+    throw new Error('Python was not found or ai_agent_playbook_engine is unavailable. Install Python 3.11+ or set AI_AGENT_PLAYBOOK_PYTHON. Probe results: ' + details);
   }
   const result = await runPythonWritingNaturalness({
     repoRoot: root,

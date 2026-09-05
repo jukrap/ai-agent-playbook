@@ -2,6 +2,9 @@ import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtemp, rm } from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
 import { pythonEngineStatus } from '../src/runtime/python-engine.mjs';
 
 test('Python candidate discovery isolates a synchronous spawn failure', async () => {
@@ -30,13 +33,28 @@ test('Python candidate discovery isolates a synchronous spawn failure', async ()
   );
 });
 
-function successfulPythonChild(command) {
+test('Python discovery accepts a healthy interpreter that takes more than three seconds to start', async (t) => {
+  const repoRoot = await mkdtemp(path.join(os.tmpdir(), 'aapb-python-start-'));
+  t.after(async () => { assert.equal(path.dirname(repoRoot), os.tmpdir()); await rm(repoRoot, { recursive: true, force: true }); });
+  const status = await pythonEngineStatus({
+    repoRoot,
+    spawnImpl(command) {
+      if (command !== 'python') throw new Error('Unavailable test candidate');
+      return successfulPythonChild(command, 3500);
+    }
+  });
+  assert.equal(status.ok, true);
+  assert.equal(status.selected?.command, 'python');
+});
+
+function successfulPythonChild(command, delay = 0) {
   const child = new EventEmitter();
   child.stdin = new PassThrough();
   child.stdout = new PassThrough();
   child.stderr = new PassThrough();
-  child.kill = () => {};
-  queueMicrotask(() => {
+  let timer;
+  child.kill = () => clearTimeout(timer);
+  const complete = () => {
     child.stdout.end(JSON.stringify({
       executable: command,
       version: '3.13.0',
@@ -45,6 +63,8 @@ function successfulPythonChild(command) {
     }));
     child.stderr.end();
     child.emit('close', 0);
-  });
+  };
+  if (delay) timer = setTimeout(complete, delay);
+  else queueMicrotask(complete);
   return child;
 }

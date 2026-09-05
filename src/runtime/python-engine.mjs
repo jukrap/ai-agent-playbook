@@ -154,7 +154,7 @@ async function probeCandidate(candidate, repoRoot, spawnImpl) {
   const result = await runPython(candidate.command, [...candidate.args, '-c', code], {
     repoRoot,
     input: '',
-    timeoutMs: 3000,
+    timeoutMs: DEFAULT_TIMEOUT_MS,
     spawnImpl
   });
   const base = {

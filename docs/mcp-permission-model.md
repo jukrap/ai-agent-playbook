@@ -4,15 +4,17 @@ MCP lets an agent app call AAPB's record tools. It is optional: the CLI and dire
 
 ## Before connecting
 
-Use an installed archive or checkout whose CLI you have verified. Select one existing project, and check its records with `ai-agent-playbook records status "<project>" --json`. Keep an older common MCP entry disabled until you intentionally replace its command and tool allowlist.
+Use an installed archive or checkout whose CLI you have verified. In an existing project's terminal directory, check its records with `ai-agent-playbook records status --json`. Keep an older common MCP entry disabled until you intentionally update its command and tool allowlist.
 
-The server binds one project at startup:
+The server uses its startup working directory as the project when no path is supplied:
 
 ```powershell
-ai-agent-playbook mcp --project "<project>"
+ai-agent-playbook mcp
 ```
 
 It uses stdio: the client and server exchange messages over standard input/output. Running it in a terminal may look idle because it is waiting for a client. That is not a loading or functional test; stop the manual process with Ctrl+C when finished.
+
+In Codex, one common registration can serve tasks in different projects: Codex starts each server in that task's working directory. You do not need to enter a project path for every repository. The connection remains bound to the directory it started in; mentioning another repository or changing a shell's directory does not retarget it. See [Codex setup](../adapters/codex/README.md) for the complete common configuration.
 
 ## Configure the host
 
@@ -22,7 +24,7 @@ Use the host's supported MCP settings. Supply these values, adapted to its confi
 | --- | --- |
 | Server name | `aapb` |
 | Command | `node`, or the absolute Node executable path if the app cannot find it |
-| Arguments | Absolute path to `bin/aapb.mjs`, then `mcp`, `--project`, and the absolute target-project path |
+| Arguments | Absolute path to `bin/aapb.mjs`, then `mcp` |
 | Transport | stdio |
 | Environment | No API key is required for AAPB record tools |
 
@@ -31,11 +33,24 @@ For example, the command/argument fields are:
 ```json
 {
   "command": "node",
+  "args": ["<absolute-package-directory>/bin/aapb.mjs", "mcp"]
+}
+```
+
+Replace the package-directory placeholder and retain separate array elements. This is a command example, not a complete host-specific configuration file. An absolute script path lets the host find the installed program; the process working directory separately determines which project's records it reads. Reuse an existing AAPB server entry rather than registering the same server twice. See the [Codex](../adapters/codex/README.md) or [Claude Code](../adapters/claude-code/README.md) adapter.
+
+## Pin a target only when needed
+
+If another client does not supply the intended working directory, or you deliberately want a fixed project, append `--project` and its absolute path:
+
+```json
+{
+  "command": "node",
   "args": ["<absolute-package-directory>/bin/aapb.mjs", "mcp", "--project", "<absolute-project-directory>"]
 }
 ```
 
-Replace both placeholders and retain separate array elements. This is a command example, not a complete host-specific configuration file. Using Node and an absolute script path avoids dependence on a global shell wrapper or the app's working directory. See the [Codex](../adapters/codex/README.md) or [Claude Code](../adapters/claude-code/README.md) adapter.
+The equivalent terminal command is `ai-agent-playbook mcp --project "<project>"`. A host that supports a server `cwd` can also fix the startup directory there. Use one targeting method for clarity. These are optional choices in Codex; project-local configuration is useful when connection settings must differ by repository. Check the startup directory in other clients rather than assuming they behave like Codex. AAPB uses the selected directory directly and does not search upward for the Git root.
 
 ## Confirm actual loading and behavior
 
@@ -70,6 +85,7 @@ There are no MCP write tools, shell tools, dynamic resources, generated workflow
 | --- | --- |
 | Host cannot start the command | Check absolute script/Node paths and the app's environment |
 | Old tools still appear | Inspect duplicate server entries and reload the connection |
+| Records come from the wrong project | Check for a fixed `--project` or server `cwd`, and start the task in the intended project |
 | CURRENT.md is absent | Inspect status and the existing layout; do not assume bootstrap should overwrite it |
 | Cursor rejected after editing | Restart the read/search against the changed source |
 | Result too large | Narrow the query, select a smaller page, or read a specific record/range |

@@ -7,7 +7,7 @@ Installing a capability makes it available; it does not guarantee that an agent 
 | Mechanism | How it becomes available | How it is used |
 | --- | --- | --- |
 | Skills | Install a selected profile and reload the host's catalog | The host may select a matching description, or the user invokes the skill explicitly |
-| MCP | Intentionally configure a project-bound server and reload its connection | The host may call an advertised tool that fits the request |
+| MCP | Register and enable the server, then reload its connection; Codex can use one common entry | The host may call an advertised tool that fits the request |
 | Writing/UI CLI | Install the npm package and provide an allowed shell/Node execution tool | The agent or user runs an advisory command when useful |
 
 The [official skills guide](https://learn.chatgpt.com/docs/build-skills) describes both explicit and description-based implicit invocation. Exact host behavior and available catalogs still need checking in the actual session. A file on disk, a listed skill, a read SKILL.md, and a useful result are different observations.
@@ -24,7 +24,7 @@ These requests can match `project-memory`, `natural-writing-humanization`, or `u
 
 The optional MCP surface contains `aapb_status`, `aapb_search`, `aapb_read`, and `aapb_validate`. It must be connected before the agent can call it. A disabled common server is not automatically activated by npm installation, skill selection, or a successful SDK test.
 
-Use [MCP setup](mcp-permission-model.md) to connect only the intended project. Check the advertised names, then exercise status/read/search/validation and verify the result and unchanged files. Those checks prove server behavior. To assess automatic selection, separately give an ordinary task without naming a tool and inspect what the agent actually chose. Direct file reading may also be a valid choice.
+In Codex, the common server can use each task's working directory without a per-project path setting. Open a task in the intended project; [MCP setup](mcp-permission-model.md) explains the default and optional fixed targets. Check the advertised names, then exercise status/read/search/validation and verify the result and unchanged files. Those checks prove server behavior. To assess automatic selection, separately give an ordinary task without naming a tool and inspect what the agent actually chose. Direct file reading may also be a valid choice.
 
 ## Korean writing tools
 

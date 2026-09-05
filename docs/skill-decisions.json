@@ -6,7 +6,7 @@
     {
       "name": "agent-orchestration-handoff",
       "category": "ai-harness",
-      "path": "skills\\ai-harness\\agent-orchestration-handoff",
+      "path": "skills/ai-harness/agent-orchestration-handoff",
       "skillBytes": 1397,
       "referenceBytes": 4684,
       "references": [
@@ -28,7 +28,7 @@
     {
       "name": "capability-witness-history",
       "category": "ai-harness",
-      "path": "skills\\ai-harness\\capability-witness-history",
+      "path": "skills/ai-harness/capability-witness-history",
       "skillBytes": 1048,
       "referenceBytes": 4723,
       "references": [
@@ -50,7 +50,7 @@
     {
       "name": "context-engineering-memory-design",
       "category": "ai-harness",
-      "path": "skills\\ai-harness\\context-engineering-memory-design",
+      "path": "skills/ai-harness/context-engineering-memory-design",
       "skillBytes": 1179,
       "referenceBytes": 3494,
       "references": [
@@ -72,7 +72,7 @@
     {
       "name": "evidence-locator-integrity",
       "category": "ai-harness",
-      "path": "skills\\ai-harness\\evidence-locator-integrity",
+      "path": "skills/ai-harness/evidence-locator-integrity",
       "skillBytes": 1458,
       "referenceBytes": 6173,
       "references": [
@@ -94,7 +94,7 @@
     {
       "name": "forge-automation-control",
       "category": "ai-harness",
-      "path": "skills\\ai-harness\\forge-automation-control",
+      "path": "skills/ai-harness/forge-automation-control",
       "skillBytes": 3291,
       "referenceBytes": 21407,
       "references": [
@@ -117,7 +117,7 @@
     {
       "name": "mcp-server-design",
       "category": "ai-harness",
-      "path": "skills\\ai-harness\\mcp-server-design",
+      "path": "skills/ai-harness/mcp-server-design",
       "skillBytes": 923,
       "referenceBytes": 3927,
       "references": [
@@ -138,7 +138,7 @@
     {
       "name": "pre-action-fact-gate",
       "category": "ai-harness",
-      "path": "skills\\ai-harness\\pre-action-fact-gate",
+      "path": "skills/ai-harness/pre-action-fact-gate",
       "skillBytes": 1178,
       "referenceBytes": 4916,
       "references": [
@@ -160,7 +160,7 @@
     {
       "name": "runtime-index-cache-design",
       "category": "ai-harness",
-      "path": "skills\\ai-harness\\runtime-index-cache-design",
+      "path": "skills/ai-harness/runtime-index-cache-design",
       "skillBytes": 1102,
       "referenceBytes": 2916,
       "references": [
@@ -182,7 +182,7 @@
     {
       "name": "skill-pack-governance",
       "category": "ai-harness",
-      "path": "skills\\ai-harness\\skill-pack-governance",
+      "path": "skills/ai-harness/skill-pack-governance",
       "skillBytes": 1117,
       "referenceBytes": 3026,
       "references": [
@@ -204,7 +204,7 @@
     {
       "name": "boundary-review",
       "category": "architecture",
-      "path": "skills\\architecture\\boundary-review",
+      "path": "skills/architecture/boundary-review",
       "skillBytes": 1341,
       "referenceBytes": 10530,
       "references": [
@@ -228,7 +228,7 @@
     {
       "name": "domain-model-change",
       "category": "architecture",
-      "path": "skills\\architecture\\domain-model-change",
+      "path": "skills/architecture/domain-model-change",
       "skillBytes": 1170,
       "referenceBytes": 2841,
       "references": [
@@ -250,7 +250,7 @@
     {
       "name": "feature-slice-boundary",
       "category": "architecture",
-      "path": "skills\\architecture\\feature-slice-boundary",
+      "path": "skills/architecture/feature-slice-boundary",
       "skillBytes": 991,
       "referenceBytes": 2808,
       "references": [
@@ -272,7 +272,7 @@
     {
       "name": "monorepo-package-boundary",
       "category": "architecture",
-      "path": "skills\\architecture\\monorepo-package-boundary",
+      "path": "skills/architecture/monorepo-package-boundary",
       "skillBytes": 1117,
       "referenceBytes": 2753,
       "references": [
@@ -294,7 +294,7 @@
     {
       "name": "api-contract-boundary",
       "category": "backend",
-      "path": "skills\\backend\\api-contract-boundary",
+      "path": "skills/backend/api-contract-boundary",
       "skillBytes": 907,
       "referenceBytes": 984,
       "references": [
@@ -315,7 +315,7 @@
     {
       "name": "backend-change-safety",
       "category": "backend",
-      "path": "skills\\backend\\backend-change-safety",
+      "path": "skills/backend/backend-change-safety",
       "skillBytes": 2056,
       "referenceBytes": 23947,
       "references": [
@@ -348,7 +348,7 @@
     {
       "name": "connector-integration-change",
       "category": "backend",
-      "path": "skills\\backend\\connector-integration-change",
+      "path": "skills/backend/connector-integration-change",
       "skillBytes": 1316,
       "referenceBytes": 6111,
       "references": [
@@ -371,7 +371,7 @@
     {
       "name": "job-worker-reliability",
       "category": "backend",
-      "path": "skills\\backend\\job-worker-reliability",
+      "path": "skills/backend/job-worker-reliability",
       "skillBytes": 1205,
       "referenceBytes": 3205,
       "references": [
@@ -392,7 +392,7 @@
     {
       "name": "request-validation-error-contract",
       "category": "backend",
-      "path": "skills\\backend\\request-validation-error-contract",
+      "path": "skills/backend/request-validation-error-contract",
       "skillBytes": 1179,
       "referenceBytes": 2752,
       "references": [
@@ -413,7 +413,7 @@
     {
       "name": "server-rendered-change",
       "category": "backend",
-      "path": "skills\\backend\\server-rendered-change",
+      "path": "skills/backend/server-rendered-change",
       "skillBytes": 1015,
       "referenceBytes": 3128,
       "references": [
@@ -434,7 +434,7 @@
     {
       "name": "analytics-instrumentation-review",
       "category": "data",
-      "path": "skills\\data\\analytics-instrumentation-review",
+      "path": "skills/data/analytics-instrumentation-review",
       "skillBytes": 1191,
       "referenceBytes": 2472,
       "references": [
@@ -456,7 +456,7 @@
     {
       "name": "analytics-reporting-review",
       "category": "data",
-      "path": "skills\\data\\analytics-reporting-review",
+      "path": "skills/data/analytics-reporting-review",
       "skillBytes": 1031,
       "referenceBytes": 3406,
       "references": [
@@ -478,7 +478,7 @@
     {
       "name": "data-contract-lineage-review",
       "category": "data",
-      "path": "skills\\data\\data-contract-lineage-review",
+      "path": "skills/data/data-contract-lineage-review",
       "skillBytes": 1064,
       "referenceBytes": 2577,
       "references": [
@@ -500,7 +500,7 @@
     {
       "name": "data-migration-integrity",
       "category": "data",
-      "path": "skills\\data\\data-migration-integrity",
+      "path": "skills/data/data-migration-integrity",
       "skillBytes": 1127,
       "referenceBytes": 3273,
       "references": [
@@ -522,7 +522,7 @@
     {
       "name": "data-pipeline-review",
       "category": "data",
-      "path": "skills\\data\\data-pipeline-review",
+      "path": "skills/data/data-pipeline-review",
       "skillBytes": 943,
       "referenceBytes": 3091,
       "references": [
@@ -543,7 +543,7 @@
     {
       "name": "data-quality-observability",
       "category": "data",
-      "path": "skills\\data\\data-quality-observability",
+      "path": "skills/data/data-quality-observability",
       "skillBytes": 1110,
       "referenceBytes": 2478,
       "references": [
@@ -565,7 +565,7 @@
     {
       "name": "knowledge-retrieval-pipeline-review",
       "category": "data",
-      "path": "skills\\data\\knowledge-retrieval-pipeline-review",
+      "path": "skills/data/knowledge-retrieval-pipeline-review",
       "skillBytes": 1263,
       "referenceBytes": 2494,
       "references": [
@@ -587,7 +587,7 @@
     {
       "name": "knowledge-source-registry",
       "category": "data",
-      "path": "skills\\data\\knowledge-source-registry",
+      "path": "skills/data/knowledge-source-registry",
       "skillBytes": 1106,
       "referenceBytes": 5063,
       "references": [
@@ -609,7 +609,7 @@
     {
       "name": "data-integrity-constraints",
       "category": "database",
-      "path": "skills\\database\\data-integrity-constraints",
+      "path": "skills/database/data-integrity-constraints",
       "skillBytes": 1039,
       "referenceBytes": 3236,
       "references": [
@@ -631,7 +631,7 @@
     {
       "name": "database-change-safety",
       "category": "database",
-      "path": "skills\\database\\database-change-safety",
+      "path": "skills/database/database-change-safety",
       "skillBytes": 904,
       "referenceBytes": 3862,
       "references": [
@@ -652,7 +652,7 @@
     {
       "name": "query-performance-review",
       "category": "database",
-      "path": "skills\\database\\query-performance-review",
+      "path": "skills/database/query-performance-review",
       "skillBytes": 1192,
       "referenceBytes": 3542,
       "references": [
@@ -674,7 +674,7 @@
     {
       "name": "schema-migration-plan",
       "category": "database",
-      "path": "skills\\database\\schema-migration-plan",
+      "path": "skills/database/schema-migration-plan",
       "skillBytes": 1120,
       "referenceBytes": 3932,
       "references": [
@@ -696,7 +696,7 @@
     {
       "name": "ci-quality-gate",
       "category": "delivery",
-      "path": "skills\\delivery\\ci-quality-gate",
+      "path": "skills/delivery/ci-quality-gate",
       "skillBytes": 1123,
       "referenceBytes": 3902,
       "references": [
@@ -718,7 +718,7 @@
     {
       "name": "eval-harness-design",
       "category": "delivery",
-      "path": "skills\\delivery\\eval-harness-design",
+      "path": "skills/delivery/eval-harness-design",
       "skillBytes": 987,
       "referenceBytes": 5823,
       "references": [
@@ -740,7 +740,7 @@
     {
       "name": "flaky-test-triage",
       "category": "delivery",
-      "path": "skills\\delivery\\flaky-test-triage",
+      "path": "skills/delivery/flaky-test-triage",
       "skillBytes": 974,
       "referenceBytes": 2261,
       "references": [
@@ -762,7 +762,7 @@
     {
       "name": "git-worklog-guardrails",
       "category": "delivery",
-      "path": "skills\\delivery\\git-worklog-guardrails",
+      "path": "skills/delivery/git-worklog-guardrails",
       "skillBytes": 839,
       "referenceBytes": 1835,
       "references": [
@@ -783,7 +783,7 @@
     {
       "name": "test-fixture-data-design",
       "category": "delivery",
-      "path": "skills\\delivery\\test-fixture-data-design",
+      "path": "skills/delivery/test-fixture-data-design",
       "skillBytes": 1033,
       "referenceBytes": 1865,
       "references": [
@@ -805,7 +805,7 @@
     {
       "name": "test-verification-strategy",
       "category": "delivery",
-      "path": "skills\\delivery\\test-verification-strategy",
+      "path": "skills/delivery/test-verification-strategy",
       "skillBytes": 1032,
       "referenceBytes": 2545,
       "references": [
@@ -827,7 +827,7 @@
     {
       "name": "brand-identity-system",
       "category": "design",
-      "path": "skills\\design\\brand-identity-system",
+      "path": "skills/design/brand-identity-system",
       "skillBytes": 1176,
       "referenceBytes": 4283,
       "references": [
@@ -849,7 +849,7 @@
     {
       "name": "design-brief-direction",
       "category": "design",
-      "path": "skills\\design\\design-brief-direction",
+      "path": "skills/design/design-brief-direction",
       "skillBytes": 1462,
       "referenceBytes": 9963,
       "references": [
@@ -872,7 +872,7 @@
     {
       "name": "design-reference-analysis",
       "category": "design",
-      "path": "skills\\design\\design-reference-analysis",
+      "path": "skills/design/design-reference-analysis",
       "skillBytes": 1341,
       "referenceBytes": 6281,
       "references": [
@@ -895,7 +895,7 @@
     {
       "name": "image-to-code-handoff",
       "category": "design",
-      "path": "skills\\design\\image-to-code-handoff",
+      "path": "skills/design/image-to-code-handoff",
       "skillBytes": 1179,
       "referenceBytes": 3603,
       "references": [
@@ -917,7 +917,7 @@
     {
       "name": "ci-failure-triage",
       "category": "devops",
-      "path": "skills\\devops\\ci-failure-triage",
+      "path": "skills/devops/ci-failure-triage",
       "skillBytes": 748,
       "referenceBytes": 1946,
       "references": [
@@ -938,7 +938,7 @@
     {
       "name": "container-change-safety",
       "category": "devops",
-      "path": "skills\\devops\\container-change-safety",
+      "path": "skills/devops/container-change-safety",
       "skillBytes": 1080,
       "referenceBytes": 3926,
       "references": [
@@ -960,7 +960,7 @@
     {
       "name": "deployment-release-check",
       "category": "devops",
-      "path": "skills\\devops\\deployment-release-check",
+      "path": "skills/devops/deployment-release-check",
       "skillBytes": 1410,
       "referenceBytes": 8939,
       "references": [
@@ -985,7 +985,7 @@
     {
       "name": "observability-incident-triage",
       "category": "devops",
-      "path": "skills\\devops\\observability-incident-triage",
+      "path": "skills/devops/observability-incident-triage",
       "skillBytes": 1020,
       "referenceBytes": 3014,
       "references": [
@@ -1007,7 +1007,7 @@
     {
       "name": "package-publish-readiness",
       "category": "devops",
-      "path": "skills\\devops\\package-publish-readiness",
+      "path": "skills/devops/package-publish-readiness",
       "skillBytes": 1058,
       "referenceBytes": 2877,
       "references": [
@@ -1029,7 +1029,7 @@
     {
       "name": "browser-dom-change",
       "category": "frontend",
-      "path": "skills\\frontend\\browser-dom-change",
+      "path": "skills/frontend/browser-dom-change",
       "skillBytes": 899,
       "referenceBytes": 1710,
       "references": [
@@ -1050,7 +1050,7 @@
     {
       "name": "design-system-handoff",
       "category": "frontend",
-      "path": "skills\\frontend\\design-system-handoff",
+      "path": "skills/frontend/design-system-handoff",
       "skillBytes": 1183,
       "referenceBytes": 2804,
       "references": [
@@ -1072,7 +1072,7 @@
     {
       "name": "frontend-accessibility-review",
       "category": "frontend",
-      "path": "skills\\frontend\\frontend-accessibility-review",
+      "path": "skills/frontend/frontend-accessibility-review",
       "skillBytes": 1104,
       "referenceBytes": 3688,
       "references": [
@@ -1094,7 +1094,7 @@
     {
       "name": "frontend-state-data-flow",
       "category": "frontend",
-      "path": "skills\\frontend\\frontend-state-data-flow",
+      "path": "skills/frontend/frontend-state-data-flow",
       "skillBytes": 1046,
       "referenceBytes": 3894,
       "references": [
@@ -1116,7 +1116,7 @@
     {
       "name": "generic-ui-review",
       "category": "frontend",
-      "path": "skills\\frontend\\generic-ui-review",
+      "path": "skills/frontend/generic-ui-review",
       "skillBytes": 1940,
       "referenceBytes": 2961,
       "references": [
@@ -1137,7 +1137,7 @@
     {
       "name": "interactive-media-3d-review",
       "category": "frontend",
-      "path": "skills\\frontend\\interactive-media-3d-review",
+      "path": "skills/frontend/interactive-media-3d-review",
       "skillBytes": 1635,
       "referenceBytes": 10589,
       "references": [
@@ -1161,7 +1161,7 @@
     {
       "name": "style-policy-selection",
       "category": "frontend",
-      "path": "skills\\frontend\\style-policy-selection",
+      "path": "skills/frontend/style-policy-selection",
       "skillBytes": 1100,
       "referenceBytes": 1629,
       "references": [
@@ -1182,7 +1182,7 @@
     {
       "name": "ui-polish",
       "category": "frontend",
-      "path": "skills\\frontend\\ui-polish",
+      "path": "skills/frontend/ui-polish",
       "skillBytes": 935,
       "referenceBytes": 3310,
       "references": [
@@ -1203,7 +1203,7 @@
     {
       "name": "visual-regression-qa",
       "category": "frontend",
-      "path": "skills\\frontend\\visual-regression-qa",
+      "path": "skills/frontend/visual-regression-qa",
       "skillBytes": 1226,
       "referenceBytes": 5441,
       "references": [
@@ -1226,7 +1226,7 @@
     {
       "name": "commit-worklog-guardrails",
       "category": "git",
-      "path": "skills\\git\\commit-worklog-guardrails",
+      "path": "skills/git/commit-worklog-guardrails",
       "skillBytes": 1083,
       "referenceBytes": 7507,
       "references": [
@@ -1247,7 +1247,7 @@
     {
       "name": "legacy-android-webview-hybrid",
       "category": "legacy",
-      "path": "skills\\legacy\\legacy-android-webview-hybrid",
+      "path": "skills/legacy/legacy-android-webview-hybrid",
       "skillBytes": 1253,
       "referenceBytes": 1784,
       "references": [
@@ -1268,7 +1268,7 @@
     {
       "name": "legacy-batch-file-transfer",
       "category": "legacy",
-      "path": "skills\\legacy\\legacy-batch-file-transfer",
+      "path": "skills/legacy/legacy-batch-file-transfer",
       "skillBytes": 1169,
       "referenceBytes": 1613,
       "references": [
@@ -1289,7 +1289,7 @@
     {
       "name": "legacy-change-safety",
       "category": "legacy",
-      "path": "skills\\legacy\\legacy-change-safety",
+      "path": "skills/legacy/legacy-change-safety",
       "skillBytes": 895,
       "referenceBytes": 4017,
       "references": [
@@ -1311,7 +1311,7 @@
     {
       "name": "legacy-database-heavy-system",
       "category": "legacy",
-      "path": "skills\\legacy\\legacy-database-heavy-system",
+      "path": "skills/legacy/legacy-database-heavy-system",
       "skillBytes": 1235,
       "referenceBytes": 1805,
       "references": [
@@ -1332,7 +1332,7 @@
     {
       "name": "legacy-dotnet-webforms",
       "category": "legacy",
-      "path": "skills\\legacy\\legacy-dotnet-webforms",
+      "path": "skills/legacy/legacy-dotnet-webforms",
       "skillBytes": 1474,
       "referenceBytes": 1726,
       "references": [
@@ -1353,7 +1353,7 @@
     {
       "name": "legacy-feature-addition",
       "category": "legacy",
-      "path": "skills\\legacy\\legacy-feature-addition",
+      "path": "skills/legacy/legacy-feature-addition",
       "skillBytes": 1237,
       "referenceBytes": 1749,
       "references": [
@@ -1374,7 +1374,7 @@
     {
       "name": "legacy-general",
       "category": "legacy",
-      "path": "skills\\legacy\\legacy-general",
+      "path": "skills/legacy/legacy-general",
       "skillBytes": 1220,
       "referenceBytes": 1950,
       "references": [
@@ -1395,7 +1395,7 @@
     {
       "name": "legacy-ie-activex-compat",
       "category": "legacy",
-      "path": "skills\\legacy\\legacy-ie-activex-compat",
+      "path": "skills/legacy/legacy-ie-activex-compat",
       "skillBytes": 1210,
       "referenceBytes": 1802,
       "references": [
@@ -1416,7 +1416,7 @@
     {
       "name": "legacy-java-spring-mvc",
       "category": "legacy",
-      "path": "skills\\legacy\\legacy-java-spring-mvc",
+      "path": "skills/legacy/legacy-java-spring-mvc",
       "skillBytes": 1438,
       "referenceBytes": 1812,
       "references": [
@@ -1437,7 +1437,7 @@
     {
       "name": "legacy-jquery-web",
       "category": "legacy",
-      "path": "skills\\legacy\\legacy-jquery-web",
+      "path": "skills/legacy/legacy-jquery-web",
       "skillBytes": 1073,
       "referenceBytes": 1738,
       "references": [
@@ -1458,7 +1458,7 @@
     {
       "name": "legacy-php-lamp",
       "category": "legacy",
-      "path": "skills\\legacy\\legacy-php-lamp",
+      "path": "skills/legacy/legacy-php-lamp",
       "skillBytes": 1462,
       "referenceBytes": 1727,
       "references": [
@@ -1479,7 +1479,7 @@
     {
       "name": "legacy-reporting-printing",
       "category": "legacy",
-      "path": "skills\\legacy\\legacy-reporting-printing",
+      "path": "skills/legacy/legacy-reporting-printing",
       "skillBytes": 1224,
       "referenceBytes": 1489,
       "references": [
@@ -1500,7 +1500,7 @@
     {
       "name": "legacy-risk-check",
       "category": "legacy",
-      "path": "skills\\legacy\\legacy-risk-check",
+      "path": "skills/legacy/legacy-risk-check",
       "skillBytes": 1217,
       "referenceBytes": 1862,
       "references": [
@@ -1521,7 +1521,7 @@
     {
       "name": "legacy-server-rendered-web",
       "category": "legacy",
-      "path": "skills\\legacy\\legacy-server-rendered-web",
+      "path": "skills/legacy/legacy-server-rendered-web",
       "skillBytes": 1215,
       "referenceBytes": 1517,
       "references": [
@@ -1542,7 +1542,7 @@
     {
       "name": "agent-skill-authoring",
       "category": "meta",
-      "path": "skills\\meta\\agent-skill-authoring",
+      "path": "skills/meta/agent-skill-authoring",
       "skillBytes": 1979,
       "referenceBytes": 3462,
       "references": [
@@ -1564,7 +1564,7 @@
     {
       "name": "device-permission-qa",
       "category": "mobile",
-      "path": "skills\\mobile\\device-permission-qa",
+      "path": "skills/mobile/device-permission-qa",
       "skillBytes": 1145,
       "referenceBytes": 3116,
       "references": [
@@ -1586,7 +1586,7 @@
     {
       "name": "native-release-readiness",
       "category": "mobile",
-      "path": "skills\\mobile\\native-release-readiness",
+      "path": "skills/mobile/native-release-readiness",
       "skillBytes": 1211,
       "referenceBytes": 3484,
       "references": [
@@ -1608,7 +1608,7 @@
     {
       "name": "offline-sync-review",
       "category": "mobile",
-      "path": "skills\\mobile\\offline-sync-review",
+      "path": "skills/mobile/offline-sync-review",
       "skillBytes": 1166,
       "referenceBytes": 2943,
       "references": [
@@ -1630,7 +1630,7 @@
     {
       "name": "webview-bridge",
       "category": "mobile",
-      "path": "skills\\mobile\\webview-bridge",
+      "path": "skills/mobile/webview-bridge",
       "skillBytes": 897,
       "referenceBytes": 1706,
       "references": [
@@ -1651,7 +1651,7 @@
     {
       "name": "adr-spec-handoff",
       "category": "project",
-      "path": "skills\\project\\adr-spec-handoff",
+      "path": "skills/project/adr-spec-handoff",
       "skillBytes": 1055,
       "referenceBytes": 3337,
       "references": [
@@ -1673,7 +1673,7 @@
     {
       "name": "documentation-artifact-package",
       "category": "project",
-      "path": "skills\\project\\documentation-artifact-package",
+      "path": "skills/project/documentation-artifact-package",
       "skillBytes": 1237,
       "referenceBytes": 3509,
       "references": [
@@ -1695,7 +1695,7 @@
     {
       "name": "issue-planning-triage",
       "category": "project",
-      "path": "skills\\project\\issue-planning-triage",
+      "path": "skills/project/issue-planning-triage",
       "skillBytes": 1183,
       "referenceBytes": 3547,
       "references": [
@@ -1717,7 +1717,7 @@
     {
       "name": "natural-writing-humanization",
       "category": "project",
-      "path": "skills\\project\\natural-writing-humanization",
+      "path": "skills/project/natural-writing-humanization",
       "skillBytes": 1994,
       "referenceBytes": 8826,
       "references": [
@@ -1741,7 +1741,7 @@
     {
       "name": "project-bootstrap",
       "category": "project",
-      "path": "skills\\project\\project-bootstrap",
+      "path": "skills/project/project-bootstrap",
       "skillBytes": 1256,
       "referenceBytes": 2950,
       "references": [
@@ -1762,7 +1762,7 @@
     {
       "name": "project-doc-system",
       "category": "project",
-      "path": "skills\\project\\project-doc-system",
+      "path": "skills/project/project-doc-system",
       "skillBytes": 1056,
       "referenceBytes": 2954,
       "references": [
@@ -1783,7 +1783,7 @@
     {
       "name": "release-notes-changelog",
       "category": "project",
-      "path": "skills\\project\\release-notes-changelog",
+      "path": "skills/project/release-notes-changelog",
       "skillBytes": 1211,
       "referenceBytes": 3420,
       "references": [
@@ -1805,7 +1805,7 @@
     {
       "name": "repo-onboarding",
       "category": "project",
-      "path": "skills\\project\\repo-onboarding",
+      "path": "skills/project/repo-onboarding",
       "skillBytes": 1090,
       "referenceBytes": 1317,
       "references": [
@@ -1826,7 +1826,7 @@
     {
       "name": "requirements-prd-scope-review",
       "category": "project",
-      "path": "skills\\project\\requirements-prd-scope-review",
+      "path": "skills/project/requirements-prd-scope-review",
       "skillBytes": 1171,
       "referenceBytes": 3746,
       "references": [
@@ -1848,7 +1848,7 @@
     {
       "name": "cleanup-ai-slop",
       "category": "quality",
-      "path": "skills\\quality\\cleanup-ai-slop",
+      "path": "skills/quality/cleanup-ai-slop",
       "skillBytes": 1193,
       "referenceBytes": 1924,
       "references": [
@@ -1869,7 +1869,7 @@
     {
       "name": "frontend-ui-polish",
       "category": "quality",
-      "path": "skills\\quality\\frontend-ui-polish",
+      "path": "skills/quality/frontend-ui-polish",
       "skillBytes": 1027,
       "referenceBytes": 2009,
       "references": [
@@ -1890,7 +1890,7 @@
     {
       "name": "review-work-light",
       "category": "quality",
-      "path": "skills\\quality\\review-work-light",
+      "path": "skills/quality/review-work-light",
       "skillBytes": 941,
       "referenceBytes": 1573,
       "references": [
@@ -1911,7 +1911,7 @@
     {
       "name": "style-quality-review",
       "category": "quality",
-      "path": "skills\\quality\\style-quality-review",
+      "path": "skills/quality/style-quality-review",
       "skillBytes": 963,
       "referenceBytes": 941,
       "references": [
@@ -1932,7 +1932,7 @@
     {
       "name": "ui-style-policy",
       "category": "quality",
-      "path": "skills\\quality\\ui-style-policy",
+      "path": "skills/quality/ui-style-policy",
       "skillBytes": 919,
       "referenceBytes": 1553,
       "references": [
@@ -1953,7 +1953,7 @@
     {
       "name": "auth-access-control",
       "category": "security",
-      "path": "skills\\security\\auth-access-control",
+      "path": "skills/security/auth-access-control",
       "skillBytes": 839,
       "referenceBytes": 2418,
       "references": [
@@ -1974,7 +1974,7 @@
     {
       "name": "dependency-supply-chain-review",
       "category": "security",
-      "path": "skills\\security\\dependency-supply-chain-review",
+      "path": "skills/security/dependency-supply-chain-review",
       "skillBytes": 1157,
       "referenceBytes": 5443,
       "references": [
@@ -1996,7 +1996,7 @@
     {
       "name": "license-notice-review",
       "category": "security",
-      "path": "skills\\security\\license-notice-review",
+      "path": "skills/security/license-notice-review",
       "skillBytes": 1031,
       "referenceBytes": 2571,
       "references": [
@@ -2018,7 +2018,7 @@
     {
       "name": "security-compliance-gate",
       "category": "security",
-      "path": "skills\\security\\security-compliance-gate",
+      "path": "skills/security/security-compliance-gate",
       "skillBytes": 1235,
       "referenceBytes": 5638,
       "references": [
@@ -2040,7 +2040,7 @@
     {
       "name": "security-review",
       "category": "security",
-      "path": "skills\\security\\security-review",
+      "path": "skills/security/security-review",
       "skillBytes": 1254,
       "referenceBytes": 11853,
       "references": [

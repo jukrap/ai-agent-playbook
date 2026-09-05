@@ -1,98 +1,35 @@
-# Maintenance Workflow
+# Maintenance
 
-Use this checklist whenever adding, renaming, removing, or substantially rewriting content in this repository.
+Read the current source, relevant instructions and worktree state before changing content. English is canonical; update Korean mirrors in the same change. Installable SKILL.md files belong only under skills/<category>/<name>. Frontmatter contains name and a trigger-focused description beginning with Use when.
 
-## Source order
+Keep short skill entrypoints, task-specific local references, project-copyable policies under templates/agents, and project records under templates/project-playbook. The optional reference library is not an automatic reading list. Sync installed copies only from this repository.
 
-- Edit English source files first.
-- Update Korean translations under `translations/ko` after the English source is stable.
-- Do not create `SKILL.md` files under translations.
-- Do not edit installed local skill copies as the source of truth.
+## Checks
 
-## Adding a skill
+Run after a coherent change:
 
-1. Choose the smallest fitting category under `skills/`.
-2. Create `skills/<category>/<skill-name>/SKILL.md`.
-3. Keep `SKILL.md` focused on trigger, workflow, and when to read references.
-4. Keep the frontmatter description as a trigger sentence under the lint warning threshold, usually no more than 180 characters.
-5. Move long rules, checklists, examples, and provider-specific details into `references/*.md`.
-6. Keep references substantive enough to carry reusable procedure, evidence, examples, or stack/profile detail; avoid placeholder references.
-7. Add or update `agents/openai.yaml` only if the skill UI metadata needs to be exposed.
-8. Add the Korean translation at `translations/ko/skills/<category>/<skill-name>.ko.md`.
-9. Translate any reference files under the matching `translations/ko/skills/**/references/` path.
-10. Update `README.md` and `docs/classification.md` if the skill changes the public category map.
-11. Run validation and sync installed copies.
-
-## Adding a project template
-
-1. Put copyable thin root agent bootstrap files under `templates/agents`.
-2. Put personal Codex home defaults under `templates/codex-home`.
-3. Put project-memory templates under `templates/project-playbook`.
-4. Keep project-specific product facts out of reusable templates.
-5. Make technology-specific guidance profile-scoped, not global or Codex-home default.
-6. Add the matching Korean translation under `translations/ko/templates/**`.
-7. Update template indexes when the new template changes recommended bundles.
-
-## Updating the runtime CLI
-
-1. Keep runtime code under `bin/`, `src/`, and `test/`.
-2. Keep the CLI dependency-free unless the feature needs a dependency.
-3. Add tests for every new command, overwrite rule, or path convention.
-4. Update `docs/harness-runtime.md`, `README.md`, lifecycle docs, and Korean translations.
-5. Run `npm run check`, `npm run typecheck`, `npm test`, and `npm run validate:python` when the runtime or engine bridge changes.
-
-## TypeScript transition
-
-- Expand `tsconfig.json` from leaf modules first.
-- Prefer modules with narrow input contracts and no package entrypoint responsibility.
-- Keep `bin/aapb.mjs`, `src/cli.mjs`, `src/mcp-server.mjs`, adapter facades, and package shell files as `.mjs` until a build step can preserve the public paths exactly.
-- Before adding a broad module to `typecheck`, add JSDoc option contracts for exported functions and fix the narrow errors revealed by `npx tsc --ignoreConfig ...`.
-- Do not convert runtime files to `.ts` without updating package files, tests, docs, and dry-run packaging checks in the same change.
-
-## Updating commit, PR, or worklog policy
-
-- Update both `templates/project-playbook/knowledge/references/guides/commit-push-worklog.md` and `skills/git/commit-worklog-guardrails/references/git-worklog-checklist.md`.
-- Keep project-copyable guidance in the template.
-- Keep skill-triggered procedural guidance in the skill reference.
-- Update Korean translations for both files in the same change.
-- If the policy came from local agent settings, remove machine-specific paths and keep the portable rule.
-- Commit messages use Conventional Commit type/scope. Use the user's or repository's working language for the subject and body; for Korean work, keep the type/scope in English and write the subject/body in Korean.
-- Use a title-only commit only for very small changes. For multi-file, runtime, packaging, or documentation-structure changes, include a short body and a verification section with commands actually run.
-- PR bodies should follow the reviewer's expected language when known, summarize real diff scope, list real verification, and avoid placeholders, agent signatures, branch names, or PR numbers inside public docs.
-
-## Updating examples
-
-- Keep examples generic and scrubbed.
-- Remove personal names, company names, customer names, internal domains, credentials, branch names, PR numbers, and dated operational status.
-- Prefer examples that show decision quality, verification, and handoff clarity.
-- Do not let old examples become active rules unless the corresponding template or skill is updated.
-
-## Required checks
-
-```powershell
+```sh
 npm run check
 npm run typecheck
 npm test
 npm run validate:python
 npm run validate:all
+```
+
+Windows wrapper compatibility:
+
+```powershell
 .\scripts\sync-skills.ps1 -WhatIf
 .\install.ps1 -SkipValidation -WhatIf
 .\update.ps1 -SkipValidation -WhatIf
 ```
 
-The PowerShell validation scripts remain Windows-friendly wrappers around the same Node validators. Use the npm scripts as the cross-platform path for macOS, Linux, CI, and package consumers. If validation scripts change, update `.github/workflows/validate.yml` in the same change.
+Select a profile when actually syncing. For old duplicates, inspect a migration preview first. Do not re-run the entire suite for every paragraph; rerun affected checks when a failure or new behavior warrants it.
 
-When skill source files changed, sync installed copies after validation:
+## Runtime and artifacts
 
-```powershell
-.\scripts\sync-skills.ps1
-```
+Keep Node ESM entrypoints and the aapb command. Add meaningful regressions for changed data boundaries, overwrite rules, migration/recovery and public commands. Validate npm pack contents and prerelease installation. Optional Python metadata uses PEP 440, mapping npm next.N to devN.
 
-## Review checklist
+Do not weaken public-document hygiene or translation coverage to hide failures. Keep machine paths, credentials, local records and raw evidence out of public artifacts. Update CI when validation behavior changes.
 
-- Does the new content belong in `skills`, `templates`, `examples`, `docs`, or `adapters`?
-- Did the English source stay free of project-private values?
-- Does every English markdown source have a Korean translation?
-- Are installable skills still only under `skills/**/SKILL.md`?
-- Did README, classification, adapters, or recommended bundles need an update?
-- Did any installed skill copy need to be synced?
+Use Conventional Commit type/scope and the user's working language, with a body and actual verification for substantive changes. Stage explicit related paths; do not bypass hooks or include local-only records. Remote publication is separate from local commits.

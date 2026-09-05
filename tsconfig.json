@@ -8,17 +8,20 @@
     "noEmit": true,
     "strict": false,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
   "include": [
-    "src/automation/**/*.mjs",
     "src/forge/**/*.mjs",
-    "src/core/config.mjs",
-    "src/runtime/capability-history.mjs",
-    "src/runtime/dependency-inventory.mjs",
     "src/runtime/python-engine.mjs",
-    "src/runtime/route-api-hints.mjs",
-    "src/runtime/symbol-outline.mjs",
-    "src/runtime/writing-naturalness.mjs"
+    "src/runtime/writing-naturalness.mjs",
+    "src/fs-safety.mjs",
+    "src/records.mjs",
+    "src/skills-lifecycle.mjs",
+    "src/catalog/selection.mjs",
+    "src/cli.mjs",
+    "src/mcp-server.mjs",
+    "src/mcp-tools.mjs"
   ]
 }

@@ -1,335 +1,128 @@
-import { existsSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { runCli } from '../src/cli.mjs';
-
-const repoRoot = path.resolve(import.meta.dirname, '..');
-
-test('skills install dry-run reports operations without writing roots', async () => {
-  const root = await tempRepo('skills dry-run-공백-한글-');
-  const codexRoot = path.join(root, 'codex skills');
-  const agentsRoot = path.join(root, 'agents skills');
-  const before = await listRelativeFiles(root);
-
-  const io = capture(root);
-  assert.equal(await runCli([
-    'skills', 'install',
-    '--dry-run',
-    '--json',
-    '--codex-root', codexRoot,
-    '--agents-root', agentsRoot
-  ], io), 0);
-  const report = JSON.parse(io.out());
-
-  assert.equal(report.schemaVersion, '1');
-  assert.equal(report.ok, true);
-  assert.equal(report.applied, false);
-  assert.equal(report.summary.skills, 94);
-  assert.equal(report.operations.some((operation) => operation.action === 'install'), true);
-  assert.deepEqual(await listRelativeFiles(root), before);
-  await cleanup(root);
+import { mkdtemp, mkdir, writeFile, readFile, rm, symlink, rename } from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+import { fileURLToPath } from 'node:url';
+import { runSkillsLifecycle } from '../src/skills-lifecycle.mjs';
+import { treeSnapshot, statOrNull } from '../src/fs-safety.mjs';
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+async function fixture(t) {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'aapb-skills-'));
+  t.after(async () => { assert.equal(path.dirname(root), os.tmpdir()); await rm(root, { recursive: true, force: true }); });
+  return { root, repoRoot, agentsRoot: path.join(root, '한글 agents skills'), codexRoot: path.join(root, 'codex skills'), backupRoot: path.join(root, 'backups') };
+}
+async function legacy(root, name, text = '# Old managed skill\n') {
+  const dir = path.join(root, name);
+  await mkdir(dir, { recursive: true }); await writeFile(path.join(dir, 'SKILL.md'), text);
+  const snap = await treeSnapshot(dir);
+  await writeFile(path.join(dir, '.ai-agent-playbook-install.json'), JSON.stringify({ source: 'ai-agent-playbook', schemaVersion: 1, skillName: name, sourceHash: snap.legacyHash }));
+  return dir;
+}
+test('selected installation is single-root, preview is write-free, repeat is a no-op', async (t) => {
+  const f = await fixture(t), before = await treeSnapshot(f.root);
+  await runSkillsLifecycle({ ...f, command: 'install', profile: 'core', dryRun: true });
+  assert.deepEqual(await treeSnapshot(f.root), before);
+  const installed = await runSkillsLifecycle({ ...f, command: 'install', profile: 'core' });
+  assert.equal(installed.ok, true);
+  assert.equal(installed.summary.applied, 2);
+  assert.equal(await statOrNull(f.codexRoot), null);
+  assert.equal((await runSkillsLifecycle({ ...f, command: 'update', profile: 'core' })).summary.operations, 0);
+  assert.equal((await runSkillsLifecycle({ ...f, command: 'check', profile: 'core' })).ok, true);
 });
-
-test('skills check reports missing installs as a no-write failure', async () => {
-  const root = await tempRepo('skills check-공백-한글-');
-  const codexRoot = path.join(root, 'codex skills');
-  const agentsRoot = path.join(root, 'agents skills');
-  const before = await listRelativeFiles(root);
-
-  const io = capture(root);
-  assert.equal(await runCli([
-    'skills', 'check',
-    '--json',
-    '--codex-root', codexRoot,
-    '--agents-root', agentsRoot
-  ], io), 1);
-  const report = JSON.parse(io.out());
-
-  assert.equal(report.schemaVersion, '1');
-  assert.equal(report.ok, false);
-  assert.equal(report.applied, false);
-  assert.equal(report.conflicts.some((conflict) => conflict.id === 'skills.missing'), true);
-  assert.deepEqual(await listRelativeFiles(root), before);
-  await cleanup(root);
+test('migration removes owned duplicates and preserves independent changed and unmanaged files', async (t) => {
+  const f = await fixture(t);
+  const clean = await legacy(f.codexRoot, 'repo-onboarding');
+  const changed = await legacy(f.codexRoot, 'project-doc-system');
+  await writeFile(path.join(changed, 'SKILL.md'), '# User edit\n');
+  const foreign = path.join(f.agentsRoot, 'project-bootstrap');
+  await mkdir(foreign, { recursive: true }); await writeFile(path.join(foreign, 'SKILL.md'), '# Foreign\n');
+  const before = await treeSnapshot(f.root);
+  const preview = await runSkillsLifecycle({ ...f, command: 'migrate', profile: 'development', dryRun: true });
+  assert.equal(preview.ok, false);
+  assert.deepEqual(await treeSnapshot(f.root), before);
+  const result = await runSkillsLifecycle({ ...f, command: 'migrate', profile: 'development', apply: true });
+  assert.equal(result.ok, false);
+  assert.equal(result.applied, true);
+  assert.equal(await statOrNull(clean), null);
+  assert.equal(await readFile(path.join(changed, 'SKILL.md'), 'utf8'), '# User edit\n');
+  assert.equal(await readFile(path.join(foreign, 'SKILL.md'), 'utf8'), '# Foreign\n');
+  assert.equal((await runSkillsLifecycle({ ...f, command: 'migrate', profile: 'development', apply: true })).summary.operations, 0);
 });
-
-test('skills install writes managed skill markers to Codex and Agents roots', async () => {
-  const root = await tempRepo('skills install-공백-한글-');
-  const codexRoot = path.join(root, 'codex');
-  const agentsRoot = path.join(root, 'agents');
-
-  const io = capture(root);
-  assert.equal(await runCli([
-    'skills', 'install',
-    '--json',
-    '--codex-root', codexRoot,
-    '--agents-root', agentsRoot
-  ], io), 0);
-  const report = JSON.parse(io.out());
-
-  assert.equal(report.ok, true);
-  assert.equal(report.applied, true);
-  assert.equal(existsSync(path.join(codexRoot, 'project-bootstrap', 'SKILL.md')), true);
-  assert.equal(existsSync(path.join(agentsRoot, 'project-bootstrap', 'SKILL.md')), true);
-  assert.equal(existsSync(path.join(agentsRoot, 'legacys', 'legacy-general', 'SKILL.md')), true);
-
-  const marker = JSON.parse(await readFile(path.join(codexRoot, 'project-bootstrap', '.ai-agent-playbook-install.json'), 'utf8'));
-  assert.equal(marker.source, 'ai-agent-playbook');
-  assert.equal(marker.skillName, 'project-bootstrap');
-  assert.equal(marker.category, 'project');
-  assert.equal(typeof marker.sourceHash, 'string');
-  await cleanup(root);
+test('rollback restores original bytes, preserves later edits and can be repeated', async (t) => {
+  const f = await fixture(t);
+  const old = await legacy(f.codexRoot, 'repo-onboarding');
+  const original = await treeSnapshot(old);
+  const result = await runSkillsLifecycle({ ...f, command: 'migrate', profile: 'core', apply: true });
+  const changed = path.join(f.agentsRoot, 'project-memory/SKILL.md');
+  await writeFile(changed, '# Later user edit\n');
+  const rollback = await runSkillsLifecycle({ ...f, command: 'rollback', backup: result.backup, apply: true });
+  assert.equal(rollback.ok, false);
+  assert.deepEqual(await treeSnapshot(old), original);
+  assert.equal(await readFile(changed, 'utf8'), '# Later user edit\n');
+  assert.equal(await statOrNull(path.join(f.agentsRoot, 'spec-artifacts')), null);
+  const replay = await runSkillsLifecycle({ ...f, command: 'rollback', backup: result.backup, apply: true });
+  assert.equal(replay.summary.restored, 0);
 });
-
-test('PowerShell sync accepts Node-managed skill markers', async (t) => {
-  const pwsh = resolvePowerShell();
-  if (!pwsh) {
-    t.skip('PowerShell is not available');
-    return;
-  }
-
-  const root = await tempRepo('skills ps compat-공백-한글-');
-  const codexRoot = path.join(root, 'codex');
-  const agentsRoot = path.join(root, 'agents');
-
-  assert.equal(await runCli(['skills', 'install', '--codex-root', codexRoot, '--agents-root', agentsRoot], capture(root)), 0);
-
-  const result = spawnSync(pwsh, [
-    '-NoProfile',
-    '-ExecutionPolicy',
-    'Bypass',
-    '-File',
-    path.join(repoRoot, 'scripts', 'sync-skills.ps1'),
-    '-SourceSkillsRoot',
-    path.join(repoRoot, 'skills'),
-    '-CodexSkillsRoot',
-    codexRoot,
-    '-AgentsSkillsRoot',
-    agentsRoot,
-    '-WhatIf'
-  ], {
-    encoding: 'utf8',
-    cwd: repoRoot
+test('changed-after-preview entry is preserved while independently safe entries complete', async (t) => {
+  const f = await fixture(t);
+  const old = await legacy(f.codexRoot, 'repo-onboarding');
+  const result = await runSkillsLifecycle({ ...f, command: 'migrate', apply: true,
+    beforeOperation: async (entry) => { if (entry.skillName === 'repo-onboarding') await writeFile(path.join(old, 'SKILL.md'), '# Concurrent edit\n'); }
   });
-
-  assert.equal(result.status, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /Would update managed skill project-bootstrap/);
-  await cleanup(root);
+  assert.equal(result.ok, false);
+  assert.equal(await readFile(path.join(old, 'SKILL.md'), 'utf8'), '# Concurrent edit\n');
+  assert.ok(await statOrNull(path.join(f.agentsRoot, 'project-memory/SKILL.md')));
+});
+test('linked installation is preserved without traversing or moving its target', async (t) => {
+  const f = await fixture(t), outside = path.join(f.root, 'outside');
+  await mkdir(outside); await writeFile(path.join(outside, 'SKILL.md'), '# Preserve\n');
+  await mkdir(f.codexRoot);
+  await symlink(outside, path.join(f.codexRoot, 'repo-onboarding'), process.platform === 'win32' ? 'junction' : 'dir');
+  const result = await runSkillsLifecycle({ ...f, command: 'migrate', apply: true });
+  assert.equal(result.ok, false);
+  assert.equal(await readFile(path.join(outside, 'SKILL.md'), 'utf8'), '# Preserve\n');
+  assert.equal((await statOrNull(path.join(f.codexRoot, 'repo-onboarding'))).isSymbolicLink(), true);
+});
+test('backup roots cannot overlap installations and invalid selections do not mutate', async (t) => {
+  const f = await fixture(t), before = await treeSnapshot(f.root);
+  await assert.rejects(runSkillsLifecycle({ ...f, command: 'install', profile: 'unknown' }), /Unknown/);
+  await assert.rejects(runSkillsLifecycle({ ...f, command: 'install', skills: ['..\/outside'] }), /Unknown/);
+  await assert.rejects(runSkillsLifecycle({ ...f, command: 'install', backupRoot: path.join(f.agentsRoot, 'backup') }), /outside|separate/);
+  assert.deepEqual(await treeSnapshot(f.root), before);
 });
 
-test('skills update refuses modified managed skills unless forced', async () => {
-  const root = await tempRepo('skills modified-공백-한글-');
-  const codexRoot = path.join(root, 'codex');
-  const agentsRoot = path.join(root, 'agents');
-  assert.equal(await runCli(['skills', 'install', '--codex-root', codexRoot, '--agents-root', agentsRoot], capture(root)), 0);
-
-  const modified = path.join(codexRoot, 'project-bootstrap', 'SKILL.md');
-  await writeFile(modified, `${await readFile(modified, 'utf8')}\nlocal edit\n`);
-
-  const refused = capture(root);
-  assert.equal(await runCli(['skills', 'update', '--json', '--codex-root', codexRoot, '--agents-root', agentsRoot], refused), 1);
-  const refusedReport = JSON.parse(refused.out());
-  assert.equal(refusedReport.conflicts.some((conflict) => conflict.id === 'skills.modified-managed'), true);
-  assert.match(await readFile(modified, 'utf8'), /local edit/);
-
-  const forced = capture(root);
-  assert.equal(await runCli(['skills', 'update', '--force-managed', '--json', '--codex-root', codexRoot, '--agents-root', agentsRoot], forced), 0);
-  assert.doesNotMatch(await readFile(modified, 'utf8'), /local edit/);
-  await cleanup(root);
+test('interrupted apply can restore a moved original before a replacement is installed', async (t) => {
+  const f = await fixture(t), old = await legacy(f.agentsRoot, 'project-memory');
+  const original = await treeSnapshot(old);
+  const result = await runSkillsLifecycle({ ...f, command: 'install', skills: ['project-memory'] });
+  const journalPath = path.join(result.backup, 'journal.json');
+  const journal = JSON.parse(await readFile(journalPath, 'utf8'));
+  const entry = journal.entries[0];
+  await rename(old, path.join(result.backup, entry.id, 'after'));
+  entry.state = 'applying'; journal.state = 'partial';
+  await writeFile(journalPath, JSON.stringify(journal));
+  const recovered = await runSkillsLifecycle({ ...f, command: 'rollback', backup: result.backup, apply: true });
+  assert.equal(recovered.ok, true);
+  assert.deepEqual(await treeSnapshot(old), original);
+  assert.equal((await runSkillsLifecycle({ ...f, command: 'rollback', backup: result.backup, apply: true })).summary.restored, 0);
 });
 
-test('skills install adopts matching unmanaged skills and rejects differing unmanaged skills', async () => {
-  const root = await tempRepo('skills unmanaged-공백-한글-');
-  const codexRoot = path.join(root, 'codex');
-  const agentsRoot = path.join(root, 'agents');
-  await mkdir(path.join(codexRoot, 'project-bootstrap'), { recursive: true });
-  await mkdir(path.join(codexRoot, 'repo-onboarding'), { recursive: true });
-  await copyDir(path.join(repoRoot, 'skills', 'project', 'project-bootstrap'), path.join(codexRoot, 'project-bootstrap'));
-  await writeFile(path.join(codexRoot, 'repo-onboarding', 'SKILL.md'), '# Local repo onboarding\n');
-
-  const io = capture(root);
-  assert.equal(await runCli(['skills', 'install', '--json', '--codex-root', codexRoot, '--agents-root', agentsRoot], io), 1);
-  const report = JSON.parse(io.out());
-
-  assert.equal(report.conflicts.some((conflict) => conflict.id === 'skills.unmanaged-conflict'), true);
-  assert.equal(existsSync(path.join(codexRoot, 'project-bootstrap', '.ai-agent-playbook-install.json')), true);
-  assert.equal(existsSync(path.join(codexRoot, 'repo-onboarding', '.ai-agent-playbook-install.json')), false);
-  await cleanup(root);
+test('all journal paths are validated before recovery and tampered backups are preserved', async (t) => {
+  const f = await fixture(t); await legacy(f.codexRoot, 'repo-onboarding');
+  const result = await runSkillsLifecycle({ ...f, command: 'migrate', apply: true });
+  const journalPath = path.join(result.backup, 'journal.json');
+  const journal = JSON.parse(await readFile(journalPath, 'utf8'));
+  const original = JSON.stringify(journal);
+  journal.entries[0].relative = '../outside';
+  await writeFile(journalPath, JSON.stringify(journal));
+  const before = await treeSnapshot(f.agentsRoot);
+  await assert.rejects(runSkillsLifecycle({ ...f, command: 'rollback', backup: result.backup, apply: true }), /Unsafe/);
+  assert.deepEqual(await treeSnapshot(f.agentsRoot), before);
+  await writeFile(journalPath, original);
+  const removed = journal.entries.find((e) => e.action === 'remove');
+  await writeFile(path.join(result.backup, removed.id, 'before', 'SKILL.md'), '# Changed backup\n');
+  const rollback = await runSkillsLifecycle({ ...f, command: 'rollback', backup: result.backup, apply: true });
+  assert.equal(rollback.ok, false);
+  assert.equal(await statOrNull(path.join(f.codexRoot, 'repo-onboarding')), null);
 });
-
-test('skills uninstall removes unmodified managed skills and preserves modified managed skills', async () => {
-  const root = await tempRepo('skills uninstall-공백-한글-');
-  const codexRoot = path.join(root, 'codex');
-  const agentsRoot = path.join(root, 'agents');
-  assert.equal(await runCli(['skills', 'install', '--codex-root', codexRoot, '--agents-root', agentsRoot], capture(root)), 0);
-  const modified = path.join(codexRoot, 'project-bootstrap', 'SKILL.md');
-  await writeFile(modified, `${await readFile(modified, 'utf8')}\nlocal edit\n`);
-  const before = await listRelativeFiles(root);
-
-  const preview = capture(root);
-  assert.equal(await runCli(['skills', 'uninstall', '--dry-run', '--json', '--codex-root', codexRoot, '--agents-root', agentsRoot], preview), 1);
-  const previewReport = JSON.parse(preview.out());
-  assert.equal(previewReport.applied, false);
-  assert.equal(previewReport.conflicts.some((conflict) => conflict.id === 'skills.modified-managed'), true);
-  assert.deepEqual(await listRelativeFiles(root), before);
-
-  const removed = capture(root);
-  assert.equal(await runCli(['skills', 'uninstall', '--json', '--codex-root', codexRoot, '--agents-root', agentsRoot], removed), 1);
-  const removedReport = JSON.parse(removed.out());
-  assert.equal(removedReport.applied, true);
-  assert.equal(existsSync(path.join(codexRoot, 'commit-worklog-guardrails')), false);
-  assert.equal(existsSync(path.join(codexRoot, 'project-bootstrap')), true);
-  assert.match(await readFile(modified, 'utf8'), /local edit/);
-  await cleanup(root);
-});
-
-test('skills lint --json reports trigger and reference quality without writing files', async () => {
-  const root = await tempRepo('skills lint-공백-한글-');
-  await mkdir(path.join(root, 'skills', 'project', 'good-skill', 'references'), { recursive: true });
-  await mkdir(path.join(root, 'skills', 'project', 'shallow-skill', 'references'), { recursive: true });
-  await mkdir(path.join(root, 'skills', 'project', 'bad-skill'), { recursive: true });
-  await writeFile(path.join(root, 'skills', 'project', 'good-skill', 'SKILL.md'), [
-    '---',
-    'name: good-skill',
-    'description: Use when checking a focused project bootstrap edge case.',
-    '---',
-    '# Good Skill',
-    '',
-    'Read [details](references/details.md).'
-  ].join('\n'));
-  await writeFile(path.join(root, 'skills', 'project', 'good-skill', 'references', 'details.md'), [
-    '# Details',
-    '',
-    '## Trigger',
-    '',
-    '- Focused trigger guidance.',
-    '',
-    '## Procedure',
-    '',
-    '- Inspect the repository.',
-    '- Check the relevant docs.',
-    '- Keep changes scoped.',
-    '- Preserve existing behavior.',
-    '- Verify with project commands.',
-    '',
-    '## Evidence',
-    '',
-    '- Record commands run.',
-    '- Record files changed.',
-    '- Record skipped checks.',
-    '- Record follow-up risk.',
-    ''
-  ].join('\n'));
-  await writeFile(path.join(root, 'skills', 'project', 'shallow-skill', 'SKILL.md'), [
-    '---',
-    'name: shallow-skill',
-    'description: Use when checking shallow reference detection.',
-    '---',
-    '# Shallow Skill',
-    '',
-    'Read [thin](references/thin.md).'
-  ].join('\n'));
-  await writeFile(path.join(root, 'skills', 'project', 'shallow-skill', 'references', 'thin.md'), '# Thin\n');
-  await writeFile(path.join(root, 'skills', 'project', 'bad-skill', 'SKILL.md'), [
-    '---',
-    'name: bad-skill',
-    'description: This skill helps you do many things by following a long workflow that should have been reference material instead of a trigger, including project setup, delivery, documentation, release, integration, and validation work.',
-    'owner: local',
-    '---',
-    '# Bad Skill',
-    '',
-    'Read [missing](references/missing.md).'
-  ].join('\n'));
-  const before = await listRelativeFiles(root);
-
-  const io = capture(root, root);
-  assert.equal(await runCli(['skills', 'lint', '--json'], io), 1);
-  const report = JSON.parse(io.out());
-
-  assert.equal(report.schemaVersion, '1');
-  assert.equal(report.ok, false);
-  assert.equal(report.summary.skills, 3);
-  assert.equal(report.summary.depth.skillsWithReferences, 2);
-  assert.equal(report.summary.depth.referenceFiles, 2);
-  assert.equal(report.summary.depth.shallowReferences, 1);
-  assert.equal(report.skills.find((skill) => skill.name === 'good-skill').depth.referenceFiles, 1);
-  assert.equal(report.skills.some((skill) => skill.name === 'good-skill' && skill.status === 'pass'), true);
-  assert.equal(report.skills.some((skill) => skill.name === 'shallow-skill' && skill.status === 'warn'), true);
-  assert.equal(report.warnings.some((warning) => warning.id === 'skills.lint.description-trigger'), true);
-  assert.equal(report.warnings.some((warning) => warning.id === 'skills.lint.description-length'), true);
-  assert.equal(report.warnings.some((warning) => warning.id === 'skills.lint.reference-missing'), true);
-  assert.equal(report.warnings.some((warning) => warning.id === 'skills.lint.reference-shallow'), true);
-  assert.equal(report.conflicts.some((conflict) => conflict.id === 'skills.lint.frontmatter-keys'), true);
-  assert.deepEqual(await listRelativeFiles(root), before);
-  await cleanup(root);
-});
-
-function capture(cwd, overrideRepoRoot = repoRoot) {
-  let stdout = '';
-  let stderr = '';
-  return {
-    cwd,
-    repoRoot: overrideRepoRoot,
-    stdout: { write: (text) => { stdout += text; } },
-    stderr: { write: (text) => { stderr += text; } },
-    out: () => stdout,
-    err: () => stderr
-  };
-}
-
-async function tempRepo(prefix) {
-  return mkdtemp(path.join(os.tmpdir(), prefix));
-}
-
-async function copyDir(source, destination) {
-  await mkdir(destination, { recursive: true });
-  const entries = await readdir(source, { withFileTypes: true });
-  for (const entry of entries) {
-    const sourcePath = path.join(source, entry.name);
-    const destinationPath = path.join(destination, entry.name);
-    if (entry.isDirectory()) {
-      await copyDir(sourcePath, destinationPath);
-    } else if (entry.isFile()) {
-      await writeFile(destinationPath, await readFile(sourcePath));
-    }
-  }
-}
-
-async function listRelativeFiles(root) {
-  const files = [];
-  await walk(root, '');
-  files.sort();
-  return files;
-
-  async function walk(current, rel) {
-    if (!existsSync(current)) return;
-    const entries = await readdir(current, { withFileTypes: true });
-    for (const entry of entries) {
-      const entryRel = rel ? `${rel}/${entry.name}` : entry.name;
-      const fullPath = path.join(current, entry.name);
-      if (entry.isDirectory()) {
-        await walk(fullPath, entryRel);
-      } else if (entry.isFile()) {
-        files.push(entryRel);
-      }
-    }
-  }
-}
-
-async function cleanup(target) {
-  await rm(target, { recursive: true, force: true });
-}
-
-function resolvePowerShell() {
-  for (const command of ['pwsh', 'powershell']) {
-    const result = spawnSync(command, ['-NoProfile', '-Command', '$PSVersionTable.PSVersion.ToString()'], {
-      encoding: 'utf8'
-    });
-    if (result.status === 0) return command;
-  }
-  return null;
-}

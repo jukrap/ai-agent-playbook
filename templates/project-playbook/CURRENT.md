@@ -1,46 +1,17 @@
-# Current State
+# Current state
 
-Use this file for current project truth that future agents should trust before old plans or worklogs.
+## Objective
 
-Keep facts here only after they are confirmed by code, configuration, command output, or an explicit user/team decision.
+State the active objective and the next concrete action. Remove this prompt after writing the actual state.
 
-## Baseline
+## Constraints
 
-- Product or system shape:
-- Primary stack:
-- Package manager and runtime:
-- Verification commands:
-- Local-only docs policy:
+Record only constraints that can affect the current task.
 
-## Working vocabulary
+## Verified state
 
-- Term:
-  - Meaning:
-  - Evidence or source:
-  - Where to inspect:
+Link to the relevant source, decision or command result. Distinguish configuration from observed runtime behavior.
 
-## Current decisions
+## Supporting records
 
-- Decision:
-  - Reason:
-  - Date:
-
-## Active risks
-
-- Risk:
-  - Evidence:
-  - Mitigation:
-
-## Recent changes that matter
-
-- Change:
-  - Why it matters:
-  - Where to inspect:
-
-## Next maintenance
-
-- Promote durable facts from recent worklogs into this file.
-- Promote stable project terms into Working vocabulary when repeated naming confusion appears.
-- Archive stale plans when the work completes or changes direction.
-- Remove or revise facts when code and docs diverge.
-- Link to maps, runbooks, and decisions for detail instead of turning this file into a long report.
+Link to a spec, contract, decision or handoff only when it is needed. Do not create empty records to fill this section.

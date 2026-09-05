@@ -1,3 +1,0 @@
-openai:
-  short_description: "Route legacy UI style policy requests"
-  default_prompt: "Use ui-style-policy as a compatibility trigger for frontend/style-policy-selection when choosing a repository styling method."

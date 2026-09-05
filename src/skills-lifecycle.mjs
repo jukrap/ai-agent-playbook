@@ -1,636 +1,225 @@
-import { existsSync } from 'node:fs';
-import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
-import crypto from 'node:crypto';
-import os from 'node:os';
+import { mkdir, cp, rename, readdir } from 'node:fs/promises';
 import path from 'node:path';
-import { SCHEMA_VERSION } from './harness.mjs';
+import os from 'node:os';
+import { randomUUID } from 'node:crypto';
+import { noLinks, statOrNull, readJson, writeAtomic, treeSnapshot, inside, relativePath } from './fs-safety.mjs';
+import { skillCatalog, selectSkills, SKILL_PROFILES } from './catalog/selection.mjs';
+import { PACKAGE_VERSION } from './version.mjs';
 
-const INSTALL_SOURCE = 'ai-agent-playbook';
-const MARKER_FILE = '.ai-agent-playbook-install.json';
-const OBSOLETE_SKILL_NAMES = [
-  'design-system-first',
-  'css-class-first',
-  'utility-class-first',
-  'inline-style-first'
-];
-const DESCRIPTION_WARNING_LENGTH = 180;
-const SHALLOW_REFERENCE_LINE_THRESHOLD = 20;
+const OWNER = 'ai-agent-playbook';
+const MARKER = '.ai-agent-playbook-install.json';
+const snapshot = (root) => treeSnapshot(root, { exclude: [MARKER] });
+const equal = (a, b) => a?.treeHash === b?.treeHash;
+const json = (value) => JSON.stringify(value, null, 2) + '\n';
 
-export async function runSkillsLifecycle(options) {
-  const {
-    repoRoot,
-    command,
-    codexRoot = defaultCodexRoot(),
-    agentsRoot = defaultAgentsRoot(),
-    dryRun = false,
-    forceManaged = false,
-    forceUnmanaged = false
-  } = options;
-  const sourceRoot = path.join(path.resolve(repoRoot), 'skills');
-  const skills = await discoverSkills(sourceRoot);
+async function managedState(directory) {
+  const tree = await snapshot(directory);
+  if (!tree) return { tree: null, marker: null, owned: false, unchanged: false };
+  const markerFile = path.join(directory, MARKER);
+  let marker = null;
+  if (await statOrNull(markerFile)) marker = await readJson(markerFile);
+  const owned = marker?.source === OWNER && typeof marker.sourceHash === 'string';
+  const unchanged = owned && (marker.sourceHash === tree.hash || (Number(marker.schemaVersion) === 1 && marker.sourceHash === tree.legacyHash));
+  return { tree, marker, owned, unchanged };
+}
+function safeDestination(roots, rootKind, relative) {
+  if (!['agents', 'codex'].includes(rootKind)) throw new Error('Invalid installation root kind.');
+  const rel = relativePath(relative);
+  if (!/^(?:legacys\/)?[a-z0-9-]+$/.test(rel)) throw new Error('Invalid skill installation path.');
+  const destination = path.resolve(roots[rootKind], rel);
+  if (!inside(roots[rootKind], destination) || destination === roots[rootKind]) throw new Error('Unsafe installation destination.');
+  return destination;
+}
+async function rootsFor(options) {
   const roots = {
-    codex: path.resolve(codexRoot),
-    agents: path.resolve(agentsRoot)
+    agents: path.resolve(options.agentsRoot ?? path.join(os.homedir(), '.agents', 'skills')),
+    codex: path.resolve(options.codexRoot ?? path.join(os.homedir(), '.codex', 'skills'))
   };
-  const operations = [];
-  const warnings = [];
-  const conflicts = [];
-  let appliedOperations = 0;
-
-  const mode = command === 'update' ? 'install' : command;
-  if (!['check', 'install', 'uninstall'].includes(mode)) {
-    throw new Error(`Unsupported skills command: ${command}`);
-  }
-
-  const targets = buildSkillTargets(skills, roots);
-  const obsoleteTargets = buildObsoleteTargets(roots);
-
-  if (mode === 'uninstall') {
-    for (const target of [...targets, ...obsoleteTargets]) {
-      const result = await planRemoveSkill(target, { dryRun, forceManaged });
-      collect(result);
-      appliedOperations += result.applied ? 1 : 0;
-    }
-  } else {
-    for (const target of obsoleteTargets) {
-      const result = await planRemoveSkill(target, { dryRun: mode === 'check' || dryRun, forceManaged, obsolete: true });
-      collect(result);
-      appliedOperations += result.applied ? 1 : 0;
-    }
-    for (const target of targets) {
-      const result = mode === 'check'
-        ? await checkSkill(target)
-        : await syncSkill(target, { dryRun, forceManaged, forceUnmanaged });
-      collect(result);
-      appliedOperations += result.applied ? 1 : 0;
-    }
-  }
-
-  return {
-    schemaVersion: SCHEMA_VERSION,
-    ok: conflicts.length === 0,
-    command: `skills.${command}`,
-    applied: mode !== 'check' && !dryRun && appliedOperations > 0,
-    sourceRoot,
-    roots,
-    summary: {
-      skills: skills.length,
-      operations: operations.length,
-      warnings: warnings.length,
-      conflicts: conflicts.length
-    },
-    operations,
-    warnings,
-    conflicts
-  };
-
-  function collect(result) {
-    operations.push(...result.operations);
-    warnings.push(...result.warnings);
-    conflicts.push(...result.conflicts);
-  }
+  if (inside(roots.agents, roots.codex) || inside(roots.codex, roots.agents)) throw new Error('Installation roots must be separate and non-overlapping.');
+  await noLinks(roots.agents); await noLinks(roots.codex);
+  return roots;
 }
-
-export async function lintSkills(options) {
-  const { repoRoot } = options;
-  const resolvedRepoRoot = path.resolve(repoRoot);
-  const sourceRoot = path.join(resolvedRepoRoot, 'skills');
-  const warnings = [];
-  const conflicts = [];
-  const skills = [];
-  const skillFiles = [];
-  await collectSkillFiles(sourceRoot, skillFiles);
-  for (const skillFile of skillFiles.sort()) {
-    const skill = await lintSkillFile({ sourceRoot, skillFile });
-    skills.push(skill);
-    warnings.push(...skill.warnings);
-    conflicts.push(...skill.conflicts);
-  }
-  const depth = summarizeSkillDepth(skills);
-  return {
-    schemaVersion: SCHEMA_VERSION,
-    ok: conflicts.length === 0,
-    command: 'skills.lint',
-    summary: {
-      skills: skills.length,
-      pass: skills.filter((skill) => skill.status === 'pass').length,
-      warn: skills.filter((skill) => skill.status === 'warn').length,
-      conflict: skills.filter((skill) => skill.status === 'conflict').length,
-      depth,
-      warnings: warnings.length,
-      conflicts: conflicts.length
-    },
-    skills: skills.map((skill) => ({
-      name: skill.name,
-      path: skill.path,
-      status: skill.status,
-      depth: skill.depth,
-      warnings: skill.warnings.length,
-      conflicts: skill.conflicts.length
-    })),
-    warnings,
-    conflicts
-  };
-}
-
-async function collectSkillFiles(sourceRoot, skillFiles) {
-  if (!existsSync(sourceRoot)) return;
-  const entries = await readdir(sourceRoot, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(sourceRoot, entry.name);
-    if (entry.isDirectory()) {
-      await collectSkillFiles(fullPath, skillFiles);
-    } else if (entry.isFile() && entry.name === 'SKILL.md') {
-      skillFiles.push(fullPath);
-    }
-  }
-}
-
-async function lintSkillFile(options) {
-  const { sourceRoot, skillFile } = options;
-  const skillDir = path.dirname(skillFile);
-  const relativePath = toPortablePath(path.relative(sourceRoot, skillFile));
-  const text = await readFile(skillFile, 'utf8');
-  const parsed = parseSkillMarkdown(text);
-  const name = String(parsed.frontmatter.name ?? path.basename(skillDir)).trim();
-  const description = String(parsed.frontmatter.description ?? '').trim();
-  const warnings = [];
-  const conflicts = [];
-  const referenceFiles = await collectReferenceFiles(skillDir);
-  const referenceStats = [];
-  for (const referenceFile of referenceFiles) {
-    const relativeReferencePath = toPortablePath(path.relative(skillDir, referenceFile));
-    const lineCount = await countLines(referenceFile);
-    const stat = { path: relativeReferencePath, lines: lineCount };
-    referenceStats.push(stat);
-    if (lineCount < SHALLOW_REFERENCE_LINE_THRESHOLD) {
-      warnings.push(lintIssue(
-        'skills.lint.reference-shallow',
-        `${relativePath} reference ${relativeReferencePath} is shallow (${lineCount} lines); move enough reusable procedure, evidence, or examples into references.`,
-        [relativePath, relativeReferencePath]
-      ));
-    }
-  }
-  const keys = Object.keys(parsed.frontmatter).sort();
-  const extraKeys = keys.filter((key) => !['description', 'name'].includes(key));
-  if (!parsed.hasFrontmatter || !parsed.frontmatter.name || !parsed.frontmatter.description) {
-    conflicts.push(lintIssue('skills.lint.frontmatter-required', `${relativePath} must define name and description frontmatter.`, relativePath));
-  }
-  if (extraKeys.length > 0) {
-    conflicts.push(lintIssue('skills.lint.frontmatter-keys', `${relativePath} has unsupported frontmatter keys: ${extraKeys.join(', ')}.`, relativePath));
-  }
-  if (!description.startsWith('Use when')) {
-    warnings.push(lintIssue('skills.lint.description-trigger', `${relativePath} description should start with "Use when..." and describe trigger conditions.`, relativePath));
-  }
-  if (description.length > DESCRIPTION_WARNING_LENGTH) {
-    warnings.push(lintIssue('skills.lint.description-length', `${relativePath} description is long; keep trigger text concise.`, relativePath));
-  }
-  if (/\b(this skill helps|follow(?:ing)? steps?|use this skill to|step-by-step|workflow\s*:)\b/i.test(description)) {
-    warnings.push(lintIssue('skills.lint.description-workflow', `${relativePath} description looks workflow-oriented rather than trigger-focused.`, relativePath));
-  }
-  for (const link of markdownLinks(parsed.body)) {
-    const resolved = resolveSkillLink(skillDir, link);
-    if (!resolved) continue;
-    if (!existsSync(resolved.absolutePath)) {
-      warnings.push(lintIssue('skills.lint.reference-missing', `${relativePath} links to missing ${resolved.relativePath}.`, [relativePath, resolved.relativePath]));
-    }
-  }
-  return {
-    name,
-    path: relativePath,
-    status: conflicts.length > 0 ? 'conflict' : warnings.length > 0 ? 'warn' : 'pass',
-    depth: {
-      skillLines: lineCount(text),
-      referenceFiles: referenceStats.length,
-      referenceLines: referenceStats.reduce((sum, reference) => sum + reference.lines, 0),
-      shallowReferences: referenceStats.filter((reference) => reference.lines < SHALLOW_REFERENCE_LINE_THRESHOLD).length
-    },
-    warnings,
-    conflicts
-  };
-}
-
-async function collectReferenceFiles(skillDir) {
-  const referencesRoot = path.join(skillDir, 'references');
-  const files = [];
-  await collectMarkdownFiles(referencesRoot, files);
-  return files.sort();
-}
-
-async function collectMarkdownFiles(root, files) {
-  if (!existsSync(root)) return;
-  const entries = await readdir(root, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(root, entry.name);
-    if (entry.isDirectory()) {
-      await collectMarkdownFiles(fullPath, files);
-    } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.md')) {
-      files.push(fullPath);
-    }
-  }
-}
-
-async function countLines(filePath) {
-  return lineCount(await readFile(filePath, 'utf8'));
-}
-
-function lineCount(text) {
-  if (!text) return 0;
-  return text.replace(/\r\n/g, '\n').split('\n').length;
-}
-
-function summarizeSkillDepth(skills) {
-  const skillLines = skills.map((skill) => skill.depth.skillLines);
-  const totalReferenceFiles = skills.reduce((sum, skill) => sum + skill.depth.referenceFiles, 0);
-  const totalReferenceLines = skills.reduce((sum, skill) => sum + skill.depth.referenceLines, 0);
-  return {
-    skillLineThreshold: 60,
-    shallowReferenceLineThreshold: SHALLOW_REFERENCE_LINE_THRESHOLD,
-    skillLines: numberSummary(skillLines),
-    referenceFiles: totalReferenceFiles,
-    referenceLines: {
-      total: totalReferenceLines,
-      average: totalReferenceFiles === 0 ? 0 : roundOne(totalReferenceLines / totalReferenceFiles)
-    },
-    skillsWithReferences: skills.filter((skill) => skill.depth.referenceFiles > 0).length,
-    skillsWithoutReferences: skills.filter((skill) => skill.depth.referenceFiles === 0).length,
-    shallowReferences: skills.reduce((sum, skill) => sum + skill.depth.shallowReferences, 0)
-  };
-}
-
-function numberSummary(values) {
-  if (values.length === 0) {
-    return { min: 0, max: 0, average: 0 };
-  }
-  return {
-    min: Math.min(...values),
-    max: Math.max(...values),
-    average: roundOne(values.reduce((sum, value) => sum + value, 0) / values.length)
-  };
-}
-
-function roundOne(value) {
-  return Math.round(value * 10) / 10;
-}
-
-function parseSkillMarkdown(text) {
-  if (!text.startsWith('---\n') && !text.startsWith('---\r\n')) {
-    return { hasFrontmatter: false, frontmatter: {}, body: text };
-  }
-  const normalized = text.replace(/\r\n/g, '\n');
-  const end = normalized.indexOf('\n---\n', 4);
-  if (end === -1) return { hasFrontmatter: false, frontmatter: {}, body: text };
-  const frontmatterText = normalized.slice(4, end);
-  const frontmatter = {};
-  for (const line of frontmatterText.split('\n')) {
-    const match = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
-    if (!match) continue;
-    frontmatter[match[1]] = match[2].trim().replace(/^["']|["']$/g, '');
-  }
-  return {
-    hasFrontmatter: true,
-    frontmatter,
-    body: normalized.slice(end + '\n---\n'.length)
-  };
-}
-
-function markdownLinks(text) {
-  const links = [];
-  const pattern = /!?\[[^\]]*]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)/g;
-  for (const match of text.matchAll(pattern)) {
-    links.push(match[1]);
-  }
-  return links;
-}
-
-function resolveSkillLink(skillDir, href) {
-  const trimmed = href.trim();
-  if (!trimmed || trimmed.startsWith('#') || /^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return null;
-  const withoutFragment = trimmed.split('#')[0];
-  if (!withoutFragment) return null;
-  const absolutePath = path.resolve(skillDir, withoutFragment);
-  const relativePath = toPortablePath(path.relative(skillDir, absolutePath));
-  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) return null;
-  return { absolutePath, relativePath };
-}
-
-function lintIssue(id, message, paths) {
-  return {
-    id,
-    message,
-    paths: Array.isArray(paths) ? paths : [paths]
-  };
-}
-
-function defaultCodexRoot() {
-  return path.join(os.homedir(), '.codex', 'skills');
-}
-
-function defaultAgentsRoot() {
-  return path.join(os.homedir(), '.agents', 'skills');
-}
-
-async function discoverSkills(sourceRoot) {
-  const skillFiles = [];
-  await walk(sourceRoot);
-  if (skillFiles.length === 0) throw new Error(`No SKILL.md files found under ${sourceRoot}`);
-
-  const skills = [];
-  for (const skillFile of skillFiles.sort()) {
-    const sourceDir = path.dirname(skillFile);
-    const skillName = path.basename(sourceDir);
-    const category = path.basename(path.dirname(sourceDir));
-    skills.push({
-      skillName,
-      category,
-      sourceDir,
-      sourceHash: await directorySignature(sourceDir)
-    });
-  }
-  return skills;
-
-  async function walk(current) {
-    const entries = await readdir(current, { withFileTypes: true });
-    for (const entry of entries) {
-      const fullPath = path.join(current, entry.name);
-      if (entry.isDirectory()) {
-        await walk(fullPath);
-      } else if (entry.isFile() && entry.name === 'SKILL.md') {
-        skillFiles.push(fullPath);
-      }
-    }
-  }
-}
-
-function buildSkillTargets(skills, roots) {
-  const targets = [];
-  for (const skill of skills) {
-    targets.push({
-      ...skill,
-      rootKind: 'codex',
-      destinationRoot: roots.codex,
-      destination: path.join(roots.codex, skill.skillName)
-    });
-    targets.push({
-      ...skill,
-      rootKind: 'agents',
-      destinationRoot: skill.category === 'legacy' ? path.join(roots.agents, 'legacys') : roots.agents,
-      destination: skill.category === 'legacy'
-        ? path.join(roots.agents, 'legacys', skill.skillName)
-        : path.join(roots.agents, skill.skillName)
-    });
-  }
-  return targets;
-}
-
-function buildObsoleteTargets(roots) {
-  return OBSOLETE_SKILL_NAMES.flatMap((skillName) => [
-    {
-      skillName,
-      category: 'obsolete',
-      sourceDir: null,
-      sourceHash: null,
-      rootKind: 'codex',
-      destinationRoot: roots.codex,
-      destination: path.join(roots.codex, skillName)
-    },
-    {
-      skillName,
-      category: 'obsolete',
-      sourceDir: null,
-      sourceHash: null,
-      rootKind: 'agents',
-      destinationRoot: roots.agents,
-      destination: path.join(roots.agents, skillName)
-    }
-  ]);
-}
-
-async function checkSkill(target) {
-  const operations = [];
-  const warnings = [];
-  const conflicts = [];
-  const marker = await readMarker(target.destination);
-  if (!existsSync(target.destination)) {
-    conflicts.push(conflict('skills.missing', `${target.skillName} is not installed in ${target.rootKind}.`, target));
-    return { applied: false, operations, warnings, conflicts };
-  }
-  const destinationHash = await directorySignature(target.destination);
-  if (isManagedMarker(marker.value)) {
-    if (marker.value.sourceHash && !sameHash(destinationHash, marker.value.sourceHash)) {
-      conflicts.push(conflict('skills.modified-managed', `${target.skillName} has local edits in ${target.rootKind}.`, target));
-    } else {
-      operations.push(operation('skills.present-managed', 'present', `${target.skillName} is managed in ${target.rootKind}.`, target));
-    }
-  } else if (sameHash(destinationHash, target.sourceHash)) {
-    operations.push(operation('skills.adoptable-unmanaged', 'adopt', `${target.skillName} matches the source and can be adopted in ${target.rootKind}.`, target));
-  } else {
-    conflicts.push(conflict('skills.unmanaged-conflict', `${target.skillName} exists in ${target.rootKind} but is not managed by this playbook.`, target));
-  }
-  return { applied: false, operations, warnings, conflicts };
-}
-
-async function syncSkill(target, options) {
-  assertInside(target.destinationRoot, target.destination);
-  const operations = [];
-  const warnings = [];
-  const conflicts = [];
-  const { dryRun, forceManaged, forceUnmanaged } = options;
-  const exists = existsSync(target.destination);
-  let action = 'install';
-  let message = `Install managed skill ${target.skillName} into ${target.rootKind}.`;
-
-  if (exists) {
-    const marker = await readMarker(target.destination);
-    const destinationHash = await directorySignature(target.destination);
-    if (isManagedMarker(marker.value)) {
-      if (!forceManaged && marker.value.sourceHash && !sameHash(destinationHash, marker.value.sourceHash)) {
-        conflicts.push(conflict('skills.modified-managed', `${target.skillName} has local edits in ${target.rootKind}; use --force-managed to replace it.`, target));
-        return { applied: false, operations, warnings, conflicts };
-      }
-      action = 'update';
-      message = `Update managed skill ${target.skillName} in ${target.rootKind}.`;
-    } else if (sameHash(destinationHash, target.sourceHash)) {
-      action = 'adopt';
-      message = `Adopt matching unmanaged skill ${target.skillName} in ${target.rootKind}.`;
-    } else if (forceUnmanaged) {
-      action = 'replace';
-      message = `Replace unmanaged skill ${target.skillName} in ${target.rootKind}.`;
-    } else {
-      conflicts.push(conflict('skills.unmanaged-conflict', `${target.skillName} exists in ${target.rootKind} but is not managed by this playbook.`, target));
-      return { applied: false, operations, warnings, conflicts };
-    }
-  }
-
-  operations.push(operation(`skills.${action}`, action, message, target));
-  if (dryRun) return { applied: false, operations, warnings, conflicts };
-
-  await mkdir(target.destinationRoot, { recursive: true });
-  if (action === 'adopt') {
-    await writeMarker(target);
-  } else {
-    if (exists) await rm(target.destination, { recursive: true, force: true });
-    await cp(target.sourceDir, target.destination, { recursive: true });
-    await writeMarker(target);
-  }
-  return { applied: true, operations, warnings, conflicts };
-}
-
-async function planRemoveSkill(target, options) {
-  assertInside(target.destinationRoot, target.destination);
-  const operations = [];
-  const warnings = [];
-  const conflicts = [];
-  const { dryRun, forceManaged, obsolete = false } = options;
-  if (!existsSync(target.destination)) return { applied: false, operations, warnings, conflicts };
-
-  const marker = await readMarker(target.destination);
-  if (!isManagedMarker(marker.value)) {
-    warnings.push(warning(obsolete ? 'skills.obsolete-unmanaged' : 'skills.unmanaged-skip', `${target.skillName} in ${target.rootKind} is not managed by this playbook; leaving it in place.`, target));
-    return { applied: false, operations, warnings, conflicts };
-  }
-
-  const destinationHash = await directorySignature(target.destination);
-  if (!forceManaged && marker.value.sourceHash && !sameHash(destinationHash, marker.value.sourceHash)) {
-    conflicts.push(conflict('skills.modified-managed', `${target.skillName} has local edits in ${target.rootKind}; use --force-managed to remove it.`, target));
-    return { applied: false, operations, warnings, conflicts };
-  }
-
-  operations.push(operation(obsolete ? 'skills.remove-obsolete' : 'skills.uninstall', 'remove', `Remove managed skill ${target.skillName} from ${target.rootKind}.`, target));
-  if (dryRun) return { applied: false, operations, warnings, conflicts };
-
-  await rm(target.destination, { recursive: true, force: true });
-  await removeEmptyParents(path.dirname(target.destination), target.destinationRoot);
-  return { applied: true, operations, warnings, conflicts };
-}
-
-async function readMarker(destination) {
-  const markerPath = path.join(destination, MARKER_FILE);
-  if (!existsSync(markerPath)) return { path: markerPath, value: null };
-  try {
-    return { path: markerPath, value: JSON.parse(await readFile(markerPath, 'utf8')) };
-  } catch (error) {
-    return { path: markerPath, value: { malformed: true, error: error.message } };
-  }
-}
-
-function isManagedMarker(marker) {
-  return marker && typeof marker === 'object' && marker.source === INSTALL_SOURCE;
-}
-
-async function writeMarker(target) {
-  const existing = await readMarker(target.destination);
-  const installedAtUtc = isManagedMarker(existing.value) && typeof existing.value.installedAtUtc === 'string'
-    ? existing.value.installedAtUtc
-    : new Date().toISOString();
-  const marker = {
-    schemaVersion: 1,
-    source: INSTALL_SOURCE,
-    skillName: target.skillName,
-    category: target.category,
-    sourceHash: target.sourceHash,
-    installedAtUtc
-  };
-  await writeFile(path.join(target.destination, MARKER_FILE), `${JSON.stringify(marker, null, 2)}\n`);
-}
-
-async function directorySignature(directory) {
-  if (!existsSync(directory)) return null;
-  const files = [];
-  await walk(directory, '');
-  files.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
-  return sha256(files.map((file) => `${file.relativePath}=${file.hash}`).join('\n'));
-
-  async function walk(current, rel) {
-    const entries = await readdir(current, { withFileTypes: true });
-    for (const entry of entries) {
-      const entryRel = rel ? `${rel}/${entry.name}` : entry.name;
-      const fullPath = path.join(current, entry.name);
-      if (entry.isDirectory()) {
-        await walk(fullPath, entryRel);
-      } else if (entry.isFile() && entry.name !== MARKER_FILE) {
-        files.push({
-          relativePath: entryRel,
-          hash: sha256(await readFile(fullPath))
-        });
-      }
-    }
-  }
-}
-
-async function removeEmptyParents(startDir, stopDir) {
-  const resolvedStop = path.resolve(stopDir);
-  let current = path.resolve(startDir);
-  while (current !== resolvedStop && isInside(resolvedStop, current)) {
+export async function runSkillsLifecycle(options) {
+  const { repoRoot, command = 'check', profile = 'core', dryRun = false, apply = false } = options;
+  if (command === 'rollback') return rollbackSkills(options);
+  const catalog = await skillCatalog({ repoRoot });
+  if (command === 'list') return { schemaVersion: 2, ok: true, kind: 'skills.list', writes: false, profiles: SKILL_PROFILES, skills: catalog.map(({ directory, ...s }) => s) };
+  const selected = selectSkills(catalog, options);
+  const roots = await rootsFor(options);
+  const operations = [], conflicts = [], warnings = [];
+  if (!['check', 'lint', 'install', 'update', 'migrate', 'uninstall'].includes(command)) throw new Error('Unsupported skills command: ' + command);
+  if (options.forceManaged || options.forceUnmanaged) throw new Error('Force replacement was retired. Preserve local edits and resolve the reported conflict before retrying.');
+  if (command === 'lint') return { schemaVersion: 2, kind: 'skills.lint', ok: true, writes: false, summary: { skills: catalog.length }, warnings: catalog.filter((s) => s.description.length > 180).map((s) => 'Long trigger: ' + s.name) };
+  const chosen = new Set(selected.map((s) => s.name));
+  const baseline = (await readJson(path.join(repoRoot, 'docs/skill-decisions.json'), 2_000_000)).items;
+  async function schedule(rootKind, relative, skill = null) {
+    const destination = safeDestination(roots, rootKind, relative);
     try {
-      const entries = await readdir(current);
-      if (entries.length > 0) break;
-      await rm(current, { recursive: false });
-    } catch {
-      break;
+      const old = await managedState(destination);
+      if (!skill && !old.tree) return;
+      if (!skill && !old.owned) {
+        warnings.push({ path: destination, code: 'unmanaged-preserved' }); return;
+      }
+      const source = skill ? await snapshot(skill.directory) : null;
+      if (old.tree && (!old.owned || !old.unchanged)) {
+        conflicts.push({ path: destination, code: old.owned ? 'modified-managed' : 'unmanaged', message: 'Preserved; no force replacement or removal.' }); return;
+      }
+      if (command === 'check') {
+        if (!old.tree || old.tree.hash !== source?.hash) conflicts.push({ path: destination, code: old.tree ? 'outdated' : 'missing' });
+        return;
+      }
+      if (source && old.unchanged && old.tree.hash === source.hash) return;
+      operations.push({
+        rootKind, relative, path: destination, skillName: skill?.name ?? path.basename(destination),
+        action: skill ? old.tree ? 'update' : 'install' : 'remove',
+        source: skill?.directory ?? null, sourceHash: source?.hash ?? null,
+        beforeHash: old.tree?.treeHash ?? null,
+        category: skill?.category ?? old.marker?.category ?? null
+      });
+    } catch (error) { conflicts.push({ path: destination, code: 'unsafe-or-unreadable', message: error.message }); }
+  }
+  if (command === 'uninstall') {
+    for (const s of selected) await schedule('agents', s.name);
+  } else {
+    for (const s of selected) await schedule('agents', s.name, s);
+  }
+  if (command === 'migrate') {
+    for (const row of baseline) {
+      await schedule('codex', row.name);
+      const relative = row.category === 'legacy' ? 'legacys/' + row.name : row.name;
+      if (!chosen.has(row.name)) await schedule('agents', relative);
     }
-    current = path.dirname(current);
+    // New-generation duplicates are also removable only after ownership and hash checks.
+    for (const s of catalog) if (!baseline.some((b) => b.name === s.name)) await schedule('codex', s.name);
   }
-}
-
-function operation(id, action, message, target) {
-  return {
-    id,
-    action,
-    message,
-    skillName: target.skillName,
-    category: target.category,
-    root: target.rootKind,
-    path: target.destination
-  };
-}
-
-function warning(id, message, target) {
-  return {
-    id,
-    message,
-    skillName: target.skillName,
-    root: target.rootKind,
-    paths: [target.destination]
-  };
-}
-
-function conflict(id, message, target) {
-  return {
-    id,
-    message,
-    skillName: target.skillName,
-    root: target.rootKind,
-    paths: [target.destination]
-  };
-}
-
-function assertInside(root, child) {
-  const resolvedRoot = path.resolve(root);
-  const resolvedChild = path.resolve(child);
-  if (resolvedChild !== resolvedRoot && !isInside(resolvedRoot, resolvedChild)) {
-    throw new Error(`Refusing to operate outside destination root: ${resolvedChild}`);
+  const shouldApply = command === 'migrate' ? apply && !dryRun : ['install', 'update', 'uninstall'].includes(command) && !dryRun;
+  let transaction = null;
+  if (shouldApply && operations.length) {
+    transaction = await applySkillOperations({ operations, roots, profile, backupRoot: options.backupRoot, beforeOperation: options.beforeOperation });
+    conflicts.push(...transaction.conflicts);
   }
+  return {
+    schemaVersion: 2, kind: 'skills.' + command, ok: conflicts.length === 0, writes: Boolean(transaction?.applied),
+    applied: Boolean(transaction?.applied), profile, roots, operations, conflicts, warnings,
+    backup: transaction?.backup ?? null, summary: { selected: selected.length, operations: operations.length, applied: transaction?.applied ?? 0, conflicts: conflicts.length }
+  };
 }
-
-function isInside(root, child) {
-  const resolvedRoot = normalizeCase(path.resolve(root));
-  const resolvedChild = normalizeCase(path.resolve(child));
-  return resolvedChild.startsWith(`${resolvedRoot}${path.sep}`);
+export async function applySkillOperations({ operations, roots, profile, backupRoot, beforeOperation }) {
+  const parent = path.resolve(backupRoot ?? path.join(os.homedir(), '.agents', 'aapb-backups'));
+  for (const root of Object.values(roots)) if (inside(root, parent) || inside(parent, root)) throw new Error('Backup root must be outside and separate from installation roots.');
+  await noLinks(parent);
+  const backup = path.join(parent, 'skills-' + new Date().toISOString().replaceAll(':', '-') + '-' + randomUUID());
+  await mkdir(backup, { recursive: true });
+  const journalFile = path.join(backup, 'journal.json');
+  const journal = { schemaVersion: 1, kind: 'skills.transaction', source: OWNER, version: PACKAGE_VERSION, roots, profile, state: 'prepared', entries: [] };
+  const conflicts = [];
+  // Prepare and verify all replacement bytes before moving any installed directory.
+  for (const [index, operation] of operations.entries()) {
+    const entry = { ...operation, id: String(index), state: 'prepared', afterHash: null };
+    const entryDir = path.join(backup, entry.id);
+    await mkdir(entryDir);
+    if (entry.source) {
+      const stage = path.join(entryDir, 'after');
+      await noLinks(entry.source);
+      await cp(entry.source, stage, { recursive: true, dereference: false, errorOnExist: true, force: false });
+      const staged = await snapshot(stage);
+      if (staged.hash !== entry.sourceHash) throw new Error('Source skill changed during preparation: ' + entry.skillName);
+      await writeAtomic(path.join(stage, MARKER), json({
+        schemaVersion: 2, source: OWNER, version: PACKAGE_VERSION, profile,
+        skillName: entry.skillName, category: entry.category, sourceHash: staged.hash
+      }), { exclusive: true });
+      entry.afterHash = (await snapshot(stage)).treeHash;
+    }
+    journal.entries.push(entry);
+  }
+  await writeAtomic(journalFile, json(journal), { exclusive: true });
+  let applied = 0;
+  journal.state = 'applying';
+  for (const entry of journal.entries) {
+    const destination = safeDestination(roots, entry.rootKind, entry.relative);
+    const entryDir = path.join(backup, entry.id);
+    try {
+      if (beforeOperation) await beforeOperation(entry);
+      await noLinks(destination);
+      const current = await snapshot(destination);
+      if ((current?.treeHash ?? null) !== entry.beforeHash) throw new Error('Installation changed after preview; preserved.');
+      if (entry.afterHash && (await snapshot(path.join(entryDir, 'after')))?.treeHash !== entry.afterHash) throw new Error('Prepared replacement changed; preserved.');
+      await mkdir(path.dirname(destination), { recursive: true });
+      await noLinks(path.dirname(destination));
+      entry.state = 'applying';
+      await writeAtomic(journalFile, json(journal));
+      if (current) {
+        await rename(destination, path.join(entryDir, 'before'));
+        if ((await snapshot(path.join(entryDir, 'before')))?.treeHash !== entry.beforeHash) throw new Error('Installation changed during the move; use rollback to inspect the preserved directory.');
+      }
+      if (entry.afterHash) {
+        if (await statOrNull(destination)) throw new Error('A new destination appeared; it was preserved.');
+        await rename(path.join(entryDir, 'after'), destination);
+      }
+      entry.state = 'applied';
+      applied++;
+    } catch (error) {
+      entry.error = error.message;
+      conflicts.push({ path: destination, code: 'apply-conflict', message: error.message });
+    }
+    await writeAtomic(journalFile, json(journal));
+  }
+  journal.state = conflicts.length ? 'partial' : 'applied';
+  await writeAtomic(journalFile, json(journal));
+  return { backup, applied, conflicts };
 }
-
-function normalizeCase(value) {
-  return process.platform === 'win32' ? value.toLowerCase() : value;
-}
-
-function toPortablePath(value) {
-  return value.split(path.sep).join('/');
-}
-
-function sameHash(left, right) {
-  return typeof left === 'string' && typeof right === 'string' && left.toLowerCase() === right.toLowerCase();
-}
-
-function sha256(value) {
-  return crypto.createHash('sha256').update(value).digest('hex');
+/** @param {{backup?: string, apply?: boolean, dryRun?: boolean, beforeOperation?: (entry: any) => Promise<void>}} options */
+export async function rollbackSkills({ backup, apply = false, dryRun = false, beforeOperation } = {}) {
+  if (!backup) throw new Error('Rollback requires --backup <transaction-directory>.');
+  const directory = path.resolve(backup);
+  await noLinks(directory);
+  const journalFile = path.join(directory, 'journal.json');
+  const journal = await readJson(journalFile, 4_000_000);
+  if (journal.kind !== 'skills.transaction' || journal.source !== OWNER || journal.schemaVersion !== 1 || !Array.isArray(journal.entries)) throw new Error('Invalid skills recovery journal.');
+  if (typeof journal.roots?.agents !== 'string' || typeof journal.roots?.codex !== 'string' || !path.isAbsolute(journal.roots.agents) || !path.isAbsolute(journal.roots.codex)) throw new Error('Recovery requires explicit absolute installation roots.');
+  const roots = await rootsFor({ agentsRoot: journal.roots.agents, codexRoot: journal.roots.codex });
+  for (const root of Object.values(roots)) if (inside(root, directory) || inside(directory, root)) throw new Error('Recovery journal overlaps an installation root.');
+  const ids = new Set(), destinations = new Set();
+  for (const entry of journal.entries) {
+    if (!/^\d+$/.test(entry.id) || ids.has(entry.id) || !['prepared', 'applying', 'applied', 'restoring', 'restored'].includes(entry.state)) throw new Error('Invalid recovery entry.');
+    for (const hash of [entry.beforeHash, entry.afterHash]) if (hash !== null && !/^[a-f0-9]{64}$/.test(hash)) throw new Error('Invalid recovery hash.');
+    const destination = safeDestination(roots, entry.rootKind, entry.relative).toLowerCase();
+    if (destinations.has(destination)) throw new Error('Duplicate recovery destination.');
+    ids.add(entry.id); destinations.add(destination);
+  }
+  const operations = [], conflicts = [];
+  let restored = 0;
+  for (const entry of [...journal.entries].reverse()) {
+    if (!/^\d+$/.test(entry.id) || !['prepared', 'applying', 'applied', 'restoring', 'restored'].includes(entry.state)) throw new Error('Invalid recovery entry.');
+    if (entry.state === 'prepared' || entry.state === 'restored') continue;
+    const destination = safeDestination(roots, entry.rootKind, entry.relative);
+    const before = path.join(directory, entry.id, 'before');
+    try {
+      const current = await snapshot(destination);
+      const saved = await snapshot(before);
+      // An interrupted rollback may have restored the directory before journaling completion.
+      if ((current?.treeHash ?? null) === entry.beforeHash && !saved) {
+        if (apply && !dryRun) { entry.state = 'restored'; await writeAtomic(journalFile, json(journal)); }
+        continue;
+      }
+      if (entry.beforeHash && saved?.treeHash !== entry.beforeHash) throw new Error('Recovery content is missing or changed.');
+      const currentHash = current?.treeHash ?? null;
+      if (currentHash !== entry.afterHash && !(entry.state === 'applying' && !current) && !(entry.state === 'restoring' && !current)) throw new Error('Later user changes were preserved.');
+      operations.push({ path: destination, action: entry.beforeHash ? 'restore' : 'remove-installed', id: entry.id });
+      if (apply && !dryRun) {
+        if (beforeOperation) await beforeOperation(entry);
+        if (!equal(current, await snapshot(destination))) throw new Error('Destination changed during rollback.');
+        entry.state = 'restoring'; await writeAtomic(journalFile, json(journal));
+        if (current) await rename(destination, path.join(directory, entry.id, 'rolled-back-installation-' + randomUUID()));
+        if (saved) { await mkdir(path.dirname(destination), { recursive: true }); await noLinks(destination); await rename(before, destination); }
+        entry.state = 'restored'; restored++;
+        await writeAtomic(journalFile, json(journal));
+      }
+    } catch (error) { conflicts.push({ path: destination, code: 'rollback-conflict', message: error.message }); }
+  }
+  if (apply && !dryRun) {
+    journal.state = conflicts.length ? 'rollback-partial' : 'restored';
+    await writeAtomic(journalFile, json(journal));
+  }
+  return { schemaVersion: 2, kind: 'skills.rollback', ok: conflicts.length === 0, writes: restored > 0, applied: restored > 0, operations, conflicts, backup: directory, summary: { restored, conflicts: conflicts.length } };
 }

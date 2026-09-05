@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0-next.1 (source prerelease)
+
+- Replace broad process routing with selected project-record, artifact, design, UI, prose and optional legacy-contract skills.
+- Use one default installation root with migration journals and guarded rollback.
+- Reduce MCP to four project-bound record tools and preserve legacy record reading.
+- Retire autonomous execution, scheduling, automatic delivery and duplicate analysis. Keep explicit forge coordination.
+- Registry publication and stable promotion are separate from this source version.
+
 This file summarizes shipped, user-visible changes. Current behavior belongs in the feature and operator documents under `docs/`; detailed release artifacts remain on [GitHub Releases](https://github.com/jukrap/ai-agent-playbook/releases).
 
 ## 0.5.11 (2026-08-15)

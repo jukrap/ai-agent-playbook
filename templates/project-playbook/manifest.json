@@ -1,16 +1,5 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
   "source": "ai-agent-playbook",
-  "layoutKind": "structured",
-  "runtimePolicy": {
-    "defaultLocalOnly": true,
-    "runtimeIsGenerated": true,
-    "memoryRequiresExplicitPromotion": true
-  },
-  "permissions": {
-    "mcpDefaultTier": "read",
-    "writeToolsRequireOptIn": true,
-    "forgeWriteToolsRequireSeparateOptIn": true,
-    "automationTickExposedViaMcp": false
-  }
+  "layoutKind": "minimal"
 }

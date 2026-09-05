@@ -2,6 +2,14 @@
 
 1.0 centers AAPB on project records, requested artifact formats, and selected specialist guidance. Coding agents and project tools remain responsible for implementation and execution.
 
+## Why we redesigned AAPB
+
+The starting point for 1.0 was the growing capability of coding models. Earlier versions of AAPB supplied extensive skills, prescribed workflows, and execution features to support their work. As models became better at planning, exploring repositories, using tools, and reviewing changes, we reconsidered which parts of that support still added value.
+
+We judged that overlapping instructions and procedures could make the harness itself a bottleneck for more capable models. Rereading similar guidance, resolving competing process rules, and repeating checks already provided by the host can consume context and execution time without moving the project forward.
+
+AAPB 1.0 therefore gives models and their hosts room to handle general work, while retaining the context they cannot reliably reconstruct: project decisions and evidence, product constraints, requested artifact formats, and specialist contracts. Design, UI, and Korean/English writing guidance remain available where they add value. Detailed references are selected for the task, and routine execution stays with the host and project tools.
+
 ## Main changes
 
 - Use `ai-agent-playbook` as the primary command or `aapb` as its equivalent short alias. Project commands use the current directory when the path is omitted.

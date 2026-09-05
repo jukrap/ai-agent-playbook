@@ -1,29 +1,16 @@
-# FSD DDD Fit Matrix
+# Compare architecture boundaries
 
-Use this reference when choosing a boundary model for frontend, backend, full-stack, or monorepo code.
+Use this reference when a project actually needs a boundary decision. These are comparison prompts, not universal rankings or a requirement to pick a named architecture. Start with [the project's constraints and accepted decisions](../../../docs/project-architecture.md).
 
-## Fit Matrix
-
-| Approach | Strong fit | Weak fit | First safe move |
+| Approach | Useful question | Caution | Possible first change |
 | --- | --- | --- | --- |
-| Feature-Sliced Design | UI-heavy apps with pages, widgets, features, entities, shared UI/lib, and repeated cross-feature coupling. | Backend-only services, tiny apps, or apps without stable feature boundaries. | Define public imports for one feature or shared layer. |
-| Layered architecture | Controllers, services, repositories, adapters, and infrastructure already exist but dependency direction leaks. | Domain behavior is unclear or layers would be artificial names. | Move request/session concerns out of lower layers. |
-| DDD modules | Business invariants, aggregates, policies, and bounded contexts drive change risk. | CRUD/reporting/integration glue without durable domain language. | Name one aggregate or policy boundary and protect its invariants. |
-| Modular monolith | One deployable app needs internal ownership, dependency rules, and future extraction optionality. | Package split is only aesthetic or build tooling cannot enforce it. | Create module entrypoints and forbid deep imports. |
-| Monorepo packages | Independent build/test/release ownership matters. | Shared code would become a dumping ground. | Add package exports and dependency direction checks. |
-| Legacy seam | Compatibility and hidden coupling dominate the risk. | Rewrite is already planned and safe to scope separately. | Add adapter/shim around the risky surface before behavior change. |
+| Feature-Sliced Design | Would frontend pages, reuse, and explicit imports benefit from shared conventions? | Do not apply it to backend-only code or add layers with no useful role; small size alone does not rule it out | Define the scope and public imports for one page or feature |
+| Layered architecture | Are transport, application behavior, and persistence responsibilities mixed? | Extra layers can merely rename the same pass-through logic | Separate one leaking request or persistence boundary |
+| DDD modules | Which business invariants and terms must stay consistent as behavior changes? | Do not add aggregates or bounded-context names without a domain reason | Record one domain invariant and its owner |
+| Modular monolith | Can one deployable application benefit from clear internal ownership? | Splitting folders alone does not enforce an interface | Define one module entrypoint and its permitted callers |
+| Monorepo packages | Do parts need distinct build, test, or release ownership? | Extraction adds dependency and release coordination | Define exports and checks for one actual package boundary |
+| Legacy compatibility seam | Which existing contract must stay stable while internals change? | A wrapper needs a purpose and a removal or maintenance condition | Add a bounded adapter around the changing interface |
 
-## Decision Rules
+Use imports, routes, manifests, tests, and runtime responsibilities as evidence of what exists. Compare that evidence with the intended contract; do not silently treat current code as the final design.
 
-- Start from evidence in imports, entrypoints, package manifests, routes, tests, and runtime ownership.
-- Pick the smallest boundary model that prevents the next likely regression.
-- Do not apply FSD to backend code just because the organization uses FSD elsewhere.
-- Do not apply DDD names unless the business language is stable enough to protect invariants.
-- Prefer documented public APIs over folder naming alone.
-
-## Output
-
-- Chosen boundary model and why other models were not selected.
-- Directories or modules covered by the decision.
-- Allowed imports, forbidden imports, and exception path.
-- Verification command or search that can detect boundary drift.
+Record the chosen scope, reasons, allowed dependencies, exceptions, verification, and revisit condition. A small provisional structure may be enough when future requirements are unclear. Keep the decision with the project and revise it when new evidence changes the tradeoff.

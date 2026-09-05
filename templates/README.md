@@ -4,7 +4,7 @@ Templates become part of a project only after you review and adapt them. They ar
 
 | Location | Purpose | How to use it |
 | --- | --- | --- |
-| [agents](agents/README.md) | Root instructions and selected stack profiles | Merge relevant rules with the project's existing AGENTS.md |
+| [agents](agents/README.md) | Stack-neutral project instructions | Merge relevant rules with the project's existing AGENTS.md |
 | [project-playbook/CURRENT.md](project-playbook/CURRENT.md) | Current objective, constraints, and evidence | Let bootstrap create it, or adapt the document manually |
 | [codex-home](codex-home/README.md) | Optional personal defaults | Review separately from project rules and preserve existing preferences |
 
@@ -14,4 +14,4 @@ Inspect the actual stack, existing policy, and current records first. For a new 
 
 If you copy only CURRENT.md manually, it remains a plain user document; copying text does not create verified management ownership. Do not manufacture hashes to enable migration. Add detailed decisions, contracts, and handoffs only when needed, using established project locations.
 
-The root policy should identify applicable rules and relevant record entrypoints. Keep product requirements in project documents rather than replicating them in every policy. See [Record layout](../docs/structured-playbook-layout.md), [Existing repositories](../docs/existing-repository-bootstrap.md), and [example handoffs](../examples/handoffs/api-contract-handoff-example.md).
+The root policy should identify applicable rules and relevant record entrypoints. Keep product requirements in project documents rather than replicating them in every policy. See [Architecture choices](../docs/project-architecture.md), [Record layout](../docs/structured-playbook-layout.md), [Existing repositories](../docs/existing-repository-bootstrap.md), and [example handoffs](../examples/handoffs/api-contract-handoff-example.md).

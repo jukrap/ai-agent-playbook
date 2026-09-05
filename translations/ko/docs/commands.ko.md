@@ -65,6 +65,8 @@ ai-agent-playbook records read --path CURRENT.md
 
 Git이 아닌 폴더이거나 기록을 커밋해서 공유하려면 `--local-only`를 뺍니다. AAPB가 커밋하지는 않습니다. 기존 AGENTS.md와 플레이북은 보존합니다. Bootstrap을 반복해도 기존 기록의 Git 추적 정책은 바뀌지 않습니다. [기존 저장소 적용](existing-repository-bootstrap.ko.md)을 참고하세요.
 
+부트스트랩은 아키텍처를 선택하거나 소스 폴더를 생성하지 않습니다. 프로젝트 루트 지침과 아키텍처 결정은 별도로 조정해 작성합니다. [프로젝트 아키텍처](project-architecture.ko.md)를 참고하세요.
+
 ## 기록 상태와 검증
 
 | 명령 전체 | 뜻 |

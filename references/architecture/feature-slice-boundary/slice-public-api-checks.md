@@ -1,24 +1,18 @@
-# Slice Public API Checks
+# Public interfaces across modules
 
-Use this when a boundary is expressed through index files, barrel exports, route loaders, feature APIs, component libraries, or shared modules.
+Use this when a boundary is expressed through index files, exports, route loaders, feature APIs, component libraries, or shared modules.
 
-## Public API Review
+## Inspect the contract
 
-- Identify what callers are supposed to import and what must remain private.
-- Check index/barrel exports, route files, generated API files, package exports, module aliases, and path mapping.
-- Confirm names, types, defaults, side effects, CSS/assets, and tree-shaking behavior when they are part of the public surface.
-- Record callers that need migration and whether re-export compatibility is required.
+- Identify what callers may import and what remains private.
+- Inspect exports, routes, generated API files, aliases, package exports, and path mapping.
+- Preserve names, types, defaults, side effects, CSS/assets, and tree-shaking behavior when they are part of the public contract.
+- Identify callers needing migration and whether a compatibility re-export is useful.
 
-## Migration Notes
+## Evolve the boundary
 
-- For FSD or feature-sliced migrations, define the next safe slice, not the final ideal tree.
-- Keep adapter files when old imports are widespread and behavior must stay stable.
-- Avoid moving files only to satisfy a taxonomy if dependency direction and ownership do not improve.
-- Use `boundary-review` for broad architecture decisions and `monorepo-package-boundary` when the public API crosses workspace packages.
+For a migration, choose a useful next portion rather than moving everything to an ideal final tree. Keep adapters while callers transition. A folder rename alone does not establish a better dependency direction or owner.
 
-## Stop Conditions
+Use [architecture decisions](../../../docs/project-architecture.md) when the accepted design changes and [package boundaries](../monorepo-package-boundary/package-ownership-dependency-direction.md) when the interface crosses workspace packages.
 
-- Public imports are removed without caller inventory.
-- A shared barrel starts exporting unstable implementation details.
-- Generated files or framework route conventions are moved without verifying the generator/runtime.
-- Boundary documentation contradicts actual import behavior.
+Before removing an entrypoint, account for its callers. Before moving generated routes or files, verify the generator and runtime. If documentation and imports disagree, record the gap and resolve the relevant contract; do not silently promote current code into the intended design.

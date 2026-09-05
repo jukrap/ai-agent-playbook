@@ -1,26 +1,32 @@
-# Project AGENTS.md templates
+# Project instructions without a fixed stack
 
-These are examples to adapt into a project's root instructions. Read any existing AGENTS.md first and merge only relevant rules. AAPB 1.0 bootstrap preserves that file automatically.
+Start with [AGENTS.md](AGENTS.md), then adapt it to the actual repository. Keep a small set of applicable rules and links to real decisions. AAPB does not require FSD, a package manager, or a particular folder tree.
 
-`global/` here means a stack-neutral project template. It is not a personal global instruction file; those examples are in [codex-home](../codex-home/README.md).
+This directory is for project instructions. Personal Codex defaults are in [codex-home](../codex-home/README.md). AAPB's `core`, `development`, and `legacy` skill profiles choose reusable guidance; they do not choose project architecture.
 
-## Choose a matching profile
+## Adapt the template
 
-| Template | Matching project |
+1. Read existing root and directory instructions and relevant configuration.
+2. Keep the repository's accepted rules and user edits. If root instructions are absent and useful, adapt the template rather than treating it as an installed managed file.
+3. Add actual commands and links that help work in this project. Do not leave example filenames or guessed commands as requirements.
+4. Keep detailed architecture in its existing document. Record ownership, dependency direction, exceptions, and when a decision should be revisited.
+5. Create project records with bootstrap only when needed. Bootstrap preserves root instructions and does not copy this template automatically.
+
+For new, existing, or changing structures, use [Choose and evolve an architecture](../../docs/project-architecture.md). An accepted architecture can evolve; a template should not freeze an idealized folder tree.
+
+## Earlier template paths
+
+The stack-specific root files have been removed. Their useful domain contracts remain as selected references; generic start, Git, and worklog procedures are covered by the neutral template and project rules.
+
+| Removed path in this directory | Current destination |
 | --- | --- |
-| [global](global/AGENTS.md) | General repositories and documentation work |
-| [react-vite-fsd](profiles/react-vite-fsd/AGENTS.md) | React/Vite/TypeScript with existing layered boundaries |
-| [react-native-expo](profiles/react-native-expo/AGENTS.md) | Expo/React Native and device verification |
-| [legacy-jquery-web](profiles/legacy-jquery-web/AGENTS.md) | jQuery, direct DOM manipulation, and script ordering |
-| [legacy-server-rendered-web](profiles/legacy-server-rendered-web/AGENTS.md) | Server templates, forms, and server-side contracts |
-| [legacy-android-webview-hybrid](profiles/legacy-android-webview-hybrid/AGENTS.md) | Native shell, WebView, local assets, and bridges |
+| `global/AGENTS.md` | [Neutral project instructions](AGENTS.md); the old name did not mean a personal global file |
+| `profiles/react-vite-fsd/AGENTS.md` | [Architecture choices](../../docs/project-architecture.md), [feature boundaries](../../references/architecture/feature-slice-boundary/feature-slice-layering.md), and the UI/data references below |
+| `profiles/react-native-expo/AGENTS.md` | [Native UI and data boundaries](../../references/mobile/native-release-readiness/native-ui-and-data.md) |
+| `profiles/legacy-jquery-web/AGENTS.md` | [jQuery contracts](../../references/legacy/legacy-jquery-web/jquery-browser.md) |
+| `profiles/legacy-server-rendered-web/AGENTS.md` | [Server-rendered forms](../../references/legacy/legacy-server-rendered-web/server-rendered-legacy-flow.md) |
+| `profiles/legacy-android-webview-hybrid/AGENTS.md` | [WebView and bridge contracts](../../references/legacy/legacy-android-webview-hybrid/android-webview-hybrid.md) |
 
-## Apply to the actual repository
+Frontend styling, state, and response-contract detail remain in [style policy](../../references/frontend/style-policy-selection/style-policy-selection.md), [state ownership](../../references/frontend/frontend-state-data-flow/state-ownership.md), and [API boundary checks](../../references/backend/api-contract-boundary/api-boundary-checklist.md). Read only the relevant material. Legacy contracts are also available through the optional [legacy skill](../../skills/legacy/legacy-contracts/SKILL.md).
 
-1. Inspect configuration, build scripts, existing instructions, and dirty changes.
-2. Keep the root policy focused on applicable rules and the current-state entrypoint.
-3. Choose a profile only if its stack matches; remove inapplicable assumptions and commands.
-4. Create records with bootstrap if needed, then write actual current facts in CURRENT.md.
-5. Keep detailed product, Git, and verification rules in the project's established documents and link them where useful.
-
-The old template paths `policy/SKILLS.md`, `policy/GIT.md`, and the generated guide tree are not part of the minimal template. Do not copy or require those nonexistent files. Existing project copies remain valid historical/project material. See [Record layout](../../docs/structured-playbook-layout.md).
+Existing copies in projects are not deleted or replaced. Keep project-specific modifications when adapting them. The 0.5.11 package and repository history retain the older templates; current bootstrap instructions are in [Existing repositories](../../docs/existing-repository-bootstrap.md).

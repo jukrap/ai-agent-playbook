@@ -1,64 +1,21 @@
-# Project Bootstrap Checklist
+# 부트스트랩과 프로젝트 지침
 
-대상 프로젝트에 root agent files 또는 `.ai-agent-playbook/` folder를 만들 때 사용합니다.
+프로젝트 기록을 추가하거나 루트 지침을 조정할 때 사용합니다. 기존 지침, 관련 설정, 진행 중인 변경과 현재 기록 위치를 먼저 확인합니다.
 
-## Discovery
+## 선택을 구분하기
 
-- branch, remotes, dirty files, staged files, local-only policy를 확인합니다.
-- root docs, README, package/build files, lockfiles, scripts, existing agent instructions를 확인합니다.
-- existing project memory, plans, worklogs, ADRs, runbooks, onboarding notes를 찾습니다.
-- package manager, runtime, verification commands, project shape를 습관이 아니라 파일에서 확인합니다.
+- 기록 생성: 프로젝트에서 `ai-agent-playbook bootstrap --dry-run`을 실행하고 결과를 확인한 뒤 `--dry-run`을 빼면 기록이 없을 때 생성합니다.
+- Git 로컬 기록: Git 저장소에서만 두 명령에 `--local-only`를 붙입니다. Git 로컬 제외 파일을 사용하며 이미 커밋한 기록의 추적을 해제하지는 않습니다.
+- 루트 지침: 도움이 될 때 [프로젝트 템플릿](../../../templates/agents/AGENTS.ko.md)을 조정하고 기존 사용자 지침을 보존합니다.
+- 아키텍처: 채택한 프로젝트 결정을 따르거나 요청 범위 안에서 규모에 맞는 구조를 고릅니다. 경계를 기록하고 다시 검토하는 방법은 [아키텍처 안내](../../../docs/project-architecture.ko.md)에 있습니다.
+- 스킬: 관련 지침을 별도로 선택합니다. 스킬 프로필은 프로젝트 폴더 구조가 아닙니다.
 
-## Template selection
+## 생성되는 파일
 
-- 얇은 루트 부트스트랩: `templates/agents/global/AGENTS.md`.
-- Skill policy: `templates/project-playbook/policy/SKILLS.md`, copied as `.ai-agent-playbook/policy/SKILLS.md`.
-- Git policy: `templates/project-playbook/policy/GIT.md`, copied as `.ai-agent-playbook/policy/GIT.md`.
-- Project memory: `templates/project-playbook/`을 `.ai-agent-playbook/`로 복사합니다.
-- Stack profile: stack이 확인된 경우에만 가장 가까운 `templates/agents/profiles/**/AGENTS.md`를 추가하고, root 진입점은 짧게 유지합니다.
+새 부트스트랩은 .ai-agent-playbook에 CURRENT.md, manifest.json, .ai-agent-playbook-install.json을 만듭니다. 소스 폴더, 루트 AGENTS.md, 빈 정책 문서나 작업 폴더 트리는 생성하지 않습니다. 기존 기록은 보존합니다. [기록 구조](../../../docs/structured-playbook-layout.ko.md)를 참고하세요.
 
-## Minimum useful `.ai-agent-playbook/`
+CURRENT.md에는 실제 목표와 근거를 적고 도움이 되는 상세 문서만 연결합니다. 상세 결정이 필요하지 않다면 체크리스트를 채우려고 만들지 않습니다. 비공개 실행 결과는 허용된 로컬 전용 위치에 보관합니다.
 
-대부분의 프로젝트는 아래로 시작합니다.
+## 결정이 바뀔 때
 
-- `README.md`
-- `START_HERE.md`
-- `CURRENT.md`
-- `questions.md`
-- `manifest.json`
-- `policy/SKILLS.md`
-- `policy/GIT.md`
-- `policy/SAFETY.md`
-- `memory/README.md`
-- `memory/maps/README.md`
-- `workflows/runbooks/README.md`
-- `workflows/plans/README.md`
-- `workflows/worklogs/README.md`
-- `knowledge/sources.json`
-- `runtime/README.md`
-- `integrations/README.md`
-
-상세 maps, runbooks, decisions, guides는 채울 project evidence가 있을 때만 추가합니다.
-
-## Content rules
-
-- `START_HERE.md`: 다음 agent가 먼저 읽고 할 일.
-- `CURRENT.md`: current truth, active risks, decisions that still matter.
-- `policy/`: skill selection, Git policy, safety note, scoped rule.
-- `memory/context/`: path-scoped reading hint와 fact.
-- `memory/maps/`: scan range와 freshness가 있는 structure/runtime facts.
-- `workflows/runbooks/`: verified commands and cleanup steps.
-- `workflows/plans/`: active execution plans only.
-- `workflows/runs/`: 긴 작업 중 근거.
-- `workflows/worklogs/`: detailed history plus monthly summaries.
-- `knowledge/`: source registry와 검토된 reference.
-- `runtime/`: generated evidence, index, report, snapshot.
-- `archive/`: stale plans, prompts, handoffs.
-
-## Hygiene
-
-- personal absolute paths, private names, credentials, internal URLs, raw tokens, customer data, machine-local assumptions를 commit하지 않습니다.
-- reusable templates에서는 relative paths를 사용합니다.
-- `.ai-agent-playbook/`이 local-only라면 private notes를 쓰기 전에 `.gitignore`에 추가합니다.
-- worklog를 commit한다면 scrubbed 상태이고 future maintainers에게 유용해야 합니다.
-- Bootstrap 중에는 runtime hook을 추가하지 않습니다. 문서 하네스를 먼저 안정화한 뒤, 프로젝트에 선택적 hook behavior가 필요하면 `templates/project-playbook/knowledge/references/guides/runtime-roadmap.md`를 사용합니다.
+프로젝트의 결정 문서와 관련 코드·검사를 함께 갱신합니다. 이전 이유와 임시 예외를 보존합니다. 예전 템플릿이나 기록이 나중에 채택한 결정보다 우선하지 않습니다. 기존 구조를 바꾸기 전에는 [기존 저장소 적용](../../../docs/existing-repository-bootstrap.ko.md)을 참고하세요.

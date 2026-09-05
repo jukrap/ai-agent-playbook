@@ -186,6 +186,7 @@ CHANGELOG.md          버전별 변경 기록
 - [명령어 가이드](docs/commands.ko.md): 명령·옵션·예시·쓰기 여부·종료 코드.
 - [설치·업데이트·복구](docs/lifecycle.ko.md): 패키지와 스킬의 설치, 갱신, 삭제, 이전, 복구.
 - [기존 저장소에 적용하기](docs/existing-repository-bootstrap.ko.md): 기존 기록과 프로젝트 지침 보존.
+- [프로젝트 아키텍처](docs/project-architecture.ko.md): 부트스트랩에서 기술 구조를 강제하지 않고 경계를 정하고 바꾸는 방법.
 - [프로젝트 기록 구조](docs/structured-playbook-layout.ko.md): CURRENT.md 작성과 상세 문서 추가 기준.
 - [런타임 구조](docs/harness-runtime.ko.md): 데이터 흐름, 소유권, 검증 범위.
 - [MCP 설정과 권한](docs/mcp-permission-model.ko.md): 선택형 읽기 전용 도구 네 개 연결.

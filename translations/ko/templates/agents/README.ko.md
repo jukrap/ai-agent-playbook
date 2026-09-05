@@ -1,26 +1,32 @@
-# 프로젝트 AGENTS.md 템플릿
+# 특정 기술에 묶이지 않는 프로젝트 지침
 
-프로젝트 루트 지침에 맞게 조정해 쓰는 예시입니다. 기존 AGENTS.md를 먼저 읽고 필요한 규칙만 합치세요. AAPB 1.0 bootstrap은 이 파일을 자동으로 보존합니다.
+[AGENTS.md](AGENTS.ko.md)를 출발점으로 삼아 실제 저장소에 맞게 조정하세요. 적용할 규칙과 실제 결정 문서의 링크를 남깁니다. AAPB는 FSD, 특정 패키지 관리자나 폴더 트리를 요구하지 않습니다.
 
-여기서 `global/`은 특정 기술에 묶이지 않은 프로젝트 템플릿을 뜻합니다. 개인 전역 지침 파일이 아닙니다. 개인 설정 예시는 [codex-home](../codex-home/README.ko.md)에 있습니다.
+이 디렉터리는 프로젝트 지침용입니다. 개인 Codex 기본 지침은 [codex-home](../codex-home/README.ko.md)에 있습니다. AAPB의 `core`, `development`, `legacy` 스킬 프로필은 재사용 지침을 고르며 프로젝트 아키텍처를 정하지 않습니다.
 
-## 맞는 프로필 고르기
+## 템플릿 적용 방법
 
-| 템플릿 | 해당 프로젝트 |
+1. 기존 루트·하위 디렉터리 지침과 관련 설정을 읽습니다.
+2. 저장소에서 채택한 규칙과 사용자 편집을 보존합니다. 루트 지침이 없고 필요하다면 템플릿을 조정해 작성합니다. 설치 도구가 관리하는 파일로 취급하지 않습니다.
+3. 이 프로젝트에서 일할 때 도움이 되는 실제 명령과 링크를 추가합니다. 예시 파일명이나 추측한 명령을 필수 조건으로 남기지 않습니다.
+4. 상세 아키텍처는 기존 문서에 둡니다. 각 부분의 역할, 의존성 방향, 예외와 재검토 조건을 기록합니다.
+5. 필요할 때 부트스트랩으로 프로젝트 기록을 만듭니다. 부트스트랩은 루트 지침을 보존하며 이 템플릿을 자동으로 복사하지 않습니다.
+
+새 구조, 기존 구조와 구조 변경은 [프로젝트 아키텍처 안내](../../docs/project-architecture.ko.md)를 참고하세요. 채택한 아키텍처도 바뀔 수 있습니다. 템플릿으로 이상적인 폴더 트리를 고정하지 않습니다.
+
+## 이전 템플릿의 이동 위치
+
+기술별 루트 지침 파일은 제거했습니다. 유용한 분야별 계약은 선택형 참고 자료로 보존하고, 중복된 시작·Git·작업 일지 절차는 기술 중립 템플릿과 프로젝트 규칙으로 정리했습니다.
+
+| 이 디렉터리에서 제거한 경로 | 현재 위치 |
 | --- | --- |
-| [global](global/AGENTS.ko.md) | 일반 저장소와 문서 작업 |
-| [react-vite-fsd](profiles/react-vite-fsd/AGENTS.ko.md) | 기존 계층 구조를 사용하는 React/Vite/TypeScript |
-| [react-native-expo](profiles/react-native-expo/AGENTS.ko.md) | Expo/React Native와 기기 검증 |
-| [legacy-jquery-web](profiles/legacy-jquery-web/AGENTS.ko.md) | jQuery, 직접 DOM 조작, 스크립트 순서 |
-| [legacy-server-rendered-web](profiles/legacy-server-rendered-web/AGENTS.ko.md) | 서버 템플릿, 폼, 서버 계약 |
-| [legacy-android-webview-hybrid](profiles/legacy-android-webview-hybrid/AGENTS.ko.md) | 네이티브 셸, WebView, 로컬 자산, 브리지 |
+| `global/AGENTS.md` | [기술 중립 프로젝트 지침](AGENTS.ko.md). 예전 이름도 개인 전역 파일을 뜻하지는 않았음 |
+| `profiles/react-vite-fsd/AGENTS.md` | [아키텍처 선택](../../docs/project-architecture.ko.md), [기능 경계](../../references/architecture/feature-slice-boundary/feature-slice-layering.ko.md)와 아래 UI·데이터 참고 자료 |
+| `profiles/react-native-expo/AGENTS.md` | [네이티브 UI와 데이터 경계](../../references/mobile/native-release-readiness/native-ui-and-data.ko.md) |
+| `profiles/legacy-jquery-web/AGENTS.md` | [jQuery 계약](../../references/legacy/legacy-jquery-web/jquery-browser.ko.md) |
+| `profiles/legacy-server-rendered-web/AGENTS.md` | [서버 렌더링 폼](../../references/legacy/legacy-server-rendered-web/server-rendered-legacy-flow.ko.md) |
+| `profiles/legacy-android-webview-hybrid/AGENTS.md` | [WebView와 브리지 계약](../../references/legacy/legacy-android-webview-hybrid/android-webview-hybrid.ko.md) |
 
-## 실제 저장소에 적용하기
+프론트엔드 스타일, 상태와 응답 계약의 상세 내용은 [스타일 정책](../../references/frontend/style-policy-selection/style-policy-selection.ko.md), [상태 관리 주체](../../references/frontend/frontend-state-data-flow/state-ownership.ko.md), [API 경계 검사](../../references/backend/api-contract-boundary/api-boundary-checklist.ko.md)에 있습니다. 관련된 자료만 읽으세요. 레거시 계약은 선택형 [레거시 스킬](../../skills/legacy/legacy-contracts.ko.md)에서도 제공합니다.
 
-1. 설정, 빌드 명령, 기존 지침, 커밋하지 않은 변경을 확인합니다.
-2. 루트 정책에는 실제 적용할 규칙과 현재 상태의 시작 위치를 둡니다.
-3. 기술 환경이 맞을 때만 프로필을 고르고 해당하지 않는 전제·명령을 뺍니다.
-4. 기록이 필요하면 bootstrap으로 만든 뒤 CURRENT.md에 현재 사실을 적습니다.
-5. 상세 제품·Git·검증 규칙은 프로젝트의 기존 문서에 두고 필요할 때 연결합니다.
-
-과거 템플릿의 `policy/SKILLS.md`, `policy/GIT.md`, 생성형 안내 폴더는 최소 템플릿에 없습니다. 존재하지 않는 파일을 복사하거나 필수로 요구하지 마세요. 기존 프로젝트에 남은 문서는 과거 기록이나 해당 프로젝트 자료로 계속 사용할 수 있습니다. [기록 구조](../../docs/structured-playbook-layout.ko.md)를 참고하세요.
+이미 프로젝트에 복사한 지침은 삭제하거나 교체하지 않습니다. 조정할 때 프로젝트 고유의 편집을 보존하세요. 이전 템플릿은 0.5.11 패키지와 Git 이력에 남아 있습니다. 현재 부트스트랩 사용법은 [기존 저장소 적용](../../docs/existing-repository-bootstrap.ko.md)에 있습니다.

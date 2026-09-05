@@ -37,7 +37,7 @@ AAPB does not own the host's entire plugin installation. Its installer manages o
 | Superpowers | Disabled | Generic mandatory workflow overlaps with the host and project instructions; preserve an explicit reactivation path. |
 | Writer product skills/MCP | Dedicated product profile | Accepted voice, candidate approval, snapshots and operation log are product contracts. |
 | Game product skills/MCP | Dedicated product profile | Engine execution permissions and evidence are distinct from a generic skill installation. |
-| AAPB MCP | Disabled by default | Four project-bound read-only record tools, enabled only for a chosen project. |
+| AAPB MCP | Disabled by default | Four read-only record tools, bound to the server's startup directory; Codex can supply each task's directory through one common registration. |
 | Another project's MCP | Project-specific | Remove common activation without editing that project's configuration in an unrelated migration. |
 
 A private audit should record owner/version, configured state, observed discovery and injection, distinctive capability, bytes and execution requirements, decision, preserved location and recovery for every item/version. Include platform-provided entries and cache-only entries explicitly. Text size is an instruction-size proxy, not a measured token price or proof of model harm. The five-case comparison in [verification](verification.md) does not measure every third-party skill.

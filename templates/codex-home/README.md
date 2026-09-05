@@ -1,48 +1,18 @@
-# Codex Home Templates
+# Personal instruction template
 
-This folder is for personal Codex home guidance, not project-root templates.
+This optional template is a starting point for personal Codex defaults. It is separate from a project's root AGENTS.md and is never installed by AAPB's package or skill installation.
 
-Codex loads a global instruction file from the Codex home directory. By default
-that is `~/.codex`, unless `CODEX_HOME` is set. At that level Codex reads
-`AGENTS.override.md` first if it exists; otherwise it reads `AGENTS.md`.
+Read [AGENTS.md](AGENTS.md), compare it with your current personal instructions, and merge only the preferences you want. Preserve communication choices, approval requirements, and project-specific overrides. Do not overwrite an existing file merely to adopt this template.
 
-Use this folder when you want a reusable starting point for your own
-`~/.codex/AGENTS.md`.
+## Appropriate content
 
-## Files
+- Personal communication and collaboration preferences.
+- How to respect repository instructions and unrelated changes.
+- Evidence and verification habits that apply across projects.
+- Default Git practices within the user's authorization.
 
-- `AGENTS.md`: recommended personal global defaults for Codex.
+Keep product requirements, stack assumptions, API contracts, milestones, credentials, and private account details out of a reusable personal template. Repository rules belong in the project's own instructions and records.
 
-## Install manually
+Use the personal instruction location supported by the installed host and its current configuration. This template does not change model selection, context/output budgets, plugin activation, or experimental features. [Codex setup](../../adapters/codex/README.md) distinguishes those settings from skills and MCP.
 
-PowerShell:
-
-```powershell
-$playbookRepo = '<path-to-ai-agent-playbook>'
-$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $env:USERPROFILE '.codex' }
-New-Item -ItemType Directory -Force -Path $codexHome | Out-Null
-Copy-Item -LiteralPath (Join-Path $playbookRepo 'templates\codex-home\AGENTS.md') -Destination (Join-Path $codexHome 'AGENTS.md')
-```
-
-Use `AGENTS.override.md` in the Codex home directory only for temporary global
-experiments. Remove it when the experiment is done.
-
-## What belongs here
-
-- Personal communication preferences.
-- Personal default verification habits.
-- Personal default Git safety preferences.
-- How to treat skills and project playbook docs when a repository provides them.
-
-## What does not belong here
-
-- Project-specific stack rules.
-- Product requirements, API contracts, or milestones.
-- Customer, employer, account, or private path details.
-- Rules that should travel with a repository.
-
-Put repository working rules in the project's root `AGENTS.md`. If you use this
-playbook's project templates, the root `AGENTS.md` comes from
-`templates/agents/global/`, while skill and Git policy live under
-`templates/project-playbook/` as `.ai-agent-playbook/policy/SKILLS.md` and
-`.ai-agent-playbook/policy/GIT.md`.
+For a project policy, use [templates/agents](../agents/README.md). For current facts and supporting documents, use [the minimal record layout](../../docs/structured-playbook-layout.md); the old generated policy directory is not required.

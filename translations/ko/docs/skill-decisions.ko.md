@@ -1,8 +1,8 @@
 # 스킬 전수 판정표
 
-기준선의 각 스킬에 판정, 참조 보존 위치, 복구 경로를 지정합니다. bytes는 텍스트 크기이며 토큰이나 실측 실행 비용이 아닙니다. 참조 라이브러리는 해당 과제에 필요할 때만 읽습니다.
+구버전 스킬마다 유지·통합·종료 여부와 참고 자료를 옮긴 위치, 복구 방법을 정리했습니다. 바이트 수는 텍스트 파일의 크기이며 토큰 수나 실제 실행 비용이 아닙니다. 참고 자료는 현재 작업에 필요할 때만 읽습니다.
 
-| 기존 스킬 | 판정 | 선택 진입점 | 선택 참조 보존 위치 | 스킬 / 참조 bytes |
+| 기존 스킬 | 판정 | 선택 진입점 | 선택 참조 보존 위치 | 스킬 / 참고 자료 크기(바이트) |
 | --- | --- | --- | --- | --- |
 | agent-orchestration-handoff | 통합 | spec-artifacts | references/ai-harness/agent-orchestration-handoff | 1397 / 4684 |
 | capability-witness-history | 통합 | project-memory | references/ai-harness/capability-witness-history | 1048 / 4723 |

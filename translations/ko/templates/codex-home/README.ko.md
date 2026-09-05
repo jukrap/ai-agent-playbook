@@ -1,44 +1,18 @@
-# Codex Home 템플릿
+# 개인 지침 템플릿
 
-이 폴더는 개인 Codex home 지침용이며, 프로젝트 루트 템플릿이 아닙니다.
+개인 Codex 기본 지침을 작성할 때 참고할 선택형 템플릿입니다. 프로젝트 루트 AGENTS.md와 별개이며 AAPB 패키지나 스킬 설치가 자동으로 적용하지 않습니다.
 
-Codex는 Codex home 디렉터리에서 전역 지침 파일을 읽습니다. 기본값은 `~/.codex`이며,
-`CODEX_HOME`을 설정하면 그 디렉터리를 사용합니다. 이 위치에서 Codex는
-`AGENTS.override.md`가 있으면 먼저 읽고, 없으면 `AGENTS.md`를 읽습니다.
+[AGENTS.md](AGENTS.ko.md)를 읽고 현재 개인 지침과 비교한 뒤 원하는 내용만 반영하세요. 대화 방식, 승인 요구, 프로젝트별 우선 규칙을 보존합니다. 템플릿을 적용하려고 기존 파일을 통째로 덮어쓰지 않습니다.
 
-자신의 `~/.codex/AGENTS.md` 시작점이 필요할 때 이 폴더를 사용합니다.
+## 넣기 적합한 내용
 
-## 파일
+- 개인적인 대화와 협업 선호.
+- 저장소 지침과 무관한 변경을 존중하는 기준.
+- 여러 프로젝트에 공통으로 적용할 근거·검증 습관.
+- 사용자가 허용한 범위 안의 기본 Git 작업 방식.
 
-- `AGENTS.md`: Codex용 개인 전역 기본값 예시.
+제품 요구사항, 기술 스택 전제, API 계약, 이정표, 인증 정보, 비공개 계정 정보는 재사용 개인 템플릿에 넣지 않습니다. 저장소 규칙은 해당 프로젝트의 지침과 기록에 둡니다.
 
-## 수동 설치
+개인 지침 위치는 설치된 앱과 현재 설정이 지원하는 곳을 사용하세요. 이 템플릿은 모델, 문맥·출력 수치, 플러그인 활성화, 실험 기능을 바꾸지 않습니다. [Codex 설정](../../adapters/codex/README.ko.md)에서 스킬·MCP와의 차이를 설명합니다.
 
-PowerShell:
-
-```powershell
-$playbookRepo = '<path-to-ai-agent-playbook>'
-$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $env:USERPROFILE '.codex' }
-New-Item -ItemType Directory -Force -Path $codexHome | Out-Null
-Copy-Item -LiteralPath (Join-Path $playbookRepo 'templates\codex-home\AGENTS.md') -Destination (Join-Path $codexHome 'AGENTS.md')
-```
-
-Codex home 디렉터리의 `AGENTS.override.md`는 임시 전역 실험에만 사용합니다. 실험이 끝나면 삭제해 기본 지침으로 되돌립니다.
-
-## 여기에 둘 내용
-
-- 개인 커뮤니케이션 선호.
-- 개인 기본 검증 습관.
-- 개인 기본 Git 안전 선호.
-- 저장소가 제공하는 skill과 project playbook 문서를 다루는 방식.
-
-## 여기에 두지 않을 내용
-
-- 프로젝트별 스택 규칙.
-- 제품 요구사항, API 계약, milestone.
-- 고객, 고용주, 계정, 비공개 경로 정보.
-- 저장소와 함께 이동해야 하는 규칙.
-
-저장소 작업 규칙은 프로젝트 루트 `AGENTS.md`에 둡니다. 이 playbook의 프로젝트 템플릿을 사용한다면,
-루트 `AGENTS.md`는 `templates/agents/global/`에서 오고, skill/Git 정책은
-`templates/project-playbook/` 아래에서 `.ai-agent-playbook/policy/SKILLS.md`, `.ai-agent-playbook/policy/GIT.md`로 들어갑니다.
+프로젝트 정책은 [templates/agents](../agents/README.ko.md), 현재 사실과 상세 문서는 [최소 기록 구조](../../docs/structured-playbook-layout.ko.md)를 참고하세요. 과거에 생성하던 정책 폴더가 필수는 아닙니다.

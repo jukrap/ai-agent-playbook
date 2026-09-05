@@ -14,7 +14,7 @@ Installation checks cover a single destination, selected profiles, Korean/space 
 
 Additional review reproduced and fixed empty explicit skill selections, unreadable current-state entrypoints, a writing report that ignored --root, and linked ancestor paths in advisory readers. Regressions now reject unsafe inputs without changing project records or external files. The MCP assertion covers the entire tool result, including both text and structured representations; checking each representation separately had missed the combined limit. The npm file list now includes Korean and linked maintenance documentation. An archive-content audit checked 106 current guide/skill Markdown files for missing relative links and excluded private records, backups and tests.
 
-A local package archive was inspected for required runtime/catalog/reference files and absence of private records. An isolated npm prefix successfully ran the previous global 0.5.10 package, upgraded to 1.0.0-next.1, recovered 0.5.10, then upgraded again. Source recovery remains separately pinned to 0.5.11. No registry publication or remote push was performed.
+A local package archive was inspected for required runtime/catalog/reference files and absence of private records. An isolated npm prefix successfully ran the previous global 0.5.10 package, upgraded to 1.0.0-next.1, recovered 0.5.10, then upgraded again. Source recovery remains separately pinned to 0.5.11. That initial next.1 archive-validation stage did not publish to npm or push remotely. Later GitHub activity is a separate milestone; these historical package checks are not a statement of current branch publication status.
 
 ## Response continuation and existing-project demonstration
 
@@ -53,3 +53,11 @@ Fresh host discovery and actual prompt injection were measured separately. The i
 A cold first-turn CLI probe injected only 20 entries before remote plugin loading; this is a timing difference, not an additional cleanup success. Do not equate cache inventory, discovery, injected catalog and connected tools. The existing conversation retains its earlier context. See [environment profiles](environment-profiles.md) for remote-plugin controls and [lifecycle](lifecycle.md) for recovery.
 
 Common AAPB MCP and the project-specific common MCP were confirmed disabled in a fresh runtime. Optional plugin MCP overlays were also disabled. Host connector tooling remained connected; tool availability does not prove every connector operation or artifact renderer works. Native history/notes availability was not promoted from source presence or model metadata, and no experiment flag was enabled.
+
+## Human documentation follow-up
+
+The README mastheads, badges, language selection, product map, and guide navigation were restored using the earlier reader structure and current functionality. Beginner, command, lifecycle, record, integration, and maintenance guides now include runnable examples and result interpretation. Korean explanations were reviewed separately from translation-file coverage. The ordinary user path is npm installation and aapb operation; source checkout, PowerShell compatibility, and prerelease testing belong to developer guidance.
+
+This review also found template instructions pointing to removed files, inactive adapter examples invoking deleted hooks, and orphaned metadata for a retired skill. Those references were corrected or made inactive. README images, context, and examples are included in the npm file list. Runtime and installed skill behavior were not redesigned in this documentation follow-up.
+
+A locally installed archive was used for English/Korean practice records, exact continued reads, list/search pages, advisory checks, Forge previews, isolated skill installation/removal/recovery, and four SDK stdio tool calls. Original project instructions and read-only call inputs were preserved. Package checks inspect parsed Markdown links and HTML image/link attributes, not just file presence. Local browser previews checked README branding and readable rendered structure; this is not an independent beginner usability study or a claim of registry publication.

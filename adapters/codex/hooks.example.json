@@ -1,29 +1,3 @@
 {
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"<path-to-ai-agent-playbook>/adapters/codex/hook.mjs\"",
-            "timeout": 5,
-            "statusMessage": "Loading ai-agent-playbook context"
-          }
-        ]
-      }
-    ],
-    "PostCompact": [
-      {
-        "matcher": "manual|auto",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"<path-to-ai-agent-playbook>/adapters/codex/hook.mjs\"",
-            "timeout": 5,
-            "statusMessage": "Reloading ai-agent-playbook context"
-          }
-        ]
-      }
-    ]
-  }
+  "hooks": {}
 }

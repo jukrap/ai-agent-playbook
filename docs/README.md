@@ -43,8 +43,9 @@ Choose a route for the task at hand. These human guides are not an agent startup
 - [Repository context](../CONTEXT.md) and [runtime architecture](harness-runtime.md): terms, data flow, and boundaries.
 - [1.0 changes and previous versions](redesign.md): decisions and evidence limits.
 - [Verification](verification.md): actual tests, bounded comparisons, and untested scope.
-- [Release readiness](runtime-roadmap.md) and [publishing checklist](publishing-checklist.md): prerelease-to-stable conditions.
+- [Release readiness](runtime-roadmap.md) and [publishing checklist](publishing-checklist.md): release preparation and follow-up.
 - [Maintenance](maintenance.md) and [translation policy](translation-policy.md): editing, preservation, and checks.
+- [1.0.0 release notes](release-1.0.0.md): supported behavior and the previous-version migration path.
 - [Changelog](../CHANGELOG.md): versioned changes.
 
 Old filenames such as `forge-automation.md` remain stable links. Their current content explains supported coordination and retired automation. Historical references may still mention old commands; check the current command guide before using them.

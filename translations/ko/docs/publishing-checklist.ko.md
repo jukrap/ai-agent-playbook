@@ -1,6 +1,6 @@
 # 배포 점검표
 
-현재 소스는 npm `1.0.0-next.3`, Python `1.0.0.dev3`를 사용합니다. 소스 버전 표기이며 게시 완료를 뜻하지 않습니다. 레지스트리 게시를 결정하기 전에 로컬 압축 파일부터 시험합니다.
+Node와 Python은 모두 `1.0.0`을 사용합니다. 소스의 버전 표기만으로 레지스트리 게시를 확인한 것은 아닙니다. 게시 전에 정확한 압축 파일을 시험하고, 게시 후에는 레지스트리에서 받은 파일로 확인합니다.
 
 ## 릴리스 후보 준비
 
@@ -29,12 +29,22 @@ node "<demo-prefix>/node_modules/ai-agent-playbook/bin/aapb.mjs" --help
 정확한 후보 파일과 게시가 허용된 뒤에 검증한 압축 파일을 게시합니다. 사전 릴리스는 `next` 태그를 사용하고 정식 `latest` 전환은 별도로 결정합니다.
 
 ```powershell
-npm publish "<verified-archive.tgz>" --tag next --dry-run
+npm publish "<verified-archive.tgz>" --tag latest --dry-run
 ```
 
 위 명령은 게시 미리보기입니다. 레지스트리 인증, 권한, 업로드 성공, 공개 상태를 확인한 것은 아닙니다. 실제 게시에는 `--dry-run`을 빼지만 압축 파일 생성에 성공했다는 이유만으로 진행하지 않습니다.
 
 의도적으로 게시한 뒤에는 정확한 버전과 태그를 조회하고 새 폴더에 그 버전을 설치해 진입점을 다시 확인합니다. 게시, Git push·PR·병합, 로컬 설치는 따로 기록하세요. 패키지 설치가 스킬·MCP·훅을 자동 활성화해서는 안 됩니다.
+
+## 같은 파일로 GitHub 릴리스 만들기
+
+릴리스 변경을 병합한 뒤 검증한 소스 커밋을 확인합니다. GitHub와 npm에 같은 압축 파일과 체크섬 파일을 사용합니다. 다음 자리표시자를 검증한 파일로 바꾸세요.
+
+```sh
+gh release create v1.0.0 "<verified-archive.tgz>" "<checksum-file>" --target "<verified-commit>" --title "AI Agent Playbook 1.0.0" --notes-file "<release-notes.md>" --latest
+```
+
+태그가 없으면 명시한 커밋에 연결해 만듭니다. 태그가 이미 있으면 대상을 확인하고 기존 릴리스 태그를 옮기지 않습니다. 두 게시 결과를 각각 확인하세요. [GitHub CLI 릴리스 생성](https://cli.github.com/manual/gh_release_create)과 [npm 게시](https://docs.npmjs.com/cli/v10/commands/npm-publish/) 안내를 참고할 수 있습니다.
 
 ## 복구와 릴리스 안내
 

@@ -1,6 +1,6 @@
 # Publishing checklist
 
-This source uses npm `1.0.0-next.3` and Python `1.0.0.dev3`. They are source versions, not statements of publication. Testing a local archive comes before a registry decision.
+Node and Python both use `1.0.0`. A version in source is not proof of registry publication. Test the exact archive before publishing and install the registry copy afterward.
 
 ## Prepare the release candidate
 
@@ -29,12 +29,22 @@ Check relative Markdown links and HTML image/link attributes inside the archive.
 Only after the exact candidate and publication are authorized, publish the tested archive. A prerelease uses the `next` tag; stable `latest` is a separate promotion decision.
 
 ```powershell
-npm publish "<verified-archive.tgz>" --tag next --dry-run
+npm publish "<verified-archive.tgz>" --tag latest --dry-run
 ```
 
 The command above previews publication. It does not prove registry authentication, permissions, successful upload, or public availability. An actual publish removes `--dry-run`; do not perform it merely because packaging succeeded.
 
 After intentional publication, inspect the exact registry version and tag, install that version into a fresh prefix, and repeat the entrypoint smoke checks. Record publication, Git push/PR/merge, and local installation separately. Package installation must not activate skills, MCP, or hooks automatically.
+
+## GitHub release from the same artifact
+
+After the release changes are merged, identify the verified source commit. Use the same archive and checksum file for GitHub and npm. Adapt these placeholders to the verified artifacts:
+
+```sh
+gh release create v1.0.0 "<verified-archive.tgz>" "<checksum-file>" --target "<verified-commit>" --title "AI Agent Playbook 1.0.0" --notes-file "<release-notes.md>" --latest
+```
+
+The explicit target binds an absent tag to that commit. If the tag already exists, inspect its target before proceeding; do not move an existing release tag. Check both publication results separately. See [GitHub CLI release creation](https://cli.github.com/manual/gh_release_create) and [npm publication](https://docs.npmjs.com/cli/v10/commands/npm-publish/).
 
 ## Recovery and release notes
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0
+
+- Provide portable project records, six selected skills, neutral project instructions, and optional read-only record MCP tools.
+- Offer `ai-agent-playbook` as the primary command and `aapb` as its short alias; omitted project paths use the current directory.
+- Preserve user edits during installation and migration, provide recovery journals, and keep Forge coordination explicit.
+- Retire the previous executor, scheduler, and duplicate analysis commands with pinned 0.5.11 recovery guidance.
+- Include complete English/Korean usage, migration, architecture, and release documentation in npm packages.
+
+[Release notes](docs/release-1.0.0.md)
+
 ## 1.0.0-next.3
 
 - Replace stack-specific root instruction templates with one neutral template, preserving domain contracts in selected references and explaining project-owned architecture decisions.

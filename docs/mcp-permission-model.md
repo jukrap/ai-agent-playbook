@@ -58,6 +58,8 @@ For the distinction between a successful SDK test and an agent choosing a tool f
 
 A request cannot change the bound project. Read paths are playbook-relative; traversal outside the project, absolute input paths, links/junctions, and unsuitable text files are rejected or reported as skipped. Scan warnings show incomplete coverage.
 
+For `.ai-agent-playbook/CURRENT.md`, pass `{"path":"CURRENT.md"}` or `{}` to read the default entrypoint. Do not include `.ai-agent-playbook/` in the tool argument. Use the relative paths returned by status or search for other records.
+
 Content defaults to 12,000 characters and can be adjusted. Long text and lists return continuation cursors. The complete MCP result has a separate 256 KiB UTF-8 ceiling, including text and structured representations and metadata but excluding the JSON-RPC transport envelope. See [Response limits](record-responses.md) for practical sizing and examples.
 
 ## Writing and troubleshooting

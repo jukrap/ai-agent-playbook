@@ -45,6 +45,8 @@ Keep Node ESM, the `ai-agent-playbook` package and primary executable, and the c
 
 Inspect the actual npm archive, not only the checkout. Include linked human guides, examples, and README images. Check Markdown links and HTML `src`/`href`, including language-specific relative paths. Verify code-font paths and commands separately; a Markdown link checker does not catch nonexistent paths mentioned in prose.
 
+Skill ownership and update checks compare exact file bytes. Keep Markdown and JSON references in LF as declared by `.gitattributes`, so a Windows checkout does not make an unchanged installation appear outdated. The checkout regression exercises both `core.autocrlf` values. Do not normalize installed user files or loosen ownership hashes to hide a mismatch.
+
 Keep private paths, credentials, raw logs, local project records, backups, and test installations out of public artifacts. Do not weaken hygiene or translation checks to hide findings. Preserve versioned verification evidence and distinguish historical checks from checks for the current archive.
 
 ## Git and release records

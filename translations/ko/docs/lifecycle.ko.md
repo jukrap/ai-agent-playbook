@@ -70,6 +70,8 @@ node "<demo-prefix>/node_modules/ai-agent-playbook/bin/aapb.mjs" --version
 
 ## 스킬 선택·설치·갱신·삭제
 
+기존 프로젝트를 올릴 때는 [현재 사용하는 지침도 검토](existing-repository-bootstrap.ko.md#05에서-올릴-때-기존-지침-검토하기)하세요. 패키지·스킬 업데이트는 그 파일들을 보존하므로, 문서에 남은 종료 명령이나 스킬 요구까지 없애주지는 않습니다.
+
 기본 `core`는 `project-memory`, `spec-artifacts`를 선택합니다. `development`는 디자인 방향, UI 다듬기, 문서 편집을 더합니다. `legacy`는 `legacy-contracts` 하나만 선택합니다. `--skill`을 반복 지정하면 프로필 대신 그 목록을 사용합니다. [스킬 카탈로그](skill-catalog.ko.md)에 자세한 예시가 있습니다.
 
 ```sh

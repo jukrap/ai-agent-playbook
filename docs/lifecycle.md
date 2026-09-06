@@ -70,6 +70,8 @@ Keep the archive checksum with its verification evidence. From a source checkout
 
 ## Select and manage skills
 
+When upgrading an existing project, also [review its active instructions](existing-repository-bootstrap.md#review-instructions-when-upgrading-from-05). Package and skill updates preserve those files; they cannot remove stale command or skill requirements from them.
+
 Default `core` selects `project-memory` and `spec-artifacts`. `development` adds design direction, UI polish, and document editing. `legacy` selects `legacy-contracts` alone. Repeated `--skill` options replace a profile with an explicit list. See [Skill catalog](skill-catalog.md).
 
 ```sh

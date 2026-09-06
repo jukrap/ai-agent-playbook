@@ -39,6 +39,21 @@ For example, the command/argument fields are:
 
 Replace the package-directory placeholder and retain separate array elements. This is a command example, not a complete host-specific configuration file. An absolute script path lets the host find the installed program; the process working directory separately determines which project's records it reads. Reuse an existing AAPB server entry rather than registering the same server twice. See the [Codex](../adapters/codex/README.md) or [Claude Code](../adapters/claude-code/README.md) adapter.
 
+## Run a published version with npx
+
+Instead of an installed script path, the same server can be launched with npm's package runner:
+
+```json
+{
+  "command": "npx",
+  "args": ["-y", "ai-agent-playbook@1.0.0", "mcp"]
+}
+```
+
+This is an alternative command/argument pair for the same registration. Keep the existing activation state, tool allowlist and intended working directory; do not add a duplicate server. Node.js and npm must be available to the host. `-y` skips npm's package-installation confirmation, and `@1.0.0` selects that package version. npm may download missing content to its cache; it does not necessarily download the package on every startup.
+
+The host starts a server for the connection, not for each tool call. Both launch methods provide the same AAPB tools for the same version and project. A global CLI update does not change an explicit npx version pin; update that pin deliberately and reload the connection when adopting another release.
+
 ## Pin a target only when needed
 
 If another client does not supply the intended working directory, or you deliberately want a fixed project, append `--project` and its absolute path:

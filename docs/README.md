@@ -19,7 +19,8 @@ Choose a route for the task at hand. These human guides are not an agent startup
 - [Existing repositories](existing-repository-bootstrap.md): inspect records and preserve project instructions.
 - [Project architecture](project-architecture.md): architecture decisions, FSD as an option, evolving boundaries, and bootstrap scope.
 - [Record layout](structured-playbook-layout.md): current facts, supporting documents, ownership, and examples.
-- [MCP setup](mcp-permission-model.md): connect four project-bound read-only tools.
+- [MCP setup](mcp-permission-model.md): connect the four default record tools and optional AST search.
+- [AST source search](ast-search.md): structural patterns, source boundaries, optional engine and one-time MCP activation.
 - [Agent use](agent-usage.md): how skills, MCP, and advisory commands become available and how to verify actual use.
 - [Response limits](record-responses.md): CLI/MCP examples for long text and lists.
 - [Forge coordination](forge-automation.md): GitHub/Gitea plans, application, conflicts, and retry.
@@ -45,6 +46,7 @@ Choose a route for the task at hand. These human guides are not an agent startup
 - [Verification](verification.md): actual tests, bounded comparisons, and untested scope.
 - [Release readiness](runtime-roadmap.md) and [publishing checklist](publishing-checklist.md): release preparation and follow-up.
 - [Maintenance](maintenance.md) and [translation policy](translation-policy.md): editing, preservation, and checks.
+- [1.1.0 release notes](release-1.1.0.md): AST restoration, update instructions and recovery.
 - [1.0.0 release notes](release-1.0.0.md): supported behavior and the previous-version migration path.
 - [Changelog](../CHANGELOG.md): versioned changes.
 

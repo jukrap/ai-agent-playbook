@@ -67,9 +67,13 @@ If another client does not supply the intended working directory, or you deliber
 
 The equivalent terminal command is `ai-agent-playbook mcp --project "<project>"`. A host that supports a server `cwd` can also fix the startup directory there. Use one targeting method for clarity. These are optional choices in Codex; project-local configuration is useful when connection settings must differ by repository. Check the startup directory in other clients rather than assuming they behave like Codex. AAPB uses the selected directory directly and does not search upward for the Git root.
 
+## Enable structural source search once
+
+Add `--with-ast` to the server command to expose the read-only `aapb_ast_search` tool alongside the four record tools. Add its name to `enabled_tools` if an allowlist is configured, then reload the connection. No per-task toggle is needed. It searches project-relative source paths, with bounded results and coverage reporting; see [AST search](ast-search.md) for the optional native engine, arguments, limits, and installation requirements. The old broad analysis and write tools remain retired.
+
 ## Confirm actual loading and behavior
 
-After reloading the host's MCP connection, inspect the tool list. It should advertise exactly these four AAPB tools:
+After reloading the host's MCP connection, inspect the tool list. The default connection advertises exactly these four AAPB tools:
 
 | Tool | Purpose | First request arguments |
 | --- | --- | --- |
@@ -86,7 +90,7 @@ For the distinction between a successful SDK test and an agent choosing a tool f
 
 ## Read boundary and output
 
-A request cannot change the bound project. Read paths are playbook-relative; traversal outside the project, absolute input paths, links/junctions, and unsuitable text files are rejected or reported as skipped. Scan warnings show incomplete coverage.
+A request cannot change the bound project. Record-tool paths are playbook-relative; AST source paths are project-relative. Traversal outside the project, absolute input paths, links/junctions, and unsuitable text files are rejected or reported as skipped. Scan warnings show incomplete coverage.
 
 For `.ai-agent-playbook/CURRENT.md`, pass `{"path":"CURRENT.md"}` or `{}` to read the default entrypoint. Do not include `.ai-agent-playbook/` in the tool argument. Use the relative paths returned by status or search for other records.
 

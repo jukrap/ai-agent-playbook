@@ -19,7 +19,8 @@
 - [기존 저장소에 적용하기](existing-repository-bootstrap.ko.md): 기존 기록 점검과 프로젝트 지침 보존.
 - [프로젝트 아키텍처](project-architecture.ko.md): 아키텍처 결정, 선택지로서의 FSD, 경계 변경과 부트스트랩 범위.
 - [프로젝트 기록 구조](structured-playbook-layout.ko.md): 현재 사실, 상세 문서, 관리 파일 구분, 작성 예시.
-- [MCP 설정](mcp-permission-model.ko.md): 프로젝트에 연결하는 읽기 전용 도구 네 개.
+- [MCP 설정](mcp-permission-model.ko.md): 기본 기록 도구 네 개와 선택형 AST 검색 연결.
+- [AST 코드 구조 검색](ast-search.ko.md): 구조 패턴, 소스 검색 범위, 선택 엔진과 MCP의 일회성 활성화 설정.
 - [에이전트의 도구 활용](agent-usage.ko.md): 스킬·MCP·문서 점검을 사용할 수 있게 하는 방법과 실제 활용 확인.
 - [응답 크기와 이어 읽기](record-responses.ko.md): 긴 문서와 목록을 다루는 CLI/MCP 예시.
 - [Forge 협업](forge-automation.ko.md): GitHub/Gitea 계획, 적용, 충돌, 재시도.
@@ -45,6 +46,7 @@
 - [검증 보고서](verification.ko.md): 실제 검사, 제한된 비교 결과, 미검증 사항.
 - [정식 버전 준비](runtime-roadmap.ko.md), [배포 점검표](publishing-checklist.ko.md): 릴리스 준비와 후속 확인.
 - [유지보수](maintenance.ko.md), [번역 정책](translation-policy.ko.md): 편집, 보존 기준, 필요한 검사.
+- [1.1.0 릴리스 안내](release-1.1.0.ko.md): AST 복원, 업데이트와 복구.
 - [1.0.0 릴리스 안내](release-1.0.0.ko.md): 지원 기능과 이전 버전 사용자의 적용 경로.
 - [변경 기록](../CHANGELOG.ko.md): 버전별 변경 사항.
 

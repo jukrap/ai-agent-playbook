@@ -40,12 +40,12 @@ In 1.0, AAPB concentrates on records, artifact formats, and selected specialist 
 | Reference library | Domain contracts, examples, and exceptions retained from earlier skills, read only when relevant | `references/` |
 | Project templates | Root instruction examples and a current-state document; additional records are created as needed | `templates/` |
 | Runtime CLI | Explicit installation, bootstrap, record inspection, migration/recovery, advisory checks, and Forge coordination | `bin/`, `src/` |
-| MCP tools | Four project-bound tools for status, search, reading, and document validation | `src/` |
+| MCP tools | Four default record tools, plus optional structural source search | `src/` |
 | Human docs | Beginner instructions, worked commands, troubleshooting, architecture, and release guidance | `docs/` |
 | Translations | Korean reading copies with localized explanations and navigation | `translations/ko/` |
 | Agent adapters | Setup notes for specific agent environments | `adapters/` |
 
-The optional MCP tools are `aapb_status`, `aapb_search`, `aapb_read`, and `aapb_validate`. [MCP setup](docs/mcp-permission-model.md) explains how to connect and check them.
+The default MCP tools are `aapb_status`, `aapb_search`, `aapb_read`, and `aapb_validate`. [AST source search](docs/ast-search.md) is available through the CLI and the optional `aapb_ast_search` MCP tool. [MCP setup](docs/mcp-permission-model.md) explains how to connect and check them.
 
 ## Quick Start
 

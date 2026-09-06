@@ -12,7 +12,7 @@ CLI와 MCP 서버는 Node.js로 실행합니다. Python은 한국어·영어 문
 | `kss`, `kiwipiepy` | 선택형 Python `ko` 추가 구성 | 한국어 분석 기능 |
 | TypeScript | 개발 의존성 | 소스 검사. 런타임 분석 서비스가 아님 |
 
-공개 최소 조건과 실제 시험한 버전은 구분합니다. 실행해 본 버전은 [검증 보고서](verification.ko.md)에 있습니다. 종료한 AST·이미지 비교 명령의 AST-grep·PNG-diff 의존성은 더 이상 포함하지 않습니다.
+공개 최소 조건과 실제 시험한 버전은 구분합니다. 실행해 본 버전은 [검증 보고서](verification.ko.md)에 있습니다. 읽기 전용 [AST 검색](ast-search.ko.md)은 선택 의존성 `@ast-grep/napi`를 호출할 때만 로딩합니다. 일반 npm 설치에는 포함되며 `--omit=optional`로 제외해도 기록 도구는 사용할 수 있습니다. 종료한 이미지 비교 기능의 PNG-diff 의존성은 포함하지 않습니다.
 
 ## JavaScript로 시작하기
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0
+
+- Restore read-only structural source search through `ast search`, with a lazily loaded optional ast-grep engine.
+- Add `aapb_ast_search` only when MCP starts with `--with-ast`; keep the four default record tools and existing skill profiles.
+- Bound source selection, parsing, snippets and result pages; report incomplete coverage and reject changed-source cursors or linked paths.
+- Document language selection, shell quoting, npm engine installation and one-time MCP activation in English and Korean.
+
 ## 1.0.0
 
 - Provide portable project records, six selected skills, neutral project instructions, and optional read-only record MCP tools.

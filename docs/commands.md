@@ -170,10 +170,21 @@ Here `--path`, `--root`, `--before`, and `--after` are project-relative, unlike 
 
 `--lang` accepts `auto`, `ko`, or `en`. Writing defaults to `--engine js`; `auto` and `python` request Python discovery. If unavailable, retained checks report JavaScript fallback and engine warnings. `--max-files` and `--root` bound the requested scan. Linked input paths and unsuitable text are rejected. Ordinary prose editing does not require these checks; use [Quality review](quality-review.md) to interpret them.
 
+## Structural source search
+
+| Complete command | Meaning | Writes? |
+| --- | --- | --- |
+| `ai-agent-playbook ast search --lang javascript --pattern 'console.log($$$ARGS)' --path src --json` | Find actual calls in JavaScript source under src | No |
+| `ai-agent-playbook ast search --lang tsx --pattern 'useState($VALUE)' --max-results 10 --max-chars 4000 --max-files 200 --json` | Bound the source scan and result page | No |
+| `ai-agent-playbook ast search --lang javascript --pattern 'console.log($$$ARGS)' --path src --cursor '<returned-token>' --json` | Continue the same query against unchanged source | No |
+
+Single quotes preserve pattern metavariables in PowerShell and POSIX shells. `--lang` is required and selects matching extensions. `--path` is relative to the project; omission searches the current project. `--max-files` bounds parsed files, `--max-results` bounds each result page, and `--max-chars` bounds page content. Inspect `scan.complete`, warning totals, snippet truncation and `page.nextCursor`. AST search is already read-only; it rejects `--apply` and `--dry-run`. [AST search](ast-search.md) covers engine installation, exclusions, supported languages and all limits.
+
 ## Optional MCP
 
 | Complete command | Meaning |
 | --- | --- |
+| `ai-agent-playbook mcp --with-ast` | Add the read-only `aapb_ast_search` tool once at startup |
 | `ai-agent-playbook mcp` | Start a stdio server bound to the current directory |
 | `ai-agent-playbook mcp --project "<project>"` | Start the server for an explicitly selected project |
 

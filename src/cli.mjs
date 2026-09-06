@@ -7,8 +7,8 @@ import { playbookStatus, playbookSearch, playbookRead, playbookValidate, bootstr
 import { PACKAGE_VERSION } from './version.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const FLAGS = new Set(['json','help','version','dry-run','apply','local-only','preserve-agents','offline','no-remote','remote-read-only','force-managed','force-unmanaged']);
-const VALUES = new Set(['profile','skill','agents-root','codex-root','backup-root','backup','path','query','max-results','max-chars','start-line','end-line','cursor','page-size','view','project','to','before','after','lang','engine','root','max-files','plan','provider','remote','milestone','project-title','project-mode']);
+const FLAGS = new Set(['json','help','version','dry-run','apply','local-only','preserve-agents','offline','no-remote','remote-read-only','force-managed','force-unmanaged','with-ast']);
+const VALUES = new Set(['profile','skill','agents-root','codex-root','backup-root','backup','path','query','max-results','max-chars','start-line','end-line','cursor','page-size','view','project','to','before','after','lang','engine','root','max-files','plan','provider','remote','milestone','project-title','project-mode','pattern']);
 const RETIRED = new Set(['automation','plan','worklog','workflow','reference','index','graph','canon','write-gate','rules','diagnostics','run','source','ast','lsp']);
 function parse(argv) {
   const args = [], flags = {}, skills = [];
@@ -35,7 +35,7 @@ function retired(command) {
 export async function runCli(argv, io = {}) {
   const cwd = io.cwd ?? process.cwd(), stdout = io.stdout ?? process.stdout, stderr = io.stderr ?? process.stderr;
   try {
-    if (RETIRED.has(argv[0]) && !argv.includes('--help')) {
+    if (RETIRED.has(argv[0]) && !(argv[0] === 'ast' && argv[1] === 'search') && !argv.includes('--help')) {
       stdout.write(JSON.stringify(retired(argv.slice(0, 2).join(' ')), null, 2) + '\n');
       return 2;
     }
@@ -43,7 +43,7 @@ export async function runCli(argv, io = {}) {
     if (flags.version) { stdout.write(PACKAGE_VERSION + '\n'); return 0; }
     if (flags.help || !args.length || args[0] === 'help') { stdout.write(help()); return 0; }
     const [command, sub] = args;
-    const nested = ['records','skills','migrate','forge','writing','runtime','qa','operator','managed','layout','catalog','contracts'].includes(command) || (command === 'context' && ['list','status','init'].includes(sub));
+    const nested = ['records','skills','migrate','forge','writing','runtime','qa','operator','managed','layout','catalog','contracts','ast'].includes(command) || (command === 'context' && ['list','status','init'].includes(sub));
     const target = path.resolve(cwd, flags.project ?? args[nested ? 2 : 1] ?? '.');
     const repoRoot = io.repoRoot ?? REPO_ROOT;
     /** @type {{ok?: boolean, kind?: string, content?: string, truncated?: boolean, [key: string]: unknown}} */
@@ -55,7 +55,11 @@ export async function runCli(argv, io = {}) {
         dryRun: Boolean(flags['dry-run']), apply: Boolean(flags.apply), forceManaged: flags['force-managed'], forceUnmanaged: flags['force-unmanaged'] });
     } else if (command === 'mcp') {
       const { runMcpServer } = await import('./mcp-server.mjs');
-      await runMcpServer({ target: path.resolve(cwd, flags.project ?? args[1] ?? '.') }); return 0;
+      await runMcpServer({ target: path.resolve(cwd, flags.project ?? args[1] ?? '.'), withAst: Boolean(flags['with-ast']) }); return 0;
+    } else if (command === 'ast' && sub === 'search') {
+      if (flags.apply || flags['dry-run']) throw new Error('AST search is read-only; --apply and --dry-run do not apply.');
+      const { searchAst } = await import('./ast-search.mjs');
+      result = await searchAst({ target, pattern: flags.pattern, lang: flags.lang, path: flags.path, maxFiles: flags['max-files'], maxResults: flags['max-results'], maxChars: flags['max-chars'], cursor: flags.cursor });
     } else if (command === 'bootstrap') {
       result = await bootstrapRecords({ target, repoRoot, dryRun: Boolean(flags['dry-run']), localOnly: Boolean(flags['local-only']) });
     } else if (command === 'migrate' && sub === 'rollback') {
@@ -153,7 +157,8 @@ Skills (default destination: .agents/skills):
   Destination overrides: --agents-root <directory>, --codex-root <legacy-directory>, --backup-root <directory>
 
 Optional tools:
-  ai-agent-playbook mcp [--project <project>]  (aapb_status/search/read/validate; never registered automatically)
+  ai-agent-playbook mcp [--project <project>] [--with-ast]  (four record tools; --with-ast adds aapb_ast_search)
+  ai-agent-playbook ast search [project] --pattern <structural-pattern> --lang javascript|typescript|tsx|jsx|css|html [--path <relative-file-or-directory>] [--max-results N] [--max-chars N] [--max-files N] [--cursor token] [--json]
   ai-agent-playbook writing naturalness-check [project] --path <file> [--lang auto|ko|en] [--engine js|auto|python] [--json]
   ai-agent-playbook writing naturalness-report [project] [--root <directory>] [--max-files N] [--lang auto|ko|en] [--engine js|auto|python] [--json]
   ai-agent-playbook writing fidelity-check [project] --before <file> --after <file> [--lang auto|ko|en] [--json]

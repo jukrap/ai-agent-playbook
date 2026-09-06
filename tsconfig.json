@@ -22,6 +22,7 @@
     "src/catalog/selection.mjs",
     "src/cli.mjs",
     "src/mcp-server.mjs",
-    "src/mcp-tools.mjs"
+    "src/mcp-tools.mjs",
+    "src/ast-*.mjs"
   ]
 }

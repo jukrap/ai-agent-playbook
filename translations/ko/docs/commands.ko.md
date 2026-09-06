@@ -170,10 +170,21 @@ ai-agent-playbook skills install --profile development --agents-root "<skills-di
 
 `--lang`은 `auto`, `ko`, `en`을 받습니다. 문서 기본 엔진은 `js`이며 `auto`, `python`은 Python 탐색을 요청합니다. Python을 사용할 수 없으면 JavaScript로 검사하고 엔진 경고를 표시합니다. `--max-files`와 `--root`로 범위를 제한합니다. 연결된 입력 경로와 적합하지 않은 텍스트는 거부합니다. 일반 문서 편집마다 실행할 필요는 없습니다. [품질 검토](quality-review.ko.md)에서 해석 방법을 설명합니다.
 
+## 코드 구조 검색
+
+| 전체 명령어 | 의미 | 쓰기 여부 |
+| --- | --- | --- |
+| `ai-agent-playbook ast search --lang javascript --pattern 'console.log($$$ARGS)' --path src --json` | src의 JavaScript 소스에서 실제 호출 검색 | 없음 |
+| `ai-agent-playbook ast search --lang tsx --pattern 'useState($VALUE)' --max-results 10 --max-chars 4000 --max-files 200 --json` | 소스 탐색량과 결과 페이지 크기 제한 | 없음 |
+| `ai-agent-playbook ast search --lang javascript --pattern 'console.log($$$ARGS)' --path src --cursor '<returned-token>' --json` | 같은 검색을 변경되지 않은 소스에서 이어 읽기 | 없음 |
+
+PowerShell과 POSIX 셸에서는 작은따옴표가 패턴의 메타변수를 보호합니다. 필수 `--lang`은 해당 확장자를 선택합니다. `--path`는 프로젝트 상대 경로이며 생략하면 현재 프로젝트를 검색합니다. `--max-files`는 파싱할 파일 수, `--max-results`는 페이지당 결과 수, `--max-chars`는 페이지 내용 크기를 제한합니다. `scan.complete`, 경고 총수, 코드 조각 생략 여부와 `page.nextCursor`를 함께 확인하세요. AST 검색은 읽기 전용이므로 `--apply`, `--dry-run`을 거부합니다. 엔진 설치, 제외 경로, 지원 언어와 전체 제한은 [AST 검색](ast-search.ko.md)에 있습니다.
+
 ## 선택형 MCP
 
 | 명령 전체 | 뜻 |
 | --- | --- |
+| `ai-agent-playbook mcp --with-ast` | 시작할 때 읽기 전용 `aapb_ast_search`를 추가 |
 | `ai-agent-playbook mcp` | 현재 폴더에 연결된 stdio 서버 시작 |
 | `ai-agent-playbook mcp --project "<project>"` | 명시한 프로젝트의 서버 시작 |
 

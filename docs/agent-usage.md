@@ -22,7 +22,7 @@ These requests can match `project-memory`, `natural-writing-humanization`, or `u
 
 ## MCP availability and verification
 
-The optional MCP surface contains `aapb_status`, `aapb_search`, `aapb_read`, and `aapb_validate`. It must be connected before the agent can call it. A disabled common server is not automatically activated by npm installation, skill selection, or a successful SDK test.
+The default MCP surface contains `aapb_status`, `aapb_search`, `aapb_read`, and `aapb_validate`. It must be connected before the agent can call it. A disabled common server is not automatically activated by npm installation, skill selection, or a successful SDK test.
 
 In Codex, the common server can use each task's working directory without a per-project path setting. Open a task in the intended project; [MCP setup](mcp-permission-model.md) explains the default and optional fixed targets. Check the advertised names, then exercise status/read/search/validation and verify the result and unchanged files. Those checks prove server behavior. To assess automatic selection, separately give an ordinary task without naming a tool and inspect what the agent actually chose. Direct file reading may also be a valid choice.
 
@@ -35,7 +35,7 @@ ai-agent-playbook writing fidelity-check --before docs/before.md --after docs/af
 ai-agent-playbook writing naturalness-check --path docs/after.md --lang ko --engine js --json
 ```
 
-Run from the intended project or supply a path. These commands are not MCP tools: the four-tool MCP server intentionally reads project records only. A writing CLI call uses the host's ordinary execution capability and still returns advisory signals, not a guarantee of good Korean.
+Run from the intended project or supply a path. These commands are not MCP tools: writing checks are not exposed by either MCP mode. Optional `--with-ast` adds only the `aapb_ast_search` source-search tool; see [AST search](ast-search.md). A writing CLI call uses the host's ordinary execution capability and still returns advisory signals, not a guarantee of good Korean.
 
 ## Check the right layer when something is missing
 

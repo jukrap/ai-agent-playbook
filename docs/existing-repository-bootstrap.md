@@ -45,3 +45,25 @@ Bootstrap does not choose or migrate source architecture. Keep accepted project 
 Keep historical decisions and evidence links. Add or update CURRENT.md using verified current facts, then link detail when useful. Do not automatically summarize old execution reports as today's status. Test the application with its own commands and record the actual scope.
 
 Use [Record layout](structured-playbook-layout.md) for writing examples and [Lifecycle](lifecycle.md) for migration preview, apply, and rollback. To test migration safely, use a preserved copy as described in [Local demonstration](demo.md).
+
+## Review instructions when upgrading from 0.5
+
+Updating npm, installing skills, or migrating layout metadata does not rewrite existing project instructions. Old records can remain readable while active guidance still requests retired commands or unavailable skills. Record validation checks structure and ownership, not whether every instruction is current.
+
+1. Back up the instructions you will edit and inspect their Git tracking and local-only rules. Read the actual entrypoint and the project rules that link to it.
+2. Review active `AGENTS.md`, `CURRENT.md`, and, when present, `START_HERE.md` and `policy/SKILLS.md`. Follow links relevant to the upgrade. Search results in old worklogs are historical evidence, not a list of files to rewrite.
+3. Update unsupported guidance using the mappings below. Preserve product decisions, architecture boundaries, approval requirements and project-specific verification commands.
+4. Make CURRENT.md the current-state entrypoint through a reviewed file edit. Keep useful navigation and detailed guides. If dated history obscures the next action, move that history intact to a linked record; do not summarize it into newly verified facts.
+5. Read the revised entrypoint and linked handoff from a fresh session. Check whether it identifies the changed scope, protected decisions, next action and untested work without the previous conversation.
+
+| Active 0.5 guidance | Current approach |
+| --- | --- |
+| `operator context` or old catalog/index tools | Use `records read` / `records search` or corresponding MCP tools for records; read source files with ordinary project tools |
+| `run start` or a required AAPB execution loop | Use the host's normal execution tools and write records at meaningful milestones |
+| Old MCP resources, workflow prompts or write-enabling flags | Inspect the four advertised tools; edit records through files or supported explicit CLI operations |
+| Retired skill names or a mandatory full skill sequence | Select current capabilities from the [skill catalog](skill-catalog.md); retain useful project contracts in project documents |
+| Every map, plan and worklog must be read on entry | Start with current state and follow the references needed for this task |
+
+Keep historical commands and evidence where they explain past work. Do not reinstall old skills to satisfy a stale policy, rewrite ownership hashes to hide `managed-modified` results, or replace project instructions wholesale with a template. [Lifecycle](lifecycle.md) covers deliberate old-runtime recovery.
+
+Record verification and application verification remain separate. A successful read does not prove that a past implementation claim is still true. If a fresh session reports a host-tool failure or missing evidence, preserve those limits in the handoff rather than calling the entire workflow verified.

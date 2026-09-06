@@ -212,13 +212,16 @@ async function validateMcpDocs() {
   const names = unique([...source.matchAll(/\['(aapb_[a-z]+)'/g)].map((match) => match[1])).sort();
   const expected = ['aapb_read', 'aapb_search', 'aapb_status', 'aapb_validate'];
   const errors = [];
-  if (JSON.stringify(names) !== JSON.stringify(expected)) errors.push('MCP must expose exactly the four project record tools.');
+  if (JSON.stringify(names) !== JSON.stringify(expected)) errors.push('Default MCP must expose exactly the four project record tools.');
+  const astSource = await readRepoFile(root, 'src/ast-search.mjs');
+  if (!astSource.includes("AST_TOOL = 'aapb_ast_search'")) errors.push('Unexpected optional AST tool name.');
   for (const doc of ['docs/commands.md', 'docs/mcp-permission-model.md', 'translations/ko/docs/commands.ko.md', 'translations/ko/docs/mcp-permission-model.ko.md']) {
     const text = await readRepoFile(root, doc);
     for (const name of names) if (!text.includes(name)) errors.push(doc + ': Missing documented tool ' + name);
+    if (!text.includes('aapb_ast_search') || !text.includes('--with-ast')) errors.push(doc + ': Missing optional AST tool activation.');
   }
   failIfFindings(errors, 'MCP documentation does not match the record tool surface.');
-  console.log('Validated documentation for four project-bound read-only MCP tools.');
+  console.log('Validated documentation for four default record tools and optional AST search.');
 }
 
 async function validatePublicDocs() {

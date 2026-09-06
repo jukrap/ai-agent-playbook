@@ -19,7 +19,8 @@
 - [기존 저장소에 적용하기](existing-repository-bootstrap.ko.md): 기존 기록 점검과 프로젝트 지침 보존.
 - [프로젝트 아키텍처](project-architecture.ko.md): 아키텍처 결정, 선택지로서의 FSD, 경계 변경과 부트스트랩 범위.
 - [프로젝트 기록 구조](structured-playbook-layout.ko.md): 현재 사실, 상세 문서, 관리 파일 구분, 작성 예시.
-- [MCP 설정](mcp-permission-model.ko.md): 프로젝트에 연결하는 읽기 전용 도구 네 개.
+- [MCP 설정](mcp-permission-model.ko.md): 기본 기록 도구 네 개와 선택형 AST 검색 연결.
+- [AST 코드 구조 검색](ast-search.ko.md): 구조 패턴, 소스 검색 범위, 선택 엔진과 MCP의 일회성 활성화 설정.
 - [에이전트의 도구 활용](agent-usage.ko.md): 스킬·MCP·문서 점검을 사용할 수 있게 하는 방법과 실제 활용 확인.
 - [응답 크기와 이어 읽기](record-responses.ko.md): 긴 문서와 목록을 다루는 CLI/MCP 예시.
 - [Forge 협업](forge-automation.ko.md): GitHub/Gitea 계획, 적용, 충돌, 재시도.

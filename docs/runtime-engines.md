@@ -12,7 +12,7 @@ Node.js runs the CLI and MCP server. Python is optional for additional Korean/En
 | `kss`, `kiwipiepy` | Optional Python `ko` extras | Korean language analysis capabilities |
 | TypeScript | Development dependency | Source checking, not a runtime analysis service |
 
-The public minimum and a version actually tested are different claims. See [Verification](verification.md) for exercised versions. Retired AST and image-diff commands no longer bring AST-grep or PNG-diff dependencies.
+The public minimum and a version actually tested are different claims. See [Verification](verification.md) for exercised versions. Read-only [AST search](ast-search.md) uses optional `@ast-grep/napi`, loaded only when called. Normal npm installs include optional dependencies; `--omit=optional` leaves record tools usable without this parser. Retired image-diff commands do not bring PNG-diff dependencies.
 
 ## Start with JavaScript
 

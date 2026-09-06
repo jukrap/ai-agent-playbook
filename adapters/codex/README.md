@@ -46,6 +46,8 @@ Use `--project "<project>"`, a fixed server `cwd`, or project-local configuratio
 
 Keep an old common MCP entry disabled until its command and tool allowlist have been checked. Package installation does not enable it automatically. Writing still uses file tools or explicit CLI operations.
 
+For AST source search, add `--with-ast` after `mcp` in the existing server args and add `aapb_ast_search` to its allowlist. Reload once, then confirm five tools. The parser is an optional npm dependency; see [AST search](../../docs/ast-search.md). Keep the existing entry instead of registering a duplicate server.
+
 ## Old hooks and external plugins
 
 The earlier package context hooks and broad shell wrappers are retired. `hooks.example.json` is now an inactive empty-hooks example; it no longer points to a removed script. Do not copy old hook commands from historical references into a current installation.

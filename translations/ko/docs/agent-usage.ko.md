@@ -22,7 +22,9 @@
 
 ## MCP 연결과 검증
 
-선택형 MCP는 `aapb_status`, `aapb_search`, `aapb_read`, `aapb_validate`를 제공합니다. 먼저 연결되어야 에이전트가 호출할 수 있습니다. 비활성 공통 서버가 npm 설치, 스킬 선택, SDK 테스트 성공만으로 켜지지는 않습니다.
+코드 구조 검색이 필요하면 `--with-ast`로 `aapb_ast_search`를 추가할 수 있습니다. [AST 검색](ast-search.ko.md)에서 설명합니다. 문서 점검 CLI는 어느 MCP 모드에도 포함되지 않습니다.
+
+기본 MCP는 `aapb_status`, `aapb_search`, `aapb_read`, `aapb_validate`를 제공합니다. 먼저 연결되어야 에이전트가 호출할 수 있습니다. 비활성 공통 서버가 npm 설치, 스킬 선택, SDK 테스트 성공만으로 켜지지는 않습니다.
 
 Codex에서는 프로젝트별 경로 설정 없이 공통 서버가 각 작업의 폴더를 사용할 수 있습니다. 원하는 프로젝트에서 작업을 여세요. 기본 동작과 선택적인 경로 고정은 [MCP 설정](mcp-permission-model.ko.md)에서 설명합니다. 도구 이름을 확인하고 상태·읽기·검색·검증을 호출한 뒤 결과와 파일 무변경을 대조하세요. 이 검사는 서버 동작을 확인합니다. 자동 선택을 보려면 별도로 도구 이름을 말하지 않은 일반 요청을 주고 실제 선택을 확인해야 합니다. 파일을 직접 읽는 것도 적절한 선택일 수 있습니다.
 
@@ -35,7 +37,7 @@ ai-agent-playbook writing fidelity-check --before docs/before.md --after docs/af
 ai-agent-playbook writing naturalness-check --path docs/after.md --lang ko --engine js --json
 ```
 
-대상 프로젝트에서 실행하거나 경로를 지정하세요. 이 명령들은 MCP 도구가 아닙니다. 네 도구로 구성한 MCP는 의도적으로 프로젝트 기록만 읽습니다. 문서 CLI는 앱의 일반 실행 기능으로 호출하며, 결과도 참고 신호이지 좋은 한국어를 보장하는 판정은 아닙니다.
+대상 프로젝트에서 실행하거나 경로를 지정하세요. 이 명령들은 어느 MCP 모드에도 포함되지 않습니다. `--with-ast`는 소스 검색 도구만 추가합니다. 문서 CLI는 앱의 일반 실행 기능으로 호출하며, 결과도 참고 신호이지 좋은 한국어를 보장하는 판정은 아닙니다.
 
 ## 어디를 확인해야 하나요?
 

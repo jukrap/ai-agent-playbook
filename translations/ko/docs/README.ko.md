@@ -46,6 +46,7 @@
 - [검증 보고서](verification.ko.md): 실제 검사, 제한된 비교 결과, 미검증 사항.
 - [정식 버전 준비](runtime-roadmap.ko.md), [배포 점검표](publishing-checklist.ko.md): 릴리스 준비와 후속 확인.
 - [유지보수](maintenance.ko.md), [번역 정책](translation-policy.ko.md): 편집, 보존 기준, 필요한 검사.
+- [1.1.0 릴리스 안내](release-1.1.0.ko.md): AST 복원, 업데이트와 복구.
 - [1.0.0 릴리스 안내](release-1.0.0.ko.md): 지원 기능과 이전 버전 사용자의 적용 경로.
 - [변경 기록](../CHANGELOG.ko.md): 버전별 변경 사항.
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.0-next.1
+## 1.1.0
 
 - Restore read-only structural source search through `ast search`, with a lazily loaded optional ast-grep engine.
 - Add `aapb_ast_search` only when MCP starts with `--with-ast`; keep the four default record tools and existing skill profiles.

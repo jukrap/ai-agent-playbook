@@ -46,6 +46,7 @@ Choose a route for the task at hand. These human guides are not an agent startup
 - [Verification](verification.md): actual tests, bounded comparisons, and untested scope.
 - [Release readiness](runtime-roadmap.md) and [publishing checklist](publishing-checklist.md): release preparation and follow-up.
 - [Maintenance](maintenance.md) and [translation policy](translation-policy.md): editing, preservation, and checks.
+- [1.1.0 release notes](release-1.1.0.md): AST restoration, update instructions and recovery.
 - [1.0.0 release notes](release-1.0.0.md): supported behavior and the previous-version migration path.
 - [Changelog](../CHANGELOG.md): versioned changes.
 

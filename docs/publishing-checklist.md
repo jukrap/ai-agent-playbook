@@ -1,11 +1,11 @@
 # Publishing checklist
 
-Node and Python both use `1.0.0`. A version in source is not proof of registry publication. Test the exact archive before publishing and install the registry copy afterward.
+Node and Python release metadata must agree; npm `next.N` prereleases map to Python `devN`. A version in source is not proof of registry publication. Test the exact archive before publishing and install the registry copy afterward.
 
 ## Prepare the release candidate
 
 1. Inspect the branch, dirty state, intended diff, and preserved user changes.
-2. Align `package.json`, `src/version.mjs`, Python metadata/version, changelog, and version-specific guidance. Stable `1.0.0` must be an intentional promotion, not an accidental tag change.
+2. Align `package.json`, `src/version.mjs`, Python metadata/version, changelog, and version-specific guidance. Stable `1.1.0` must be an intentional promotion, not an accidental tag change.
 3. Run the required [maintenance checks](maintenance.md), including behavior, translation, public-document, and wrapper previews.
 4. Follow the beginner walkthrough and changed command examples in isolated folders. Review both README presentations and Korean clarity.
 5. Inspect the archive file list for runtime files, selected skills, references, linked guides, examples, and images. Exclude private records, backups, raw logs, test installs, and retired executable modules.
@@ -41,7 +41,7 @@ After intentional publication, inspect the exact registry version and tag, insta
 After the release changes are merged, identify the verified source commit. Use the same archive and checksum file for GitHub and npm. Adapt these placeholders to the verified artifacts:
 
 ```sh
-gh release create v1.0.0 "<verified-archive.tgz>" "<checksum-file>" --target "<verified-commit>" --title "AI Agent Playbook 1.0.0" --notes-file "<release-notes.md>" --latest
+gh release create v1.1.0 "<verified-archive.tgz>" "<checksum-file>" --target "<verified-commit>" --title "AI Agent Playbook 1.1.0" --notes-file "<release-notes.md>" --latest
 ```
 
 The explicit target binds an absent tag to that commit. If the tag already exists, inspect its target before proceeding; do not move an existing release tag. Check both publication results separately. See [GitHub CLI release creation](https://cli.github.com/manual/gh_release_create) and [npm publication](https://docs.npmjs.com/cli/v10/commands/npm-publish/).

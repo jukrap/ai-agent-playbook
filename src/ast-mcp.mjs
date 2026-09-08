@@ -7,6 +7,7 @@ export function registerAstMcpTool(server, { target }) {
     description: 'Search source syntax in this project with ast-grep. Choose lang and a narrow project-relative path. Returns locations, bounded snippets and cursor pages; scan.complete reports coverage. No rewrites or project commands.',
     inputSchema: {
       pattern: z.string().min(1).max(4096), lang: z.enum(/** @type {[string, ...string[]]} */ (AST_LANGUAGES)),
+      repo: z.string().max(64).describe('Registered repository ID; required at a workspace root.').optional(),
       path: z.string().min(1).max(1024).optional(), maxFiles: z.number().int().min(1).max(4000).optional(),
       maxResults: z.number().int().min(1).max(100).optional(), maxChars: z.number().int().min(1).max(100000).optional(),
       cursor: z.string().min(1).max(2048).optional()

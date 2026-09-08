@@ -71,7 +71,8 @@ export async function readText(file, maxBytes = 1_000_000) {
 export async function readJson(file, maxBytes = 1_000_000) {
   return JSON.parse(await readText(file, maxBytes));
 }
-export async function writeAtomic(file, content, { exclusive = false } = {}) {
+export async function writeAtomic(file, content, { exclusive = false, beforeReplace = undefined } = {}) {
+  if (exclusive && beforeReplace !== undefined) throw new Error('beforeReplace is only available for replacement writes.');
   await noLinks(file);
   await mkdir(path.dirname(file), { recursive: true });
   await noLinks(path.dirname(file));
@@ -83,6 +84,8 @@ export async function writeAtomic(file, content, { exclusive = false } = {}) {
   try {
     await writeFile(temp, content, { flag: 'wx' });
     await noLinks(file);
+    // Optional recheck after staging narrows editor races; it is not an OS-level compare-and-swap.
+    if (beforeReplace !== undefined) await beforeReplace();
     await rename(temp, file);
   } finally { await unlink(temp).catch((e) => { if (e.code !== 'ENOENT') throw e; }); }
 }

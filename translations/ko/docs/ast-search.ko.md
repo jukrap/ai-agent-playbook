@@ -9,10 +9,11 @@ ai-agent-playbook ast search --lang javascript --pattern 'console.log($$$ARGS)' 
 ai-agent-playbook ast search --lang tsx --pattern 'useState($VALUE)' --path src --max-results 10 --json
 ```
 
-프로젝트 경로를 생략하면 현재 터미널의 작업 폴더를 사용합니다. 위치 인자나 `--project`로 다른 루트를 지정할 수도 있습니다. `--path`는 프로젝트 안의 파일 또는 폴더이며, 생략하면 선택한 프로젝트를 검색합니다. PowerShell과 POSIX 셸에서는 패턴을 작은따옴표로 감싸야 `$VALUE`, `$$$ARGS`가 그대로 전달됩니다. 큰따옴표를 쓰면 셸이 패턴을 바꿀 수 있습니다.
+프로젝트 경로를 생략하면 현재 터미널의 작업 폴더를 사용합니다. 위치 인자나 `--project`로 다른 루트를 지정할 수도 있습니다. `--path`는 선택한 코드 저장소 기준 파일·폴더이며 생략하면 해당 저장소를 검색합니다. 작업 공간 루트에서는 `--repo <id>`가 필요하고 구성원 안에서는 그 구성원이 기본값입니다. 공통 기록이 모든 구성원의 소스 검색을 뜻하지는 않습니다. PowerShell과 POSIX 셸에서는 패턴을 작은따옴표로 감싸야 `$VALUE`, `$$$ARGS`가 그대로 전달됩니다. 큰따옴표를 쓰면 셸이 패턴을 바꿀 수 있습니다.
 
 | 인자 | 의미 |
 | --- | --- |
+| `--repo` | 등록된 저장소 ID. 작업 공간 루트에서는 필수이며 그 밖에는 현재 구성원 사용 |
 | `--pattern` | 필수 ast-grep 구조 패턴. 최대 4096자 |
 | `--lang` | 필수 언어. `javascript`, `typescript`, `tsx`, `jsx`, `css`, `html` 중 선택하며 해당 확장자의 파일만 검색 |
 | `--path` | 상대 파일·폴더 경로. 와일드카드와 상위 경로 이동은 허용하지 않음 |
@@ -44,13 +45,15 @@ npm 패키지는 `@ast-grep/napi`를 선택 의존성으로 선언합니다. 일
 ai-agent-playbook mcp --with-ast
 ```
 
-새 도구는 서버가 연결된 프로젝트 안에서 `pattern`, `lang`, `path`, `maxFiles`, `maxResults`, `maxChars`, `cursor`를 받습니다. 다른 프로젝트를 선택하거나 일치한 코드를 수정할 수 없습니다. 기존과 같이 MCP 응답 전체에 256 KiB 상한을 적용합니다. 활성화하면 도구 정의도 노출됩니다. 선택형 등록이 컨텍스트 비용 0이나 호스트의 지연 로딩을 보장하지는 않습니다.
+도구는 `pattern`, `lang`, `path`, `repo`, `maxFiles`, `maxResults`, `maxChars`, `cursor`를 받습니다. `repo`는 연결된 작업 공간에 명시적으로 등록된 구성원만 선택하며 루트에서는 필수입니다. 임의 프로젝트를 고르거나 일치한 코드를 수정하지 못합니다. 선택한 저장소의 Git 제외 규칙을 사용합니다. Android/iOS 등록이 Kotlin·Swift 파싱을 추가하지는 않으며 위 지원 언어 목록은 같습니다. 기존과 같이 MCP 응답 전체에 256 KiB 상한을 적용합니다. 활성화하면 도구 정의도 노출됩니다. 선택형 등록이 컨텍스트 비용 0이나 호스트의 지연 로딩을 보장하지는 않습니다.
 
 Codex에서 `npx`로 등록했다면 `mcp` 뒤에 `--with-ast`를 추가합니다. `enabled_tools`가 있다면 기존 기록 도구 네 개와 함께 `aapb_ast_search`도 넣으세요. 등록 변경 후 서버·세션을 다시 시작하면 매 작업마다 켤 필요는 없습니다. 이 기능이 포함된 패키지 버전을 사용해야 합니다. 저장소에서 구현했다고 이미 설치·실행 중인 npm 패키지까지 바뀌지는 않습니다.
 
 예전 `ast_grep_search` MCP 이름, `operator analyze --deep`, AST 교체 명령, 언어 서비스 도구는 복원하지 않습니다. 새 구조 검색 계약을 사용하세요. 나머지 기능은 [에이전트 사용법](agent-usage.ko.md)과 [MCP 설정](mcp-permission-model.ko.md)에서 설명합니다.
 
 ## 확인한 범위
+
+다음은 1.1.0 AST 릴리스의 과거 검증 결과입니다. 작업 공간 선택은 실제 후보로 검증해야 하며 아래 결과를 현재 후보의 테스트 수로 사용하지 않습니다.
 
 Windows의 Node.js 22.22.3에서 AST 회귀 15개를 포함한 전체 테스트 154개와 정적·타입·Python·문서 검사, 설치 미리보기가 통과했습니다. Node.js 18.20.8에서도 AST 15개와 기본 MCP 검사 1개가 통과했습니다. 이 과정에서 Windows junction 발견 방식의 차이를 확인하고, 링크 하나 때문에 폴더 검색 전체가 실패하는 대신 건너뛴 범위를 표시하도록 보완했습니다.
 

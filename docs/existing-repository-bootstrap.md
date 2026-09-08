@@ -1,6 +1,6 @@
 # Add AAPB to an existing repository
 
-Start by inspecting the repository and its existing instructions. AAPB can read old records without rebuilding them. Bootstrap is only for a project that does not already have a playbook.
+Start by inspecting the repository and its existing instructions. AAPB can read old records without rebuilding them. Bootstrap can create missing records or add explicitly selected guides, links, and exclusions while preserving existing content.
 
 ## Inspect before writing
 
@@ -10,7 +10,7 @@ ai-agent-playbook records status "<project>" --view records --json
 ai-agent-playbook bootstrap "<project>" --local-only --dry-run
 ```
 
-Use `--local-only` only for a Git repository whose new records should remain local. Read `AGENTS.md` and the entrypoint shown by status. Check dirty Git changes before deciding whether any document should be changed.
+Use `--local-only` as the compatibility alias for `--exclude local`. Without Git, creation continues and reports that local exclusion was skipped; no Git repository is initialized. Read `AGENTS.md` and the entrypoint shown by status. Check dirty Git changes before deciding whether any document should be changed.
 
 | Existing state | Next step |
 | --- | --- |
@@ -26,15 +26,33 @@ Use `--local-only` only for a Git repository whose new records should remain loc
 ai-agent-playbook bootstrap "<project>" --local-only
 ```
 
-For a new playbook, this creates CURRENT.md and two metadata files, plus the Git-local exclusion. Existing root instructions are preserved automatically. `--preserve-agents` remains accepted for compatibility but is no longer required. Old link/replace-root-policy modes are not supported by the 1.0 bootstrap.
+This explicit invocation uses minimal records and requests local exclusion. Use `--records standard` to add worklog and knowledge guides, `--lang en|ko` for new text, and `--agents link` to append a short records link without replacing instructions. `--agents preserve` is the default; `--preserve-agents` remains its compatible alias. The old replace-root-policy modes remain unsupported.
 
-If a playbook already exists, bootstrap reports preservation and performs no writes. In particular, rerunning with `--local-only` does not change existing tracking policy. Inspect Git tracking and project rules before making an existing directory local-only; an exclude entry cannot untrack already committed files.
+On a repeat run, existing documents, metadata, and membership are preserved. Missing standard guides and an explicitly selected AGENTS link may be added; explicit exclusion choices can move unchanged AAPB-owned rules. Inspect the proposed operations and returned backup. User ignore rules and already tracked files are preserved: an exclude entry cannot untrack committed files.
 
 ## Choose sharing and ownership deliberately
 
-Omit `--local-only` for records intended for commits. AAPB does not stage or commit them. Keep private execution output and personal paths in the project's approved local-only location.
+Choose `--exclude none` for records intended to be available for commits; existing user or global rules may still exclude them. AAPB does not stage or commit them. Keep private execution output and personal paths in the project's approved local-only location.
 
 The ownership marker covers only known managed files. User documents and root instructions are not disposable template output. Layout migration requires owned, unchanged metadata; do not rewrite hashes or invent ownership to bypass a conflict.
+
+## Choose exclusions and revisit setup
+
+| Mode | Effect |
+| --- | --- |
+| `local` | Add the target record path to Git's local `info/exclude`; linked worktrees can share that file. Without Git, report the skipped exclusion and keep records usable. |
+| `shared` | Add an ignore rule to `.gitignore`; sharing that rule requires your own commit. The records themselves are excluded. |
+| `global` | Use the user's Git exclusion file; affects other repositories using it. Review that scope explicitly. |
+| `none` | Add no rule; remove only unchanged AAPB-owned rules for this target during a managed transition. |
+
+```sh
+ai-agent-playbook bootstrap "<project>" --records standard --exclude shared --agents preserve --dry-run --json
+ai-agent-playbook bootstrap "<project>" --records standard --exclude shared --agents preserve --json
+```
+
+No mode stages, untracks, or commits files. User rules and shared ignore precedence can still affect Git's result. Records above child repositories do not need exclusions added to every child. Preserve returned journals and use [bootstrap recovery](lifecycle.md) for exclusion or AGENTS-link changes.
+
+Bare interactive bootstrap offers a guide and final review. `--interactive` requests it explicitly; `--yes` applies its defaults without questions. Explicit setup arguments and non-interactive calls preserve minimal/no-exclusion defaults, while new guide defaults are standard/local with Git or standard/none without Git. `--json` never asks. See [Commands](commands.md) for combinations and [Workspaces](workspaces.md) for registered-member setup.
 
 ## Architecture and root instructions
 
@@ -44,7 +62,7 @@ Bootstrap does not choose or migrate source architecture. Keep accepted project 
 
 Keep historical decisions and evidence links. Add or update CURRENT.md using verified current facts, then link detail when useful. Do not automatically summarize old execution reports as today's status. Test the application with its own commands and record the actual scope.
 
-Use [Record layout](structured-playbook-layout.md) for writing examples and [Lifecycle](lifecycle.md) for migration preview, apply, and rollback. To test migration safely, use a preserved copy as described in [Local demonstration](demo.md).
+Use [Durable records](durable-records.md) for milestone worklogs and current knowledge, [Record layout](structured-playbook-layout.md) for writing examples and [Lifecycle](lifecycle.md) for migration preview, apply, and rollback. To test migration safely, use a preserved copy as described in [Local demonstration](demo.md).
 
 ## Review instructions when upgrading from 0.5
 

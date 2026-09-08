@@ -4,6 +4,8 @@ Forge means a collaboration service such as GitHub or Gitea. AAPB can plan and e
 
 ## Inspect the selected remote
 
+At a workspace root, add `--repo <id>` to select a registered member. Within a member, that repository is the default. Check its instructions, branch, dirty state, and remote first; shared records do not authorize remote actions across all members. `--plan` is relative to the selected repository. See [Workspaces](workspaces.md).
+
 ```sh
 ai-agent-playbook forge status "<project>" --json
 ai-agent-playbook forge status "<project>" --remote origin --provider github --json

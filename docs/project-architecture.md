@@ -18,6 +18,8 @@ Use an existing document when it serves the purpose. Do not create ARCHITECTURE.
 
 ## Existing projects
 
+In a [registered workspace](workspaces.md), common records describe shared decisions while code belongs to a selected member. Confirm that repository's instructions, Git state, deployment boundaries, and callers before changing code or Git state. Membership is not a shared architecture or permission for cross-repository writes.
+
 Read the relevant instructions and current code before choosing a structure. Identify public imports, routes, build units, state owners, and tests around the change.
 
 - For an ordinary feature or fix, work within accepted boundaries. A new template is not a reason to reorganize the repository.
@@ -78,7 +80,7 @@ ai-agent-playbook bootstrap --dry-run
 ai-agent-playbook bootstrap
 ```
 
-Bootstrap creates CURRENT.md and two record metadata files when no playbook exists. It does not generate source folders, choose FSD, install a stack profile, or create/replace root AGENTS.md. AAPB skill profiles select guidance independently of project architecture.
+Bootstrap creates missing current-state records and metadata; standard mode also adds worklog and knowledge guides, and workspace mode records explicitly selected members. It does not generate source folders, choose FSD, or install a stack profile. Root AGENTS.md is preserved by default; an explicit `--agents link` appends a records link or creates a small instruction file without replacing existing rules. AAPB skill profiles select guidance independently of project architecture.
 
 After inspecting the project, adapt [the project instruction template](../templates/agents/AGENTS.md) if root instructions are needed. Put an architecture decision in the project's established location only when useful. If you create `.ai-agent-playbook/decisions/architecture.md`, CURRENT.md can link to `decisions/architecture.md`; if you use `docs/architecture.md` at project root, that link is `../docs/architecture.md`. Create the document before adding its link.
 

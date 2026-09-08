@@ -12,6 +12,11 @@
 | 에이전트 앱에 연결하려 함 | [MCP 설정](mcp-permission-model.ko.md) → [응답 크기](record-responses.ko.md) → 사용하는 앱의 어댑터 안내 |
 | 게시 전에 시험하려 함 | [로컬 시연](demo.ko.md) → [검증 보고서](verification.ko.md) → [배포 점검표](publishing-checklist.ko.md) |
 
+## 작업 공간과 오래 유지할 기록
+
+- [작업 공간](workspaces.ko.md): 명시적 등록, 공통·로컬 기록, 코드 대상과 복구.
+- [오래 유지할 기록](durable-records.ko.md): 현재 상태, 지식, 월별 일지, 작성·필터·초안 검토.
+
 ## 사용법과 연동
 
 - [명령어 가이드](commands.ko.md): 문법, 쓰기 여부, 결과, 오류, 구버전 명령의 대체 방법.

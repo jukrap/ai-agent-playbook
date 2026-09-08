@@ -1,9 +1,11 @@
-import { readdir, mkdir } from 'node:fs/promises';
+import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { projectRoot, safePath, statOrNull, noLinks, readText, readJson, readBytes, sha256, writeAtomic, relativePath } from './fs-safety.mjs';
 import { DEFAULT_CONTENT_CHARS, MAX_CONTENT_CHARS, fitsResponse, integerLimit, pagingError, scopeHash, cursorAt, readCursor, pageItems, textBoundary } from './record-paging.mjs';
+import { resolveRecordContext } from './workspace.mjs';
+import { parseRecordMetadata, classifyRecordPath, readRecordHeader } from './record-authoring.mjs';
 
-export const PLAYBOOK_NAMES = ['.ai-agent-playbook', '.ai-playbook', 'ai-playbook'];
+export { PLAYBOOK_NAMES } from './workspace.mjs';
 export const RECORD_TOOLS = ['aapb_status', 'aapb_search', 'aapb_read', 'aapb_validate'];
 const MARKER = '.ai-agent-playbook-install.json';
 const MAX_FILES = 2000;
@@ -12,19 +14,8 @@ const MAX_SCAN_BYTES = 32_000_000;
 const TEXT_EXTENSIONS = new Set(['.md', '.txt', '.json', '.jsonl', '.yaml', '.yml', '.toml']);
 const SKIP_DIRS = new Set(['.git', 'node_modules', '.venv', 'cache', 'tmp', 'objects']);
 
-export async function locatePlaybook(target) {
-  const root = await projectRoot(target);
-  const candidates = [];
-  for (const name of PLAYBOOK_NAMES) {
-    const directory = await safePath(root, name);
-    const st = await statOrNull(directory);
-    if (st) {
-      if (!st.isDirectory()) throw new Error('Playbook path is not a directory: ' + name);
-      candidates.push({ name, directory });
-    }
-  }
-  if (candidates.length > 1) throw new Error('Multiple playbook roots exist; select and reconcile them before using records.');
-  return { root, ...(candidates[0] ?? { name: PLAYBOOK_NAMES[0], directory: path.join(root, PLAYBOOK_NAMES[0]) }), exists: candidates.length === 1 };
+export async function locatePlaybook(target, recordSource = undefined) {
+  return resolveRecordContext({ target, recordSource });
 }
 function report(kind, extra = {}) { return { schemaVersion: '2', kind, ok: true, writes: false, ...extra }; }
 function managedFiles(marker, playbookName) {
@@ -39,16 +30,54 @@ function managedFiles(marker, playbookName) {
 }
 function warning(path, code, message) { return { path, code, message: String(message).slice(0, 1024) }; }
 function warningSummary(warnings) { return { total: warnings.length, sample: warnings.slice(0, 3), hasMore: warnings.length > 3 }; }
-async function inventory(playbook) {
+async function normalizeFilters(filters, playbook) {
+  const selected = { ...filters };
+  if (selected.path !== undefined) selected.path = relativePath(selected.path);
+  if (selected.month !== undefined && !/^\d{4}-(0[1-9]|1[0-2])$/.test(selected.month)) throw new Error('month must be YYYY-MM.');
+  if (selected.kind !== undefined && !['worklog', 'knowledge', 'current', 'other'].includes(selected.kind)) throw new Error('kind must be worklog, knowledge, current or other.');
+  if (selected.repo !== undefined) {
+    if (!playbook.workspace?.config.repositories.some((item) => item.id === selected.repo)) throw new Error('repo must identify a registered workspace member.');
+  }
+  selected.logRoots = ['worklogs', 'workflows/worklogs'];
+  if (selected.month || selected.kind === 'worklog') {
+    const file = await safePath(playbook.directory, 'manifest.json');
+    if (await statOrNull(file)) {
+      const manifest = await readJson(file, MAX_FILE_BYTES);
+      if (manifest.recordPaths?.worklogs) {
+        const custom = relativePath(manifest.recordPaths.worklogs);
+        if (custom.split('/').some((part) => SKIP_DIRS.has(part) || part.startsWith('.'))) throw new Error('Unsafe configured worklog path.');
+        if (!selected.logRoots.includes(custom)) selected.logRoots.push(custom);
+      }
+    }
+  }
+  return selected;
+}
+function pathInScope(relative, directory, filters) {
+  if (filters.path && relative !== filters.path && !relative.startsWith(filters.path + '/') && !(directory && filters.path.startsWith(relative + '/'))) return false;
+  const logRoots = filters.logRoots ?? ['worklogs', 'workflows/worklogs'];
+  if (filters.month) {
+    const months = logRoots.map((root) => root + '/' + filters.month);
+    const flatLegacy = !directory && logRoots.some((root) => relative.startsWith(root + '/') && /^\d{4}-\d{2}-\d{2}[-_.]/.test(path.posix.basename(relative)) && path.posix.basename(relative).startsWith(filters.month + '-'));
+    if (!flatLegacy && !months.some((prefix) => relative === prefix || relative.startsWith(prefix + '/') || (directory && prefix.startsWith(relative + '/')))) return false;
+  }
+  if (filters.repo && relative.startsWith('repos/') && relative.split('/')[1] !== filters.repo) return false;
+  if (!filters.path && filters.kind === 'worklog' && !logRoots.some((root) => relative === root || relative.startsWith(root + '/') || (directory && root.startsWith(relative + '/')))) return false;
+  if (!filters.path && filters.kind === 'knowledge' && !['knowledge', 'memory'].some((root) => relative === root || relative.startsWith(root + '/'))) return false;
+  if (filters.kind === 'current' && relative !== 'CURRENT.md' && relative !== 'START_HERE.md' && relative !== 'repos' && !relative.startsWith('repos/')) return false;
+  return true;
+}
+async function inventory(playbook, filters = {}) {
   const records = [], warnings = [], excluded = new Set();
   let visited = 0, limited = false;
   async function walk(dir) {
     if (limited) return;
     await noLinks(dir);
     for (const entry of (await readdir(dir, { withFileTypes: true })).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) {
-      if (++visited > MAX_FILES) { limited = true; warnings.push(warning('', 'traversal-limit', 'Record traversal limit reached.')); return; }
       const file = path.join(dir, entry.name);
       const rel = path.relative(playbook.directory, file).replaceAll('\\', '/');
+      if (/^archive\/(?:bootstrap-[0-9a-f-]{36}|workspace-[0-9a-f]{16})\.json$/i.test(rel)) continue;
+      if (!pathInScope(rel, entry.isDirectory(), filters)) continue;
+      if (++visited > MAX_FILES) { limited = true; warnings.push(warning('', 'traversal-limit', 'Record traversal limit reached.')); return; }
       if (entry.isSymbolicLink()) { warnings.push(warning(rel, 'linked-record', 'Skipped linked record.')); continue; }
       if (entry.isDirectory()) {
         if (SKIP_DIRS.has(entry.name)) excluded.add(entry.name);
@@ -65,12 +94,19 @@ function scanSummary(data, extra = {}) {
     recordCount: data.records.length, excludedDirectories: data.excluded,
     limits: { entries: MAX_FILES, fileBytes: MAX_FILE_BYTES, textBytes: MAX_SCAN_BYTES }, ...extra };
 }
-async function inspectRecords(pb) {
-  const data = await inventory(pb), documents = [], hashes = [], warnings = [...data.warnings];
-  let bytes = 0, stopped = false;
+async function inspectRecords(pb, filters = {}) {
+  const data = await inventory(pb, filters), documents = [], hashes = [], warnings = [...data.warnings];
+  let bytes = 0, stopped = false, inspectedHeaders = 0, filteredFiles = 0;
   for (const relative of data.records) {
     try {
       const file = await safePath(pb.directory, relative), info = await statOrNull(file);
+      if (filters.repo && pb.recordSource !== 'repo:' + filters.repo && !relative.startsWith('repos/' + filters.repo + '/')) {
+        const header = await readRecordHeader(file, Math.min(16_384, MAX_SCAN_BYTES - bytes));
+        bytes += header.bytes; inspectedHeaders++;
+        hashes.push([relative, header.signature]);
+        if (header.budgetLimited) { warnings.push(warning(relative, 'scan-byte-limit', 'Metadata inspection budget reached.')); stopped = true; break; }
+        if (!parseRecordMetadata(header.text)?.repos?.includes(filters.repo)) { filteredFiles++; continue; }
+      }
       if (info?.size > MAX_SCAN_BYTES - bytes) {
         warnings.push(warning(relative, 'scan-byte-limit', 'Aggregate text inspection limit reached.'));
         stopped = true; break;
@@ -84,29 +120,35 @@ async function inspectRecords(pb) {
     } catch (e) { warnings.push(warning(relative, 'unreadable-record', e.message)); }
   }
   const scan = { ...scanSummary(data), complete: !data.limited && !stopped && !warnings.length,
-    inspectedFiles: documents.length, inspectedBytes: bytes, uninspectedFiles: data.records.length - documents.length };
+    inspectedFiles: documents.length, inspectedBytes: bytes, inspectedHeaders, filteredFiles, uninspectedFiles: data.records.length - documents.length - filteredFiles };
   return { ...data, documents, hashes: Object.fromEntries(hashes), warnings, scan, snapshot: scopeHash({ root: pb.directory, records: data.records, hashes, warnings, scan }) };
 }
-export async function playbookStatus({ target, view = 'summary', pageSize, maxChars, cursor }) {
-  if (!['summary', 'records', 'warnings'].includes(view)) throw new Error('Status view must be summary, records or warnings.');
-  const pb = await locatePlaybook(target), data = await inventory(pb);
+function contextMetadata(pb) {
+  if (!pb.workspace) return {};
+  return { workspace: { repositoryCount: pb.workspace.config.repositories.length, activeRepo: pb.activeRepo?.id ?? null }, recordSource: pb.recordSource };
+}
+export async function playbookStatus({ target, view = 'summary', pageSize, maxChars, cursor, recordSource = undefined }) {
+  if (!['summary', 'records', 'warnings', 'repositories'].includes(view)) throw new Error('Status view must be summary, records, warnings or repositories.');
+  const pb = await locatePlaybook(target, recordSource), data = await inventory(pb);
   let layout = pb.exists ? 'legacy' : 'missing', manifest = null;
   if (pb.exists && await statOrNull(path.join(pb.directory, 'manifest.json'))) {
     manifest = await readJson(await safePath(pb.directory, 'manifest.json'), MAX_FILE_BYTES);
     layout = manifest.layoutKind ?? 'legacy';
   }
   const metadata = report('aapb.status', {
-    exists: pb.exists, playbook: pb.name, layout, view,
+    exists: pb.exists, playbook: pb.name, layout, view, ...contextMetadata(pb),
     entrypoint: data.records.includes('CURRENT.md') ? 'CURRENT.md' : data.records.includes('START_HERE.md') ? 'START_HERE.md' : null,
     recordCount: data.records.length, warnings: warningSummary(data.warnings), scan: scanSummary(data), complete: !data.limited && !data.warnings.length,
     validation: { configurationInspected: Boolean(manifest), runtimeVerified: false }
   });
   if (view === 'summary') { if (cursor !== undefined) throw new Error('A summary does not accept a cursor.'); return metadata; }
+  if (view === 'repositories') return pageItems({ items: pb.workspace?.config.repositories.map((repo) => ({ ...repo, recordSource: 'repo:' + repo.id })) ?? [], key: 'repositories', metadata,
+    scope: scopeHash({ kind: 'aapb.repositories', root: pb.directory, recordSource: pb.recordSource, hash: pb.workspace?.hash ?? null }), cursor, pageSize, maxChars });
   return pageItems({ items: view === 'records' ? data.records : data.warnings, key: 'items', metadata,
     scope: scopeHash({ root: pb.directory, kind: metadata.kind, view, manifest, records: data.records, warnings: data.warnings }), cursor, pageSize, maxChars });
 }
-export async function playbookRead({ target, path: recordPath = 'CURRENT.md', startLine, endLine, maxChars, cursor }) {
-  const pb = await locatePlaybook(target);
+export async function playbookRead({ target, path: recordPath = 'CURRENT.md', startLine, endLine, maxChars, cursor, recordSource = undefined }) {
+  const pb = await locatePlaybook(target, recordSource);
   if (!pb.exists) throw new Error('No playbook exists; bootstrap only when this project needs records.');
   const relative = relativePath(recordPath);
   if (!TEXT_EXTENSIONS.has(path.extname(relative))) throw new Error('Only text records can be read.');
@@ -134,7 +176,7 @@ export async function playbookRead({ target, path: recordPath = 'CURRENT.md', st
     while (line + 1 < offsets.length && offsets[line + 1] <= offset) line++;
     return { line: line + 1, column: offset - offsets[line] + 1, offset };
   };
-  const resultAt = (end) => report('aapb.read', { path: relative, sha256: hash, totalLines: offsets.length,
+  const resultAt = (end) => report('aapb.read', { path: relative, sha256: hash, totalLines: offsets.length, ...contextMetadata(pb),
     startLine: position(start).line, position: position(start), nextPosition: end < rangeEnd ? position(end) : null,
     content: text.slice(start, end), truncated: end < rangeEnd,
     nextCursor: end < rangeEnd ? cursorAt(scope, end, { end: rangeEnd }) : null });
@@ -151,13 +193,18 @@ export async function playbookRead({ target, path: recordPath = 'CURRENT.md', st
   if (end === start && start < rangeEnd) throw pagingError('aapb.page-budget-too-small', 'The read budget cannot hold the next Unicode character. Increase maxChars.');
   return resultAt(end);
 }
-export async function playbookSearch({ target, query, maxResults, maxChars, cursor, view = 'results' }) {
+export async function playbookSearch({ target, query, maxResults, maxChars, cursor, view = 'results', recordSource = undefined, path: searchPath = undefined, repo = undefined, month = undefined, kind = undefined }) {
   if (typeof query !== 'string' || !query.trim() || query.length > 1000) throw new Error('Search requires a non-empty literal query of at most 1000 characters.');
   if (!['results', 'warnings'].includes(view)) throw new Error('Search view must be results or warnings.');
-  const pb = await locatePlaybook(target), data = await inspectRecords(pb), results = [];
+  const pb = await locatePlaybook(target, recordSource), filters = await normalizeFilters({ path: searchPath, repo, month, kind }, pb);
+  const data = await inspectRecords(pb, filters), results = [];
   const needle = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'iu');
   let matchLimit = false;
   outer: for (const { relative, text } of data.documents) {
+    const meta = parseRecordMetadata(text);
+    const detectedKind = meta?.kind ?? classifyRecordPath(relative) ?? (filters.logRoots.some((root) => relative.startsWith(root + '/') && /\.md$/i.test(relative)) ? 'worklog' : /^(?:CURRENT|START_HERE)\.md$/.test(relative) || /^repos\/[^/]+\/CURRENT\.md$/.test(relative) ? 'current' : 'other');
+    if (kind && detectedKind !== kind) continue;
+    if (repo && pb.recordSource !== 'repo:' + repo && !meta?.repos?.includes(repo) && !relative.startsWith('repos/' + repo + '/')) continue;
     const lines = text.split(/\r\n|\r|\n/);
     for (let i = 0; i < lines.length; i++) {
       const match = needle.exec(lines[i])?.index;
@@ -172,12 +219,12 @@ export async function playbookSearch({ target, query, maxResults, maxChars, curs
   if (matchLimit) data.warnings.push(warning('', 'match-limit', 'Search match limit reached; narrow the query.'));
   const scan = { ...data.scan, complete: data.scan.complete && !matchLimit, matchLimit: 10000 };
   return pageItems({ items: view === 'results' ? results : data.warnings, key: 'results',
-    metadata: report('aapb.search', { query, view, matchCount: results.length, scannedFiles: data.documents.length, scan, warnings: warningSummary(data.warnings) }),
-    scope: scopeHash({ snapshot: data.snapshot, kind: 'aapb.search', query, view }), cursor, pageSize: maxResults, maxChars });
+    metadata: report('aapb.search', { query, view, filters: { path: searchPath, repo, month, kind }, ...contextMetadata(pb), matchCount: results.length, scannedFiles: data.documents.length, scan, warnings: warningSummary(data.warnings) }),
+    scope: scopeHash({ snapshot: data.snapshot, kind: 'aapb.search', query, view, filters }), cursor, pageSize: maxResults, maxChars });
 }
-export async function playbookValidate({ target, view = 'issues', pageSize, maxChars, cursor }) {
+export async function playbookValidate({ target, view = 'issues', pageSize, maxChars, cursor, recordSource = undefined }) {
   if (!['summary', 'issues', 'warnings'].includes(view)) throw new Error('Validation view must be summary, issues or warnings.');
-  const pb = await locatePlaybook(target), data = await inspectRecords(pb), issues = [];
+  const pb = await locatePlaybook(target, recordSource), data = await inspectRecords(pb), issues = [];
   let issuesLimited = false;
   const addIssue = (issue) => { if (issues.length < 10000) issues.push(issue); else issuesLimited = true; };
   if (!pb.exists) addIssue({ path: pb.name, code: 'missing', message: 'No playbook found.' });
@@ -233,45 +280,19 @@ export async function playbookValidate({ target, view = 'issues', pageSize, maxC
   if (issuesLimited) { data.scan.complete = false; data.warnings.push(warning('', 'issue-limit', 'Validation issue limit reached; inspect source files directly.')); }
   const counts = {};
   for (const issue of issues) counts[issue.code] = (counts[issue.code] ?? 0) + 1;
-  const metadata = report('aapb.validate', { ok: issues.length === 0 && data.scan.complete, view, issueCount: issues.length, issueCounts: counts,
+  const metadata = report('aapb.validate', { ok: issues.length === 0 && data.scan.complete, view, ...contextMetadata(pb), issueCount: issues.length, issueCounts: counts,
     warnings: warningSummary(data.warnings), scan: data.scan, complete: data.scan.complete, configurationOnly: true, runtimeVerified: false });
   if (view === 'summary') { if (cursor !== undefined) throw new Error('A summary does not accept a cursor.'); return metadata; }
   return pageItems({ items: view === 'issues' ? issues : data.warnings, key: 'issues', metadata,
     scope: scopeHash({ snapshot: data.snapshot, markerHash, kind: metadata.kind, view, issues }), cursor, pageSize, maxChars });
 }
 
-export async function bootstrapRecords({ target, repoRoot, dryRun = false, localOnly = false }) {
-  const pb = await locatePlaybook(target);
-  if (pb.exists) return report('playbook.bootstrap', { applied: false, operations: [], warnings: ['Existing records and project instructions were preserved.'] });
-  const current = await readText(path.join(repoRoot, 'templates/project-playbook/CURRENT.md'));
-  const manifest = JSON.stringify({ schemaVersion: '2', source: 'ai-agent-playbook', layoutKind: 'minimal' }, null, 2) + '\n';
-  const contents = { 'CURRENT.md': current, 'manifest.json': manifest };
-  const marker = JSON.stringify({ schemaVersion: 2, source: 'ai-agent-playbook', files: { 'manifest.json': sha256(manifest) }, userFiles: ['CURRENT.md'] }, null, 2) + '\n';
-  const operations = Object.keys(contents).concat(MARKER);
-  let excludeFile, excludeText;
-  if (localOnly) {
-    // .git may be a worktree pointer; git resolves the correct local exclude file.
-    const { execFile } = await import('node:child_process');
-    const { promisify } = await import('node:util');
-    const gitPath = await promisify(execFile)('git', ['-C', pb.root, 'rev-parse', '--git-path', 'info/exclude'], { encoding: 'utf8' });
-    excludeFile = path.resolve(pb.root, gitPath.stdout.trim());
-    await noLinks(excludeFile);
-    excludeText = await statOrNull(excludeFile) ? await readText(excludeFile) : '';
-    operations.push('git-local-exclude');
-  }
-  if (!dryRun) {
-    await noLinks(pb.directory);
-    await mkdir(pb.directory); // exclusive creation: do not race an existing bootstrap
-    for (const [name, body] of Object.entries({ ...contents, [MARKER]: marker })) await writeAtomic(await safePath(pb.directory, name), body, { exclusive: true });
-    if (localOnly && !excludeText.split(/\r?\n/).some((line) => line.trim() === '.ai-agent-playbook/')) {
-      if ((await statOrNull(excludeFile) ? await readText(excludeFile) : '') !== excludeText) throw new Error('Local exclude changed; preserve it and add .ai-agent-playbook/ manually.');
-      await writeAtomic(excludeFile, excludeText + (excludeText && !excludeText.endsWith('\n') ? '\n' : '') + '.ai-agent-playbook/\n');
-    }
-  }
-  return report('playbook.bootstrap', { writes: !dryRun, applied: !dryRun, operations, localOnly, agentsPreserved: true });
+export async function bootstrapRecords(options) {
+  const { bootstrapProject } = await import('./bootstrap.mjs');
+  return bootstrapProject(options);
 }
-export async function migrateRecords({ target, apply = false }) {
-  const pb = await locatePlaybook(target);
+export async function migrateRecords({ target, apply = false, recordSource = undefined }) {
+  const pb = await locatePlaybook(target, recordSource);
   if (!pb.exists) throw new Error('No records to migrate.');
   const file = await safePath(pb.directory, 'manifest.json');
   const original = await statOrNull(file) ? await readBytes(file) : null;
@@ -312,8 +333,8 @@ export async function migrateRecords({ target, apply = false }) {
   return report('playbook.migrate', { ok: !conflicts.length, writes: apply && operations.length > 0, applied: apply && operations.length > 0, operations, conflicts, backup: backupPath, recordsPreserved: true });
 }
 
-export async function rollbackRecordMigration({ target, backup, apply = false }) {
-  const pb = await locatePlaybook(target);
+export async function rollbackRecordMigration({ target, backup, apply = false, recordSource = undefined }) {
+  const pb = await locatePlaybook(target, recordSource);
   const archive = await readJson(await safePath(pb.directory, backup));
   if (archive.kind !== 'playbook.layout-backup' || archive.schemaVersion !== 1) throw new Error('Invalid layout recovery record.');
   const operations = [], conflicts = [];

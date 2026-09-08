@@ -16,7 +16,7 @@ node $demoCli --version
 node $demoCli --help
 ```
 
-Confirm `1.0.0` for this release artifact. Package installation does not install user skills or enable MCP. All following calls use `node $demoCli` so a different global version cannot accidentally supply the result. In another shell, invoke the installed script by its absolute path.
+Confirm the installed version against the checkout's package.json, currently `1.2.1`. Registry tags describe published packages; they do not automatically follow a source version change. Use the verified local archive or `node bin/aapb.mjs` from source until the intended release is available in the registry. Package installation does not install user skills or enable MCP. All following calls use `node $demoCli` so a different global version cannot accidentally supply the result. In another shell, invoke the installed script by its absolute path.
 
 ## 2. Inspect an existing project without changing it
 
@@ -55,6 +55,28 @@ node $demoCli skills install --profile development --agents-root '<demo-skills>'
 ```
 
 Apply by omitting `--dry-run`, then check, uninstall, and recover using the same selection and returned backup. Keep backups outside both roots and on the same filesystem. [Installation guidance](lifecycle.md) explains partial failures and reverse transaction order.
+
+## Workspace and durable-record exercise
+
+Use a fresh disposable workspace with existing member folders such as `apps/web` and `services/api`. Give the CLI that workspace as its project path; keep real repositories read-only. From the workspace root, the equivalent installed commands are:
+
+```sh
+ai-agent-playbook bootstrap --kind workspace --repo-path apps/web --repo-path services/api --records standard --exclude none --agents link --dry-run --json
+ai-agent-playbook bootstrap --kind workspace --repo-path apps/web --repo-path services/api --records standard --exclude none --agents link --json
+ai-agent-playbook records status --view repositories --json
+ai-agent-playbook worklog new --title "Workspace setup" --topic setup --repo web --lang en --json
+ai-agent-playbook knowledge new --title "Workspace contract" --topic setup --repo web --lang en --json
+ai-agent-playbook worklog list --repo web --topic setup --page-size 5 --json
+ai-agent-playbook records search --query "Workspace" --repo web --kind knowledge --json
+```
+
+In the PowerShell session above, substitute `node $demoCli` for `ai-agent-playbook` and supply the disposable workspace path. Fill the created records from actual results. Re-run status from a registered member and check that it resolves common records; compare an unregistered sibling. If the member has old records, read them with `--record-source repo:web` and verify unchanged bytes.
+
+Exercise `workspace add/remove` previews and applies on disposable member directories, keeping the returned registry backups. Test AST/Forge selection refusal at the workspace root without `--repo`, then select one member for read-only AST or Forge status. Use only the documented AST languages and do not perform remote writes for this exercise.
+
+For exclusions, use disposable Git repositories and a separate test Git environment for any global-ignore exercise. Preview local/shared/none transitions, preserve unrelated ignore rules and tracked files, and recover using `migrate bootstrap-rollback --backup "<returned-journal>"` before and with `--apply`. Do not change a real user's global exclusions to run a demo. Also exercise no-Git record creation and its skipped-local-exclusion warning.
+
+Use an interactive terminal to check the guide, final review, cancellation, and `--yes`; use non-interactive input to check explicit defaults and that `--json` never asks. An injected question callback or CLI help alone is not a live-terminal usability test. Record any path that could not be exercised instead of claiming the entire candidate passed.
 
 ## 5. Report what was actually verified
 

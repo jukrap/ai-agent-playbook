@@ -8,7 +8,8 @@ AAPB separates reusable instructions, project files, executable behavior, and hu
 | A skill's `references/` | Detail needed by that selected skill | Travels with the skill, read when useful |
 | Root `references/` | Optional historical domain examples and contracts | Consulted explicitly; not a second skill catalog |
 | `templates/agents/` | Copyable project instructions | Reviewed and adapted into a project's existing policy |
-| `templates/project-playbook/` | Minimal current-state template and metadata | Used by bootstrap; detail added as needed |
+| `templates/project-playbook/` | Current-state template and metadata | Used by bootstrap; detail added as needed |
+| `templates/record-artifacts/` | Worklog and knowledge document templates | Used by explicit record creation; completed from actual evidence |
 | `examples/` | Completed or reusable examples | Read for format and intent, not as current project facts |
 | `docs/`, README, CONTEXT | Human onboarding, usage, architecture, and maintenance | Navigated by reader purpose |
 | `adapters/` | Agent-host setup and integration boundaries | Used for the selected host |

@@ -16,7 +16,7 @@ node $demoCli --version
 node $demoCli --help
 ```
 
-이번 릴리스 파일의 버전이 `1.0.0`인지 확인합니다. 패키지 설치는 사용자 스킬을 설치하거나 MCP를 켜지 않습니다. 이후에는 모두 `node $demoCli`를 사용해 다른 전역 버전을 실수로 실행하지 않도록 합니다. 다른 셸에서는 설치된 스크립트의 절대 경로로 실행하세요.
+설치된 버전을 체크아웃의 package.json과 대조합니다. 현재 소스는 `1.2.1`입니다. 레지스트리 태그는 게시된 패키지를 가리키며 소스 버전 변경을 자동으로 따라가지 않습니다. 원하는 릴리스가 레지스트리에 올라가기 전에는 검증한 로컬 압축 파일이나 소스의 `node bin/aapb.mjs`로 실행하세요. 패키지 설치는 사용자 스킬을 설치하거나 MCP를 켜지 않습니다. 이후에는 모두 `node $demoCli`를 사용해 다른 전역 버전을 실수로 실행하지 않도록 합니다. 다른 셸에서는 설치된 스크립트의 절대 경로로 실행하세요.
 
 ## 2. 기존 프로젝트를 바꾸지 않고 확인하기
 
@@ -55,6 +55,28 @@ node $demoCli skills install --profile development --agents-root '<demo-skills>'
 ```
 
 `--dry-run`을 빼서 적용한 뒤 같은 선택으로 점검·삭제하고 반환된 백업으로 복구합니다. 백업은 두 설치 폴더 밖이면서 같은 파일시스템에 둡니다. 일부 실패와 최신 작업부터 되돌리는 순서는 [설치 안내](lifecycle.ko.md)를 보세요.
+
+## 작업 공간과 기록 작성 실습
+
+새 일회용 작업 공간에 `apps/web`, `services/api` 같은 구성원 폴더를 준비합니다. 해당 작업 공간을 CLI 프로젝트 경로로 넘기고 실제 저장소는 읽기 전용으로 보존하세요. 작업 공간 루트에서 설치 명령을 쓰면 다음과 같습니다.
+
+```sh
+ai-agent-playbook bootstrap --kind workspace --repo-path apps/web --repo-path services/api --records standard --exclude none --agents link --dry-run --json
+ai-agent-playbook bootstrap --kind workspace --repo-path apps/web --repo-path services/api --records standard --exclude none --agents link --json
+ai-agent-playbook records status --view repositories --json
+ai-agent-playbook worklog new --title "Workspace setup" --topic setup --repo web --lang ko --json
+ai-agent-playbook knowledge new --title "Workspace contract" --topic setup --repo web --lang ko --json
+ai-agent-playbook worklog list --repo web --topic setup --page-size 5 --json
+ai-agent-playbook records search --query "Workspace" --repo web --kind knowledge --json
+```
+
+위 PowerShell 세션에서는 `ai-agent-playbook` 대신 `node $demoCli`를 사용하고 일회용 작업 공간 경로를 넣습니다. 실제 결과로 생성한 기록을 채우세요. 등록된 구성원에서 상태를 다시 조회해 공통 기록을 찾는지 확인하고 미등록 형제 폴더와 비교합니다. 구성원에 과거 기록이 있다면 `--record-source repo:web`로 읽고 바이트가 보존됐는지 확인합니다.
+
+일회용 구성원 폴더에서 `workspace add/remove`의 미리보기와 적용을 시험하고 반환된 등록 백업을 보관합니다. 작업 공간 루트에서 `--repo` 없는 AST·Forge가 거부되는지 확인한 뒤 한 구성원을 선택해 읽기 전용 AST나 Forge 상태를 확인하세요. 지원하는 AST 언어만 사용하고 이 실습에서 원격 쓰기는 하지 않습니다.
+
+제외 검증에는 일회용 Git 저장소를 사용하고 전역 제외를 시험한다면 별도 테스트 Git 환경을 준비합니다. local/shared/none 전환을 미리 보고 무관한 규칙과 추적 파일을 보존하며, `migrate bootstrap-rollback --backup "<returned-journal>"`의 미리보기와 `--apply`로 복구를 확인합니다. 시연을 위해 실제 사용자의 전역 제외를 바꾸지 않습니다. Git 없는 기록 생성과 로컬 제외를 건너뛰는 경고도 확인합니다.
+
+대화형 터미널에서는 안내, 최종 검토, 취소와 `--yes`를 확인합니다. 비대화형 입력에서는 명시적 기본값과 `--json`이 질문하지 않는지 확인하세요. 질문 콜백을 주입하거나 CLI 도움말을 읽는 것만으로 실제 터미널 사용성을 검증한 것은 아닙니다. 실행하지 못한 경로를 기록하고 후보 전체가 통과했다고 보고하지 않습니다.
 
 ## 5. 실제 확인 범위 보고하기
 

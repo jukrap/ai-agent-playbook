@@ -56,6 +56,6 @@ ai-agent-playbook runtime python-status --json
 
 ## 버전과 검증
 
-정식 Node 패키지와 Python 엔진은 모두 `1.0.0`을 사용합니다. 이후 사전 릴리스에서는 npm의 `next.N`을 Python PEP 440의 `devN`에 대응합니다. 엔진 동작을 개발·수정했다면 `npm run validate:python`을 실행합니다. 사용자 환경에 선택형 엔진이 없는 것과 개발에 필요한 검사가 실패한 것은 다른 상황입니다.
+Node 패키지와 Python 엔진의 버전을 맞춥니다. npm의 `next.N`은 Python PEP 440의 `devN`에 대응하며, 예를 들어 `1.2.0-next.1`은 `1.2.0.dev1`입니다. 전역 설치가 체크아웃과 같다고 가정하지 말고 실제 패키지와 엔진 메타데이터를 확인하세요. 엔진 동작을 개발·수정했다면 `npm run validate:python`을 실행합니다. 사용자 환경에 선택형 엔진이 없는 것과 개발에 필요한 검사가 실패한 것은 다른 상황입니다.
 
 문서 점검 결과는 참고용입니다. 모든 신호를 수정 요구로 보지 않고 의미와 문체를 보존하는 방법은 [품질 검토](quality-review.ko.md)에 있습니다.

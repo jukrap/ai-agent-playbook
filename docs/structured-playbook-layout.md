@@ -4,14 +4,19 @@
 
 ## Files created for a new project
 
+`--records minimal` creates the entrypoint and metadata below. `standard`, the new interactive default, also adds worklog and knowledge guides when absent. `--kind workspace` adds explicit member registration.
+
 ```text
 .ai-agent-playbook/
   CURRENT.md                        User-editable current state
   manifest.json                     Managed layout metadata
   .ai-agent-playbook-install.json    Managed ownership information
+  worklogs/README.md                Standard record guide
+  knowledge/README.md               Standard record guide
+  workspace.json                    Workspace registration only
 ```
 
-Bootstrap does not create a root policy, empty contract collection, or workflow folder tree. `CURRENT.md` is explicitly user-editable in the new marker; editing it is normal. The manifest and marker let installation/migration identify managed content without treating all nearby files as owned.
+Bootstrap does not generate a source architecture or an empty contract/workflow tree. Root instructions are preserved by default; `--agents link` can append a short records link or create a small root instruction file. `CURRENT.md` is explicitly user-editable in the new marker; editing it is normal. The manifest and marker let installation/migration identify managed content without treating all nearby files as owned.
 
 ## What to write in CURRENT.md
 
@@ -28,13 +33,17 @@ For example, create `decisions/csv-export.md` only when the export decision need
 
 ## Supporting records and handoff
 
+Keep current reusable rules and contracts in `knowledge/` with sources, applicable repositories, confirmation dates, and uncertainty. New worklogs live in `worklogs/YYYY-MM/`, with unique dated files containing detailed milestone evidence. Create months and topics when first needed. CURRENT.md links to the relevant records rather than repeating their histories. See [Durable records](durable-records.md) for `worklog new/list`, `knowledge new`, filters, and draft review.
+
 Use the project's established locations for specifications, ADRs (architecture decision records), contracts, plans, verification notes, and handoffs. The [spec-artifacts skill](skill-catalog.md) offers formats; it does not require all of them.
 
 A useful handoff records what changed, the evidence checked, uncertainty, and the next action. Preserve exact commands and source links when they let someone verify a fact. Label generated reports as evidence to review. A historical note is not automatically a current truth, and a successful configuration check is not runtime proof.
 
 ## Existing layouts
 
-For legacy compatibility, the reader recognizes `.ai-agent-playbook/`, `.ai-playbook/`, and `ai-playbook/`. More than one existing root is ambiguous. It will not silently merge or choose between them.
+Registered workspace members share the ancestor workspace records by default. An explicit `--record-source repo:<id>` selects a member's existing local records without moving them. Unregistered descendants do not bind to that workspace. See [Workspaces](workspaces.md).
+
+For legacy compatibility, within a selected record location the reader recognizes `.ai-agent-playbook/`, `.ai-playbook/`, and `ai-playbook/`. More than one existing root is ambiguous. It will not silently merge or choose between them.
 
 Old `START_HERE.md`, `memory/`, `maps/`, `contracts/`, `workflows/`, and `runtime/` records remain readable when present. Status prefers CURRENT.md and can identify START_HERE.md when CURRENT.md is absent. The old full reading sequence is not required for every new task; follow existing project instructions and relevant links.
 

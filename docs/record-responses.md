@@ -34,7 +34,7 @@ ai-agent-playbook records search "<project>" --query "API decision" --max-result
 ai-agent-playbook records search "<project>" --query "API decision" --max-results 3 --cursor "<page.nextCursor>" --json
 ```
 
-List cursors are in `page.nextCursor`. Repeat the view and, for search, the same query. Status offers `summary`, `records`, and `warnings`; validation offers `issues` (default), `summary`, and `warnings`; search offers `results` (default) and `warnings`.
+List cursors are in `page.nextCursor`. Repeat the view and, for search, the same query and path/repository/month/kind filters. Keep `--record-source` unchanged. `worklog list` also returns `page.nextCursor`; repeat its repository, topic, month, and source selection. Status offers `summary`, `records`, `warnings`, and `repositories`; validation offers `issues` (default), `summary`, and `warnings`; search offers `results` (default) and `warnings`.
 
 Every page keeps totals and scan completeness for the inspected scope. A failed validation stays failed even when the displayed page contains no new issue. An incomplete scan is not made complete by reading all returned pages.
 
@@ -52,13 +52,13 @@ Then use the returned cursor:
 {"path":"CURRENT.md","cursor":"<nextCursor>","maxChars":2000}
 ```
 
-MCP uses camelCase arguments (`maxChars`, `pageSize`, `maxResults`, `startLine`, `endLine`); CLI options use hyphens. The other public tools are `aapb_status`, `aapb_search`, and `aapb_validate`. The earlier `playbook_*` prerelease names are no longer advertised.
+MCP uses camelCase arguments (`maxChars`, `pageSize`, `maxResults`, `startLine`, `endLine`, `recordSource`); CLI options use hyphens. The other public tools are `aapb_status`, `aapb_search`, and `aapb_validate`. The earlier `playbook_*` prerelease names are no longer advertised.
 
 ## Exact text and changed sources
 
 Reads preserve source text and line endings. A UTF-8 BOM is omitted from text output, while the source hash still identifies the original bytes. Positions and character budgets use JavaScript UTF-16 units; some emoji occupy two units, and the reader avoids splitting the pair. Search returns the source path, line number, and text around each match.
 
-Cursors bind the project, operation, query/view, and inspected content. If a source changes or the request no longer matches, restart the operation. Do not edit a cursor or use it to switch projects. Each request enforces the same filesystem boundaries; a cursor does not grant permission.
+Cursors bind the selected workspace/record source, operation, filters and query/view, and inspected content. Workspace registration changes or a switch between common and member-local records require a new request. Selecting `repo` for record search filters a member's records; selecting `recordSource` changes the source. If a source changes or the request no longer matches, restart the operation. Do not edit a cursor or use it to switch projects. Each request enforces the same filesystem boundaries; a cursor does not grant permission.
 
 ## Content and transport limits
 

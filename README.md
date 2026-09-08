@@ -26,11 +26,11 @@
 
 AI Agent Playbook (AAPB) helps coding agents keep useful project records and produce consistent specifications, handoffs, designs, and documents. It combines selected reusable skills, copyable templates, a local command-line tool, and an optional read-only MCP server.
 
-A project's current goal, constraints, verified facts, and next action belong in `CURRENT.md`. Detailed decisions and evidence can live in linked documents when they are needed. The files remain ordinary Markdown and JSON that you and your agent can edit with existing tools.
+A project's current goal, constraints, verified facts, and next action belong in `CURRENT.md`. Topic knowledge keeps current rules and contracts; monthly worklogs preserve detailed milestone evidence. A registered workspace can share these records across repositories without moving their code or existing local records. The files remain ordinary Markdown and JSON that you and your agent can edit with existing tools.
 
 The source is agent-agnostic. Codex, Claude Code, and other coding agents can use the same records and reference material; host-specific setup belongs in `adapters/`.
 
-In 1.0, AAPB concentrates on records, artifact formats, and selected specialist guidance. The agent host and project tools handle execution and scheduling. See [the 1.0 changes and migration choices](docs/redesign.md) if you used the broader 0.5 runtime.
+AAPB concentrates on portable records, explicit workspace membership, artifact formats, and selected specialist guidance. The agent host and project tools handle execution and scheduling. See [the 1.0 changes and migration choices](docs/redesign.md) if you used the broader 0.5 runtime.
 
 ## What You Get
 
@@ -45,7 +45,7 @@ In 1.0, AAPB concentrates on records, artifact formats, and selected specialist 
 | Translations | Korean reading copies with localized explanations and navigation | `translations/ko/` |
 | Agent adapters | Setup notes for specific agent environments | `adapters/` |
 
-The default MCP tools are `aapb_status`, `aapb_search`, `aapb_read`, and `aapb_validate`. [AST source search](docs/ast-search.md) is available through the CLI and the optional `aapb_ast_search` MCP tool. [MCP setup](docs/mcp-permission-model.md) explains how to connect and check them.
+The default MCP tools are `aapb_status`, `aapb_search`, `aapb_read`, and `aapb_validate`. [AST source search](docs/ast-search.md) is available through the CLI and the optional `aapb_ast_search` MCP tool enabled with `--with-ast`. [MCP setup](docs/mcp-permission-model.md) explains how to connect and check them.
 
 ## Quick Start
 
@@ -66,6 +66,8 @@ ai-agent-playbook skills install --profile development --json
 ai-agent-playbook skills check --profile development --json
 ```
 
+Check `ai-agent-playbook --version` before following workspace and authoring examples. For an unpublished candidate, use the [source or local-archive demonstration](docs/demo.md); an npm install or `@latest` call selects the published package.
+
 Reload the agent's skills or start a fresh session. File installation and actual host loading are separate checks.
 
 Run these commands from the project folder. Omitting the project path uses the terminal's current directory:
@@ -77,11 +79,13 @@ ai-agent-playbook bootstrap
 ai-agent-playbook records read --path CURRENT.md
 ```
 
-Bootstrap preserves existing `AGENTS.md` and records. For a new playbook it creates `CURRENT.md` and two metadata files. Add `--local-only` to both bootstrap commands when this is a Git repository and records should remain local.
+In an interactive terminal, bare bootstrap opens a guide with a final review. New setup defaults to standard record guides and local Git exclusion, or no exclusion without Git. `--dry-run` previews the selected choices. Existing records and root instructions are preserved; an optional AGENTS link is added only when selected.
+
+For scripts, specify choices such as `--kind single --records standard --exclude none --agents preserve --json`. Explicit choices and non-interactive calls retain minimal/no-exclusion defaults unless overridden; `--yes` chooses the guide defaults without asking, and `--json` never asks. [Workspaces](docs/workspaces.md) explains repeated `--repo-path` membership selection; [durable records](docs/durable-records.md) covers `worklog new/list` and `knowledge new`.
 
 To work on another folder, add a quoted path, for example `ai-agent-playbook bootstrap "<project>" --dry-run`, or use `--project "<project>"`. [The command guide](docs/commands.md) explains complete command combinations and their options.
 
-[First 10 minutes](docs/quick-start.md) provides a practice project, glossary, expected results, and troubleshooting. [Lifecycle](docs/lifecycle.md) covers updates, removal, version selection, and recovery.
+[Workspaces](docs/workspaces.md) and [durable records](docs/durable-records.md) cover shared membership and lasting evidence. [First 10 minutes](docs/quick-start.md) provides a practice project, glossary, expected results, and troubleshooting. [Lifecycle](docs/lifecycle.md) covers updates, removal, version selection, and recovery.
 
 Package installation, skill installation, project bootstrap, and MCP registration are separate actions. Python is optional for selected writing checks; see [Runtime engines](docs/runtime-engines.md). Developers can use [Maintenance](docs/maintenance.md) and [Local package testing](docs/demo.md).
 
@@ -92,7 +96,7 @@ AAPB can preview and explicitly apply GitHub/Gitea coordination plans, reuse exi
 | Component | When it is needed | What the requirement means |
 | --- | --- | --- |
 | Node.js `18+` | CLI and MCP | Package runtime minimum; actual tested versions are listed in the verification report |
-| Git | Clone/update, `--local-only`, and Forge remote discovery | Ordinary record reads do not require a remote repository |
+| Git | Clone/update, Git-local exclusions, and Forge remote discovery | Record creation and reading also work without Git; skipped local exclusion is reported |
 | Python `3.11+` | Optional writing engine | Basic record operations and JavaScript writing checks work without it |
 | GitHub / Gitea access | Explicitly applied coordination changes | A local preview does not prove remote credentials or permissions |
 | An MCP-capable agent host | Optional tool connection | Plain file editing and CLI use remain available independently |
@@ -135,7 +139,8 @@ references/           Optional domain detail from the earlier catalog
 templates/
   agents/             Stack-neutral project instructions
   codex-home/         Optional personal instruction template
-  project-playbook/   Minimal current-state template and layout metadata
+  project-playbook/   Current-state template and layout metadata
+  record-artifacts/   Worklog and knowledge document templates
 examples/             Worklog, prompt, and handoff examples
 translations/ko/      Korean reading copies; not a second installed skill catalog
 adapters/             Host-specific setup notes

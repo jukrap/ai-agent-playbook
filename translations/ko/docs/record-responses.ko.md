@@ -34,7 +34,7 @@ ai-agent-playbook records search "<project>" --query "API decision" --max-result
 ai-agent-playbook records search "<project>" --query "API decision" --max-results 3 --cursor "<page.nextCursor>" --json
 ```
 
-목록의 다음 커서는 `page.nextCursor`에 있습니다. 같은 보기를 유지하고, 검색은 같은 검색어도 다시 넘깁니다. 상태는 `summary`, `records`, `warnings`, 검증은 `issues`(기본값), `summary`, `warnings`, 검색은 `results`(기본값), `warnings`를 제공합니다.
+목록의 다음 커서는 `page.nextCursor`에 있습니다. 같은 보기를 유지하고, 검색은 검색어와 경로·저장소·월·종류 필터도 다시 넘깁니다. `--record-source`를 유지하세요. `worklog list`도 `page.nextCursor`를 반환하며 저장소, 주제, 월과 출처를 반복합니다. 상태는 `summary`, `records`, `warnings`, `repositories`, 검증은 `issues`(기본값), `summary`, `warnings`, 검색은 `results`(기본값), `warnings`를 제공합니다.
 
 각 페이지에는 검사한 범위의 총수와 검사 완료 여부가 남습니다. 현재 페이지에 새로운 문제가 없더라도 실패한 검증이 성공으로 바뀌지는 않습니다. 반환된 페이지를 모두 읽었다고 원래 건너뛴 범위까지 검사한 것은 아닙니다.
 
@@ -52,13 +52,13 @@ ai-agent-playbook records search "<project>" --query "API decision" --max-result
 {"path":"CURRENT.md","cursor":"<nextCursor>","maxChars":2000}
 ```
 
-MCP 인자는 `maxChars`, `pageSize`, `maxResults`, `startLine`, `endLine`처럼 쓰고, CLI 옵션은 하이픈으로 구분합니다. 다른 공개 도구는 `aapb_status`, `aapb_search`, `aapb_validate`입니다. 이전 사전 릴리스의 `playbook_*` 이름은 더 이상 표시하지 않습니다.
+MCP 인자는 `maxChars`, `pageSize`, `maxResults`, `startLine`, `endLine`, `recordSource`처럼 쓰고, CLI 옵션은 하이픈으로 구분합니다. 다른 공개 도구는 `aapb_status`, `aapb_search`, `aapb_validate`입니다. 이전 사전 릴리스의 `playbook_*` 이름은 더 이상 표시하지 않습니다.
 
 ## 원문 보존과 편집 후 커서
 
 읽기는 문장과 줄바꿈을 보존합니다. UTF-8 BOM은 텍스트 출력에서 빼지만 원본 해시는 실제 파일 바이트를 기준으로 합니다. 위치와 글자 수는 JavaScript의 UTF-16 단위입니다. 일부 이모지는 두 단위를 차지하며 그 중간에서 자르지 않습니다. 검색에는 원본 경로, 줄 번호, 검색어 주변 문장이 나옵니다.
 
-커서는 프로젝트, 작업 종류, 검색어·보기, 검사한 내용에 연결됩니다. 원본이 바뀌거나 요청이 맞지 않으면 처음부터 다시 조회하세요. 커서를 편집하거나 다른 프로젝트로 바꾸는 용도로 쓰지 않습니다. 매번 같은 파일 경계를 확인하므로 커서가 별도 권한을 주지는 않습니다.
+커서는 선택한 작업 공간·기록 출처, 작업 종류, 필터·검색어·보기와 검사한 내용에 연결됩니다. 등록이 바뀌거나 공통·로컬 출처를 전환하면 새 요청을 시작합니다. 검색의 `repo`는 구성원에 해당하는 기록을 필터링하고 `recordSource`는 출처를 바꿉니다. 원본이 바뀌거나 요청이 맞지 않으면 처음부터 다시 조회하세요. 커서를 편집하거나 다른 프로젝트로 바꾸는 용도로 쓰지 않습니다. 매번 같은 파일 경계를 확인하므로 커서가 별도 권한을 주지는 않습니다.
 
 ## 본문 크기와 전송 한도
 

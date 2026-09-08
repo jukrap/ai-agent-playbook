@@ -26,11 +26,11 @@
 
 AI Agent Playbook(AAPB)은 코딩 에이전트와 함께 작업할 때 프로젝트의 현재 상태와 결정 근거를 남기고, 명세·인수인계·디자인·문서를 정리하는 데 쓰는 도구 모음입니다. 재사용 스킬, 복사해서 쓸 템플릿, 명령줄 도구, 선택형 읽기 전용 MCP 서버를 제공합니다.
 
-현재 목표, 제약, 확인한 사실, 다음 할 일은 `CURRENT.md`에 적습니다. 자세한 결정이나 검증 근거가 필요하면 별도 문서를 만들고 링크합니다. 기록은 일반 Markdown과 JSON 파일이므로 평소 쓰는 편집기나 에이전트로 읽고 수정할 수 있습니다.
+현재 목표, 제약, 확인한 사실, 다음 할 일은 `CURRENT.md`에 적습니다. 주제별 지식은 현재 규칙과 계약을, 월별 작업 일지는 의미 있는 진척의 상세 근거를 보존합니다. 등록된 작업 공간에서는 코드나 기존 로컬 기록을 옮기지 않고 여러 저장소가 공통 기록을 사용할 수 있습니다. 기록은 일반 Markdown과 JSON이므로 평소 쓰는 편집기나 에이전트로 읽고 수정합니다.
 
 특정 에이전트에 묶이지 않습니다. Codex, Claude Code 등에서 같은 기록과 참고 자료를 사용할 수 있으며, 도구별 설정은 `adapters/`에서 따로 설명합니다.
 
-1.0은 프로젝트 기록, 산출물 형식, 필요한 전문 지침에 집중합니다. 코드 실행과 예약 작업은 에이전트 앱이나 프로젝트의 기존 도구가 맡습니다. 0.5 버전을 사용했다면 [1.0 변경사항과 이전 버전](docs/redesign.ko.md)을 함께 확인하세요.
+AAPB는 어디서나 읽을 수 있는 기록, 명시적 작업 공간 등록, 산출물 형식과 필요한 전문 지침에 집중합니다. 코드 실행과 예약 작업은 에이전트 앱이나 프로젝트의 기존 도구가 맡습니다. 0.5 버전을 사용했다면 [1.0 변경사항과 이전 버전](docs/redesign.ko.md)을 함께 확인하세요.
 
 ## 제공하는 것
 
@@ -64,6 +64,8 @@ ai-agent-playbook skills install --profile development --json
 ai-agent-playbook skills check --profile development --json
 ```
 
+작업 공간과 기록 작성 예시를 사용하기 전에 `ai-agent-playbook --version`을 확인하세요. 아직 게시하지 않은 후보는 [소스·로컬 압축 파일 시연](docs/demo.ko.md)으로 사용합니다. npm 설치나 `@latest` 호출은 게시된 패키지를 선택합니다.
+
 에이전트에서 스킬 목록을 다시 불러오거나 새 세션을 시작합니다. 파일 설치와 실제 앱 로딩은 별도로 확인합니다.
 
 프로젝트 폴더에서 아래 명령을 실행하세요. 프로젝트 경로를 생략하면 현재 터미널의 작업 폴더를 사용합니다.
@@ -75,7 +77,9 @@ ai-agent-playbook bootstrap
 ai-agent-playbook records read --path CURRENT.md
 ```
 
-Bootstrap은 기존 `AGENTS.md`와 기록을 보존합니다. 새 플레이북에는 `CURRENT.md`와 관리 파일 두 개를 만듭니다. Git 저장소에서 기록을 로컬에만 두려면 두 bootstrap 명령에 모두 `--local-only`를 붙입니다.
+대화형 터미널에서 별도 선택 없이 bootstrap을 실행하면 최종 검토가 포함된 안내를 엽니다. 새 구성은 표준 기록 안내와 Git 로컬 제외를 기본으로 하며 Git이 없으면 제외하지 않습니다. `--dry-run`은 선택한 내용을 미리 보여줍니다. 기존 기록과 루트 지침은 보존하고 AGENTS 링크는 선택한 경우에만 추가합니다.
+
+스크립트에서는 `--kind single --records standard --exclude none --agents preserve --json`처럼 선택을 명시하세요. 명시적 설정과 비대화형 호출은 별도로 지정하지 않으면 최소·제외 없음 기본값을 유지합니다. `--yes`는 질문 없이 안내 기본값을 고르고 `--json`은 질문하지 않습니다. [작업 공간](docs/workspaces.ko.md)은 반복하는 `--repo-path` 선택을, [오래 유지할 기록](docs/durable-records.ko.md)은 `worklog new/list`와 `knowledge new`를 설명합니다.
 
 다른 폴더를 대상으로 삼으려면 `ai-agent-playbook bootstrap "<project>" --dry-run`처럼 경로를 붙이거나 `--project "<project>"`를 사용하세요. [명령어 가이드](docs/commands.ko.md)에서 전체 명령 조합과 옵션별 뜻을 설명합니다.
 
@@ -90,7 +94,7 @@ Forge는 GitHub나 Gitea처럼 이슈와 코드 리뷰를 관리하는 서비스
 | 구성 요소 | 필요한 경우 | 확인할 점 |
 | --- | --- | --- |
 | Node.js `18+` | CLI와 MCP 사용 | 패키지의 최소 조건입니다. 실제 검증 버전은 검증 보고서에 따로 적습니다. |
-| Git | 소스 복제·갱신, `--local-only`, Forge 원격 확인 | 일반적인 기록 조회에는 원격 저장소가 필요하지 않습니다. |
+| Git | 소스 복제·갱신, Git 로컬 제외, Forge 원격 확인 | 기록 생성과 조회는 Git 없이도 가능하며 로컬 제외를 건너뛰면 그 사실을 표시합니다. |
 | Python `3.11+` | 선택형 문서 점검 엔진 | 기본 기록 기능과 JavaScript 문서 점검은 Python 없이 사용할 수 있습니다. |
 | GitHub / Gitea 접근 권한 | 협업 계획을 원격에 적용 | 로컬 미리보기만으로 로그인이나 원격 쓰기 권한을 확인한 것은 아닙니다. |
 | MCP 지원 에이전트 앱 | 선택형 MCP 연결 | 파일을 직접 편집하거나 CLI만 사용해도 됩니다. |
@@ -155,7 +159,7 @@ skills/
   frontend/           실제 화면을 기준으로 한 UI 다듬기
   legacy/             선택형 레거시 시스템 보존 계약
 references/           이전 카탈로그의 분야별 참고 자료
-templates/            복사해서 쓸 루트 지침과 현재 상태 문서
+templates/            루트 지침·현재 상태·작업 일지·지식 문서 템플릿
 examples/             작업 기록·프롬프트·인수인계 예시
 translations/ko/      한국어 읽기용 문서. 별도의 설치형 스킬 목록이 아님
 adapters/             에이전트별 설정 안내
@@ -185,6 +189,9 @@ CHANGELOG.md          버전별 변경 기록
 [문서 지도](docs/README.ko.md)에서 목적에 맞는 읽기 순서를 고르거나 아래 안내를 바로 열 수 있습니다.
 
 - [저장소 맥락](CONTEXT.ko.md): 용어와 설계 의도.
+- [작업 공간](docs/workspaces.ko.md): 명시적인 구성원 등록, 공통·로컬 기록과 코드 대상.
+- [오래 유지할 기록](docs/durable-records.ko.md): 현재 상태, 지식, 월별 작업 일지와 근거 보존.
+
 - [처음 10분 사용법](docs/quick-start.ko.md): 초보자 실습, 용어, 예상 결과, 문제 해결.
 - [명령어 가이드](docs/commands.ko.md): 명령·옵션·예시·쓰기 여부·종료 코드.
 - [설치·업데이트·복구](docs/lifecycle.ko.md): 패키지와 스킬의 설치, 갱신, 삭제, 이전, 복구.

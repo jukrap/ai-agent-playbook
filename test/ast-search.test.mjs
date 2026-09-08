@@ -140,7 +140,7 @@ test('AST CLI uses cwd, preserves read-only behavior and keeps old mutation comm
 
 test('AST reports a missing optional engine without downloading or changing source', async (t) => {
   const target = await fixture(t, { 'source/a.js': 'console.log(1)' });
-  for (const name of ['ast-search.mjs', 'ast-worker.mjs', 'fs-safety.mjs', 'record-paging.mjs']) {
+  for (const name of ['ast-search.mjs', 'ast-worker.mjs', 'fs-safety.mjs', 'record-paging.mjs', 'workspace.mjs']) {
     await copyFile(path.join(repoRoot, 'src', name), path.join(target, name));
   }
   const isolated = await import(pathToFileURL(path.join(target, 'ast-search.mjs')).href);

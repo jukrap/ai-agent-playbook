@@ -25,6 +25,8 @@ ai-agent-playbook --help
 
 전역 설치를 하면 기본 명령 `ai-agent-playbook`과 축약 명령 `aapb`를 사용할 수 있습니다. 두 명령의 옵션과 동작은 같습니다. 도움말에서 기록·스킬·선택형 명령을 확인하세요. 전역 설치 없이 가끔 사용하려면 `ai-agent-playbook` 대신 `npx ai-agent-playbook`을 쓸 수 있습니다.
 
+게시하지 않은 후보의 기능은 npm에 올라갔다고 가정하지 말고 [소스·로컬 압축 파일 시연](demo.ko.md)으로 사용하세요.
+
 버전을 고정하거나 별도 폴더에 설치하는 방법은 [설치·복구 안내](lifecycle.ko.md)에 있습니다. 이제 새 연습 폴더를 만들 수 있는 상위 폴더에서 계속합니다.
 
 ## 2. 연습용 폴더를 만들고 미리보기 실행하기
@@ -35,17 +37,19 @@ ai-agent-playbook --help
 mkdir aapb-demo
 cd aapb-demo
 ai-agent-playbook records status --json
-ai-agent-playbook bootstrap --dry-run
+ai-agent-playbook bootstrap --records minimal --exclude none --lang ko --dry-run --json
 ```
 
 상태 조회에서는 플레이북이 없다고 나옵니다. 새 폴더이므로 정상입니다. 미리보기에는 만들 예정인 파일 세 개가 표시되지만 아직 생성하지 않습니다.
 
-이 명령들은 현재 터미널의 작업 폴더를 사용합니다. `.`을 붙여도 같습니다. 다른 폴더는 경로나 `--project "<project>"`로 지정합니다. 상위 Git 루트를 자동으로 찾아 올라가지는 않습니다.
+위 예시는 최소 구성을 명시했습니다. 대화형 터미널에서 별도 선택 없이 `bootstrap`을 실행하면 안내를 열고 표준 기록을 기본으로 선택합니다. Git이 있으면 로컬 제외, 없으면 제외 없음이 기본입니다. `--yes`는 질문 없이 안내 기본값을 사용하며 `--json`은 질문하지 않습니다.
+
+이 명령들은 현재 터미널의 작업 폴더를 사용합니다. `.`을 붙여도 같습니다. 다른 폴더는 경로나 `--project "<project>"`로 지정합니다. 등록된 구성원은 상위 작업 공간의 공통 기록을 사용할 수 있습니다. 그 밖에는 선택한 폴더에서 찾으며 일반적인 상위 Git 루트 탐색은 하지 않습니다.
 
 ## 3. 현재 상태 문서를 만들고 편집하기
 
 ```sh
-ai-agent-playbook bootstrap
+ai-agent-playbook bootstrap --records minimal --exclude none --lang ko --json
 ai-agent-playbook records read --path CURRENT.md
 ```
 
@@ -122,9 +126,9 @@ ai-agent-playbook records status "<project>" --json
 ai-agent-playbook bootstrap "<project>" --local-only --dry-run
 ```
 
-`--local-only`는 Git 저장소에서만 사용합니다. 새 플레이북을 만들 때 기록 폴더를 Git의 로컬 제외 목록에 추가합니다. Git이 아닌 폴더이거나 기록을 커밋해서 공유할 예정이면 옵션을 빼세요. 어느 쪽이든 커밋을 자동으로 만들지는 않습니다.
+`--local-only`는 `--exclude local`의 별칭입니다. Git이 있으면 로컬 제외를 요청하고 없으면 기록을 만든 뒤 제외를 건너뛰었다고 알립니다. 새 규칙이 필요 없으면 `--exclude none`, 공유 제외 규칙은 `shared`, 사용자 전체 규칙은 `global`을 사용합니다. 어느 방식도 커밋을 만들거나 Git을 초기화하지 않습니다.
 
-기록이 이미 있다면 표시된 시작 문서를 읽습니다. Bootstrap은 기존 기록과 루트 지침을 보존합니다. 기록이 없고 미리보기가 맞다면 `--dry-run`을 빼고 다시 실행하세요. 기록 구조를 이전하기 전에는 [기존 저장소 적용 안내](existing-repository-bootstrap.ko.md)를 읽습니다.
+기록이 이미 있다면 표시된 시작 문서를 읽습니다. Bootstrap은 기존 기록과 루트 지침을 보존합니다. `--records standard`는 없는 안내를, 명시적인 `--agents link`는 짧은 기록 링크를 추가할 수 있습니다. 기록이 없고 미리보기가 맞다면 `--dry-run`을 빼고 다시 실행하세요. 기록 구조를 이전하기 전에는 [기존 저장소 적용 안내](existing-repository-bootstrap.ko.md)를 읽습니다.
 
 ## 막혔을 때 확인할 사항
 
@@ -133,7 +137,7 @@ ai-agent-playbook bootstrap "<project>" --local-only --dry-run
 | `node`나 `npm`을 찾지 못함 | Node.js 설치 후 터미널을 다시 열고 `node --version`, `npm --version` 실행 |
 | 로컬 Node 스크립트를 찾지 못함 | 격리 설치에서 지정한 패키지 절대 경로 확인 |
 | `ai-agent-playbook` 명령을 찾지 못함 | 버전 확인. 0.5.11은 `aapb`만 제공합니다. 1.0이면 npm 전역 설치 후 터미널 다시 열기. npm 설치 위치와 PATH를 확인하거나 격리 Node 진입점 사용 |
-| Git이 아닌 폴더에서 `--local-only` 실패 | 연습 폴더에서는 빼고 Git 저장소에서만 사용 |
+| Git이 없는 폴더에서 로컬 제외를 건너뜀 | 기록은 계속 사용 가능. 경고를 확인하거나 `--exclude none`을 명시하며 Git 초기화는 필요 없음 |
 | 에이전트에 스킬이 보이지 않음 | 프로필, 설치 결과, 앱의 지원 경로, 새 세션의 목록 확인 |
 | 이전 스킬과 충돌함 | 파일을 보존하고 이전 미리보기 확인. 강제 덮어쓰기 옵션은 지원하지 않음 |
 | 수정된 관리 파일이 있다고 나옴 | 수정 내용을 검토. 표시를 없애려고 유용한 기록을 덮어쓰지 않기 |
@@ -144,10 +148,12 @@ ai-agent-playbook bootstrap "<project>" --local-only --dry-run
 | --- | --- |
 | `ai-agent-playbook` / `aapb` | 같은 패키지가 제공하는 기본 명령 / 축약 명령 |
 | `npx` | npm 패키지를 실행하는 도구. 소스·전역 설치본과 다른 버전을 고를 수 있음 |
-| `bootstrap` | 플레이북이 없을 때만 기록을 생성하는 명령 |
+| `bootstrap` | 기존 내용을 보존하며 없는 기록이나 선택한 안내·링크·제외 변경을 적용하는 명령 |
 | `--dry-run` | 쓰기 없이 예정된 작업을 확인하는 옵션 |
-| `--apply` | 원래 미리보기로 동작하는 이전·복구·Forge 명령을 적용하는 옵션 |
+| `--apply` | 원래 미리보기로 동작하는 작업 공간 변경·이전·복구·Forge 명령을 적용하는 옵션 |
 | `--json` | 경고와 이어 읽기 정보 등을 구조화해서 출력하는 옵션 |
 | 커서 | 다음 결과 위치를 나타내는 반환값. 고치지 않고 다음 요청에 전달 |
+
+여러 저장소는 [작업 공간](workspaces.ko.md), 의미 있는 진척의 일지와 재사용할 지식은 [오래 유지할 기록](durable-records.ko.md)을 참고하세요.
 
 이어서 [명령어 가이드](commands.ko.md), [설치·복구](lifecycle.ko.md), [MCP 설정](mcp-permission-model.ko.md)을 볼 수 있습니다. 전체 안내는 [문서 지도](README.ko.md)에 있습니다.

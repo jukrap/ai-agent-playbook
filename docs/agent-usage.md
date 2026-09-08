@@ -26,6 +26,16 @@ The default MCP surface contains `aapb_status`, `aapb_search`, `aapb_read`, and 
 
 In Codex, the common server can use each task's working directory without a per-project path setting. Open a task in the intended project; [MCP setup](mcp-permission-model.md) explains the default and optional fixed targets. Check the advertised names, then exercise status/read/search/validation and verify the result and unchanged files. Those checks prove server behavior. To assess automatic selection, separately give an ordinary task without naming a tool and inspect what the agent actually chose. Direct file reading may also be a valid choice.
 
+## Workspaces and durable records
+
+Start from CURRENT.md and task-relevant knowledge or worklogs. Narrow reads with path, repository, month, and kind filters, then expand when evidence is missing. A global reference does not require reading all history or writing a log after every response. Record meaningful milestones and retain exact evidence in [durable records](durable-records.md).
+
+Common records bind only explicitly registered workspace members. Before code or Git operations, confirm the selected repository and its instructions, root, branch, dirty state, and required checks. At a workspace root, AST and Forge require `--repo <id>`. Record-tool `recordSource` selects common or existing member-local records; search `repo` filters records for a member. See [Workspaces](workspaces.md).
+
+Astra or Sol can handle the main task. Preserve the user's model and reasoning choices, including Sol `xhigh` and `max`. Normally record work in the main task; an optional long independent draft can use a bounded fact packet and short relevant history. The parent reviews source paths, numbers, commands, URLs, decisions, and unknowns before adoption. Host capabilities determine exact spawn arguments and permissions; a role prompt is not a security sandbox. [Codex model use](../adapters/codex/model-use.md) covers supported-host v1/v2 waits without forcing a 25-minute setting or adding a scheduler.
+
+Complete authorized investigation, implementation, verification, and review while preserving explicit approvals. Reuse passing checks only when relevant inputs and conditions are unchanged and required gates permit it; changed executable examples and configuration contracts still need verification.
+
 ## Korean writing tools
 
 The writing skill preserves meaning and register and offers relevant examples. Normal editing does not require running a checker. For a material before/after comparison, the optional CLI can inspect protected information:

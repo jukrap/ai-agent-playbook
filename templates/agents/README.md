@@ -10,9 +10,19 @@ This directory is for project instructions. Personal Codex defaults are in [code
 2. Keep the repository's accepted rules and user edits. If root instructions are absent and useful, adapt the template rather than treating it as an installed managed file.
 3. Add actual commands and links that help work in this project. Do not leave example filenames or guessed commands as requirements.
 4. Keep detailed architecture in its existing document. Record ownership, dependency direction, exceptions, and when a decision should be revisited.
-5. Create project records with bootstrap only when needed. Bootstrap preserves root instructions and does not copy this template automatically.
+5. Create project records with bootstrap only when needed. Bootstrap preserves existing root instructions and does not copy this template automatically. An explicitly selected AGENTS link can connect the existing instructions to records without replacing project rules.
 
 For new, existing, or changing structures, use [Choose and evolve an architecture](../../docs/project-architecture.md). An accepted architecture can evolve; a template should not freeze an idealized folder tree.
+
+Keep restrictions from example projects in their original context. A tool preference, dependency restriction, or Git approval rule in one example does not become a universal policy. Preserve actual project requirements when adapting the template.
+
+## Workspace targets and records
+
+Project records also work in a folder without Git. In a multi-repository workspace, register the intended members explicitly and keep common records separate from the selected code target. A discovered folder is only a candidate. Before code or Git operations, check the selected repository's instructions, root, and Git state when present. An ambiguous workspace root requires a repository choice; an ancestor record folder does not bind unrelated descendants.
+
+Keep the existing CURRENT.md as the short resume point. Use topic knowledge for current rules and contracts, with sources, dates, applicable repositories, and uncertainty. Use detailed worklogs for milestone history and verification, grouped by month for the new layout. Read related records through links and available repository, topic, month, kind, or path filters instead of loading all history. Existing member-local records stay separate unless their migration is explicitly requested.
+
+Assign one owner to shared current-state updates. Independent record drafts can be reviewed and incorporated without giving several agents the same file to overwrite. The [project-memory skill](../../skills/project/project-memory/SKILL.md) covers record roles and evidence; it does not require every project to create the whole structure or add a timer.
 
 ## Earlier template paths
 

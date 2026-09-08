@@ -6,6 +6,7 @@ import path from 'node:path';
 import { AST_LANGUAGES, AST_LIMITS } from './ast-search.mjs';
 import { projectRoot, safePath, relativePath, readBytes, sha256, noLinks } from './fs-safety.mjs';
 import { integerLimit, pageItems, scopeHash, textBoundary } from './record-paging.mjs';
+import { resolveCodeTarget, projectGitEnvironment } from './workspace.mjs';
 
 const EXCLUDED = new Set(['.git', 'node_modules', 'dist', 'build', 'coverage', '.next', '.turbo', '.venv', '.ai-agent-playbook', '.ai-playbook', 'ai-playbook', '.refra-scope', '_reference', '_work']); // Includes legacy record layouts.
 const EXTENSIONS = { javascript: ['.js', '.mjs', '.cjs'], typescript: ['.ts', '.mts', '.cts'], tsx: ['.tsx'], jsx: ['.jsx'], css: ['.css'], html: ['.html', '.htm'] };
@@ -27,7 +28,7 @@ async function scan(options) {
   // Validate page limits before loading the optional engine or reading source.
   integerLimit(maxResults, 20, 100);
   integerLimit(maxChars, 12000, 100000);
-  const root = await projectRoot(target);
+  const root = await resolveCodeTarget({ target, repo: options.repo });
   const selection = options.path === undefined || options.path === '.' ? '.' : relativePath(options.path);
   if (excluded(selection)) throw fail('excluded-path', 'Path belongs to an excluded generated or local-record directory.');
   const selected = selection === '.' ? root : await safePath(root, selection);
@@ -50,8 +51,9 @@ async function scan(options) {
   let candidates;
   try {
     const gitOptions = ['--literal-pathspecs', '-c', 'core.fsmonitor=false', '-C', root];
-    await promisify(execFile)('git', [...gitOptions, 'rev-parse', '--is-inside-work-tree'], { windowsHide: true, timeout: 5000 });
-    const output = await promisify(execFile)('git', [...gitOptions, 'ls-files', '--cached', '--others', '--exclude-standard', '-z', '--', selection], { windowsHide: true, timeout: 10000, maxBuffer: 4_000_000 });
+    const env = projectGitEnvironment();
+    await promisify(execFile)('git', [...gitOptions, 'rev-parse', '--is-inside-work-tree'], { env, windowsHide: true, timeout: 5000 });
+    const output = await promisify(execFile)('git', [...gitOptions, 'ls-files', '--cached', '--others', '--exclude-standard', '-z', '--', selection], { env, windowsHide: true, timeout: 10000, maxBuffer: 4_000_000 });
     candidates = [...new Set(output.stdout.split('\0').filter(Boolean))];
     sourceMode = 'git';
   } catch (error) {

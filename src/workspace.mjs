@@ -1,10 +1,17 @@
-import { readdir } from 'node:fs/promises';
+import { readdir, open, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { projectRoot, safePath, statOrNull, noLinks, readJson, readBytes, relativePath, inside, sha256, writeAtomic } from './fs-safety.mjs';
 
 export const PLAYBOOK_NAMES = ['.ai-agent-playbook', '.ai-playbook', 'ai-playbook']; // Legacy compatibility roots.
 const MAX_REPOSITORIES = 256;
 const fail = (message) => Object.assign(new Error(message), { code: 'aapb.workspace-invalid' });
+
+/** Keep user authentication/configuration but never let ambient worktree overrides retarget a query. */
+export function projectGitEnvironment() {
+  const env = { ...process.env, GIT_OPTIONAL_LOCKS: '0' };
+  for (const name of ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR', 'GIT_INDEX_FILE', 'GIT_OBJECT_DIRECTORY', 'GIT_ALTERNATE_OBJECT_DIRECTORIES', 'GIT_PREFIX']) delete env[name];
+  return env;
+}
 
 export async function locateLocalPlaybook(target) {
   const root = await projectRoot(target), found = [];
@@ -24,7 +31,7 @@ export function validateWorkspaceConfig(config) {
   const repositories = config.repositories.map((repo) => {
     if (!repo || typeof repo.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(repo.id) || ids.has(repo.id)) throw fail('Repository IDs must be unique lowercase names of at most 64 characters.');
     const relative = relativePath(repo.path);
-    if (relative.split('/').some((part) => part === '.git' || PLAYBOOK_NAMES.includes(part))) throw fail('Repository paths cannot point into Git metadata or playbook records.');
+    if (relative.split('/').some((part) => part.toLowerCase() === '.git' || PLAYBOOK_NAMES.includes(part.toLowerCase()))) throw fail('Repository paths cannot point into Git metadata or playbook records.');
     const folded = relative.toLowerCase();
     if (paths.some((other) => other === folded || other.startsWith(folded + '/') || folded.startsWith(other + '/'))) throw fail('Registered repository paths must not duplicate or overlap.');
     if (repo.role !== undefined && (typeof repo.role !== 'string' || repo.role.length > 200 || /[\x00-\x1f]/.test(repo.role))) throw fail('Repository role must be a short, single-line description.');
@@ -73,6 +80,14 @@ export async function findWorkspace(target) {
   return { workspace: null, activeRepo: null, start };
 }
 
+async function locateMemberPlaybook(workspace, member) {
+  const root = await projectRoot(await safePath(workspace.root, member.path));
+  if (!member.recordPath) return locateLocalPlaybook(root);
+  const directory = await safePath(root, member.recordPath), st = await statOrNull(directory);
+  if (st && !st.isDirectory()) throw fail('Local record path is not a directory.');
+  return { root, directory, name: member.recordPath, exists: Boolean(st) };
+}
+
 export async function resolveRecordContext({ target, recordSource = undefined }) {
   const context = await findWorkspace(target);
   if (recordSource !== undefined && recordSource !== 'workspace' && !/^repo:[a-z0-9][a-z0-9-]{0,63}$/.test(recordSource)) throw fail('recordSource must be workspace or repo:<registered-id>.');
@@ -84,13 +99,7 @@ export async function resolveRecordContext({ target, recordSource = undefined })
   if (recordSource?.startsWith('repo:')) {
     const id = recordSource.slice(5), repo = workspace.config.repositories.find((item) => item.id === id);
     if (!repo) throw fail('Unknown repository ID: ' + id);
-    const repoRoot = await projectRoot(await safePath(workspace.root, repo.path));
-    let local;
-    if (repo.recordPath) {
-      const directory = await safePath(repoRoot, repo.recordPath), st = await statOrNull(directory);
-      if (st && !st.isDirectory()) throw fail('Local record path is not a directory.');
-      local = { root: repoRoot, directory, name: repo.recordPath, exists: Boolean(st) };
-    } else local = await locateLocalPlaybook(repoRoot);
+    const local = await locateMemberPlaybook(workspace, repo);
     return { ...local, workspace, activeRepo: repo, recordSource };
   }
   return { root: workspace.root, directory: workspace.directory, name: workspace.name, exists: true, workspace, activeRepo, recordSource: 'workspace' };
@@ -143,9 +152,10 @@ export async function runWorkspace({ target, command, id = undefined, path: repo
   const warnings = [], repositories = [];
   for (const member of workspace.config.repositories) {
     try {
-      const root = await projectRoot(await safePath(workspace.root, member.path));
-      const local = await locateLocalPlaybook(root);
+      const local = await locateMemberPlaybook(workspace, member);
       repositories.push({ ...member, available: true, localRecords: local.exists ? local.name : null });
+      if (member.recordPath && !local.exists) warnings.push({ id: member.id, code: 'missing-record-path', path: member.recordPath,
+        message: 'Registered local record path is missing: ' + member.recordPath + '. The saved selection was preserved; no alternative playbook was substituted.' });
     } catch (error) {
       repositories.push({ ...member, available: false, localRecords: null });
       warnings.push({ id: member.id, message: String(error.message).slice(0, 500) });
@@ -170,6 +180,13 @@ export async function runWorkspace({ target, command, id = undefined, path: repo
   const proposed = JSON.stringify(next, null, 2) + '\n';
   let backup;
   if (apply && !dryRun) {
+    const lockPath = await safePath(workspace.directory, '.workspace-write.lock');
+    let lock;
+    try { lock = await open(lockPath, 'wx'); }
+    catch (error) { if (error.code === 'EEXIST') throw fail('Workspace registration is busy. Retry after the writer finishes; preserve a stale lock until its owner is checked.'); throw error; }
+    const lockStat = await lock.stat();
+    try {
+    await lock.writeFile(JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() }) + '\n');
     const original = await readBytes(workspace.file, 500_000);
     if (sha256(original) !== workspace.hash) throw fail('Workspace registry changed; inspect it before applying.');
     backup = 'archive/workspace-' + workspace.hash.slice(0, 16) + '.json';
@@ -178,7 +195,14 @@ export async function runWorkspace({ target, command, id = undefined, path: repo
     if (!existingBackup) await writeAtomic(backupFile, original, { exclusive: true });
     else if (sha256(await readBytes(backupFile, 500_000)) !== workspace.hash) throw fail('Workspace backup differs; preserve it and choose a new transaction.');
     if (sha256(await readBytes(workspace.file, 500_000)) !== workspace.hash) throw fail('Workspace registry changed after backup; no registry update applied.');
-    await writeAtomic(workspace.file, proposed);
+    await writeAtomic(workspace.file, proposed, { beforeReplace: async () => {
+      if (sha256(await readBytes(workspace.file, 500_000)) !== workspace.hash) throw fail('Workspace registry changed after staging; no registry update applied.');
+    } });
+    } finally {
+      await lock.close();
+      const currentLock = await statOrNull(lockPath);
+      if (currentLock && currentLock.dev === lockStat.dev && currentLock.ino === lockStat.ino) await unlink(lockPath);
+    }
   }
   return { ...base, writes: Boolean(apply && !dryRun), applied: Boolean(apply && !dryRun), proposedRepositories: next.repositories, ...(backup ? { backup } : {}), recordsPreserved: true };
 }

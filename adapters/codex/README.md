@@ -16,9 +16,13 @@ The default user directory is `.agents/skills`. Do not mirror the same skills in
 
 ## Work with project records
 
-Follow project instructions, read CURRENT.md and relevant linked records, then use the project's own tools to implement and verify. Write current facts and the next action with normal file editing. A skill is not required to read plain Markdown.
+Follow project instructions, read CURRENT.md and relevant linked knowledge/worklogs, then use the selected repository's own tools to implement and verify. Use `worklog new/list` and `knowledge new` or normal file editing for durable milestone evidence; keep current facts and the next action in the existing entrypoint. A skill is not required to read plain Markdown.
 
 Preserve existing personal model, reasoning, context, compaction, output, and service settings. AAPB installation does not enable experimental history/notes features. A public source capability, installed version metadata, visible tool, and successful invocation are different evidence.
+
+## Model and reasoning choices
+
+Astra and Sol can both run the main task, including a user's Sol `xhigh` or `max` selection. Preserve main and explicit role settings. Optional independent record drafts remain DRAFT until the parent checks original paths, numbers, commands, URLs, decisions, and unknowns. See [Model use](model-use.md) for host-specific spawn fields and v1/v2 waits. AAPB installs no scheduler or 25-minute wait preset.
 
 ## Optional MCP
 
@@ -40,7 +44,9 @@ In the TOML example, use forward slashes for Windows paths to avoid backslash es
 
 Reload the MCP connection or restart the app, then open a task in the intended project. In `/mcp`, check the connection and four tools. Ask the agent to read CURRENT.md with AAPB. AAPB reports missing records without creating them automatically.
 
-The server stays bound to the directory it started in. Mentioning another repository or running `cd` in a shell does not retarget an existing connection. Start a task in the other project to use its records. AAPB does not search upward for a Git root.
+The server stays bound to its startup context. Mentioning another repository or running `cd` in a shell does not retarget it. Within an explicitly registered workspace, record tools default to common records and accept `recordSource: "repo:<id>"` for existing member-local records; status supports `view: "repositories"`. Registered members can resolve their ancestor workspace. Unregistered folders do not inherit nearby records. Start a separate task for an unrelated project.
+
+At a workspace root, optional AST requires `repo`; within a registered member, that member is the default. CLI AST and Forge use `--repo <id>` for the same boundary. Confirm the selected repository before code or Git operations. [Workspaces](../../docs/workspaces.md), [durable records](../../docs/durable-records.md), and [MCP setup](../../docs/mcp-permission-model.md) explain source selection and filters.
 
 Use `--project "<project>"`, a fixed server `cwd`, or project-local configuration only when you deliberately need a different or fixed target. [MCP setup](../../docs/mcp-permission-model.md) covers those alternatives and output boundaries. See the [official Codex MCP guide](https://learn.chatgpt.com/docs/extend/mcp?surface=cli) for registration and connection controls.
 

@@ -1,6 +1,6 @@
 # Installation, update, migration, and recovery
 
-Manage the CLI package, user skills, and project records separately. npm installs and updates the Node CLI; `ai-agent-playbook skills` manages selected guidance; record commands work on one project. MCP remains a separate host setting.
+Manage the CLI package, user skills, and project records separately. npm installs and updates the Node CLI; `ai-agent-playbook skills` manages selected guidance; record commands select a project or explicitly registered workspace source. MCP remains a separate host setting.
 
 ## Install and update with npm
 
@@ -126,11 +126,24 @@ ai-agent-playbook bootstrap "<project>" --local-only --dry-run
 ai-agent-playbook bootstrap "<project>" --local-only
 ```
 
-New bootstrap creates `CURRENT.md`, `manifest.json`, and `.ai-agent-playbook-install.json`; it preserves root `AGENTS.md`. `--local-only` adds an exclusion through Git's local exclude file, including linked worktrees. It requires Git and does not change shared `.gitignore`. Omit it when records should be available for committing or when the project is not a Git repository.
+Explicit argument mode defaults to minimal records; `--records standard` also adds worklog and knowledge guides when absent. Root `AGENTS.md` is preserved unless `--agents link` is selected. `--local-only` aliases `--exclude local`; without Git, records are still created and the skipped exclusion is reported. Choose `shared` for a `.gitignore` rule, `global` for a user-level Git exclusion, or `none` for no new rule. Global changes affect other repositories using that file, while local Git excludes may also affect linked worktrees.
 
-Existing records are not overwritten. Rerunning bootstrap does not convert an existing shared playbook into local-only records. Choose that Git policy explicitly for existing records; see [Existing repositories](existing-repository-bootstrap.md).
+Existing records are not overwritten. Rerunning bootstrap can add missing guides or an explicit AGENTS link and transition unchanged AAPB-owned exclusions. User rules, tracked files, metadata, and membership remain preserved; see [Existing repositories](existing-repository-bootstrap.md).
 
 Project record deletion is a deliberate file-management decision, not part of package uninstall. Back up useful records and check references and Git tracking before removing a playbook. The old `managed uninstall` command is retired; it does not silently delete documents in 1.0.
+
+## Recover bootstrap and exclusion changes
+
+Keep the `backup` journal returned by a bootstrap change, including exclusion-mode transitions and additions to AGENTS.md. Use that exact journal with the same project:
+
+```sh
+ai-agent-playbook migrate bootstrap-rollback "<project>" --backup "<returned-journal>" --json
+ai-agent-playbook migrate bootstrap-rollback "<project>" --backup "<returned-journal>" --apply --json
+```
+
+The first call previews; `--apply` restores affected content only when current and saved hashes permit it. Later user edits are preserved as conflicts. Check returned operations and warnings, retain the journal, and recover dependent changes newest first. This is separate from layout migration and skill rollback. A backup returned by `workspace add/remove` is a prior registry, not a bootstrap journal; review it alongside current membership before a deliberate registry restoration.
+
+For common records and explicit members, follow [Workspaces](workspaces.md). For date-based worklogs and topic knowledge, follow [Durable records](durable-records.md). Those operations do not require moving existing records or setting a timer.
 
 ## Migrate and restore layout metadata
 
@@ -149,6 +162,12 @@ ai-agent-playbook migrate rollback "<project>" --backup "<returned-relative-back
 ```
 
 Later metadata changes are preserved as conflicts. Missing ownership or a modified manifest is a reason to inspect and reconcile, not invent ownership to force migration. Multiple playbook roots are ambiguous and must be reconciled deliberately.
+
+## Recover a member-local record source
+
+`migrate layout`, `migrate rollback`, and `migrate bootstrap-rollback` accept `--record-source repo:<id>` for an explicitly registered member's existing records. Keep the same project target, source, and matching returned backup through preview and apply. Omission uses the common workspace records; selecting a member must not be replaced by changing shell directories alone. A migration or rollback updates only its selected record source, preserving common records and other members.
+
+The [command guide](commands.md) shows source-qualified examples. Inspect legacy ownership and current hashes before applying; source selection does not bypass those checks.
 
 ## PowerShell checkout helpers
 

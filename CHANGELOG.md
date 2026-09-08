@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0-next.1
+
+- Add interactive and argument bootstrap with single/workspace selection, minimal/standard records, optional AGENTS links, and local/shared/global/no exclusions.
+- Support record creation without Git, preserve existing content and tracking, and return guarded bootstrap recovery journals for changes.
+- Register workspace members explicitly; resolve shared records from registered descendants and select existing member-local records without moving them.
+- Add monthly worklog creation/listing, topic knowledge creation, repository inventory, and bounded record filters.
+- Require a selected repository for workspace-root AST and Forge operations; retain existing AST languages and four default MCP tools.
+- Update English/Korean instructions and guides while preserving user model/reasoning choices, approval requirements, and detailed evidence.
+
+Local candidate; registry publication and final verification are separate. See [Local package testing](docs/demo.md).
+
 ## 1.1.0
 
 - Restore read-only structural source search through `ast search`, with a lazily loaded optional ast-grep engine.

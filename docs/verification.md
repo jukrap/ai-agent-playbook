@@ -1,6 +1,26 @@
 # Verification record
 
-The sections below preserve development-stage evidence and its original scope. Current release information is in [1.0.0 release notes](release-1.0.0.md). Test totals and package checks from an earlier archive do not automatically describe a later archive.
+The sections below preserve development-stage evidence and its original scope. Current change information is in the [changelog](../CHANGELOG.md); [local package testing](demo.md) explains how to verify an unpublished candidate. The historical [1.0.0](release-1.0.0.md) and [1.1.0](release-1.1.0.md) release notes retain their own scope. Test totals and package checks from an earlier archive do not automatically describe a later archive.
+
+## Workspace and durable-record candidate
+
+The `1.2.0-next.1` source passed 240 tests on Windows with Node.js 22.22.3, plus syntax, TypeScript, Python, naming, skills, translation and public-document checks. Required PowerShell validation and install/update/sync previews passed without updating installed skills. The source still offers six skills, including optional legacy contracts; the development profile selects five.
+
+Fixtures include twelve independent Git repositories: one PC web, three webview webs, four Android and four iOS members. Checks cover shared/member-local records, Git-less bootstrap, four exclusion modes, worktree exclusions, cancellation, previews, ownership, interrupted changes/recovery, concurrent worklogs and registry writers, and user edits. Follow-up regressions cover reserved-directory case variants, stale member record paths, cross-workspace cursors, flat legacy monthly logs, filtered traversal/text budgets and explicit-source migration/rollback. Forge cannot inherit an ancestor remote from a plain registered subdirectory, including when a member's Git directory disappears. Remote writes use test transports.
+
+A real terminal completed a Korean guide dry run and a separate cancellation without creating files. SDK stdio tests exercised the five-tool surface, including AST, from a registered member. Separate ephemeral Codex host sessions used Astra `xhigh` at the workspace root and Sol `max` inside a member. Both retrieved the shared goal, linked knowledge, recorded checks, unknowns and next action through MCP, preserving fixture files. This verifies invocation and record resumption; it does not verify native apps or builds.
+
+Three synthetic fact packets compared Astra `xhigh` alone with a Sol `xhigh` draft followed by Astra `xhigh` review. All supplied commands, URLs, source locators, IDs and values survived all nine outputs. Review found no assumptions or unrun checks promoted to fact. One Sol draft exceeded the requested 20 lines; another duplicated the next action as a proposal. Review corrected both.
+
+| Packet | Main-only seconds | Draft + review seconds | Main-only input tokens | Draft + review input tokens |
+| --- | --- | --- | --- | --- |
+| Authentication | 29.86 | 51.39 | 16,781 | 32,903 |
+| Upload limit | 21.19 | 35.51 | 16,750 | 32,824 |
+| Native bridge evidence | 28.59 | 33.35 | 16,767 | 32,884 |
+
+These are CLI end-to-end timings and reported input usage, including host instructions and cached input, for one run per case. Each main-only run reported 11,776 cached input tokens; each draft/review pair reported 22,528 combined. The text-only comparisons called no tools. They establish no general speed, quality, price or subscription-limit improvement. Drafting alone finished sooner, but adding review increased total time and input usage in all three cases. Ordinary records therefore remain with the main task; long independent drafts are optional.
+
+The candidate adds no model runner, timer, vector database or required 25-minute wait preset. Linux/macOS execution, real company repositories, native devices and long-record delegation economics were not tested in this stage. GitHub delivery and npm publication remain separate steps.
 
 ## Earlier prerelease scope and runtime checks
 

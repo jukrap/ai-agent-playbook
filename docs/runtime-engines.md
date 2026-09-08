@@ -56,6 +56,6 @@ Each probe is bounded at eight seconds. `python-status` reports the selected int
 
 ## Versions and validation
 
-The stable Node package and Python engine both use `1.0.0`. For a future prerelease, npm `next.N` maps to Python's PEP 440 `devN`. For development, run `npm run validate:python` after changing engine behavior. An optional engine being absent in a user's environment is different from a failed required development check.
+Keep the Node package and Python engine versions aligned. npm `next.N` maps to Python's PEP 440 `devN`; for example, `1.2.0-next.1` corresponds to `1.2.0.dev1`. Check the actual package and engine metadata instead of assuming a global installation matches the checkout. For development, run `npm run validate:python` after changing engine behavior. An optional engine being absent in a user's environment is different from a failed required development check.
 
 Writing findings remain advisory. See [Quality review](quality-review.md) for how to preserve meaning and voice instead of treating every signal as a required edit.

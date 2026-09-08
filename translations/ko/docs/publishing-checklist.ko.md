@@ -5,7 +5,7 @@ Node와 Python 릴리스 메타데이터를 맞춥니다. npm의 `next.N` 사전
 ## 릴리스 후보 준비
 
 1. 브랜치, 커밋하지 않은 상태, 의도한 변경, 보존할 사용자 변경을 확인합니다.
-2. `package.json`, `src/version.mjs`, Python 설정·버전, 변경 기록, 버전별 안내를 맞춥니다. 정식 `1.1.0` 전환은 의도적으로 결정해야 하며 태그 변경의 부수 효과로 진행하지 않습니다.
+2. `package.json`, `src/version.mjs`, Python 설정·버전, 변경 기록, 버전별 안내를 맞춥니다. 정식 전환은 의도적으로 결정합니다. 게시를 승인하기 전까지 `1.2.0-next.1` 후보와 게시된 `1.1.0` 패키지를 구분합니다.
 3. 동작·번역·공개 문서·래퍼 미리보기를 포함한 [유지보수 검사](maintenance.ko.md)를 실행합니다.
 4. 격리된 폴더에서 초보자 실습과 바뀐 명령 예시를 따라 합니다. README 두 언어의 표현과 한국어 이해도를 검토합니다.
 5. 압축 파일에 런타임, 선택 스킬, 참고 자료, 연결된 안내·예시·이미지가 있는지 봅니다. 개인 기록, 백업, 원시 로그, 시험 설치본, 종료된 실행 모듈은 제외합니다.
@@ -29,10 +29,10 @@ node "<demo-prefix>/node_modules/ai-agent-playbook/bin/aapb.mjs" --help
 정확한 후보 파일과 게시가 허용된 뒤에 검증한 압축 파일을 게시합니다. 사전 릴리스는 `next` 태그를 사용하고 정식 `latest` 전환은 별도로 결정합니다.
 
 ```powershell
-npm publish "<verified-archive.tgz>" --tag latest --dry-run
+npm publish "<verified-archive.tgz>" --tag next --dry-run
 ```
 
-위 명령은 게시 미리보기입니다. 레지스트리 인증, 권한, 업로드 성공, 공개 상태를 확인한 것은 아닙니다. 실제 게시에는 `--dry-run`을 빼지만 압축 파일 생성에 성공했다는 이유만으로 진행하지 않습니다.
+위 명령은 사전 릴리스 게시 미리보기입니다. `latest`는 명시적으로 승인한 정식 압축 파일에만 선택합니다. 레지스트리 인증, 권한, 업로드 성공, 공개 상태를 확인한 것은 아닙니다. 실제 게시에는 `--dry-run`을 빼지만 압축 파일 생성에 성공했다는 이유만으로 진행하지 않습니다.
 
 의도적으로 게시한 뒤에는 정확한 버전과 태그를 조회하고 새 폴더에 그 버전을 설치해 진입점을 다시 확인합니다. 게시, Git push·PR·병합, 로컬 설치는 따로 기록하세요. 패키지 설치가 스킬·MCP·훅을 자동 활성화해서는 안 됩니다.
 
@@ -41,8 +41,10 @@ npm publish "<verified-archive.tgz>" --tag latest --dry-run
 릴리스 변경을 병합한 뒤 검증한 소스 커밋을 확인합니다. GitHub와 npm에 같은 압축 파일과 체크섬 파일을 사용합니다. 다음 자리표시자를 검증한 파일로 바꾸세요.
 
 ```sh
-gh release create v1.1.0 "<verified-archive.tgz>" "<checksum-file>" --target "<verified-commit>" --title "AI Agent Playbook 1.1.0" --notes-file "<release-notes.md>" --latest
+gh release create "<release-tag>" "<verified-archive.tgz>" "<checksum-file>" --target "<verified-commit>" --title "AI Agent Playbook <version>" --notes-file "<release-notes.md>" --prerelease
 ```
+
+이 사전 릴리스 예시에는 후보 태그와 버전을 사용합니다. 승인한 정식 릴리스에서만 `--prerelease`를 빼고 `--latest`를 선택하세요.
 
 태그가 없으면 명시한 커밋에 연결해 만듭니다. 태그가 이미 있으면 대상을 확인하고 기존 릴리스 태그를 옮기지 않습니다. 두 게시 결과를 각각 확인하세요. [GitHub CLI 릴리스 생성](https://cli.github.com/manual/gh_release_create)과 [npm 게시](https://docs.npmjs.com/cli/v10/commands/npm-publish/) 안내를 참고할 수 있습니다.
 

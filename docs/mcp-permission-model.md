@@ -46,11 +46,11 @@ Instead of an installed script path, the same server can be launched with npm's 
 ```json
 {
   "command": "npx",
-  "args": ["-y", "ai-agent-playbook@1.0.0", "mcp"]
+  "args": ["-y", "ai-agent-playbook@1.1.0", "mcp"]
 }
 ```
 
-This is an alternative command/argument pair for the same registration. Keep the existing activation state, tool allowlist and intended working directory; do not add a duplicate server. Node.js and npm must be available to the host. `-y` skips npm's package-installation confirmation, and `@1.0.0` selects that package version. npm may download missing content to its cache; it does not necessarily download the package on every startup.
+This is an alternative command/argument pair for the same registration. Keep the existing activation state, tool allowlist and intended working directory; do not add a duplicate server. Node.js and npm must be available to the host. `-y` skips npm's package-installation confirmation, and `@1.1.0` selects that published version. It provides the older single-project record behavior and optional AST. For workspace and durable-record candidate behavior, use a verified source or local-archive script from [the demonstration guide](demo.md); `@latest` does not select unpublished checkout changes. npm may download missing content to its cache; it does not necessarily download the package on every startup.
 
 The host starts a server for the connection, not for each tool call. Both launch methods provide the same AAPB tools for the same version and project. A global CLI update does not change an explicit npx version pin; update that pin deliberately and reload the connection when adopting another release.
 
@@ -65,7 +65,7 @@ If another client does not supply the intended working directory, or you deliber
 }
 ```
 
-The equivalent terminal command is `ai-agent-playbook mcp --project "<project>"`. A host that supports a server `cwd` can also fix the startup directory there. Use one targeting method for clarity. These are optional choices in Codex; project-local configuration is useful when connection settings must differ by repository. Check the startup directory in other clients rather than assuming they behave like Codex. AAPB uses the selected directory directly and does not search upward for the Git root.
+The equivalent terminal command is `ai-agent-playbook mcp --project "<project>"`. A host that supports a server `cwd` can also fix the startup directory there. Use one targeting method for clarity. These are optional choices in Codex; project-local configuration is useful when connection settings must differ by repository. Check the startup directory in other clients rather than assuming they behave like Codex. AAPB can resolve an ancestor workspace only for explicitly registered members. Outside a registered workspace, record discovery stays at the selected directory rather than searching for a parent Git root.
 
 ## Enable structural source search once
 
@@ -88,9 +88,24 @@ Earlier 1.0 prereleases advertised `playbook_*`; starting with next.2, the tools
 
 For the distinction between a successful SDK test and an agent choosing a tool for a natural-language request, see [Agent use](agent-usage.md).
 
+## Workspace requests
+
+The four record tool names stay unchanged. Supported workspace arguments include:
+
+| Tool | Example arguments | Meaning |
+| --- | --- | --- |
+| `aapb_status` | `{"view":"repositories","pageSize":10}` | Page registered members |
+| `aapb_read` | `{"recordSource":"repo:web","path":"CURRENT.md"}` | Read the existing local records of member web |
+| `aapb_search` | `{"recordSource":"workspace","query":"CSV","path":"knowledge","repo":"web","kind":"knowledge"}` | Filter common record text by path, repository metadata, and kind |
+| `aapb_search` | `{"query":"CSV","kind":"worklog","month":"2026-09"}` | Search the selected month's worklogs |
+| `aapb_validate` | `{"recordSource":"workspace"}` | Validate the common record source |
+| Optional `aapb_ast_search` | `{"repo":"web","lang":"tsx","pattern":"useState($VALUE)","path":"src"}` | Search one registered member's source |
+
+Search kinds are `current`, `knowledge`, `worklog`, and `other`. `repo` filters a registered member's records; `recordSource` selects the record source. Repeat the same source and filters with continuation. Neither argument authorizes writes or membership changes. See [Workspaces](workspaces.md) and [Durable records](durable-records.md).
+
 ## Read boundary and output
 
-A request cannot change the bound project. Record-tool paths are playbook-relative; AST source paths are project-relative. Traversal outside the project, absolute input paths, links/junctions, and unsuitable text files are rejected or reported as skipped. Scan warnings show incomplete coverage.
+A request cannot retarget the server to an arbitrary project. Within its registered workspace, record tools can select `recordSource: "workspace"` (default) or `recordSource: "repo:<id>"` for a member's existing local records. AST selects one code repository with `repo`; it is required at the workspace root. Record paths are relative to the selected playbook, while AST paths are relative to that code repository. Unregistered paths, absolute input paths, links/junctions, and unsuitable text are rejected or reported as skipped. Scan warnings show incomplete coverage.
 
 For `.ai-agent-playbook/CURRENT.md`, pass `{"path":"CURRENT.md"}` or `{}` to read the default entrypoint. Do not include `.ai-agent-playbook/` in the tool argument. Use the relative paths returned by status or search for other records.
 
@@ -98,7 +113,7 @@ Content defaults to 12,000 characters and can be adjusted. Long text and lists r
 
 ## Writing and troubleshooting
 
-There are no MCP write tools, shell tools, dynamic resources, generated workflow prompts, automatic hooks, or Forge writes. Use normal file editing for records and explicit CLI operations for migration or Forge apply. Old write-enabling flags are unsupported.
+There are no MCP write tools, shell tools, dynamic resources, generated workflow prompts, automatic hooks, or Forge writes. Use normal file editing or explicit `worklog new` / `knowledge new` CLI operations for records, and separate CLI operations for workspace management, migration, or Forge apply. Old write-enabling flags are unsupported.
 
 | Problem | Response |
 | --- | --- |

@@ -6,7 +6,8 @@ AAPB is a local Node.js ESM program for project records and explicit supporting 
 
 ```text
 CLI command / project-bound MCP request
-  -> select one existing project and playbook root
+  -> resolve registered workspace membership or an exact-directory playbook
+  -> select the record source or one code repository for AST/Forge
   -> check paths, file types, and size bounds
   -> read records or plan an explicit operation
   -> return content, warnings, scope, and continuation
@@ -19,7 +20,9 @@ Record operations share implementations between CLI and MCP. CLI routes load ins
 | Surface | Responsibility | Outside its claim |
 | --- | --- | --- |
 | Record readers | Inventory, text search/read, document validation | Whether project code works or prose is currently true |
-| Bootstrap/layout migration | Minimal records and managed metadata | Replacing root policy or rewriting historical documents |
+| Bootstrap/layout migration | Minimal/standard records, optional AGENTS link, exclusions, and managed metadata | Replacing existing root rules or rewriting historical documents |
+| Workspace registry | Explicit members, common records, and selected code targets | Discovering every descendant as a member or bulk remote writes |
+| Record authoring | Unique monthly worklogs and topic knowledge templates | Gathering conversation history or inferring verified facts |
 | Skill lifecycle | Selected owned installations and recovery | All host plugins, connector accounts, or unrelated skills |
 | Writing/UI checks | Advisory signals in selected text | Rendered UI validation or authorship detection |
 | Forge | Reviewed coordination plans and explicit remote application | Task execution, scheduling, commits, or pushes |
@@ -35,6 +38,8 @@ Files remain Markdown/JSON and compatible text formats. There is no external rec
 ## Writes, ownership, and recovery
 
 Installation checks real paths, ownership, and hashes before applying staged replacements. Existing content moves into a same-filesystem backup with a recovery journal. Rollback checks later edits before restoring. Files are not owned merely because they have a familiar name.
+
+Bootstrap can preserve existing documents while adding selected guides, a records link, or managed exclusion changes. Retain its separate recovery journal. Workspace registry edits return a prior-registry backup; record creation uses exclusive writes.
 
 Layout migration saves the previous manifest and marker, changes compatible metadata, and preserves user documents. It does not automatically select current facts from old evidence. [Lifecycle](lifecycle.md) explains the different skill and record recovery paths.
 

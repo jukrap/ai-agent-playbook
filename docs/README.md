@@ -12,6 +12,11 @@ Choose a route for the task at hand. These human guides are not an agent startup
 | Agent app connection | [MCP setup](mcp-permission-model.md) → [Response limits](record-responses.md) → the host adapter |
 | Testing before publication | [Local demonstration](demo.md) → [Verification report](verification.md) → [Publishing checklist](publishing-checklist.md) |
 
+## Workspace and durable records
+
+- [Workspaces](workspaces.md): explicit membership, common and member-local records, selected code targets, and recovery.
+- [Durable records](durable-records.md): current state, knowledge, monthly worklogs, authoring, filters, and draft review.
+
 ## Use and integration
 
 - [Commands](commands.md): syntax, writes, results, errors, and old command replacements.

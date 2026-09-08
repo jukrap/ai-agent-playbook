@@ -1,15 +1,17 @@
 # Release readiness and follow-up
 
-The source targets the stable 1.0.0 release. Readiness depends on observable behavior and a usable adoption path, not only a version field or a reduced catalog. The [verification report](verification.md) records evidence already gathered; this page explains how to assess the remaining release decision.
+Release readiness covers workspace membership, interactive and argument bootstrap, Git-independent records, durable authoring, and their upgrade/recovery path. Readiness depends on observable behavior and a usable adoption path, not only a version field or a reduced catalog. The [verification report](verification.md) records evidence already gathered; this page explains how to assess the remaining release decision.
 
 ## Readiness areas
 
 | Area | Evidence to review |
 | --- | --- |
 | Runtime | Required syntax/type/tests/Python checks and public-command compatibility |
-| Records | Minimal creation, old-layout reading, preserved current facts and evidence links |
+| Records | Minimal/standard creation, worklogs/knowledge, filtered continuation, preserved old layouts and evidence |
+| Workspaces | Explicit membership, ancestor resolution, member-local source selection, code targeting, and registry backups |
+| Bootstrap | Interactive/non-interactive defaults, no-Git use, four exclusion modes, cancellation, and recovery |
 | Installation | Selected profiles, owned-file preservation, preview, interrupted recovery, repeat rollback |
-| MCP | Exactly four tools, bounded read-only calls, actual stdio transport and host loading |
+| MCP | Four default record tools plus optional AST, workspace arguments, bounded reads, actual stdio transport and host loading |
 | Forge | Stable identifiers, stale-state conflicts, partial failures, and declared live/mock scope |
 | Human documentation | Beginner practice, command examples, troubleshooting, language-specific presentation, and understandable Korean |
 | Package | Actual archive contents, images/links, isolated install, exact version and checksum |

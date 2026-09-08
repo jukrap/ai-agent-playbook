@@ -1,6 +1,6 @@
 # 설치·업데이트·이전·복구
 
-CLI 패키지, 사용자 스킬, 프로젝트 기록은 따로 관리합니다. npm은 Node CLI를 설치·갱신하고, `ai-agent-playbook skills`는 선택한 지침을 관리하며, 기록 명령은 프로젝트 하나를 다룹니다. MCP는 앱에서 별도로 설정합니다.
+CLI 패키지, 사용자 스킬, 프로젝트 기록은 따로 관리합니다. npm은 Node CLI를 설치·갱신하고, `ai-agent-playbook skills`는 선택한 지침을 관리하며, 기록 명령은 프로젝트 또는 명시적으로 등록된 작업 공간의 출처를 선택합니다. MCP는 앱에서 별도로 설정합니다.
 
 ## npm으로 설치·업데이트하기
 
@@ -126,11 +126,24 @@ ai-agent-playbook bootstrap "<project>" --local-only --dry-run
 ai-agent-playbook bootstrap "<project>" --local-only
 ```
 
-새 bootstrap은 `CURRENT.md`, `manifest.json`, `.ai-agent-playbook-install.json`을 만들고 루트 `AGENTS.md`를 보존합니다. `--local-only`는 Git의 로컬 제외 파일을 사용하며 연결된 worktree도 지원합니다. Git이 필요하고 공유 `.gitignore`는 바꾸지 않습니다. 기록을 커밋해서 공유하거나 Git이 아닌 폴더라면 이 옵션을 빼세요.
+인자형 실행은 최소 기록이 기본이며 `--records standard`는 없는 작업 일지·지식 안내도 추가합니다. `--agents link`를 선택하지 않으면 루트 `AGENTS.md`는 보존합니다. `--local-only`는 `--exclude local`의 별칭입니다. Git이 없어도 기록을 만들고 로컬 제외를 건너뛰었다고 표시합니다. `shared`는 `.gitignore` 규칙, `global`은 사용자 Git 제외, `none`은 새 규칙 없음을 선택합니다. 전역 변경은 같은 파일을 쓰는 다른 저장소에도 영향을 주며 로컬 제외는 연결된 worktree에도 적용될 수 있습니다.
 
-기존 기록은 덮어쓰지 않습니다. Bootstrap을 다시 실행해도 이미 공유 중인 기록이 로컬 전용으로 바뀌지는 않습니다. 기존 기록의 Git 포함 여부는 별도로 결정하세요. [기존 저장소 적용](existing-repository-bootstrap.ko.md)에서 설명합니다.
+기존 기록은 덮어쓰지 않습니다. 부트스트랩을 다시 실행하면 없는 안내나 명시적 AGENTS 링크를 추가하고 수정되지 않은 AAPB 관리 제외 규칙을 전환할 수 있습니다. 사용자 규칙, 추적 중인 파일, 메타데이터와 등록은 보존합니다. [기존 저장소 적용](existing-repository-bootstrap.ko.md)을 참고하세요.
 
 프로젝트 기록 삭제는 패키지 제거와 별개의 파일 관리 작업입니다. 유용한 기록을 백업하고 링크와 Git 추적 여부를 확인한 뒤 제거하세요. 구버전의 `managed uninstall`은 종료되었으며 1.0에서 문서를 자동 삭제하지 않습니다.
+
+## 부트스트랩과 제외 변경 복구하기
+
+제외 방식 전환이나 AGENTS.md 링크 추가를 포함한 부트스트랩 변경에서 반환한 `backup` journal을 보관합니다. 같은 프로젝트에 정확한 복구 기록을 사용하세요.
+
+```sh
+ai-agent-playbook migrate bootstrap-rollback "<project>" --backup "<returned-journal>" --json
+ai-agent-playbook migrate bootstrap-rollback "<project>" --backup "<returned-journal>" --apply --json
+```
+
+첫 호출은 미리보기입니다. `--apply`는 현재·저장 해시가 허용할 때만 영향을 받은 내용을 복원합니다. 이후 사용자 편집은 충돌로 보존합니다. 작업과 경고를 확인하고 journal을 보관하며 서로 의존하는 변경은 최신 작업부터 복구하세요. 구조 이전·스킬 복구와는 별개입니다. `workspace add/remove`가 반환하는 백업은 이전 등록 정보이며 부트스트랩 journal이 아닙니다. 등록을 복원할 때는 현재 등록과 함께 직접 검토합니다.
+
+공통 기록과 명시적 구성원은 [작업 공간](workspaces.ko.md), 날짜별 일지와 주제 지식은 [오래 유지할 기록](durable-records.ko.md)을 참고하세요. 기존 기록을 옮기거나 타이머를 설정할 필요는 없습니다.
 
 ## 기록 구조 이전과 복구
 
@@ -149,6 +162,12 @@ ai-agent-playbook migrate rollback "<project>" --backup "<returned-relative-back
 ```
 
 이후에 바뀐 관리 정보는 충돌로 보존합니다. 소유권이 없거나 manifest가 수정되었다면 이유를 확인해야 합니다. 이전을 통과시키려고 관리 정보를 만들어 넣지 마세요. 플레이북 폴더가 여러 개라면 어느 기록을 기준으로 할지 먼저 정리해야 합니다.
+
+## 구성원의 로컬 기록 출처 복구하기
+
+`migrate layout`, `migrate rollback`, `migrate bootstrap-rollback`은 `--record-source repo:<id>`로 명시적으로 등록된 구성원의 기존 기록을 선택할 수 있습니다. 미리보기와 적용에서 같은 프로젝트 대상, 출처와 해당 작업의 백업을 유지하세요. 생략하면 작업 공간의 공통 기록을 사용하므로 셸 폴더 이동만으로 구성원 출처 선택을 대신하지 않습니다. 이전·복구는 선택한 기록 출처만 갱신하고 공통 기록과 다른 구성원을 보존합니다.
+
+출처를 명시한 예시는 [명령어 가이드](commands.ko.md)에 있습니다. 적용 전에 기존 소유권과 현재 해시를 확인하세요. 출처를 선택해도 이 검사를 건너뛰지는 않습니다.
 
 ## 소스 폴더의 PowerShell 도우미
 

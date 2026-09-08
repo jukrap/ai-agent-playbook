@@ -8,7 +8,8 @@
 | 스킬 안의 `references/` | 해당 스킬에 필요한 상세 내용 | 스킬과 함께 설치, 필요할 때 읽기 |
 | 루트 `references/` | 과거의 분야별 예시와 계약 | 직접 선택해서 참고. 별도의 스킬 목록이 아님 |
 | `templates/agents/` | 복사 가능한 프로젝트 지침 | 기존 정책과 비교·검토해 적용 |
-| `templates/project-playbook/` | 최소 현재 상태 템플릿과 관리 정보 | Bootstrap에서 사용, 상세 기록은 필요할 때 추가 |
+| `templates/project-playbook/` | 현재 상태 템플릿과 관리 정보 | Bootstrap에서 사용, 상세 기록은 필요할 때 추가 |
+| `templates/record-artifacts/` | 작업 일지와 지식 문서 템플릿 | 명시적 기록 생성에 사용하고 실제 근거로 내용을 채움 |
 | `examples/` | 완성 예시나 재사용 예시 | 형식과 의도를 참고. 현재 프로젝트 사실로 보지 않음 |
 | `docs/`, README, CONTEXT | 시작 안내, 사용법, 구조, 유지보수 | 독자의 목적에 맞춰 탐색 |
 | `adapters/` | 앱 설정과 연동 범위 | 사용하는 에이전트 앱에 맞춰 참고 |

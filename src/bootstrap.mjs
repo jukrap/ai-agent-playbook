@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdir, open, rename, unlink, rmdir, link } from 'node:fs/promises';
+import { mkdir, open, rename, unlink, rmdir, link, realpath } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
@@ -16,6 +16,21 @@ const DOCS = ['CURRENT.md', 'manifest.json', MARKER, 'worklogs/README.md', 'know
 const fail = (message, code = 'aapb.bootstrap-invalid') => Object.assign(new Error(message), { code });
 const json = (value) => JSON.stringify(value, null, 2) + '\n';
 const slash = (value) => value.replaceAll('\\', '/');
+
+// Resolve existing filesystem aliases before comparing scopes, without following links.
+// Keep a missing suffix so a new ignore file or directory can still be planned.
+async function canonicalFilePath(file) {
+  const absolute = path.resolve(file);
+  await noLinks(absolute);
+  let ancestor = absolute;
+  const suffix = [];
+  while (!await statOrNull(ancestor)) {
+    const parent = path.dirname(ancestor);
+    if (parent === ancestor) throw fail('No existing ancestor for exclusion path.');
+    suffix.unshift(path.basename(ancestor)); ancestor = parent;
+  }
+  return path.join(await realpath(ancestor), ...suffix);
+}
 
 function enumValue(value, values, name) {
   if (!values.includes(value)) throw fail(`${name} must be ${values.join(' or ')}.`);
@@ -52,12 +67,12 @@ export async function inspectBootstrapGit(target) {
   if (/[\x00-\x1f]/.test(root)) throw fail('Bootstrap paths must not contain control characters.');
   const top = await git(root, ['rev-parse', '--show-toplevel'], { optional: true });
   if (top === null) return null;
-  const topLevel = path.resolve(root, top.trim());
+  const topLevel = await canonicalFilePath(path.resolve(root, top.trim()));
   if (!inside(topLevel, root)) throw fail('Git worktree does not contain the selected target.');
   await noLinks(topLevel);
   await noLinks(path.join(topLevel, '.git'));
-  const commonDirectory = path.resolve(root, (await git(root, ['rev-parse', '--git-common-dir'])).trim());
-  const excludeFile = path.resolve(root, (await git(root, ['rev-parse', '--git-path', 'info/exclude'])).trim());
+  const commonDirectory = await canonicalFilePath(path.resolve(root, (await git(root, ['rev-parse', '--git-common-dir'])).trim()));
+  const excludeFile = await canonicalFilePath(path.resolve(root, (await git(root, ['rev-parse', '--git-path', 'info/exclude'])).trim()));
   if (excludeFile !== path.join(commonDirectory, 'info', 'exclude')) throw fail('Git returned an unexpected local exclusion path.');
   await noLinks(excludeFile);
   return { topLevel, commonDirectory, excludeFile };
@@ -71,7 +86,7 @@ async function globalExclusion(root, gitInfo) {
   const home = process.env.HOME || os.homedir();
   const base = process.env.XDG_CONFIG_HOME || path.join(home, '.config');
   if (value === null && !path.isAbsolute(base)) throw fail('The Git global configuration directory must be absolute.');
-  const file = value === null ? path.join(base, 'git', 'ignore') : path.resolve(gitInfo?.topLevel ?? root, value);
+  const file = await canonicalFilePath(value === null ? path.join(base, 'git', 'ignore') : path.resolve(gitInfo?.topLevel ?? root, value));
   if (file === path.parse(file).root) throw fail('Global exclusions must name a file.');
   await noLinks(file);
   return { file, configured: value !== null, value };
@@ -454,6 +469,9 @@ export async function recoverBootstrap({ target, transaction, dryRun = false, re
   if (!Array.isArray(journal.applied) || indices.some((index) => !Number.isInteger(index) || index < 0 || index >= journal.operations.length)) throw fail('Invalid bootstrap recovery progress.');
   const seen = new Set(), conflicts = [];
   for (const op of journal.operations) {
+    // Older journals may contain an equivalent Windows short path.
+    if (typeof op.file !== 'string' || !path.isAbsolute(op.file)) throw fail('Unsafe bootstrap recovery path.');
+    op.file = await canonicalFilePath(op.file);
     if (!allowed.has(op.file) || seen.has(op.file) || !/^[a-f0-9]{64}$/.test(op.afterHash) || (op.before !== null && (typeof op.before !== 'string' || Buffer.byteLength(op.before, 'base64') > MAX_BYTES)) || (op.mode !== null && (!Number.isInteger(op.mode) || op.mode < 0 || op.mode > 0o777))) throw fail('Unsafe bootstrap recovery operation.');
     seen.add(op.file);
   }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm, realpath } from 'node:fs/promises';
 import { renameSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -12,9 +12,10 @@ import { createWorkspaceConfig, projectGitEnvironment } from '../src/workspace.m
 import { inside, treeSnapshot } from '../src/fs-safety.mjs';
 
 async function tempRoot(t) {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'aapb-forge-target-'));
+  const parent = await realpath(os.tmpdir());
+  const root = await mkdtemp(path.join(parent, 'aapb-forge-target-'));
   t.after(async () => {
-    assert.equal(path.dirname(root), os.tmpdir());
+    assert.equal(path.dirname(root), parent);
     assert.match(path.basename(root), /^aapb-forge-target-/);
     await rm(root, { recursive: true, force: true });
   });

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, writeFile, readdir, rm, symlink } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, readdir, rm, symlink, realpath } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import path from 'node:path';
@@ -16,7 +16,8 @@ async function git(target, ...args) {
   return (await exec('git', ['-C', target, ...args], { encoding: 'utf8', windowsHide: true, timeout: 10000 })).stdout.trim();
 }
 async function fixture(t, withGit = false) {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'aapb-bootstrap-v12-'));
+  const parent = await realpath(os.tmpdir());
+  const root = await mkdtemp(path.join(parent, 'aapb-bootstrap-v12-'));
   const target = path.join(root, 'project'), home = path.join(root, 'home');
   await mkdir(target); await mkdir(home); await mkdir(path.join(home, 'templates'));
   const environment = { HOME: home, USERPROFILE: home, XDG_CONFIG_HOME: path.join(home, '.config'), GIT_CONFIG_GLOBAL: path.join(home, '.gitconfig'), GIT_CONFIG_SYSTEM: path.join(home, 'system'), GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_COUNT: '0', GIT_TEMPLATE_DIR: path.join(home, 'templates'), GIT_CONFIG_PARAMETERS: undefined, GIT_DIR: undefined, GIT_WORK_TREE: undefined, GIT_INDEX_FILE: undefined, GIT_COMMON_DIR: undefined };
@@ -24,7 +25,7 @@ async function fixture(t, withGit = false) {
   for (const [key, value] of Object.entries(environment)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
   t.after(async () => {
     for (const [key, value] of Object.entries(original)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
-    assert.equal(path.dirname(root), os.tmpdir()); assert.ok(path.basename(root).startsWith('aapb-bootstrap-v12-'));
+    assert.equal(path.dirname(root), parent); assert.ok(path.basename(root).startsWith('aapb-bootstrap-v12-'));
     await rm(root, { recursive: true, force: true });
   });
   if (withGit) await git(target, 'init', '--quiet');
@@ -36,6 +37,41 @@ async function ignored(target, relative) {
   try { return Boolean(await git(target, 'check-ignore', '--', relative)); }
   catch (error) { if (error.code === 1) return false; throw error; }
 }
+
+async function shortPath(t, directory) {
+  const script = '[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false); (New-Object -ComObject Scripting.FileSystemObject).GetFolder($env:AAPB_SHORT_PATH).ShortPath';
+  const result = await exec('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { env: { ...process.env, AAPB_SHORT_PATH: directory }, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+  const alias = result.stdout.trim();
+  assert.equal(await realpath(alias), directory);
+  if (path.resolve(alias).toLowerCase() === directory.toLowerCase()) { t.skip('Filesystem does not expose a distinct short path.'); return null; }
+  return alias;
+}
+
+test('Windows short exclusion paths cannot alias protected records, Git metadata or another exclusion scope', { skip: process.platform !== 'win32' }, async (t) => {
+  const f = await fixture(t, true), alias = await shortPath(t, f.root);
+  if (!alias) return;
+  for (const suffix of ['project/.git/config', 'project/.git/info/exclude', 'project/.ai-agent-playbook/CURRENT.md', 'project/AGENTS.md']) {
+    await git(f.target, 'config', '--global', 'core.excludesFile', path.join(alias, suffix));
+    const before = await treeSnapshot(f.root);
+    for (const dryRun of [true, false]) await assert.rejects(bootstrapProject({ ...f.options, exclude: 'global', dryRun }), /Git metadata|overlap|same file/);
+    assert.deepEqual(await treeSnapshot(f.root), before);
+  }
+});
+
+test('Windows short paths support new exclusion suffixes and old recovery journals', { skip: process.platform !== 'win32' }, async (t) => {
+  const f = await fixture(t, true), alias = await shortPath(t, f.root);
+  if (!alias) return;
+  const ignore = path.join(f.home, 'new/global/ignore');
+  await git(f.target, 'config', '--global', 'core.excludesFile', path.join(alias, 'home/new/global/ignore'));
+  const applied = await bootstrapProject({ ...f.options, exclude: 'global' });
+  assert.equal(applied.applied, true); assert.match(await contents(ignore), /ai-agent-playbook exclusions/);
+  const journal = JSON.parse(await contents(applied.backup));
+  for (const op of journal.operations) op.file = path.join(alias, path.relative(f.root, op.file));
+  await writeFile(applied.backup, JSON.stringify(journal));
+  assert.equal((await recoverBootstrap({ target: f.target, transaction: applied.backup })).applied, true);
+  await absent(ignore); await absent(path.join(f.pb, 'CURRENT.md'));
+  assert.equal((await recoverBootstrap({ target: f.target, transaction: applied.backup })).applied, false);
+});
 
 test('Git-less minimal defaults preserve policy, user metadata and ownership bytes on repeat', async (t) => {
   const f = await fixture(t);

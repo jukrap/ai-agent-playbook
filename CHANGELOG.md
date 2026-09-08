@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1
+
+- Resolve Windows short path aliases before checking exclusion boundaries, preventing a configured global ignore file from overlapping Git metadata, project records, instructions or another exclusion scope.
+- Preserve link rejection, support new ignore-file suffixes, and accept equivalent paths in existing bootstrap recovery journals.
+- Correct Windows fixture path comparisons so editor-conflict injections and worktree assertions exercise the intended filesystem paths.
+
 ## 1.2.0
 
 - Add interactive and argument bootstrap with single/workspace selection, minimal/standard records, optional AGENTS links, and local/shared/global/no exclusions.

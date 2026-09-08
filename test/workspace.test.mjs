@@ -1,14 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs, { mkdtemp, mkdir, writeFile, readFile, readdir, rm, symlink } from 'node:fs/promises';
+import fs, { mkdtemp, mkdir, writeFile, readFile, readdir, rm, symlink, realpath } from 'node:fs/promises';
 import { syncBuiltinESMExports } from 'node:module';
 import path from 'node:path';
 import os from 'node:os';
 import { createWorkspaceConfig, validateWorkspaceConfig, locateLocalPlaybook, resolveRecordContext, resolveCodeTarget, discoverRepositories, runWorkspace } from '../src/workspace.mjs';
 
 async function fixture(t) {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'aapb-workspace-'));
-  t.after(() => { assert.equal(path.dirname(root), os.tmpdir()); return rm(root, { recursive: true, force: true }); });
+  const parent = await realpath(os.tmpdir());
+  const root = await mkdtemp(path.join(parent, 'aapb-workspace-'));
+  t.after(() => { assert.equal(path.dirname(root), parent); return rm(root, { recursive: true, force: true }); });
   return root;
 }
 async function workspace(t) {

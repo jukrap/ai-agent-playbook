@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0-next.1
+## 1.2.0
 
 - Add interactive and argument bootstrap with single/workspace selection, minimal/standard records, optional AGENTS links, and local/shared/global/no exclusions.
 - Support record creation without Git, preserve existing content and tracking, and return guarded bootstrap recovery journals for changes.
@@ -9,7 +9,7 @@
 - Require a selected repository for workspace-root AST and Forge operations; retain existing AST languages and four default MCP tools.
 - Update English/Korean instructions and guides while preserving user model/reasoning choices, approval requirements, and detailed evidence.
 
-Local candidate; registry publication and final verification are separate. See [Local package testing](docs/demo.md).
+Promote the tested 1.2 candidate to the stable release and align the Python module's reported version with package metadata. See [Verification](docs/verification.md) and [Local package testing](docs/demo.md).
 
 ## 1.1.0
 

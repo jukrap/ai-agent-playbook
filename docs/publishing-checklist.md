@@ -5,7 +5,7 @@ Node and Python release metadata must agree; npm `next.N` prereleases map to Pyt
 ## Prepare the release candidate
 
 1. Inspect the branch, dirty state, intended diff, and preserved user changes.
-2. Align `package.json`, `src/version.mjs`, Python metadata/version, changelog, and version-specific guidance. Stable promotion must be intentional. Keep a `1.2.0-next.1` candidate separate from the published `1.1.0` package until publication is authorized.
+2. Align `package.json`, `src/version.mjs`, Python metadata/module version, changelog, and version-specific guidance. The current stable source is `1.2.0`; use `latest` for its authorized publication. A `-next.N` candidate uses `next`. Inspect actual registry tags separately; changing source metadata does not publish a package.
 3. Run the required [maintenance checks](maintenance.md), including behavior, translation, public-document, and wrapper previews.
 4. Follow the beginner walkthrough and changed command examples in isolated folders. Review both README presentations and Korean clarity.
 5. Inspect the archive file list for runtime files, selected skills, references, linked guides, examples, and images. Exclude private records, backups, raw logs, test installs, and retired executable modules.

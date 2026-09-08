@@ -40,7 +40,8 @@ async function ignored(target, relative) {
 
 async function shortPath(t, directory) {
   const script = '[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false); (New-Object -ComObject Scripting.FileSystemObject).GetFolder($env:AAPB_SHORT_PATH).ShortPath';
-  const result = await exec('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { env: { ...process.env, AAPB_SHORT_PATH: directory }, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+  // Cold Windows CI startup can exhaust ten seconds; this bound is only for the test helper.
+  const result = await exec('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { env: { ...process.env, AAPB_SHORT_PATH: directory }, encoding: 'utf8', windowsHide: true, timeout: 30000 });
   const alias = result.stdout.trim();
   assert.equal(await realpath(alias), directory);
   if (path.resolve(alias).toLowerCase() === directory.toLowerCase()) { t.skip('Filesystem does not expose a distinct short path.'); return null; }

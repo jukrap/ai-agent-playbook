@@ -83,6 +83,21 @@ test('AST does not traverse junctions or symlinks, including explicit and ancest
   await assert.rejects(search(path.join(target, 'linked')), /link|junction/);
 });
 
+test('AST excludes protected directory names regardless of casing in both source modes', async (t) => {
+  const target = await fixture(t, { 'src/a.js': 'console.log(1)', '.ai-agent-playbook/private.js': 'console.log(2)', 'DiSt/generated.js': 'console.log(3)' });
+  const before = await treeSnapshot(target);
+  for (const selected of ['.AI-AGENT-PLAYBOOK', '.AI-AGENT-PLAYBOOK/private.js', 'DIST/generated.js']) {
+    await assert.rejects(search(target, { path: selected }), { code: 'aapb.ast-excluded-path' });
+  }
+  assert.deepEqual((await search(target)).results.map((item) => item.path), ['src/a.js']);
+  assert.deepEqual(await treeSnapshot(target), before);
+  execFileSync('git', ['init', '--quiet', target], { windowsHide: true });
+  execFileSync('git', ['-C', target, 'add', '--force', '.'], { windowsHide: true });
+  const result = await search(target);
+  assert.equal(result.scan.sourceMode, 'git');
+  assert.deepEqual(result.results.map((item) => item.path), ['src/a.js']);
+});
+
 test('AST coverage reports file limits, parser errors, oversized and binary source', async (t) => {
   const target = await fixture(t, { 'a.js': 'console.log(1)', 'b.js': 'console.log(2)' });
   assert.equal((await search(target, { maxFiles: 1 })).scan.complete, false);

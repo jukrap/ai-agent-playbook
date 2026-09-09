@@ -14,7 +14,11 @@ product/
   notes/
 ```
 
-Run `ai-agent-playbook bootstrap` in `product/` from an interactive terminal and choose workspace mode. The guide discovers a bounded set of repository candidates; select the intended IDs explicitly. Discovery does not register every child folder, scan the whole drive, or follow links and junctions. A non-Git member can be selected by an explicit path using argument mode.
+Run `ai-agent-playbook bootstrap` in `product/` from an interactive terminal and choose Several repositories. For a new workspace, folder preparation shows the parent folder and intended shared record location. Prepare or clone the child repositories yourself in that parent folder, using another terminal or file manager if needed, then choose Ready to continue. AAPB creates `product/.ai-agent-playbook/` after final apply; you do not need to create the record folder, and AAPB does not move or clone repositories.
+
+The guide discovers a bounded set of repository candidates and shows their paths as checkbox labels. Use numbers or arrow keys to focus, Space to check or uncheck, and Enter to confirm the checked set. You do not need to type repository names, IDs, or quotes. Search with `/`; checked items remain selected when hidden by the filter. `a` toggles available choices on the displayed page only, and `r` rescans after you prepare more repositories, outside search input. The list shows up to ten items and the selected count; disabled choices retain their reasons. Line-input fallback accepts numbers and ranges such as `1,3-5`, with optional name aliases. See [Commands](commands.md) for all controls.
+
+Discovery does not automatically select candidates, register every child folder, scan the whole drive, or follow links and junctions. Only explicit previous choices are restored when you revisit selection. If no repositories are selected, confirm an empty workspace or prepare folders and rescan. A non-Git member can be selected by an explicit path using argument mode. `q` and key help appear above the list; Esc or `b` returns to a previous step when available outside search input. Final review lets you edit a setting before applying.
 
 For a repeatable setup, preview the existing relative member directories:
 
@@ -27,7 +31,7 @@ ai-agent-playbook workspace check --json
 
 Repeat `--repo-path` for each selected directory; bootstrap derives IDs from their directory names and reports the registration. In this example the IDs are `web` and `api`. Inspect the result instead of guessing IDs when names repeat. Bootstrap does not use `--repo` for member selection. `--agents link` adds a short records link while preserving existing instructions; choose `preserve` to leave AGENTS.md exactly as it is.
 
-The registry is `.ai-agent-playbook/workspace.json`. It records each member's ID, workspace-relative path, role, and existing local record location when present. An unrelated folder such as `notes/` does not become a member merely because it is below the workspace. Existing membership is preserved when bootstrap runs again; use the management commands to change it.
+The registry is `.ai-agent-playbook/workspace.json`. It records each member's ID, workspace-relative path, role, and existing local record location when present. An unrelated folder such as `notes/` does not become a member merely because it is below the workspace. Existing membership is preserved when bootstrap runs again; the guide does not offer a replacement registry or conversion to a single project. Use the management commands to change membership. When starting the guide from a registered member, confirm the shared workspace location before configuring its records.
 
 ## Manage membership
 
@@ -72,5 +76,7 @@ In MCP, use `recordSource` on the four record tools, `view: "repositories"` for 
 ## Exclusions and recovery
 
 Choose `local`, `shared`, `global`, or `none` for the location of the records. A common record folder outside a child Git repository does not need an ignore rule in that child. `shared` shares an ignore rule, not the record contents; `none` adds no rule. Existing tracked files remain tracked.
+
+Local exclusion uses `info/exclude` in the Git repository containing the setup root, including nested folders and linked worktrees. Availability does not depend on a `.git` directory directly inside that root. If the parent folder is outside Git, the guide still shows local exclusion, disabled with a reason, and recommends no exclusion. Recommendations and current saved settings are separate from menu selection. Explicit `--exclude local` or `--local-only` retains its warning-and-skip behavior outside Git. Linked worktrees may share the exclude file.
 
 Keep returned backups when changing exclusions or adding an AGENTS link. [Existing repositories](existing-repository-bootstrap.md) explains the modes; [Lifecycle](lifecycle.md) covers `migrate bootstrap-rollback`. Registry backups and bootstrap recovery journals serve different operations. Preserve both and do not use a bootstrap rollback command with a workspace registry backup.

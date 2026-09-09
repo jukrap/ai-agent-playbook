@@ -1,6 +1,6 @@
 {
   "name": "ai-agent-playbook",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Portable project records, selected artifact skills, and optional read-only project tools.",
   "type": "module",
   "license": "MIT",

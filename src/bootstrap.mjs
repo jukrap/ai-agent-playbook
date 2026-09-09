@@ -377,6 +377,7 @@ async function writeJournal(file, data, initial = false) {
 
 function result(plan, extra = {}) {
   return { schemaVersion: '2', kind: 'playbook.bootstrap', ok: true, writes: false, applied: false,
+    dryRun: Boolean(plan.selected.dryRun), recordDirectory: plan.pb.directory,
     operations: plan.operations.map((op) => op.label), preserved: plan.preserved, warnings: plan.warnings,
     localOnly: plan.selected.exclude === 'local', agentsPreserved: !plan.operations.some((op) => op.label === 'AGENTS.md'),
     selection: { kind: plan.selected.kind, records: plan.selected.records, lang: plan.selected.lang, agents: plan.selected.agents, exclude: plan.selected.exclude },

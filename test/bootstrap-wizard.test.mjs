@@ -8,8 +8,10 @@ import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { prepareBootstrapOptions } from '../src/bootstrap-wizard.mjs';
+import { PROMPT_BACK, PROMPT_RESCAN } from '../src/terminal-prompts.mjs';
 import { bootstrapProject } from '../src/bootstrap.mjs';
 import { treeSnapshot } from '../src/fs-safety.mjs';
+import { runCli } from '../src/cli.mjs';
 
 const exec = promisify(execFile), repoRoot = fileURLToPath(new URL('../', import.meta.url));
 async function fixture(t, withGit = false) {
@@ -56,13 +58,13 @@ test('--yes selects safe standard defaults, honors explicit undefined options an
 
 test('injected wizard asks language first, explains exclusion differences and returns options directly', async (t) => {
   const f = await fixture(t, true), questions = [], before = await treeSnapshot(f.root);
-  const answer = { lang: 'ko', kind: 'single', exclude: 'shared', records: 'standard', agents: 'link', review: 'yes' };
+  const answer = { lang: 'ko', kind: 'single', prepare: 'ready', exclude: 'shared', records: 'standard', agents: 'link', review: 'yes' };
   const selected = await prepareBootstrapOptions(f.options, { interactive: true, ask: (question) => { questions.push(question); return answer[question.id]; } });
-  assert.deepEqual(questions.map((q) => q.id), ['lang', 'kind', 'exclude', 'records', 'agents', 'review']);
+  assert.deepEqual(questions.map((q) => q.id), ['lang', 'kind', 'prepare', 'exclude', 'records', 'agents', 'review']);
   for (const question of questions.slice(1)) assert.match(question.message, /[가-힣]/);
   const exclude = questions.find((q) => q.id === 'exclude');
-  assert.match(exclude.choices.find((c) => c.value === 'global').label, /모든 저장소/);
-  assert.match(exclude.choices.find((c) => c.value === 'shared').label, /\.gitignore/);
+  assert.match(exclude.choices.find((c) => c.value === 'global').description, /모든 저장소/);
+  assert.match(exclude.choices.find((c) => c.value === 'shared').description, /\.gitignore/);
   assert.equal(selected.lang, 'ko'); assert.equal(selected.exclude, 'shared'); assert.equal(selected.records, 'standard');
   assert.ok(questions.at(-1).review.operations.includes('AGENTS.md'));
   assert.deepEqual(await treeSnapshot(f.root), before);
@@ -73,7 +75,7 @@ test('injected wizard asks language first, explains exclusion differences and re
 
 test('cancellation at each question and final review leaves files and Git home identical', async (t) => {
   const f = await fixture(t, true), before = await treeSnapshot(f.root);
-  const answer = { lang: 'en', kind: 'single', exclude: 'global', records: 'standard', agents: 'link', review: 'yes' };
+  const answer = { lang: 'en', kind: 'single', prepare: 'ready', exclude: 'global', records: 'standard', agents: 'link', review: 'yes' };
   for (const stop of Object.keys(answer)) {
     const output = await prepareBootstrapOptions(f.options, { interactive: true, ask: (question) => question.id === stop ? null : answer[question.id] });
     assert.equal(output, null);
@@ -91,7 +93,7 @@ test('workspace wizard registers a chosen subset and never silently selects all 
   const before = await treeSnapshot(f.root);
   const selected = await prepareBootstrapOptions(f.options, { interactive: true, ask: (question) => {
     questions.push(question);
-    return { lang: 'en', kind: 'workspace', repositories: 'alpha,gamma', exclude: 'none', records: 'standard', agents: 'preserve', review: true }[question.id];
+    return { lang: 'en', kind: 'workspace', prepare: 'ready', repositories: 'alpha,gamma', exclude: 'none', records: 'standard', agents: 'preserve', review: true }[question.id];
   } });
   assert.deepEqual(selected.repositories.map((repo) => repo.id), ['alpha', 'gamma']);
   assert.equal(questions.find((q) => q.id === 'repositories').defaultValue, undefined);
@@ -135,12 +137,12 @@ test('bare TTY uses the built-in readline path and EOF cancels without writes', 
   let shown = '', scheduled = false;
   output.on('data', (bytes) => {
     shown += bytes.toString();
-    if (!scheduled && shown.includes('Choose the language')) { scheduled = true; setImmediate(() => input.end()); }
+    if (!scheduled && shown.includes('Language /')) { scheduled = true; setImmediate(() => input.end()); }
   });
   const before = await treeSnapshot(f.root);
   const selected = await prepareBootstrapOptions(f.options, { stdin: input, stdout: output });
   assert.equal(selected, null);
-  assert.match(shown, /Choose the language/);
+  assert.match(shown, /Language \/ /);
   assert.deepEqual(await treeSnapshot(f.root), before);
   input.destroy(); output.destroy();
 });
@@ -151,4 +153,65 @@ test('invalid injected selections fail read-only and --interactive rejects ended
   const input = new PassThrough(), output = new PassThrough(); input.isTTY = true; output.isTTY = true; input.destroy();
   await assert.rejects(prepareBootstrapOptions(f.options, { interactive: true, stdin: input, stdout: output }), /workable TTY/);
   assert.deepEqual(await treeSnapshot(f.root), before); output.destroy();
+});
+
+test('Git-less setup shows unavailable local exclusions and keeps recommendations separate', async (t) => {
+  const f = await fixture(t), before = await treeSnapshot(f.root), questions = [];
+  const selected = await prepareBootstrapOptions(f.options, { interactive: true, ask: (q) => { questions.push(q); return q.defaultValue; } });
+  const local = questions.find(q => q.id === 'exclude').choices.find(c => c.value === 'local');
+  assert.equal(local.disabled, true); assert.match(local.description, /info\/exclude/); assert.match(local.disabledReason, /outside a Git repository/);
+  assert.equal(questions.find(q => q.id === 'exclude').choices.find(c => c.value === 'none').recommended, true);
+  assert.equal(questions.find(q => q.id === 'exclude').choices.some(c => c.current), false);
+  assert.equal(selected.exclude, 'none'); assert.deepEqual(await treeSnapshot(f.root), before);
+});
+
+test('folder preparation and repository rescan discover new folders without typing names', async (t) => {
+  const f = await fixture(t), questions = [];
+  let scans = 0, expected;
+  const options = await prepareBootstrapOptions(f.options, { interactive: true, ask: async (q) => {
+    questions.push(q);
+    if (q.id === 'kind') return 'workspace';
+    if (q.id === 'prepare') {
+      assert.match(q.intro.join('\n'), /web\/|api\//);
+      const directory = path.join(f.target, "web app's code"); await mkdir(directory); await f.git(directory, 'init', '--quiet');
+      return 'ready';
+    }
+    if (q.id === 'repositories') {
+      assert.equal(q.type, 'multiselect'); assert.deepEqual(q.initialValues, []);
+      if (!scans++) { const directory = path.join(f.target, 'API 프로젝트'); await mkdir(directory); await f.git(directory, 'init', '--quiet'); return PROMPT_RESCAN; }
+      assert.equal(q.choices.length, 2);
+      expected = await treeSnapshot(f.root);
+      return q.choices.map(c => c.value);
+    }
+    return q.defaultValue;
+  } });
+  assert.deepEqual(options.repositories.map(repo => repo.path).sort(), ['API 프로젝트', "web app's code"].sort());
+  assert.equal(scans, 2); assert.deepEqual(await treeSnapshot(f.root), expected);
+});
+
+test('back navigation and one-field review edits preserve previous answers without applying', async (t) => {
+  const f = await fixture(t, true), before = await treeSnapshot(f.root);
+  const visits = {};
+  const selected = await prepareBootstrapOptions(f.options, { interactive: true, ask: (q) => {
+    visits[q.id] = (visits[q.id] ?? 0) + 1;
+    if (q.id === 'records' && visits.records === 1) return PROMPT_BACK;
+    if (q.id === 'exclude') return visits.exclude === 3 ? 'none' : 'shared';
+    if (q.id === 'review' && visits.review === 1) return 'edit';
+    if (q.id === 'edit') return 'exclude';
+    return q.defaultValue;
+  } });
+  assert.equal(visits.exclude, 3); assert.equal(visits.records, 2); assert.equal(visits.agents, 1);
+  assert.equal(selected.exclude, 'none'); assert.equal(selected.records, 'standard');
+  assert.deepEqual(await treeSnapshot(f.root), before);
+});
+
+test('interactive CLI finishes with a human preview while JSON stays machine-readable', async (t) => {
+  const f = await fixture(t), before = await treeSnapshot(f.root);
+  let output = '';
+  const code = await runCli(['bootstrap', '--interactive', '--dry-run'], { cwd: f.target, repoRoot, ask: q => q.defaultValue,
+    stdout: { write: text => { output += text; } }, stderr: { write: text => assert.fail(text) } });
+  assert.equal(code, 0); assert.match(output, /Preview complete/); assert.doesNotMatch(output, /"schemaVersion"/);
+  output = '';
+  assert.equal(await runCli(['bootstrap', '--dry-run', '--json'], { cwd: f.target, repoRoot, stdout: { write: text => { output += text; } } }), 0);
+  assert.equal(JSON.parse(output).writes, false); assert.deepEqual(await treeSnapshot(f.root), before);
 });

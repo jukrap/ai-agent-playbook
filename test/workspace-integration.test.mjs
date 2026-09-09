@@ -168,5 +168,8 @@ test('repository metadata is selected before unrelated full text consumes search
   await writeFile(path.join(pb, 'worklogs/2026-09/z-selected.md'), header('selected', 'ios-d') + 'Selected-header-token\n');
   const result = await playbookSearch({ target: root, query: 'Selected-header-token', repo: 'ios-d', month: '2026-09' });
   assert.equal(result.results.length, 1); assert.equal(result.scan.complete, true);
-  assert.equal(result.scan.filteredFiles, 85); assert.ok(result.scan.inspectedBytes < 2_000_000);
+  // Undated legacy files now participate via metadata dates. The standard
+  // worklog README is checked only by header and excluded along with 85 other-repo logs.
+  assert.equal(result.scan.filteredFiles, 86); assert.equal(result.scan.inspectedHeaders, 87);
+  assert.ok(result.scan.inspectedBytes < 2_000_000);
 });

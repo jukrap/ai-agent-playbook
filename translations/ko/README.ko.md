@@ -77,9 +77,11 @@ ai-agent-playbook bootstrap
 ai-agent-playbook records read --path CURRENT.md
 ```
 
-대화형 터미널에서 별도 선택 없이 bootstrap을 실행하면 최종 검토가 포함된 안내를 엽니다. 새 구성은 표준 기록 안내와 Git 로컬 제외를 기본으로 하며 Git이 없으면 제외하지 않습니다. `--dry-run`은 선택한 내용을 미리 보여줍니다. 기존 기록과 루트 지침은 보존하고 AGENTS 링크는 선택한 경우에만 추가합니다.
+대화형 터미널에서 별도 선택 없이 bootstrap을 실행하면 언어, 새 설치의 폴더 준비, 설정 선택, 최종 검토를 안내합니다. 검토 화면에서 설정을 수정할 수 있으며, 적용을 선택하면 AAPB가 기록 폴더를 만듭니다. 작업 공간의 하위 저장소는 선택한 상위 폴더 아래에 직접 배치하거나 clone하세요. AAPB는 저장소를 옮기거나 clone하지 않습니다. 기존 기록, 루트 지침과 등록된 구성원은 보존하고 AGENTS 링크는 선택한 경우에만 추가합니다.
 
-스크립트에서는 `--kind single --records standard --exclude none --agents preserve --json`처럼 선택을 명시하세요. 명시적 설정과 비대화형 호출은 별도로 지정하지 않으면 최소·제외 없음 기본값을 유지합니다. `--yes`는 질문 없이 안내 기본값을 고르고 `--json`은 질문하지 않습니다. [작업 공간](docs/workspaces.ko.md)은 반복하는 `--repo-path` 선택을, [오래 유지할 기록](docs/durable-records.ko.md)은 `worklog new/list`와 `knowledge new`를 설명합니다.
+안내는 권장 항목과 현재 설정을 따로 표시합니다. 표준 기록 안내와 Git 로컬 제외를 권장하고 Git 밖에서는 제외 없음을 권장하지만 자동으로 선택하지는 않습니다. 번호나 방향키로 이동한 뒤 Enter를 누르고, 저장소 체크박스는 Space로 선택한 뒤 Enter로 확정하세요. `q` 취소와 키 도움말은 목록 위에 표시합니다. 로컬 제외를 사용할 수 없어도 항목과 이유를 보여줍니다. 검색·재탐색·이전 이동은 [명령어 가이드](docs/commands.ko.md)에서 설명합니다.
+
+대화형 실행을 마치면 읽기 쉬운 결과와 다음 행동을 표시하며, `--dry-run`은 쓰기 없이 미리 봅니다. 스크립트에서는 `--kind single --records standard --exclude none --agents preserve --json`처럼 선택을 명시하세요. 명시적 설정과 비대화형 호출은 별도로 지정하지 않으면 최소·제외 없음 기본값을 유지합니다. `--yes`는 기존 기본값과 저장된 설정을 사용하며 명시한 옵션을 우선합니다. `--json`은 질문하지 않습니다. [작업 공간](docs/workspaces.ko.md)은 반복하는 `--repo-path` 선택을, [오래 유지할 기록](docs/durable-records.ko.md)은 `worklog new/list`와 `knowledge new`를 설명합니다.
 
 다른 폴더를 대상으로 삼으려면 `ai-agent-playbook bootstrap "<project>" --dry-run`처럼 경로를 붙이거나 `--project "<project>"`를 사용하세요. [명령어 가이드](docs/commands.ko.md)에서 전체 명령 조합과 옵션별 뜻을 설명합니다.
 

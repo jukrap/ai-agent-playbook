@@ -51,6 +51,7 @@ export async function runCli(argv, io = {}) {
     const repoRoot = io.repoRoot ?? REPO_ROOT;
     /** @type {{ok?: boolean, kind?: string, content?: string, truncated?: boolean, [key: string]: unknown}} */
     let result;
+    let bootstrapLanguage;
     if (command === 'skills') {
       const { runSkillsLifecycle } = await import('./skills-lifecycle.mjs');
       result = await runSkillsLifecycle({ repoRoot, command: sub, profile: flags.profile ?? 'core', skills,
@@ -69,7 +70,8 @@ export async function runCli(argv, io = {}) {
       const { prepareBootstrapOptions } = await import('./bootstrap-wizard.mjs');
       const options = await prepareBootstrapOptions({ target, repoRoot, dryRun: Boolean(flags['dry-run']), localOnly: Boolean(flags['local-only']),
         kind: flags.kind, exclude: flags.exclude, lang: flags.lang, records: flags.records, agents: flags['preserve-agents'] ? 'preserve' : flags.agents, repositories },
-      { stdin: io.stdin ?? process.stdin, stdout, stderr, ask: io.ask, interactive: flags.interactive, yes: flags.yes, json: flags.json });
+      { stdin: io.stdin ?? process.stdin, stdout, stderr, ask: io.ask, interactive: flags.interactive, yes: flags.yes, json: flags.json,
+        onInteractive: ({ lang }) => { bootstrapLanguage = lang; } });
       result = options === null ? { schemaVersion: 2, kind: 'playbook.bootstrap', ok: true, writes: false, applied: false, cancelled: true } : await bootstrapRecords(options);
     } else if (command === 'migrate' && sub === 'bootstrap-rollback') {
       const { recoverBootstrap } = await import('./bootstrap.mjs');
@@ -119,6 +121,10 @@ export async function runCli(argv, io = {}) {
       result = retired(args.join(' '));
     } else throw new Error('Unknown command. Run ai-agent-playbook --help.');
     if (flags.json) stdout.write(JSON.stringify(result, null, 2) + '\n');
+    else if (bootstrapLanguage) {
+      const { formatBootstrapOutcome } = await import('./bootstrap-copy.mjs');
+      stdout.write(formatBootstrapOutcome(result, bootstrapLanguage));
+    }
     else if (result.kind === 'aapb.read') stdout.write(result.content + (result.truncated ? '\n[More text: repeat this path with --cursor ' + result.nextCursor + ' --json]\n' : ''));
     else stdout.write(JSON.stringify(result, null, 2) + '\n');
     return result.ok === false ? result.kind === 'command.retired' ? 2 : 1 : 0;

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.2
+
+- Guide interactive setup through folder preparation, explicit choices, repository checkboxes, search/rescan, back navigation and an editable final review. Show recommendations separately from saved settings and explain unavailable local Git exclusions.
+- Improve English/Korean menu wording and readable setup results while preserving argument, JSON and `--yes` automation behavior.
+- Exclude worklog guides and summaries consistently in record search, including custom worklog folders.
+- Match record path filters to Windows filesystem casing and keep AST protected directories excluded through case aliases.
+- Align worklog search and listing on filename, folder and metadata dates while retaining bounded scans and pruning other months.
+
 ## 1.2.1
 
 - Resolve Windows short path aliases before checking exclusion boundaries, preventing a configured global ignore file from overlapping Git metadata, project records, instructions or another exclusion scope.

@@ -14,7 +14,7 @@ For occasional use, prepend `npx` and select a published version. From source, u
 
 A positional argument supplies a value such as a project path. An option starts with `--`: `--local-only` is an on/off flag; `--path CURRENT.md` is an option followed by a value. Quote values containing spaces. Angle brackets mark a placeholder to replace; square brackets in syntax descriptions mean optional and are not typed.
 
-**Project paths are optional.** Omitting the project uses the current terminal directory, just like writing `.`. Registered members can resolve an ancestor workspace and its common records. Otherwise playbook discovery stays at the selected directory; there is no general upward Git-root search. Change directories first, give a positional path, or use `--project`.
+**Project paths are optional.** Omitting the project uses the current terminal directory, just like writing `.`. Registered members can resolve an ancestor workspace and its common records. Otherwise playbook discovery stays at the selected directory. Git exclusion checks separately resolve the actual containing Git worktree; they do not relocate the records to its root. Change directories first, give a positional path, or use `--project`.
 
 | Complete command | Meaning |
 | --- | --- |
@@ -39,21 +39,37 @@ A positional argument supplies a value such as a project path. An option starts 
 
 `--apply` is not required by ordinary bootstrap, worklog/knowledge creation, or skill install/update/uninstall. Those commands write unless `--dry-run` is present. When both `--apply` and `--dry-run` are present, preview wins.
 
-Most commands print JSON. `records read` prints plain text unless `--json` is present; use JSON for scripts that need continuation fields. Exit codes are `0` for success, `1` for a failure/conflict, and `2` for a retired command. Inspect warnings and scope even on success. A partial operation may have completed safe items before reporting conflicts.
+Most commands print JSON. Interactive bootstrap instead prints a readable outcome in the selected language, including the record location, affected files, recovery backup and notes when present, and the next action. Cancellation and previews say that no files changed. Explicit argument and non-interactive output remain unchanged; `--json` retains structured results for scripts and never opens the guide. `records read` prints plain text unless `--json` is present; use JSON for scripts that need continuation fields. Exit codes are `0` for success, `1` for a failure/conflict, and `2` for a retired command. Inspect warnings and scope even on success. A partial operation may have completed safe items before reporting conflicts.
 
 ## Create project records: bootstrap
 
 Run from the target directory, or supply a project path after `bootstrap`. The interactive guide and argument mode use the same preview and preservation rules.
 
-| Invocation | Defaults and questions |
+| Invocation | Selection and questions |
 | --- | --- |
-| `ai-agent-playbook bootstrap` in a bare interactive terminal | Opens the setup guide; new setup defaults to `single`, `standard`, `local` with Git or `none` without Git, `en`, and `preserve` |
+| `ai-agent-playbook bootstrap` in a bare interactive terminal | Opens the guide; every single-choice menu requires an explicit selection, including final apply |
 | `ai-agent-playbook bootstrap --interactive` | Explicitly asks for choices and a final review; requires usable interactive input/output |
-| `ai-agent-playbook bootstrap --yes` | Applies the guide's defaults without questions; explicit choices still win |
+| `ai-agent-playbook bootstrap --yes` | Uses existing defaults without questions: `single`, `standard`, `local` with Git or `none` without Git, `en`, `preserve`; saved settings override these defaults and explicit choices still win |
 | Explicit setup choices or non-interactive input | Preserves legacy defaults: `single`, `minimal`, `none`, `en`, `preserve` |
 | `--json` | Never asks; `--interactive --json` is rejected, while `--yes --json` uses defaults without questions |
 
-A project path, `--dry-run`, or `--apply` alone is not a setup choice that disables the guide. For a predictable non-interactive preview, supply setup choices or `--json`. Existing saved choices are offered when revisiting the guide. Cancellation, input closure, and previews do not write.
+A project path, `--dry-run`, or `--apply` alone is not a setup choice that disables the guide. For a predictable non-interactive preview, supply setup choices or `--json`. The guide marks recommended and current saved settings separately. Recommendations are `standard`, `preserve`, and `local` with Git or `none` outside Git. A single-choice menu starts without focus: Enter alone does not accept a recommendation or saved setting. Repository checkboxes restore only an explicit previous selection; discovery does not select candidates automatically.
+
+For a new setup, the folder-preparation step shows the target and intended record location. Use the project folder for one project, or an existing parent folder for a workspace. Place or clone child repositories there yourself, then choose Ready to continue. AAPB creates the missing `.ai-agent-playbook/` after final apply; it does not create, move, or clone the repositories. An empty workspace needs an explicit confirmation and can gain members later with `workspace add`.
+
+Cancellation and key help appear above the list. Menus show up to ten items, fewer on a small terminal, and multiselect shows the selected count. Disabled choices remain in the list, including filtered results, with an availability reason.
+
+| Key | Action |
+| --- | --- |
+| Arrow keys or a number, then Enter | Choose a single item explicitly |
+| Space, then Enter | Toggle the focused repository checkbox; Enter confirms only the checked items |
+| `/` | Search labels; Enter keeps the filter, while Esc clears and leaves search input. Checked items survive filtering |
+| `a` | Toggle all available items on the displayed page only |
+| `r` | Rescan repository candidates after preparing more folders, outside search input |
+| Esc or `b` | Return to the previous step when available, outside search input |
+| `q` or Ctrl+C | Cancel; closed input also cancels without writes |
+
+If raw keyboard input is unavailable, the guide accepts line input: a number, multiple numbers or ranges such as `1,3-5`, or name aliases. Repository names and quotes are not required. Use `n`/`p` for pages and `/text` to filter. Invalid input asks again; blank input cannot accept a single-choice default. At final review, choose Change a setting to revisit a field and review the result before applying. Cancellation and `--dry-run` never write.
 
 | Option | Values and effect |
 | --- | --- |
@@ -72,7 +88,9 @@ ai-agent-playbook bootstrap --kind single --records standard --exclude local --a
 ai-agent-playbook records read --path CURRENT.md
 ```
 
-`local` uses Git's local exclude file; `shared` writes a shared `.gitignore` rule; `global` affects repositories using the user's Git exclude file; `none` adds no rule and can remove unchanged AAPB-owned rules for this target. Without Git, local exclusion is skipped with a warning and records remain usable. No Git repository is initialized.
+`local` and `--local-only` use Git's `info/exclude`. The menu label is Local only (info/exclude), including when disabled. Availability depends on the Git repository containing the setup root, not on whether that folder has its own `.git` directory; nested project folders and linked worktrees are supported. Linked worktrees may share the exclude file. Outside Git, the guide keeps local exclusion visible but disabled and explains why. An explicit `--exclude local` or `--local-only` still skips exclusion with a warning and permits record creation. No Git repository is initialized.
+
+`shared` writes a shared `.gitignore` rule; `global` affects repositories using the user's Git exclude file; `none` adds no rule and can remove unchanged AAPB-owned rules for this target. Common records outside child repositories need no ignore rule in those children.
 
 Existing records and user instructions are preserved. Rerunning bootstrap can add missing standard guides or an explicitly selected link and change managed exclusions, but does not regenerate documents or replace membership. Only unchanged AAPB-owned ignore rules are migrated; user rules, tracked files, and Git history remain intact. Keep any returned recovery journal. See [Existing repositories](existing-repository-bootstrap.md), [Lifecycle](lifecycle.md), and [Project architecture](project-architecture.md).
 
@@ -102,6 +120,8 @@ ai-agent-playbook knowledge new --title "CSV export contract" --topic csv-export
 ```
 
 Creation writes unless `--dry-run` is present; listing is read-only. `--title` is required for creation. `--topic` labels a worklog and selects the knowledge filename; knowledge defaults its topic to the title. `--lang en|ko` overrides the selected manifest language. `--date YYYY-MM-DD` is for log creation; `--month YYYY-MM` filters listing. `--repo <id>` tags or filters a registered member. `--record-source workspace|repo:<id>` selects common or existing member-local records for these commands.
+
+`worklog list` and `records search --month` use the same month rule: a valid date at the start of the filename, then an enclosing `YYYY-MM` folder, then metadata `createdAt`. An undated legacy file without a month folder can therefore match by metadata. Other-month filenames and folders are pruned before reading; traversal, byte, and result limits remain in force. See [Durable records](durable-records.md) for filing-date examples.
 
 `worklog list` supports `--page-size`, `--max-chars`, and `--cursor`. Creation returns the actual `path`, template `content`, metadata, and write state. Fill the template with evidence; creation does not infer facts or run commands. Unique worklog names permit concurrent creation; existing knowledge topics are never overwritten. [Durable records](durable-records.md) covers monthly storage, old locations, draft review, and continuation.
 

@@ -21,6 +21,8 @@ ai-agent-playbook bootstrap --records standard --exclude none --agents preserve 
 
 Standard setup adds worklog and knowledge guides when absent. Minimal setup remains supported; the authoring commands create the needed directories on first use. Existing CURRENT.md, knowledge, worklogs, and metadata are preserved. For a registered workspace, [select the common or member-local source](workspaces.md) before authoring.
 
+Bootstrap creates the missing record folder in the selected project or shared workspace root when applied. In the interactive guide, a new setup shows this location during folder preparation and waits for your choices and final review. Prepare any child repositories yourself; AAPB does not move or clone them. Existing workspace membership and member-local records remain intact.
+
 ## Create a worklog
 
 ```sh
@@ -53,7 +55,11 @@ ai-agent-playbook records search --query "CSV" --path knowledge --kind knowledge
 ai-agent-playbook records search --query "CSV" --kind worklog --month 2026-09 --json
 ```
 
-Within a workspace, add `--repo web` to filter records for a member or `--record-source repo:web` to read an existing member-local source. These are different selections. Repeat the source, filters, query/view, and returned cursor for continuation; inspect totals and incomplete-scan warnings. `worklog list` also supports `--max-chars` and `--cursor`. Month filters cover monthly folders and dated flat legacy files such as `workflows/worklogs/2026-09-01-review.md`; old files do not need relocation. Record search excludes unrelated `repos/<id>/` directories before reading text. Search accepts `current`, `knowledge`, `worklog`, or `other` for `--kind`; authoring titles and topics are not full-text search expressions.
+Within a workspace, add `--repo web` to filter records for a member or `--record-source repo:web` to read an existing member-local source. These are different selections. Repeat the source, filters, query/view, and returned cursor for continuation; inspect totals and incomplete-scan warnings. `worklog list` also supports `--max-chars` and `--cursor`.
+
+Worklog listing and record search share the same `--month` rule. For each inspected record, a valid date at the start of its filename takes precedence, followed by the nearest enclosing `YYYY-MM` folder, then metadata `createdAt`. A log filed as `2026-08-31-review.md` belongs to August even if it was created in September; `createdAt` still records the actual creation time. An undated legacy file without a month folder can match September through its `createdAt` metadata. Monthly folders and flat legacy files such as `workflows/worklogs/2026-09-01-review.md` remain supported without relocation.
+
+Other-month dated filenames and month folders are pruned before reading, so keep filing dates and month folders consistent. Metadata fallback does not expand the scan to all history: existing traversal, depth, byte, and result limits still apply. Record search also excludes unrelated `repos/<id>/` directories before reading text. Search accepts `current`, `knowledge`, `worklog`, or `other` for `--kind`; authoring titles and topics are not full-text search expressions.
 
 Start with CURRENT.md, then follow relevant knowledge and worklog links. Expand a search only when evidence is insufficient. A global reference does not require reading all history. Absence under a metadata filter does not establish absence from untagged legacy records. [Response limits](record-responses.md) explains bounded pages and changed-source cursors.
 

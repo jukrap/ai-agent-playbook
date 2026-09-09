@@ -79,9 +79,11 @@ ai-agent-playbook bootstrap
 ai-agent-playbook records read --path CURRENT.md
 ```
 
-In an interactive terminal, bare bootstrap opens a guide with a final review. New setup defaults to standard record guides and local Git exclusion, or no exclusion without Git. `--dry-run` previews the selected choices. Existing records and root instructions are preserved; an optional AGENTS link is added only when selected.
+In an interactive terminal, bare bootstrap guides you through language, folder preparation for a new setup, explicit choices, and a final review where you can change a setting. AAPB creates the record folder after you choose to apply. For a workspace, prepare or clone the child repositories yourself under the chosen parent folder; AAPB does not move or clone them. Existing records, root instructions, and registered membership are preserved; an AGENTS link is added only when selected.
 
-For scripts, specify choices such as `--kind single --records standard --exclude none --agents preserve --json`. Explicit choices and non-interactive calls retain minimal/no-exclusion defaults unless overridden; `--yes` chooses the guide defaults without asking, and `--json` never asks. [Workspaces](docs/workspaces.md) explains repeated `--repo-path` membership selection; [durable records](docs/durable-records.md) covers `worklog new/list` and `knowledge new`.
+The guide shows recommendations and current settings separately. It recommends standard guides and local Git exclusion, or no exclusion outside Git, but selects nothing for you. Use numbers or arrow keys, then Enter; repository checkboxes use Space and Enter. `q` cancellation and key help appear above the list. Local exclusion stays visible with a reason when unavailable. [The command guide](docs/commands.md) covers search, rescanning, and back navigation.
+
+Interactive completion shows a readable result and next action; `--dry-run` previews without writes. For scripts, specify choices such as `--kind single --records standard --exclude none --agents preserve --json`. Explicit choices and non-interactive calls retain minimal/no-exclusion defaults unless overridden. `--yes` retains its existing defaults and saved settings, with explicit options taking precedence; `--json` never asks. [Workspaces](docs/workspaces.md) explains repeated `--repo-path` membership selection; [durable records](docs/durable-records.md) covers `worklog new/list` and `knowledge new`.
 
 To work on another folder, add a quoted path, for example `ai-agent-playbook bootstrap "<project>" --dry-run`, or use `--project "<project>"`. [The command guide](docs/commands.md) explains complete command combinations and their options.
 

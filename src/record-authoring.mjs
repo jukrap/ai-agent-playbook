@@ -74,11 +74,11 @@ function summaryPath(relative) {
     /(?:^|[-_.])summar(?:y|ies)(?:[-_.]|\.md$)/.test(name);
 }
 
-/** Classify conventional playbook-relative paths; custom locations can use parseRecordMetadata instead. */
-export function classifyRecordPath(relative) {
+/** Classify conventional/custom record paths with the same summary exclusion policy. */
+export function classifyRecordPath(relative, worklogRoots = ['worklogs', 'workflows/worklogs']) {
   try { relative = relativePath(relative); } catch { return null; }
   if (!/\.md$/i.test(relative) || summaryPath(relative)) return null;
-  if (/^(?:workflows\/)?worklogs\//i.test(relative)) return 'worklog';
+  if (worklogRoots.some((root) => relative.toLowerCase().startsWith(relativePath(root).toLowerCase() + '/'))) return 'worklog';
   if (/^knowledge\//i.test(relative)) return 'knowledge';
   return null;
 }
@@ -220,7 +220,7 @@ function heading(text, relative) {
   return value.slice(0, textBoundary(value, Math.min(value.length, MAX_LITERAL_CHARS)));
 }
 
-function recordMonth(relative, metadata) {
+export function recordMonth(relative, metadata) {
   const day = /^(\d{4}-\d{2}-\d{2})(?:[-T_.]|$)/.exec(path.posix.basename(relative))?.[1];
   if (validDay(day)) return day.slice(0, 7);
   const folder = relative.split('/').slice(0, -1).reverse().find((part) => /^\d{4}-(?:0[1-9]|1[0-2])$/.test(part));

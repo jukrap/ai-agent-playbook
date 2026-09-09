@@ -3,7 +3,7 @@ import path from 'node:path';
 import { projectRoot, safePath, statOrNull, noLinks, readText, readJson, readBytes, sha256, writeAtomic, relativePath } from './fs-safety.mjs';
 import { DEFAULT_CONTENT_CHARS, MAX_CONTENT_CHARS, fitsResponse, integerLimit, pagingError, scopeHash, cursorAt, readCursor, pageItems, textBoundary } from './record-paging.mjs';
 import { resolveRecordContext } from './workspace.mjs';
-import { parseRecordMetadata, classifyRecordPath, readRecordHeader } from './record-authoring.mjs';
+import { parseRecordMetadata, classifyRecordPath, readRecordHeader, recordMonth } from './record-authoring.mjs';
 
 export { PLAYBOOK_NAMES } from './workspace.mjs';
 export const RECORD_TOOLS = ['aapb_status', 'aapb_search', 'aapb_read', 'aapb_validate'];
@@ -39,7 +39,7 @@ async function normalizeFilters(filters, playbook) {
     if (!playbook.workspace?.config.repositories.some((item) => item.id === selected.repo)) throw new Error('repo must identify a registered workspace member.');
   }
   selected.logRoots = ['worklogs', 'workflows/worklogs'];
-  if (selected.month || selected.kind === 'worklog') {
+  if (playbook.exists) {
     const file = await safePath(playbook.directory, 'manifest.json');
     if (await statOrNull(file)) {
       const manifest = await readJson(file, MAX_FILE_BYTES);
@@ -53,17 +53,23 @@ async function normalizeFilters(filters, playbook) {
   return selected;
 }
 function pathInScope(relative, directory, filters) {
-  if (filters.path && relative !== filters.path && !relative.startsWith(filters.path + '/') && !(directory && filters.path.startsWith(relative + '/'))) return false;
-  const logRoots = filters.logRoots ?? ['worklogs', 'workflows/worklogs'];
+  const key = (value) => process.platform === 'win32' ? value.toLowerCase() : value;
+  relative = key(relative);
+  const selectedPath = filters.path && key(filters.path);
+  if (selectedPath && relative !== selectedPath && !relative.startsWith(selectedPath + '/') && !(directory && selectedPath.startsWith(relative + '/'))) return false;
+  const logRoots = (filters.logRoots ?? ['worklogs', 'workflows/worklogs']).map(key);
   if (filters.month) {
-    const months = logRoots.map((root) => root + '/' + filters.month);
-    const flatLegacy = !directory && logRoots.some((root) => relative.startsWith(root + '/') && /^\d{4}-\d{2}-\d{2}[-_.]/.test(path.posix.basename(relative)) && path.posix.basename(relative).startsWith(filters.month + '-'));
-    if (!flatLegacy && !months.some((prefix) => relative === prefix || relative.startsWith(prefix + '/') || (directory && prefix.startsWith(relative + '/')))) return false;
+    if (!logRoots.some((root) => relative === root || relative.startsWith(root + '/') || (directory && root.startsWith(relative + '/')))) return false;
+    const name = path.posix.basename(relative);
+    // Prune known dates before reading; undated legacy files may carry a month
+    // in their bounded metadata, just as worklog list supports.
+    if (directory && /^\d{4}-\d{2}$/.test(name) && name !== filters.month) return false;
+    if (!directory && /^\d{4}-\d{2}-\d{2}[-_.]/.test(name) && !name.startsWith(filters.month + '-')) return false;
   }
   if (filters.repo && relative.startsWith('repos/') && relative.split('/')[1] !== filters.repo) return false;
   if (!filters.path && filters.kind === 'worklog' && !logRoots.some((root) => relative === root || relative.startsWith(root + '/') || (directory && root.startsWith(relative + '/')))) return false;
   if (!filters.path && filters.kind === 'knowledge' && !['knowledge', 'memory'].some((root) => relative === root || relative.startsWith(root + '/'))) return false;
-  if (filters.kind === 'current' && relative !== 'CURRENT.md' && relative !== 'START_HERE.md' && relative !== 'repos' && !relative.startsWith('repos/')) return false;
+  if (filters.kind === 'current' && relative !== key('CURRENT.md') && relative !== key('START_HERE.md') && relative !== 'repos' && !relative.startsWith('repos/')) return false;
   return true;
 }
 async function inventory(playbook, filters = {}) {
@@ -80,9 +86,9 @@ async function inventory(playbook, filters = {}) {
       if (++visited > MAX_FILES) { limited = true; warnings.push(warning('', 'traversal-limit', 'Record traversal limit reached.')); return; }
       if (entry.isSymbolicLink()) { warnings.push(warning(rel, 'linked-record', 'Skipped linked record.')); continue; }
       if (entry.isDirectory()) {
-        if (SKIP_DIRS.has(entry.name)) excluded.add(entry.name);
+        if (SKIP_DIRS.has(entry.name.toLowerCase())) excluded.add(entry.name);
         else await walk(file);
-      } else if (entry.isFile() && TEXT_EXTENSIONS.has(path.extname(entry.name)) && entry.name !== MARKER) records.push(rel);
+      } else if (entry.isFile() && TEXT_EXTENSIONS.has(path.extname(entry.name).toLowerCase()) && entry.name !== MARKER) records.push(rel);
       if (limited) return;
     }
   }
@@ -151,7 +157,7 @@ export async function playbookRead({ target, path: recordPath = 'CURRENT.md', st
   const pb = await locatePlaybook(target, recordSource);
   if (!pb.exists) throw new Error('No playbook exists; bootstrap only when this project needs records.');
   const relative = relativePath(recordPath);
-  if (!TEXT_EXTENSIONS.has(path.extname(relative))) throw new Error('Only text records can be read.');
+  if (!TEXT_EXTENSIONS.has(path.extname(relative).toLowerCase())) throw new Error('Only text records can be read.');
   const bytes = await readBytes(await safePath(pb.directory, relative), MAX_FILE_BYTES);
   if (bytes.includes(0)) throw new Error('Binary files are not text records.');
   const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes).replace(/^\uFEFF/, '');
@@ -202,8 +208,9 @@ export async function playbookSearch({ target, query, maxResults, maxChars, curs
   let matchLimit = false;
   outer: for (const { relative, text } of data.documents) {
     const meta = parseRecordMetadata(text);
-    const detectedKind = meta?.kind ?? classifyRecordPath(relative) ?? (filters.logRoots.some((root) => relative.startsWith(root + '/') && /\.md$/i.test(relative)) ? 'worklog' : /^(?:CURRENT|START_HERE)\.md$/.test(relative) || /^repos\/[^/]+\/CURRENT\.md$/.test(relative) ? 'current' : 'other');
+    const detectedKind = meta?.kind ?? classifyRecordPath(relative, filters.logRoots) ?? (/^(?:CURRENT|START_HERE)\.md$/.test(relative) || /^repos\/[^/]+\/CURRENT\.md$/.test(relative) ? 'current' : 'other');
     if (kind && detectedKind !== kind) continue;
+    if (month && recordMonth(relative, meta) !== month) continue;
     if (repo && pb.recordSource !== 'repo:' + repo && !meta?.repos?.includes(repo) && !relative.startsWith('repos/' + repo + '/')) continue;
     const lines = text.split(/\r\n|\r|\n/);
     for (let i = 0; i < lines.length; i++) {

@@ -12,7 +12,8 @@ const EXCLUDED = new Set(['.git', 'node_modules', 'dist', 'build', 'coverage', '
 const EXTENSIONS = { javascript: ['.js', '.mjs', '.cjs'], typescript: ['.ts', '.mts', '.cts'], tsx: ['.tsx'], jsx: ['.jsx'], css: ['.css'], html: ['.html', '.htm'] };
 const ENGINE_LANG = { javascript: 'JavaScript', typescript: 'TypeScript', tsx: 'Tsx', jsx: 'Tsx', css: 'Css', html: 'Html' };
 const fail = (code, message) => Object.assign(new Error(message), { code: 'aapb.ast-' + code });
-const excluded = (name) => name.split('/').some((part) => EXCLUDED.has(part));
+// Protected trees remain excluded even through Windows case aliases.
+const excluded = (name) => name.split('/').some((part) => EXCLUDED.has(part.toLowerCase()));
 
 try {
   parentPort.postMessage({ result: await scan(workerData) });

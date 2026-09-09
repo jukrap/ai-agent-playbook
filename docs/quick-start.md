@@ -38,9 +38,15 @@ ai-agent-playbook records status --json
 ai-agent-playbook bootstrap --records minimal --exclude none --lang en --dry-run --json
 ```
 
-Status reports a missing playbook, which is normal for a new folder. This explicit minimal preview lists the entrypoint and metadata without creating them. Bare interactive `bootstrap` instead opens the guide, whose new default is standard records and local exclusion with Git, or no exclusion without Git. `--yes` uses guide defaults without questions; `--json` never asks.
+Status reports a missing playbook, which is normal for a new folder. This exercise uses explicit minimal settings; the preview lists the entrypoint and metadata without creating them.
 
-These commands use the current terminal directory. An explicit `.` means the same thing. A path or `--project "<project>"` selects another folder. Registered workspace members can use their ancestor common records; otherwise discovery stays at the selected directory. There is no general upward Git-root search.
+Bare interactive `bootstrap` opens the guided alternative. After choosing a language and one project or several repositories, a new setup shows the folder-preparation step. Confirm the project folder, or prepare child repositories inside a workspace's parent folder yourself. You can place or clone them in another terminal, then choose Ready to continue or rescan. AAPB creates the record folder after final apply; it does not move or clone repositories.
+
+The guide shows recommended and current settings separately. It recommends standard guides, preservation of agent instructions, and local exclusion with Git or no exclusion outside Git. Nothing is selected automatically: use a number or arrow keys and Enter; repository checkboxes use Space and Enter. `q` and key help are above the list. Outside search input, Esc or `b` goes back when available. Final review lets you change a setting before applying. See [Commands](commands.md) for search, page toggles, and line-input fallback.
+
+Interactive completion shows a readable result and next action. `--yes` still uses saved settings or the existing standard/local-or-none defaults without asking, with explicit options taking precedence. Explicit argument and non-interactive calls retain their minimal/no-exclusion defaults; `--json` never asks and keeps structured output.
+
+These commands use the current terminal directory. An explicit `.` means the same thing. A path or `--project "<project>"` selects another folder. Registered workspace members can use their ancestor common records; otherwise record discovery stays at the selected directory. Checking the containing Git worktree for exclusions is separate and does not move the record location.
 
 ## 3. Create and edit a current-state record
 
@@ -49,7 +55,7 @@ ai-agent-playbook bootstrap --records minimal --exclude none --lang en --json
 ai-agent-playbook records read --path CURRENT.md
 ```
 
-The project now contains:
+The apply call creates `.ai-agent-playbook/` automatically; you do not need to create that folder yourself. With this exercise's minimal settings, the project now contains:
 
 ```text
 aapb-demo/
@@ -122,7 +128,7 @@ ai-agent-playbook records status "<project>" --json
 ai-agent-playbook bootstrap "<project>" --local-only --dry-run
 ```
 
-`--local-only` aliases `--exclude local`. In Git, it requests a local exclude rule; without Git, records are created and a warning explains that local exclusion was skipped. Use `--exclude none` when no new ignore rule is wanted, `shared` for a shared ignore rule, or `global` for a user-level rule. No mode creates a commit or initializes Git.
+`--local-only` aliases `--exclude local` and requests a rule in Git's `info/exclude`. AAPB checks the Git repository containing the setup root, so a nested project folder does not need its own `.git` directory and linked worktrees are supported. They may share the exclude file. Outside Git, an explicit local request skips exclusion with a warning; the guide shows the local choice disabled with a reason. Records remain usable. Use `--exclude none` when no new ignore rule is wanted, `shared` for a shared ignore rule, or `global` for a user-level rule. No mode creates a commit or initializes Git.
 
 If records already exist, read their entrypoint. Bootstrap preserves them and existing root instructions; `--records standard` can add missing guides, and `--agents link` can add a short records link when explicitly selected. If no records exist and the preview is right, repeat without `--dry-run`. Read [Existing repositories](existing-repository-bootstrap.md) before migrating layouts.
 
@@ -133,7 +139,8 @@ If records already exist, read their entrypoint. Bootstrap preserves them and ex
 | `node` or `npm` not found | Install Node.js, reopen the terminal, check `node --version` and `npm --version` |
 | A local Node script cannot be found | Check the absolute package path used by the isolated installation |
 | `ai-agent-playbook` not found | Check the version: 0.5.11 provides only `aapb`. For 1.0, reopen the terminal after npm global installation; check the npm prefix and PATH, or use the isolated Node entrypoint |
-| Local exclusion is skipped outside Git | Records remain usable. Read the warning or explicitly choose `--exclude none`; no Git initialization is needed |
+| Local exclusion is disabled in the guide or skipped outside Git | Read the reason or warning. Records remain usable; `none` adds no ignore rule, and no Git initialization is needed |
+| Enter does not advance a single-choice menu | Choose an item with a number or arrow keys first; recommended/current markers do not select it |
 | Skills absent in the agent | Check profile, installation result, supported path, and a fresh session's catalog |
 | Old skill conflicts | Preserve it and inspect migration; force-replacement flags are unsupported |
 | Modified managed files | Review local edits; do not overwrite useful records merely to clear the signal |

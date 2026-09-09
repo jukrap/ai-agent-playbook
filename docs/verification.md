@@ -2,6 +2,14 @@
 
 The sections below preserve development-stage evidence and its original scope. Current change information is in the [changelog](../CHANGELOG.md); [local package testing](demo.md) explains how to verify an unpublished candidate. The historical [1.0.0](release-1.0.0.md) and [1.1.0](release-1.1.0.md) release notes retain their own scope. Test totals and package checks from an earlier archive do not automatically describe a later archive.
 
+## Bootstrap usability and field fixes (1.2.2)
+
+The source passed all 295 tests on Windows with Node.js 22.22.3, plus syntax, TypeScript, Python, skills, translations, public-document checks and required PowerShell install/update/sync previews. Terminal tests include explicit selection, disabled choices, search, paging, cancellation, stream cleanup and narrow Korean rendering. A real Windows terminal exercised twelve repository checkboxes, folder preparation, the unavailable local exclusion, final-review language editing and a no-write preview; a separate existing-project flow was cancelled without writes.
+
+Read-only CLI and SDK MCP checks in two existing frontend repositories reproduced worklog guide misclassification, Windows record path casing, AST protected-path case aliases and metadata-only monthly search inconsistencies. Corrected source and an installed candidate archive were then checked against both repositories, preserving existing files and Git state. Fixture regressions cover custom worklog roots, summaries, date precedence, bounded metadata reads and both Git/filesystem AST selection.
+
+An isolated npm installation verified 1.2.1 → 1.2.2 → 1.2.1, both executable aliases, shared records, authoring, AST, SDK MCP and restoration of existing records. Installation without optional dependencies retained record tools and reported the missing AST engine. These checks do not establish a fresh Codex host's automatic tool selection, every application UI behavior, other operating systems, publication or an updated global installation.
+
 ## Workspace and durable-record candidate
 
 The `1.2.0-next.1` source passed 240 tests on Windows with Node.js 22.22.3, plus syntax, TypeScript, Python, naming, skills, translation and public-document checks. Required PowerShell validation and install/update/sync previews passed without updating installed skills. The source still offers six skills, including optional legacy contracts; the development profile selects five.

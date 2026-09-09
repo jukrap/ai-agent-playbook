@@ -10,7 +10,7 @@ ai-agent-playbook records status "<project>" --view records --json
 ai-agent-playbook bootstrap "<project>" --local-only --dry-run
 ```
 
-Use `--local-only` as the compatibility alias for `--exclude local`. Without Git, creation continues and reports that local exclusion was skipped; no Git repository is initialized. Read `AGENTS.md` and the entrypoint shown by status. Check dirty Git changes before deciding whether any document should be changed.
+Use `--local-only` as the compatibility alias for `--exclude local`, which writes Git's `info/exclude`. AAPB resolves the Git repository containing the setup root; the selected folder need not contain its own `.git` directory. Nested project folders and linked worktrees are supported, and worktrees may share the exclude file. Outside Git, an explicit local request permits creation and reports that exclusion was skipped; no Git repository is initialized. Read `AGENTS.md` and the entrypoint shown by status. Check dirty Git changes before deciding whether any document should be changed.
 
 | Existing state | Next step |
 | --- | --- |
@@ -40,7 +40,7 @@ The ownership marker covers only known managed files. User documents and root in
 
 | Mode | Effect |
 | --- | --- |
-| `local` | Add the target record path to Git's local `info/exclude`; linked worktrees can share that file. Without Git, report the skipped exclusion and keep records usable. |
+| `local` | Add the target record path to Git's `info/exclude`; linked worktrees can share it. Outside Git, the guide shows this choice disabled with a reason; explicit local arguments report a skipped exclusion and keep records usable. |
 | `shared` | Add an ignore rule to `.gitignore`; sharing that rule requires your own commit. The records themselves are excluded. |
 | `global` | Use the user's Git exclusion file; affects other repositories using it. Review that scope explicitly. |
 | `none` | Add no rule; remove only unchanged AAPB-owned rules for this target during a managed transition. |
@@ -52,7 +52,11 @@ ai-agent-playbook bootstrap "<project>" --records standard --exclude shared --ag
 
 No mode stages, untracks, or commits files. User rules and shared ignore precedence can still affect Git's result. Records above child repositories do not need exclusions added to every child. Preserve returned journals and use [bootstrap recovery](lifecycle.md) for exclusion or AGENTS-link changes.
 
-Bare interactive bootstrap offers a guide and final review. `--interactive` requests it explicitly; `--yes` applies its defaults without questions. Explicit setup arguments and non-interactive calls preserve minimal/no-exclusion defaults, while new guide defaults are standard/local with Git or standard/none without Git. `--json` never asks. See [Commands](commands.md) for combinations and [Workspaces](workspaces.md) for registered-member setup.
+Bare interactive bootstrap offers a guide; `--interactive` requests it explicitly. A new setup includes folder preparation: check the project or parent folder, prepare child repositories yourself for a workspace, then continue. AAPB creates the missing record folder after final apply; it does not move or clone repositories. Existing workspaces keep their registry and use `workspace add/remove` for membership changes.
+
+Recommended and current settings have separate markers. Standard guides and local exclusion with Git, or no exclusion outside Git, are recommendations, not automatic selections. Choose a single item by number or arrow keys and Enter; Enter alone does not advance. Repository checkboxes use Space and Enter. `q` and key help are above the list; Esc or `b` goes back outside search input when available. At final review, Change a setting returns you to a field before another review. The outcome is readable text with the selected language and next action.
+
+`--yes` keeps its existing defaults and saved settings without questions; explicit options take precedence. Explicit argument and non-interactive calls still use minimal/no-exclusion defaults unless overridden. `--json` never asks and retains structured output. See [Commands](commands.md) for search, number ranges, and controls, and [Workspaces](workspaces.md) for registered-member setup.
 
 ## Architecture and root instructions
 

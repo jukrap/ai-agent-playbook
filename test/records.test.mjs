@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { bootstrapRecords, playbookRead, playbookSearch, playbookStatus, playbookValidate, migrateRecords, rollbackRecordMigration } from '../src/records.mjs';
 import { sha256, treeSnapshot } from '../src/fs-safety.mjs';
+import { listWorklogs } from '../src/record-authoring.mjs';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 async function fixture(t) {
   const target = await mkdtemp(path.join(os.tmpdir(), 'aapb-records-'));
@@ -28,6 +29,30 @@ test('bootstrap creates one editable entrypoint, preserves policy, and is idempo
   assert.equal((await playbookValidate({ target })).ok, true);
   assert.equal(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), 'User policy\n');
 });
+
+test('worklog kind excludes guide and summary documents in conventional and custom folders', async (t) => {
+  const target = await fixture(t);
+  await bootstrapRecords({ target, repoRoot });
+  const pb = path.join(target, '.ai-agent-playbook');
+  const manifestFile = path.join(pb, 'manifest.json');
+  const manifest = JSON.parse(await readFile(manifestFile, 'utf8'));
+  await writeFile(manifestFile, JSON.stringify({ ...manifest, recordPaths: { worklogs: 'history/tasks' } }));
+  const roots = ['worklogs', 'workflows/worklogs', 'history/tasks'];
+  for (const root of roots) {
+    await mkdir(path.join(pb, root, '2026-09'), { recursive: true });
+    for (const name of ['README.md', 'index.md', '2026-09-summary.md', '2026-09/2026-09-09-work.md']) {
+      await writeFile(path.join(pb, root, name), '# Worklog-kind-probe\n');
+    }
+  }
+  const before = await treeSnapshot(target);
+  const logs = await playbookSearch({ target, query: 'Worklog-kind-probe', kind: 'worklog' });
+  assert.deepEqual(logs.results.map((entry) => entry.path).sort(), roots.map((root) => root + '/2026-09/2026-09-09-work.md').sort());
+  const listed = await listWorklogs({ target });
+  assert.deepEqual(listed.items.map((entry) => entry.path).sort(), logs.results.map((entry) => entry.path).sort());
+  const other = await playbookSearch({ target, query: 'Worklog-kind-probe', kind: 'other' });
+  assert.equal(other.results.length, 9);
+  assert.deepEqual(await treeSnapshot(target), before);
+});
 test('records are bounded, literal, non-mutating and retain source locations', async (t) => {
   const target = await fixture(t);
   await bootstrapRecords({ target, repoRoot });
@@ -43,6 +68,46 @@ test('records are bounded, literal, non-mutating and retain source locations', a
   await assert.rejects(playbookRead({ target, path: '../AGENTS.md' }), /Unsafe|relative/);
   await assert.rejects(playbookRead({ target, path: 'C:/private.md' }), /relative/);
   await assert.rejects(playbookRead({ target, path: 'CURRENT.md:stream' }), /relative/);
+});
+
+test('record path filters match platform casing and retain actual filenames', async (t) => {
+  const target = await fixture(t);
+  await bootstrapRecords({ target, repoRoot });
+  const pb = path.join(target, '.ai-agent-playbook');
+  await writeFile(path.join(pb, 'CURRENT.md'), '# Case-probe\n');
+  await mkdir(path.join(pb, 'workflows/plans'), { recursive: true });
+  await writeFile(path.join(pb, 'workflows/plans/plan.MD'), '# Case-probe\n');
+  const before = await treeSnapshot(target);
+  for (const [exact, alias] of [['CURRENT.md', 'current.md'], ['workflows/plans', 'WORKFLOWS/plans']]) {
+    const original = await playbookSearch({ target, query: 'Case-probe', path: exact });
+    const alternate = await playbookSearch({ target, query: 'Case-probe', path: alias });
+    assert.equal(original.matchCount, 1);
+    assert.equal(alternate.scan.complete, true);
+    if (process.platform === 'win32') assert.deepEqual(alternate.results, original.results);
+    else assert.equal(alternate.matchCount, 0);
+  }
+  if (process.platform === 'win32') assert.equal((await playbookRead({ target, path: 'current.MD' })).content, '# Case-probe\n');
+  assert.deepEqual(await treeSnapshot(target), before);
+});
+
+test('month search and worklog list agree on metadata dates while pruning other months', async (t) => {
+  const target = await fixture(t);
+  await bootstrapRecords({ target, repoRoot });
+  const pb = path.join(target, '.ai-agent-playbook');
+  const metadata = { kind: 'worklog', id: 'month-probe', createdAt: '2026-09-09T11:00:00.000Z', repos: [], topic: 'month-probe' };
+  for (const name of ['undated.md', '2026-09/entry.md', '2026-08/entry.md', '2026-08-01-earlier.md']) {
+    const file = path.join(pb, 'worklogs', name);
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, '<!-- aapb-record ' + JSON.stringify(metadata) + ' -->\n# Month-probe\n');
+  }
+  const before = await treeSnapshot(target);
+  const listed = await listWorklogs({ target, month: '2026-09' });
+  const searched = await playbookSearch({ target, query: 'Month-probe', kind: 'worklog', month: '2026-09' });
+  assert.equal(listed.items.length, 2);
+  assert.deepEqual([...new Set(searched.results.map((item) => item.path))].sort(), listed.items.map((item) => item.path).sort());
+  assert.equal(searched.scannedFiles, 2);
+  assert.equal(searched.scan.complete, true);
+  assert.deepEqual(await treeSnapshot(target), before);
 });
 test('linked record directories cannot disclose data outside the bound project', async (t) => {
   const target = await fixture(t), outside = await fixture(t);

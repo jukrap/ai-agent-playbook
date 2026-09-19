@@ -2,6 +2,12 @@
 
 The sections below preserve development-stage evidence and its original scope. Current change information is in the [changelog](../CHANGELOG.md); [local package testing](demo.md) explains how to verify an unpublished candidate. The historical [1.0.0](release-1.0.0.md) and [1.1.0](release-1.1.0.md) release notes retain their own scope. Test totals and package checks from an earlier archive do not automatically describe a later archive.
 
+## Light skill profile and guarded migration (1.3.0)
+
+The 1.3.0 source passed all 307 tests on Windows with Node.js 22.22.3, plus syntax, TypeScript, Python, skills, translations, public-document checks and required PowerShell installation/update/sync previews. The seven new migration regressions cover replacement conflicts before apply, failed installations after preview, partially successful replacement sets, already-current and newly installed replacements changed before cleanup, changes between removals, preservation in both skill roots, and recovery. Source checks do not replace verification of the exact release archive or hosted CI results.
+
+The light profile selects one skill with one instruction file and no reference bundle. The measured name-plus-description length is 82 characters, compared with 230 for core and 634 for development; paths and host framing are excluded. These are package-content measurements, not observed model token counts or cost savings. Host discovery, automatic selection, response wording, and provider or company audit behavior were not validated by these checks. See [Release notes](release-1.3.0.md) for the feature and recovery boundaries.
+
 ## Bootstrap usability and field fixes (1.2.2)
 
 The source passed all 295 tests on Windows with Node.js 22.22.3, plus syntax, TypeScript, Python, skills, translations, public-document checks and required PowerShell install/update/sync previews. Terminal tests include explicit selection, disabled choices, search, paging, cancellation, stream cleanup and narrow Korean rendering. A real Windows terminal exercised twelve repository checkboxes, folder preparation, the unavailable local exclusion, final-review language editing and a no-write preview; a separate existing-project flow was cancelled without writes.

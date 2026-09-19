@@ -81,6 +81,7 @@ export async function runSkillsLifecycle(options) {
   if (options.forceManaged || options.forceUnmanaged) throw new Error('Force replacement was retired. Preserve local edits and resolve the reported conflict before retrying.');
   if (command === 'lint') return { schemaVersion: 2, kind: 'skills.lint', ok: true, writes: false, summary: { skills: catalog.length }, warnings: catalog.filter((s) => s.description.length > 180).map((s) => 'Long trigger: ' + s.name) };
   const chosen = new Set(selected.map((s) => s.name));
+  const selectedHashes = new Map();
   const baseline = (await readJson(path.join(repoRoot, 'docs/skill-decisions.json'), 2_000_000)).items;
   async function schedule(rootKind, relative, skill = null) {
     const destination = safeDestination(roots, rootKind, relative);
@@ -91,6 +92,10 @@ export async function runSkillsLifecycle(options) {
         warnings.push({ path: destination, code: 'unmanaged-preserved' }); return;
       }
       const source = skill ? await snapshot(skill.directory) : null;
+      if (skill) {
+        if (!source) throw new Error('Source skill is missing: ' + skill.name);
+        selectedHashes.set(skill.name, source.hash);
+      }
       if (old.tree && (!old.owned || !old.unchanged)) {
         conflicts.push({ path: destination, code: old.owned ? 'modified-managed' : 'unmanaged', message: 'Preserved; no force replacement or removal.' }); return;
       }
@@ -113,21 +118,39 @@ export async function runSkillsLifecycle(options) {
   } else {
     for (const s of selected) await schedule('agents', s.name, s);
   }
-  if (command === 'migrate') {
+  if (command === 'migrate' && conflicts.length) {
+    warnings.push({ code: 'migration-cleanup-blocked', message: 'Removal was not planned because selected skills have installation conflicts. Independent installations can still proceed.' });
+  } else if (command === 'migrate') {
     for (const row of baseline) {
       await schedule('codex', row.name);
       const relative = row.category === 'legacy' ? 'legacys/' + row.name : row.name;
       if (!chosen.has(row.name)) await schedule('agents', relative);
     }
-    // New-generation duplicates are also removable only after ownership and hash checks.
-    for (const s of catalog) if (!baseline.some((b) => b.name === s.name)) await schedule('codex', s.name);
+    // Reconcile current profiles too, with the same ownership and hash checks.
+    for (const s of catalog) if (!baseline.some((b) => b.name === s.name)) {
+      await schedule('codex', s.name);
+      if (!chosen.has(s.name)) await schedule('agents', s.name);
+    }
+  }
+  async function requireSelectedInstallations() {
+    for (const skill of selected) {
+      try {
+        const state = await managedState(safeDestination(roots, 'agents', skill.name));
+        if (!state.unchanged || state.tree?.hash !== selectedHashes.get(skill.name)) {
+          throw new Error('Selected installation is missing, modified, unmanaged, or does not match the planned source.');
+        }
+      } catch (error) {
+        throw Object.assign(new Error('Migration cleanup blocked by ' + skill.name + ': ' + error.message), { code: 'migration-cleanup-blocked' });
+      }
+    }
   }
   const shouldApply = command === 'migrate' ? apply && !dryRun : ['install', 'update', 'uninstall'].includes(command) && !dryRun;
   const plannedBackupRoot = operations.length && ['install', 'update', 'migrate', 'uninstall'].includes(command)
     ? await validateBackupPlacement({ operations, roots, backupRoot: options.backupRoot }) : null;
   let transaction = null;
   if (shouldApply && operations.length) {
-    transaction = await applySkillOperations({ operations, roots, profile, backupRoot: plannedBackupRoot, beforeOperation: options.beforeOperation });
+    transaction = await applySkillOperations({ operations, roots, profile, backupRoot: plannedBackupRoot, beforeOperation: options.beforeOperation,
+      beforeRemove: command === 'migrate' ? requireSelectedInstallations : undefined });
     conflicts.push(...transaction.conflicts);
   }
   return {
@@ -136,7 +159,7 @@ export async function runSkillsLifecycle(options) {
     backup: transaction?.backup ?? null, backupRoot: plannedBackupRoot, summary: { selected: selected.length, operations: operations.length, applied: transaction?.applied ?? 0, conflicts: conflicts.length }
   };
 }
-export async function applySkillOperations({ operations, roots, profile, backupRoot, beforeOperation }) {
+export async function applySkillOperations({ operations, roots, profile, backupRoot, beforeOperation, beforeRemove = undefined }) {
   const parent = await validateBackupPlacement({ operations, roots, backupRoot });
   const backup = path.join(parent, 'skills-' + new Date().toISOString().replaceAll(':', '-') + '-' + randomUUID());
   await mkdir(backup, { recursive: true });
@@ -176,6 +199,8 @@ export async function applySkillOperations({ operations, roots, profile, backupR
       if (entry.afterHash && (await snapshot(path.join(entryDir, 'after')))?.treeHash !== entry.afterHash) throw new Error('Prepared replacement changed; preserved.');
       await mkdir(path.dirname(destination), { recursive: true });
       await noLinks(path.dirname(destination));
+      // Cleanup depends on the selected replacements, including already-current copies.
+      if (entry.action === 'remove' && beforeRemove) await beforeRemove();
       entry.state = 'applying';
       await writeAtomic(journalFile, json(journal));
       if (current) {
@@ -190,7 +215,7 @@ export async function applySkillOperations({ operations, roots, profile, backupR
       applied++;
     } catch (error) {
       entry.error = error.message;
-      conflicts.push({ path: destination, code: 'apply-conflict', message: error.message });
+      conflicts.push({ path: destination, code: error.code === 'migration-cleanup-blocked' ? error.code : 'apply-conflict', message: error.message });
     }
     await writeAtomic(journalFile, json(journal));
   }

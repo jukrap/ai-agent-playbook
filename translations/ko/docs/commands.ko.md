@@ -184,6 +184,8 @@ ai-agent-playbook knowledge new --title "CSV export contract" --topic csv-export
 | `ai-agent-playbook skills list --json` | 소스의 프로필과 스킬 이름 확인 | 없음 |
 | `ai-agent-playbook skills lint --json` | 소스 스킬 목록의 형식 검사 | 없음 |
 | `ai-agent-playbook skills install --dry-run --json` | 기본 core 스킬 두 개의 설치 미리보기 | 없음 |
+| `ai-agent-playbook skills install --profile light --dry-run --json` | 참고 자료 없는 간결한 project-notes 스킬 하나의 설치 미리보기 | 없음 |
+| `ai-agent-playbook skills install --profile light --json` | 다른 설치 스킬을 보존하면서 라이트 구성 설치 | 있음 |
 | `ai-agent-playbook skills install --profile development --dry-run --json` | 개발 스킬 다섯 개의 설치 미리보기 | 없음 |
 | `ai-agent-playbook skills install --profile development --json` | 선택한 개발 스킬 설치 | 있음 |
 | `ai-agent-playbook skills check --profile development --json` | 선택한 설치본과 원본 비교 | 없음 |
@@ -194,7 +196,7 @@ ai-agent-playbook knowledge new --title "CSV export contract" --topic csv-export
 | `ai-agent-playbook skills install --profile legacy --dry-run --json` | legacy-contracts 하나만 설치 미리보기 | 없음 |
 | `ai-agent-playbook skills install --skill project-memory --skill legacy-contracts --dry-run --json` | 프로필 대신 지정한 두 스킬만 설치 미리보기 | 없음 |
 
-`--profile`은 `core`, `development`, `legacy`를 받습니다. `--skill`을 반복하거나 쉼표로 이름을 나누면 직접 선택할 수 있으며 빈 이름은 거부합니다. 일반 갱신이 다른 스킬이나 구버전 중복 설치를 자동으로 지우지는 않습니다. 프로필은 기능 선택이며 라이트·헤비 런타임 모드가 아닙니다.
+`--profile`은 `light`, `core`, `development`, `legacy`를 받습니다. `--skill`을 반복하거나 쉼표로 이름을 나누면 직접 선택할 수 있으며 빈 이름은 거부합니다. 일반 갱신이 다른 스킬이나 구버전 중복 설치를 자동으로 지우지는 않습니다. `light`는 간결한 지침을 선택하며 런타임, 추론 수준, 권한이나 감사 설정을 바꾸지 않습니다. [라이트 모드](skill-catalog.ko.md#라이트-모드)와 [프로필 전환](lifecycle.ko.md#라이트-설치와-프로필-전환)을 참고하세요.
 
 경로를 직접 정하는 예시입니다.
 
@@ -209,6 +211,8 @@ ai-agent-playbook skills install --profile development --agents-root "<skills-di
 | 명령 전체 | 뜻 | 쓰기 여부 |
 | --- | --- | --- |
 | `ai-agent-playbook skills migrate --profile development --json` | 소유권이 확인된 0.5 복사본 정리 미리보기 | 없음 |
+| `ai-agent-playbook skills migrate --profile light --json` | 라이트 설치와 선택 밖의 수정되지 않은 알려진 AAPB 설치본 제거 미리보기 | 없음 |
+| `ai-agent-playbook skills migrate --profile light --apply --json` | 안전한 라이트 전환 작업 적용, 복구 자료 보관 | 있음 |
 | `ai-agent-playbook skills migrate --profile development --apply --json` | 독립적으로 안전한 이전 항목 적용 | 있음 |
 | `ai-agent-playbook skills rollback --backup "<transaction-directory>" --json` | 스킬 작업 하나의 복원 미리보기 | 없음 |
 | `ai-agent-playbook skills rollback --backup "<transaction-directory>" --apply --json` | 이후 바뀌지 않은 스킬 항목 복원 | 있음 |

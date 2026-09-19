@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0
+
+See [release notes](docs/release-1.3.0.md) for installation, profile transitions, and recovery.
+
+- Add the optional `light` skill profile in the CLI and PowerShell installers. It selects one compact `project-notes` skill without bundled references, with focused record reads and result-focused replies subject to required disclosures and host instructions.
+- Reconcile unselected current AAPB skills during explicit profile migration, preserving ownership checks, local edits, unrelated plugins, previews, and recovery. Ordinary installation remains additive.
+- Require valid selected replacements before migration cleanup. Omit removal plans on selected-installation conflicts and recheck all replacements before each removal, preserving remaining old copies if installation fails or changes during apply.
+- Document light installation, profile transitions, and the independent minimal bootstrap choice in English and Korean. Light does not alter model settings, permissions, or audit records.
+
 ## 1.2.2
 
 - Guide interactive setup through folder preparation, explicit choices, repository checkboxes, search/rescan, back navigation and an editable final review. Show recommendations separately from saved settings and explain unavailable local Git exclusions.

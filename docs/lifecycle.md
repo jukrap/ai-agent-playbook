@@ -72,7 +72,7 @@ Keep the archive checksum with its verification evidence. From a source checkout
 
 When upgrading an existing project, also [review its active instructions](existing-repository-bootstrap.md#review-instructions-when-upgrading-from-05). Package and skill updates preserve those files; they cannot remove stale command or skill requirements from them.
 
-Default `core` selects `project-memory` and `spec-artifacts`. `development` adds design direction, UI polish, and document editing. `legacy` selects `legacy-contracts` alone. Repeated `--skill` options replace a profile with an explicit list. See [Skill catalog](skill-catalog.md).
+Default `core` selects `project-memory` and `spec-artifacts`. `light` selects only the compact `project-notes` skill without references. `development` adds design direction, UI polish, and document editing. `legacy` selects `legacy-contracts` alone. Repeated `--skill` options replace a profile with an explicit list. See [Skill catalog](skill-catalog.md).
 
 ```sh
 ai-agent-playbook skills install --profile development --dry-run --json
@@ -95,9 +95,39 @@ Read the result and preserve its backup directory. Modified files, unknown owner
 
 After installation or removal, reload the agent and check its actual catalog. `skills check` verifies disk copies, not whether a running conversation loaded them.
 
+### Light installation and switching profiles
+
+For a new light installation:
+
+```sh
+ai-agent-playbook skills install --profile light --dry-run --json
+ai-agent-playbook skills install --profile light --json
+ai-agent-playbook skills check --profile light --json
+```
+
+Use the same profile for later `update` or `uninstall`. Source-checkout PowerShell wrappers accept `-Profile light` too:
+
+```powershell
+.\install.ps1 -Profile light -WhatIf
+.\install.ps1 -Profile light
+```
+
+Installing light does not remove previous skills. To reduce an existing core/development installation, preview a profile migration:
+
+```sh
+ai-agent-playbook skills migrate --profile light --json
+ai-agent-playbook skills migrate --profile light --apply --json
+```
+
+Migration installs the selected skill and removes unchanged known AAPB copies outside the selection from both supported roots, including other current profiles and recognized old copies. This can also remove an explicitly installed legacy skill; inspect the operations and use an explicit `--skill` selection if it must remain. Modified, unmanaged, linked, and unrelated plugin directories are preserved. A partial result can leave additional skills installed. To switch back, preview `skills migrate --profile core --json` or `--profile development`, then repeat with `--apply`. Use the returned transaction backup for rollback, and reload the host to check its actual catalog.
+
+Cleanup depends on every selected skill being a valid, unchanged managed installation matching the planned source. If a selected installation conflicts during inspection, removal is omitted from the plan; independent installations can still proceed. During apply, that prerequisite is checked again immediately before each removal, including for already-current skills. If a replacement fails or changes, remaining cleanup is blocked. Previously completed operations are not automatically undone; use the returned backup to recover them. A conflict in an unselected cleanup target still preserves that target while other safe removals can proceed.
+
+Light is a smaller guidance selection, not a privacy or logging control. Its result-focused wording applies when that skill is used and remains subject to host/project instructions. See [Light mode](skill-catalog.md#light-mode) for scope and limitations. Bootstrap needs no new mode: `bootstrap "<project>" --records minimal --agents preserve --dry-run` previews the existing minimal record setup, independently of skill selection.
+
 ## Migrate 0.5 copies into one root
 
-Use this when AAPB copies remain in both `.codex/skills` and `.agents/skills`:
+Use this when reconciling a selected profile or when AAPB copies remain in both `.codex/skills` and `.agents/skills`:
 
 ```sh
 ai-agent-playbook skills migrate --profile development --json

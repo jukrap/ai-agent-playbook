@@ -72,7 +72,7 @@ node "<demo-prefix>/node_modules/ai-agent-playbook/bin/aapb.mjs" --version
 
 기존 프로젝트를 올릴 때는 [현재 사용하는 지침도 검토](existing-repository-bootstrap.ko.md#05에서-올릴-때-기존-지침-검토하기)하세요. 패키지·스킬 업데이트는 그 파일들을 보존하므로, 문서에 남은 종료 명령이나 스킬 요구까지 없애주지는 않습니다.
 
-기본 `core`는 `project-memory`, `spec-artifacts`를 선택합니다. `development`는 디자인 방향, UI 다듬기, 문서 편집을 더합니다. `legacy`는 `legacy-contracts` 하나만 선택합니다. `--skill`을 반복 지정하면 프로필 대신 그 목록을 사용합니다. [스킬 카탈로그](skill-catalog.ko.md)에 자세한 예시가 있습니다.
+기본 `core`는 `project-memory`, `spec-artifacts`를 선택합니다. `light`는 참고 자료 없이 간결한 `project-notes` 하나만 선택합니다. `development`는 디자인 방향, UI 다듬기, 문서 편집을 더합니다. `legacy`는 `legacy-contracts` 하나만 선택합니다. `--skill`을 반복 지정하면 프로필 대신 그 목록을 사용합니다. [스킬 카탈로그](skill-catalog.ko.md)에 자세한 예시가 있습니다.
 
 ```sh
 ai-agent-playbook skills install --profile development --dry-run --json
@@ -95,9 +95,39 @@ ai-agent-playbook skills uninstall --profile development --json
 
 설치·삭제 후에는 에이전트에서 목록을 다시 불러와 실제 표시를 확인하세요. `skills check`는 디스크의 설치본을 확인하며 실행 중인 대화가 스킬을 불러왔는지는 확인하지 않습니다.
 
+### 라이트 설치와 프로필 전환
+
+처음 라이트로 설치할 때는 다음을 실행합니다.
+
+```sh
+ai-agent-playbook skills install --profile light --dry-run --json
+ai-agent-playbook skills install --profile light --json
+ai-agent-playbook skills check --profile light --json
+```
+
+이후 `update`나 `uninstall`에도 같은 프로필을 사용합니다. 소스 체크아웃의 PowerShell 래퍼도 `-Profile light`를 받습니다.
+
+```powershell
+.\install.ps1 -Profile light -WhatIf
+.\install.ps1 -Profile light
+```
+
+light를 설치해도 이전 스킬은 제거하지 않습니다. 기존 core/development 설치를 줄이려면 프로필 이전을 미리 확인합니다.
+
+```sh
+ai-agent-playbook skills migrate --profile light --json
+ai-agent-playbook skills migrate --profile light --apply --json
+```
+
+이전은 선택한 스킬을 설치하고, 양쪽 지원 경로에서 선택 밖의 알려진 AAPB 설치본 중 수정되지 않은 항목을 제거합니다. 다른 현재 프로필과 인식 가능한 구버전 복사본도 포함합니다. 별도로 설치한 레거시 스킬도 제거 대상일 수 있으므로 작업 목록을 확인하고, 유지해야 한다면 `--skill`로 목록을 직접 지정하세요. 수정본, 미관리 설치본, 연결된 디렉터리와 다른 플러그인은 보존합니다. 일부만 적용되면 추가 스킬이 남을 수 있습니다. 돌아가려면 `skills migrate --profile core --json` 또는 `--profile development`를 미리 확인한 뒤 `--apply`로 실행합니다. 되돌릴 때는 반환된 작업 백업을 사용하고, 앱을 새로 불러와 실제 스킬 목록을 확인하세요.
+
+정리는 선택한 모든 스킬이 계획한 원본과 일치하며 수정되지 않은 유효한 관리 설치본일 때만 진행합니다. 사전 검사에서 선택한 설치가 충돌하면 제거를 계획에 넣지 않으며, 독립적인 설치는 계속할 수 있습니다. 적용 중에는 이미 최신인 스킬까지 포함해 각 제거 직전에 이 조건을 다시 확인합니다. 대체 설치가 실패하거나 바뀌면 남은 정리를 중단합니다. 이미 완료한 작업은 자동으로 되돌리지 않으므로 반환된 백업으로 복구하세요. 선택 밖 정리 대상의 충돌은 해당 항목을 보존하면서 다른 안전한 제거는 계속 처리합니다.
+
+라이트는 작은 지침 구성이며 비공개나 로그 제어 기능이 아닙니다. 결과 중심 문구는 해당 스킬을 사용할 때 적용되며 앱·프로젝트 지침을 따릅니다. 범위와 한계는 [라이트 모드](skill-catalog.ko.md#라이트-모드)를 보세요. 부트스트랩에는 새 모드가 필요하지 않습니다. `bootstrap "<project>" --records minimal --agents preserve --dry-run`으로 스킬 선택과 별개인 기존 최소 기록 구성을 미리 볼 수 있습니다.
+
 ## 0.5 스킬을 한 설치 위치로 모으기
 
-`.codex/skills`와 `.agents/skills` 양쪽에 AAPB 복사본이 남아 있을 때 사용합니다.
+선택한 프로필에 맞춰 정리하거나 `.codex/skills`와 `.agents/skills` 양쪽에 AAPB 복사본이 남아 있을 때 사용합니다.
 
 ```sh
 ai-agent-playbook skills migrate --profile development --json

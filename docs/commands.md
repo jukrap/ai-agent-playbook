@@ -184,6 +184,8 @@ These commands operate on user skill directories, independently of the current p
 | `ai-agent-playbook skills list --json` | Show source profiles and skill names | No |
 | `ai-agent-playbook skills lint --json` | Check the source skill catalog format | No |
 | `ai-agent-playbook skills install --dry-run --json` | Preview default core installation (two skills) | No |
+| `ai-agent-playbook skills install --profile light --dry-run --json` | Preview one compact project-notes skill without references | No |
+| `ai-agent-playbook skills install --profile light --json` | Install the light selection, preserving other installed skills | Yes |
 | `ai-agent-playbook skills install --profile development --dry-run --json` | Preview five development skills | No |
 | `ai-agent-playbook skills install --profile development --json` | Install the selected development skills | Yes |
 | `ai-agent-playbook skills check --profile development --json` | Compare selected installed copies with their source | No |
@@ -194,7 +196,7 @@ These commands operate on user skill directories, independently of the current p
 | `ai-agent-playbook skills install --profile legacy --dry-run --json` | Preview only legacy-contracts | No |
 | `ai-agent-playbook skills install --skill project-memory --skill legacy-contracts --dry-run --json` | Preview exactly these two skills, replacing the profile selection | No |
 
-`--profile` accepts `core`, `development`, or `legacy`. Repeated `--skill` or comma-separated names select explicit entries; empty names are rejected. Ordinary updates do not remove unrelated skills or duplicate old installations automatically. Profiles are capability selections, not light/heavy runtime modes.
+`--profile` accepts `light`, `core`, `development`, or `legacy`. Repeated `--skill` or comma-separated names select explicit entries; empty names are rejected. Ordinary updates do not remove unrelated skills or duplicate old installations automatically. `light` selects compact guidance; it does not change the runtime, reasoning effort, permissions, or audit settings. See [Light mode](skill-catalog.md#light-mode) and [profile transitions](lifecycle.md#light-installation-and-switching-profiles).
 
 For custom locations:
 
@@ -209,6 +211,8 @@ ai-agent-playbook skills install --profile development --agents-root "<skills-di
 | Complete command | Meaning | Writes? |
 | --- | --- | --- |
 | `ai-agent-playbook skills migrate --profile development --json` | Preview reconciliation of known owned 0.5 copies | No |
+| `ai-agent-playbook skills migrate --profile light --json` | Preview light installation and removal of unchanged known AAPB copies outside that selection | No |
+| `ai-agent-playbook skills migrate --profile light --apply --json` | Apply safe operations for the light transition and retain recovery data | Yes |
 | `ai-agent-playbook skills migrate --profile development --apply --json` | Apply independent safe migration operations | Yes |
 | `ai-agent-playbook skills rollback --backup "<transaction-directory>" --json` | Preview restoration of one skill transaction | No |
 | `ai-agent-playbook skills rollback --backup "<transaction-directory>" --apply --json` | Restore unchanged affected skill entries | Yes |

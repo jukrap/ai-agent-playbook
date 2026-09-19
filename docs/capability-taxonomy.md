@@ -18,4 +18,4 @@ A skill explains a constraint or format; a connector provides access; a runtime 
 
 For a small Korean README edit, preserve terms and meaning without automatically loading a full review framework. For a dense dashboard, inspect its workflow and rendered states before choosing visual changes. For a legacy WebView, select the relevant bridge/compatibility contract and retain the project's execution permissions.
 
-The six AAPB entrypoints were chosen after separating these roles, not by deleting every item beyond an arbitrary count. Use [Skill catalog](skill-catalog.md) for installation, [disposition](skill-decisions.md) for old names, and [environment profiles](environment-profiles.md) for external integrations.
+AAPB entrypoints are selected by these roles rather than an arbitrary count. The optional light profile supplies compact continuity guidance; core and development retain the fuller formats and specialist guidance. Use [Skill catalog](skill-catalog.md) for installation, [disposition](skill-decisions.md) for old names, and [environment profiles](environment-profiles.md) for external integrations.

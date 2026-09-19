@@ -229,8 +229,8 @@ Project records:
 
 Skills (default destination: .agents/skills):
   ai-agent-playbook skills list|lint [--json]
-  ai-agent-playbook skills install|update|check|uninstall [--profile core|development|legacy] [--skill name] [--dry-run] [--json]
-  ai-agent-playbook skills migrate [--profile development] [--apply] [--dry-run] [--json]
+  ai-agent-playbook skills install|update|check|uninstall [--profile light|core|development|legacy] [--skill name] [--dry-run] [--json]
+  ai-agent-playbook skills migrate [--profile light|core|development|legacy] [--apply] [--dry-run] [--json]
   ai-agent-playbook skills rollback --backup <transaction-directory> [--apply] [--json]
   Destination overrides: --agents-root <directory>, --codex-root <legacy-directory>, --backup-root <directory>
 

@@ -18,4 +18,4 @@
 
 작은 한국어 README 편집에는 용어와 의미를 지키는 지침을 쓰되 전체 검토 체계를 자동으로 읽지 않습니다. 정보가 많은 대시보드는 사용 흐름과 실제 상태를 먼저 봅니다. 레거시 WebView는 해당 브리지·호환 계약을 고르고 프로젝트의 실행 권한을 유지합니다.
 
-AAPB의 여섯 진입점은 이런 역할을 구분해 정한 결과이며 정해진 개수 밖의 항목을 모두 삭제한 결과가 아닙니다. 설치는 [스킬 카탈로그](skill-catalog.ko.md), 구버전 이름은 [이전표](skill-decisions.ko.md), 외부 연동은 [공통 환경 구성](environment-profiles.ko.md)을 보세요.
+AAPB 진입점은 임의의 개수보다 이런 역할을 기준으로 선택합니다. 선택형 light 프로필은 간결한 연속성 지침을 제공하고, core와 development는 더 자세한 문서 형식과 전문 지침을 유지합니다. 설치는 [스킬 카탈로그](skill-catalog.ko.md), 구버전 이름은 [이전표](skill-decisions.ko.md), 외부 연동은 [공통 환경 구성](environment-profiles.ko.md)을 보세요.

@@ -2,7 +2,7 @@ param(
   [string]$SourceSkillsRoot = (Join-Path (Split-Path -Parent $PSScriptRoot) 'skills'),
   [string]$CodexSkillsRoot = (Join-Path $env:USERPROFILE '.codex\skills'),
   [string]$AgentsSkillsRoot = (Join-Path $env:USERPROFILE '.agents\skills'),
-  [ValidateSet('core', 'development', 'legacy')][string]$Profile = 'core',
+  [ValidateSet('light', 'core', 'development', 'legacy')][string]$Profile = 'core',
   [string[]]$Skill = @(),
   [string]$BackupRoot,
   [switch]$Migrate,

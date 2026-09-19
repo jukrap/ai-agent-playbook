@@ -2,6 +2,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 
 export const SKILL_PROFILES = Object.freeze({
+  light: ['project-notes'],
   core: ['project-memory', 'spec-artifacts'],
   development: ['project-memory', 'spec-artifacts', 'design-brief-direction', 'ui-polish', 'natural-writing-humanization'],
   legacy: ['legacy-contracts']

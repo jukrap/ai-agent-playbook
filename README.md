@@ -159,11 +159,14 @@ CHANGELOG.md          Versioned changes
 
 | Profile | Included skills | Use it for |
 | --- | --- | --- |
+| `light` | `project-notes` | Brief continuity notes and result-focused replies, with no reference bundle |
 | `core` (default) | `project-memory`, `spec-artifacts` | Project continuity and requested specifications, decisions, or handoffs |
 | `development` | Core plus `design-brief-direction`, `ui-polish`, `natural-writing-humanization` | Development with design, UI, and document editing |
 | `legacy` | `legacy-contracts` | Explicitly selected legacy-system preservation work |
 
 Individual `--skill` selections replace the profile selection. Profiles select guidance, not permissions. See [Skill catalog](docs/skill-catalog.md) for triggers, examples, and combined selections.
+
+For a smaller installation, use `skills install --profile light --dry-run --json` and repeat without `--dry-run` to install. Light selects one compact skill; it does not conceal skill use or change audit settings. Ordinary installation preserves other installed skills. To reduce an existing installation, follow the explicit [profile transition and recovery](docs/lifecycle.md#light-installation-and-switching-profiles). Bootstrap keeps its independent `--records minimal` choice.
 
 The old 94 entrypoints were consolidated or retired. Useful domain references remain in the [reference library](references/README.md), with an [item-by-item migration table](docs/skill-decisions.md). Short skill entrypoints do not require short human documentation or loss of product-specific detail.
 

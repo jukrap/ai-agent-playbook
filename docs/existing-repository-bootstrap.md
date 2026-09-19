@@ -28,6 +28,8 @@ ai-agent-playbook bootstrap "<project>" --local-only
 
 This explicit invocation uses minimal records and requests local exclusion. Use `--records standard` to add worklog and knowledge guides, `--lang en|ko` for new text, and `--agents link` to append a short records link without replacing instructions. `--agents preserve` is the default; `--preserve-agents` remains its compatible alias. The old replace-root-policy modes remain unsupported.
 
+The [light skill profile](skill-catalog.md#light-mode) is a separate installation choice. Bootstrap does not load skills or set a global response style. Use the existing `--records minimal` choice for fewer initial record files; light also works with standard or existing records. Git exclusions do not control model input or service audit records.
+
 On a repeat run, existing documents, metadata, and membership are preserved. Missing standard guides and an explicitly selected AGENTS link may be added; explicit exclusion choices can move unchanged AAPB-owned rules. Inspect the proposed operations and returned backup. User ignore rules and already tracked files are preserved: an exclude entry cannot untrack committed files.
 
 ## Choose sharing and ownership deliberately

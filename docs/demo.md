@@ -16,7 +16,7 @@ node $demoCli --version
 node $demoCli --help
 ```
 
-Confirm the installed version against the checkout's package.json, currently `1.2.2`. Registry tags describe published packages; they do not automatically follow a source version change. Use the verified local archive or `node bin/aapb.mjs` from source until the intended release is available in the registry. Package installation does not install user skills or enable MCP. All following calls use `node $demoCli` so a different global version cannot accidentally supply the result. In another shell, invoke the installed script by its absolute path.
+Confirm the installed version against the checkout's package.json, currently `1.3.0`. Registry tags describe published packages; they do not automatically follow a source version change. Use the verified local archive or `node bin/aapb.mjs` from source until the intended release is available in the registry. Package installation does not install user skills or enable MCP. All following calls use `node $demoCli` so a different global version cannot accidentally supply the result. In another shell, invoke the installed script by its absolute path.
 
 ## 2. Inspect an existing project without changing it
 
